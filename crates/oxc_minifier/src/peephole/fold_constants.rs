@@ -573,34 +573,34 @@ impl<'a, 'b> PeepholeOptimizations {
         if e.arguments.len() != 1 {
             return None;
         }
-        Some(ctx.value_to_expr(
-            e.span,
-            ConstantValue::Number(match &e.arguments[0] {
-                // `Number(undefined)` -> `NaN`
-                Argument::Identifier(ident) if ctx.is_identifier_undefined(ident) => f64::NAN,
-                // `Number(null)` -> `0`
-                Argument::NullLiteral(_) => 0.0,
-                // `Number(true)` -> `1` `Number(false)` -> `0`
-                Argument::BooleanLiteral(b) => f64::from(b.value),
-                // `Number(100)` -> `100`
-                Argument::NumericLiteral(n) => n.value,
-                // `Number("a")` -> `+"a"` -> `NaN`
-                // `Number("1")` -> `+"1"` -> `1`
-                Argument::StringLiteral(n) => {
-                    let argument = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
-                    if let Some(n) = ctx.eval_to_number(&argument) {
-                        n
-                    } else {
-                        return Some(ctx.ast.expression_unary(
-                            e.span,
-                            UnaryOperator::UnaryPlus,
-                            argument,
-                        ));
-                    }
+        let arg = e.arguments[0].as_expression()?;
+        let value = ConstantValue::Number(match arg {
+            // `Number(undefined)` -> `NaN`
+            Expression::Identifier(ident) if ctx.is_identifier_undefined(ident) => f64::NAN,
+            // `Number(null)` -> `0`
+            Expression::NullLiteral(_) => 0.0,
+            // `Number(true)` -> `1` `Number(false)` -> `0`
+            Expression::BooleanLiteral(b) => f64::from(b.value),
+            // `Number(100)` -> `100`
+            Expression::NumericLiteral(n) => n.value,
+            // `Number("a")` -> `+"a"` -> `NaN`
+            // `Number("1")` -> `+"1"` -> `1`
+            Expression::StringLiteral(n) => {
+                let argument = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
+                if let Some(n) = ctx.eval_to_number(&argument) {
+                    n
+                } else {
+                    return Some(ctx.ast.expression_unary(
+                        e.span,
+                        UnaryOperator::UnaryPlus,
+                        argument,
+                    ));
                 }
-                _ => return None,
-            }),
-        ))
+            }
+            e if e.is_void_0() => f64::NAN,
+            _ => return None,
+        });
+        Some(ctx.value_to_expr(e.span, value))
     }
 
     fn try_fold_binary_typeof_comparison(
@@ -1744,6 +1744,7 @@ mod test {
     #[test]
     fn test_number_constructor() {
         test("Number(undefined)", "NaN");
+        test("Number(void 0)", "NaN");
         test("Number(null)", "0");
         test("Number(true)", "1");
         test("Number(false)", "0");
