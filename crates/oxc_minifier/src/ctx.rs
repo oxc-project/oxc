@@ -62,6 +62,7 @@ impl<'a> Ctx<'a, '_> {
         }
     }
 
+    #[inline]
     pub fn is_identifier_undefined(self, ident: &IdentifierReference) -> bool {
         if ident.name == "undefined" && ident.is_global_reference(self.symbols()) {
             return true;
@@ -69,6 +70,7 @@ impl<'a> Ctx<'a, '_> {
         false
     }
 
+    #[inline]
     pub fn is_identifier_infinity(self, ident: &IdentifierReference) -> bool {
         if ident.name == "Infinity" && ident.is_global_reference(self.symbols()) {
             return true;
@@ -76,6 +78,7 @@ impl<'a> Ctx<'a, '_> {
         false
     }
 
+    #[inline]
     pub fn is_identifier_nan(self, ident: &IdentifierReference) -> bool {
         if ident.name == "NaN" && ident.is_global_reference(self.symbols()) {
             return true;

@@ -4,10 +4,9 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
     ToInt32,
 };
-use oxc_semantic::ReferenceFlags;
 use oxc_span::{cmp::ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
-use oxc_traverse::{Ancestor, MaybeBoundIdentifier, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
 use crate::ctx::Ctx;
 
@@ -366,13 +365,9 @@ impl<'a> PeepholeOptimizations {
             unreachable!()
         };
         let return_stmt = return_stmt.unbox();
-        if let Some(e) = return_stmt.argument {
-            e
-        } else {
-            let name = "undefined";
-            let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), name);
-            let ident = MaybeBoundIdentifier::new(Atom::from(name), symbol_id);
-            ident.create_expression(ReferenceFlags::read(), ctx)
+        match return_stmt.argument {
+            Some(e) => e,
+            None => ctx.ast.void_0(return_stmt.span),
         }
     }
 

@@ -871,7 +871,6 @@ impl<'a> LatePeepholeOptimizations {
         }
 
         if let Some(folded_expr) = match expr {
-            Expression::Identifier(ident) => Self::try_compress_undefined(ident, ctx),
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
             _ => None,
         } {
@@ -891,23 +890,6 @@ impl<'a> LatePeepholeOptimizations {
         {
             e.arguments.clear();
         }
-    }
-
-    /// Transforms `undefined` => `void 0`
-    fn try_compress_undefined(
-        ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        if !Ctx(ctx).is_identifier_undefined(ident) {
-            return None;
-        }
-        // `delete undefined` returns `false`
-        // `delete void 0` returns `true`
-        if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
-        {
-            return None;
-        }
-        Some(ctx.ast.void_0(ident.span))
     }
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.

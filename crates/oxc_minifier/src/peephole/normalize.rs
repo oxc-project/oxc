@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::ConstantEvaluation;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{ctx::Ctx, CompressOptions};
 
@@ -22,6 +22,7 @@ pub struct NormalizeOptions {
 /// * convert `Infinity` to `f64::INFINITY`
 /// * convert `NaN` to `f64::NaN`
 /// * convert `var x; void x` to `void 0`
+/// * convert `undefined` to `void 0`
 ///
 /// Also
 ///
@@ -62,7 +63,10 @@ impl<'a> Traverse<'a> for Normalize {
             *expr = ctx.ast.move_expression(&mut paren_expr.expression);
         }
         match expr {
-            Expression::Identifier(_) => {
+            Expression::Identifier(ident) => {
+                if let Some(e) = Self::try_compress_undefined(ident, ctx) {
+                    *expr = e;
+                }
                 Self::convert_infinity_or_nan_into_number(expr, ctx);
             }
             Expression::UnaryExpression(e) if e.operator.is_void() => {
@@ -153,6 +157,24 @@ impl<'a> Normalize {
             return;
         }
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+    }
+
+    /// Transforms `undefined` => `void 0`
+    /// So subsequent passes don't need to look up whether `undefined` is shadowed or not.
+    fn try_compress_undefined(
+        ident: &IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if !Ctx(ctx).is_identifier_undefined(ident) {
+            return None;
+        }
+        // `delete undefined` returns `false`
+        // `delete void 0` returns `true`
+        if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
+        {
+            return None;
+        }
+        Some(ctx.ast.void_0(ident.span))
     }
 }
 
