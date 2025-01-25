@@ -3,8 +3,9 @@ use crate::cli::{lint_command, CliRunResult, LintResult, LintRunner};
 #[cfg(test)]
 use crate::runner::Runner;
 #[cfg(test)]
+use regex::Regex;
+#[cfg(test)]
 use std::{env, path::PathBuf};
-
 #[cfg(test)]
 pub struct Tester {
     cwd: PathBuf,
@@ -64,8 +65,13 @@ impl Tester {
         settings.set_omit_expression(true);
         settings.set_snapshot_suffix("oxlint");
 
+        let regex = Regex::new(r"\d+ms|\d+ threads?").unwrap();
+
+        let output_string = &String::from_utf8(output).unwrap();
+        let output_string = regex.replace_all(output_string, "<variable>");
+
         settings.bind(|| {
-            insta::assert_snapshot!(format!("{}", args_string), String::from_utf8(output).unwrap());
+            insta::assert_snapshot!(format!("{}", args_string), output_string);
         });
     }
 }
