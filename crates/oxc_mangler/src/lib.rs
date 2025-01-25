@@ -232,6 +232,9 @@ impl Mangler {
             {
                 slots[symbol_id.index()] = assigned_slot;
 
+                let declared_scope_id =
+                    ast_nodes.get_node(symbol_table.get_declaration(*symbol_id)).scope_id();
+
                 // Calculate the scope ids that this symbol is alive in.
                 let lived_scope_ids = symbol_table
                     .get_resolved_references(*symbol_id)
@@ -239,6 +242,12 @@ impl Mangler {
                         let used_scope_id = ast_nodes.get_node(reference.node_id()).scope_id();
                         scope_tree.ancestors(used_scope_id).take_while(|s_id| *s_id != scope_id)
                     })
+                    // also include scopes that this symbol was declared (for cases like `function foo() { { var x; let y; } }`)
+                    .chain(
+                        scope_tree
+                            .ancestors(declared_scope_id)
+                            .take_while(|s_id| *s_id != scope_id),
+                    )
                     .chain(iter::once(scope_id));
 
                 // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
