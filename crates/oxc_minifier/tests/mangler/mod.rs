@@ -40,6 +40,10 @@ fn mangler() {
         "function _() { var x; try { throw 0 } catch (e) { e } }", // e can shadow x
         "function _() { var x; try { throw 0 } catch (e) { var e } }", // e can shadow x (not implemented)
         "function _() { var x; try { throw 0 } catch { var e } }",     // e should not shadow x
+        "function _() { var x; var y; }", // x and y should have different names
+        "function _() { var x; let y; }", // x and y should have different names
+        "function _() { { var x; var y; } }", // x and y should have different names
+        "function _() { { var x; let y; } }", // x and y should have different names
     ];
     let top_level_cases = [
         "function foo(a) {a}",

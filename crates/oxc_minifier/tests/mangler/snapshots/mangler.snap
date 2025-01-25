@@ -153,6 +153,34 @@ function _() {
 	}
 }
 
+function _() { var x; var y; }
+function _() {
+	var a;
+	var b;
+}
+
+function _() { var x; let y; }
+function _() {
+	var a;
+	let b;
+}
+
+function _() { { var x; var y; } }
+function _() {
+	{
+		var a;
+		var b;
+	}
+}
+
+function _() { { var x; let y; } }
+function _() {
+	{
+		var a;
+		let b;
+	}
+}
+
 function foo(a) {a}
 function a(a) {
 	a;
