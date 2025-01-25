@@ -27,7 +27,7 @@ fn main() -> std::io::Result<()> {
 
     let mut allocator = Allocator::default();
     let printed = minify(&allocator, &source_text, source_type, mangle, nospace);
-    // println!("{printed}");
+    println!("{printed}");
 
     if twice {
         allocator.reset();

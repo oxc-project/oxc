@@ -4,8 +4,8 @@ use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
-    StringLastIndexOf, StringSubstring, ToInt32,
+    constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects, StringCharAt,
+    StringCharCodeAt, StringIndexOf, StringLastIndexOf, StringSubstring, ToInt32,
 };
 use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;

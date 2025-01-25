@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::ConstantEvaluation;
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;

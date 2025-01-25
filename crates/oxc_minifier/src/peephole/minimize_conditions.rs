@@ -2,6 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
+    side_effects::MayHaveSideEffects,
     ToInt32,
 };
 use oxc_span::{cmp::ContentEq, GetSpan};

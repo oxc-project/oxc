@@ -1,9 +1,7 @@
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ValueType},
-    side_effects::MayHaveSideEffects,
-    ToJsString, ToNumber,
+    constant_evaluation::ValueType, side_effects::MayHaveSideEffects, ToJsString, ToNumber,
 };
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
@@ -455,7 +453,9 @@ impl<'a> PeepholeOptimizations {
         let Some(argument) = &stmt.argument else { return };
         if !match argument {
             Expression::Identifier(ident) => Ctx(ctx).is_identifier_undefined(ident),
-            Expression::UnaryExpression(e) => e.operator.is_void() && !e.may_have_side_effects(),
+            Expression::UnaryExpression(e) => {
+                e.operator.is_void() && !Ctx(ctx).expression_may_have_side_efffects(argument)
+            }
             _ => false,
         } {
             return;
@@ -1439,7 +1439,7 @@ mod test {
     #[test]
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
-        test("const foo = () => { foo; return 'baz' }", "const foo = () => (foo, 'baz');");
+        test("const foo = () => { foo; return 'baz' }", "const foo = () => 'baz'");
     }
 
     #[test]

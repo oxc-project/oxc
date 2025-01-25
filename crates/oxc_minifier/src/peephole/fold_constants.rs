@@ -125,7 +125,7 @@ impl<'a, 'b> PeepholeOptimizations {
             // (FALSE && x) => FALSE
             if if lval { op == LogicalOperator::Or } else { op == LogicalOperator::And } {
                 return Some(ctx.ast.move_expression(&mut logical_expr.left));
-            } else if !left.may_have_side_effects() {
+            } else if !ctx.expression_may_have_side_efffects(left) {
                 let parent = ctx.ancestry.parent();
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
                 if parent.is_tagged_template_expression()
@@ -150,7 +150,7 @@ impl<'a, 'b> PeepholeOptimizations {
                 let left_child_right_boolean = ctx.get_boolean_value(&left_child.right);
                 let left_child_op = left_child.operator;
                 if let Some(right_boolean) = left_child_right_boolean {
-                    if !left_child.right.may_have_side_effects() {
+                    if !ctx.expression_may_have_side_efffects(&left_child.right) {
                         // a || false || b => a || b
                         // a && true && b => a && b
                         if !right_boolean && left_child_op == LogicalOperator::Or
@@ -183,7 +183,7 @@ impl<'a, 'b> PeepholeOptimizations {
         let left_val = ValueType::from(left);
         match left_val {
             ValueType::Null | ValueType::Undefined => {
-                Some(if left.may_have_side_effects() {
+                Some(if ctx.expression_may_have_side_efffects(left) {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions = ctx.ast.vec_from_array([
                         ctx.ast.move_expression(&mut logical_expr.left),
@@ -386,7 +386,9 @@ impl<'a, 'b> PeepholeOptimizations {
         let left = &e.left;
         let right = &e.right;
         let op = e.operator;
-        if left.may_have_side_effects() || right.may_have_side_effects() {
+        if ctx.expression_may_have_side_efffects(left)
+            || ctx.expression_may_have_side_efffects(right)
+        {
             return None;
         }
         let value = match op {

@@ -1,6 +1,5 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::GetSpan;
 use oxc_traverse::TraverseCtx;
 
@@ -67,7 +66,10 @@ impl<'a> PeepholeOptimizations {
                 for_stmt.init.is_none()
                     || for_stmt.init.as_ref().is_some_and(ForStatementInit::is_expression)
             }
-            Statement::ForInStatement(for_in_stmt) => !for_in_stmt.left.may_have_side_effects(),
+            // Avoid cases where we have for(var x = foo() in a) { ....
+            Statement::ForInStatement(for_in_stmt) => {
+                !matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(_))
+            }
             Statement::LabeledStatement(labeled_stmt) => {
                 Self::is_fusable_control_statement(&labeled_stmt.body)
             }
@@ -287,7 +289,7 @@ mod test {
         // Never fuse a statement into a block that contains let/const/class declarations, or you risk
         // colliding variable names. (unless the AST is normalized).
         test("a; {b;}", "a,b");
-        test("a; {b; var a = 1;}", "{a,b; var a = 1;}");
+        test("a; {b; var a = 1;}", "{b; var a = 1;}");
         test_same("a; { b; let a = 1; }");
         test_same("a; { b; const a = 1; }");
         test_same("a; { b; class a {} }");
