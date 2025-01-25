@@ -67,22 +67,22 @@ source: crates/oxc_linter/src/tester.rs
  1 │ {
  2 │             {var x = 1;}
    ·             ────────────
- 3 │              let y = 2; } {let z = 1;}
+ 3 │             let y = 2; } {let z = 1;}
    ╰────
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
    ╭─[no_lone_blocks.tsx:1:1]
  1 │ ╭─▶ {
  2 │ │               {let x = 1;}
- 3 │ ╰─▶              var y = 2; } {let z = 1;}
+ 3 │ ╰─▶             var y = 2; } {let z = 1;}
    ╰────
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
    ╭─[no_lone_blocks.tsx:1:1]
  1 │ ╭─▶ {
  2 │ │               {var x = 1;}
- 3 │ ╰─▶              var y = 2; }
- 4 │                  {var z = 1;}
+ 3 │ ╰─▶             var y = 2; }
+ 4 │                 {var z = 1;}
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
@@ -90,147 +90,147 @@ source: crates/oxc_linter/src/tester.rs
  1 │ {
  2 │             {var x = 1;}
    ·             ────────────
- 3 │              var y = 2; }
+ 3 │             var y = 2; }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
-   ╭─[no_lone_blocks.tsx:4:5]
- 3 │              var y = 2; }
- 4 │              {var z = 1;}
-   ·              ────────────
+   ╭─[no_lone_blocks.tsx:4:4]
+ 3 │             var y = 2; }
+ 4 │             {var z = 1;}
+   ·             ────────────
    ╰────
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
-   ╭─[no_lone_blocks.tsx:5:24]
- 4 │                                     foo();
- 5 │ ╭─▶                                 {
- 6 │ │                                       bar;
- 7 │ ╰─▶                                 }
- 8 │                               }
+   ╭─[no_lone_blocks.tsx:5:17]
+ 4 │                     foo();
+ 5 │ ╭─▶                 {
+ 6 │ │                       bar;
+ 7 │ ╰─▶                 }
+ 8 │                 }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
-   ╭─[no_lone_blocks.tsx:4:20]
- 3 │                                 case 1:
- 4 │ ╭─▶                             {
- 5 │ │                                   bar;
- 6 │ ╰─▶                             }
- 7 │                                 foo();
+   ╭─[no_lone_blocks.tsx:4:21]
+ 3 │                     case 1:
+ 4 │ ╭─▶                     {
+ 5 │ │                           bar;
+ 6 │ ╰─▶                     }
+ 7 │                         foo();
    ╰────
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
-   ╭─[no_lone_blocks.tsx:3:20]
- 2 │                               function foo () {
- 3 │ ╭─▶                             {
- 4 │ │                                 const x = 4;
- 5 │ ╰─▶                             }
- 6 │                               }
+   ╭─[no_lone_blocks.tsx:3:17]
+ 2 │                 function foo () {
+ 3 │ ╭─▶                 {
+ 4 │ │                       const x = 4;
+ 5 │ ╰─▶                 }
+ 6 │                 }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
-   ╭─[no_lone_blocks.tsx:3:20]
- 2 │                               function foo () {
- 3 │ ╭─▶                             {
- 4 │ │                                 var x = 4;
- 5 │ ╰─▶                             }
- 6 │                               }
+   ╭─[no_lone_blocks.tsx:3:17]
+ 2 │                 function foo () {
+ 3 │ ╭─▶                 {
+ 4 │ │                       var x = 4;
+ 5 │ ╰─▶                 }
+ 6 │                 }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:5:24]
- 4 │                                   if (foo) {
- 5 │ ╭─▶                                 {
- 6 │ │                                       let block;
- 7 │ ╰─▶                                 }
- 8 │                                   }
+   ╭─[no_lone_blocks.tsx:5:25]
+ 4 │                         if (foo) {
+ 5 │ ╭─▶                         {
+ 6 │ │                               let block;
+ 7 │ ╰─▶                         }
+ 8 │                         }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:5:24]
- 4 │                                   if (foo) {
- 5 │ ╭─▶                                 {
- 6 │ │                                       block;
- 7 │ ╰─▶                                 }
- 8 │                                     something;
+   ╭─[no_lone_blocks.tsx:5:25]
+ 4 │                         if (foo) {
+ 5 │ ╭─▶                         {
+ 6 │ │                               block;
+ 7 │ ╰─▶                         }
+ 8 │                             something;
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:4:22]
- 3 │                                 static {
- 4 │ ╭─▶                               {
- 5 │ │                                   block;
- 6 │ ╰─▶                               }
- 7 │                                 }
+   ╭─[no_lone_blocks.tsx:4:21]
+ 3 │                     static {
+ 4 │ ╭─▶                     {
+ 5 │ │                           block;
+ 6 │ ╰─▶                     }
+ 7 │                     }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:4:22]
- 3 │                                 static {
- 4 │ ╭─▶                               {
- 5 │ │                                   let block;
- 6 │ ╰─▶                               }
- 7 │                                 }
+   ╭─[no_lone_blocks.tsx:4:21]
+ 3 │                     static {
+ 4 │ ╭─▶                     {
+ 5 │ │                           let block;
+ 6 │ ╰─▶                     }
+ 7 │                     }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:4:22]
- 3 │                                 static {
- 4 │ ╭─▶                               {
- 5 │ │                                   const block = 1;
- 6 │ ╰─▶                               }
- 7 │                                 }
+   ╭─[no_lone_blocks.tsx:4:21]
+ 3 │                     static {
+ 4 │ ╭─▶                     {
+ 5 │ │                           const block = 1;
+ 6 │ ╰─▶                     }
+ 7 │                     }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:4:22]
- 3 │                                 static {
- 4 │ ╭─▶                               {
- 5 │ │                                   function block() {}
- 6 │ ╰─▶                               }
- 7 │                                 }
+   ╭─[no_lone_blocks.tsx:4:21]
+ 3 │                     static {
+ 4 │ ╭─▶                     {
+ 5 │ │                           function block() {}
+ 6 │ ╰─▶                     }
+ 7 │                     }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:4:22]
- 3 │                                 static {
- 4 │ ╭─▶                               {
- 5 │ │                                   class block {}
- 6 │ ╰─▶                               }
- 7 │                                 }
+   ╭─[no_lone_blocks.tsx:4:21]
+ 3 │                     static {
+ 4 │ ╭─▶                     {
+ 5 │ │                           class block {}
+ 6 │ ╰─▶                     }
+ 7 │                     }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:4:22]
- 3 │                                 static {
- 4 │ ╭─▶                               {
- 5 │ │                                   var block;
- 6 │ ╰─▶                               }
- 7 │                                   something;
+   ╭─[no_lone_blocks.tsx:4:21]
+ 3 │                     static {
+ 4 │ ╭─▶                     {
+ 5 │ │                           var block;
+ 6 │ ╰─▶                     }
+ 7 │                         something;
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:5:22]
- 4 │                                   something;
- 5 │ ╭─▶                               {
- 6 │ │                                   var block;
- 7 │ ╰─▶                               }
- 8 │                                 }
+   ╭─[no_lone_blocks.tsx:5:21]
+ 4 │                         something;
+ 5 │ ╭─▶                     {
+ 6 │ │                           var block;
+ 7 │ ╰─▶                     }
+ 8 │                     }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:4:22]
- 3 │                                 static {
- 4 │ ╭─▶                               {
- 5 │ │                                   block;
- 6 │ ╰─▶                               }
- 7 │                                   something;
+   ╭─[no_lone_blocks.tsx:4:21]
+ 3 │                     static {
+ 4 │ ╭─▶                     {
+ 5 │ │                           block;
+ 6 │ ╰─▶                     }
+ 7 │                         something;
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
-   ╭─[no_lone_blocks.tsx:5:22]
- 4 │                                   something;
- 5 │ ╭─▶                               {
- 6 │ │                                   block;
- 7 │ ╰─▶                               }
- 8 │                                 }
+   ╭─[no_lone_blocks.tsx:5:21]
+ 4 │                         something;
+ 5 │ ╭─▶                     {
+ 6 │ │                           block;
+ 7 │ ╰─▶                     }
+ 8 │                     }
    ╰────

@@ -62,13 +62,12 @@ impl Rule for NoLoneBlocks {
         };
 
         if stmt.body.is_empty() {
+            let is_comment_in_stmt =
+                ctx.semantic().comments_range(stmt.span.start..stmt.span.end).last().is_some();
 
-            let is_comment_in_stmt = ctx
-                .semantic()
-                .comments_range(stmt.span.start..stmt.span.end)
-                .last().is_some();            
-
-            if !is_comment_in_stmt && !matches!(parent_node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_)) {
+            if !is_comment_in_stmt
+                && !matches!(parent_node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_))
+            {
                 report(ctx, node, parent_node);
             }
             return;
@@ -77,7 +76,6 @@ impl Rule for NoLoneBlocks {
         let mut is_lone_blocks = is_lone_block(node, parent_node);
 
         if is_lone_blocks {
-
             for child in &stmt.body {
                 match child.as_declaration() {
                     Some(Declaration::VariableDeclaration(decl))
