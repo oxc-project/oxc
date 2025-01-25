@@ -55,6 +55,18 @@ function _() {
 	}
 }
 
+function _() { function x(a) {} }
+function _() {
+	function a(a) {}
+}
+
+function _() { function x(a) { x } }
+function _() {
+	function a(b) {
+		a;
+	}
+}
+
 function _() { var x; { var y }}
 function _() {
 	var a;
