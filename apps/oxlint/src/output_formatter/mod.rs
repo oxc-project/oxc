@@ -62,7 +62,9 @@ pub struct LintCommandInfo {
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
     /// Print all available rules by oxlint
-    fn all_rules(&self) -> Option<String>;
+    fn all_rules(&self) -> Option<String> {
+        None
+    }
 
     /// At the end of the Lint command the Formatter can output extra information.
     fn lint_command_info(&self, _lint_command_info: &LintCommandInfo) -> Option<String> {

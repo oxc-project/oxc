@@ -13,10 +13,6 @@ use crate::output_formatter::InternalFormatter;
 pub struct CheckStyleOutputFormatter;
 
 impl InternalFormatter for CheckStyleOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
-        None
-    }
-
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(CheckstyleReporter::default())
     }

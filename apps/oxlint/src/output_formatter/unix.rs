@@ -11,10 +11,6 @@ use crate::output_formatter::InternalFormatter;
 pub struct UnixOutputFormatter;
 
 impl InternalFormatter for UnixOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
-        None
-    }
-
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(UnixReporter::default())
     }
