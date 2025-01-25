@@ -719,10 +719,9 @@ impl<'a> JsxImpl<'a, '_> {
 
             // isStaticChildren
             if is_development {
-                arguments.push(Argument::from(ctx.ast.expression_boolean_literal(
-                    SPAN,
-                    if is_fragment { false } else { children_len > 1 },
-                )));
+                arguments.push(Argument::from(
+                    ctx.ast.expression_boolean_literal(SPAN, children_len > 1),
+                ));
             }
 
             // Fragment doesn't have source and self
