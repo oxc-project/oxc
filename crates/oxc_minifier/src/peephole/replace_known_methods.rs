@@ -245,7 +245,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = object else { return None };
         let ctx = Ctx(ctx);
-        if !ctx.is_global_reference(ident) {
+        if ident.name != "String" || !ctx.is_global_reference(ident) {
             return None;
         }
         let args = &ce.arguments;
@@ -1422,6 +1422,8 @@ mod test {
         test_same("String.fromCharCode(x)");
         test("x = String.fromCharCode('x')", "x = '\\0'");
         test("x = String.fromCharCode('0.5')", "x = '\\0'");
+
+        test_same("x = Unknown.fromCharCode('0.5')");
     }
 
     #[test]
