@@ -216,6 +216,20 @@ impl<T> NonEmptyStack<T> {
         Self { cursor: start, start, end }
     }
 
+    /// Get reference to first value on stack.
+    #[inline]
+    pub fn first(&self) -> &T {
+        // SAFETY: All methods ensure `self.start` always points to a valid initialized `T`
+        unsafe { self.start.as_ref() }
+    }
+
+    /// Get mutable reference to first value on stack.
+    #[inline]
+    pub fn first_mut(&mut self) -> &mut T {
+        // SAFETY: All methods ensure `self.start` always points to a valid initialized `T`
+        unsafe { self.start.as_mut() }
+    }
+
     /// Get reference to last value on stack.
     #[inline]
     pub fn last(&self) -> &T {
