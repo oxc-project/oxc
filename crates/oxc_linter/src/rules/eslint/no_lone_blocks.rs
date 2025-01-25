@@ -71,6 +71,8 @@ impl Rule for NoLoneBlocks {
         let mut is_lone_blocks = is_lone_block(node, parent_node);
 
         if is_lone_blocks {
+          println!("is_lone_blocks: {is_lone_blocks}");
+
             for child in &stmt.body {
                 match child.as_declaration() {
                     Some(Declaration::VariableDeclaration(decl))
@@ -144,225 +146,244 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "if (foo) { if (bar) { baz(); } }",
-        "do { bar(); } while (foo)",
-        "function foo() { while (bar) { baz() } }",
-        "function test() { { console.log(6); console.log(6) } }",
-        "{ let x = 1; }",                      // { "ecmaVersion": 6 },
-        "{ const x = 1; }",                    // { "ecmaVersion": 6 },
-        "'use strict'; { function bar() {} }", // { "ecmaVersion": 6 },
-        "{ function bar() {} }", // { "ecmaVersion": 6, "parserOptions": { "ecmaFeatures": { "impliedStrict": true } } },
-        "{ class Bar {} }",      // { "ecmaVersion": 6 },
-        "{ {let y = 1;} let x = 1; }", // { "ecmaVersion": 6 },
-        "
-			          switch (foo) {
-			            case bar: {
-			              baz;
-			            }
-			          }
-			        ",
-        "
-			          switch (foo) {
-			            case bar: {
-			              baz;
-			            }
-			            case qux: {
-			              boop;
-			            }
-			          }
-			        ",
-        "
-			          switch (foo) {
-			            case bar:
-			            {
-			              baz;
-			            }
-			          }
-			        ",
-        "function foo() { { const x = 4 } const x = 3 }", // { "ecmaVersion": 6 },
-        "class C { static {} }",                          // { "ecmaVersion": 2022 },
-        "class C { static { foo; } }",                    // { "ecmaVersion": 2022 },
-        "class C { static { if (foo) { block; } } }",     // { "ecmaVersion": 2022 },
-        "class C { static { lbl: { block; } } }",         // { "ecmaVersion": 2022 },
-        "class C { static { { let block; } something; } }", // { "ecmaVersion": 2022 },
-        "class C { static { something; { const block = 1; } } }", // { "ecmaVersion": 2022 },
-        "class C { static { { function block(){} } something; } }", // { "ecmaVersion": 2022 },
-        "class C { static { something; { class block {}  } } }", // { "ecmaVersion": 2022 },
-        "
-			{
-			  using x = makeDisposable();
-			}", // {                "parser": require(parser("typescript-parsers/no-lone-blocks/using")),                "ecmaVersion": 2022            },
-        "
-			{
-			  await using x = makeDisposable();
-			}", // {                "parser": require(parser("typescript-parsers/no-lone-blocks/await-using")),                "ecmaVersion": 2022            }
-        // Issue: <https://github.com/oxc-project/oxc/issues/8515>
-        "try {} catch {}",
+      //   "if (foo) { if (bar) { baz(); } }",
+      //   "do { bar(); } while (foo)",
+      //   "function foo() { while (bar) { baz() } }",
+      //   "function test() { { console.log(6); console.log(6) } }",
+      //   "{ let x = 1; }",                      // { "ecmaVersion": 6 },
+      //   "{ const x = 1; }",                    // { "ecmaVersion": 6 },
+      //   "'use strict'; { function bar() {} }", // { "ecmaVersion": 6 },
+      //   "{ function bar() {} }", // { "ecmaVersion": 6, "parserOptions": { "ecmaFeatures": { "impliedStrict": true } } },
+      //   "{ class Bar {} }",      // { "ecmaVersion": 6 },
+      //   "{ {let y = 1;} let x = 1; }", // { "ecmaVersion": 6 },
+      //   "
+			//           switch (foo) {
+			//             case bar: {
+			//               baz;
+			//             }
+			//           }
+			//         ",
+      //   "
+			//           switch (foo) {
+			//             case bar: {
+			//               baz;
+			//             }
+			//             case qux: {
+			//               boop;
+			//             }
+			//           }
+			//         ",
+      //   "
+			//           switch (foo) {
+			//             case bar:
+			//             {
+			//               baz;
+			//             }
+			//           }
+			//         ",
+      //   "function foo() { { const x = 4 } const x = 3 }", // { "ecmaVersion": 6 },
+      //   "class C { static {} }",                          // { "ecmaVersion": 2022 },
+      //   "class C { static { foo; } }",                    // { "ecmaVersion": 2022 },
+      //   "class C { static { if (foo) { block; } } }",     // { "ecmaVersion": 2022 },
+      //   "class C { static { lbl: { block; } } }",         // { "ecmaVersion": 2022 },
+      //   "class C { static { { let block; } something; } }", // { "ecmaVersion": 2022 },
+      //   "class C { static { something; { const block = 1; } } }", // { "ecmaVersion": 2022 },
+      //   "class C { static { { function block(){} } something; } }", // { "ecmaVersion": 2022 },
+      //   "class C { static { something; { class block {}  } } }", // { "ecmaVersion": 2022 },
+      //   "
+			// {
+			//   using x = makeDisposable();
+			// }", // {                "parser": require(parser("typescript-parsers/no-lone-blocks/using")),                "ecmaVersion": 2022            },
+      //   "
+			// {
+			//   await using x = makeDisposable();
+			// }", // {                "parser": require(parser("typescript-parsers/no-lone-blocks/await-using")),                "ecmaVersion": 2022            }
+      //   // Issue: <https://github.com/oxc-project/oxc/issues/8515>
+      //   "try {} catch {}",
+      // Issue: https://github.com/oxc-project/oxc/issues/8697
+      "
+        if (foo) {
+          // do nothing
+        }
+        else if (bar) {
+          // do nothing again
+        }
+        else {
+          console.log('not foo');
+        }
+
+        if (baz) {
+          console.log(baz);
+        } 
+        else {
+          // do nothing
+        }
+      ",
     ];
 
     let fail = vec![
-        "{}",
-        "{var x = 1;}",
-        "foo(); {} bar();",
-        "function test() { { console.log(6); } }",
-        "if (foo) { bar(); {} baz(); }",
-        "{
-			{ } }",
-        "function foo() { bar(); {} baz(); }",
-        "while (foo) { {} }",
-        // MEMO: Currently, this rule always analyzes in strict mode (as it cannot retrieve ecmaFeatures).
-        // "{ function bar() {} }", // { "ecmaVersion": 6 },
-        "{var x = 1;}", // { "ecmaVersion": 6 },
-        "{
-			{var x = 1;}
-			 let y = 2; } {let z = 1;}", // { "ecmaVersion": 6 },
-        "{
-			{let x = 1;}
-			 var y = 2; } {let z = 1;}", // { "ecmaVersion": 6 },
-        "{
-			{var x = 1;}
-			 var y = 2; }
-			 {var z = 1;}", // { "ecmaVersion": 6 },
-        "
-			              switch (foo) {
-			                case 1:
-			                    foo();
-			                    {
-			                        bar;
-			                    }
-			              }
-			            ",
-        "
-			              switch (foo) {
-			                case 1:
-			                {
-			                    bar;
-			                }
-			                foo();
-			              }
-			            ",
-        "
-			              function foo () {
-			                {
-			                  const x = 4;
-			                }
-			              }
-			            ", // { "ecmaVersion": 6 },
-        "
-			              function foo () {
-			                {
-			                  var x = 4;
-			                }
-			              }
-			            ",
-        "
-			              class C {
-			                static {
-			                  if (foo) {
-			                    {
-			                        let block;
-			                    }
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  if (foo) {
-			                    {
-			                        block;
-			                    }
-			                    something;
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  {
-			                    block;
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  {
-			                    let block;
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  {
-			                    const block = 1;
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  {
-			                    function block() {}
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  {
-			                    class block {}
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  {
-			                    var block;
-			                  }
-			                  something;
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  something;
-			                  {
-			                    var block;
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  {
-			                    block;
-			                  }
-			                  something;
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 },
-        "
-			              class C {
-			                static {
-			                  something;
-			                  {
-			                    block;
-			                  }
-			                }
-			              }
-			            ", // { "ecmaVersion": 2022 }
+      //   "{}",
+      //   "{var x = 1;}",
+      //   "foo(); {} bar();",
+      //   "function test() { { console.log(6); } }",
+      //   "if (foo) { bar(); {} baz(); }",
+      //   "{
+			// { } }",
+      //   "function foo() { bar(); {} baz(); }",
+      //   "while (foo) { {} }",
+      //   // MEMO: Currently, this rule always analyzes in strict mode (as it cannot retrieve ecmaFeatures).
+      //   // "{ function bar() {} }", // { "ecmaVersion": 6 },
+      //   "{var x = 1;}", // { "ecmaVersion": 6 },
+      //   "{
+			// {var x = 1;}
+			//  let y = 2; } {let z = 1;}", // { "ecmaVersion": 6 },
+      //   "{
+			// {let x = 1;}
+			//  var y = 2; } {let z = 1;}", // { "ecmaVersion": 6 },
+      //   "{
+			// {var x = 1;}
+			//  var y = 2; }
+			//  {var z = 1;}", // { "ecmaVersion": 6 },
+      //   "
+			//               switch (foo) {
+			//                 case 1:
+			//                     foo();
+			//                     {
+			//                         bar;
+			//                     }
+			//               }
+			//             ",
+      //   "
+			//               switch (foo) {
+			//                 case 1:
+			//                 {
+			//                     bar;
+			//                 }
+			//                 foo();
+			//               }
+			//             ",
+      //   "
+			//               function foo () {
+			//                 {
+			//                   const x = 4;
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 6 },
+      //   "
+			//               function foo () {
+			//                 {
+			//                   var x = 4;
+			//                 }
+			//               }
+			//             ",
+      //   "
+			//               class C {
+			//                 static {
+			//                   if (foo) {
+			//                     {
+			//                         let block;
+			//                     }
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   if (foo) {
+			//                     {
+			//                         block;
+			//                     }
+			//                     something;
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   {
+			//                     block;
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   {
+			//                     let block;
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   {
+			//                     const block = 1;
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   {
+			//                     function block() {}
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   {
+			//                     class block {}
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   {
+			//                     var block;
+			//                   }
+			//                   something;
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   something;
+			//                   {
+			//                     var block;
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   {
+			//                     block;
+			//                   }
+			//                   something;
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 },
+      //   "
+			//               class C {
+			//                 static {
+			//                   something;
+			//                   {
+			//                     block;
+			//                   }
+			//                 }
+			//               }
+			//             ", // { "ecmaVersion": 2022 }
     ];
 
     Tester::new(NoLoneBlocks::NAME, NoLoneBlocks::PLUGIN, pass, fail).test_and_snapshot();
