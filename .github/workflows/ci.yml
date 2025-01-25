@@ -45,7 +45,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test
+      - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
@@ -96,7 +96,7 @@ jobs:
         shell: bash
         run: |
           # cargo ck # no need to check because it's already checked in linux
-          cargo test --workspace
+          cargo test --all-features
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads

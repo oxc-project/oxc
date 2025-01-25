@@ -1,9 +1,10 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::ConstantEvaluation;
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{ctx::Ctx, CompressOptions};
 
@@ -22,6 +23,7 @@ pub struct NormalizeOptions {
 /// * convert `Infinity` to `f64::INFINITY`
 /// * convert `NaN` to `f64::NaN`
 /// * convert `var x; void x` to `void 0`
+/// * convert `undefined` to `void 0`
 ///
 /// Also
 ///
@@ -61,20 +63,22 @@ impl<'a> Traverse<'a> for Normalize {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
             *expr = ctx.ast.move_expression(&mut paren_expr.expression);
         }
-        match expr {
-            Expression::Identifier(_) => {
-                Self::convert_infinity_or_nan_into_number(expr, ctx);
-            }
+        if let Some(e) = match expr {
+            Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
             Expression::UnaryExpression(e) if e.operator.is_void() => {
                 Self::convert_void_ident(e, ctx);
+                None
             }
             Expression::ArrowFunctionExpression(e) => {
                 self.recover_arrow_expression_after_drop_console(e);
+                None
             }
             Expression::CallExpression(_) if self.compress_options.drop_console => {
-                self.compress_console(expr, ctx);
+                self.compress_console(expr, ctx)
             }
-            _ => {}
+            _ => None,
+        } {
+            *expr = e;
         }
     }
 }
@@ -91,11 +95,13 @@ impl<'a> Normalize {
         matches!(stmt, Statement::DebuggerStatement(_)) && self.compress_options.drop_debugger
     }
 
-    fn compress_console(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn compress_console(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
         debug_assert!(self.compress_options.drop_console);
-        if Self::is_console(expr) {
-            *expr = ctx.ast.void_0(expr.span());
-        }
+        Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
     }
 
     fn drop_console(&mut self, stmt: &Statement<'a>) -> bool {
@@ -131,18 +137,34 @@ impl<'a> Normalize {
         *stmt = Statement::ForStatement(for_stmt);
     }
 
-    fn convert_infinity_or_nan_into_number(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::Identifier(ident) = expr {
-            let ctx = Ctx(ctx);
-            let value = if ctx.is_identifier_infinity(ident) {
-                f64::INFINITY
-            } else if ctx.is_identifier_nan(ident) {
-                f64::NAN
-            } else {
-                return;
-            };
-            *expr =
-                ctx.ast.expression_numeric_literal(ident.span, value, None, NumberBase::Decimal);
+    /// Transforms `undefined` => `void 0`, `Infinity` => `f64::Infinity`, `NaN` -> `f64::NaN`.
+    /// So subsequent passes don't need to look up whether these variables are shadowed or not.
+    fn try_compress_identifier(
+        ident: &IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        match ident.name.as_str() {
+            "undefined" if ident.is_global_reference(ctx.symbols()) => {
+                // `delete undefined` returns `false`
+                // `delete void 0` returns `true`
+                if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
+                {
+                    return None;
+                }
+                Some(ctx.ast.void_0(ident.span))
+            }
+            "Infinity" if ident.is_global_reference(ctx.symbols()) => {
+                Some(ctx.ast.expression_numeric_literal(
+                    ident.span,
+                    f64::INFINITY,
+                    None,
+                    NumberBase::Decimal,
+                ))
+            }
+            "NaN" if ident.is_global_reference(ctx.symbols()) => Some(
+                ctx.ast.expression_numeric_literal(ident.span, f64::NAN, None, NumberBase::Decimal),
+            ),
+            _ => None,
         }
     }
 

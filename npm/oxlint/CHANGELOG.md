@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.8] - 2025-01-24
+
+### Features
+
+- 79ba9b5 linter: Added support to run in Node.JS legacy versions (#8648) (Luiz Felipe Weber)
+
 ## [0.15.7] - 2025-01-19
 
 ### Features

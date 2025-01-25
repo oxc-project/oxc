@@ -1,6 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
+
+use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
@@ -9,11 +10,7 @@ impl<'a> PeepholeOptimizations {
     /// are minimized and instead flows to implicit exits conditions.
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_exit_points(
-        &mut self,
-        body: &mut FunctionBody<'_>,
-        _ctx: &mut TraverseCtx<'_>,
-    ) {
+    pub fn minimize_exit_points(&mut self, body: &mut FunctionBody<'_>, _ctx: Ctx<'a, '_>) {
         self.remove_last_return(&mut body.statements);
     }
 

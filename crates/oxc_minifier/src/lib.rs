@@ -55,11 +55,12 @@ impl Minifier {
             Stats::default()
         };
         let mangler = self.options.mangle.map(|options| {
-            let semantic = SemanticBuilder::new().with_stats(stats).build(program).semantic;
-            let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-            Mangler::default()
-                .with_options(options)
-                .build_with_symbols_and_scopes(symbols, &scopes, program)
+            let semantic = SemanticBuilder::new()
+                .with_stats(stats)
+                .with_scope_tree_child_ids(true)
+                .build(program)
+                .semantic;
+            Mangler::default().with_options(options).build_with_semantic(semantic, program)
         });
         MinifierReturn { mangler }
     }

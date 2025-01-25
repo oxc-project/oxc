@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "0.15.7"
+version = "0.15.8"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -44,6 +44,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
+
+[dev-dependencies]
+insta = { workspace = true }
+regex = { workspace = true }
 
 [features]
 default = []

@@ -53,6 +53,8 @@ mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
 mod trivia;
+#[cfg(feature = "serialize")]
+pub mod utf8_to_utf16;
 
 mod generated {
     #![allow(missing_docs)]

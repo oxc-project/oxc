@@ -220,7 +220,7 @@ impl DiagnosticService {
     }
 
     fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
-        // Do not panic when the process is skill (e.g. piping into `less`).
+        // Do not panic when the process is killed (e.g. piping into `less`).
         if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
             Ok(())
         } else {

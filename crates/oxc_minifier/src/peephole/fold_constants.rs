@@ -8,7 +8,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator},
 };
-use oxc_traverse::{Ancestor, TraverseCtx};
+use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -18,12 +18,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// Constant Folding
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-    pub fn fold_constants_exit_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let ctx = Ctx(ctx);
+    pub fn fold_constants_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
                 .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),
@@ -125,7 +120,7 @@ impl<'a, 'b> PeepholeOptimizations {
             // (FALSE && x) => FALSE
             if if lval { op == LogicalOperator::Or } else { op == LogicalOperator::And } {
                 return Some(ctx.ast.move_expression(&mut logical_expr.left));
-            } else if !left.may_have_side_effects() {
+            } else if !ctx.expression_may_have_side_efffects(left) {
                 let parent = ctx.ancestry.parent();
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
                 if parent.is_tagged_template_expression()
@@ -150,7 +145,7 @@ impl<'a, 'b> PeepholeOptimizations {
                 let left_child_right_boolean = ctx.get_boolean_value(&left_child.right);
                 let left_child_op = left_child.operator;
                 if let Some(right_boolean) = left_child_right_boolean {
-                    if !left_child.right.may_have_side_effects() {
+                    if !ctx.expression_may_have_side_efffects(&left_child.right) {
                         // a || false || b => a || b
                         // a && true && b => a && b
                         if !right_boolean && left_child_op == LogicalOperator::Or
@@ -183,7 +178,7 @@ impl<'a, 'b> PeepholeOptimizations {
         let left_val = ValueType::from(left);
         match left_val {
             ValueType::Null | ValueType::Undefined => {
-                Some(if left.may_have_side_effects() {
+                Some(if ctx.expression_may_have_side_efffects(left) {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions = ctx.ast.vec_from_array([
                         ctx.ast.move_expression(&mut logical_expr.left),
@@ -386,7 +381,9 @@ impl<'a, 'b> PeepholeOptimizations {
         let left = &e.left;
         let right = &e.right;
         let op = e.operator;
-        if left.may_have_side_effects() || right.may_have_side_effects() {
+        if ctx.expression_may_have_side_efffects(left)
+            || ctx.expression_may_have_side_efffects(right)
+        {
             return None;
         }
         let value = match op {
@@ -573,34 +570,34 @@ impl<'a, 'b> PeepholeOptimizations {
         if e.arguments.len() != 1 {
             return None;
         }
-        Some(ctx.value_to_expr(
-            e.span,
-            ConstantValue::Number(match &e.arguments[0] {
-                // `Number(undefined)` -> `NaN`
-                Argument::Identifier(ident) if ctx.is_identifier_undefined(ident) => f64::NAN,
-                // `Number(null)` -> `0`
-                Argument::NullLiteral(_) => 0.0,
-                // `Number(true)` -> `1` `Number(false)` -> `0`
-                Argument::BooleanLiteral(b) => f64::from(b.value),
-                // `Number(100)` -> `100`
-                Argument::NumericLiteral(n) => n.value,
-                // `Number("a")` -> `+"a"` -> `NaN`
-                // `Number("1")` -> `+"1"` -> `1`
-                Argument::StringLiteral(n) => {
-                    let argument = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
-                    if let Some(n) = ctx.eval_to_number(&argument) {
-                        n
-                    } else {
-                        return Some(ctx.ast.expression_unary(
-                            e.span,
-                            UnaryOperator::UnaryPlus,
-                            argument,
-                        ));
-                    }
+        let arg = e.arguments[0].as_expression()?;
+        let value = ConstantValue::Number(match arg {
+            // `Number(undefined)` -> `NaN`
+            Expression::Identifier(ident) if ctx.is_identifier_undefined(ident) => f64::NAN,
+            // `Number(null)` -> `0`
+            Expression::NullLiteral(_) => 0.0,
+            // `Number(true)` -> `1` `Number(false)` -> `0`
+            Expression::BooleanLiteral(b) => f64::from(b.value),
+            // `Number(100)` -> `100`
+            Expression::NumericLiteral(n) => n.value,
+            // `Number("a")` -> `+"a"` -> `NaN`
+            // `Number("1")` -> `+"1"` -> `1`
+            Expression::StringLiteral(n) => {
+                let argument = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
+                if let Some(n) = ctx.eval_to_number(&argument) {
+                    n
+                } else {
+                    return Some(ctx.ast.expression_unary(
+                        e.span,
+                        UnaryOperator::UnaryPlus,
+                        argument,
+                    ));
                 }
-                _ => return None,
-            }),
-        ))
+            }
+            e if e.is_void_0() => f64::NAN,
+            _ => return None,
+        });
+        Some(ctx.value_to_expr(e.span, value))
     }
 
     fn try_fold_binary_typeof_comparison(
@@ -1744,6 +1741,7 @@ mod test {
     #[test]
     fn test_number_constructor() {
         test("Number(undefined)", "NaN");
+        test("Number(void 0)", "NaN");
         test("Number(null)", "0");
         test("Number(true)", "1");
         test("Number(false)", "0");
