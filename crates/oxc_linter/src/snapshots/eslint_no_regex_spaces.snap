@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:12]

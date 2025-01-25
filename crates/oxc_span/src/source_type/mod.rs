@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
-use crate::{cmp::ContentEq, hash::ContentHash};
+use crate::cmp::ContentEq;
 
 mod error;
 pub use error::UnknownExtension;
@@ -93,13 +93,6 @@ impl ContentEq for SourceType {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other
-    }
-}
-
-impl ContentHash for SourceType {
-    #[inline]
-    fn content_hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.hash(state);
     }
 }
 

@@ -84,7 +84,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let members =
             self.ast.vec_from_iter(expr.properties.iter().filter_map(|property| match property {
                 ObjectPropertyKind::ObjectProperty(object) => {
-                    if self.report_property_key(&object.key, object.computed) {
+                    if object.computed && self.report_property_key(&object.key) {
                         return None;
                     }
 

@@ -1,5 +1,5 @@
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::Reference;
+use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -113,20 +113,31 @@ impl<'a> TypeScriptModule<'a, '_> {
                 }
                 TSModuleReference::ExternalModuleReference(_) => {}
             }
+            let scope_id = ctx.current_scope_id();
+            ctx.scopes_mut().remove_binding(scope_id, &decl.id.name);
             return None;
         }
 
         let binding_pattern_kind =
-            ctx.ast.binding_pattern_kind_binding_identifier(SPAN, &decl.id.name);
+            BindingPatternKind::BindingIdentifier(ctx.ast.alloc(decl.id.clone()));
         let binding = ctx.ast.binding_pattern(binding_pattern_kind, NONE, false);
         let decl_span = decl.span;
 
+        let flags = ctx.symbols_mut().get_flags_mut(decl.id.symbol_id());
+        flags.remove(SymbolFlags::Import);
+
         let (kind, init) = match &mut decl.module_reference {
-            type_name @ match_ts_type_name!(TSModuleReference) => (
-                VariableDeclarationKind::Var,
-                self.transform_ts_type_name(&mut *type_name.to_ts_type_name_mut(), ctx),
-            ),
+            type_name @ match_ts_type_name!(TSModuleReference) => {
+                flags.insert(SymbolFlags::FunctionScopedVariable);
+
+                (
+                    VariableDeclarationKind::Var,
+                    self.transform_ts_type_name(&mut *type_name.to_ts_type_name_mut(), ctx),
+                )
+            }
             TSModuleReference::ExternalModuleReference(reference) => {
+                flags.insert(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable);
+
                 if self.ctx.module.is_esm() {
                     self.ctx.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
                 }

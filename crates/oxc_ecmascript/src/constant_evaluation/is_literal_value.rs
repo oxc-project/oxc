@@ -27,6 +27,14 @@ pub fn is_immutable_value(expr: &Expression<'_>) -> bool {
         Expression::Identifier(ident) => {
             matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
         }
+        Expression::UnaryExpression(e)
+            if matches!(
+                e.operator,
+                UnaryOperator::Void | UnaryOperator::LogicalNot | UnaryOperator::UnaryNegation
+            ) =>
+        {
+            is_immutable_value(&e.argument)
+        }
         // Operations on bigint can result type error.
         // Expression::BigIntLiteral(_) => false,
         _ => false,

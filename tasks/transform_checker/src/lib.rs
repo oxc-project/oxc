@@ -674,7 +674,7 @@ impl<'a> Visit<'a> for SemanticIdsCollector<'a, '_> {
         let reference_id = ident.reference_id.get();
         self.reference_ids.push(reference_id);
         if reference_id.is_some() {
-            self.reference_names.push(ident.name.clone());
+            self.reference_names.push(ident.name);
         } else {
             self.errors.push(format!("Missing ReferenceId: {:?}", ident.name));
         }

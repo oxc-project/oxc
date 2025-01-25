@@ -3,7 +3,7 @@ use saphyr::Yaml;
 #[derive(Debug, Clone, Default)]
 pub struct MetaData {
     // pub description: Box<str>,
-    // pub esid: Option<Box<str>>,
+    pub esid: Option<Box<str>>,
     // pub es5id: Option<Box<str>>,
     // pub es6id: Option<Box<str>>,
     // pub info: Box<str>,
@@ -91,7 +91,7 @@ impl MetaData {
         let Some(yaml) = yamls.first() else { return Self::default() };
         Self {
             // description: yaml["description"].as_str().unwrap_or_default().into(),
-            // esid: yaml["esid"].as_str().map(Into::into),
+            esid: yaml["esid"].as_str().map(Into::into),
             // es5id: yaml["es5id"].as_str().map(Into::into),
             // es6id: yaml["es6id"].as_str().map(Into::into),
             // info: yaml["info"].as_str().unwrap_or_default().into(),

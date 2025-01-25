@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): Require local Test Context for concurrent snapshot tests
    ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]

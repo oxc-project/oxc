@@ -10,7 +10,6 @@ mod source_type;
 mod span;
 
 pub mod cmp;
-pub mod hash;
 
 pub use crate::{
     atom::Atom,

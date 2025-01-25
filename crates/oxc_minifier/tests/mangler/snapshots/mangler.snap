@@ -2,23 +2,23 @@
 source: crates/oxc_minifier/tests/mangler/mod.rs
 ---
 function foo(a) {a}
-function foo(b) {
-	b;
+function foo(a) {
+	a;
 }
 
 function foo(a) { let _ = { x } }
-function foo(b) {
-	let c = { x };
+function foo(a) {
+	let b = { x };
 }
 
 function foo(a) { let { x } = y }
-function foo(b) {
-	let { x: c } = y;
+function foo(a) {
+	let { x: b } = y;
 }
 
 var x; function foo(a) { ({ x } = y) }
 var x;
-function foo(c) {
+function foo(b) {
 	({x} = y);
 }
 
@@ -31,9 +31,159 @@ function _(exports) {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }
 
+function foo(foo_a, foo_b, foo_c) {}; function bar(bar_a, bar_b, bar_c) {}
+function foo(a, b, c) {}
+;
+function bar(a, b, c) {}
+
+function _() { function foo() { var x; foo; } }
+function _() {
+	function a() {
+		var b;
+		a;
+	}
+}
+
+function _() { var x; function foo() { var y; function bar() { x } } }
+function _() {
+	var a;
+	function b() {
+		var b;
+		function c() {
+			a;
+		}
+	}
+}
+
+function _() { function x(a) {} }
+function _() {
+	function a(a) {}
+}
+
+function _() { function x(a) { x } }
+function _() {
+	function a(b) {
+		a;
+	}
+}
+
+function _() { var x; { var y }}
+function _() {
+	var a;
+	{
+		var b;
+	}
+}
+
+function _() { var x; { let y }}
+function _() {
+	var a;
+	{
+		let a;
+	}
+}
+
+function _() { let x; { let y }}
+function _() {
+	let a;
+	{
+		let a;
+	}
+}
+
+function _() { var x; { const y }}
+function _() {
+	var a;
+	{
+		const a;
+	}
+}
+
+function _() { let x; { const y }}
+function _() {
+	let a;
+	{
+		const a;
+	}
+}
+
+function _() { var x; { class Y{} }}
+function _() {
+	var a;
+	{
+		class a {}
+	}
+}
+
+function _() { let x; { class Y{} }}
+function _() {
+	let a;
+	{
+		class a {}
+	}
+}
+
+function _() { var x; try { throw 0 } catch (e) { e } }
+function _() {
+	var a;
+	try {
+		throw 0;
+	} catch (a) {
+		a;
+	}
+}
+
+function _() { var x; try { throw 0 } catch (e) { var e } }
+function _() {
+	var a;
+	try {
+		throw 0;
+	} catch (b) {
+		var b;
+	}
+}
+
+function _() { var x; try { throw 0 } catch { var e } }
+function _() {
+	var a;
+	try {
+		throw 0;
+	} catch {
+		var b;
+	}
+}
+
+function _() { var x; var y; }
+function _() {
+	var a;
+	var b;
+}
+
+function _() { var x; let y; }
+function _() {
+	var a;
+	let b;
+}
+
+function _() { { var x; var y; } }
+function _() {
+	{
+		var a;
+		var b;
+	}
+}
+
+function _() { { var x; let y; } }
+function _() {
+	{
+		var a;
+		let b;
+	}
+}
+
 function foo(a) {a}
-function a(b) {
-	b;
+function a(a) {
+	a;
 }
 
 export function foo() {}; foo()

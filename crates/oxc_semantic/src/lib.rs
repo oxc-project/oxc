@@ -90,10 +90,14 @@ pub struct Semantic<'a> {
 }
 
 impl<'a> Semantic<'a> {
-    /// Extract the [`SymbolTable`] and [`ScopeTree`] from the [`Semantic`]
-    /// instance, consuming `self`.
+    /// Extract [`SymbolTable`] and [`ScopeTree`] from [`Semantic`].
     pub fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
         (self.symbols, self.scopes)
+    }
+
+    /// Extract [`SymbolTable`], [`ScopeTree`] and [`AstNode`] from the [`Semantic`].
+    pub fn into_symbols_scopes_nodes(self) -> (SymbolTable, ScopeTree, AstNodes<'a>) {
+        (self.symbols, self.scopes, self.nodes)
     }
 
     /// Source code of the JavaScript/TypeScript program being analyzed.
@@ -247,7 +251,7 @@ mod tests {
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
-        let semantic = SemanticBuilder::new().build(&parse.program);
+        let semantic = SemanticBuilder::new().build(allocator.alloc(parse.program));
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }

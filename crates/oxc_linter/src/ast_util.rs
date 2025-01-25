@@ -7,6 +7,8 @@ use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, Sy
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
+use crate::LintContext;
+
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
 /// 1. Literal booleans (`true` or `false`)
@@ -306,7 +308,7 @@ pub fn extract_regex_flags<'a>(
         return None;
     }
     let flag_arg = match &args[1] {
-        Argument::StringLiteral(flag_arg) => flag_arg.value.clone(),
+        Argument::StringLiteral(flag_arg) => flag_arg.value,
         Argument::TemplateLiteral(template) if template.is_no_substitution_template() => {
             template.quasi().expect("no-substitution templates always have a quasi")
         }
@@ -467,5 +469,91 @@ pub fn leftmost_identifier_reference<'a, 'b: 'a>(
         Expression::ComputedMemberExpression(mem) => leftmost_identifier_reference(&mem.object),
         Expression::PrivateFieldExpression(mem) => leftmost_identifier_reference(&mem.object),
         _ => Err(expr),
+    }
+}
+
+fn is_definitely_non_error_type(ty: &TSType) -> bool {
+    match ty {
+        TSType::TSNumberKeyword(_)
+        | TSType::TSStringKeyword(_)
+        | TSType::TSBooleanKeyword(_)
+        | TSType::TSNullKeyword(_)
+        | TSType::TSUndefinedKeyword(_) => true,
+        TSType::TSUnionType(union) => union.types.iter().all(is_definitely_non_error_type),
+        TSType::TSIntersectionType(intersect) => {
+            intersect.types.iter().all(is_definitely_non_error_type)
+        }
+        _ => false,
+    }
+}
+
+pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
+    match expr.get_inner_expression() {
+        Expression::NewExpression(_)
+        | Expression::AwaitExpression(_)
+        | Expression::CallExpression(_)
+        | Expression::ChainExpression(_)
+        | Expression::YieldExpression(_)
+        | Expression::PrivateFieldExpression(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::TaggedTemplateExpression(_) => true,
+        Expression::AssignmentExpression(expr) => {
+            if matches!(expr.operator, AssignmentOperator::Assign | AssignmentOperator::LogicalAnd)
+            {
+                return could_be_error(ctx, &expr.right);
+            }
+
+            if matches!(
+                expr.operator,
+                AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
+            ) {
+                return expr.left.get_expression().map_or(true, |expr| could_be_error(ctx, expr))
+                    || could_be_error(ctx, &expr.right);
+            }
+
+            false
+        }
+        Expression::SequenceExpression(expr) => {
+            expr.expressions.last().is_some_and(|expr| could_be_error(ctx, expr))
+        }
+        Expression::LogicalExpression(expr) => {
+            if matches!(expr.operator, LogicalOperator::And) {
+                return could_be_error(ctx, &expr.right);
+            }
+
+            could_be_error(ctx, &expr.left) || could_be_error(ctx, &expr.right)
+        }
+        Expression::ConditionalExpression(expr) => {
+            could_be_error(ctx, &expr.consequent) || could_be_error(ctx, &expr.alternate)
+        }
+        Expression::Identifier(ident) => {
+            let reference = ctx.symbols().get_reference(ident.reference_id());
+            let Some(symbol_id) = reference.symbol_id() else {
+                return true;
+            };
+            let decl = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+            match decl.kind() {
+                AstKind::VariableDeclarator(decl) => {
+                    if let Some(init) = &decl.init {
+                        could_be_error(ctx, init)
+                    } else {
+                        // TODO: warn about throwing undefined
+                        false
+                    }
+                }
+                AstKind::Function(_)
+                | AstKind::Class(_)
+                | AstKind::TSModuleDeclaration(_)
+                | AstKind::TSEnumDeclaration(_) => false,
+                AstKind::FormalParameter(param) => !param
+                    .pattern
+                    .type_annotation
+                    .as_ref()
+                    .is_some_and(|annot| is_definitely_non_error_type(&annot.type_annotation)),
+                _ => true,
+            }
+        }
+        _ => false,
     }
 }

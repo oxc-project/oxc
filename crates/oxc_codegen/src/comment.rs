@@ -59,6 +59,9 @@ impl Codegen<'_> {
     }
 
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
+        if !self.print_comments {
+            return;
+        }
         let Some(comments) = self.comments.remove(&start) else {
             return;
         };

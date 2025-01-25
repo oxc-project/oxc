@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
@@ -70,48 +70,4 @@ pub(super) fn debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
         !(matches!(expr, Expression::ParenthesizedExpression(_)) || expr.is_typescript_syntax()),
         "Should not be: {expr:?} in {path:?}",
     );
-}
-
-/// `object` -> `object.prototype`.
-pub(super) fn create_prototype_member<'a>(
-    object: Expression<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
-    let static_member = ctx.ast.member_expression_static(SPAN, object, property, false);
-    Expression::from(static_member)
-}
-
-/// `object` -> `object.call`.
-pub(super) fn create_member_callee<'a>(
-    object: Expression<'a>,
-    property: &'static str,
-    ctx: &mut TraverseCtx<'a>,
-) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
-    Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
-}
-
-/// `object` -> `object.bind(this)`.
-pub(super) fn create_bind_call<'a>(
-    callee: Expression<'a>,
-    this: Expression<'a>,
-    span: Span,
-    ctx: &mut TraverseCtx<'a>,
-) -> Expression<'a> {
-    let callee = create_member_callee(callee, "bind", ctx);
-    let arguments = ctx.ast.vec1(Argument::from(this));
-    ctx.ast.expression_call(span, callee, NONE, arguments, false)
-}
-
-/// `object` -> `object.call(...arguments)`.
-pub(super) fn create_call_call<'a>(
-    callee: Expression<'a>,
-    this: Expression<'a>,
-    span: Span,
-    ctx: &mut TraverseCtx<'a>,
-) -> Expression<'a> {
-    let callee = create_member_callee(callee, "call", ctx);
-    let arguments = ctx.ast.vec1(Argument::from(this));
-    ctx.ast.expression_call(span, callee, NONE, arguments, false)
 }

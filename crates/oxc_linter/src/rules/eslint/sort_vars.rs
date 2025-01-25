@@ -95,7 +95,7 @@ impl SortVars {
         };
 
         if self.ignore_case {
-            return ident.name.as_str().cow_to_lowercase();
+            return ident.name.as_str().cow_to_ascii_lowercase();
         }
 
         Cow::Borrowed(ident.name.as_str()) // avoid string allocs in the default case

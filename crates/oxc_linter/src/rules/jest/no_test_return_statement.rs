@@ -130,7 +130,10 @@ fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
 fn test() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
+        ("it('noop', () => {});", None),
         ("test('noop', () => {});", None),
         ("test('one', () => expect(1).toBe(1));", None),
         ("test('empty')", None),

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:39]

@@ -18,8 +18,7 @@ mod schema;
 mod util;
 
 use derives::{
-    DeriveCloneIn, DeriveContentEq, DeriveContentHash, DeriveESTree, DeriveGetAddress,
-    DeriveGetSpan, DeriveGetSpanMut,
+    DeriveCloneIn, DeriveContentEq, DeriveESTree, DeriveGetAddress, DeriveGetSpan, DeriveGetSpanMut,
 };
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GetIdGenerator,
@@ -80,7 +79,6 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .generate(DeriveGetSpan)
         .generate(DeriveGetSpanMut)
         .generate(DeriveContentEq)
-        .generate(DeriveContentHash)
         .generate(DeriveESTree)
         .generate(AssertLayouts)
         .generate(AstKindGenerator)

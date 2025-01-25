@@ -149,7 +149,7 @@ impl<'a> ParserImpl<'a> {
         // <member.foo.bar />
         if self.at(Kind::Dot) {
             return self
-                .parse_jsx_member_expression(span, identifier)
+                .parse_jsx_member_expression(span, &identifier)
                 .map(JSXElementName::MemberExpression);
         }
 
@@ -184,14 +184,12 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_member_expression(
         &mut self,
         span: Span,
-        object: JSXIdentifier<'a>,
+        object: &JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut object = if object.name == "this" {
-            let object = self.ast.alloc_this_expression(object.span);
-            JSXMemberExpressionObject::ThisExpression(object)
+            self.ast.jsx_member_expression_object_this_expression(object.span)
         } else {
-            let object = self.ast.alloc_identifier_reference(object.span, object.name);
-            JSXMemberExpressionObject::IdentifierReference(object)
+            self.ast.jsx_member_expression_object_identifier_reference(object.span, object.name)
         };
 
         let mut span = span;

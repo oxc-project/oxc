@@ -15,10 +15,3 @@ fn main() {
     TestRunner::new(TestRunnerOptions { filter: filter.clone(), language: TestLanguage::Js }).run();
     TestRunner::new(TestRunnerOptions { filter: filter.clone(), language: TestLanguage::Ts }).run();
 }
-
-#[test]
-#[cfg(any(coverage, coverage_nightly))]
-fn test() {
-    TestRunner::new(TestRunnerOptions { filter: None, language: TestLanguage::Js }).run();
-    TestRunner::new(TestRunnerOptions { filter: None, language: TestLanguage::Ts }).run();
-}

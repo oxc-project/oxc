@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+### Refactor
+
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
+## [0.47.0] - 2025-01-18
+
+### Performance
+
+- d17021c mangler: Optimize `base54` function (#8557) (overlookmotel)
+- 6b52d7a mangler: Use a single allocation space for temporary vecs (#8495) (Boshen)
+
+## [0.46.0] - 2025-01-14
+
+### Performance
+
+- 7a8200c mangler: Allocate base54 name without heap allocation (#8472) (Boshen)
+- 31dac22 mangler: Allocate data in arena (#8471) (Boshen)
+- 372eb09 minifier: Preallocate mangler's semantic data (#8451) (Boshen)
+
+## [0.45.0] - 2025-01-11
+
+### Bug Fixes
+
+- 5c63414 mangler: Keep exported symbols for `top_level: true` (#7927) (翠 / green)
+
 ## [0.43.0] - 2024-12-21
 
 ### Performance

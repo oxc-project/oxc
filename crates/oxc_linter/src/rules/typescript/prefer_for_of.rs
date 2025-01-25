@@ -228,7 +228,7 @@ impl Rule for PreferForOf {
             return;
         }
 
-        let span = for_stmt_init.span.merge(&test_expr.span).merge(&update_expr.span());
+        let span = for_stmt_init.span.merge(test_expr.span).merge(update_expr.span());
         ctx.diagnostic(prefer_for_of_diagnostic(span));
     }
 }

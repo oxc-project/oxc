@@ -325,7 +325,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             ctx.ast.vec_from_iter(object_assignment_target.properties.iter_mut().filter_map(|e| {
                 match e {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
-                        let name = ident.binding.name.clone();
+                        let name = ident.binding.name;
                         let expr = ctx.ast.expression_string_literal(SPAN, name, None);
                         Some(ArrayExpressionElement::from(expr))
                     }
@@ -967,15 +967,15 @@ impl<'a> ObjectRestSpread<'a, '_> {
         match key {
             // `let { a, ... rest }`
             PropertyKey::StaticIdentifier(ident) => {
-                let name = ident.name.clone();
+                let name = ident.name;
                 let expr = ctx.ast.expression_string_literal(ident.span, name, None);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { 'a', ... rest }`
             // `let { ['a'], ... rest }`
             PropertyKey::StringLiteral(lit) => {
-                let name = lit.value.clone();
-                let expr = ctx.ast.expression_string_literal(lit.span, name.clone(), None);
+                let name = lit.value;
+                let expr = ctx.ast.expression_string_literal(lit.span, name, None);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { [`a`], ... rest }`

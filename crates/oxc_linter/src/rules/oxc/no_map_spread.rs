@@ -5,8 +5,9 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
-        ObjectPropertyKind,
+        ObjectPropertyKind, ReturnStatement,
     },
+    visit::walk,
     AstKind, Visit,
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -637,21 +638,15 @@ impl<'a, F> Visit<'a> for SpreadInReturnVisitor<'a, '_, F>
 where
     F: FnMut(Spread<'a, '_>),
 {
-    #[inline]
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        if let AstKind::ReturnStatement(stmt) = kind {
-            self.is_in_return = true;
-            self.return_span = stmt.argument.as_ref().map(GetSpan::span);
-        }
-    }
+    fn visit_return_statement(&mut self, stmt: &ReturnStatement<'a>) {
+        self.is_in_return = true;
+        self.return_span = stmt.argument.as_ref().map(GetSpan::span);
 
-    #[inline]
-    fn leave_node(&mut self, kind: AstKind<'a>) {
-        if let AstKind::ReturnStatement(_) = kind {
-            self.is_in_return = false;
-            // NOTE: do not clear `return_span` here. We want to keep the last
-            // encountered `return` for reporting.
-        }
+        walk::walk_return_statement(self, stmt);
+
+        self.is_in_return = false;
+        // NOTE: do not clear `return_span` here. We want to keep the last
+        // encountered `return` for reporting.
     }
 
     fn visit_expression(&mut self, expr: &Expression<'a>) {

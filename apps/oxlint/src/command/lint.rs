@@ -1,7 +1,9 @@
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 
 use bpaf::Bpaf;
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
+
+use crate::output_formatter::OutputFormat;
 
 use super::{
     ignore::{ignore_options, IgnoreOptions},
@@ -69,6 +71,10 @@ pub struct BasicOptions {
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
+
+    /// Initialize oxlint configuration with default values
+    #[bpaf(switch, hide_usage)]
+    pub init: bool,
 }
 
 // This is formatted according to
@@ -179,35 +185,9 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format (default, json, unix, checkstyle, github)
+    /// Use a specific output format (default, json, unix, checkstyle, github, stylish)
     #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum OutputFormat {
-    Default,
-    /// GitHub Check Annotation
-    /// <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>
-    Github,
-    Json,
-    Unix,
-    Checkstyle,
-}
-
-impl FromStr for OutputFormat {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "json" => Ok(Self::Json),
-            "default" => Ok(Self::Default),
-            "unix" => Ok(Self::Unix),
-            "checkstyle" => Ok(Self::Checkstyle),
-            "github" => Ok(Self::Github),
-            _ => Err(format!("'{s}' is not a known format")),
-        }
-    }
 }
 
 /// Enable Plugins

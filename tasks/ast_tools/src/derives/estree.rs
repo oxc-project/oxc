@@ -141,6 +141,14 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
                     }
                 )?;
             });
+        } else if let Some(via) = &field.markers.derive_attributes.estree.via {
+            let via_tokens: TokenStream = via.parse().unwrap();
+            fields.push(quote! {
+                map.serialize_entry(
+                    #name,
+                    &#via_tokens(&self.#ident)
+                )?;
+            });
         } else {
             fields.push(quote! {
                 map.serialize_entry(#name, &self.#ident)?;

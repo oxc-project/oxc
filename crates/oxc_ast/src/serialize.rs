@@ -241,6 +241,18 @@ impl<E: Serialize, R: Serialize> Serialize for ElementsAndRest<'_, E, R> {
     }
 }
 
+pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'a Option<oxc_allocator::Vec<'b, T>>);
+
+impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(vec) = &self.0 {
+            vec.serialize(serializer)
+        } else {
+            [false; 0].serialize(serializer)
+        }
+    }
+}
+
 /// Serialize `TSModuleBlock` to be ESTree compatible, with `body` and `directives` fields combined,
 /// and directives output as `StringLiteral` expression statements
 impl Serialize for TSModuleBlock<'_> {
@@ -295,7 +307,7 @@ impl Serialize for JSXElementName<'_> {
         match self {
             Self::Identifier(ident) => ident.serialize(serializer),
             Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer)
             }
             Self::NamespacedName(name) => name.serialize(serializer),
             Self::MemberExpression(expr) => expr.serialize(serializer),
@@ -310,7 +322,7 @@ impl Serialize for JSXMemberExpressionObject<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer)
             }
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {

@@ -40,6 +40,7 @@ fn expr() {
     test_minify("delete 2e308", "delete(1/0);");
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
+    test_minify_same("new(import(\"\"),function(){});");
 }
 
 #[test]

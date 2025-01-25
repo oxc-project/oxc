@@ -361,7 +361,7 @@ impl<'a> ParserImpl<'a> {
             // return parseJSDocFunctionType();
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
             Kind::Bang => self.parse_js_doc_non_nullable_type(),
-            Kind::NoSubstitutionTemplate | Kind::Str | Kind::False | Kind::Null => {
+            Kind::NoSubstitutionTemplate | Kind::Str | Kind::True | Kind::False | Kind::Null => {
                 self.parse_literal_type_node(/* negative */ false)
             }
             kind if kind.is_number() => {
@@ -432,10 +432,6 @@ impl<'a> ParserImpl<'a> {
             Kind::Boolean => {
                 self.bump_any();
                 self.ast.ts_type_boolean_keyword(self.end_span(span))
-            }
-            Kind::Intrinsic => {
-                self.bump_any();
-                self.ast.ts_type_intrinsic_keyword(self.end_span(span))
             }
             Kind::Never => {
                 self.bump_any();

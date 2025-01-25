@@ -40,7 +40,7 @@ pub struct JSDocTag<'a> {
 
 impl<'a> JSDocTag<'a> {
     pub fn new(kind: JSDocTagKindPart<'a>, body_content: &'a str, body_span: Span) -> JSDocTag<'a> {
-        Self { span: kind.span.merge(&body_span), kind, body_raw: body_content, body_span }
+        Self { span: kind.span.merge(body_span), kind, body_raw: body_content, body_span }
     }
 
     /// Use for various simple tags like `@access`, `@deprecated`, ...etc.
@@ -194,7 +194,7 @@ mod test {
     fn build_semantic<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
-        SemanticBuilder::new().with_build_jsdoc(true).build(&ret.program).semantic
+        SemanticBuilder::new().with_build_jsdoc(true).build(allocator.alloc(ret.program)).semantic
     }
 
     #[test]

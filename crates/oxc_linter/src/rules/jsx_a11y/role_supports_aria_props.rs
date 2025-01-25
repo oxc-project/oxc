@@ -86,7 +86,7 @@ impl Rule for RoleSupportsAriaProps {
             for attr in &jsx_el.attributes {
                 if let JSXAttributeItem::Attribute(attr) = attr {
                     let name = get_jsx_attribute_name(&attr.name);
-                    let name = name.cow_to_lowercase();
+                    let name = name.cow_to_ascii_lowercase();
                     if invalid_props.contains(&&name.as_ref()) {
                         ctx.diagnostic(if is_implicit {
                             is_implicit_diagnostic(attr.span, &name, role_value, &el_type)

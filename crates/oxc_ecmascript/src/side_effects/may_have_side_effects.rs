@@ -1,22 +1,110 @@
-use oxc_ast::ast::{Expression, ForStatementLeft, PropertyKey, UnaryExpression};
+use oxc_ast::ast::*;
 
-use super::check_for_state_change::CheckForStateChange;
-
-/// Returns true if the node which may have side effects when executed.
-/// This version default to the "safe" assumptions when the compiler object
-/// is not provided (RegExp have side-effects, etc).
+/// Returns true if subtree changes application state.
 ///
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
-pub trait MayHaveSideEffects<'a, 'b>
-where
-    Self: CheckForStateChange<'a, 'b>,
-{
-    fn may_have_side_effects(&self) -> bool {
-        self.check_for_state_change(/* check_for_new_objects */ false)
+pub trait MayHaveSideEffects {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
+        matches!(ident.name.as_str(), "undefined" | "NaN" | "Infinity")
+    }
+
+    fn expression_may_have_side_efffects(&self, e: &Expression<'_>) -> bool {
+        match e {
+            // Reference read can have a side effect.
+            Expression::Identifier(ident) => self.is_global_reference(ident),
+            Expression::NumericLiteral(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::MetaProperty(_)
+            | Expression::ThisExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::FunctionExpression(_) => false,
+            Expression::TemplateLiteral(template) => {
+                template.expressions.iter().any(|e| self.expression_may_have_side_efffects(e))
+            }
+            Expression::UnaryExpression(e) => self.unary_expression_may_have_side_effects(e),
+            Expression::ParenthesizedExpression(e) => {
+                self.expression_may_have_side_efffects(&e.expression)
+            }
+            Expression::ConditionalExpression(e) => {
+                self.expression_may_have_side_efffects(&e.test)
+                    || self.expression_may_have_side_efffects(&e.consequent)
+                    || self.expression_may_have_side_efffects(&e.alternate)
+            }
+            Expression::SequenceExpression(e) => {
+                e.expressions.iter().any(|e| self.expression_may_have_side_efffects(e))
+            }
+            Expression::BinaryExpression(e) => self.binary_expression_may_have_side_effects(e),
+            Expression::ObjectExpression(object_expr) => object_expr
+                .properties
+                .iter()
+                .any(|property| self.object_property_kind_may_have_side_effects(property)),
+            Expression::ArrayExpression(e) => e
+                .elements
+                .iter()
+                .any(|element| self.array_expression_element_may_have_side_effects(element)),
+            _ => true,
+        }
+    }
+
+    fn unary_expression_may_have_side_effects(&self, e: &UnaryExpression<'_>) -> bool {
+        /// A "simple" operator is one whose children are expressions, has no direct side-effects.
+        fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
+            operator != UnaryOperator::Delete
+        }
+        if is_simple_unary_operator(e.operator) {
+            return self.expression_may_have_side_efffects(&e.argument);
+        }
+        true
+    }
+
+    fn binary_expression_may_have_side_effects(&self, e: &BinaryExpression<'_>) -> bool {
+        // `instanceof` and `in` can throw `TypeError`
+        if matches!(e.operator, BinaryOperator::In | BinaryOperator::Instanceof) {
+            return true;
+        }
+        self.expression_may_have_side_efffects(&e.left)
+            || self.expression_may_have_side_efffects(&e.right)
+    }
+
+    fn array_expression_element_may_have_side_effects(
+        &self,
+        e: &ArrayExpressionElement<'_>,
+    ) -> bool {
+        match e {
+            ArrayExpressionElement::SpreadElement(e) => {
+                self.expression_may_have_side_efffects(&e.argument)
+            }
+            match_expression!(ArrayExpressionElement) => {
+                self.expression_may_have_side_efffects(e.to_expression())
+            }
+            ArrayExpressionElement::Elision(_) => false,
+        }
+    }
+
+    fn object_property_kind_may_have_side_effects(&self, e: &ObjectPropertyKind<'_>) -> bool {
+        match e {
+            ObjectPropertyKind::ObjectProperty(o) => self.object_property_may_have_side_effects(o),
+            ObjectPropertyKind::SpreadProperty(e) => {
+                self.expression_may_have_side_efffects(&e.argument)
+            }
+        }
+    }
+
+    fn object_property_may_have_side_effects(&self, e: &ObjectProperty<'_>) -> bool {
+        self.property_key_may_have_side_effects(&e.key)
+            || self.expression_may_have_side_efffects(&e.value)
+    }
+
+    fn property_key_may_have_side_effects(&self, key: &PropertyKey<'_>) -> bool {
+        match key {
+            PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
+            match_expression!(PropertyKey) => {
+                self.expression_may_have_side_efffects(key.to_expression())
+            }
+        }
     }
 }
-
-impl<'a> MayHaveSideEffects<'a, '_> for Expression<'a> {}
-impl<'a> MayHaveSideEffects<'a, '_> for UnaryExpression<'a> {}
-impl<'a> MayHaveSideEffects<'a, '_> for ForStatementLeft<'a> {}
-impl<'a> MayHaveSideEffects<'a, '_> for PropertyKey<'a> {}

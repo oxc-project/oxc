@@ -169,7 +169,7 @@ impl Rule for SortKeys {
                 for group in &mut property_groups {
                     *group = group
                         .iter()
-                        .map(|s| s.cow_to_lowercase().to_string())
+                        .map(|s| s.cow_to_ascii_lowercase().to_string())
                         .collect::<Vec<String>>();
                 }
             }

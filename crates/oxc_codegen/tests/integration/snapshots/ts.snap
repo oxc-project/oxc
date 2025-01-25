@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_codegen/tests/integration/main.rs
-snapshot_kind: text
 ---
 ########## 0
 let x: string = `\x01`;
@@ -112,12 +111,16 @@ class A {
 ########## 17
 let foo: { <T>(t: T): void }
 ----------
-let foo: { <T>(t: T): void };
+let foo: {
+	<T>(t: T): void
+};
 
 ########## 18
 let foo: { new <T>(t: T): void }
 ----------
-let foo: { new <T>(t: T): void };
+let foo: {
+	new <T>(t: T): void
+};
 
 ########## 19
 function <const T>(){}

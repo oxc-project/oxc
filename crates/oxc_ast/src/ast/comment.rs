@@ -1,11 +1,11 @@
 #![warn(missing_docs)]
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
-use oxc_span::{cmp::ContentEq, hash::ContentHash, Span};
+use oxc_span::{cmp::ContentEq, Span};
 
 /// Indicates a line or block comment.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
+#[generate_derive(CloneIn, ContentEq)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum CommentKind {
     /// Line comment
@@ -17,7 +17,7 @@ pub enum CommentKind {
 
 /// Information about a comment's position relative to a token.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
+#[generate_derive(CloneIn, ContentEq)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum CommentPosition {
     /// Comments prior to a token until another token or trailing comment.
@@ -40,7 +40,7 @@ pub enum CommentPosition {
 
 /// A comment in source code.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
+#[generate_derive(CloneIn, ContentEq)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.

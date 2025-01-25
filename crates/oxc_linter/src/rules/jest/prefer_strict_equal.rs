@@ -75,6 +75,8 @@ impl PreferStrictEqual {
 fn test() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("expect(something).toStrictEqual(somethingElse);", None),
         ("a().toEqual('b')", None),

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ oxc(approx-constant): Approximate value of `PI` found.
    ╭─[approx_constant.tsx:1:29]

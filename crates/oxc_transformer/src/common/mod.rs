@@ -81,6 +81,14 @@ impl<'a> Traverse<'a> for Common<'a, '_> {
         self.arrow_function_converter.enter_arrow_function_expression(arrow, ctx);
     }
 
+    fn exit_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_converter.exit_arrow_function_expression(arrow, ctx);
+    }
+
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.arrow_function_converter.enter_function_body(body, ctx);
     }

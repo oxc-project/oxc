@@ -259,7 +259,7 @@ impl InternConfig<'_> {
                 }
             }
             AstKind::BigIntLiteral(bigint) => {
-                let big_int_string = bigint.raw.clone().into_string();
+                let big_int_string = bigint.raw.into_string();
                 if is_negative {
                     let raw = format!("-{big_int_string}");
 

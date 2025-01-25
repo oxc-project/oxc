@@ -54,7 +54,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
-use crate::TransformCtx;
+use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, TransformCtx};
 
 #[derive(Debug)]
 enum CallContext<'a> {
@@ -242,29 +242,6 @@ impl<'a> OptionalChaining<'a, '_> {
         ctx.ast.expression_conditional(SPAN, test, consequent, alternate)
     }
 
-    /// Wrap the expression with an arrow function
-    ///
-    /// `expr` ->  `() => { return expr; }`
-    fn wrap_arrow_function(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        let kind = FormalParameterKind::ArrowFormalParameters;
-        let params = ctx.ast.formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
-        let statements =
-            ctx.ast.vec1(ctx.ast.statement_return(SPAN, Some(ctx.ast.move_expression(expr))));
-        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
-        let scope_id = ctx.current_scope_id();
-        let arrow = ctx.ast.alloc_arrow_function_expression_with_scope_id(
-            SPAN, false, false, NONE, params, NONE, body, scope_id,
-        );
-        // IIFE
-        ctx.ast.expression_call(
-            SPAN,
-            Expression::ArrowFunctionExpression(arrow),
-            NONE,
-            ctx.ast.vec(),
-            false,
-        )
-    }
-
     /// Convert chain expression to expression
     ///
     /// - [ChainElement::CallExpression] -> [Expression::CallExpression]
@@ -306,7 +283,7 @@ impl<'a> OptionalChaining<'a, '_> {
             // To insert the temp binding in the correct scope, we wrap the expression with
             // an arrow function. During the chain expression transformation, the temp binding
             // will be inserted into the arrow function's body.
-            Self::wrap_arrow_function(expr, ctx)
+            wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx)
         } else {
             self.transform_chain_expression_impl(false, expr, ctx)
         }
@@ -320,7 +297,7 @@ impl<'a> OptionalChaining<'a, '_> {
     ) {
         *expr = if self.is_inside_function_parameter {
             // Same as the above `transform_chain_expression` explanation
-            Self::wrap_arrow_function(expr, ctx)
+            wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx)
         } else {
             // Unfortunately no way to get compiler to see that this branch is provably unreachable.
             // We don't want to inline this function, to keep `enter_expression` as small as possible.
@@ -659,7 +636,6 @@ impl<'a> OptionalChaining<'a, '_> {
         let assignment_expression =
             Self::create_assignment_expression(temp_binding.create_write_target(ctx), expr, ctx);
 
-        let reference = temp_binding.create_read_expression(ctx);
         // `left || (binding = expr) === null`
         let left = Self::create_logical_expression(
             left,
@@ -670,6 +646,7 @@ impl<'a> OptionalChaining<'a, '_> {
         if self.ctx.assumptions.no_document_all {
             left
         } else {
+            let reference = temp_binding.create_read_expression(ctx);
             // `left || (binding = expr) === null || binding === void 0`
             Self::create_logical_expression(left, Self::wrap_void0_check(reference, ctx), ctx)
         }
