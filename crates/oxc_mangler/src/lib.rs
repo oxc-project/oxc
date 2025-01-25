@@ -136,8 +136,9 @@ impl Mangler {
 
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
 
-        // Walk the scope tree and compute the slot number for each scope
         let mut tmp_bindings = std::vec::Vec::with_capacity(100);
+        let mut reusable_slots = std::vec::Vec::new();
+        // Walk the scope tree and compute the slot number for each scope
         for scope_id in iter::once(scope_tree.root_scope_id())
             .chain(scope_tree.iter_all_child_ids(scope_tree.root_scope_id()))
         {
@@ -153,19 +154,20 @@ impl Mangler {
                 .find(|s_id| scope_tree.get_flags(*s_id).is_var())
                 .unwrap_or(scope_tree.root_scope_id());
 
-            let reusable_slots = Vec::from_iter_in(
+            reusable_slots.clear();
+            reusable_slots.extend(
                 slot_liveness
                     .iter()
                     .enumerate()
                     .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
                     .map(|(slot, _)| slot)
                     .take(bindings.len()),
-                &allocator,
             );
 
             let remaining_count = bindings.len() - reusable_slots.len();
 
-            let assignable_slots = reusable_slots.into_iter().chain(slot..slot + remaining_count);
+            reusable_slots.extend(slot..slot + remaining_count);
+
             slot += remaining_count;
             if slot_liveness.len() < slot {
                 slot_liveness.resize_with(slot, || FixedBitSet::with_capacity(scope_tree.len()));
@@ -175,7 +177,9 @@ impl Mangler {
             tmp_bindings.clear();
             tmp_bindings.extend(bindings.values().copied());
             tmp_bindings.sort_unstable();
-            for (symbol_id, assigned_slot) in tmp_bindings.iter().zip(assignable_slots) {
+            for (symbol_id, assigned_slot) in
+                tmp_bindings.iter().zip(reusable_slots.iter().copied())
+            {
                 slots[symbol_id.index()] = assigned_slot;
 
                 let lived_scope_ids = symbol_table
