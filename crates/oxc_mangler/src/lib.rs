@@ -84,7 +84,7 @@ type Slot = usize;
 /// `top_level_a` is declared in the root scope, but is not used in function `foo` and function `bar`.
 /// Therefore, we can reuse the same name for `top_level_a` and `foo_a` and `bar_a`.
 ///
-/// To calculate whether the variable name can be reused in the desendant scopes,
+/// To calculate whether the variable name can be reused in the descendant scopes,
 /// this mangler introduces a concept of symbol liveness and slot liveness.
 /// Symbol liveness is a subtree of the scope tree that contains the declared scope of the symbol and
 /// all the scopes that the symbol is used in. It is a subtree, so any scopes that are between the declared scope and the used scope
