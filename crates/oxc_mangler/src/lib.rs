@@ -88,7 +88,7 @@ type Slot = usize;
 /// this mangler introduces a concept of symbol liveness and slot liveness.
 /// Symbol liveness is a subtree of the scope tree that contains the declared scope of the symbol and
 /// all the scopes that the symbol is used in. It is a subtree, so any scopes that are between the declared scope and the used scope
-/// are also included. This is to ensure that the symbol is not shadowed by a different symbol before the use in the decendant scope.
+/// are also included. This is to ensure that the symbol is not shadowed by a different symbol before the use in the descendant scope.
 ///
 /// For the example above, the liveness of each symbols are:
 /// - `top_level_a`: root_scope
