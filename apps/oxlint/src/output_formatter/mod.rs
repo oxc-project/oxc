@@ -4,6 +4,7 @@ mod github;
 mod json;
 mod stylish;
 mod unix;
+mod junit;
 
 use std::str::FromStr;
 use std::time::Duration;
@@ -12,6 +13,7 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
+use junit::JUnitOutputFormatter;
 
 use oxc_diagnostics::reporter::DiagnosticReporter;
 
@@ -27,6 +29,7 @@ pub enum OutputFormat {
     Unix,
     Checkstyle,
     Stylish,
+    JUnit,
 }
 
 impl FromStr for OutputFormat {
@@ -40,6 +43,7 @@ impl FromStr for OutputFormat {
             "checkstyle" => Ok(Self::Checkstyle),
             "github" => Ok(Self::Github),
             "stylish" => Ok(Self::Stylish),
+            "junit" => Ok(Self::JUnit),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
@@ -93,6 +97,7 @@ impl OutputFormatter {
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
+            OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
         }
     }
 
