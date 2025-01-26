@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, IsLiteralValue},
+    constant_evaluation::{ConstantEvaluation, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
@@ -357,6 +357,51 @@ impl<'a, 'b> PeepholeOptimizations {
                     unary_expr.span,
                     ctx.ast.move_expression(&mut unary_expr.argument),
                 ))
+            }
+            Expression::NewExpression(e) => {
+                let Expression::Identifier(ident) = &e.callee else { return None };
+                let len = e.arguments.len();
+                if match ident.name.as_str() {
+                    "WeakSet" | "WeakMap" if ctx.is_global_reference(ident) => match len {
+                        0 => true,
+                        1 => match e.arguments[0].as_expression()? {
+                            Expression::NullLiteral(_) => true,
+                            Expression::ArrayExpression(e) => e.elements.is_empty(),
+                            e if ctx.is_expression_undefined(e) => true,
+                            _ => false,
+                        },
+                        _ => false,
+                    },
+                    "Date" if ctx.is_global_reference(ident) => match len {
+                        0 => true,
+                        1 => {
+                            let arg = e.arguments[0].as_expression()?;
+                            let ty = ValueType::from(arg);
+                            matches!(
+                                ty,
+                                ValueType::Null
+                                    | ValueType::Undefined
+                                    | ValueType::Boolean
+                                    | ValueType::Number
+                                    | ValueType::String
+                            ) && !ctx.expression_may_have_side_efffects(arg)
+                        }
+                        _ => false,
+                    },
+                    "Set" | "Map" if ctx.is_global_reference(ident) => match len {
+                        0 => true,
+                        1 => match e.arguments[0].as_expression()? {
+                            Expression::NullLiteral(_) => true,
+                            e if ctx.is_expression_undefined(e) => true,
+                            _ => false,
+                        },
+                        _ => false,
+                    },
+                    _ => false,
+                } {
+                    return Some(ctx.ast.statement_empty(e.span));
+                }
+                None
             }
             _ => None,
         }
@@ -809,6 +854,43 @@ mod test {
         test("-1", "");
         test("!1", "");
         test("1", "");
+    }
+
+    #[test]
+    fn test_new_constructor_side_effect() {
+        test("new WeakSet()", "");
+        test("new WeakSet(null)", "");
+        test("new WeakSet(void 0)", "");
+        test("new WeakSet([])", "");
+        test_same("new WeakSet([x])");
+        test_same("new WeakSet(x)");
+        test("new WeakMap()", "");
+        test("new WeakMap(null)", "");
+        test("new WeakMap(void 0)", "");
+        test("new WeakMap([])", "");
+        test_same("new WeakMap([x])");
+        test_same("new WeakMap(x)");
+        test("new Date()", "");
+        test("new Date('')", "");
+        test("new Date(0)", "");
+        test("new Date(null)", "");
+        test("new Date(true)", "");
+        test("new Date(false)", "");
+        test("new Date(undefined)", "");
+        test_same("new Date(x)");
+        test("new Set()", "");
+        // test("new Set([a, b, c])", "");
+        test("new Set(null)", "");
+        test("new Set(undefined)", "");
+        test("new Set(void 0)", "");
+        test_same("new Set(x)");
+        test("new Map()", "");
+        test("new Map(null)", "");
+        test("new Map(undefined)", "");
+        test("new Map(void 0)", "");
+        // test_same("new Map([x])");
+        test_same("new Map(x)");
+        // test("new Map([[a, b], [c, d]])", "");
     }
 
     #[test]
