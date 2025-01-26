@@ -67,7 +67,11 @@ impl ignore::ParallelVisitor for WalkCollector {
 impl Walk {
     /// Will not canonicalize paths.
     /// # Panics
-    pub fn new(paths: &[PathBuf], options: &IgnoreOptions, override_builder: Override) -> Self {
+    pub fn new(
+        paths: &[PathBuf],
+        options: &IgnoreOptions,
+        override_builder: Option<Override>,
+    ) -> Self {
         assert!(!paths.is_empty(), "At least one path must be provided to Walk::new");
 
         let mut inner = ignore::WalkBuilder::new(
@@ -85,7 +89,10 @@ impl Walk {
 
         if !options.no_ignore {
             inner.add_custom_ignore_filename(&options.ignore_path);
-            inner.overrides(override_builder);
+
+            if let Some(override_builder) = override_builder {
+                inner.overrides(override_builder);
+            }
         }
 
         // Turning off `follow_links` because:
@@ -146,7 +153,7 @@ mod test {
 
         let override_builder = OverrideBuilder::new("/").build().unwrap();
 
-        let mut paths = Walk::new(&fixtures, &ignore_options, override_builder)
+        let mut paths = Walk::new(&fixtures, &ignore_options, Some(override_builder))
             .with_extensions(Extensions(["js", "vue"].to_vec()))
             .paths()
             .into_iter()
