@@ -101,11 +101,7 @@ pub trait CompilerInterface {
         ControlFlow::Continue(())
     }
 
-    fn after_semantic(
-        &mut self,
-        _program: &mut Program<'_>,
-        _semantic_return: &mut SemanticBuilderReturn,
-    ) -> ControlFlow<()> {
+    fn after_semantic(&mut self, _semantic_return: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
 
@@ -148,7 +144,7 @@ pub trait CompilerInterface {
             self.handle_errors(semantic_return.errors);
             return;
         }
-        if self.after_semantic(&mut program, &mut semantic_return).is_break() {
+        if self.after_semantic(&mut semantic_return).is_break() {
             return;
         }
 
@@ -235,7 +231,7 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(&self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
+    fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         let mut builder = SemanticBuilder::new();
 
         if self.transform_options().is_some() {

@@ -188,7 +188,7 @@ impl NoConstantBinaryExpression {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| Self::has_constant_nullishness(last, non_nullish, ctx)),
+                .is_some_and(|last| Self::has_constant_nullishness(last, non_nullish, ctx)),
             Expression::Identifier(_) => expr.evaluate_to_undefined(),
             _ => false,
         }
@@ -255,7 +255,7 @@ impl NoConstantBinaryExpression {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| Self::has_constant_loose_boolean_comparison(last, ctx)),
+                .is_some_and(|last| Self::has_constant_loose_boolean_comparison(last, ctx)),
             Expression::ParenthesizedExpression(paren_expr) => {
                 Self::has_constant_loose_boolean_comparison(&paren_expr.expression, ctx)
             }
@@ -321,7 +321,7 @@ impl NoConstantBinaryExpression {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| Self::has_constant_strict_boolean_comparison(last, ctx)),
+                .is_some_and(|last| Self::has_constant_strict_boolean_comparison(last, ctx)),
             Expression::ParenthesizedExpression(paren_expr) => {
                 Self::has_constant_strict_boolean_comparison(&paren_expr.expression, ctx)
             }
@@ -350,7 +350,7 @@ impl NoConstantBinaryExpression {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| Self::is_always_new(last, ctx)),
+                .is_some_and(|last| Self::is_always_new(last, ctx)),
             Expression::AssignmentExpression(assignment_expr)
                 if assignment_expr.operator == AssignmentOperator::Assign =>
             {

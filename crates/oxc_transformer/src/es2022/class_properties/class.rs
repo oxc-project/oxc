@@ -79,7 +79,7 @@ impl<'a> ClassProperties<'a, '_> {
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
         let mut constructor = None;
-        for element in body.body.iter_mut() {
+        for element in &mut body.body {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
                     // TODO: Throw error if property has decorators
@@ -89,7 +89,7 @@ impl<'a> ClassProperties<'a, '_> {
                         // Note: Current scope is outside class.
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
-                            ident.name.clone(),
+                            ident.name,
                             PrivateProp::new(binding, prop.r#static, None, false),
                         );
                     }
@@ -133,7 +133,7 @@ impl<'a> ClassProperties<'a, '_> {
                             SymbolFlags::FunctionScopedVariable,
                         );
 
-                        match private_props.entry(ident.name.clone()) {
+                        match private_props.entry(ident.name) {
                             Entry::Occupied(mut entry) => {
                                 // If there's already a binding for this private property,
                                 // it's a setter or getter, so store the binding in `binding2`.
@@ -156,7 +156,7 @@ impl<'a> ClassProperties<'a, '_> {
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
                         let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
                         private_props.insert(
-                            ident.name.clone(),
+                            ident.name,
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
@@ -296,7 +296,7 @@ impl<'a> ClassProperties<'a, '_> {
         }
 
         let mut constructor = None;
-        for element in body.body.iter_mut() {
+        for element in &mut body.body {
             #[expect(clippy::match_same_arms)]
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -451,7 +451,7 @@ impl<'a> ClassProperties<'a, '_> {
                 // TODO: Only call `insert_many_before` if some private *props*
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
-                    private_props.iter().filter_map(|(name, prop)| {
+                    private_props.iter().filter_map(|(&name, prop)| {
                         // TODO: Output `var _C_brand = new WeakSet();` for private instance method
                         if prop.is_method() || prop.is_accessor {
                             return None;
@@ -592,7 +592,7 @@ impl<'a> ClassProperties<'a, '_> {
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
             // TODO(improve-on-babel): Simplify this.
             if self.private_fields_as_properties {
-                exprs.extend(private_props.iter().filter_map(|(name, prop)| {
+                exprs.extend(private_props.iter().filter_map(|(&name, prop)| {
                     // TODO: Output `_C_brand = new WeakSet()` for private instance method
                     if prop.is_method() || prop.is_accessor {
                         return None;
@@ -796,18 +796,14 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `_classPrivateFieldLooseKey("prop")`
     fn create_private_prop_key_loose(
-        name: &Atom<'a>,
+        name: Atom<'a>,
         transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         transform_ctx.helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
             SPAN,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
-                SPAN,
-                name.clone(),
-                None,
-            ))),
+            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
             ctx,
         )
     }

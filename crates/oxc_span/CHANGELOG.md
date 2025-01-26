@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+- 54d0fac span: [**BREAKING**] Remove `PartialEq` impl for `&Atom` (#8642) (overlookmotel)
+
+### Refactor
+
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- 20f52b1 span: Remove unnecessary lifetimes on `Atom` impls (#8639) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
+## [0.47.0] - 2025-01-18
+
+- 7066d1c ast, span, syntax, regular_expression: [**BREAKING**] Remove `ContentHash` (#8512) (overlookmotel)
+
+### Features
+
+
+### Performance
+
+- 63eb298 span: Compare `Span`s as single `u64`s (#8300) (overlookmotel)
+- a43560c span: Hash `Span` as a single `u64` (#8299) (overlookmotel)
+- 3fff7d2 span: Align `Span` same as `usize` (#8298) (overlookmotel)
+
+### Refactor
+
+- ac05134 allocator: `String` type (#8568) (overlookmotel)
+- b5ed58e span: All methods take owned `Span` (#8297) (overlookmotel)
+
+## [0.46.0] - 2025-01-14
+
+### Features
+
+- 9d550aa span: Add `Atom::r#static` (#8479) (_Kerman)
+
+### Refactor
+
+- de5b288 span: Rename `Atom::new_const` method (#8480) (overlookmotel)
+
+## [0.45.0] - 2025-01-11
+
+### Styling
+
+- e81f34f span: Reformat code (#8296) (overlookmotel)
+
 ## [0.44.0] - 2024-12-25
 
 ### Features

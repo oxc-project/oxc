@@ -2,7 +2,6 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/do_while_break.js
-snapshot_kind: text
 ---
 bb0: {
 

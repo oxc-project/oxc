@@ -138,13 +138,19 @@ describe('modules', () => {
     const code = `
 export = function foo (): void {}
 import bar = require('bar')
+console.log(bar)
 `;
     const ret = transform('test.ts', code, {
       typescript: {
         declaration: {},
       },
     });
-    expect(ret.code).toEqual('module.exports = function foo() {};\nconst bar = require("bar");\n');
+    expect(ret.code).toMatchInlineSnapshot(`
+      "module.exports = function foo() {};
+      const bar = require("bar");
+      console.log(bar);
+      "
+    `);
     expect(ret.declaration).toEqual('declare const _default: () => void;\nexport = _default;\n');
   });
 });

@@ -149,7 +149,7 @@ impl Rule for RequireReturns {
                         match parent_node.kind() {
                             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                                 // Ignore `return;`
-                                let Some(ref argument) = return_stmt.argument else {
+                                let Some(argument) = &return_stmt.argument else {
                                     continue 'visit_node;
                                 };
 

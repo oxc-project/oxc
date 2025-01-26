@@ -193,8 +193,8 @@ impl Rule for NoRequireImports {
 
                 ctx.diagnostic(no_require_imports_diagnostic(call_expr.span));
             }
-            AstKind::TSImportEqualsDeclaration(decl) => match decl.module_reference {
-                TSModuleReference::ExternalModuleReference(ref mod_ref) => {
+            AstKind::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
+                TSModuleReference::ExternalModuleReference(mod_ref) => {
                     if self.allow_as_import {
                         return;
                     }

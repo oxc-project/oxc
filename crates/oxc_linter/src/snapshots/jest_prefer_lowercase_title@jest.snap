@@ -1,0 +1,242 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it('Foo', function () {})
+   ·    ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:5]
+ 1 │ xit('Foo', function () {})
+   ·     ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it("Foo", function () {})
+   ·    ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it(`Foo`, function () {})
+   ·    ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test('Foo', function () {})
+   ·      ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:7]
+ 1 │ xtest('Foo', function () {})
+   ·       ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test("Foo", function () {})
+   ·      ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test(`Foo`, function () {})
+   ·      ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:10]
+ 1 │ describe('Foo', function () {})
+   ·          ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:10]
+ 1 │ describe("Foo", function () {})
+   ·          ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:10]
+ 1 │ describe(`Foo`, function () {})
+   ·          ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:3:25]
+ 2 │                 import { describe as context } from '@jest/globals';
+ 3 │                 context(`Foo`, () => {});
+   ·                         ─────
+ 4 │             
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:10]
+ 1 │ describe(`Some longer description`, function () {})
+   ·          ─────────────────────────
+   ╰────
+  help: `"Some longer description"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:11]
+ 1 │ fdescribe(`Some longer description`, function () {})
+   ·           ─────────────────────────
+   ╰────
+  help: `"Some longer description"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:29]
+ 1 │ it.each(['green', 'black'])('Should return %', () => {})
+   ·                             ─────────────────
+   ╰────
+  help: `"Should return %"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:35]
+ 1 │ describe.each(['green', 'black'])('Should return %', () => {})
+   ·                                   ─────────────────
+   ╰────
+  help: `"Should return %"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test('Foo', function () {})
+   ·      ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:5]
+ 1 │ xit('Foo', function () {})
+   ·     ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:10]
+ 1 │ describe('Foo', function () {})
+   ·          ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it('Foo', function () {})
+   ·    ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:5]
+ 1 │ xit('Foo', function () {})
+   ·     ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:10]
+ 1 │ describe('Foo', function () {})
+   ·          ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test('Foo', function () {})
+   ·      ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:7]
+ 1 │ xtest('Foo', function () {})
+   ·       ─────
+   ╰────
+  help: `"Foo"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it("Works!", () => {});
+   ·    ────────
+   ╰────
+  help: `"Works!"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:4:28]
+ 3 │                     describe('MyMethod', () => {
+ 4 │                         it('Does things', () => {
+   ·                            ─────────────
+ 5 │                             //
+   ╰────
+  help: `"Does things"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:3:30]
+ 2 │                 describe('MyClass', () => {
+ 3 │                     describe('MyMethod', () => {
+   ·                              ──────────
+ 4 │                         it('Does things', () => {
+   ╰────
+  help: `"MyMethod"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:4:29]
+ 3 │                 describe('MyClass', () => {
+ 4 │                     context('MyMethod', () => {
+   ·                             ──────────
+ 5 │                         it('Does things', () => {
+   ╰────
+  help: `"MyMethod"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:5:28]
+ 4 │                     context('MyMethod', () => {
+ 5 │                         it('Does things', () => {
+   ·                            ─────────────
+ 6 │                             //
+   ╰────
+  help: `"Does things"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:4:28]
+ 3 │                     describe('MyMethod', () => {
+ 4 │                         it('Does things', () => {
+   ·                            ─────────────
+ 5 │                             //
+   ╰────
+  help: `"Does things"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:2:26]
+ 1 │ 
+ 2 │                 describe('MyClass', () => {
+   ·                          ─────────
+ 3 │                     describe('MyMethod', () => {
+   ╰────
+  help: `"MyClass"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:3:30]
+ 2 │                 describe('MyClass', () => {
+ 3 │                     describe('MyMethod', () => {
+   ·                              ──────────
+ 4 │                         it('Does things', () => {
+   ╰────
+  help: `"MyMethod"`s should begin with lowercase

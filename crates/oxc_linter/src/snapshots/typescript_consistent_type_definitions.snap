@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ typescript-eslint(consistent-type-definitions): Use an `interface` instead of a `type`
    ╭─[consistent_type_definitions.tsx:1:1]

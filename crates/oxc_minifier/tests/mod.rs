@@ -1,6 +1,6 @@
-mod ast_passes;
 mod ecmascript;
 mod mangler;
+mod peephole;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
@@ -15,7 +15,11 @@ pub(crate) fn test(source_text: &str, expected: &str, options: CompressOptions) 
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
-fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
+pub(crate) fn run(
+    source_text: &str,
+    source_type: SourceType,
+    options: Option<CompressOptions>,
+) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;

@@ -1,0 +1,25 @@
+name: Release NAPI Minify
+
+permissions: {}
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - npm/oxc-minify/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Release NAPI Minify
+    uses: ./.github/workflows/reusable_release_napi.yml
+    with:
+      name: minify
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    permissions:
+      id-token: write # for `pnpm publish --provenance`

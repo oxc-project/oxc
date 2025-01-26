@@ -157,7 +157,7 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
         1 => VALID_AUTOCOMPLETE_VALUES.contains(parts[0]),
         2 => VALID_AUTOCOMPLETE_COMBINATIONS
             .get(parts[0])
-            .map_or(false, |valid_suffixes| valid_suffixes.contains(parts[1])),
+            .is_some_and(|valid_suffixes| valid_suffixes.contains(parts[1])),
         _ => false,
     }
 }

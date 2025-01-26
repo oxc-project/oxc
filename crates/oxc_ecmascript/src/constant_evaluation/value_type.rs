@@ -65,7 +65,7 @@ impl<'a> From<&Expression<'a>> for ValueType {
             Expression::BooleanLiteral(_) => Self::Boolean,
             Expression::NullLiteral(_) => Self::Null,
             Expression::NumericLiteral(_) => Self::Number,
-            Expression::StringLiteral(_) => Self::String,
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => Self::String,
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)
             | Expression::RegExpLiteral(_)

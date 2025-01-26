@@ -132,7 +132,7 @@ impl PreferJestMocked {
 
 fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     outermost_paren_parent(node, ctx)
-        .map_or(false, |parent| !matches!(parent.kind(), AstKind::SimpleAssignmentTarget(_)))
+        .is_some_and(|parent| !matches!(parent.kind(), AstKind::SimpleAssignmentTarget(_)))
 }
 
 #[test]

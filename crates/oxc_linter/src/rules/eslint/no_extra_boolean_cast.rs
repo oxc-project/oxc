@@ -136,14 +136,14 @@ fn is_bool_fn_or_constructor_call(node: &AstNode) -> bool {
 
 fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
     match parent.kind() {
-        AstKind::CallExpression(expr) => expr.arguments.first().map_or(false, |arg| {
+        AstKind::CallExpression(expr) => expr.arguments.first().is_some_and(|arg| {
             if let Some(expr) = arg.as_expression() {
                 expr.without_parentheses().span() == node.kind().span()
             } else {
                 false
             }
         }),
-        AstKind::NewExpression(expr) => expr.arguments.first().map_or(false, |arg| {
+        AstKind::NewExpression(expr) => expr.arguments.first().is_some_and(|arg| {
             if let Some(expr) = arg.as_expression() {
                 expr.without_parentheses().span() == node.kind().span()
             } else {
@@ -155,7 +155,7 @@ fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
 }
 
 fn is_inside_test_condition(node: &AstNode, ctx: &LintContext) -> bool {
-    get_real_parent(node, ctx).map_or(false, |parent| match parent.kind() {
+    get_real_parent(node, ctx).is_some_and(|parent| match parent.kind() {
         AstKind::IfStatement(stmt) => {
             let expr_span = stmt.test.get_inner_expression().without_parentheses().span();
             expr_span == node.kind().span()
@@ -172,7 +172,7 @@ fn is_inside_test_condition(node: &AstNode, ctx: &LintContext) -> bool {
             let expr_span = stmt.test.get_inner_expression().without_parentheses().span();
             expr_span == node.kind().span()
         }
-        AstKind::ForStatement(stmt) => stmt.test.as_ref().map_or(false, |expr| {
+        AstKind::ForStatement(stmt) => stmt.test.as_ref().is_some_and(|expr| {
             let expr_span = expr.get_inner_expression().without_parentheses().span();
             expr_span == node.kind().span()
         }),

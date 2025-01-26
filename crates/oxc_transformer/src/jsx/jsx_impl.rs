@@ -187,8 +187,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         if self.require_jsx.is_none() {
             let var_name =
                 if self.is_development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
-            let id =
-                self.add_require_statement(var_name, self.jsx_runtime_importer.clone(), false, ctx);
+            let id = self.add_require_statement(var_name, self.jsx_runtime_importer, false, ctx);
             self.require_jsx = Some(id);
         };
         self.require_jsx.as_ref().unwrap().create_read_reference(ctx)
@@ -291,7 +290,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
         name: &'static str,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        self.add_import_statement(name, self.jsx_runtime_importer.clone(), ctx)
+        self.add_import_statement(name, self.jsx_runtime_importer, ctx)
     }
 
     fn add_import_statement(
@@ -365,20 +364,20 @@ impl<'a> Pragma<'a> {
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let (object, parts) = match self {
             Self::Double(first, second) => {
-                let object = get_read_identifier_reference(SPAN, first.clone(), ctx);
+                let object = get_read_identifier_reference(SPAN, *first, ctx);
                 return Expression::from(ctx.ast.member_expression_static(
                     SPAN,
                     object,
-                    ctx.ast.identifier_name(SPAN, second.clone()),
+                    ctx.ast.identifier_name(SPAN, *second),
                     false,
                 ));
             }
             Self::Single(single) => {
-                return get_read_identifier_reference(SPAN, single.clone(), ctx);
+                return get_read_identifier_reference(SPAN, *single, ctx);
             }
             Self::Multiple(parts) => {
                 let mut parts = parts.iter();
-                let first = parts.next().unwrap().clone();
+                let first = *parts.next().unwrap();
                 let object = get_read_identifier_reference(SPAN, first, ctx);
                 (object, parts)
             }
@@ -397,8 +396,8 @@ impl<'a> Pragma<'a> {
         };
 
         let mut expr = object;
-        for item in parts {
-            let name = ctx.ast.identifier_name(SPAN, item.clone());
+        for &item in parts {
+            let name = ctx.ast.identifier_name(SPAN, item);
             expr = ctx.ast.member_expression_static(SPAN, expr, name, false).into();
         }
         expr
@@ -720,10 +719,9 @@ impl<'a> JsxImpl<'a, '_> {
 
             // isStaticChildren
             if is_development {
-                arguments.push(Argument::from(ctx.ast.expression_boolean_literal(
-                    SPAN,
-                    if is_fragment { false } else { children_len > 1 },
-                )));
+                arguments.push(Argument::from(
+                    ctx.ast.expression_boolean_literal(SPAN, children_len > 1),
+                ));
             }
 
             // Fragment doesn't have source and self
@@ -770,7 +768,7 @@ impl<'a> JsxImpl<'a, '_> {
     ) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name.clone(), None)
+                ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
             JSXElementName::IdentifierReference(ident) => {
                 Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
@@ -852,7 +850,7 @@ impl<'a> JsxImpl<'a, '_> {
             }
             JSXMemberExpressionObject::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         };
-        let property = ctx.ast.identifier_name(expr.property.span, expr.property.name.clone());
+        let property = ctx.ast.identifier_name(expr.property.span, expr.property.name);
         ctx.ast.member_expression_static(expr.span, object, property, false).into()
     }
 
@@ -915,7 +913,7 @@ impl<'a> JsxImpl<'a, '_> {
     fn get_attribute_name(name: &JSXAttributeName<'a>, ctx: &TraverseCtx<'a>) -> PropertyKey<'a> {
         match name {
             JSXAttributeName::Identifier(ident) => {
-                let name = ident.name.clone();
+                let name = ident.name;
                 if ident.name.contains('-') {
                     PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name, None))
                 } else {

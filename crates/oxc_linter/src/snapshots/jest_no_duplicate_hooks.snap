@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
    ╭─[no_duplicate_hooks.tsx:4:21]
@@ -161,5 +160,59 @@ snapshot_kind: text
  11 │                         beforeEach(() => {});
     ·                         ────────────────────
  12 │ 
+    ╰────
+  help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
+
+  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+   ╭─[no_duplicate_hooks.tsx:4:21]
+ 3 │                     beforeEach(() => {}),
+ 4 │                     beforeEach(() => {}),
+   ·                     ────────────────────
+ 5 │                     test("bar", () => {
+   ╰────
+  help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
+
+  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "afterEach" in describe block.
+   ╭─[no_duplicate_hooks.tsx:4:21]
+ 3 │                     afterEach(() => {}),
+ 4 │                     afterEach(() => {}),
+   ·                     ───────────────────
+ 5 │                     test("bar", () => {
+   ╰────
+  help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
+
+  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+    ╭─[no_duplicate_hooks.tsx:11:21]
+ 10 │                     beforeEach(() => {}),
+ 11 │                     beforeEach(() => {}),
+    ·                     ────────────────────
+ 12 │                     beforeAll(() => {}),
+    ╰────
+  help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
+
+  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+    ╭─[no_duplicate_hooks.tsx:11:21]
+ 10 │                     beforeEach(() => {}),
+ 11 │                     beforeEach(() => {}),
+    ·                     ────────────────────
+ 12 │                     beforeAll(() => {}),
+    ╰────
+  help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
+
+  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+   ╭─[no_duplicate_hooks.tsx:4:21]
+ 3 │                     beforeEach(() => {});
+ 4 │                     beforeEach(() => {});
+   ·                     ────────────────────
+ 5 │                     
+   ╰────
+  help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
+
+  ⚠ eslint-plugin-jest(no-duplicate-hooks): Duplicate "beforeEach" in describe block.
+    ╭─[no_duplicate_hooks.tsx:11:25]
+ 10 │                         beforeEach(() => {});
+ 11 │                         beforeEach(() => {});
+    ·                         ────────────────────
+ 12 │                     
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.

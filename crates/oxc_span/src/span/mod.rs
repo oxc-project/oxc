@@ -1,4 +1,8 @@
-use std::ops::{Index, IndexMut, Range};
+use std::{
+    fmt::{self, Debug},
+    hash::{Hash, Hasher},
+    ops::{Index, IndexMut, Range},
+};
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
@@ -8,6 +12,18 @@ pub use types::Span;
 
 /// An Empty span useful for creating AST nodes.
 pub const SPAN: Span = Span::new(0, 0);
+
+/// Zero-sized type which has pointer alignment (8 on 64-bit, 4 on 32-bit).
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(transparent)]
+struct PointerAlign([usize; 0]);
+
+impl PointerAlign {
+    #[inline]
+    const fn new() -> Self {
+        Self([])
+    }
+}
 
 impl Span {
     /// Create a new [`Span`] from a start and end position.
@@ -19,7 +35,7 @@ impl Span {
     ///
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        Self { start, end }
+        Self { start, end, _align: PointerAlign::new() }
     }
 
     /// Create a new empty [`Span`] that starts and ends at an offset position.
@@ -34,7 +50,7 @@ impl Span {
     /// assert_eq!(fifth, Span::new(5, 5));
     /// ```
     pub fn empty(at: u32) -> Self {
-        Self { start: at, end: at }
+        Self::new(at, at)
     }
 
     /// Create a new [`Span`] starting at `start` and covering `size` bytes.
@@ -61,7 +77,7 @@ impl Span {
     /// assert_eq!(Span::new(0, 5).size(), 5);
     /// assert_eq!(Span::new(5, 10).size(), 5);
     /// ```
-    pub const fn size(&self) -> u32 {
+    pub const fn size(self) -> u32 {
         debug_assert!(self.start <= self.end);
         self.end - self.start
     }
@@ -76,7 +92,7 @@ impl Span {
     /// assert!(Span::new(5, 5).is_empty());
     /// assert!(!Span::new(0, 5).is_empty());
     /// ```
-    pub const fn is_empty(&self) -> bool {
+    pub const fn is_empty(self) -> bool {
         debug_assert!(self.start <= self.end);
         self.start == self.end
     }
@@ -92,8 +108,9 @@ impl Span {
     /// assert!(!Span::new(0, 5).is_unspanned());
     /// assert!(!Span::new(5, 5).is_unspanned());
     /// ```
-    pub const fn is_unspanned(&self) -> bool {
-        self.start == SPAN.start && self.end == SPAN.end
+    #[inline]
+    pub const fn is_unspanned(self) -> bool {
+        self.const_eq(SPAN)
     }
 
     /// Check if this [`Span`] contains another [`Span`].
@@ -132,7 +149,7 @@ impl Span {
     /// assert_eq!(merged_span, Span::new(0, 8));
     /// ```
     #[must_use]
-    pub fn merge(&self, other: &Self) -> Self {
+    pub fn merge(self, other: Self) -> Self {
         Self::new(self.start.min(other.start), self.end.max(other.end))
     }
 
@@ -308,7 +325,7 @@ impl Span {
     /// let name = name_span.source_text(source);
     /// assert_eq!(name_span.size(), name.len() as u32);
     /// ```
-    pub fn source_text<'a>(&self, source_text: &'a str) -> &'a str {
+    pub fn source_text(self, source_text: &str) -> &str {
         &source_text[self.start as usize..self.end as usize]
     }
 
@@ -324,6 +341,40 @@ impl Span {
     #[must_use]
     pub fn primary_label<S: Into<String>>(self, label: S) -> LabeledSpan {
         LabeledSpan::new_primary_with_span(Some(label.into()), self)
+    }
+
+    /// Convert [`Span`] to a single `u64`.
+    ///
+    /// On 64-bit platforms, `Span` is aligned on 8, so equivalent to a `u64`.
+    /// Compiler boils this conversion down to a no-op on 64-bit platforms.
+    /// <https://godbolt.org/z/9rcMoT1fc>
+    ///
+    /// Do not use this on 32-bit platforms as it's likely to be less efficient.
+    ///
+    /// Note: `#[ast]` macro adds `#[repr(C)]` to the struct, so field order is guaranteed.
+    #[expect(clippy::inline_always)] // Because this is a no-op on 64-bit platforms.
+    #[inline(always)]
+    const fn as_u64(self) -> u64 {
+        if cfg!(target_endian = "little") {
+            ((self.end as u64) << 32) | (self.start as u64)
+        } else {
+            ((self.start as u64) << 32) | (self.end as u64)
+        }
+    }
+
+    /// Compare two [`Span`]s.
+    ///
+    /// Same as `PartialEq::eq`, but a const function, and takes owned `Span`s.
+    //
+    // `#[inline(always)]` because want to make sure this is inlined into `PartialEq::eq`.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    const fn const_eq(self, other: Self) -> bool {
+        if cfg!(target_pointer_width = "64") {
+            self.as_u64() == other.as_u64()
+        } else {
+            self.start == other.start && self.end == other.end
+        }
     }
 }
 
@@ -359,6 +410,38 @@ impl From<Span> for SourceSpan {
 impl From<Span> for LabeledSpan {
     fn from(val: Span) -> Self {
         LabeledSpan::underline(val)
+    }
+}
+
+// On 64-bit platforms, compare `Span`s as single `u64`s, which is faster when used with `&Span` refs.
+// https://godbolt.org/z/sEf9MGvsr
+impl PartialEq for Span {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.const_eq(*other)
+    }
+}
+
+// Skip hashing `_align` field.
+// On 64-bit platforms, hash `Span` as a single `u64`, which is faster with `FxHash`.
+// https://godbolt.org/z/4fbvcsTxM
+impl Hash for Span {
+    #[inline] // We exclusively use `FxHasher`, which produces small output hashing `u64`s and `u32`s
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        if cfg!(target_pointer_width = "64") {
+            self.as_u64().hash(hasher);
+        } else {
+            self.start.hash(hasher);
+            self.end.hash(hasher);
+        }
+    }
+}
+
+// Skip `_align` field in `Debug` output
+#[expect(clippy::missing_fields_in_debug)]
+impl Debug for Span {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Span").field("start", &self.start).field("end", &self.end).finish()
     }
 }
 
@@ -415,18 +498,51 @@ mod test {
     #[test]
     fn test_hash() {
         use std::hash::{DefaultHasher, Hash, Hasher};
-        let mut first = DefaultHasher::new();
-        let mut second = DefaultHasher::new();
-        Span::new(0, 5).hash(&mut first);
-        Span::new(0, 5).hash(&mut second);
-        assert_eq!(first.finish(), second.finish());
+        fn hash<T: Hash>(value: T) -> u64 {
+            let mut hasher = DefaultHasher::new();
+            value.hash(&mut hasher);
+            hasher.finish()
+        }
+
+        let first_hash = hash(Span::new(1, 5));
+        let second_hash = hash(Span::new(1, 5));
+        assert_eq!(first_hash, second_hash);
+
+        // On 64-bit platforms, check hash is equivalent to `u64`
+        #[cfg(target_pointer_width = "64")]
+        {
+            let u64_equivalent: u64 =
+                if cfg!(target_endian = "little") { 1 + (5 << 32) } else { (1 << 32) + 5 };
+            let u64_hash = hash(u64_equivalent);
+            assert_eq!(first_hash, u64_hash);
+        }
+
+        // On 32-bit platforms, check `_align` field does not alter hash
+        #[cfg(not(target_pointer_width = "64"))]
+        {
+            #[derive(Hash)]
+            #[repr(C)]
+            struct PlainSpan {
+                start: u32,
+                end: u32,
+            }
+
+            let plain_hash = hash(PlainSpan { start: 1, end: 5 });
+            assert_eq!(first_hash, plain_hash);
+        }
     }
 
     #[test]
     fn test_eq() {
         assert_eq!(Span::new(0, 0), Span::new(0, 0));
         assert_eq!(Span::new(0, 1), Span::new(0, 1));
+        assert_eq!(Span::new(1, 5), Span::new(1, 5));
+
         assert_ne!(Span::new(0, 0), Span::new(0, 1));
+        assert_ne!(Span::new(1, 5), Span::new(0, 5));
+        assert_ne!(Span::new(1, 5), Span::new(2, 5));
+        assert_ne!(Span::new(1, 5), Span::new(1, 4));
+        assert_ne!(Span::new(1, 5), Span::new(1, 6));
     }
 
     #[test]
@@ -480,4 +596,19 @@ mod test {
         let span = Span::new(5, 10);
         let _ = span.shrink(5);
     }
+}
+
+#[cfg(test)]
+mod size_asserts {
+    use std::mem::{align_of, size_of};
+
+    use super::Span;
+
+    const _: () = assert!(size_of::<Span>() == 8);
+
+    #[cfg(target_pointer_width = "64")]
+    const _: () = assert!(align_of::<Span>() == 8);
+
+    #[cfg(not(target_pointer_width = "64"))]
+    const _: () = assert!(align_of::<Span>() == 4);
 }

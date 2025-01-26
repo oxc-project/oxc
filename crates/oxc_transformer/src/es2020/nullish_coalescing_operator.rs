@@ -91,7 +91,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                     // Check binding is not mutated.
                     // TODO(improve-on-babel): Remove this check. Whether binding is mutated or not is not relevant.
                     if ctx.symbols().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
-                        let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
+                        let binding = BoundIdentifier::new(ident.name, symbol_id);
                         let ident_span = ident.span;
                         return Self::create_conditional_expression(
                             logical_expr.left,

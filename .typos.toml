@@ -26,6 +26,7 @@ extend-exclude = [
   "tasks/transform_conformance/overrides",
   "tasks/transform_conformance/snapshots",
   "npm/oxc-wasm/oxc_wasm.js",
+  "napi/minify/test/terser.test.ts",
 ]
 
 [default]

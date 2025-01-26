@@ -46,7 +46,7 @@ impl Rule for NoUnnecessaryAwait {
                     || matches!(expr.argument, Expression::ClassExpression(_))
             } || {
                 // `+await +1` -> `++1`
-                ctx.nodes().parent_node(node.id()).map_or(false, |parent| {
+                ctx.nodes().parent_node(node.id()).is_some_and(|parent| {
                     if let (
                         AstKind::UnaryExpression(parent_unary),
                         Expression::UnaryExpression(inner_unary),

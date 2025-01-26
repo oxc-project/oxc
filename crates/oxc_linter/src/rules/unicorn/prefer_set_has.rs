@@ -78,11 +78,11 @@ fn is_array_of_or_from(callee: &MemberExpression) -> bool {
 fn is_kind_of_array_expr(expr: &Expression) -> bool {
     match expr {
         Expression::NewExpression(new_expr) => {
-            new_expr.callee.get_identifier_reference().map_or(false, |ident| ident.name == "Array")
+            new_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == "Array")
         }
         Expression::CallExpression(call_expr) => {
             let Some(callee) = call_expr.callee.get_member_expr() else {
-                return call_expr.callee_name().map_or(false, |name| name == "Array");
+                return call_expr.callee_name().is_some_and(|name| name == "Array");
             };
 
             if callee.is_computed() || callee.optional() {

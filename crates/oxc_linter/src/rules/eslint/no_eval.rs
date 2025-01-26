@@ -50,7 +50,7 @@ declare_oxc_lint!(
 
 impl Rule for NoEval {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_indirect = value.get(0).map_or(false, |config| {
+        let allow_indirect = value.get(0).is_some_and(|config| {
             config.get("allowIndirect").and_then(serde_json::Value::as_bool).unwrap_or(false)
         });
 

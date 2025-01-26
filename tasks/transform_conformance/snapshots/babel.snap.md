@@ -1,6 +1,6 @@
-commit: 54a8389f
+commit: acbc09a8
 
-Passed: 686/1154
+Passed: 698/1168
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -915,7 +915,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-nullish-coalescing-operator (5/12)
+# babel-plugin-transform-nullish-coalescing-operator (9/24)
 * assumption-noDocumentAll/transform/input.js
 x Output mismatch
 
@@ -934,299 +934,35 @@ x Output mismatch
 * assumption-noDocumentAll/transform-static-refs-in-function/input.js
 x Output mismatch
 
+* assumption-pureGetters/logical-assignment/input.js
+x Output mismatch
+
+* assumption-pureGetters/logical-assignment-undeclared/input.js
+x Output mismatch
+
+* assumption-pureGetters/transform-in-default-param/input.js
+x Output mismatch
+
+* assumption-pureGetters/transform-static-refs-in-function/input.js
+x Output mismatch
+
+* nullish-coalescing/logical-assignment/input.js
+x Output mismatch
+
+* nullish-coalescing/logical-assignment-undeclared/input.js
+x Output mismatch
+
 * nullish-coalescing/transform-loose/input.js
 x Output mismatch
 
+* nullish-coalescing/transform-static-refs-in-function/input.js
+x Output mismatch
 
-# babel-plugin-transform-optional-chaining (36/45)
-* assumption-noDocumentAll/assignment/input.js
-Symbol reference IDs mismatch for "_obj$a":
-after transform: SymbolId(5): [ReferenceId(7), ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(5)]
-Symbol reference IDs mismatch for "_obj$b":
-after transform: SymbolId(6): [ReferenceId(11), ReferenceId(12), ReferenceId(13)]
-rebuilt        : SymbolId(1): [ReferenceId(7), ReferenceId(9)]
-Symbol reference IDs mismatch for "_obj$a2":
-after transform: SymbolId(7): [ReferenceId(15), ReferenceId(16), ReferenceId(17)]
-rebuilt        : SymbolId(2): [ReferenceId(12), ReferenceId(14)]
+* nullish-coalescing/undeclared/input.js
+x Output mismatch
 
-* assumption-noDocumentAll/in-function-params/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "a"]
-rebuilt        : ScopeId(2): ["_x"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(1): Some(ScopeId(0))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
-Bindings mismatch:
-after transform: ScopeId(2): ["a", "b"]
-rebuilt        : ScopeId(4): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(0))
-rebuilt        : ScopeId(4): Some(ScopeId(3))
-Bindings mismatch:
-after transform: ScopeId(3): ["_a$b", "a", "b"]
-rebuilt        : ScopeId(6): ["_a$b"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(0))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Bindings mismatch:
-after transform: ScopeId(4): ["_a$b2", "a", "b"]
-rebuilt        : ScopeId(8): ["_a$b2"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(0))
-rebuilt        : ScopeId(8): Some(ScopeId(7))
-Bindings mismatch:
-after transform: ScopeId(5): ["_a$b3", "a", "b"]
-rebuilt        : ScopeId(10): ["_a$b3"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(0))
-rebuilt        : ScopeId(10): Some(ScopeId(9))
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(1)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(4): ScopeId(3)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(3)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(6): ScopeId(3)
-rebuilt        : SymbolId(7): ScopeId(5)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(7): ScopeId(3)
-rebuilt        : SymbolId(8): ScopeId(5)
-Symbol reference IDs mismatch for "_a$b":
-after transform: SymbolId(15): [ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
-rebuilt        : SymbolId(9): [ReferenceId(5), ReferenceId(7), ReferenceId(8), ReferenceId(9)]
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(9): ScopeId(4)
-rebuilt        : SymbolId(11): ScopeId(7)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(10): ScopeId(4)
-rebuilt        : SymbolId(12): ScopeId(7)
-Symbol reference IDs mismatch for "_a$b2":
-after transform: SymbolId(16): [ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17)]
-rebuilt        : SymbolId(13): [ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14)]
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(12): ScopeId(5)
-rebuilt        : SymbolId(15): ScopeId(9)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(13): ScopeId(5)
-rebuilt        : SymbolId(16): ScopeId(9)
-Symbol reference IDs mismatch for "_a$b3":
-after transform: SymbolId(17): [ReferenceId(19), ReferenceId(20), ReferenceId(21)]
-rebuilt        : SymbolId(17): [ReferenceId(16), ReferenceId(18)]
 
-* assumption-noDocumentAll/memoize/input.js
-Symbol reference IDs mismatch for "_foo$bar":
-after transform: SymbolId(2): [ReferenceId(27), ReferenceId(28), ReferenceId(29)]
-rebuilt        : SymbolId(2): [ReferenceId(3), ReferenceId(5)]
-Symbol reference IDs mismatch for "_foo$bar5":
-after transform: SymbolId(9): [ReferenceId(46), ReferenceId(47), ReferenceId(48)]
-rebuilt        : SymbolId(9): [ReferenceId(35), ReferenceId(37)]
-Symbol reference IDs mismatch for "_foo$bar7":
-after transform: SymbolId(11): [ReferenceId(53), ReferenceId(54), ReferenceId(55)]
-rebuilt        : SymbolId(11): [ReferenceId(45), ReferenceId(47)]
-Symbol reference IDs mismatch for "_foo$bar8$baz":
-after transform: SymbolId(13): [ReferenceId(58), ReferenceId(59), ReferenceId(60)]
-rebuilt        : SymbolId(13): [ReferenceId(51), ReferenceId(53)]
-Symbol reference IDs mismatch for "_foo$bar9":
-after transform: SymbolId(14): [ReferenceId(63), ReferenceId(64), ReferenceId(65), ReferenceId(69)]
-rebuilt        : SymbolId(14): [ReferenceId(57), ReferenceId(60), ReferenceId(62)]
-Symbol reference IDs mismatch for "_foo$bar9$baz":
-after transform: SymbolId(15): [ReferenceId(66), ReferenceId(67), ReferenceId(68)]
-rebuilt        : SymbolId(15): [ReferenceId(59), ReferenceId(61)]
-
-* general/delete-in-function-params/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Bindings mismatch:
-after transform: ScopeId(1): ["_a", "x"]
-rebuilt        : ScopeId(2): ["_a"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(1): Some(ScopeId(0))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(1)
-
-* general/in-function-params/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "a"]
-rebuilt        : ScopeId(2): ["_x"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(1): Some(ScopeId(0))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
-Bindings mismatch:
-after transform: ScopeId(2): ["a", "b"]
-rebuilt        : ScopeId(4): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(0))
-rebuilt        : ScopeId(4): Some(ScopeId(3))
-Bindings mismatch:
-after transform: ScopeId(3): ["_a$b", "a", "b"]
-rebuilt        : ScopeId(6): ["_a$b"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(0))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Bindings mismatch:
-after transform: ScopeId(4): ["_a$b2", "a", "b"]
-rebuilt        : ScopeId(8): ["_a$b2"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(0))
-rebuilt        : ScopeId(8): Some(ScopeId(7))
-Bindings mismatch:
-after transform: ScopeId(5): ["_a$b3", "a", "b"]
-rebuilt        : ScopeId(10): ["_a$b3"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(0))
-rebuilt        : ScopeId(10): Some(ScopeId(9))
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(1)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(4): ScopeId(3)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(3)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(6): ScopeId(3)
-rebuilt        : SymbolId(7): ScopeId(5)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(7): ScopeId(3)
-rebuilt        : SymbolId(8): ScopeId(5)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(9): ScopeId(4)
-rebuilt        : SymbolId(11): ScopeId(7)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(10): ScopeId(4)
-rebuilt        : SymbolId(12): ScopeId(7)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(12): ScopeId(5)
-rebuilt        : SymbolId(15): ScopeId(9)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(13): ScopeId(5)
-rebuilt        : SymbolId(16): ScopeId(9)
-
-* general/in-function-params-loose/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "a"]
-rebuilt        : ScopeId(2): ["_x"]
-Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(Function)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(1): Some(ScopeId(0))
-rebuilt        : ScopeId(2): Some(ScopeId(1))
-Bindings mismatch:
-after transform: ScopeId(2): ["a", "b"]
-rebuilt        : ScopeId(4): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(0))
-rebuilt        : ScopeId(4): Some(ScopeId(3))
-Bindings mismatch:
-after transform: ScopeId(3): ["_a$b", "a", "b"]
-rebuilt        : ScopeId(6): ["_a$b"]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(0))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Bindings mismatch:
-after transform: ScopeId(4): ["_a$b2", "a", "b"]
-rebuilt        : ScopeId(8): ["_a$b2"]
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(Function)
-rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(0))
-rebuilt        : ScopeId(8): Some(ScopeId(7))
-Bindings mismatch:
-after transform: ScopeId(5): ["_a$b3", "a", "b"]
-rebuilt        : ScopeId(10): ["_a$b3"]
-Scope flags mismatch:
-after transform: ScopeId(5): ScopeFlags(Function)
-rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(5): Some(ScopeId(0))
-rebuilt        : ScopeId(10): Some(ScopeId(9))
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(1)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(4): ScopeId(3)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(3)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(6): ScopeId(3)
-rebuilt        : SymbolId(7): ScopeId(5)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(7): ScopeId(3)
-rebuilt        : SymbolId(8): ScopeId(5)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(9): ScopeId(4)
-rebuilt        : SymbolId(11): ScopeId(7)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(10): ScopeId(4)
-rebuilt        : SymbolId(12): ScopeId(7)
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(12): ScopeId(5)
-rebuilt        : SymbolId(15): ScopeId(9)
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(13): ScopeId(5)
-rebuilt        : SymbolId(16): ScopeId(9)
-
+# babel-plugin-transform-optional-chaining (42/45)
 * transparent-expr-wrappers/ts-as-function-call-loose/input.ts
 Unresolved references mismatch:
 after transform: ["A", "B", "foo"]
@@ -1619,7 +1355,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (47/157)
+# babel-plugin-transform-typescript (49/159)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1834,6 +1570,22 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 * enum/mix-references/input.ts
 x Output mismatch
 
+* enum/non-constant-member-reference/input.ts
+Missing ReferenceId: "Foo"
+Missing ReferenceId: "Foo"
+Bindings mismatch:
+after transform: ScopeId(1): ["A", "B", "C", "D", "Foo"]
+rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(1): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(7): [ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
+rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(12)]
+
 * enum/non-foldable-constant/input.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
@@ -1976,12 +1728,6 @@ Symbol reference IDs mismatch for "None":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
 
-* exports/export-import=/input.ts
-Missing SymbolId: "JGraph"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-
 * exports/export-type/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -2060,11 +1806,9 @@ after transform: ScopeId(0): ["React", "x"]
 rebuilt        : ScopeId(0): ["x"]
 
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
-Missing SymbolId: "foo"
-Missing SymbolId: "bar"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Bindings mismatch:
+after transform: ScopeId(0): ["nsa", "nsb"]
+rebuilt        : ScopeId(0): []
 
 * imports/elide-typeof/input.ts
 Bindings mismatch:
@@ -2159,23 +1903,10 @@ Bindings mismatch:
 after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): []
 
-* imports/import=-module-to-cjs/input.ts
-Missing SymbolId: "lib"
-Missing ReferenceId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "lib":
-after transform: SymbolId(0) "lib"
-rebuilt        : SymbolId(0) "lib"
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
-
 * imports/only-remove-type-imports/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
-rebuilt        : ScopeId(0): ["L2", "a", "b", "c2", "d", "d2", "e", "e4"]
+after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4", "x"]
+rebuilt        : ScopeId(0): ["L2", "a", "b", "c2", "d", "d2", "e", "e4", "x"]
 
 * imports/property-signature/input.ts
 Bindings mismatch:
@@ -2219,467 +1950,382 @@ after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 * namespace/alias/input.ts
-Missing SymbolId: "b"
-Missing SymbolId: "AliasModule"
 Bindings mismatch:
-after transform: ScopeId(0): ["AliasModule", "LongNameModule", "b", "babel", "bar", "baz", "node", "some", "str"]
-rebuilt        : ScopeId(0): ["AliasModule", "b", "babel", "bar", "baz", "node", "some", "str"]
+after transform: ScopeId(0): ["AliasModule", "LongNameModule", "babel", "bar", "baz", "node", "some", "str"]
+rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "AliasModule":
-after transform: SymbolId(8) "AliasModule"
-rebuilt        : SymbolId(2) "AliasModule"
-Reference symbol mismatch for "AliasModule":
-after transform: SymbolId(8) "AliasModule"
-rebuilt        : SymbolId(2) "AliasModule"
+Symbol reference IDs mismatch for "AliasModule":
+after transform: SymbolId(8): [ReferenceId(2), ReferenceId(3), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
 Unresolved reference IDs mismatch for "LongNameModule":
 after transform: [ReferenceId(1), ReferenceId(5)]
-rebuilt        : [ReferenceId(1)]
+rebuilt        : [ReferenceId(0)]
 
 * namespace/clobber-class/input.ts
-Missing SymbolId: "_A"
-Missing ReferenceId: "_A"
-Missing ReferenceId: "A"
-Missing ReferenceId: "A"
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 22, end: 23 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/clobber-enum/input.ts
-Missing SymbolId: "_A"
-Missing ReferenceId: "_A"
-Missing ReferenceId: "A"
-Missing ReferenceId: "A"
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "C"]
 rebuilt        : ScopeId(1): ["A"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(2): [SymbolId(2), SymbolId(3)]
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(6)]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 30, end: 31 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/clobber-export/input.ts
-Missing SymbolId: "_N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
 Symbol flags mismatch for "N":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol reference IDs mismatch for "N":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 Symbol redeclarations mismatch for "N":
 after transform: SymbolId(0): [Span { start: 35, end: 36 }]
 rebuilt        : SymbolId(0): []
 
 * namespace/contentious-names/input.ts
-Missing SymbolId: "N"
-Missing SymbolId: "_N"
-Missing SymbolId: "N"
-Missing SymbolId: "_N2"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Missing SymbolId: "constructor"
-Missing SymbolId: "_constructor"
-Missing ReferenceId: "constructor"
-Missing ReferenceId: "constructor"
-Missing SymbolId: "length"
-Missing SymbolId: "_length"
-Missing ReferenceId: "length"
-Missing ReferenceId: "length"
-Missing SymbolId: "concat"
-Missing SymbolId: "_concat"
-Missing ReferenceId: "concat"
-Missing ReferenceId: "concat"
-Missing SymbolId: "copyWithin"
-Missing SymbolId: "_copyWithin"
-Missing ReferenceId: "copyWithin"
-Missing ReferenceId: "copyWithin"
-Missing SymbolId: "fill"
-Missing SymbolId: "_fill"
-Missing ReferenceId: "fill"
-Missing ReferenceId: "fill"
-Missing SymbolId: "find"
-Missing SymbolId: "_find"
-Missing ReferenceId: "find"
-Missing ReferenceId: "find"
-Missing SymbolId: "findIndex"
-Missing SymbolId: "_findIndex"
-Missing ReferenceId: "findIndex"
-Missing ReferenceId: "findIndex"
-Missing SymbolId: "lastIndexOf"
-Missing SymbolId: "_lastIndexOf"
-Missing ReferenceId: "lastIndexOf"
-Missing ReferenceId: "lastIndexOf"
-Missing SymbolId: "pop"
-Missing SymbolId: "_pop"
-Missing ReferenceId: "pop"
-Missing ReferenceId: "pop"
-Missing SymbolId: "push"
-Missing SymbolId: "_push"
-Missing ReferenceId: "push"
-Missing ReferenceId: "push"
-Missing SymbolId: "reverse"
-Missing SymbolId: "_reverse"
-Missing ReferenceId: "reverse"
-Missing ReferenceId: "reverse"
-Missing SymbolId: "shift"
-Missing SymbolId: "_shift"
-Missing ReferenceId: "shift"
-Missing ReferenceId: "shift"
-Missing SymbolId: "unshift"
-Missing SymbolId: "_unshift"
-Missing ReferenceId: "unshift"
-Missing ReferenceId: "unshift"
-Missing SymbolId: "slice"
-Missing SymbolId: "_slice"
-Missing ReferenceId: "slice"
-Missing ReferenceId: "slice"
-Missing SymbolId: "sort"
-Missing SymbolId: "_sort"
-Missing ReferenceId: "sort"
-Missing ReferenceId: "sort"
-Missing SymbolId: "splice"
-Missing SymbolId: "_splice"
-Missing ReferenceId: "splice"
-Missing ReferenceId: "splice"
-Missing SymbolId: "includes"
-Missing SymbolId: "_includes"
-Missing ReferenceId: "includes"
-Missing ReferenceId: "includes"
-Missing SymbolId: "indexOf"
-Missing SymbolId: "_indexOf"
-Missing ReferenceId: "indexOf"
-Missing ReferenceId: "indexOf"
-Missing SymbolId: "join"
-Missing SymbolId: "_join"
-Missing ReferenceId: "join"
-Missing ReferenceId: "join"
-Missing SymbolId: "keys"
-Missing SymbolId: "_keys"
-Missing ReferenceId: "keys"
-Missing ReferenceId: "keys"
-Missing SymbolId: "entries"
-Missing SymbolId: "_entries"
-Missing ReferenceId: "entries"
-Missing ReferenceId: "entries"
-Missing SymbolId: "values"
-Missing SymbolId: "_values"
-Missing ReferenceId: "values"
-Missing ReferenceId: "values"
-Missing SymbolId: "forEach"
-Missing SymbolId: "_forEach"
-Missing ReferenceId: "forEach"
-Missing ReferenceId: "forEach"
-Missing SymbolId: "filter"
-Missing SymbolId: "_filter"
-Missing ReferenceId: "filter"
-Missing ReferenceId: "filter"
-Missing SymbolId: "map"
-Missing SymbolId: "_map"
-Missing ReferenceId: "map"
-Missing ReferenceId: "map"
-Missing SymbolId: "every"
-Missing SymbolId: "_every"
-Missing ReferenceId: "every"
-Missing ReferenceId: "every"
-Missing SymbolId: "some"
-Missing SymbolId: "_some"
-Missing ReferenceId: "some"
-Missing ReferenceId: "some"
-Missing SymbolId: "reduce"
-Missing SymbolId: "_reduce"
-Missing ReferenceId: "reduce"
-Missing ReferenceId: "reduce"
-Missing SymbolId: "reduceRight"
-Missing SymbolId: "_reduceRight"
-Missing ReferenceId: "reduceRight"
-Missing ReferenceId: "reduceRight"
-Missing SymbolId: "toLocaleString"
-Missing SymbolId: "_toLocaleString"
-Missing ReferenceId: "toLocaleString"
-Missing ReferenceId: "toLocaleString"
-Missing SymbolId: "toString"
-Missing SymbolId: "_toString"
-Missing ReferenceId: "toString"
-Missing ReferenceId: "toString"
-Missing SymbolId: "flat"
-Missing SymbolId: "_flat"
-Missing ReferenceId: "flat"
-Missing ReferenceId: "flat"
-Missing SymbolId: "flatMap"
-Missing SymbolId: "_flatMap"
-Missing ReferenceId: "flatMap"
-Missing ReferenceId: "flatMap"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(9), SymbolId(11), SymbolId(13), SymbolId(15), SymbolId(17), SymbolId(19), SymbolId(21), SymbolId(23), SymbolId(25), SymbolId(27), SymbolId(29), SymbolId(31), SymbolId(33), SymbolId(35), SymbolId(37), SymbolId(39), SymbolId(41), SymbolId(43), SymbolId(45), SymbolId(47), SymbolId(49), SymbolId(51), SymbolId(53), SymbolId(55), SymbolId(57), SymbolId(59), SymbolId(61), SymbolId(63), SymbolId(65), SymbolId(67), SymbolId(69)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5), SymbolId(8), SymbolId(11), SymbolId(14), SymbolId(17), SymbolId(20), SymbolId(23), SymbolId(26), SymbolId(29), SymbolId(32), SymbolId(35), SymbolId(38), SymbolId(41), SymbolId(44), SymbolId(47), SymbolId(50), SymbolId(53), SymbolId(56), SymbolId(59), SymbolId(62), SymbolId(65), SymbolId(68), SymbolId(71), SymbolId(74), SymbolId(77), SymbolId(80), SymbolId(83), SymbolId(86), SymbolId(89), SymbolId(92), SymbolId(95), SymbolId(98), SymbolId(101)]
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(70)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(4), SymbolId(71)]
-rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
-Binding symbols mismatch:
-after transform: ScopeId(4): [SymbolId(6), SymbolId(72)]
-rebuilt        : ScopeId(4): [SymbolId(9), SymbolId(10)]
-Binding symbols mismatch:
-after transform: ScopeId(5): [SymbolId(8), SymbolId(73)]
-rebuilt        : ScopeId(5): [SymbolId(12), SymbolId(13)]
-Binding symbols mismatch:
-after transform: ScopeId(6): [SymbolId(10), SymbolId(74)]
-rebuilt        : ScopeId(6): [SymbolId(15), SymbolId(16)]
-Binding symbols mismatch:
-after transform: ScopeId(7): [SymbolId(12), SymbolId(75)]
-rebuilt        : ScopeId(7): [SymbolId(18), SymbolId(19)]
-Binding symbols mismatch:
-after transform: ScopeId(8): [SymbolId(14), SymbolId(76)]
-rebuilt        : ScopeId(8): [SymbolId(21), SymbolId(22)]
-Binding symbols mismatch:
-after transform: ScopeId(9): [SymbolId(16), SymbolId(77)]
-rebuilt        : ScopeId(9): [SymbolId(24), SymbolId(25)]
-Binding symbols mismatch:
-after transform: ScopeId(10): [SymbolId(18), SymbolId(78)]
-rebuilt        : ScopeId(10): [SymbolId(27), SymbolId(28)]
-Binding symbols mismatch:
-after transform: ScopeId(11): [SymbolId(20), SymbolId(79)]
-rebuilt        : ScopeId(11): [SymbolId(30), SymbolId(31)]
-Binding symbols mismatch:
-after transform: ScopeId(12): [SymbolId(22), SymbolId(80)]
-rebuilt        : ScopeId(12): [SymbolId(33), SymbolId(34)]
-Binding symbols mismatch:
-after transform: ScopeId(13): [SymbolId(24), SymbolId(81)]
-rebuilt        : ScopeId(13): [SymbolId(36), SymbolId(37)]
-Binding symbols mismatch:
-after transform: ScopeId(14): [SymbolId(26), SymbolId(82)]
-rebuilt        : ScopeId(14): [SymbolId(39), SymbolId(40)]
-Binding symbols mismatch:
-after transform: ScopeId(15): [SymbolId(28), SymbolId(83)]
-rebuilt        : ScopeId(15): [SymbolId(42), SymbolId(43)]
-Binding symbols mismatch:
-after transform: ScopeId(16): [SymbolId(30), SymbolId(84)]
-rebuilt        : ScopeId(16): [SymbolId(45), SymbolId(46)]
-Binding symbols mismatch:
-after transform: ScopeId(17): [SymbolId(32), SymbolId(85)]
-rebuilt        : ScopeId(17): [SymbolId(48), SymbolId(49)]
-Binding symbols mismatch:
-after transform: ScopeId(18): [SymbolId(34), SymbolId(86)]
-rebuilt        : ScopeId(18): [SymbolId(51), SymbolId(52)]
-Binding symbols mismatch:
-after transform: ScopeId(19): [SymbolId(36), SymbolId(87)]
-rebuilt        : ScopeId(19): [SymbolId(54), SymbolId(55)]
-Binding symbols mismatch:
-after transform: ScopeId(20): [SymbolId(38), SymbolId(88)]
-rebuilt        : ScopeId(20): [SymbolId(57), SymbolId(58)]
-Binding symbols mismatch:
-after transform: ScopeId(21): [SymbolId(40), SymbolId(89)]
-rebuilt        : ScopeId(21): [SymbolId(60), SymbolId(61)]
-Binding symbols mismatch:
-after transform: ScopeId(22): [SymbolId(42), SymbolId(90)]
-rebuilt        : ScopeId(22): [SymbolId(63), SymbolId(64)]
-Binding symbols mismatch:
-after transform: ScopeId(23): [SymbolId(44), SymbolId(91)]
-rebuilt        : ScopeId(23): [SymbolId(66), SymbolId(67)]
-Binding symbols mismatch:
-after transform: ScopeId(24): [SymbolId(46), SymbolId(92)]
-rebuilt        : ScopeId(24): [SymbolId(69), SymbolId(70)]
-Binding symbols mismatch:
-after transform: ScopeId(25): [SymbolId(48), SymbolId(93)]
-rebuilt        : ScopeId(25): [SymbolId(72), SymbolId(73)]
-Binding symbols mismatch:
-after transform: ScopeId(26): [SymbolId(50), SymbolId(94)]
-rebuilt        : ScopeId(26): [SymbolId(75), SymbolId(76)]
-Binding symbols mismatch:
-after transform: ScopeId(27): [SymbolId(52), SymbolId(95)]
-rebuilt        : ScopeId(27): [SymbolId(78), SymbolId(79)]
-Binding symbols mismatch:
-after transform: ScopeId(28): [SymbolId(54), SymbolId(96)]
-rebuilt        : ScopeId(28): [SymbolId(81), SymbolId(82)]
-Binding symbols mismatch:
-after transform: ScopeId(29): [SymbolId(56), SymbolId(97)]
-rebuilt        : ScopeId(29): [SymbolId(84), SymbolId(85)]
-Binding symbols mismatch:
-after transform: ScopeId(30): [SymbolId(58), SymbolId(98)]
-rebuilt        : ScopeId(30): [SymbolId(87), SymbolId(88)]
-Binding symbols mismatch:
-after transform: ScopeId(31): [SymbolId(60), SymbolId(99)]
-rebuilt        : ScopeId(31): [SymbolId(90), SymbolId(91)]
-Binding symbols mismatch:
-after transform: ScopeId(32): [SymbolId(62), SymbolId(100)]
-rebuilt        : ScopeId(32): [SymbolId(93), SymbolId(94)]
-Binding symbols mismatch:
-after transform: ScopeId(33): [SymbolId(64), SymbolId(101)]
-rebuilt        : ScopeId(33): [SymbolId(96), SymbolId(97)]
-Binding symbols mismatch:
-after transform: ScopeId(34): [SymbolId(66), SymbolId(102)]
-rebuilt        : ScopeId(34): [SymbolId(99), SymbolId(100)]
-Binding symbols mismatch:
-after transform: ScopeId(35): [SymbolId(68), SymbolId(103)]
-rebuilt        : ScopeId(35): [SymbolId(102), SymbolId(103)]
+Symbol flags mismatch for "N":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol flags mismatch for "N":
+after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(1): Span { start: 26, end: 27 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol flags mismatch for "constructor":
+after transform: SymbolId(3): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "constructor":
+after transform: SymbolId(3): Span { start: 50, end: 61 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol flags mismatch for "length":
+after transform: SymbolId(5): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "length":
+after transform: SymbolId(5): Span { start: 84, end: 90 }
+rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
+Symbol flags mismatch for "concat":
+after transform: SymbolId(7): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "concat":
+after transform: SymbolId(7): Span { start: 113, end: 119 }
+rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
+Symbol flags mismatch for "copyWithin":
+after transform: SymbolId(9): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(14): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "copyWithin":
+after transform: SymbolId(9): Span { start: 142, end: 152 }
+rebuilt        : SymbolId(14): Span { start: 0, end: 0 }
+Symbol flags mismatch for "fill":
+after transform: SymbolId(11): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(17): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "fill":
+after transform: SymbolId(11): Span { start: 175, end: 179 }
+rebuilt        : SymbolId(17): Span { start: 0, end: 0 }
+Symbol flags mismatch for "find":
+after transform: SymbolId(13): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "find":
+after transform: SymbolId(13): Span { start: 202, end: 206 }
+rebuilt        : SymbolId(20): Span { start: 0, end: 0 }
+Symbol flags mismatch for "findIndex":
+after transform: SymbolId(15): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(23): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "findIndex":
+after transform: SymbolId(15): Span { start: 229, end: 238 }
+rebuilt        : SymbolId(23): Span { start: 0, end: 0 }
+Symbol flags mismatch for "lastIndexOf":
+after transform: SymbolId(17): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(26): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "lastIndexOf":
+after transform: SymbolId(17): Span { start: 261, end: 272 }
+rebuilt        : SymbolId(26): Span { start: 0, end: 0 }
+Symbol flags mismatch for "pop":
+after transform: SymbolId(19): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(29): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "pop":
+after transform: SymbolId(19): Span { start: 295, end: 298 }
+rebuilt        : SymbolId(29): Span { start: 0, end: 0 }
+Symbol flags mismatch for "push":
+after transform: SymbolId(21): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(32): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "push":
+after transform: SymbolId(21): Span { start: 321, end: 325 }
+rebuilt        : SymbolId(32): Span { start: 0, end: 0 }
+Symbol flags mismatch for "reverse":
+after transform: SymbolId(23): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(35): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "reverse":
+after transform: SymbolId(23): Span { start: 348, end: 355 }
+rebuilt        : SymbolId(35): Span { start: 0, end: 0 }
+Symbol flags mismatch for "shift":
+after transform: SymbolId(25): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(38): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "shift":
+after transform: SymbolId(25): Span { start: 378, end: 383 }
+rebuilt        : SymbolId(38): Span { start: 0, end: 0 }
+Symbol flags mismatch for "unshift":
+after transform: SymbolId(27): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(41): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "unshift":
+after transform: SymbolId(27): Span { start: 406, end: 413 }
+rebuilt        : SymbolId(41): Span { start: 0, end: 0 }
+Symbol flags mismatch for "slice":
+after transform: SymbolId(29): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(44): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "slice":
+after transform: SymbolId(29): Span { start: 436, end: 441 }
+rebuilt        : SymbolId(44): Span { start: 0, end: 0 }
+Symbol flags mismatch for "sort":
+after transform: SymbolId(31): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(47): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "sort":
+after transform: SymbolId(31): Span { start: 464, end: 468 }
+rebuilt        : SymbolId(47): Span { start: 0, end: 0 }
+Symbol flags mismatch for "splice":
+after transform: SymbolId(33): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(50): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "splice":
+after transform: SymbolId(33): Span { start: 491, end: 497 }
+rebuilt        : SymbolId(50): Span { start: 0, end: 0 }
+Symbol flags mismatch for "includes":
+after transform: SymbolId(35): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(53): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "includes":
+after transform: SymbolId(35): Span { start: 520, end: 528 }
+rebuilt        : SymbolId(53): Span { start: 0, end: 0 }
+Symbol flags mismatch for "indexOf":
+after transform: SymbolId(37): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(56): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "indexOf":
+after transform: SymbolId(37): Span { start: 551, end: 558 }
+rebuilt        : SymbolId(56): Span { start: 0, end: 0 }
+Symbol flags mismatch for "join":
+after transform: SymbolId(39): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(59): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "join":
+after transform: SymbolId(39): Span { start: 581, end: 585 }
+rebuilt        : SymbolId(59): Span { start: 0, end: 0 }
+Symbol flags mismatch for "keys":
+after transform: SymbolId(41): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(62): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "keys":
+after transform: SymbolId(41): Span { start: 608, end: 612 }
+rebuilt        : SymbolId(62): Span { start: 0, end: 0 }
+Symbol flags mismatch for "entries":
+after transform: SymbolId(43): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(65): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "entries":
+after transform: SymbolId(43): Span { start: 635, end: 642 }
+rebuilt        : SymbolId(65): Span { start: 0, end: 0 }
+Symbol flags mismatch for "values":
+after transform: SymbolId(45): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(68): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "values":
+after transform: SymbolId(45): Span { start: 665, end: 671 }
+rebuilt        : SymbolId(68): Span { start: 0, end: 0 }
+Symbol flags mismatch for "forEach":
+after transform: SymbolId(47): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(71): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "forEach":
+after transform: SymbolId(47): Span { start: 694, end: 701 }
+rebuilt        : SymbolId(71): Span { start: 0, end: 0 }
+Symbol flags mismatch for "filter":
+after transform: SymbolId(49): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(74): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "filter":
+after transform: SymbolId(49): Span { start: 724, end: 730 }
+rebuilt        : SymbolId(74): Span { start: 0, end: 0 }
+Symbol flags mismatch for "map":
+after transform: SymbolId(51): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(77): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "map":
+after transform: SymbolId(51): Span { start: 753, end: 756 }
+rebuilt        : SymbolId(77): Span { start: 0, end: 0 }
+Symbol flags mismatch for "every":
+after transform: SymbolId(53): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(80): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "every":
+after transform: SymbolId(53): Span { start: 779, end: 784 }
+rebuilt        : SymbolId(80): Span { start: 0, end: 0 }
+Symbol flags mismatch for "some":
+after transform: SymbolId(55): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(83): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "some":
+after transform: SymbolId(55): Span { start: 807, end: 811 }
+rebuilt        : SymbolId(83): Span { start: 0, end: 0 }
+Symbol flags mismatch for "reduce":
+after transform: SymbolId(57): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(86): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "reduce":
+after transform: SymbolId(57): Span { start: 834, end: 840 }
+rebuilt        : SymbolId(86): Span { start: 0, end: 0 }
+Symbol flags mismatch for "reduceRight":
+after transform: SymbolId(59): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(89): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "reduceRight":
+after transform: SymbolId(59): Span { start: 863, end: 874 }
+rebuilt        : SymbolId(89): Span { start: 0, end: 0 }
+Symbol flags mismatch for "toLocaleString":
+after transform: SymbolId(61): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(92): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "toLocaleString":
+after transform: SymbolId(61): Span { start: 897, end: 911 }
+rebuilt        : SymbolId(92): Span { start: 0, end: 0 }
+Symbol flags mismatch for "toString":
+after transform: SymbolId(63): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(95): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "toString":
+after transform: SymbolId(63): Span { start: 934, end: 942 }
+rebuilt        : SymbolId(95): Span { start: 0, end: 0 }
+Symbol flags mismatch for "flat":
+after transform: SymbolId(65): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(98): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "flat":
+after transform: SymbolId(65): Span { start: 965, end: 969 }
+rebuilt        : SymbolId(98): Span { start: 0, end: 0 }
+Symbol flags mismatch for "flatMap":
+after transform: SymbolId(67): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(101): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "flatMap":
+after transform: SymbolId(67): Span { start: 992, end: 999 }
+rebuilt        : SymbolId(101): Span { start: 0, end: 0 }
 
 * namespace/declare/input.ts
-Missing SymbolId: "N"
-Missing SymbolId: "_N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "_N", "e", "v"]
 rebuilt        : ScopeId(1): ["_N"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): []
+Symbol flags mismatch for "N":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(0): Span { start: 17, end: 18 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 * namespace/declare-global-nested-namespace/input.ts
-Missing SymbolId: "X"
-Missing SymbolId: "_X"
-Missing ReferenceId: "X"
-Missing ReferenceId: "X"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(2), SymbolId(4)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(3)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(3), SymbolId(5)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Symbol flags mismatch for "X":
+after transform: SymbolId(2): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "X":
+after transform: SymbolId(2): Span { start: 70, end: 71 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 * namespace/empty-removed/input.ts
-Missing SymbolId: "a"
-Missing SymbolId: "_a"
-Missing SymbolId: "c"
-Missing SymbolId: "_c"
-Missing ReferenceId: "c"
-Missing ReferenceId: "c"
-Missing ReferenceId: "a"
-Missing ReferenceId: "a"
-Missing SymbolId: "WithTypes"
-Missing SymbolId: "_WithTypes"
-Missing SymbolId: "d"
-Missing SymbolId: "_d2"
-Missing ReferenceId: "d"
-Missing ReferenceId: "d"
-Missing ReferenceId: "WithTypes"
-Missing ReferenceId: "WithTypes"
-Missing SymbolId: "WithValues"
-Missing SymbolId: "_WithValues"
-Missing SymbolId: "a"
-Missing SymbolId: "_a3"
-Missing ReferenceId: "a"
-Missing ReferenceId: "a"
-Missing SymbolId: "b"
-Missing SymbolId: "_b3"
-Missing ReferenceId: "b"
-Missing ReferenceId: "b"
-Missing SymbolId: "c"
-Missing SymbolId: "_c3"
-Missing ReferenceId: "c"
-Missing ReferenceId: "c"
-Missing SymbolId: "d"
-Missing SymbolId: "_d3"
-Missing ReferenceId: "d"
-Missing ReferenceId: "d"
-Missing SymbolId: "e"
-Missing SymbolId: "_e2"
-Missing ReferenceId: "e"
-Missing ReferenceId: "e"
-Missing ReferenceId: "WithValues"
-Missing ReferenceId: "WithValues"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(6), SymbolId(14)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(9)]
 Bindings mismatch:
 after transform: ScopeId(1): ["_a", "b", "c", "d"]
 rebuilt        : ScopeId(1): ["_a", "c"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(3), SymbolId(26)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
 Bindings mismatch:
 after transform: ScopeId(6): ["_WithTypes", "a", "b", "c", "d"]
 rebuilt        : ScopeId(3): ["_WithTypes", "d"]
 Scope children mismatch:
 after transform: ScopeId(6): [ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(12)]
 rebuilt        : ScopeId(3): [ScopeId(4)]
-Binding symbols mismatch:
-after transform: ScopeId(12): [SymbolId(33)]
-rebuilt        : ScopeId(4): [SymbolId(8)]
 Scope children mismatch:
 after transform: ScopeId(12): [ScopeId(13)]
 rebuilt        : ScopeId(4): []
-Binding symbols mismatch:
-after transform: ScopeId(14): [SymbolId(15), SymbolId(17), SymbolId(19), SymbolId(21), SymbolId(23), SymbolId(34)]
-rebuilt        : ScopeId(5): [SymbolId(10), SymbolId(11), SymbolId(14), SymbolId(18), SymbolId(21), SymbolId(24)]
-Binding symbols mismatch:
-after transform: ScopeId(15): [SymbolId(16), SymbolId(35)]
-rebuilt        : ScopeId(6): [SymbolId(12), SymbolId(13)]
-Binding symbols mismatch:
-after transform: ScopeId(17): [SymbolId(18), SymbolId(36)]
-rebuilt        : ScopeId(8): [SymbolId(15), SymbolId(16)]
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
-Binding symbols mismatch:
-after transform: ScopeId(19): [SymbolId(20), SymbolId(37)]
-rebuilt        : ScopeId(10): [SymbolId(19), SymbolId(20)]
-Binding symbols mismatch:
-after transform: ScopeId(21): [SymbolId(22), SymbolId(38)]
-rebuilt        : ScopeId(12): [SymbolId(22), SymbolId(23)]
-Binding symbols mismatch:
-after transform: ScopeId(22): [SymbolId(39)]
-rebuilt        : ScopeId(13): [SymbolId(25)]
+Symbol flags mismatch for "a":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "a":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "a":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4), ReferenceId(5)]
+rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
+Symbol flags mismatch for "c":
+after transform: SymbolId(2): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "c":
+after transform: SymbolId(2): Span { start: 43, end: 44 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol flags mismatch for "WithTypes":
+after transform: SymbolId(6): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "WithTypes":
+after transform: SymbolId(6): Span { start: 107, end: 116 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol flags mismatch for "d":
+after transform: SymbolId(13): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "d":
+after transform: SymbolId(13): Span { start: 224, end: 225 }
+rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+Symbol flags mismatch for "WithValues":
+after transform: SymbolId(14): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "WithValues":
+after transform: SymbolId(14): Span { start: 262, end: 272 }
+rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
+Symbol flags mismatch for "a":
+after transform: SymbolId(15): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "a":
+after transform: SymbolId(15): Span { start: 287, end: 288 }
+rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
+Symbol flags mismatch for "b":
+after transform: SymbolId(17): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(14): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "b":
+after transform: SymbolId(17): Span { start: 316, end: 317 }
+rebuilt        : SymbolId(14): Span { start: 0, end: 0 }
 Symbol flags mismatch for "B":
 after transform: SymbolId(18): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
+Symbol flags mismatch for "c":
+after transform: SymbolId(19): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(18): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "c":
+after transform: SymbolId(19): Span { start: 344, end: 345 }
+rebuilt        : SymbolId(18): Span { start: 0, end: 0 }
 Symbol flags mismatch for "C":
 after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Function)
 rebuilt        : SymbolId(20): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "d":
+after transform: SymbolId(21): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(21): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "d":
+after transform: SymbolId(21): Span { start: 378, end: 379 }
+rebuilt        : SymbolId(21): Span { start: 0, end: 0 }
+Symbol flags mismatch for "e":
+after transform: SymbolId(23): SymbolFlags(NameSpaceModule)
+rebuilt        : SymbolId(24): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "e":
+after transform: SymbolId(23): Span { start: 402, end: 403 }
+rebuilt        : SymbolId(24): Span { start: 0, end: 0 }
 
 * namespace/export/input.ts
-Missing SymbolId: "N"
-Missing SymbolId: "_N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Symbol flags mismatch for "N":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(0): Span { start: 17, end: 18 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 * namespace/export-type-only/input.ts
 Bindings mismatch:
@@ -2693,102 +2339,55 @@ after transform: ["Platform"]
 rebuilt        : []
 
 * namespace/module-nested/input.ts
-Missing SymbolId: "src"
-Missing SymbolId: "_src"
-Missing SymbolId: "ns1"
-Missing SymbolId: "_ns"
-Missing ReferenceId: "_ns"
-Missing ReferenceId: "foo"
-Missing ReferenceId: "ns1"
-Missing ReferenceId: "ns1"
-Missing ReferenceId: "_src"
-Missing ReferenceId: "_src"
-Missing SymbolId: "ns2"
-Missing SymbolId: "_ns2"
-Missing ReferenceId: "_ns2"
-Missing ReferenceId: "foo"
-Missing ReferenceId: "ns2"
-Missing ReferenceId: "ns2"
-Missing ReferenceId: "_src"
-Missing ReferenceId: "_src"
-Missing ReferenceId: "src"
-Missing ReferenceId: "src"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(5)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5)]
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(6)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
-Binding symbols mismatch:
-after transform: ScopeId(4): [SymbolId(4), SymbolId(7)]
-rebuilt        : ScopeId(4): [SymbolId(6), SymbolId(7)]
-Symbol reference IDs mismatch for "foo":
-after transform: SymbolId(2): []
-rebuilt        : SymbolId(4): [ReferenceId(1)]
-Symbol reference IDs mismatch for "foo":
-after transform: SymbolId(4): []
-rebuilt        : SymbolId(7): [ReferenceId(7)]
+Symbol flags mismatch for "src":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "src":
+after transform: SymbolId(0): Span { start: 7, end: 10 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol flags mismatch for "ns1":
+after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "ns1":
+after transform: SymbolId(1): Span { start: 32, end: 35 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol flags mismatch for "ns2":
+after transform: SymbolId(3): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "ns2":
+after transform: SymbolId(3): Span { start: 113, end: 116 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 
 * namespace/module-nested-export/input.ts
-Missing SymbolId: "src"
-Missing SymbolId: "_src"
-Missing SymbolId: "ns1"
-Missing SymbolId: "_ns"
-Missing ReferenceId: "_ns"
-Missing ReferenceId: "foo"
-Missing ReferenceId: "ns1"
-Missing ReferenceId: "ns1"
-Missing ReferenceId: "_src"
-Missing ReferenceId: "_src"
-Missing SymbolId: "ns2"
-Missing SymbolId: "_ns2"
-Missing ReferenceId: "_ns2"
-Missing ReferenceId: "foo"
-Missing ReferenceId: "ns2"
-Missing ReferenceId: "ns2"
-Missing ReferenceId: "_src"
-Missing ReferenceId: "_src"
-Missing ReferenceId: "src"
-Missing ReferenceId: "src"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(5)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5)]
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(6)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
-Binding symbols mismatch:
-after transform: ScopeId(4): [SymbolId(4), SymbolId(7)]
-rebuilt        : ScopeId(4): [SymbolId(6), SymbolId(7)]
-Symbol reference IDs mismatch for "foo":
-after transform: SymbolId(2): []
-rebuilt        : SymbolId(4): [ReferenceId(1)]
-Symbol reference IDs mismatch for "foo":
-after transform: SymbolId(4): []
-rebuilt        : SymbolId(7): [ReferenceId(7)]
+Symbol flags mismatch for "src":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "src":
+after transform: SymbolId(0): Span { start: 14, end: 17 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol flags mismatch for "ns1":
+after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "ns1":
+after transform: SymbolId(1): Span { start: 39, end: 42 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol flags mismatch for "ns2":
+after transform: SymbolId(3): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "ns2":
+after transform: SymbolId(3): Span { start: 120, end: 123 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 
 * namespace/multiple/input.ts
-Missing SymbolId: "N"
-Missing SymbolId: "_N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Missing SymbolId: "_N2"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(3)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(4)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+Symbol flags mismatch for "N":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "N":
+after transform: SymbolId(0): [Span { start: 33, end: 34 }]
+rebuilt        : SymbolId(0): []
 
 * namespace/mutable-fail/input.ts
 
@@ -2814,62 +2413,12 @@ rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
 
 
 * namespace/nested/input.ts
-Missing SymbolId: "_A"
-Missing SymbolId: "C"
-Missing SymbolId: "_C"
-Missing ReferenceId: "_C"
-Missing ReferenceId: "G"
-Missing ReferenceId: "_C"
-Missing ReferenceId: "C"
-Missing ReferenceId: "C"
-Missing ReferenceId: "_A"
-Missing ReferenceId: "_A"
-Missing SymbolId: "_M"
-Missing ReferenceId: "_M"
-Missing ReferenceId: "M"
-Missing ReferenceId: "M"
-Missing ReferenceId: "_A"
-Missing ReferenceId: "D"
-Missing SymbolId: "_D"
-Missing ReferenceId: "_D"
-Missing ReferenceId: "H"
-Missing ReferenceId: "D"
-Missing ReferenceId: "D"
-Missing ReferenceId: "_A"
-Missing ReferenceId: "_A"
-Missing SymbolId: "_F"
-Missing ReferenceId: "F"
-Missing ReferenceId: "F"
-Missing SymbolId: "G"
-Missing SymbolId: "_G"
-Missing ReferenceId: "G"
-Missing ReferenceId: "G"
-Missing ReferenceId: "A"
-Missing ReferenceId: "A"
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(1), SymbolId(4), SymbolId(6), SymbolId(12), SymbolId(14), SymbolId(16), SymbolId(18)]
-rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2), SymbolId(6), SymbolId(9), SymbolId(14), SymbolId(17), SymbolId(20)]
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(2), SymbolId(3), SymbolId(19)]
-rebuilt        : ScopeId(3): [SymbolId(3), SymbolId(4), SymbolId(5)]
-Binding symbols mismatch:
-after transform: ScopeId(6): [SymbolId(5), SymbolId(20)]
-rebuilt        : ScopeId(6): [SymbolId(7), SymbolId(8)]
-Binding symbols mismatch:
-after transform: ScopeId(8): [SymbolId(7), SymbolId(8), SymbolId(21)]
-rebuilt        : ScopeId(8): [SymbolId(10), SymbolId(11), SymbolId(12)]
 Bindings mismatch:
 after transform: ScopeId(9): ["H", "I", "J", "K"]
 rebuilt        : ScopeId(9): ["H"]
 Scope flags mismatch:
 after transform: ScopeId(9): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
-Binding symbols mismatch:
-after transform: ScopeId(11): [SymbolId(13), SymbolId(22)]
-rebuilt        : ScopeId(11): [SymbolId(15), SymbolId(16)]
-Binding symbols mismatch:
-after transform: ScopeId(12): [SymbolId(15), SymbolId(23)]
-rebuilt        : ScopeId(12): [SymbolId(18), SymbolId(19)]
 Bindings mismatch:
 after transform: ScopeId(13): ["L", "M"]
 rebuilt        : ScopeId(13): ["L"]
@@ -2879,65 +2428,47 @@ rebuilt        : ScopeId(13): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): []
-rebuilt        : SymbolId(0): [ReferenceId(33), ReferenceId(34)]
 Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 22, end: 23 }]
 rebuilt        : SymbolId(0): []
-Symbol reference IDs mismatch for "G":
-after transform: SymbolId(2): []
-rebuilt        : SymbolId(4): [ReferenceId(1)]
+Symbol flags mismatch for "C":
+after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 45, end: 46 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol flags mismatch for "M":
 after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "M":
-after transform: SymbolId(4): []
-rebuilt        : SymbolId(6): [ReferenceId(9), ReferenceId(10)]
 Symbol redeclarations mismatch for "M":
 after transform: SymbolId(4): [Span { start: 129, end: 130 }]
 rebuilt        : SymbolId(6): []
 Symbol flags mismatch for "D":
 after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "D":
-after transform: SymbolId(6): []
-rebuilt        : SymbolId(9): [ReferenceId(12), ReferenceId(22), ReferenceId(23)]
 Symbol redeclarations mismatch for "D":
 after transform: SymbolId(6): [Span { start: 207, end: 208 }]
 rebuilt        : SymbolId(9): []
 Symbol flags mismatch for "H":
 after transform: SymbolId(8): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
-Symbol reference IDs mismatch for "H":
-after transform: SymbolId(8): []
-rebuilt        : SymbolId(12): [ReferenceId(21)]
 Symbol flags mismatch for "F":
 after transform: SymbolId(12): SymbolFlags(Class | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(14): SymbolFlags(Class)
-Symbol reference IDs mismatch for "F":
-after transform: SymbolId(12): []
-rebuilt        : SymbolId(14): [ReferenceId(26), ReferenceId(27)]
 Symbol redeclarations mismatch for "F":
 after transform: SymbolId(12): [Span { start: 325, end: 326 }]
 rebuilt        : SymbolId(14): []
+Symbol flags mismatch for "G":
+after transform: SymbolId(14): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(17): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "G":
+after transform: SymbolId(14): Span { start: 350, end: 351 }
+rebuilt        : SymbolId(17): Span { start: 0, end: 0 }
 Symbol flags mismatch for "L":
 after transform: SymbolId(16): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
-Reference symbol mismatch for "C":
-after transform: SymbolId(1) "C"
-rebuilt        : SymbolId(2) "C"
 
 * namespace/nested-namespace/input.ts
-Missing SymbolId: "A"
-Missing SymbolId: "_A"
-Missing ReferenceId: "_A"
-Missing ReferenceId: "G"
-Missing ReferenceId: "A"
-Missing ReferenceId: "A"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
 Bindings mismatch:
 after transform: ScopeId(1): ["B", "G", "_A"]
 rebuilt        : ScopeId(1): ["G", "_A"]
@@ -2950,149 +2481,93 @@ rebuilt        : ScopeId(2): ["G"]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "A":
+after transform: SymbolId(0): Span { start: 17, end: 18 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "G":
 after transform: SymbolId(3): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol reference IDs mismatch for "G":
-after transform: SymbolId(3): []
-rebuilt        : SymbolId(2): [ReferenceId(4)]
 
 * namespace/nested-shorthand/input.ts
-Missing SymbolId: "X"
-Missing SymbolId: "_X"
-Missing SymbolId: "Y"
-Missing SymbolId: "_Y"
-Missing ReferenceId: "_Y"
-Missing ReferenceId: "Y"
-Missing ReferenceId: "Y"
-Missing ReferenceId: "_X"
-Missing ReferenceId: "_X"
-Missing ReferenceId: "X"
-Missing ReferenceId: "X"
-Missing SymbolId: "proj"
-Missing SymbolId: "_proj"
-Missing SymbolId: "data"
-Missing SymbolId: "_data"
-Missing SymbolId: "util"
-Missing SymbolId: "_util"
-Missing SymbolId: "api"
-Missing SymbolId: "_api"
-Missing ReferenceId: "_api"
-Missing ReferenceId: "api"
-Missing ReferenceId: "api"
-Missing ReferenceId: "_util"
-Missing ReferenceId: "_util"
-Missing ReferenceId: "util"
-Missing ReferenceId: "util"
-Missing ReferenceId: "_data"
-Missing ReferenceId: "_data"
-Missing ReferenceId: "data"
-Missing ReferenceId: "data"
-Missing ReferenceId: "_proj"
-Missing ReferenceId: "_proj"
-Missing ReferenceId: "proj"
-Missing ReferenceId: "proj"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(8)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(9)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(4), SymbolId(10)]
-rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
-Binding symbols mismatch:
-after transform: ScopeId(4): [SymbolId(5), SymbolId(11)]
-rebuilt        : ScopeId(4): [SymbolId(8), SymbolId(9)]
-Binding symbols mismatch:
-after transform: ScopeId(5): [SymbolId(6), SymbolId(12)]
-rebuilt        : ScopeId(5): [SymbolId(10), SymbolId(11)]
-Binding symbols mismatch:
-after transform: ScopeId(6): [SymbolId(7), SymbolId(13)]
-rebuilt        : ScopeId(6): [SymbolId(12), SymbolId(13)]
+Symbol flags mismatch for "X":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "X":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol flags mismatch for "Y":
+after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Y":
+after transform: SymbolId(1): Span { start: 12, end: 13 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol flags mismatch for "proj":
+after transform: SymbolId(3): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "proj":
+after transform: SymbolId(3): Span { start: 51, end: 55 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol flags mismatch for "data":
+after transform: SymbolId(4): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "data":
+after transform: SymbolId(4): Span { start: 56, end: 60 }
+rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
+Symbol flags mismatch for "util":
+after transform: SymbolId(5): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "util":
+after transform: SymbolId(5): Span { start: 61, end: 65 }
+rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
+Symbol flags mismatch for "api":
+after transform: SymbolId(6): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "api":
+after transform: SymbolId(6): Span { start: 66, end: 69 }
+rebuilt        : SymbolId(11): Span { start: 0, end: 0 }
 
 * namespace/same-name/input.ts
-Missing SymbolId: "N"
-Missing SymbolId: "_N2"
-Missing SymbolId: "_N7"
-Missing SymbolId: "_N4"
-Missing ReferenceId: "_N7"
-Missing ReferenceId: "_N7"
-Missing SymbolId: "N"
-Missing SymbolId: "_N6"
-Missing ReferenceId: "_N6"
-Missing ReferenceId: "_N3"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "_N2"
-Missing ReferenceId: "_N2"
-Missing SymbolId: "_N8"
-Missing ReferenceId: "_N8"
-Missing ReferenceId: "_N5"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "_N2"
-Missing ReferenceId: "_N2"
-Missing SymbolId: "_N9"
-Missing ReferenceId: "_N9"
-Missing ReferenceId: "_N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "_N2"
-Missing ReferenceId: "_N2"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(7)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5)]
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(2), SymbolId(8)]
-rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(4), SymbolId(9)]
-rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
-Binding symbols mismatch:
-after transform: ScopeId(5): [SymbolId(5), SymbolId(10)]
-rebuilt        : ScopeId(5): [SymbolId(8), SymbolId(9)]
-Binding symbols mismatch:
-after transform: ScopeId(7): [SymbolId(6), SymbolId(11)]
-rebuilt        : ScopeId(7): [SymbolId(10), SymbolId(11)]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(8): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "N":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol flags mismatch for "_N7":
+after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "_N7":
+after transform: SymbolId(1): Span { start: 26, end: 29 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol flags mismatch for "N":
+after transform: SymbolId(3): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(3): Span { start: 59, end: 60 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "N":
+after transform: SymbolId(3): [Span { start: 115, end: 116 }, Span { start: 166, end: 167 }]
+rebuilt        : SymbolId(5): []
 Symbol flags mismatch for "_N3":
 after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
 rebuilt        : SymbolId(7): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "_N3":
-after transform: SymbolId(4): []
-rebuilt        : SymbolId(7): [ReferenceId(3)]
-Symbol reference IDs mismatch for "_N5":
-after transform: SymbolId(5): []
-rebuilt        : SymbolId(9): [ReferenceId(9)]
 Symbol flags mismatch for "_N":
 after transform: SymbolId(6): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
-Symbol reference IDs mismatch for "_N":
-after transform: SymbolId(6): []
-rebuilt        : SymbolId(11): [ReferenceId(16)]
 
 * namespace/undeclared/input.ts
-Missing SymbolId: "N"
-Missing SymbolId: "_N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+Symbol flags mismatch for "N":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 * optimize-const-enums/custom-values/input.ts
 x Output mismatch
@@ -3125,6 +2600,9 @@ x Output mismatch
 x Output mismatch
 
 * optimize-const-enums/merged-exported/input.ts
+x Output mismatch
+
+* optimize-const-enums/namespace/input.ts
 x Output mismatch
 
 * regression/15768/input.ts

@@ -1,6 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
-input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/export/named/type-and-non-type.ts
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/exports/named/type-and-non-type.ts
 ---
 [
   {

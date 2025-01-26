@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]

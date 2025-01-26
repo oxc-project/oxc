@@ -53,6 +53,8 @@ mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
 mod trivia;
+#[cfg(feature = "serialize")]
+pub mod utf8_to_utf16;
 
 mod generated {
     #![allow(missing_docs)]
@@ -62,7 +64,6 @@ mod generated {
     pub mod ast_kind;
     pub mod derive_clone_in;
     pub mod derive_content_eq;
-    pub mod derive_content_hash;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
     pub mod derive_get_address;
@@ -79,7 +80,6 @@ pub mod visit {
 }
 
 pub use generated::{ast_builder, ast_kind};
-pub use num_bigint::BigUint;
 
 pub use crate::{
     ast::comment::{Comment, CommentKind, CommentPosition},

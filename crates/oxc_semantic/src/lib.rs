@@ -90,10 +90,14 @@ pub struct Semantic<'a> {
 }
 
 impl<'a> Semantic<'a> {
-    /// Extract the [`SymbolTable`] and [`ScopeTree`] from the [`Semantic`]
-    /// instance, consuming `self`.
+    /// Extract [`SymbolTable`] and [`ScopeTree`] from [`Semantic`].
     pub fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
         (self.symbols, self.scopes)
+    }
+
+    /// Extract [`SymbolTable`], [`ScopeTree`] and [`AstNode`] from the [`Semantic`].
+    pub fn into_symbols_scopes_nodes(self) -> (SymbolTable, ScopeTree, AstNodes<'a>) {
+        (self.symbols, self.scopes, self.nodes)
     }
 
     /// Source code of the JavaScript/TypeScript program being analyzed.
@@ -247,7 +251,7 @@ mod tests {
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
-        let semantic = SemanticBuilder::new().build(&parse.program);
+        let semantic = SemanticBuilder::new().build(allocator.alloc(parse.program));
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }
@@ -283,13 +287,9 @@ mod tests {
         let source = "function Fn() {}";
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
+        let scopes = semantic.scopes();
 
-        let top_level_a = semantic
-            .scopes()
-            .iter_bindings()
-            .find(|(_scope_id, _symbol_id, name)| *name == "Fn")
-            .unwrap();
-        assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
+        assert!(scopes.get_binding(scopes.root_scope_id(), "Fn").is_some());
     }
 
     #[test]

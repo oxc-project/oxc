@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-useless-catch): Unnecessary try/catch wrapper
    ╭─[no_useless_catch.tsx:4:18]

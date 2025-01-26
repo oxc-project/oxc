@@ -94,7 +94,7 @@ fn is_valid_tab_index_attr(attr: &JSXAttribute) -> bool {
     attr.value
         .as_ref()
         .and_then(|value| parse_jsx_value(value).ok())
-        .map_or(false, |parsed_value| parsed_value < -1.0)
+        .is_some_and(|parsed_value| parsed_value < -1.0)
 }
 
 #[test]

@@ -16,10 +16,10 @@ use pico_args::Arguments;
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
-    let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let mangle = args.contains("--mangle");
     let nospace = args.contains("--nospace");
     let twice = args.contains("--twice");
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;
@@ -50,7 +50,7 @@ fn minify(
     let mut program = ret.program;
     let options = MinifierOptions {
         mangle: mangle.then(MangleOptions::default),
-        compress: CompressOptions::default(),
+        compress: Some(CompressOptions::default()),
     };
     let ret = Minifier::new(options).build(allocator, &mut program);
     CodeGenerator::new()

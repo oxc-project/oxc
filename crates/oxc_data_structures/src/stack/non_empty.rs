@@ -3,9 +3,10 @@
 use std::{
     mem::size_of,
     ops::{Deref, DerefMut},
+    ptr::NonNull,
 };
 
-use super::{NonNull, StackCapacity, StackCommon};
+use super::{StackCapacity, StackCommon};
 
 /// A stack which can never be empty.
 ///

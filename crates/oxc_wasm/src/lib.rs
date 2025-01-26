@@ -271,7 +271,7 @@ impl Oxc {
             let compress_options = minifier_options.compress_options.unwrap_or_default();
             let options = MinifierOptions {
                 mangle: minifier_options.mangle.unwrap_or_default().then(MangleOptions::default),
-                compress: if minifier_options.compress.unwrap_or_default() {
+                compress: Some(if minifier_options.compress.unwrap_or_default() {
                     CompressOptions {
                         drop_console: compress_options.drop_console,
                         drop_debugger: compress_options.drop_debugger,
@@ -279,7 +279,7 @@ impl Oxc {
                     }
                 } else {
                     CompressOptions::all_false()
-                },
+                }),
             };
             Minifier::new(options).build(&allocator, &mut program).mangler
         } else {

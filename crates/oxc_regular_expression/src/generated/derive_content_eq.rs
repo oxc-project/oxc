@@ -27,55 +27,21 @@ impl ContentEq for Alternative<'_> {
 
 impl ContentEq for Term<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        match self {
-            Self::BoundaryAssertion(it) => match other {
-                Self::BoundaryAssertion(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::LookAroundAssertion(it) => match other {
-                Self::LookAroundAssertion(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Quantifier(it) => match other {
-                Self::Quantifier(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Character(it) => match other {
-                Self::Character(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Dot(it) => match other {
-                Self::Dot(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::CharacterClassEscape(it) => match other {
-                Self::CharacterClassEscape(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::UnicodePropertyEscape(it) => match other {
-                Self::UnicodePropertyEscape(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::CharacterClass(it) => match other {
-                Self::CharacterClass(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::CapturingGroup(it) => match other {
-                Self::CapturingGroup(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::IgnoreGroup(it) => match other {
-                Self::IgnoreGroup(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::IndexedReference(it) => match other {
-                Self::IndexedReference(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::NamedReference(it) => match other {
-                Self::NamedReference(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
+        #[allow(clippy::match_same_arms)]
+        match (self, other) {
+            (Self::BoundaryAssertion(a), Self::BoundaryAssertion(b)) => a.content_eq(b),
+            (Self::LookAroundAssertion(a), Self::LookAroundAssertion(b)) => a.content_eq(b),
+            (Self::Quantifier(a), Self::Quantifier(b)) => a.content_eq(b),
+            (Self::Character(a), Self::Character(b)) => a.content_eq(b),
+            (Self::Dot(a), Self::Dot(b)) => a.content_eq(b),
+            (Self::CharacterClassEscape(a), Self::CharacterClassEscape(b)) => a.content_eq(b),
+            (Self::UnicodePropertyEscape(a), Self::UnicodePropertyEscape(b)) => a.content_eq(b),
+            (Self::CharacterClass(a), Self::CharacterClass(b)) => a.content_eq(b),
+            (Self::CapturingGroup(a), Self::CapturingGroup(b)) => a.content_eq(b),
+            (Self::IgnoreGroup(a), Self::IgnoreGroup(b)) => a.content_eq(b),
+            (Self::IndexedReference(a), Self::IndexedReference(b)) => a.content_eq(b),
+            (Self::NamedReference(a), Self::NamedReference(b)) => a.content_eq(b),
+            _ => false,
         }
     }
 }
@@ -171,31 +137,15 @@ impl ContentEq for CharacterClassContentsKind {
 
 impl ContentEq for CharacterClassContents<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        match self {
-            Self::CharacterClassRange(it) => match other {
-                Self::CharacterClassRange(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::CharacterClassEscape(it) => match other {
-                Self::CharacterClassEscape(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::UnicodePropertyEscape(it) => match other {
-                Self::UnicodePropertyEscape(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Character(it) => match other {
-                Self::Character(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::NestedCharacterClass(it) => match other {
-                Self::NestedCharacterClass(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::ClassStringDisjunction(it) => match other {
-                Self::ClassStringDisjunction(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
+        #[allow(clippy::match_same_arms)]
+        match (self, other) {
+            (Self::CharacterClassRange(a), Self::CharacterClassRange(b)) => a.content_eq(b),
+            (Self::CharacterClassEscape(a), Self::CharacterClassEscape(b)) => a.content_eq(b),
+            (Self::UnicodePropertyEscape(a), Self::UnicodePropertyEscape(b)) => a.content_eq(b),
+            (Self::Character(a), Self::Character(b)) => a.content_eq(b),
+            (Self::NestedCharacterClass(a), Self::NestedCharacterClass(b)) => a.content_eq(b),
+            (Self::ClassStringDisjunction(a), Self::ClassStringDisjunction(b)) => a.content_eq(b),
+            _ => false,
         }
     }
 }

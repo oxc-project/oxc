@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+### Features
+
+- 99607d3 codegen: Print comments in `TSTypeLiteral` (#8679) (Boshen)
+
+### Performance
+
+- d966e0a codegen: Do not check for comments if turned off (#8598) (Boshen)
+
+### Refactor
+
+- db863a3 codegen: Use `Stack` for `binary_expr_stack` (#8663) (Boshen)
+- 8cce69a codegen: Remove `match_member_expression` (#8597) (Boshen)
+- a3dc4c3 crates: Clean up snapshot files (#8680) (Boshen)
+- 23b49a6 linter: Use `cow_to_ascii_lowercase` instead `cow_to_lowercase` (#8678) (Boshen)
+
+### Testing
+
+- 39dbd2d codegen: Fix snapshot file (#8685) (Boshen)
+
+## [0.47.0] - 2025-01-18
+
+### Bug Fixes
+
+- 855c839 codegen: Shorthand assignment target identifier consider mangled names (#8536) (Boshen)
+
+## [0.46.0] - 2025-01-14
+
+### Refactor
+
+- 6e64eef codegen: Remove `match_expression!` (#8450) (Boshen)
+
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- ad146bb codegen: Print real newline when `\n` is inside template literals (#8178) (Boshen)
+- a542013 minifier: Minimize `do{}while(true)` -> `do;while(true)` (#8311) (Boshen)
+
+### Bug Fixes
+
+- a1752a0 codegen: Fix incorrect minified `return 1n` output (#8374) (Boshen)
+- 5a648bc codegen: Fix white space issue with do statements (#8348) (Boshen)
+- b6d16f4 codegen: Print parenthesis on negative bigint lit when neccessary (#8258) (camc314)
+- 8ed9766 codegen: Source map builder panicked because it attempted to subtract with overflow in `search_original_line_and_column` (#8185) (Dunqing)
+- ad61e70 codegen: Print if else without block with proper indentation (#8135) (Boshen)
+
 ## [0.44.0] - 2024-12-25
 
 - ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)

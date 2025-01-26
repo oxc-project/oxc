@@ -189,7 +189,7 @@ impl NoDuplicateHooks {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         (
             "
                 describe(\"foo\", () => {
@@ -319,7 +319,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             "
                 describe(\"foo\", () => {
@@ -554,6 +554,189 @@ fn test() {
             None,
         ),
     ];
+
+    let pass_vitest = vec![
+        (
+            r#"
+                describe("foo", () => {
+                    beforeEach(() => {})
+                    test("bar", () => {
+                        someFn();
+                    })
+			    })
+            "#,
+            None,
+        ),
+        (
+            r#"
+                beforeEach(() => {})
+			    test("bar", () => {
+                    someFn();
+			    })
+            "#,
+            None,
+        ),
+        (
+            r#"
+                describe("foo", () => {
+                    beforeAll(() => {}),
+                    beforeEach(() => {})
+                    afterEach(() => {})
+                    afterAll(() => {})
+                
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+            "#,
+            None,
+        ),
+        (
+            r#"
+                describe.skip("foo", () => {
+                    beforeEach(() => {}),
+                    beforeAll(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+                describe("foo", () => {
+                    beforeEach(() => {}),
+                    beforeAll(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+            "#,
+            None,
+        ),
+        (
+            r#"
+                describe("foo", () => {
+                    beforeEach(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                    describe("inner_foo", () => {
+                        beforeEach(() => {})
+                        test("inner bar", () => {
+                            someFn();
+                        })
+                    })
+                })
+            "#,
+            None,
+        ),
+        (
+            "
+                describe.each(['hello'])('%s', () => {
+                    beforeEach(() => {});
+                    it('is fine', () => {});
+                });
+            ",
+            None,
+        ),
+    ];
+
+    let fail_vitest = vec![
+        (
+            r#"
+                describe("foo", () => {
+                    beforeEach(() => {}),
+                    beforeEach(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+            "#,
+            None,
+        ),
+        (
+            r#"
+                describe.skip("foo", () => {
+                    afterEach(() => {}),
+                    afterEach(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+            "#,
+            None,
+        ),
+        (
+            r#"
+                describe.skip("foo", () => {
+                    beforeEach(() => {}),
+                    beforeAll(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+                describe("foo", () => {
+                    beforeEach(() => {}),
+                    beforeEach(() => {}),
+                    beforeAll(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+            "#,
+            None,
+        ),
+        (
+            r#"
+                describe.skip("foo", () => {
+                    beforeEach(() => {}),
+                    beforeAll(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+                describe("foo", () => {
+                    beforeEach(() => {}),
+                    beforeEach(() => {}),
+                    beforeAll(() => {}),
+                    test("bar", () => {
+                        someFn();
+                    })
+                })
+            "#,
+            None,
+        ),
+        (
+            "
+                describe.each(['hello'])('%s', () => {
+                    beforeEach(() => {});
+                    beforeEach(() => {});
+                    
+                    it('is not fine', () => {});
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                describe('something', () => {
+                    describe.each(['hello'])('%s', () => {
+                        beforeEach(() => {});
+                    
+                        it('is fine', () => {});
+                    });
+			    
+                    describe.each(['world'])('%s', () => {
+                        beforeEach(() => {});
+                        beforeEach(() => {});
+                    
+                        it('is not fine', () => {});
+                    });
+                });
+            ",
+            None,
+        ),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
 
     Tester::new(NoDuplicateHooks::NAME, NoDuplicateHooks::PLUGIN, pass, fail)
         .with_jest_plugin(true)

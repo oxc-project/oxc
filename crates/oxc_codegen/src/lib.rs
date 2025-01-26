@@ -18,6 +18,7 @@ use std::borrow::Cow;
 use oxc_ast::ast::{
     BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
 };
+use oxc_data_structures::stack::Stack;
 use oxc_mangler::Mangler;
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
@@ -88,7 +89,7 @@ pub struct Codegen<'a> {
     prev_reg_exp_end: usize,
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
-    binary_expr_stack: Vec<BinaryExpressionVisitor<'a>>,
+    binary_expr_stack: Stack<BinaryExpressionVisitor<'a>>,
     /// Indicates the output is JSX type, it is set in [`Program::gen`] and the result
     /// is obtained by [`oxc_span::SourceType::is_jsx`]
     is_jsx: bool,
@@ -166,7 +167,7 @@ impl<'a> Codegen<'a> {
             needs_semicolon: false,
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
-            binary_expr_stack: Vec::with_capacity(5),
+            binary_expr_stack: Stack::with_capacity(12),
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,

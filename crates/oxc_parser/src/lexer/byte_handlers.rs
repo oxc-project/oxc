@@ -108,7 +108,6 @@ macro_rules! byte_handler {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
 ///       use assert_unchecked::assert_unchecked;
-///       let s = lexer.current.chars.as_str();
 ///       assert_unchecked!(!lexer.source.is_eof());
 ///       assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
@@ -210,14 +209,28 @@ ascii_byte_handler!(LIN(lexer) {
 // !
 ascii_byte_handler!(EXL(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Neq2
-        } else {
-            Kind::Neq
+    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
+        match next_2_bytes[0] {
+            b'=' => {
+                if next_2_bytes[1] == b'=' {
+                    lexer.consume_2_chars();
+                    Kind::Neq2
+                } else {
+                    lexer.consume_char();
+                    Kind::Neq
+                }
+            }
+            _ => Kind::Bang
         }
     } else {
-        Kind::Bang
+        // At EOF, or only 1 byte left
+        match lexer.peek_byte() {
+            Some(b'=') => {
+                lexer.consume_char();
+                Kind::Neq
+            }
+            _ => Kind::Bang
+        }
     }
 });
 

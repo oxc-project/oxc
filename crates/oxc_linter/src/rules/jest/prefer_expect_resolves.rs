@@ -150,6 +150,8 @@ impl PreferExpectResolves {
 fn tests() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("expect.hasAssertions()", None),
         (
@@ -179,6 +181,7 @@ fn tests() {
             ",
             None,
         ),
+        ("expect().nothing();", None),
     ];
 
     let fail = vec![

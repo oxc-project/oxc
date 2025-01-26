@@ -125,7 +125,7 @@ impl Rule for ValidTypeof {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let require_string_literals = value.get(0).map_or(false, |config| {
+        let require_string_literals = value.get(0).is_some_and(|config| {
             config
                 .get("requireStringLiterals")
                 .and_then(serde_json::Value::as_bool)

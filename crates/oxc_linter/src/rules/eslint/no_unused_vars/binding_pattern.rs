@@ -57,7 +57,7 @@ impl<'a> HasAnyUsedBinding<'a> for ObjectPattern<'a> {
             return true;
         }
         self.properties.iter().any(|p| p.value.has_any_used_binding(ctx))
-            || self.rest.as_ref().map_or(false, |rest| rest.argument.has_any_used_binding(ctx))
+            || self.rest.as_ref().is_some_and(|rest| rest.argument.has_any_used_binding(ctx))
     }
 }
 impl<'a> HasAnyUsedBinding<'a> for ArrayPattern<'a> {
@@ -66,6 +66,6 @@ impl<'a> HasAnyUsedBinding<'a> for ArrayPattern<'a> {
             // if the destructured element is ignored, it is considered used
             el.get_identifier().is_some_and(|name| ctx.options.is_ignored_array_destructured(&name))
                 || el.has_any_used_binding(ctx)
-        }) || self.rest.as_ref().map_or(false, |rest| rest.argument.has_any_used_binding(ctx))
+        }) || self.rest.as_ref().is_some_and(|rest| rest.argument.has_any_used_binding(ctx))
     }
 }

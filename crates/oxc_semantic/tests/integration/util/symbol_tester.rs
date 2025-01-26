@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
-use oxc_semantic::{Reference, ScopeFlags, ScopeId, Semantic, SymbolFlags, SymbolId};
+use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
 
 use super::{Expect, SemanticTester};
 
@@ -65,15 +65,15 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let symbols_with_target_name: Vec<_> =
-            semantic.scopes().iter_bindings().filter(|(_, _, name)| *name == target).collect();
+        let mut symbols_with_target_name: Vec<SymbolId> = semantic
+            .scopes()
+            .iter_bindings()
+            .filter_map(|(_, bindings)| bindings.get(target).copied())
+            .collect();
+
         let data = match symbols_with_target_name.len() {
             0 => Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
-            1 => Ok(symbols_with_target_name
-                .iter()
-                .map(|&(_, symbol_id, _)| symbol_id)
-                .next()
-                .unwrap()),
+            1 => Ok(symbols_with_target_name.pop().unwrap()),
             n if n > 1 => Err(OxcDiagnostic::error(format!(
                 "Couldn't uniquely resolve symbol id for target {target}; {n} symbols with that name are declared in the source."
             ))),
@@ -98,11 +98,13 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let symbols_with_target_name: Option<(ScopeId, SymbolId, &str)> =
-            semantic.scopes().iter_bindings().find(|(_, _, name)| *name == target);
+        let symbols_with_target_name: Option<SymbolId> = semantic
+            .scopes()
+            .iter_bindings()
+            .find_map(|(_, bindings)| bindings.get(target).copied());
 
         let data = match symbols_with_target_name {
-            Some((_, symbol_id, _)) => Ok(symbol_id),
+            Some(symbol_id) => Ok(symbol_id),
             None => Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
         };
 

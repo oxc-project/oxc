@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "0.15.5"
+version = "0.15.8"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -36,12 +36,18 @@ oxc_linter = { workspace = true }
 oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
-glob = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
 rayon = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 tempfile = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
+
+[dev-dependencies]
+insta = { workspace = true }
+regex = { workspace = true }
 
 [features]
 default = []

@@ -26,6 +26,7 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
+    ignore_type_of_test_name: bool,
     ignore_type_of_describe_name: bool,
     disallowed_words: Vec<CompactStr>,
     ignore_space: bool,
@@ -75,6 +76,17 @@ declare_oxc_lint!(
     /// describe('foo', () => {});
     /// it('bar', () => {});
     /// test('baz', () => {});
+    /// ```
+    ///
+    /// ### Options
+    /// interface Options {
+    ///     ignoreSpaces?: boolean;
+    ///     ignoreTypeOfTestName?: boolean;
+    ///     ignoreTypeOfDescribeName?: boolean;
+    ///     disallowedWords?: string[];
+    ///     mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
+    ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
+    /// }
     ValidTitle,
     jest,
     correctness,
@@ -91,6 +103,7 @@ impl Rule for ValidTitle {
                 .unwrap_or_default()
         };
 
+        let ignore_type_of_test_name = get_as_bool("ignoreTypeOfTestName");
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
         let ignore_space = get_as_bool("ignoreSpaces");
         let disallowed_words = config
@@ -107,6 +120,7 @@ impl Rule for ValidTitle {
             .and_then(compile_matcher_patterns)
             .unwrap_or_default();
         Self(Box::new(ValidTitleConfig {
+            ignore_type_of_test_name,
             ignore_type_of_describe_name,
             disallowed_words,
             ignore_space,
@@ -146,8 +160,11 @@ impl ValidTitle {
             return;
         };
 
-        let need_report_describe_name = !(self.ignore_type_of_describe_name
-            && matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)));
+        let need_report_name = match jest_fn_call.kind {
+            JestFnKind::General(JestGeneralFnKind::Test) => !self.ignore_type_of_test_name,
+            JestFnKind::General(JestGeneralFnKind::Describe) => !self.ignore_type_of_describe_name,
+            _ => unreachable!(),
+        };
 
         match arg {
             Argument::StringLiteral(string_literal) => {
@@ -177,12 +194,12 @@ impl ValidTitle {
                 if does_binary_expression_contain_string_node(binary_expr) {
                     return;
                 }
-                if need_report_describe_name {
+                if need_report_name {
                     Message::TitleMustBeString.diagnostic(ctx, arg.span());
                 }
             }
             _ => {
-                if need_report_describe_name {
+                if need_report_name {
                     Message::TitleMustBeString.diagnostic(ctx, arg.span());
                 }
             }
@@ -293,7 +310,7 @@ fn validate_title(
 
     if !valid_title.disallowed_words.is_empty() {
         let Ok(disallowed_words_reg) = regex::Regex::new(&format!(
-            r#"(?iu)\b(?:{})\b"#,
+            r"(?iu)\b(?:{})\b",
             valid_title.disallowed_words.join("|").cow_replace('.', r"\.")
         )) else {
             return;
@@ -567,6 +584,7 @@ fn test() {
             ",
             None,
         ),
+        ("it(abc, function () {})", Some(serde_json::json!([{ "ignoreTypeOfTestName": true }]))),
     ];
 
     let fail = vec![
@@ -908,6 +926,7 @@ fn test() {
             ",
             None,
         ),
+        ("it(abc, function () {})", None),
     ];
 
     let fix = vec![

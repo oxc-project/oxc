@@ -84,7 +84,7 @@ impl Rule for NoThenable {
             }
             AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(decl)) => {
                 // check declaration
-                if let Some(ref decl) = decl.declaration {
+                if let Some(decl) = &decl.declaration {
                     match decl {
                         Declaration::VariableDeclaration(decl) => {
                             for decl in &decl.declarations {
@@ -144,7 +144,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
             && !matches!(expr.arguments[0], Argument::SpreadElement(_))
             && match expr.callee.as_member_expression() {
                 Some(me) => {
-                    me.object().get_identifier_reference().map_or(false, |ident_ref| {
+                    me.object().get_identifier_reference().is_some_and(|ident_ref| {
                         ident_ref.name == "Reflect" || ident_ref.name == "Object"
                     }) && me.static_property_name() == Some("defineProperty")
                         && !me.optional()
@@ -167,7 +167,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 Some(me) => {
                     me.object()
                         .get_identifier_reference()
-                        .map_or(false, |ident_ref| ident_ref.name == "Object")
+                        .is_some_and(|ident_ref| ident_ref.name == "Object")
                         && me.static_property_name() == Some("fromEntries")
                         && !me.optional()
                 }
@@ -242,8 +242,8 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
                 let decl = ctx.semantic().nodes().get_node(symbols.get_declaration(symbol_id));
                 let var_decl = decl.kind().as_variable_declarator()?;
 
-                match var_decl.init {
-                    Some(Expression::StringLiteral(ref lit)) => {
+                match &var_decl.init {
+                    Some(Expression::StringLiteral(lit)) => {
                         if lit.value == "then" {
                             Some(lit.span)
                         } else {

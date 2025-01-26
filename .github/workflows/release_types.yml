@@ -1,5 +1,7 @@
 name: Release @oxc-project/types
 
+permissions: {}
+
 on:
   workflow_dispatch:
   push:

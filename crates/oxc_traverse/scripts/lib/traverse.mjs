@@ -24,7 +24,7 @@ export default function generateTraverseTraitCode(types) {
 
     use crate::TraverseCtx;
 
-    #[allow(unused_variables)]
+    #[expect(unused_variables)]
     pub trait Traverse<'a> {
       ${traverseMethods}
     }

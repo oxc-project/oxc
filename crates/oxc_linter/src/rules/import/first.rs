@@ -121,8 +121,8 @@ impl Rule for First {
 
         for statement in &program.body {
             match statement {
-                Statement::TSImportEqualsDeclaration(decl) => match decl.module_reference {
-                    TSModuleReference::ExternalModuleReference(ref mod_ref) => {
+                Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
+                    TSModuleReference::ExternalModuleReference(mod_ref) => {
                         if matches!(self.absolute_first, AbsoluteFirst::AbsoluteFirst) {
                             if is_relative_path(mod_ref.expression.value.as_str()) {
                                 any_relative = true;

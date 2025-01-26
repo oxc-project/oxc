@@ -287,7 +287,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         match target {
             AssignmentTarget::ObjectAssignmentTarget(t) => {
                 let mut data = vec![];
-                for prop in t.properties.iter_mut() {
+                for prop in &mut t.properties {
                     if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) = prop {
                         data.extend(match &mut p.binding {
                             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
@@ -325,7 +325,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             ctx.ast.vec_from_iter(object_assignment_target.properties.iter_mut().filter_map(|e| {
                 match e {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
-                        let name = ident.binding.name.clone();
+                        let name = ident.binding.name;
                         let expr = ctx.ast.expression_string_literal(SPAN, name, None);
                         Some(ArrayExpressionElement::from(expr))
                     }
@@ -419,7 +419,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 }
             }
             AssignmentTarget::ObjectAssignmentTarget(t) => {
-                for p in t.properties.iter_mut() {
+                for p in &mut t.properties {
                     if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(e) = p {
                         Self::recursive_walk_assignment_target_maybe_default(
                             &mut e.binding,
@@ -537,7 +537,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
         let Some(body) = func.body.as_mut() else { return };
-        for param in func.params.items.iter_mut() {
+        for param in &mut func.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
@@ -554,7 +554,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = arrow.scope_id();
         let mut replaced = false;
-        for param in arrow.params.items.iter_mut() {
+        for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
@@ -599,7 +599,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        for declarator in decl.declarations.iter_mut() {
+        for declarator in &mut decl.declarations {
             if Self::has_nested_object_rest(&declarator.id) {
                 let new_scope_id = Self::try_replace_statement_with_block(body, scope_id, ctx);
                 let Statement::BlockStatement(block) = body else {
@@ -967,15 +967,15 @@ impl<'a> ObjectRestSpread<'a, '_> {
         match key {
             // `let { a, ... rest }`
             PropertyKey::StaticIdentifier(ident) => {
-                let name = ident.name.clone();
+                let name = ident.name;
                 let expr = ctx.ast.expression_string_literal(ident.span, name, None);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { 'a', ... rest }`
             // `let { ['a'], ... rest }`
             PropertyKey::StringLiteral(lit) => {
-                let name = lit.value.clone();
-                let expr = ctx.ast.expression_string_literal(lit.span, name.clone(), None);
+                let name = lit.value;
+                let expr = ctx.ast.expression_string_literal(lit.span, name, None);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { [`a`], ... rest }`

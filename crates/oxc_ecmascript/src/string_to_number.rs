@@ -19,9 +19,9 @@ impl StringToNumber for &str {
                 let mut bytes = s.trim_start_matches(['-', '+']).bytes();
                 if bytes
                     .next()
-                    .filter(|c| c.to_ascii_lowercase() == b'i')
-                    .and_then(|_| bytes.next().filter(|c| c.to_ascii_lowercase() == b'n'))
-                    .and_then(|_| bytes.next().filter(|c| c.to_ascii_lowercase() == b'f'))
+                    .filter(|c| c.eq_ignore_ascii_case(&b'i'))
+                    .and_then(|_| bytes.next().filter(|c| c.eq_ignore_ascii_case(&b'n')))
+                    .and_then(|_| bytes.next().filter(|c| c.eq_ignore_ascii_case(&b'f')))
                     .is_some()
                 {
                     return f64::NAN;

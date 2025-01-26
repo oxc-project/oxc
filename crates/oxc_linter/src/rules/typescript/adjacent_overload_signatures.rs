@@ -115,7 +115,7 @@ struct Method {
 
 impl Method {
     fn is_same_method(&self, other: Option<&Self>) -> bool {
-        other.map_or(false, |other| {
+        other.is_some_and(|other| {
             self.name == other.name
                 && self.r#static == other.r#static
                 && self.call_signature == other.call_signature

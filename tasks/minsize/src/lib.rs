@@ -18,11 +18,11 @@ use oxc_tasks_common::{project_root, TestFile, TestFiles};
 use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 use rustc_hash::FxHashMap;
 
-// #[test]
-// #[cfg(any(coverage, coverage_nightly))]
-// fn test() {
-// run().unwrap();
-// }
+#[test]
+#[cfg(any(coverage, coverage_nightly))]
+fn test() {
+    run().unwrap();
+}
 
 /// # Panics
 /// # Errors

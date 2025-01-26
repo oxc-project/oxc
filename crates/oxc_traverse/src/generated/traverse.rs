@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 
 use crate::TraverseCtx;
 
-#[allow(unused_variables)]
+#[expect(unused_variables)]
 pub trait Traverse<'a> {
     #[inline]
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {}
