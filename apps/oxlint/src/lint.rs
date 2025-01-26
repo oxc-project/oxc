@@ -835,7 +835,7 @@ mod test {
     #[test]
     fn test_adjust_ignore_patterns() {
         let base = "/project/root";
-        let path = "\\project\\root\\src";
+        let path = "/project/root/src";
         let ignore_patterns =
             vec![String::from("target"), String::from("!dist"), String::from("!!dist")];
 
