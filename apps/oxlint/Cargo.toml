@@ -39,6 +39,7 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
+pathdiff = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }

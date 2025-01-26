@@ -3,7 +3,7 @@ use std::{
     sync::mpsc,
 };
 
-use ignore::{overrides::OverrideBuilder, DirEntry};
+use ignore::{overrides::Override, DirEntry};
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::cli::IgnoreOptions;
@@ -67,12 +67,7 @@ impl ignore::ParallelVisitor for WalkCollector {
 impl Walk {
     /// Will not canonicalize paths.
     /// # Panics
-    pub fn new(
-        current_path: &PathBuf,
-        paths: &[PathBuf],
-        options: &IgnoreOptions,
-        config_ignore_patterns: &Vec<String>,
-    ) -> Self {
+    pub fn new(paths: &[PathBuf], options: &IgnoreOptions, override_builder: Override) -> Self {
         assert!(!paths.is_empty(), "At least one path must be provided to Walk::new");
 
         let mut inner = ignore::WalkBuilder::new(
@@ -90,26 +85,9 @@ impl Walk {
 
         if !options.no_ignore {
             inner.add_custom_ignore_filename(&options.ignore_path);
-
-            let mut override_builder = OverrideBuilder::new(current_path);
-            if !options.ignore_pattern.is_empty() {
-                for pattern in &options.ignore_pattern {
-                    // Meaning of ignore pattern is reversed
-                    // <https://docs.rs/ignore/latest/ignore/overrides/struct.OverrideBuilder.html#method.add>
-                    let pattern = format!("!{pattern}");
-                    override_builder.add(&pattern).unwrap();
-                }
-            }
-
-            if !config_ignore_patterns.is_empty() {
-                for pattern in config_ignore_patterns {
-                    let pattern = format!("!{pattern}");
-                    override_builder.add(&pattern).unwrap();
-                }
-            }
-
-            inner.overrides(override_builder.build().unwrap());
+            inner.overrides(override_builder);
         }
+
         // Turning off `follow_links` because:
         // * following symlinks is a really slow syscall
         // * it is super rare to have symlinked source code
@@ -148,7 +126,9 @@ impl Walk {
 
 #[cfg(test)]
 mod test {
-    use std::{env, ffi::OsString, path::PathBuf};
+    use std::{env, ffi::OsString};
+
+    use ignore::overrides::OverrideBuilder;
 
     use super::{Extensions, Walk};
     use crate::cli::IgnoreOptions;
@@ -164,7 +144,9 @@ mod test {
             symlinks: false,
         };
 
-        let mut paths = Walk::new(&PathBuf::from("/"), &fixtures, &ignore_options, &vec![])
+        let override_builder = OverrideBuilder::new("/").build().unwrap();
+
+        let mut paths = Walk::new(&fixtures, &ignore_options, override_builder)
             .with_extensions(Extensions(["js", "vue"].to_vec()))
             .paths()
             .into_iter()
