@@ -131,11 +131,8 @@ impl Runner for LintRunner {
             }
             if !oxlintrc.ignore_patterns.is_empty() {
                 let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
-                oxlintrc.ignore_patterns = Self::adjust_ignore_patterns(
-                    &self.cwd.to_string_lossy(),
-                    &oxlint_wd.to_string_lossy(),
-                    oxlintrc.ignore_patterns,
-                );
+                oxlintrc.ignore_patterns =
+                    Self::adjust_ignore_patterns(&self.cwd, &oxlint_wd, oxlintrc.ignore_patterns);
                 for pattern in &oxlintrc.ignore_patterns {
                     let pattern = format!("!{pattern}");
                     override_builder.add(&pattern).unwrap();
@@ -408,11 +405,16 @@ impl LintRunner {
         }
     }
 
-    fn adjust_ignore_patterns(base: &str, path: &str, ignore_patterns: Vec<String>) -> Vec<String> {
+    fn adjust_ignore_patterns(
+        base: &PathBuf,
+        path: &PathBuf,
+        ignore_patterns: Vec<String>,
+    ) -> Vec<String> {
         if base == path {
             ignore_patterns
         } else {
-            let relative_ignore_path = path.strip_prefix(base).unwrap_or(".");
+            let relative_ignore_path =
+                path.strip_prefix(base).map_or_else(|_| PathBuf::from("."), Path::to_path_buf);
 
             ignore_patterns
                 .into_iter()
@@ -420,7 +422,7 @@ impl LintRunner {
                     let prefix_len = pattern.chars().take_while(|&c| c == '!').count();
                     let (prefix, pattern) = pattern.split_at(prefix_len);
 
-                    let adjusted_path = Path::new(&relative_ignore_path).join(pattern);
+                    let adjusted_path = relative_ignore_path.join(pattern);
                     format!("{prefix}{}", adjusted_path.to_string_lossy().cow_replace('\\', "/"))
                 })
                 .collect()
@@ -430,7 +432,7 @@ impl LintRunner {
 
 #[cfg(test)]
 mod test {
-    use std::fs;
+    use std::{fs, path::PathBuf};
 
     use super::LintRunner;
     use crate::tester::Tester;
@@ -840,12 +842,12 @@ mod test {
 
     #[test]
     fn test_adjust_ignore_patterns() {
-        let base = "/project/root";
-        let path = "/project/root/src";
+        let base = PathBuf::from("/project/root");
+        let path = PathBuf::from("/project/root/src");
         let ignore_patterns =
             vec![String::from("target"), String::from("!dist"), String::from("!!dist")];
 
-        let adjusted_patterns = LintRunner::adjust_ignore_patterns(base, path, ignore_patterns);
+        let adjusted_patterns = LintRunner::adjust_ignore_patterns(&base, &path, ignore_patterns);
 
         assert_eq!(
             adjusted_patterns,
