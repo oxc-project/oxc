@@ -620,6 +620,17 @@ impl<'a> LatePeepholeOptimizations {
     pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: Ctx<'a, '_>) {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
+
+    pub fn remove_empty_spread_arguments(args: &mut Vec<'a, Argument<'a>>) {
+        if args.len() != 1 {
+            return;
+        }
+        let Argument::SpreadElement(e) = &args[0] else { return };
+        let Expression::ArrayExpression(e) = &e.argument else { return };
+        if e.elements.is_empty() {
+            args.drain(..);
+        }
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
@@ -897,5 +908,11 @@ mod test {
     fn keep_module_syntax() {
         test_same("throw foo; export let bar");
         test_same("throw foo; export default bar");
+    }
+
+    #[test]
+    fn remove_empty_spread_arguments() {
+        test("foo(...[])", "foo()");
+        test("new Foo(...[])", "new Foo()");
     }
 }

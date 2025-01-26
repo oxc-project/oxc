@@ -306,6 +306,14 @@ impl<'a> Traverse<'a> for LatePeepholeOptimizations {
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         self.substitute_catch_clause(catch, Ctx(ctx));
     }
+
+    fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
+        Self::remove_empty_spread_arguments(&mut e.arguments);
+    }
+
+    fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
+        Self::remove_empty_spread_arguments(&mut e.arguments);
+    }
 }
 
 pub struct DeadCodeElimination {
