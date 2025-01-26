@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.1] - 2025-01-26
+
+### Refactor
+
+- 58002e2 ecmascript: Remove the lifetime annotation on `MayHaveSideEffects` (#8717) (Boshen)
+- 0af0267 minifier: Side effect detection needs symbols resolution (#8715) (Boshen)
+
+### Testing
+
+- 03229c5 minifier: Fix broken tests (#8722) (Boshen)
+
 ## [0.48.0] - 2025-01-24
 
 ### Bug Fixes

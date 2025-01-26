@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.1] - 2025-01-26
+
+### Features
+
+- 6589c3b mangler: Reuse variable names (#8562) (翠 / green)
+- 29bd215 minifier: Minimize `Infinity.toString(radix)` to `'Infinity'` (#8732) (Boshen)
+- e0117db minifier: Replace `const` with `let` for non-exported read-only variables (#8733) (sapphi-red)
+- 9e32f55 minifier: Evaluate `Math.sqrt` and `Math.cbrt` (#8731) (sapphi-red)
+- 360d49e minifier: Replace `Math.pow` with `**` (#8730) (sapphi-red)
+- 2e9a560 minifier: `NaN.toString(radix)` is always `NaN` (#8727) (Boshen)
+- cbe0e82 minifier: Minimize `foo(...[])` -> `foo()` (#8726) (Boshen)
+- e9fb5fe minifier: Dce pure expressions such as `new Map()` (#8725) (Boshen)
+
+### Bug Fixes
+
+- 33de70a mangler: Handle cases where a var is declared in a block scope (#8706) (翠 / green)
+- d982cdb minifier: `Unknown.fromCharCode` should not be treated as `String.fromCharCode` (#8709) (sapphi-red)
+
+### Performance
+
+- e472ced mangler: Optimize handling of collecting lived scope ids (#8724) (Dunqing)
+- 8587965 minifier: Normalize `undefined` to `void 0` before everything else (#8699) (Boshen)
+
+### Refactor
+
+- 58002e2 ecmascript: Remove the lifetime annotation on `MayHaveSideEffects` (#8717) (Boshen)
+- 6bc906c minifier: Allow mutating arguments in methods called from `try_fold_known_string_methods` (#8729) (sapphi-red)
+- bf8be23 minifier: Use `Ctx` (#8716) (Boshen)
+- 0af0267 minifier: Side effect detection needs symbols resolution (#8715) (Boshen)
+- 32e0e47 minifier: Clean up `Normalize` (#8700) (Boshen)
+
+### Testing
+
+- 03229c5 minifier: Fix broken tests (#8722) (Boshen)
+
 ## [0.48.0] - 2025-01-24
 
 ### Features

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.1] - 2025-01-26
+
+### Bug Fixes
+
+- e7ab96c transformer/jsx: Incorrect `isStaticChildren` argument for `Fragment` with multiple children (#8713) (Dunqing)
+- 3e509e1 transformer/typescript: Enum merging when same name declared in outer scope (#8691) (branchseer)
+
 ## [0.48.0] - 2025-01-24
 
 ### Refactor
