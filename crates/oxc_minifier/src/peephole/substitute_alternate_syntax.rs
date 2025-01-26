@@ -940,7 +940,7 @@ mod test {
         test("function f(){return undefined;}", "function f(){}");
         test("function f(){if(a()){return undefined;}}", "function f(){if(a())return}");
         test_same("function a(undefined) { return undefined; }");
-        test_same("function f(){return foo()");
+        test_same("function f(){return foo()}");
 
         // `return undefined` has a different semantic in async generator function.
         test("function foo() { return undefined }", "function foo() { }");
@@ -1414,7 +1414,7 @@ mod test {
     #[test]
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
-        test("const foo = () => { foo; return 'baz' }", "const foo = () => 'baz'");
+        test("const foo = () => { foo; return 'baz' }", "const foo = () => (foo, 'baz')");
     }
 
     #[test]

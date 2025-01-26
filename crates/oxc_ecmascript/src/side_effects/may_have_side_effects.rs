@@ -4,14 +4,15 @@ use oxc_ast::ast::*;
 ///
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
 pub trait MayHaveSideEffects {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
-        matches!(ident.name.as_str(), "undefined" | "NaN" | "Infinity")
-    }
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool;
 
     fn expression_may_have_side_efffects(&self, e: &Expression<'_>) -> bool {
         match e {
             // Reference read can have a side effect.
-            Expression::Identifier(ident) => self.is_global_reference(ident),
+            Expression::Identifier(ident) => match ident.name.as_str() {
+                "NaN" | "Infinity" | "undefined" => !self.is_global_reference(ident),
+                _ => true,
+            },
             Expression::NumericLiteral(_)
             | Expression::BooleanLiteral(_)
             | Expression::StringLiteral(_)

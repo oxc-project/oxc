@@ -751,7 +751,7 @@ mod test {
         test("try {} catch (e) { foo() } finally { var x = bar() }", "{ var x = bar() }");
         test("try {} finally { let x = foo() }", "{ let x = foo() }");
         test("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
-        test("try {} catch () { } finally {}", "");
+        test("try {} catch (e) { } finally {}", "");
     }
 
     #[test]
@@ -800,7 +800,7 @@ mod test {
     #[test]
     fn test_remove_empty_static_block() {
         test("class Foo { static {}; foo }", "class Foo { foo }");
-        test_same("class Foo { static { foo() }");
+        test_same("class Foo { static { foo() } }");
     }
 
     #[test]
