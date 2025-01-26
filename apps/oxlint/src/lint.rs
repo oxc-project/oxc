@@ -116,17 +116,17 @@ impl Runner for LintRunner {
         }
 
         let mut oxlintrc = config_search_result.unwrap();
-        let mut builder = None;
+        let mut override_builder = None;
 
         if !ignore_options.no_ignore {
-            let mut override_builder = OverrideBuilder::new(&self.cwd);
+            let mut builder = OverrideBuilder::new(&self.cwd);
 
             if !ignore_options.ignore_pattern.is_empty() {
                 for pattern in &ignore_options.ignore_pattern {
                     // Meaning of ignore pattern is reversed
                     // <https://docs.rs/ignore/latest/ignore/overrides/struct.OverrideBuilder.html#method.add>
                     let pattern = format!("!{pattern}");
-                    override_builder.add(&pattern).unwrap();
+                    builder.add(&pattern).unwrap();
                 }
             }
             if !oxlintrc.ignore_patterns.is_empty() {
@@ -135,11 +135,11 @@ impl Runner for LintRunner {
                     Self::adjust_ignore_patterns(&self.cwd, &oxlint_wd, oxlintrc.ignore_patterns);
                 for pattern in &oxlintrc.ignore_patterns {
                     let pattern = format!("!{pattern}");
-                    override_builder.add(&pattern).unwrap();
+                    builder.add(&pattern).unwrap();
                 }
             }
 
-            let override_builder = override_builder.build().unwrap();
+            let builder = builder.build().unwrap();
 
             // The ignore crate whitelists explicit paths, but priority
             // should be given to the ignore file. Many users lint
@@ -158,13 +158,13 @@ impl Runner for LintRunner {
                     if path.is_dir() {
                         true
                     } else {
-                        !(override_builder.matched(p, false).is_ignore()
+                        !(builder.matched(p, false).is_ignore()
                             || ignore.matched(path, false).is_ignore())
                     }
                 });
             }
 
-            builder = Some(override_builder);
+            override_builder = Some(builder);
         }
 
         if paths.is_empty() {
@@ -178,7 +178,7 @@ impl Runner for LintRunner {
             paths.push(self.cwd.clone());
         }
 
-        let walker = Walk::new(&paths, &ignore_options, builder);
+        let walker = Walk::new(&paths, &ignore_options, override_builder);
         let paths = walker.with_extensions(Extensions(extensions)).paths();
 
         let number_of_files = paths.len();
