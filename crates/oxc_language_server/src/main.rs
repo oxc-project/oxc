@@ -531,11 +531,7 @@ impl Backend {
                 if !uri_path.starts_with(gitignore.path()) {
                     continue;
                 }
-
-                let path = PathBuf::from(uri.path());
-                let ignored =
-                    gitignore.matched_path_or_any_parents(&path, path.is_dir()).is_ignore();
-                if ignored {
+                if gitignore.matched_path_or_any_parents(&uri_path, uri_path.is_dir()).is_ignore() {
                     debug!("ignored: {uri}");
                     return true;
                 }
