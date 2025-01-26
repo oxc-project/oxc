@@ -42,6 +42,7 @@ const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
     "prefer-expect-resolves",
     "prefer-hooks-in-order",
     "prefer-hooks-on-top",
+    "prefer-lowercase-title",
     "prefer-mock-promise-shorthand",
     "prefer-strict-equal",
     "prefer-to-have-length",

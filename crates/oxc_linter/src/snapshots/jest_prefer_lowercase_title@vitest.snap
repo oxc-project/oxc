@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:4]
+ 1 │ it("Foo MM mm", function () {})
+   ·    ───────────
+   ╰────
+  help: `"Foo MM mm"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test(`Foo MM mm`, function () {})
+   ·      ───────────
+   ╰────
+  help: `"Foo MM mm"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:6]
+ 1 │ test(`SFC Compile`, function () {})
+   ·      ─────────────
+   ╰────
+  help: `"SFC Compile"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:7]
+ 1 │ bench(`Foo MM mm`, function () {})
+   ·       ───────────
+   ╰────
+  help: `"Foo MM mm"`s should begin with lowercase
