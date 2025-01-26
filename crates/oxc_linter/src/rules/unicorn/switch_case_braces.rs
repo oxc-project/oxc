@@ -159,6 +159,8 @@ impl Rule for SwitchCaseBraces {
 
                                     let source_text = ctx.source_text();
                                     println!("source_text: {source_text}");
+                                    // better way to do this is to index into source text
+                                    // maybe create get_indent_str fn
 
                                     let mut consequent_num = 0;
                                     let case_test = case.test.as_ref().unwrap().span();
