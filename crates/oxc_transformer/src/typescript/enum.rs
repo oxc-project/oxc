@@ -1,9 +1,11 @@
 use rustc_hash::FxHashMap;
+use std::cell::Cell;
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::ToInt32;
-use oxc_semantic::ScopeId;
+use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
@@ -521,9 +523,9 @@ impl<'a> TypeScriptEnum<'a> {
 /// ```
 struct IdentifierReferenceRename<'a, 'ctx> {
     enum_name: Atom<'a>,
-    enum_scope_id: ScopeId,
-    ctx: &'ctx TraverseCtx<'a>,
     previous_enum_members: PrevMembers<'a>,
+    scope_stack: NonEmptyStack<ScopeId>,
+    ctx: &'ctx TraverseCtx<'a>,
 }
 
 impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
@@ -533,23 +535,70 @@ impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
         previous_enum_members: PrevMembers<'a>,
         ctx: &'ctx TraverseCtx<'a>,
     ) -> Self {
-        IdentifierReferenceRename { enum_name, enum_scope_id, ctx, previous_enum_members }
+        IdentifierReferenceRename {
+            enum_name,
+            previous_enum_members,
+            scope_stack: NonEmptyStack::new(enum_scope_id),
+            ctx,
+        }
     }
 }
 
 impl IdentifierReferenceRename<'_, '_> {
     fn should_reference_enum_member(&self, ident: &IdentifierReference<'_>) -> bool {
+        // Don't need to rename the identifier if it's not a member of the enum,
+        if !self.previous_enum_members.contains_key(&ident.name) {
+            return false;
+        };
+
         let symbol_table = self.ctx.scoping.symbols();
         let Some(symbol_id) = symbol_table.get_reference(ident.reference_id()).symbol_id() else {
-            // No symbol found. If the name is found in previous_enum_members,
-            // it must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
-            return self.previous_enum_members.contains_key(&ident.name);
+            // No symbol found, yet the name is found in previous_enum_members.
+            // It must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
+            return true;
         };
-        symbol_table.get_scope_id(symbol_id) == self.enum_scope_id
+
+        let symbol_scope_id = symbol_table.get_scope_id(symbol_id);
+        // Don't need to rename the identifier when it references a nested enum member:
+        //
+        // ```ts
+        // enum OuterEnum {
+        //   A = 0,
+        //   B = () => {
+        //     enum InnerEnum {
+        //       A = 0,
+        //       B = A,
+        //           ^ This references to `InnerEnum.A` should not be renamed
+        //     }
+        //     return InnerEnum.B;
+        //   }
+        // }
+        // ```
+        //
+        // `NonEmptyStack` guarantees that the stack is not empty.
+        *self.scope_stack.first().unwrap() == symbol_scope_id
+            // The resolved symbol is declared outside the enum,
+            // and we have checked that the name exists in previous_enum_members:
+            //
+            // ```ts
+            // const A = 0;
+            // enum Foo { A }
+            // enum Foo { B = A }
+            //                ^ This should be renamed to Foo.A
+            // ```
+        || !self.scope_stack.contains(&symbol_scope_id)
     }
 }
 
 impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
+    fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+        self.scope_stack.push(scope_id.get().unwrap());
+    }
+
+    fn leave_scope(&mut self) {
+        self.scope_stack.pop();
+    }
+
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
