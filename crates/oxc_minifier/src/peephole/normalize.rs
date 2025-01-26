@@ -10,6 +10,7 @@ use crate::{ctx::Ctx, CompressOptions};
 #[derive(Default)]
 pub struct NormalizeOptions {
     pub convert_while_to_fors: bool,
+    pub convert_const_to_let: bool,
 }
 
 /// Normalize AST
@@ -19,6 +20,7 @@ pub struct NormalizeOptions {
 /// * remove `Statement::EmptyStatement`
 /// * remove `ParenthesizedExpression`
 /// * convert whiles to fors
+/// * convert `const` to `let` for non-exported variables
 /// * convert `Infinity` to `f64::INFINITY`
 /// * convert `NaN` to `f64::NaN`
 /// * convert `var x; void x` to `void 0`
@@ -47,6 +49,16 @@ impl<'a> Traverse<'a> for Normalize {
                 || self.drop_debugger(stmt)
                 || self.drop_console(stmt))
         });
+    }
+
+    fn exit_variable_declaration(
+        &mut self,
+        decl: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.convert_const_to_let {
+            Self::convert_const_to_let(decl, ctx);
+        }
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -136,6 +148,23 @@ impl<'a> Normalize {
         *stmt = Statement::ForStatement(for_stmt);
     }
 
+    fn convert_const_to_let(decl: &mut VariableDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        // checking whether the current scope is the root scope instead of
+        // checking whether any variables are exposed to outside (e.g. `export` in ESM)
+        if decl.kind.is_const() && ctx.current_scope_id() != ctx.scopes().root_scope_id() {
+            let all_declarations_are_only_read = decl.declarations.iter().all(|decl| {
+                decl.id.get_binding_identifiers().iter().all(|id| {
+                    ctx.symbols()
+                        .get_resolved_references(id.symbol_id())
+                        .all(|reference| reference.flags().is_read_only())
+                })
+            });
+            if all_declarations_are_only_read {
+                decl.kind = VariableDeclarationKind::Let;
+            }
+        }
+    }
+
     /// Transforms `undefined` => `void 0`, `Infinity` => `f64::Infinity`, `NaN` -> `f64::NaN`.
     /// So subsequent passes don't need to look up whether these variables are shadowed or not.
     fn try_compress_identifier(
@@ -179,12 +208,24 @@ impl<'a> Normalize {
 
 #[cfg(test)]
 mod test {
-    use crate::tester::test;
+    use crate::tester::{test, test_same};
 
     #[test]
     fn test_while() {
         // Verify while loops are converted to FOR loops.
         test("while(c < b) foo()", "for(; c < b;) foo()");
+    }
+
+    #[test]
+    fn test_const_to_let() {
+        test_same("const x = 1"); // keep top-level (can be replaced with "let" if it's ESM and not exported)
+        test("{ const x = 1 }", "{ let x = 1 }");
+        test_same("{ const x = 1; x = 2 }"); // keep assign error
+        test("{ const x = 1, y = 2 }", "{ let x = 1, y = 2 }");
+        test("{ const { x } = { x: 1 } }", "{ let { x } = { x: 1 } }");
+        test("{ const [x] = [1] }", "{ let [x] = [1] }");
+        test("{ const [x = 1] = [] }", "{ let [x = 1] = [] }");
+        test("for (const x in y);", "for (let x in y);");
     }
 
     #[test]

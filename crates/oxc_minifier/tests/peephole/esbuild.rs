@@ -155,15 +155,15 @@ fn js_parser_test() {
     test("const a=0; while (1) ;", "const a = 0;for (;;) ;");
     test("var a; for (var b;;) ;", "for (var a, b;;) ;");
     test("let a; for (let b;;) ;", "let a;for (let b;;) ;");
-    test("const a=0; for (const b = 1;;) ;", "const a = 0;for (const b = 1;;) ;");
+    test("const a=0; for (const b = 1;;) ;", "const a = 0;for (let b = 1;;) ;");
     test("export var a; while (1) ;", "export var a;for (;;) ;");
     test("export let a; while (1) ;", "export let a;for (;;) ;");
     test("export const a=0; while (1) ;", "export const a = 0;for (;;) ;");
     test("export var a; for (var b;;) ;", "export var a;for (var b;;) ;");
     test("export let a; for (let b;;) ;", "export let a;for (let b;;) ;");
-    test("export const a=0; for (const b = 1;;) ;", "export const a = 0;for (const b = 1;;) ;");
+    test("export const a=0; for (const b = 1;;) ;", "export const a = 0;for (let b = 1;;) ;");
     test("var a; for (let b;;) ;", "var a;for (let b;;) ;");
-    test("let a; for (const b=0;;) ;", "let a;for (const b = 0;;) ;");
+    test("let a; for (const b=0;;) ;", "let a;for (let b = 0;;) ;");
     test("const a=0; for (var b;;) ;", "const a = 0;for (var b;;) ;");
     test("a(); while (1) ;", "for (a();;) ;");
     test("a(); for (b();;) ;", "for (a(), b();;) ;");
@@ -272,7 +272,7 @@ fn js_parser_test() {
     // test("x['-2147483648']", "x[-2147483648];");
     test("x['-2147483649']", "x['-2147483649'];");
     test("while(1) { while (1) {} }", "for (;;) for (;;)  ;");
-    test("while(1) { const x = y; }", "for (;;) { const x = y;}");
+    test("while(1) { const x = y; }", "for (;;) { let x = y;}");
     test("while(1) { let x; }", "for (;;) { let x;}");
     // test("while(1) { var x; }", "for (;;) var x;");
     test("while(1) { class X {} }", "for (;;) { class X { }}");

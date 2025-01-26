@@ -1267,7 +1267,10 @@ mod test {
 
         // Dot not fold `let` and `const`.
         // Lexical declaration cannot appear in a single-statement context.
-        test_same("if (foo) { const bar = 1 } else { const baz = 1 }");
+        test(
+            "if (foo) { const bar = 1 } else { const baz = 1 }",
+            "if (foo) { let bar = 1 } else { let baz = 1 }",
+        );
         test_same("if (foo) { let bar = 1 } else { let baz = 1 }");
         // test(
         // "if (foo) { var bar = 1 } else { var baz = 1 }",
@@ -1401,8 +1404,8 @@ mod test {
     fn test_fold_returns_integration2() {
         // if-then-else duplicate statement removal handles this case:
         test(
-            "function test(a) {if (a) {const a = Math.random();if(a) {return a;}} return a; }",
-            "function test(a) { if (a) { const a = Math.random(); if (a) return a; } return a; }",
+            "function test(a) {if (a) {let a = Math.random();if(a) {return a;}} return a; }",
+            "function test(a) { if (a) { let a = Math.random(); if (a) return a; } return a; }",
         );
     }
 
@@ -1412,7 +1415,7 @@ mod test {
         // refers to a different variable.
         // We only try removing duplicate statements if the AST is normalized and names are unique.
         test_same(
-            "if (Math.random() < 0.5) { const x = 3; alert(x); } else { const x = 5; alert(x); }",
+            "if (Math.random() < 0.5) { let x = 3; alert(x); } else { let x = 5; alert(x); }",
         );
     }
 

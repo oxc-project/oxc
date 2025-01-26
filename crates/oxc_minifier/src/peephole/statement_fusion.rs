@@ -248,7 +248,7 @@ mod test {
     fn fuse_into_vanilla_for2() {
         test("a;b;c;for(var d;g;){}", "a,b,c;for(var d;g;);");
         test("a;b;c;for(let d;g;){}", "a,b,c;for(let d;g;);");
-        test("a;b;c;for(const d = 5;g;){}", "a,b,c;for(const d = 5;g;);");
+        test("a;b;c;for(const d = 5;g;){}", "a,b,c;for(let d = 5;g;);");
     }
 
     #[test]
@@ -292,10 +292,10 @@ mod test {
         test("a; {b;}", "a,b");
         test("a; {b; var a = 1;}", "{a, b; var a = 1;}");
         test_same("a; { b; let a = 1; }");
-        test_same("a; { b; const a = 1; }");
+        test("a; { b; const a = 1; }", "a; { b; let a = 1; }");
         test_same("a; { b; class a {} }");
         test_same("a; { b; function a() {} }");
-        test_same("a; { b; const otherVariable = 1; }");
+        test("a; { b; const otherVariable = 1; }", "a; { b; let otherVariable = 1; }");
 
         // test(
         // "function f(a) { if (COND) { a; { b; let a = 1; } } }",
