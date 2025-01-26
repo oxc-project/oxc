@@ -290,6 +290,9 @@ impl<'a> PeepholeOptimizations {
                 }
                 // Only convert integers for other radix values.
                 let value = lit.value;
+                if value.is_nan() {
+                    return Some(ctx.ast.expression_string_literal(ce.span, "NaN", None));
+                }
                 if value >= 0.0 && value.fract() != 0.0 {
                     return None;
                 }
@@ -1422,6 +1425,7 @@ mod test {
         test("x = 0 .toString()", "x = '0';");
         test("x = 123 .toString()", "x = '123';");
         test("x = NaN.toString()", "x = 'NaN';");
+        test("x = NaN.toString(2)", "x = 'NaN';");
         test("x = Infinity.toString()", "x = 'Infinity';");
         test("x = 1n.toString()", "x = '1'");
         test_same("254n.toString(16);"); // unimplemented
