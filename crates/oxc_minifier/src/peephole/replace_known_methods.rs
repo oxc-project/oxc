@@ -4,8 +4,8 @@ use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
-    StringLastIndexOf, StringSubstring, ToInt32,
+    constant_evaluation::{ConstantEvaluation, ValueType},
+    StringCharAt, StringCharCodeAt, StringIndexOf, StringLastIndexOf, StringSubstring, ToInt32,
 };
 use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
@@ -63,6 +63,7 @@ impl<'a> PeepholeOptimizations {
             }
             "fromCharCode" => Self::try_fold_string_from_char_code(*span, arguments, object, ctx),
             "toString" => Self::try_fold_to_string(*span, arguments, object, ctx),
+            "pow" => self.try_fold_pow(*span, arguments, object, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -340,6 +341,51 @@ impl<'a> PeepholeOptimizations {
             }
         }
         result.into_iter().rev().collect()
+    }
+
+    /// `Math.pow(a, b)` -> `+(a) ** +b`
+    fn try_fold_pow(
+        &self,
+        span: Span,
+        arguments: &mut Arguments<'a>,
+        object: &Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if self.target < ESTarget::ES2016 {
+            return None;
+        }
+
+        let Expression::Identifier(ident) = object else { return None };
+        if ident.name != "Math" || !ctx.is_global_reference(ident) {
+            return None;
+        }
+        if arguments.len() != 2 || arguments.iter().any(|arg| !arg.is_expression()) {
+            return None;
+        }
+
+        let mut second_arg = arguments.pop().expect("checked len above");
+        let second_arg = second_arg.to_expression_mut(); // checked above
+        let mut first_arg = arguments.pop().expect("checked len above");
+        let first_arg = first_arg.to_expression_mut(); // checked above
+
+        let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
+            if ValueType::from(&*expr).is_number() {
+                ctx.ast.move_expression(expr)
+            } else {
+                ctx.ast.expression_unary(
+                    SPAN,
+                    UnaryOperator::UnaryPlus,
+                    ctx.ast.move_expression(expr),
+                )
+            }
+        };
+
+        Some(ctx.ast.expression_binary(
+            span,
+            wrap_with_unary_plus_if_needed(first_arg),
+            BinaryOperator::Exponential,
+            wrap_with_unary_plus_if_needed(second_arg),
+        ))
     }
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
@@ -1468,6 +1514,23 @@ mod test {
         test("123 .toString(b)", "123 .toString(b)");
         test("1e99.toString(b)", "1e99.toString(b)");
         test("/./.toString(b)", "/./.toString(b)");
+    }
+
+    #[test]
+    fn test_fold_pow() {
+        test("Math.pow(2, 3)", "2 ** 3");
+        test("Math.pow(a, 3)", "+(a) ** 3");
+        test("Math.pow(2, b)", "2 ** +b");
+        test("Math.pow(a, b)", "+(a) ** +b");
+        test("Math.pow(2n, 3n)", "+(2n) ** +3n"); // errors both before and after
+        test("Math.pow(a + b, c)", "+(a + b) ** +c");
+        test_same("Math.pow()");
+        test_same("Math.pow(1)");
+        test_same("Math.pow(...a, 1)");
+        test_same("Math.pow(1, ...a)");
+        test_same("Math.pow(1, 2, 3)");
+        test_es2015("Math.pow(2, 3)", "Math.pow(2, 3)");
+        test_same("Unknown.pow(1, 2)");
     }
 
     #[test]
