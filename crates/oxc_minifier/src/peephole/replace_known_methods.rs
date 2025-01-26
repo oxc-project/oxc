@@ -15,6 +15,8 @@ use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
+type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
+
 impl<'a> PeepholeOptimizations {
     /// Minimize With Known Methods
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
@@ -30,7 +32,8 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_known_string_methods(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
         let Expression::CallExpression(ce) = node else { return };
-        let (name, object) = match &ce.callee {
+        let CallExpression { span, callee, arguments, .. } = ce.as_mut();
+        let (name, object) = match &callee {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 (member.property.name.as_str(), &member.object)
             }
@@ -44,16 +47,22 @@ impl<'a> PeepholeOptimizations {
         };
         let replacement = match name {
             "toLowerCase" | "toUpperCase" | "trim" => {
-                Self::try_fold_string_casing(ce, name, object, ctx)
+                Self::try_fold_string_casing(*span, arguments, name, object, ctx)
             }
-            "substring" | "slice" => Self::try_fold_string_substring_or_slice(ce, object, ctx),
-            "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(ce, name, object, ctx),
-            "charAt" => Self::try_fold_string_char_at(ce, object, ctx),
-            "charCodeAt" => Self::try_fold_string_char_code_at(ce, object, ctx),
-            "concat" => Self::try_fold_concat(ce, ctx),
-            "replace" | "replaceAll" => Self::try_fold_string_replace(ce, name, object, ctx),
-            "fromCharCode" => Self::try_fold_string_from_char_code(ce, object, ctx),
-            "toString" => Self::try_fold_to_string(ce, object, ctx),
+            "substring" | "slice" => {
+                Self::try_fold_string_substring_or_slice(*span, arguments, object, ctx)
+            }
+            "indexOf" | "lastIndexOf" => {
+                Self::try_fold_string_index_of(*span, arguments, name, object, ctx)
+            }
+            "charAt" => Self::try_fold_string_char_at(*span, arguments, object, ctx),
+            "charCodeAt" => Self::try_fold_string_char_code_at(*span, arguments, object, ctx),
+            "concat" => Self::try_fold_concat(*span, arguments, callee, ctx),
+            "replace" | "replaceAll" => {
+                Self::try_fold_string_replace(*span, arguments, name, object, ctx)
+            }
+            "fromCharCode" => Self::try_fold_string_from_char_code(*span, arguments, object, ctx),
+            "toString" => Self::try_fold_to_string(*span, arguments, object, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -63,12 +72,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_string_casing(
-        ce: &CallExpression<'a>,
+        span: Span,
+        args: &Arguments,
         name: &str,
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        if ce.arguments.len() >= 1 {
+        if args.len() >= 1 {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
@@ -78,16 +88,16 @@ impl<'a> PeepholeOptimizations {
             "trim" => Cow::Borrowed(s.value.trim()),
             _ => return None,
         };
-        Some(ctx.ast.expression_string_literal(ce.span, value, None))
+        Some(ctx.ast.expression_string_literal(span, value, None))
     }
 
     fn try_fold_string_index_of(
-        ce: &CallExpression<'a>,
+        span: Span,
+        args: &Arguments,
         name: &str,
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let args = &ce.arguments;
         if args.len() >= 3 {
             return None;
         }
@@ -108,15 +118,15 @@ impl<'a> PeepholeOptimizations {
             _ => unreachable!(),
         };
         #[expect(clippy::cast_precision_loss)]
-        Some(ctx.ast.expression_numeric_literal(ce.span, result as f64, None, NumberBase::Decimal))
+        Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
     }
 
     fn try_fold_string_substring_or_slice(
-        ce: &CallExpression<'a>,
+        span: Span,
+        args: &Arguments,
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let args = &ce.arguments;
         if args.len() > 2 {
             return None;
         }
@@ -141,18 +151,18 @@ impl<'a> PeepholeOptimizations {
             }
         };
         Some(ctx.ast.expression_string_literal(
-            ce.span,
+            span,
             s.value.as_str().substring(start_idx, end_idx),
             None,
         ))
     }
 
     fn try_fold_string_char_at(
-        ce: &CallExpression<'a>,
+        span: Span,
+        args: &Arguments,
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let args = &ce.arguments;
         if args.len() > 1 {
             return None;
         }
@@ -172,17 +182,18 @@ impl<'a> PeepholeOptimizations {
         };
         let result =
             &s.value.as_str().char_at(char_at_index).map_or(String::new(), |v| v.to_string());
-        Some(ctx.ast.expression_string_literal(ce.span, result, None))
+        Some(ctx.ast.expression_string_literal(span, result, None))
     }
 
     #[expect(clippy::cast_lossless)]
     fn try_fold_string_char_code_at(
-        ce: &CallExpression<'a>,
+        span: Span,
+        args: &Arguments,
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let Expression::StringLiteral(s) = object else { return None };
-        let char_at_index = match ce.arguments.first() {
+        let char_at_index = match args.first() {
             None => Some(0.0),
             Some(Argument::SpreadElement(_)) => None,
             Some(e) => ctx.get_side_free_number_value(e.to_expression()),
@@ -194,28 +205,28 @@ impl<'a> PeepholeOptimizations {
         } else {
             f64::NAN
         };
-        Some(ctx.ast.expression_numeric_literal(ce.span, value, None, NumberBase::Decimal))
+        Some(ctx.ast.expression_numeric_literal(span, value, None, NumberBase::Decimal))
     }
 
     fn try_fold_string_replace(
-        ce: &CallExpression<'a>,
+        span: Span,
+        args: &Arguments,
         name: &str,
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        if ce.arguments.len() != 2 {
+        if args.len() != 2 {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
-        let span = ce.span;
-        let search_value = ce.arguments.first().unwrap();
+        let search_value = args.first().unwrap();
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
                 ctx.get_side_free_string_value(search_value.to_expression())?
             }
         };
-        let replace_value = ce.arguments.get(1).unwrap();
+        let replace_value = args.get(1).unwrap();
         let replace_value = match replace_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
@@ -235,7 +246,8 @@ impl<'a> PeepholeOptimizations {
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
     fn try_fold_string_from_char_code(
-        ce: &CallExpression<'a>,
+        span: Span,
+        args: &mut Arguments,
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -243,7 +255,6 @@ impl<'a> PeepholeOptimizations {
         if ident.name != "String" || !ctx.is_global_reference(ident) {
             return None;
         }
-        let args = &ce.arguments;
         let mut s = String::with_capacity(args.len());
         for arg in args {
             let expr = arg.as_expression()?;
@@ -252,7 +263,7 @@ impl<'a> PeepholeOptimizations {
             let c = char::try_from(v).ok()?;
             s.push(c);
         }
-        Some(ctx.ast.expression_string_literal(ce.span, s, None))
+        Some(ctx.ast.expression_string_literal(span, s, None))
     }
 
     #[expect(
@@ -262,11 +273,11 @@ impl<'a> PeepholeOptimizations {
         clippy::float_cmp
     )]
     fn try_fold_to_string(
-        ce: &CallExpression<'a>,
+        span: Span,
+        args: &mut Arguments,
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let args = &ce.arguments;
         match object {
             // Number.prototype.toString()
             // Number.prototype.toString(radix)
@@ -286,12 +297,12 @@ impl<'a> PeepholeOptimizations {
                 if radix == 10 {
                     use oxc_syntax::number::ToJsString;
                     let s = lit.value.to_js_string();
-                    return Some(ctx.ast.expression_string_literal(ce.span, s, None));
+                    return Some(ctx.ast.expression_string_literal(span, s, None));
                 }
                 // Only convert integers for other radix values.
                 let value = lit.value;
                 if value.is_nan() {
-                    return Some(ctx.ast.expression_string_literal(ce.span, "NaN", None));
+                    return Some(ctx.ast.expression_string_literal(span, "NaN", None));
                 }
                 if value >= 0.0 && value.fract() != 0.0 {
                     return None;
@@ -300,7 +311,7 @@ impl<'a> PeepholeOptimizations {
                 if i as f64 != value {
                     return None;
                 }
-                Some(ctx.ast.expression_string_literal(ce.span, Self::format_radix(i, radix), None))
+                Some(ctx.ast.expression_string_literal(span, Self::format_radix(i, radix), None))
             }
             // `null` returns type errors
             Expression::BooleanLiteral(_)
@@ -311,7 +322,7 @@ impl<'a> PeepholeOptimizations {
                 if args.is_empty() =>
             {
                 use oxc_ecmascript::ToJsString;
-                object.to_js_string().map(|s| ctx.ast.expression_string_literal(ce.span, s, None))
+                object.to_js_string().map(|s| ctx.ast.expression_string_literal(span, s, None))
             }
             _ => None,
         }
@@ -413,7 +424,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`
-    fn try_fold_concat(ce: &mut CallExpression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
+    fn try_fold_concat(
+        span: Span,
+        args: &mut Arguments<'a>,
+        callee: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
         if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent() {
             if parent_member.property().name.as_str() == "concat" {
@@ -421,11 +437,10 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        let Expression::StaticMemberExpression(member) = &mut ce.callee else { unreachable!() };
+        let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
         let Expression::ArrayExpression(array_expr) = &mut member.object else { return None };
 
-        let can_merge_until = ce
-            .arguments
+        let can_merge_until = args
             .iter()
             .enumerate()
             .take_while(|(_, argument)| match argument {
@@ -443,7 +458,7 @@ impl<'a> PeepholeOptimizations {
             .last();
 
         if let Some(can_merge_until) = can_merge_until {
-            for argument in ce.arguments.drain(..=can_merge_until) {
+            for argument in args.drain(..=can_merge_until) {
                 let argument = argument.into_expression();
                 if argument.is_literal() {
                     array_expr.elements.push(ArrayExpressionElement::from(argument));
@@ -456,14 +471,14 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if ce.arguments.is_empty() {
+        if args.is_empty() {
             Some(ctx.ast.move_expression(&mut member.object))
         } else if can_merge_until.is_some() {
             Some(ctx.ast.expression_call(
-                ce.span,
-                ctx.ast.move_expression(&mut ce.callee),
+                span,
+                ctx.ast.move_expression(callee),
                 Option::<TSTypeParameterInstantiation>::None,
-                ctx.ast.move_vec(&mut ce.arguments),
+                ctx.ast.move_vec(args),
                 false,
             ))
         } else {
