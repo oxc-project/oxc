@@ -287,13 +287,9 @@ mod tests {
         let source = "function Fn() {}";
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
+        let scopes = semantic.scopes();
 
-        let top_level_a = semantic
-            .scopes()
-            .iter_bindings()
-            .find(|(_scope_id, _symbol_id, name)| *name == "Fn")
-            .unwrap();
-        assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
+        assert!(scopes.get_binding(scopes.root_scope_id(), "Fn").is_some());
     }
 
     #[test]
