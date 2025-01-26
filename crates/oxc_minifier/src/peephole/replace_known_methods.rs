@@ -64,6 +64,7 @@ impl<'a> PeepholeOptimizations {
             "fromCharCode" => Self::try_fold_string_from_char_code(*span, arguments, object, ctx),
             "toString" => Self::try_fold_to_string(*span, arguments, object, ctx),
             "pow" => self.try_fold_pow(*span, arguments, object, ctx),
+            "sqrt" | "cbrt" => Self::try_fold_roots(*span, arguments, name, object, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -386,6 +387,57 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
+    }
+
+    /// `Math.sqrt(a)`, `Math.cbrt(a)`
+    ///
+    /// These cannot be replaced with `a ** .5`, `a ** (1/3)` because `Math.sqrt(-0)` returns `-0` where `(-0) ** .5` returns `0`.
+    /// It can be replaced when the value is known to be not `-0`, but that makes the gzip output worse.
+    fn try_fold_roots(
+        span: Span,
+        arguments: &Arguments,
+        name: &str,
+        object: &Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        let Expression::Identifier(ident) = object else { return None };
+        if ident.name != "Math" || !ctx.is_global_reference(ident) {
+            return None;
+        }
+        if arguments.len() != 1 || !arguments[0].is_expression() {
+            return None;
+        }
+        let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
+        if arg_val == f64::INFINITY || arg_val.is_nan() || arg_val == 0.0 {
+            return Some(ctx.ast.expression_numeric_literal(
+                span,
+                arg_val,
+                None,
+                NumberBase::Decimal,
+            ));
+        }
+        if arg_val < 0.0 {
+            return Some(ctx.ast.expression_numeric_literal(
+                span,
+                f64::NAN,
+                None,
+                NumberBase::Decimal,
+            ));
+        }
+        let calculated_val = match name {
+            "sqrt" => arg_val.sqrt(),
+            "cbrt" => arg_val.cbrt(),
+            _ => unreachable!(),
+        };
+        if calculated_val.fract() == 0.0 {
+            return Some(ctx.ast.expression_numeric_literal(
+                span,
+                calculated_val,
+                None,
+                NumberBase::Decimal,
+            ));
+        }
+        None
     }
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
@@ -1531,6 +1583,29 @@ mod test {
         test_same("Math.pow(1, 2, 3)");
         test_es2015("Math.pow(2, 3)", "Math.pow(2, 3)");
         test_same("Unknown.pow(1, 2)");
+    }
+
+    #[test]
+    fn test_fold_roots() {
+        test_same("v = Math.sqrt()");
+        test_same("v = Math.sqrt(1, 2)");
+        test_same("v = Math.sqrt(...a)");
+        test_same("v = Math.sqrt(a)"); // a maybe -0
+        test_same("v = Math.sqrt(2n)");
+        test("v = Math.sqrt(Infinity)", "v = Infinity");
+        test("v = Math.sqrt(NaN)", "v = NaN");
+        test("v = Math.sqrt(0)", "v = 0");
+        test("v = Math.sqrt(-0)", "v = -0");
+        test("v = Math.sqrt(-1)", "v = NaN");
+        test("v = Math.sqrt(-Infinity)", "v = NaN");
+        test("v = Math.sqrt(1)", "v = 1");
+        test("v = Math.sqrt(4)", "v = 2");
+        test_same("v = Math.sqrt(2)");
+        test("v = Math.cbrt(1)", "v = 1");
+        test("v = Math.cbrt(8)", "v = 2");
+        test_same("v = Math.cbrt(2)");
+        test_same("Unknown.sqrt(1)");
+        test_same("Unknown.cbrt(1)");
     }
 
     #[test]
