@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{iter, ops::Deref};
 
 use fixedbitset::FixedBitSet;
 use itertools::Itertools;
@@ -179,10 +179,8 @@ impl Mangler {
         let allocator = Allocator::default();
 
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots: Vec<'_, Slot> = Vec::with_capacity_in(symbol_table.len(), &allocator);
-        for _ in 0..symbol_table.len() {
-            slots.push(0);
-        }
+        let mut slots: Vec<'_, Slot> =
+            Vec::from_iter_in(iter::repeat_n(0, symbol_table.len()), &allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
