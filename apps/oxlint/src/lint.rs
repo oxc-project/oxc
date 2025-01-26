@@ -763,6 +763,15 @@ mod test {
     }
 
     #[test]
+    fn test_ignore_patterns() {
+        let result = Tester::new()
+            .with_cwd("fixtures/config_ignore_patterns/with_oxlintrc".into())
+            .get_lint_result(&["-c", "./test/eslintrc.json", "--ignore-pattern", "*.ts", "."]);
+
+        assert_eq!(result.number_of_files, 1);
+    }
+
+    #[test]
     fn test_config_ignore_patterns_extension() {
         let args = &[
             "-c",
