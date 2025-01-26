@@ -303,6 +303,10 @@ impl<'a> PeepholeOptimizations {
                 }
                 // Only convert integers for other radix values.
                 let value = lit.value;
+                if value.is_infinite() {
+                    let s = if value.is_sign_negative() { "-Infinity" } else { "Infinity" };
+                    return Some(ctx.ast.expression_string_literal(span, s, None));
+                }
                 if value.is_nan() {
                     return Some(ctx.ast.expression_string_literal(span, "NaN", None));
                 }
@@ -1540,6 +1544,8 @@ mod test {
         test("x = NaN.toString()", "x = 'NaN';");
         test("x = NaN.toString(2)", "x = 'NaN';");
         test("x = Infinity.toString()", "x = 'Infinity';");
+        test("x = Infinity.toString(2)", "x = 'Infinity';");
+        test("x = (-Infinity).toString(2)", "x = '-Infinity';");
         test("x = 1n.toString()", "x = '1'");
         test_same("254n.toString(16);"); // unimplemented
                                          // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
