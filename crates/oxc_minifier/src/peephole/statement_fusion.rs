@@ -201,7 +201,7 @@ mod test {
     #[test]
     fn fold_block_into_if() {
         test("a;b;c;if(x){}", "a,b,c,x");
-        test("a;b;c;if(x,y){}else{}", "a, b, c, !(x, y);");
+        test("a;b;c;if(x,y){}else{}", "a, b, c, x, !y;");
         test("a;b;c;if(x,y){}", "a, b, c, x, y");
         test("a;b;c;if(x,y,z){}", "a, b, c, x, y, z");
         test("a();if(a()){}a()", "a(), a(), a()");

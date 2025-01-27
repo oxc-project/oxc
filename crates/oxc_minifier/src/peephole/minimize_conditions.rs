@@ -128,6 +128,7 @@ impl<'a> PeepholeOptimizations {
             .unwrap_or_else(|| Expression::UnaryExpression(ctx.ast.alloc(unary)))
     }
 
+    /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
     fn try_minimize_not(
         expr: &mut UnaryExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -136,21 +137,39 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         match &mut expr.argument {
+            // `!!true` -> `true`
+            // `!!false` -> `false`
             Expression::UnaryExpression(e)
                 if e.operator.is_not() && ValueType::from(&e.argument).is_boolean() =>
             {
                 Some(ctx.ast.move_expression(&mut e.argument))
             }
+            // `!(a == b)` => `a != b`
+            // `!(a != b)` => `a == b`
+            // `!(a === b)` => `a !== b`
+            // `!(a !== b)` => `a === b`
             Expression::BinaryExpression(e) if e.operator.is_equality() => {
                 e.operator = e.operator.equality_inverse_operator().unwrap();
                 Some(ctx.ast.move_expression(&mut expr.argument))
             }
+            // `!(a == b ? foo: bar)` => `a != b ? foo : bar`
             Expression::ConditionalExpression(conditional_expr) => {
                 if let Expression::BinaryExpression(e) = &mut conditional_expr.test {
                     if e.operator.is_equality() {
                         e.operator = e.operator.equality_inverse_operator().unwrap();
                         return Some(ctx.ast.move_expression(&mut expr.argument));
                     }
+                }
+                None
+            }
+            // "!(a, b)" => "a, !b"
+            Expression::SequenceExpression(sequence_expr) => {
+                if let Some(e) = sequence_expr.expressions.pop() {
+                    let e = ctx.ast.expression_unary(e.span(), UnaryOperator::LogicalNot, e);
+                    let expressions = ctx.ast.vec_from_iter(
+                        sequence_expr.expressions.drain(..).chain(std::iter::once(e)),
+                    );
+                    return Some(ctx.ast.expression_sequence(sequence_expr.span, expressions));
                 }
                 None
             }
@@ -2310,6 +2329,7 @@ mod test {
         test("!!!delete x.y", "!delete x.y");
         test("!!!!delete x.y", "delete x.y");
         test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
+        test("!(a, b)", "a, !b");
     }
 
     #[test]
