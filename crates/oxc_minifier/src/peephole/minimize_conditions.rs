@@ -1468,29 +1468,28 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_logical_op_string_compare() {
         // side-effects
         // There is two way to parse two &&'s and both are correct.
-        test("if (foo() && false) z()", "(foo(), 0) && z()");
+        test("if (foo() && false) z()", "foo() && !1");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_not() {
-        test("while(!(x==y)){a=b;}", "while(x!=y){a=b;}");
-        test("while(!(x!=y)){a=b;}", "while(x==y){a=b;}");
-        test("while(!(x===y)){a=b;}", "while(x!==y){a=b;}");
-        test("while(!(x!==y)){a=b;}", "while(x===y){a=b;}");
+        test("for(; !(x==y) ;) a=b", "for(; x!=y ;) a=b");
+        test("for(; !(x!=y) ;) a=b", "for(; x==y ;) a=b");
+        test("for(; !(x===y) ;) a=b", "for(; x!==y ;) a=b");
+        test("for(; !(x!==y) ;) a=b", "for(; x===y ;) a=b");
         // Because !(x<NaN) != x>=NaN don't fold < and > cases.
-        test_same("while(!(x>y)){a=b;}");
-        test_same("while(!(x>=y)){a=b;}");
-        test_same("while(!(x<y)){a=b;}");
-        test_same("while(!(x<=y)){a=b;}");
-        test_same("while(!(x<=NaN)){a=b;}");
+        test_same("for(; !(x>y) ;) a=b");
+        test_same("for(; !(x>=y) ;) a=b");
+        test_same("for(; !(x<y) ;) a=b");
+        test_same("for(; !(x<=y) ;) a=b");
+        test_same("for(; !(x<=NaN) ;) a=b");
 
         // NOT forces a boolean context
-        test("x = !(y() && true)", "x = !y()");
+        test("x = !(y() && true)", "x = !(y() && !0)"); // FIXME: this can be `!y()`
+
         // This will be further optimized by PeepholeFoldConstants.
         test("x = !true", "x = !1");
     }
@@ -1647,10 +1646,9 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_comma() {
-        test("while(!(inc(), test())) foo();", "while(inc(), !test()) foo();");
-        test("(inc(), !test()) ? foo() : bar()", "(inc(), test()) ? bar() : foo()");
+        test("while(!(inc(), test())) foo();", "for(;inc(), !test();) foo();");
+        test("(inc(), !test()) ? foo() : bar()", "inc(), test() ? bar() : foo()");
     }
 
     #[test]
@@ -1746,7 +1744,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_if_with_lower_operators_inside() {
         test("if (x + (y=5)) z && (w,z);", "x + (y=5) && (z && (w,z))");
         test("if (!(x+(y=5))) z && (w,z);", "x + (y=5) || z && (w,z)");
@@ -2027,35 +2024,15 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_nested_if_combine() {
-        test("if(x)if(y){while(1){}}", "if(x&&y){while(1){}}");
-        test("if(x||z)if(y){while(1){}}", "if((x||z)&&y){while(1){}}");
-        test("if(x)if(y||z){while(1){}}", "if((x)&&(y||z)){while(1){}}");
-        test_same("if(x||z)if(y||z){while(1){}}");
-        test("if(x)if(y){if(z){while(1){}}}", "if(x&&(y&&z)){while(1){}}");
-    }
-
-    // See: http://blickly.github.io/closure-compiler-issues/#291
-    #[test]
-    #[ignore]
-    fn test_issue291() {
-        test("if (true) { f.onchange(); }", "if (1) f.onchange();");
-        test_same("if (f) { f.onchange(); }");
-        test_same("if (f) { f.bar(); } else { f.onchange(); }");
-        test("if (f) { f.bonchange(); }", "f && f.bonchange();");
-        test_same("if (f) { f['x'](); }");
-
-        // optional versions
-        test("if (true) { f?.onchange(); }", "if (1) f?.onchange();");
-        test_same("if (f) { f?.onchange(); }");
-        test_same("if (f) { f?.bar(); } else { f?.onchange(); }");
-        test("if (f) { f?.bonchange(); }", "f && f?.bonchange();");
-        test_same("if (f) { f?.['x'](); }");
+        test("if(x)if(y){for(;;);}", "if(x&&y) for(;;);");
+        test("if(x||z)if(y){for(;;);}", "if((x||z)&&y) for(;;);");
+        test("if(x)if(y||z){for(;;);}", "if((x)&&(y||z)) for(;;);");
+        test("if(x||z)if(y||z){for(;;);}", "if((x||z)&&(y||z)) for(;;);"); // TODO: `if(x||z)if(y||z)for(;;);` is shorter
+        test("if(x)if(y){if(z){for(;;);}}", "if(x&&(y&&z)) for(;;);");
     }
 
     #[test]
-    #[ignore]
     fn test_remove_else_cause() {
         test(
             concat!(
@@ -2065,10 +2042,10 @@ mod test {
                 " else if(x) return 3 }"
             ),
             concat!(
-                "function f() {",
+                "function f() {", //
                 " if(x) return 1;",
-                "{ if(x) return 2;",
-                "{ if(x) return 3 } } }"
+                " if(x) return 2;",
+                " if(x) return 3 }"
             ),
         );
     }
@@ -2112,8 +2089,8 @@ mod test {
         );
     }
 
+    /// https://blickly.github.io/closure-compiler-issues/#925
     #[test]
-    #[ignore]
     fn test_issue925() {
         test(
             concat!(
@@ -2143,8 +2120,7 @@ mod test {
         );
 
         test("if (x++) { x += 2 } else { x += 3 }", "x++ ? x += 2 : x += 3");
-
-        test("if (x++) { x = x + 2 } else { x = x + 3 }", "x = x++ ? x + 2 : x + 3");
+        test("if (x++) { x = x + 2 } else { x = x + 3 }", "x++ ? x += 2 : x += 3");
     }
 
     #[test]
@@ -2254,7 +2230,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_if_with_new_target_condition() {
         // Related to https://github.com/google/closure-compiler/issues/3097
         test(
