@@ -24,9 +24,6 @@ impl<'a, 'b> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) {
         self.dead_code_elimination(stmts, ctx);
-        if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
-            stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
-        }
     }
 
     pub fn remove_dead_code_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {

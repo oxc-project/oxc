@@ -30,7 +30,6 @@ impl<'a> PeepholeOptimizations {
             let mut local_change = false;
             self.try_replace_if(stmts, &mut local_change, ctx);
             if local_change {
-                stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
                 changed = local_change;
             } else {
                 break;

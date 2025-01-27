@@ -133,10 +133,6 @@ impl<'a> PeepholeOptimizations {
                 _ => {}
             }
         }
-
-        if self.is_current_function_changed() {
-            stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
-        }
     }
 
     fn collapse_expr_into_for(
