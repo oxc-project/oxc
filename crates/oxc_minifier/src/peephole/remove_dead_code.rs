@@ -325,6 +325,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
 
         match &mut stmt.expression {
+            Expression::MetaProperty(e) => Some(ctx.ast.statement_empty(e.span)),
             Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
             Expression::ObjectExpression(object_expr) => {
                 Self::try_fold_object_expression(object_expr, ctx)
@@ -874,6 +875,7 @@ mod test {
         test("-1", "");
         test("!1", "");
         test("1", "");
+        test("import.meta", "");
     }
 
     #[test]
