@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use ureq::{Agent, Proxy};
 
 /// detect proxy from environment variable in following order:
@@ -16,6 +18,9 @@ fn detect_proxy() -> Option<Proxy> {
 
 /// build a agent with proxy automatically detected
 pub fn agent() -> Agent {
-    let config = Agent::config_builder().proxy(detect_proxy()).build();
+    let config = Agent::config_builder()
+        .proxy(detect_proxy())
+        .timeout_global(Some(Duration::from_secs(5)))
+        .build();
     Agent::new_with_config(config)
 }
