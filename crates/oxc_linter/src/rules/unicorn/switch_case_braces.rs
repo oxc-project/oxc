@@ -160,13 +160,15 @@ impl Rule for SwitchCaseBraces {
                                     let source_text = ctx.source_text();
 
                                     for x in &case.consequent {
-                                        if matches!(x, Statement::ExpressionStatement(_) | Statement::BreakStatement(_)) {
+                                        if matches!(
+                                            x,
+                                            Statement::ExpressionStatement(_)
+                                                | Statement::BreakStatement(_)
+                                        ) {
                                             // indent the statement in the case consequent, if needed
-                                            let indent_str = get_preceding_indent_str(source_text, x.span());
-                                           
-                                            if indent_str.is_some() {
+                                            if let Some(indent_str) = get_preceding_indent_str(source_text, x.span()) {
                                                 formatter.print_ascii_byte(b'\n');
-                                                formatter.print_str(indent_str.unwrap());
+                                                formatter.print_str(indent_str);
                                             }
                                         }
 
@@ -174,10 +176,9 @@ impl Rule for SwitchCaseBraces {
                                     }
 
                                     // indent the closing case bracket, if needed
-                                    let case_indent_str = get_preceding_indent_str(source_text, case.span());
-                                    if case_indent_str.is_some() {
+                                    if let Some(case_indent_str) = get_preceding_indent_str(source_text, case.span()) {
                                         formatter.print_ascii_byte(b'\n');
-                                        formatter.print_str(case_indent_str.unwrap());
+                                        formatter.print_str(case_indent_str);
                                     }
 
                                     formatter.print_ascii_byte(b'}');
@@ -197,8 +198,6 @@ impl Rule for SwitchCaseBraces {
         }
     }
 }
-
-
 
 #[test]
 fn test() {
