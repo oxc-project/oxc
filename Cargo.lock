@@ -2612,7 +2612,6 @@ dependencies = [
  "regex",
  "rustc-hash",
  "serde",
- "ureq",
 ]
 
 [[package]]
