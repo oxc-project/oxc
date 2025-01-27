@@ -202,6 +202,7 @@ ureq = { version = "3.0.0", default-features = false }
 url = "2.5.4"
 walkdir = "2.5.0"
 wasm-bindgen = "0.2.99"
+quick-junit = "0.5.1"
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease"]
