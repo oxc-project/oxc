@@ -161,8 +161,9 @@ impl Rule for SwitchCaseBraces {
 
                                     for x in &case.consequent {
                                         if matches!(x, Statement::ExpressionStatement(_) | Statement::BreakStatement(_)) {
+                                            // indent the statement in the case consequent, if needed
                                             let indent_str = get_preceding_indent_str(source_text, x.span());
-
+                                           
                                             if indent_str.is_some() {
                                                 formatter.print_ascii_byte(b'\n');
                                                 formatter.print_str(indent_str.unwrap());
@@ -172,26 +173,17 @@ impl Rule for SwitchCaseBraces {
                                         formatter.print_str(x.span().source_text(source_text));
                                     }
 
+                                    // indent the closing case bracket, if needed
                                     let case_indent_str = get_preceding_indent_str(source_text, case.span());
-
                                     if case_indent_str.is_some() {
                                         formatter.print_ascii_byte(b'\n');
                                         formatter.print_str(case_indent_str.unwrap());
-
-                                        // indent
-                                        // let switch_indent_str = get_preceding_indent_str(source_text, switch.span());
-                                        // formatter.print_str(switch_indent_str.unwrap_or(""));
                                     }
 
                                     formatter.print_ascii_byte(b'}');
 
-                                    // TODO: add space diff between discriminant and first case
-
                                     formatter.into_source_text()
                                 };
-
-                                println!("case.span: {:?}", case.span);
-                                println!("modified_code: {modified_code}");
 
                                 fixer.replace(case.span, modified_code)
                             },
@@ -255,7 +247,7 @@ fn test() {
             "switch(foo) { default: doSomething(); }",
             Some(serde_json::json!(["avoid"])),
         ),
-        // Issue:  https://github.com/oxc-project/oxc/issues/8491
+        // Issue: https://github.com/oxc-project/oxc/issues/8491
         (
             "
                 const alpha = 7
@@ -283,7 +275,7 @@ fn test() {
                 }
             ",
             None,
-        )
+        ),
     ];
 
     Tester::new(SwitchCaseBraces::NAME, SwitchCaseBraces::PLUGIN, pass, fail)
