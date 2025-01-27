@@ -127,7 +127,7 @@ unicode-id-start = "1"
 
 #
 dashmap = "6"
-oxc-browserslist = "1.1.0"
+oxc-browserslist = "1.1.2"
 oxc_index = "2"
 oxc_resolver = "4"
 oxc_sourcemap = "1"

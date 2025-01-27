@@ -107,8 +107,8 @@ impl TestFile {
         } else {
             println!("[{filename}] - Downloading [{lib}] to [{}]", file.display());
             match agent().get(lib).call() {
-                Ok(response) => {
-                    let mut reader = response.into_reader();
+                Ok(mut response) => {
+                    let mut reader = response.body_mut().as_reader();
 
                     let _drop = std::fs::remove_file(&file);
                     let mut writer = std::fs::File::create(&file).map_err(err_to_string)?;
