@@ -184,6 +184,7 @@ impl Mangler {
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
+        let mut tmp_bindings = std::vec::Vec::with_capacity(100);
 
         let mut reusable_slots = std::vec::Vec::new();
         // Walk down the scope tree and assign a slot number for each symbol.
@@ -217,8 +218,12 @@ impl Mangler {
             }
 
             // Sort `bindings` in declaration order.
-            let sorted_bindings = bindings.values().copied().sorted_unstable();
-            for (symbol_id, assigned_slot) in sorted_bindings.zip(reusable_slots.iter().copied()) {
+            tmp_bindings.clear();
+            tmp_bindings.extend(bindings.values().copied());
+            tmp_bindings.sort_unstable();
+            for (&symbol_id, assigned_slot) in
+                tmp_bindings.iter().zip(reusable_slots.iter().copied())
+            {
                 slots[symbol_id.index()] = assigned_slot;
 
                 // If the symbol is declared by `var`, then it can be hoisted to
