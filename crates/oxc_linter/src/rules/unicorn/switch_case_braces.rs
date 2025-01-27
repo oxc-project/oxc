@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::get_preceding_indent_str, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Clone, Copy)]
 enum Diagnostic {
@@ -158,43 +158,29 @@ impl Rule for SwitchCaseBraces {
                                     formatter.print_ascii_byte(b'{');
 
                                     let source_text = ctx.source_text();
-                                    println!("source_text: {source_text}");
-                                    // better way to do this is to index into source text
-                                    // maybe create get_indent_str fn
-
-                                    let mut consequent_num = 0;
-                                    let case_test = case.test.as_ref().unwrap().span();
-                                    let mut prev_span_end = case_test.end;
-
-                                    println!("case_test: {:?}", case_test);
 
                                     for x in &case.consequent {
                                         if matches!(x, Statement::ExpressionStatement(_) | Statement::BreakStatement(_)) {
-                                            let mut space_diff: usize = (x.span().start - prev_span_end).try_into().unwrap();
+                                            let indent_str = get_preceding_indent_str(source_text, x.span());
 
-                                            if consequent_num == 0 {space_diff -= 3;} else {
-                                                space_diff -= 1;
+                                            if indent_str.is_some() {
+                                                formatter.print_ascii_byte(b'\n');
+                                                formatter.print_str(indent_str.unwrap());
                                             }
-
-                                            formatter.print_str("\n");
-
-
-                                            let space = &" ".repeat(space_diff);
-                                            println!("space_diff: {space_diff}");
-                                            formatter.print_str(space);
-
-
-
-                                            prev_span_end = x.span().end;
-
-                                            consequent_num += 1;
-
-                                            // TODO: figure out how to add correct spaces using spans.
-                                            // println!("stmt: {x:?}");
-                                            // println!("stmt.span: {:?}", x.span());
                                         }
 
                                         formatter.print_str(x.span().source_text(source_text));
+                                    }
+
+                                    let case_indent_str = get_preceding_indent_str(source_text, case.span());
+
+                                    if case_indent_str.is_some() {
+                                        formatter.print_ascii_byte(b'\n');
+                                        formatter.print_str(case_indent_str.unwrap());
+
+                                        // indent
+                                        // let switch_indent_str = get_preceding_indent_str(source_text, switch.span());
+                                        // formatter.print_str(switch_indent_str.unwrap_or(""));
                                     }
 
                                     formatter.print_ascii_byte(b'}');
@@ -204,6 +190,7 @@ impl Rule for SwitchCaseBraces {
                                     formatter.into_source_text()
                                 };
 
+                                println!("case.span: {:?}", case.span);
                                 println!("modified_code: {modified_code}");
 
                                 fixer.replace(case.span, modified_code)
@@ -219,53 +206,55 @@ impl Rule for SwitchCaseBraces {
     }
 }
 
+
+
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass: Vec<&str> = vec![
-        // "switch(something) { case 1: case 2: {console.log('something'); break;}}",
-        // "switch(foo){ case 1: { break; } }",
-        // "switch(foo){ case 1: { ; /* <-- not empty */} }",
-        // "switch(foo){ case 1: { {} /* <-- not empty */} }",
-        // "switch(foo){ case 1: { break; } }",
-        // "switch(foo){ default: { doSomething(); } }",
+        "switch(something) { case 1: case 2: {console.log('something'); break;}}",
+        "switch(foo){ case 1: { break; } }",
+        "switch(foo){ case 1: { ; /* <-- not empty */} }",
+        "switch(foo){ case 1: { {} /* <-- not empty */} }",
+        "switch(foo){ case 1: { break; } }",
+        "switch(foo){ default: { doSomething(); } }",
     ];
 
     let fail: Vec<&str> = vec![
-        // "switch(s){case'':/]/}",
-        // "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
-        // "switch(something) { case 1: case 2: console.log('something'); break;}",
-        // "switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }",
-        // "switch(foo) { case 1: { /* fallthrough */ } default: {}/* fallthrough */ case 3: { doSomething(); break; } }",
-        // "switch(foo) { default: doSomething(); }",
-        // "switch(foo) { case 1: { doSomething(); } break; /* <-- This should be between braces */ }",
-        // "switch(foo) { default: label: {} }",
-        // "switch(something) { case 1: case 2: { console.log('something'); break; } case 3: console.log('something else'); }",
+        "switch(s){case'':/]/}",
+        "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
+        "switch(something) { case 1: case 2: console.log('something'); break;}",
+        "switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }",
+        "switch(foo) { case 1: { /* fallthrough */ } default: {}/* fallthrough */ case 3: { doSomething(); break; } }",
+        "switch(foo) { default: doSomething(); }",
+        "switch(foo) { case 1: { doSomething(); } break; /* <-- This should be between braces */ }",
+        "switch(foo) { default: label: {} }",
+        "switch(something) { case 1: case 2: { console.log('something'); break; } case 3: console.log('something else'); }",
     ];
 
     let fix = vec![
-        // (
-        //     "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
-        //     "switch(something) { case 1:  case 2: {console.log('something'); break;}}",
-        //     None,
-        // ),
-        // (
-        //     "switch(something) { case 1: {} case 2: console.log('something'); break;}",
-        //     "switch(something) { case 1:  case 2: {console.log('something');break;}}",
-        //     None,
-        // ),
-        // (
-        //     "switch(foo) { default: doSomething(); }",
-        //     "switch(foo) { default: {doSomething();} }",
-        //     None,
-        // ),
-        // ("switch(s){case'':/]/}", "switch(s){case '': {/]/}}", None),
-        // (
-        //     "switch(foo) { default: {doSomething();} }",
-        //     "switch(foo) { default: doSomething(); }",
-        //     Some(serde_json::json!(["avoid"])),
-        // ),
+        (
+            "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
+            "switch(something) { case 1:  case 2: {console.log('something'); break;}}",
+            None,
+        ),
+        (
+            "switch(something) { case 1: {} case 2: console.log('something'); break;}",
+            "switch(something) { case 1:  case 2: {console.log('something');break;}}",
+            None,
+        ),
+        (
+            "switch(foo) { default: doSomething(); }",
+            "switch(foo) { default: {doSomething();} }",
+            None,
+        ),
+        ("switch(s){case'':/]/}", "switch(s){case '': {/]/}}", None),
+        (
+            "switch(foo) { default: {doSomething();} }",
+            "switch(foo) { default: doSomething(); }",
+            Some(serde_json::json!(["avoid"])),
+        ),
         // Issue:  https://github.com/oxc-project/oxc/issues/8491
         (
             "

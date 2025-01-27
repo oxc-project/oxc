@@ -487,6 +487,24 @@ fn is_definitely_non_error_type(ty: &TSType) -> bool {
     }
 }
 
+pub fn get_preceding_indent_str<'a>(source_text: &'a str, span: Span) -> Option<&'a str> {
+    // slice source text until start of given span, then get the preceding spaces from the last line of the source text.
+    let span_start = span.start as usize;
+    let preceding_source_text = &source_text[..span_start];
+    
+    match preceding_source_text.lines().last() {
+        Some(line) => {
+            // only return if the line is whitespace.
+            if line.trim().is_empty() {
+                Some(line)
+            } else {
+                None
+            }
+        }
+        None => None,
+    }
+}
+
 pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
     match expr.get_inner_expression() {
         Expression::NewExpression(_)
