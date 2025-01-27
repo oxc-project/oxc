@@ -127,7 +127,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_convert_to_dotted_properties_computed_property_or_field() {
         test("const test1 = {['prop1']:87};", "const test1 = {prop1:87};");
         test(
@@ -146,7 +145,7 @@ mod test {
         test("class C {'x' = 0;  ['y'] = 1;}", "class C { x= 0;y= 1;}");
         test("class C {'m'() {} }", "class C {m() {}}");
 
-        test("const o = {'b'() {}, ['c']() {}};", "const o = {b: function() {}, c:function(){}};");
+        test("const o = {'b'() {}, ['c']() {}};", "const o = {b() {}, c(){}};");
         test("o = {['x']: () => this};", "o = {x: () => this};");
 
         test("const o = {get ['d']() {}};", "const o = {get d() {}};");
@@ -161,7 +160,7 @@ mod test {
         );
         test(
             "const o = {['a']: 1,'b'() {}, ['c']() {},  get ['d']() {},  set ['e'](x) {}};",
-            "const o = {a: 1,b: function() {}, c: function() {},  get d() {},  set e(x) {}};",
+            "const o = {a: 1,b() {}, c() {},  get d() {},  set e(x) {}};",
         );
 
         // test static keyword
@@ -215,14 +214,13 @@ mod test {
         );
 
         test_same("const o = {[fn()]: 0}");
-        test_same("const test1 = {[0]:87};");
-        test_same("const test1 = {['default']:87};");
+        test("const test1 = {[0]:87};", "const test1 = {0:87}");
+        test("const test1 = {['default']:87};", "const test1 = {default:87};");
         test_same("class C { ['constructor']() {} }");
         test_same("class C { ['constructor'] = 0 }");
     }
 
     #[test]
-    #[ignore]
     fn test_convert_to_dotted_properties_computed_property_with_default_value() {
         test("const {['o']: o = 0} = {};", "const {o:o = 0} = {};");
     }

@@ -1887,8 +1887,8 @@ mod test {
             fold("1n > -Infinity", "!0");
 
             // null is interpreted as 0 when comparing with bigint
-            // test("1n < null", "!1");
-            // test("1n > null", "!0");
+            fold("1n < null", "!1");
+            fold("1n > null", "!0");
         }
 
         #[test]

@@ -1391,8 +1391,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_remove_duplicate_statements() {
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
         test("if (a) { x = 1; x++ } else { x = 2; x++ }", "x=(a) ? 1 : 2; x++");
         test(
             concat!(
@@ -1532,26 +1530,26 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_while_condition() {
         // This test uses constant folding logic, so is only here for completeness.
-        test("while(!!true) foo()", "while(1) foo()");
+        test("while(!!true) foo()", "for(;;) foo()");
         // These test tryMinimizeCondition
-        test("while(!!x) foo()", "while(x) foo()");
-        test("while(!(!x&&!y)) foo()", "while(x||y) foo()");
-        test("while(x||!!y) foo()", "while(x||y) foo()");
-        test("while(!(!!x&&y)) foo()", "while(!x||!y) foo()");
-        test("while(!(!x&&y)) foo()", "while(x||!y) foo()");
-        test("while(!(x||!y)) foo()", "while(!x&&y) foo()");
-        test("while(!(x||y)) foo()", "while(!x&&!y) foo()");
-        test("while(!(!x||y-z)) foo()", "while(x&&!(y-z)) foo()");
-        test("while(!(!(x/y)||z+w)) foo()", "while(x/y&&!(z+w)) foo()");
-        test_same("while(!(x+y||z)) foo()");
-        test_same("while(!(x&&y*z)) foo()");
-        test("while(!(!!x&&y)) foo()", "while(!x||!y) foo()");
-        test("while(x&&!0) foo()", "while(x) foo()");
-        test("while(x||!1) foo()", "while(x) foo()");
-        test("while(!((x,y)&&z)) foo()", "while((x,!y)||!z) foo()");
+        test("while(!!x) foo()", "for(;x;) foo()");
+        // test("while(!(!x&&!y)) foo()", "for(;x||y;) foo()");
+        test("while(x||!!y) foo()", "for(;x||y;) foo()");
+        // TODO
+        // test("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
+        // test("while(!(!x&&y)) foo()", "for(;x||!y;) foo()");
+        // test("while(!(x||!y)) foo()", "for(;!x&&y;) foo()");
+        // test("while(!(x||y)) foo()", "for(;!x&&!y;) foo()");
+        // test("while(!(!x||y-z)) foo()", "for(;x&&!(y-z;)) foo()");
+        // test("while(!(!(x/y)||z+w)) foo()", "for(;x/y&&!(z+w;)) foo()");
+        // test("while(!(x+y||z)) foo()", "for(;!(x+y||z);) foo()");
+        // test("while(!(x&&y*z)) foo()", "for(;!(x+y||z);) foo()");
+        // test("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
+        // test("while(x&&!0) foo()", "for(;x;) foo()");
+        // test("while(x||!1) foo()", "for(;x;) foo()");
+        // test("while(!((x,y)&&z)) foo()", "for(;(x,!y)||!z;) foo()");
     }
 
     #[test]
@@ -1756,9 +1754,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_substitute_return() {
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
-
         test("function f() { while(x) { return }}", "function f() { while(x) { break }}");
 
         test_same("function f() { while(x) { return 5 } }");
@@ -1856,9 +1851,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_substitute_break_for_throw() {
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
-
         test_same("function f() { while(x) { throw Error }}");
 
         test(

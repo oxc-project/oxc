@@ -1103,7 +1103,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_bug() {
         test_same("Math[0]()");
     }
@@ -1173,8 +1172,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    // @GwtIncompatible // TODO(b/155511629): Enable this test for J2CL
     fn test_fold_math_functions_fround_j2cl() {
         test_same("Math.fround(1.2)");
     }

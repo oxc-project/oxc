@@ -1235,7 +1235,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_split_comma_expressions() {
-        // late = false;
         // Don't try to split in expressions.
         test_same("while (foo(), !0) boo()");
         test_same("var a = (foo(), !0);");
@@ -1258,60 +1257,32 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_comma1() {
-        // late = false;
-        test("1, 2", "1; 2");
-        // late = true;
-        // test_same("1, 2");
+        test_same("x, y");
     }
 
     #[test]
-    #[ignore]
     fn test_comma2() {
-        // late = false;
-        test("1, a()", "1; a()");
-        test("1, a?.()", "1; a?.()");
-
-        // late = true;
-        // test_same("1, a()");
-        // test_same("1, a?.()");
+        test("a, a()", "a, a()");
+        test("a, a?.()", "a, a?.()");
     }
 
     #[test]
-    #[ignore]
     fn test_comma3() {
-        // late = false;
-        test("1, a(), b()", "1; a(); b()");
-        test("1, a?.(), b?.()", "1; a?.(); b?.()");
-
-        // late = true;
-        // test_same("1, a(), b()");
-        // test_same("1, a?.(), b?.()");
+        test("x, a(), b()", "x, a(), b()");
+        test("x, a?.(), b?.()", "x, a?.(), b?.()");
     }
 
     #[test]
-    #[ignore]
     fn test_comma4() {
-        // late = false;
-        test("a(), b()", "a();b()");
-        test("a?.(), b?.()", "a?.();b?.()");
-
-        // late = true;
-        // test_same("a(), b()");
-        // test_same("a?.(), b?.()");
+        test("a(), b()", "a(), b()");
+        test("a?.(), b?.()", "a?.(), b?.()");
     }
 
     #[test]
-    #[ignore]
     fn test_comma5() {
-        // late = false;
-        test("a(), b(), 1", "a(); b(); 1");
-        test("a?.(), b?.(), 1", "a?.(); b?.(); 1");
-
-        // late = true;
-        // test_same("a(), b(), 1");
-        // test_same("a?.(), b?.(), 1");
+        test("a(), b(), 1", "a(), b(), 1");
+        test("a?.(), b?.(), 1", "a?.(), b?.(), 1");
     }
 
     #[test]
@@ -1452,7 +1423,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn nullish_coalesce() {
         test("a ?? (b ?? c);", "(a ?? b) ?? c");
     }

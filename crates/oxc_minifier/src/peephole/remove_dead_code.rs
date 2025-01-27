@@ -309,8 +309,6 @@ impl<'a, 'b> PeepholeOptimizations {
     ) -> Option<Statement<'a>> {
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
-        // TODO find a better way to handle this.
-
         if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
             if *body.expression() {
                 return None;
