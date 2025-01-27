@@ -166,7 +166,9 @@ impl Rule for SwitchCaseBraces {
                                                 | Statement::BreakStatement(_)
                                         ) {
                                             // indent the statement in the case consequent, if needed
-                                            if let Some(indent_str) = get_preceding_indent_str(source_text, x.span()) {
+                                            if let Some(indent_str) =
+                                                get_preceding_indent_str(source_text, x.span())
+                                            {
                                                 formatter.print_ascii_byte(b'\n');
                                                 formatter.print_str(indent_str);
                                             }
@@ -176,7 +178,9 @@ impl Rule for SwitchCaseBraces {
                                     }
 
                                     // indent the closing case bracket, if needed
-                                    if let Some(case_indent_str) = get_preceding_indent_str(source_text, case.span()) {
+                                    if let Some(case_indent_str) =
+                                        get_preceding_indent_str(source_text, case.span())
+                                    {
                                         formatter.print_ascii_byte(b'\n');
                                         formatter.print_str(case_indent_str);
                                     }
