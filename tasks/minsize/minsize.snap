@@ -5,7 +5,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 173.90 kB  | 59.68 kB   | 59.82 kB   | 19.25 kB   | 19.33 kB   | moment.js 
 
-287.63 kB  | 89.54 kB   | 90.07 kB   | 31.07 kB   | 31.95 kB   | jquery.js 
+287.63 kB  | 89.52 kB   | 90.07 kB   | 31.07 kB   | 31.95 kB   | jquery.js 
 
 342.15 kB  | 117.69 kB  | 118.14 kB  | 43.66 kB   | 44.37 kB   | vue.js    
 
@@ -21,7 +21,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 3.20 MB    | 1.01 MB    | 1.01 MB    | 325.18 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.30 MB    | 2.31 MB    | 469.99 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.30 MB    | 2.31 MB    | 469.97 kB  | 488.28 kB  | antd.js   
 
 10.95 MB   | 3.37 MB    | 3.49 MB    | 866.63 kB  | 915.50 kB  | typescript.js
 

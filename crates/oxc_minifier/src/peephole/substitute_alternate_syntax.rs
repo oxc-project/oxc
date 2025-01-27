@@ -156,10 +156,12 @@ impl<'a> PeepholeOptimizations {
 
     /// Compress `typeof foo == "undefined"`
     ///
-    /// - `typeof foo == "undefined"` (if foo is resolved) -> `foo === undefined`
-    /// - `typeof foo != "undefined"` (if foo is resolved) -> `foo !== undefined`
-    /// - `typeof foo == "undefined"` -> `typeof foo > "u"`
-    /// - `typeof foo != "undefined"` -> `typeof foo < "u"`
+    /// - `typeof foo == "undefined"` (if foo is not resolved) -> `typeof foo > "u"`
+    /// - `typeof foo != "undefined"` (if foo is not resolved) -> `typeof foo < "u"`
+    /// - `typeof foo == "undefined"` -> `foo === undefined`
+    /// - `typeof foo != "undefined"` -> `foo !== undefined`
+    /// - `typeof foo.bar == "undefined"` -> `foo.bar === undefined` (for any expression e.g.`typeof (foo + "")`)
+    /// - `typeof foo.bar != "undefined"` -> `foo.bar !== undefined` (for any expression e.g.`typeof (foo + "")`)
     ///
     /// Enabled by `compress.typeofs`
     fn try_compress_typeof_undefined(
@@ -183,24 +185,19 @@ impl<'a> PeepholeOptimizations {
             _ => return None,
         };
         if let Expression::Identifier(ident) = &unary_expr.argument {
-            if !ctx.is_global_reference(ident) {
-                let Expression::UnaryExpression(unary_expr) =
-                    ctx.ast.move_expression(&mut expr.left)
-                else {
-                    unreachable!()
-                };
-                let right = ctx.ast.void_0(expr.right.span());
-                return Some(ctx.ast.expression_binary(
-                    expr.span,
-                    unary_expr.unbox().argument,
-                    new_eq_op,
-                    right,
-                ));
+            if ctx.is_global_reference(ident) {
+                let left = ctx.ast.move_expression(&mut expr.left);
+                let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
+                return Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right));
             }
+        }
+
+        let Expression::UnaryExpression(unary_expr) = ctx.ast.move_expression(&mut expr.left)
+        else {
+            unreachable!()
         };
-        let left = ctx.ast.move_expression(&mut expr.left);
-        let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
-        Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right))
+        let right = ctx.ast.void_0(expr.right.span());
+        Some(ctx.ast.expression_binary(expr.span, unary_expr.unbox().argument, new_eq_op, right))
     }
 
     /// `a || (b || c);` -> `(a || b) || c;`
@@ -1498,6 +1495,10 @@ mod test {
         test("typeof x !== 'undefined'; var x", "x !== void 0; var x");
         // input and output both errors with same TDZ error
         test("typeof x !== 'undefined'; let x", "x !== void 0; let x");
+
+        test("typeof x.y === 'undefined'", "x.y === void 0");
+        test("typeof x.y !== 'undefined'", "x.y !== void 0");
+        test("typeof (x + '') === 'undefined'", "x + '' === void 0");
     }
 
     /// Port from <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser_test.go#L4658>
@@ -1512,9 +1513,6 @@ mod test {
         test("typeof x == 'undefined'", "typeof x > 'u'");
         test("'undefined' === typeof x", "typeof x > 'u'");
         test("'undefined' == typeof x", "typeof x > 'u'");
-
-        test("typeof x.y === 'undefined'", "typeof x.y > 'u'");
-        test("typeof x.y !== 'undefined'", "typeof x.y < 'u'");
     }
 
     #[test]
