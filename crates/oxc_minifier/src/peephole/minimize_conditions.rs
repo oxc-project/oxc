@@ -1125,11 +1125,12 @@ impl<'a> PeepholeOptimizations {
     /// Evaluation here means `Evaluation` in the spec.
     /// <https://tc39.es/ecma262/multipage/syntax-directed-operations.html#sec-evaluation>
     ///
-    /// Matches the following cases:
+    /// Matches the following cases (`a` can be `this`):
     ///
     /// - `a`, `a`
     /// - `a.b`, `a.b`
     /// - `a["b"]`, `a["b"]`
+    /// - `a[0]`, `a[0]`
     fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget,
         expr: &Expression,
@@ -1144,18 +1145,29 @@ impl<'a> PeepholeOptimizations {
         }
         if let Some(write_expr) = assignment_target.as_member_expression() {
             if let MemberExpression::ComputedMemberExpression(e) = write_expr {
-                if !matches!(e.expression, Expression::StringLiteral(_)) {
+                if !matches!(
+                    e.expression,
+                    Expression::StringLiteral(_) | Expression::NumericLiteral(_)
+                ) {
                     return false;
                 }
             }
-            let Expression::Identifier(write_expr_object_id) = &write_expr.object() else {
-                return false;
-            };
-            if let Some(read_expr) = expr.as_member_expression() {
+            let has_same_object = match &write_expr.object() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
-                return !ctx.is_global_reference(write_expr_object_id)
-                    && write_expr.content_eq(read_expr);
+                Expression::Identifier(ident) => !ctx.is_global_reference(ident),
+                Expression::ThisExpression(_) => {
+                    expr.as_member_expression().is_some_and(|read_expr| {
+                        matches!(read_expr.object(), Expression::ThisExpression(_))
+                    })
+                }
+                _ => false,
+            };
+            if !has_same_object {
+                return false;
+            }
+            if let Some(read_expr) = expr.as_member_expression() {
+                return write_expr.content_eq(read_expr);
             }
         }
         false
@@ -2475,11 +2487,15 @@ mod test {
         test("x || (x = () => 'a')", "x ||= () => 'a'");
 
         test_same("x || (y = 3)");
+        test_same("var x; x.y || (x.z = 3)");
+        test_same("function _() { this.x || (this.y = 3) }");
 
         // GetValue(x) has no sideeffect when x is a resolved identifier
         test("var x; x.y || (x.y = 3)", "var x; x.y ||= 3");
         test("var x; x['y'] || (x['y'] = 3)", "var x; x.y ||= 3");
+        test("var x; x[0] || (x[0] = 3)", "var x; x[0] ||= 3");
         test("var x; x.#y || (x.#y = 3)", "var x; x.#y ||= 3");
+        test("function _() { this.x || (this.x = 3) }", "function _() { this.x ||= 3 }");
         test_same("x.y || (x.y = 3)");
         // this can be compressed if `y` does not have side effect
         test_same("var x; x[y] || (x[y] = 3)");
