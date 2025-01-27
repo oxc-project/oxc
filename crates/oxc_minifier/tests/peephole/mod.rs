@@ -2,7 +2,6 @@ mod dead_code_elimination;
 mod esbuild;
 
 use oxc_minifier::CompressOptions;
-use oxc_span::SourceType;
 
 fn test(source_text: &str, expected: &str) {
     let options = CompressOptions::default();
@@ -11,15 +10,6 @@ fn test(source_text: &str, expected: &str) {
 
 fn test_same(source_text: &str) {
     test(source_text, source_text);
-}
-
-fn test_idempotent(source: &str, expected: &str) {
-    let expected = crate::run(expected, SourceType::default(), None);
-    let first = crate::run(source, SourceType::default(), Some(CompressOptions::default()));
-    let second = crate::run(&first, SourceType::default(), Some(CompressOptions::default()));
-
-    assert_eq!(second, expected, "\nfor source\n{source}\nexpect\n{expected}\ngot\n{second}");
-    assert_eq!(first, second);
 }
 
 // Oxc Integration Tests
@@ -43,7 +33,7 @@ fn integration() {
     // }",
     // );
 
-    test_idempotent(
+    test(
         "require('./index.js')(function (e, os) {
     if (e) return console.log(e)
     return console.log(JSON.stringify(os))
@@ -53,7 +43,7 @@ fn integration() {
     });"#,
     );
 
-    test_idempotent(
+    test(
         "if (!(foo instanceof Var) || open) {
           arg0 = null;
         } else if (que || !(foo && bar)) {

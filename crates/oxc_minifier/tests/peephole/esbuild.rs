@@ -2380,33 +2380,3 @@ fn test_ignored() {
     test("using x = null, y = z", "using x = null, y = z;");
     test("using x = z, y = undefined", "using x = z, y = void 0;");
 }
-
-#[test]
-#[ignore]
-fn js_printer_test() {
-    test("(1 ? eval : 2)(x)", "(0, eval)(x);");
-    test("(1 ? eval : 2)?.(x)", "eval?.(x);");
-    test("let x = '\n'", "let x = ``;");
-    test("let x = ``", "let x = ``;");
-    test("let x = '\n${}'", "let x = '\n${}';");
-    test("let x = `\\${}`", "let x = '\n${}';");
-    test("let x = `\\${}${y}\\${}`", "let x = `\\${}${y}\\${}`;");
-    test("true ** 2", "(!0) ** 2;");
-    test("false ** 2", "(!1) ** 2;");
-    test("x = '\n'", "x = ``;");
-    test("x = {'\n': 0}", "x = { '\n': 0 };");
-    test("x = class{'\n' = 0}", "x = class { '\n' = 0;};");
-    test("class Foo{'\n' = 0}", "class Foo { '\n' = 0;}");
-    test("x = Infinity", "x = 1 / 0;");
-    test("x = -Infinity", "x = -1 / 0;");
-    test("x = (Infinity).toString", "x = (1 / 0).toString;");
-    test("x = (-Infinity).toString", "x = (-1 / 0).toString;");
-    test("x = Infinity ** 2", "x = (1 / 0) ** 2;");
-    test("x = (-Infinity) ** 2", "x = (-1 / 0) ** 2;");
-    test("x = Infinity * y", "x = 1 / 0 * y;");
-    test("x = Infinity / y", "x = 1 / 0 / y;");
-    test("x = y * Infinity", "x = y * (1 / 0);");
-    test("x = y / Infinity", "x = y / (1 / 0);");
-    test("throw Infinity", "throw 1 / 0;");
-    test("x = (0, /*a*/ (0, /*b*/ (0, /*c*/ 1 == 2) + 3) * 4)", "x = /*a*//*b*/(/*c*/!1 + 3) * 4;");
-}
