@@ -151,6 +151,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         let ctx = Ctx(ctx);
         self.minimize_conditions_exit_statement(stmt, ctx);
         self.remove_dead_code_exit_statement(stmt, ctx);
+        self.substitute_exit_statement(stmt, ctx);
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
