@@ -219,6 +219,9 @@ impl Mangler {
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
+            if tmp_bindings.capacity() < bindings.len() {
+                tmp_bindings.reserve(bindings.len());
+            }
             tmp_bindings.extend(bindings.values().copied());
             tmp_bindings.sort_unstable();
             for (&symbol_id, assigned_slot) in
