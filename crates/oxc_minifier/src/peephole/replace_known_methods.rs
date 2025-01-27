@@ -539,8 +539,12 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
-        let Expression::ArrayExpression(array_expr) = &mut member.object else { return None };
+        let object = match callee {
+            Expression::StaticMemberExpression(member) => &mut member.object,
+            Expression::ComputedMemberExpression(member) => &mut member.object,
+            _ => unreachable!(),
+        };
+        let Expression::ArrayExpression(array_expr) = object else { return None };
 
         let can_merge_until = args
             .iter()
@@ -574,7 +578,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         if args.is_empty() {
-            Some(ctx.ast.move_expression(&mut member.object))
+            Some(ctx.ast.move_expression(object))
         } else if can_merge_until.is_some() {
             Some(ctx.ast.expression_call(
                 span,
@@ -1438,6 +1442,7 @@ mod test {
         test("var x; ''.concat(x.a).concat(x)", "var x; ''.concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
 
         // other
+        test("x = []['concat'](1)", "x = [1]");
         test_same("obj.concat([1,2]).concat(1)");
     }
 
