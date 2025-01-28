@@ -2,9 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    format::print::call_arguments::print_call_arguments, group, ir::Doc, text, Format, Prettier,
-};
+use crate::{format::print::call_arguments, group, ir::Doc, text, Format, Prettier};
 
 pub enum CallExpressionLike<'a, 'b> {
     CallExpression(&'b CallExpression<'a>),
@@ -74,7 +72,7 @@ pub fn print_call_expression<'a>(
         parts.push(text!("?."));
     }
 
-    parts.push(print_call_arguments(p, expression));
+    parts.push(call_arguments::print_call_arguments(p, expression));
 
     group!(p, parts)
 }

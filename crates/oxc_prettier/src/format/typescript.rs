@@ -409,7 +409,7 @@ impl<'a> Format<'a> for TSTemplateLiteralType<'a> {
 
 impl<'a> Format<'a> for TSTupleType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array::print_array(p, &array::Array::TSTupleType(self))
+        array::print_array(p, &array::ArrayLike::TSTupleType(self))
     }
 }
 
