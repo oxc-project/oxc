@@ -20,7 +20,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string | null")]
+#[estree(rename = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string | null")]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
@@ -34,7 +34,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\" | null")]
+#[estree(rename = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\" | null")]
 pub struct NullLiteral {
     /// Node location in source code
     pub span: Span,
@@ -46,7 +46,7 @@ pub struct NullLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
+#[estree(rename = "Literal", via = crate::serialize::ESTreeLiteral)]
 pub struct NumericLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -67,7 +67,7 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
+#[estree(rename = "Literal", via = crate::serialize::ESTreeLiteral)]
 pub struct StringLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -86,7 +86,7 @@ pub struct StringLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, bigint: string")]
+#[estree(rename = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, bigint: string")]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -105,7 +105,7 @@ pub struct BigIntLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
 #[estree(
-	type = "Literal",
+	rename = "Literal",
 	via = crate::serialize::ESTreeLiteral,
 	add_ts = "value: {} | null, regex: { pattern: string, flags: string }"
 )]

@@ -202,7 +202,7 @@ pub use match_expression;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct IdentifierName<'a> {
     pub span: Span,
     pub name: Atom<'a>,
@@ -216,7 +216,7 @@ pub struct IdentifierName<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.
@@ -239,7 +239,7 @@ pub struct IdentifierReference<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct BindingIdentifier<'a> {
     pub span: Span,
     /// The identifier name being bound.
@@ -263,7 +263,7 @@ pub struct BindingIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct LabelIdentifier<'a> {
     pub span: Span,
     pub name: Atom<'a>,
@@ -832,7 +832,7 @@ pub struct ObjectAssignmentTarget<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "RestElement")]
+#[estree(rename = "RestElement")]
 pub struct AssignmentTargetRest<'a> {
     pub span: Span,
     #[estree(rename = "argument")]
@@ -1520,7 +1520,7 @@ pub struct ArrayPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "RestElement")]
+#[estree(rename = "RestElement")]
 pub struct BindingRestElement<'a> {
     pub span: Span,
     pub argument: BindingPattern<'a>,
