@@ -152,13 +152,12 @@ impl<'a> Normalize {
         // checking whether the current scope is the root scope instead of
         // checking whether any variables are exposed to outside (e.g. `export` in ESM)
         if decl.kind.is_const() && ctx.current_scope_id() != ctx.scopes().root_scope_id() {
-            let all_declarations_are_only_read = decl.declarations.iter().all(|decl| {
-                decl.id.get_binding_identifiers().iter().all(|id| {
+            let all_declarations_are_only_read =
+                decl.declarations.iter().flat_map(|d| d.id.get_binding_identifiers()).all(|id| {
                     ctx.symbols()
                         .get_resolved_references(id.symbol_id())
                         .all(|reference| reference.flags().is_read_only())
-                })
-            });
+                });
             if all_declarations_are_only_read {
                 decl.kind = VariableDeclarationKind::Let;
             }
@@ -226,6 +225,10 @@ mod test {
         test("{ const [x] = [1] }", "{ let [x] = [1] }");
         test("{ const [x = 1] = [] }", "{ let [x = 1] = [] }");
         test("for (const x in y);", "for (let x in y);");
+        // TypeError: Assignment to constant variable.
+        test_same("for (const i = 0; i < 1; i++);");
+        test_same("for (const x in [1, 2, 3]) x++");
+        test_same("for (const x of [1, 2, 3]) x++");
     }
 
     #[test]
