@@ -501,7 +501,7 @@ fn is_definitely_non_error_type(ty: &TSType) -> bool {
 /// ```
 ///
 /// and the Span encapsulating the break statement,
-/// 
+///
 /// this function will return "  " (2 preceding spaces).
 ///
 /// 2. Given the following source_text:
@@ -511,8 +511,8 @@ fn is_definitely_non_error_type(ty: &TSType) -> bool {
 /// ```
 ///
 /// and the Span encapsulating the break statement,
-/// 
-/// this function will return None because there is non-whitespace before the statement, 
+///
+/// this function will return None because there is non-whitespace before the statement,
 /// meaning the line of source_text containing the Span is not indented on a new line.
 pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
     let span_start = span.start as usize;
