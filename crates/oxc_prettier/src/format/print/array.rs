@@ -4,23 +4,17 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    array,
-    comments::{CommentFlags, DanglingCommentsPrintOptions},
-    fill, group, hardline, if_break, indent,
-    ir::Doc,
-    line, softline, text, Format, Prettier,
+    array, fill, group, hardline, if_break, indent, ir::Doc, line, softline, text, Format, Prettier,
 };
 
-// TODO: Rename `ArrayLike`
-#[allow(clippy::enum_variant_names)]
-pub enum Array<'a, 'b> {
+pub enum ArrayLike<'a, 'b> {
     ArrayExpression(&'b ArrayExpression<'a>),
     TSTupleType(&'b TSTupleType<'a>),
     ArrayPattern(&'b ArrayPattern<'a>),
     ArrayAssignmentTarget(&'b ArrayAssignmentTarget<'a>),
 }
 
-impl Array<'_, '_> {
+impl ArrayLike<'_, '_> {
     fn len(&self) -> usize {
         match self {
             Self::ArrayExpression(array) => array.elements.len(),
@@ -62,13 +56,13 @@ impl Array<'_, '_> {
     }
 }
 
-pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
+pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &ArrayLike<'a, '_>) -> Doc<'a> {
     if arr.len() == 0 {
-        return print_empty_array_elements(p, arr);
+        return text!("[]");
     }
 
     let (needs_forced_trailing_comma, can_have_trailing_comma) =
-        if let Array::ArrayExpression(arr) = arr {
+        if let ArrayLike::ArrayExpression(arr) = arr {
             arr.elements.last().map_or((false, false), |last| {
                 (
                     matches!(last, ArrayExpressionElement::Elision(_)),
@@ -111,9 +105,6 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
                 let elements = print_array_elements(p, arr);
                 array!(p, [elements, trailing_comma])
             });
-            if let Some(dangling_comments) = p.print_dangling_comments(arr.span(), None) {
-                indent_parts.push(dangling_comments);
-            };
             indent_parts
         };
 
@@ -130,23 +121,17 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
 
 pub fn is_concisely_printed_array(arr: &Expression) -> bool {
     match arr {
-        Expression::ArrayExpression(array) => Array::ArrayExpression(array).is_concisely_printed(),
+        Expression::ArrayExpression(array) => {
+            ArrayLike::ArrayExpression(array).is_concisely_printed()
+        }
         _ => false,
     }
 }
 
-fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
-    let dangling_options = DanglingCommentsPrintOptions::default().with_ident(true);
-    p.print_dangling_comments(array.span(), Some(&dangling_options)).map_or_else(
-        || text!("[]"),
-        |dangling_comments| group!(p, [text!("["), dangling_comments, softline!(), text!("]")]),
-    )
-}
-
-fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
+fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &ArrayLike<'a, '_>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
     match arr {
-        Array::ArrayExpression(array) => {
+        ArrayLike::ArrayExpression(array) => {
             for (i, element) in array.elements.iter().enumerate() {
                 parts.push(element.format(p));
                 let is_last = i == array.elements.len() - 1;
@@ -159,7 +144,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a
                 }
             }
         }
-        Array::TSTupleType(tuple) => {
+        ArrayLike::TSTupleType(tuple) => {
             for (i, element) in tuple.element_types.iter().enumerate() {
                 if i > 0 && i < tuple.element_types.len() {
                     parts.push(text!(","));
@@ -169,7 +154,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a
                 parts.push(element.format(p));
             }
         }
-        Array::ArrayPattern(array_pat) => {
+        ArrayLike::ArrayPattern(array_pat) => {
             let len = array_pat.elements.len();
             let has_rest = array_pat.rest.is_some();
             for (i, element) in array_pat.elements.iter().enumerate() {
@@ -188,7 +173,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a
                 parts.push(group!(p, [rest_doc]));
             }
         }
-        Array::ArrayAssignmentTarget(array_pat) => {
+        ArrayLike::ArrayAssignmentTarget(array_pat) => {
             for (i, element) in array_pat.elements.iter().enumerate() {
                 if i > 0 && i < array_pat.elements.len() {
                     parts.push(text!(","));
@@ -213,14 +198,14 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a
 
 fn print_array_elements_concisely<'a, F>(
     p: &mut Prettier<'a>,
-    arr: &Array<'a, '_>,
+    arr: &ArrayLike<'a, '_>,
     trailing_comma_fn: F,
 ) -> Doc<'a>
 where
     F: Fn(&Prettier<'a>) -> Doc<'a>,
 {
     let mut parts = Vec::new_in(p.allocator);
-    if let Array::ArrayExpression(arr) = arr {
+    if let ArrayLike::ArrayExpression(arr) = arr {
         for (i, element) in arr.elements.iter().enumerate() {
             let is_last = i == arr.elements.len() - 1;
             let element_doc = element.format(p);
@@ -234,10 +219,6 @@ where
             if !is_last {
                 if is_line_after_element_empty(p, element.span().end) {
                     parts.push(array!(p, [hardline!(p), hardline!(p)]));
-                } else if arr.elements.get(i + 1).is_some_and(|next| {
-                    p.has_comment(next.span(), CommentFlags::Leading | CommentFlags::Line)
-                }) {
-                    parts.push(array!(p, [hardline!(p)]));
                 } else {
                     parts.push(line!());
                 }
@@ -252,13 +233,13 @@ where
     fill!(p, parts)
 }
 
-fn should_break(array: &Array) -> bool {
+fn should_break(array: &ArrayLike) -> bool {
     if array.len() <= 1 {
         return false;
     }
 
     match array {
-        Array::ArrayExpression(array) => {
+        ArrayLike::ArrayExpression(array) => {
             array.elements.iter().enumerate().all(|(index, element)| {
                 if let Some(next_element) = array.elements.get(index + 1) {
                     let all_array_or_object = matches!(
@@ -283,7 +264,7 @@ fn should_break(array: &Array) -> bool {
                 }
             })
         }
-        Array::TSTupleType(tuple) => {
+        ArrayLike::TSTupleType(tuple) => {
             tuple.element_types.iter().enumerate().all(|(index, element)| {
                 let TSTupleElement::TSTupleType(array) = element else {
                     return false;
@@ -300,8 +281,8 @@ fn should_break(array: &Array) -> bool {
                 array.element_types.len() > 1
             })
         }
-        Array::ArrayPattern(array) => false,
-        Array::ArrayAssignmentTarget(array) => false,
+        ArrayLike::ArrayPattern(array) => false,
+        ArrayLike::ArrayAssignmentTarget(array) => false,
     }
 }
 
