@@ -1019,6 +1019,19 @@ mod test {
     }
 
     #[test]
+    fn test_number_number_comparison() {
+        fold("1 > 1", "!1");
+        fold("2 == 3", "!1");
+        fold("3.6 === 3.6", "!0");
+        fold_same("+x > +y");
+        fold_same("+x == +y");
+        fold("+x === +y", "+x == +y");
+        fold_same("+x > +x"); // foldable to false
+        fold_same("+x == +x");
+        fold("+x === +x", "+x == +x");
+    }
+
+    #[test]
     fn test_string_string_comparison() {
         fold("'a' < 'b'", "!0");
         fold("'a' <= 'b'", "!0");
@@ -1118,6 +1131,22 @@ mod test {
     }
 
     #[test]
+    #[ignore]
+    fn test_object_comparison1() {
+        fold("!new Date()", "false");
+        fold("!!new Date()", "true");
+
+        fold("new Date() == null", "false");
+        fold("new Date() == undefined", "false");
+        fold("new Date() != null", "true");
+        fold("new Date() != undefined", "true");
+        fold("null == new Date()", "false");
+        fold("undefined == new Date()", "false");
+        fold("null != new Date()", "true");
+        fold("undefined != new Date()", "true");
+    }
+
+    #[test]
     fn js_typeof() {
         fold("x = typeof 1", "x = \"number\"");
         fold("x = typeof 'foo'", "x = \"string\"");
@@ -1162,7 +1191,7 @@ mod test {
         fold("a=+false", "a=0");
         fold_same("a=+foo()");
         fold_same("a=+f");
-        // test("a=+(f?true:false)", "a=+(f?1:0)");
+        fold("a=+(f?true:false)", "a=+!!f");
         fold("a=+0", "a=0");
         fold("a=+Infinity", "a=Infinity");
         fold("a=+NaN", "a=NaN");
@@ -1175,7 +1204,7 @@ mod test {
         fold_same("a=~~foo()");
         fold("a=~0xffffffff", "a=0");
         fold("a=~~0xffffffff", "a=-1");
-        // test_same("a=~.5");
+        fold("a=~.5", "a=-1");
     }
 
     #[test]
@@ -1381,6 +1410,8 @@ mod test {
         // these cases look strange because bitwise OR converts unsigned numbers to be signed
         fold("x = 1 | 3000000001", "x = -1294967295");
         fold("x = 4294967295 | 0", "x = -1");
+
+        fold("x = -1 | 0", "x = -1");
     }
 
     #[test]
@@ -1482,6 +1513,12 @@ mod test {
         fold("8589934591 >>> 0", "4294967295");
         fold("8589934592 >>> 0", "0");
         fold("8589934593 >>> 0", "1");
+
+        fold("x = -1 << 1", "x = -2");
+        fold("x = -1 << 8", "x = -256");
+        fold("x = -1 >> 1", "x = -1");
+        fold("x = -2 >> 1", "x = -1");
+        fold("x = -1 >> 0", "x = -1");
     }
 
     #[test]
@@ -1489,8 +1526,8 @@ mod test {
         fold("x = 'a' + 'bc'", "x = 'abc'");
         fold("x = 'a' + 5", "x = 'a5'");
         fold("x = 5 + 'a'", "x = '5a'");
-        // test("x = 'a' + 5n", "x = 'a5n'");
-        // test("x = 5n + 'a'", "x = '5na'");
+        fold("x = 'a' + 5n", "x = 'a5'");
+        fold("x = 5n + 'a'", "x = '5a'");
         fold("x = 'a' + ''", "x = 'a'");
         fold("x = 'a' + foo()", "x = 'a'+foo()");
         fold("x = foo() + 'a' + 'b'", "x = foo()+'ab'");
@@ -1498,23 +1535,23 @@ mod test {
         fold("x = foo() + 'a' + 'b' + 'cd' + bar()", "x = foo()+'abcd'+bar()");
         fold("x = foo() + 2 + 'b'", "x = foo()+2+\"b\""); // don't fold!
 
-        // test("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
+        // fold("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
         fold("x = '' + null", "x = 'null'");
         fold("x = true + '' + false", "x = 'truefalse'");
-        // test("x = '' + []", "x = ''");
-        // test("x = foo() + 'a' + 1 + 1", "x = foo() + 'a11'");
+        // fold("x = '' + []", "x = ''");
+        // fold("x = foo() + 'a' + 1 + 1", "x = foo() + 'a11'");
         fold("x = 1 + 1 + 'a'", "x = '2a'");
         fold("x = 1 + 1 + 'a'", "x = '2a'");
         fold("x = 'a' + (1 + 1)", "x = 'a2'");
-        // test("x = '_' + p1 + '_' + ('' + p2)", "x = '_' + p1 + '_' + p2");
-        // test("x = 'a' + ('_' + 1 + 1)", "x = 'a_11'");
-        // test("x = 'a' + ('_' + 1) + 1", "x = 'a_11'");
-        // test("x = 1 + (p1 + '_') + ('' + p2)", "x = 1 + (p1 + '_') + p2");
-        // test("x = 1 + p1 + '_' + ('' + p2)", "x = 1 + p1 + '_' + p2");
-        // test("x = 1 + 'a' + p1", "x = '1a' + p1");
-        // test("x = (p1 + (p2 + 'a')) + 'b'", "x = (p1 + (p2 + 'ab'))");
-        // test("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
-        // test("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + (p1 + 'c')");
+        // fold("x = '_' + p1 + '_' + ('' + p2)", "x = '_' + p1 + '_' + p2");
+        // fold("x = 'a' + ('_' + 1 + 1)", "x = 'a_11'");
+        // fold("x = 'a' + ('_' + 1) + 1", "x = 'a_11'");
+        // fold("x = 1 + (p1 + '_') + ('' + p2)", "x = 1 + (p1 + '_') + p2");
+        // fold("x = 1 + p1 + '_' + ('' + p2)", "x = 1 + p1 + '_' + p2");
+        // fold("x = 1 + 'a' + p1", "x = '1a' + p1");
+        // fold("x = (p1 + (p2 + 'a')) + 'b'", "x = (p1 + (p2 + 'ab'))");
+        // fold("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
+        // fold("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + (p1 + 'c')");
         fold("void 0 + ''", "'undefined'");
 
         fold_same("x = 'a' + (4 + p1 + 'a')");
@@ -1554,6 +1591,11 @@ mod test {
         fold_same("x = y + 10 + 20");
         fold("x = 1 + null", "x = 1");
         fold("x = null + 1", "x = 1");
+    }
+
+    #[test]
+    fn test_fold_sub() {
+        fold("x = 10 - 20", "x = -10");
     }
 
     #[test]
