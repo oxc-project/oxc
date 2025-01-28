@@ -207,7 +207,7 @@ impl Rule for SwitchCaseBraces {
 fn test() {
     use crate::tester::Tester;
 
-    let pass: Vec<&str> = vec![
+    let pass = vec![
         "switch(something) { case 1: case 2: {console.log('something'); break;}}",
         "switch(foo){ case 1: { break; } }",
         "switch(foo){ case 1: { ; /* <-- not empty */} }",
@@ -216,7 +216,7 @@ fn test() {
         "switch(foo){ default: { doSomething(); } }",
     ];
 
-    let fail: Vec<&str> = vec![
+    let fail = vec![
         "switch(s){case'':/]/}",
         "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
         "switch(something) { case 1: case 2: console.log('something'); break;}",
