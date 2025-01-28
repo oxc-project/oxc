@@ -1234,59 +1234,6 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_split_comma_expressions() {
-        // Don't try to split in expressions.
-        test_same("while (foo(), !0) boo()");
-        test_same("var a = (foo(), !0);");
-        test_same("a = (foo(), !0);");
-
-        // Don't try to split COMMA under LABELs.
-        test_same("a:a(),b()");
-        test("1, 2, 3, 4", "1; 2; 3; 4");
-        test("x = 1, 2, 3", "x = 1; 2; 3");
-        test_same("x = (1, 2, 3)");
-        test("1, (2, 3), 4", "1; 2; 3; 4");
-        test("(x=2), foo()", "x=2; foo()");
-        test("foo(), boo();", "foo(); boo()");
-        test("(a(), b()), (c(), d());", "a(); b(); c(); d()");
-        test("a(); b(); (c(), d());", "a(); b(); c(); d();");
-        test("foo(), true", "foo();true");
-        test_same("foo();true");
-        test("function x(){foo(), !0}", "function x(){foo(); !0}");
-        test_same("function x(){foo(); !0}");
-    }
-
-    #[test]
-    fn test_comma1() {
-        test_same("x, y");
-    }
-
-    #[test]
-    fn test_comma2() {
-        test("a, a()", "a, a()");
-        test("a, a?.()", "a, a?.()");
-    }
-
-    #[test]
-    fn test_comma3() {
-        test("x, a(), b()", "x, a(), b()");
-        test("x, a?.(), b?.()", "x, a?.(), b?.()");
-    }
-
-    #[test]
-    fn test_comma4() {
-        test("a(), b()", "a(), b()");
-        test("a?.(), b?.()", "a?.(), b?.()");
-    }
-
-    #[test]
-    fn test_comma5() {
-        test("a(), b(), 1", "a(), b(), 1");
-        test("a?.(), b?.(), 1", "a?.(), b?.(), 1");
-    }
-
-    #[test]
-    #[ignore]
     fn test_string_array_splitting() {
         test_same("var x=['1','2','3','4']");
         test_same("var x=['1','2','3','4','5']");
@@ -1316,23 +1263,7 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_bind_to_call1() {
-        test("(goog.bind(f))()", "f()");
-        test("(goog.bind(f,a))()", "f.call(a)");
-        test("(goog.bind(f,a,b))()", "f.call(a,b)");
-
-        test("(goog.bind(f))(a)", "f(a)");
-        test("(goog.bind(f,a))(b)", "f.call(a,b)");
-        test("(goog.bind(f,a,b))(c)", "f.call(a,b,c)");
-
-        test("(goog.partial(f))()", "f()");
-        test("(goog.partial(f,a))()", "f(a)");
-        test("(goog.partial(f,a,b))()", "f(a,b)");
-
-        test("(goog.partial(f))(a)", "f(a)");
-        test("(goog.partial(f,a))(b)", "f(a,b)");
-        test("(goog.partial(f,a,b))(c)", "f(a,b,c)");
-
+    fn test_bind_to_call() {
         test("((function(){}).bind())()", "((function(){}))()");
         test("((function(){}).bind(a))()", "((function(){})).call(a)");
         test("((function(){}).bind(a,b))()", "((function(){})).call(a,b)");
@@ -1346,92 +1277,32 @@ mod test {
         test_same("(f.bind(a))()");
         test_same("(f.bind())(a)");
         test_same("(f.bind(a))(b)");
-
-        // Don't rewrite if the bind isn't the immediate call target
-        test_same("(goog.bind(f)).call(g)");
     }
 
+    // FIXME: the cases commented out can be implemented
     #[test]
-    #[ignore]
-    fn test_bind_to_call2() {
-        test("(goog$bind(f))()", "f()");
-        test("(goog$bind(f,a))()", "f.call(a)");
-        test("(goog$bind(f,a,b))()", "f.call(a,b)");
-
-        test("(goog$bind(f))(a)", "f(a)");
-        test("(goog$bind(f,a))(b)", "f.call(a,b)");
-        test("(goog$bind(f,a,b))(c)", "f.call(a,b,c)");
-
-        test("(goog$partial(f))()", "f()");
-        test("(goog$partial(f,a))()", "f(a)");
-        test("(goog$partial(f,a,b))()", "f(a,b)");
-
-        test("(goog$partial(f))(a)", "f(a)");
-        test("(goog$partial(f,a))(b)", "f(a,b)");
-        test("(goog$partial(f,a,b))(c)", "f(a,b,c)");
-        // Don't rewrite if the bind isn't the immediate call target
-        test_same("(goog$bind(f)).call(g)");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_bind_to_call3() {
-        // TODO(johnlenz): The code generator wraps free calls with (0,...) to
-        // prevent leaking "this", but the parser doesn't unfold it, making a
-        // AST comparison fail.  For now do a string comparison to validate the
-        // correct code is in fact generated.
-        // The FREE call wrapping should be moved out of the code generator
-        // and into a denormalizing pass.
-        // disableCompareAsTree();
-        // retraverseOnChange = true;
-        // late = false;
-
-        test("(goog.bind(f.m))()", "(0,f.m)()");
-        test("(goog.bind(f.m,a))()", "f.m.call(a)");
-
-        test("(goog.bind(f.m))(a)", "(0,f.m)(a)");
-        test("(goog.bind(f.m,a))(b)", "f.m.call(a,b)");
-
-        test("(goog.partial(f.m))()", "(0,f.m)()");
-        test("(goog.partial(f.m,a))()", "(0,f.m)(a)");
-
-        test("(goog.partial(f.m))(a)", "(0,f.m)(a)");
-        test("(goog.partial(f.m,a))(b)", "(0,f.m)(a,b)");
-
-        // Without using type information we don't know "f" is a function.
-        test_same("f.m.bind()()");
-        test_same("f.m.bind(a)()");
-        test_same("f.m.bind()(a)");
-        test_same("f.m.bind(a)(b)");
-
-        // Don't rewrite if the bind isn't the immediate call target
-        test_same("goog.bind(f.m).call(g)");
-    }
-
-    #[test]
-    #[ignore]
     fn test_rotate_associative_operators() {
-        test("a || (b || c); a * (b * c); a | (b | c)", "(a || b) || c; (a * b) * c; (a | b) | c");
-        test_same("a % (b % c); a / (b / c); a - (b - c);");
-        test("a * (b % c);", "b % c * a");
-        test("a * b * (c / d)", "c / d * b * a");
-        test("(a + b) * (c % d)", "c % d * (a + b)");
+        test("a || (b || c)", "(a || b) || c");
+        // float multiplication is not always associative
+        // <https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-multiply>
+        test_same("a * (b * c)");
+        // test("a | (b | c)", "(a | b) | c");
+        test_same("a % (b % c)");
+        test_same("a / (b / c)");
+        test_same("a - (b - c);");
+        // test("a * (b % c);", "b % c * a");
+        // test("a * (b / c);", "b / c * a");
+        // cannot transform to `c / d * a * b`
+        test_same("a * b * (c / d)");
+        // test("(a + b) * (c % d)", "c % d * (a + b)");
         test_same("(a / b) * (c % d)");
         test_same("(c = 5) * (c % d)");
-        test("(a + b) * c * (d % e)", "d % e * c * (a + b)");
-        test("!a * c * (d % e)", "d % e * c * !a");
+        // test("!a * c * (d % e)", "d % e * c * !a");
     }
 
     #[test]
     fn nullish_coalesce() {
         test("a ?? (b ?? c);", "(a ?? b) ?? c");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_no_rotate_infinite_loop() {
-        test("1/x * (y/1 * (1/z))", "1/x * (y/1) * (1/z)");
-        test_same("1/x * (y/1) * (1/z)");
     }
 
     #[test]
