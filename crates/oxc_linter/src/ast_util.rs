@@ -497,24 +497,23 @@ fn is_definitely_non_error_type(ty: &TSType) -> bool {
 /// 1. Given the following source_text (with 2 preceding spaces):
 ///
 /// ```ts
-///   const foo = 'bar'
+///   break
 /// ```
 ///
-/// and the Span encapsulating the const foo = 'bar' expression statement,
+/// and the Span encapsulating the break statement,
 /// 
 /// this function will return "  " (2 preceding spaces).
 ///
 /// 2. Given the following source_text:
 ///
 /// ```ts
-/// const fizz = 'buzz'; const foo = 'bar'
+/// const foo = 'bar'; break;
 /// ```
 ///
-/// and the Span encapsulating the "foo = 'bar'" expression statement,
+/// and the Span encapsulating the break statement,
 /// 
 /// this function will return None because there is non-whitespace before the statement, 
-/// meaning the line of source_text containing the span does not need to be indented before writing the span contents into a source code string.
-///
+/// meaning the line of source_text containing the Span is not indented on a new line.
 pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
     let span_start = span.start as usize;
     let preceding_source_text = &source_text[..span_start];
