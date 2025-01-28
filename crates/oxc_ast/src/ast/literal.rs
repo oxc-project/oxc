@@ -91,7 +91,7 @@ pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
     /// The bigint as it appears in source code
-    #[estree(type = "string | null")]
+    #[estree(ts_type = "string | null")]
     pub raw: Atom<'a>,
     /// The base representation used by the literal in source code
     #[estree(skip)]
