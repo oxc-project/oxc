@@ -161,6 +161,9 @@ impl<'a> Normalize {
             if all_declarations_are_only_read {
                 decl.kind = VariableDeclarationKind::Let;
             }
+            for decl in &mut decl.declarations {
+                decl.kind = VariableDeclarationKind::Let;
+            }
         }
     }
 
@@ -229,6 +232,7 @@ mod test {
         test_same("for (const i = 0; i < 1; i++);");
         test_same("for (const x in [1, 2, 3]) x++");
         test_same("for (const x of [1, 2, 3]) x++");
+        test("{ let foo; const bar = undefined; }", "{ let foo, bar; }");
     }
 
     #[test]
