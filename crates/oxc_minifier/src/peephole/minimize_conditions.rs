@@ -151,16 +151,6 @@ impl<'a> PeepholeOptimizations {
                 e.operator = e.operator.equality_inverse_operator().unwrap();
                 Some(ctx.ast.move_expression(&mut expr.argument))
             }
-            // `!(a == b ? foo: bar)` => `a != b ? foo : bar`
-            Expression::ConditionalExpression(conditional_expr) => {
-                if let Expression::BinaryExpression(e) = &mut conditional_expr.test {
-                    if e.operator.is_equality() {
-                        e.operator = e.operator.equality_inverse_operator().unwrap();
-                        return Some(ctx.ast.move_expression(&mut expr.argument));
-                    }
-                }
-                None
-            }
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(e) = sequence_expr.expressions.pop() {
@@ -2307,6 +2297,7 @@ mod test {
         test("!!!delete x.y", "!delete x.y");
         test("!!!!delete x.y", "delete x.y");
         test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
+        test_same("!(a === 1 ? void 0 : a.b)"); // FIXME: can be compressed to `a === 1 || !a.b`
         test("!(a, b)", "a, !b");
     }
 
