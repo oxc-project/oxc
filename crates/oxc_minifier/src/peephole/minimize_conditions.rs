@@ -162,6 +162,46 @@ impl<'a> PeepholeOptimizations {
                 }
                 None
             }
+            Expression::LogicalExpression(logical)
+                if matches!(logical.operator, LogicalOperator::And | LogicalOperator::Or) =>
+            {
+                /// This functionality checks if the unary operator will increase the number of parenthesis.
+                /// Scenes that will increase the number of quotes are binary.
+                fn may_introduce_parenthesis(expr: &Expression) -> i32 {
+                    match expr {
+                        Expression::BinaryExpression(_) | Expression::LogicalExpression(_) => 1,
+                        Expression::UnaryExpression(un) if un.operator.is_not() => -1,
+                        _ if ValueType::from(expr).is_boolean() => -1,
+                        _ => 0,
+                    }
+                }
+                let indicator_left = may_introduce_parenthesis(&logical.left);
+                let indicator_right = may_introduce_parenthesis(&logical.right);
+                // only if `bool && ...` or `truthy || ...`
+                (((indicator_left + indicator_right) < 1)
+                    && (indicator_left | indicator_right != 0))
+                    .then(|| {
+                        let new_operator = match logical.operator {
+                            LogicalOperator::And => LogicalOperator::Or,
+                            LogicalOperator::Or => LogicalOperator::And,
+                            LogicalOperator::Coalesce => unreachable!(),
+                        };
+                        ctx.ast.expression_logical(
+                            expr.span,
+                            Self::minimize_not(
+                                expr.span,
+                                ctx.ast.move_expression(&mut logical.left),
+                                ctx,
+                            ),
+                            new_operator,
+                            Self::minimize_not(
+                                expr.span,
+                                ctx.ast.move_expression(&mut logical.right),
+                                ctx,
+                            ),
+                        )
+                    })
+            }
             _ => None,
         }
     }
@@ -1476,7 +1516,7 @@ mod test {
         test_same("for(; !(x<=NaN) ;) a=b");
 
         // NOT forces a boolean context
-        test("x = !(y() && true)", "x = !(y() && !0)"); // FIXME: this can be `!y()`
+        test("x = !(y() && true)", "x = !y() || !1;"); // FIXME: this can be `!y()`
 
         // This will be further optimized by PeepholeFoldConstants.
         test("x = !true", "x = !1");
@@ -1525,25 +1565,24 @@ mod test {
         test("while(!!true) foo()", "for(;;) foo()");
         // These test tryMinimizeCondition
         test("while(!!x) foo()", "for(;x;) foo()");
-        // test("while(!(!x&&!y)) foo()", "for(;x||y;) foo()");
+        test("while(!(!x&&!y)) foo()", "for(;x||y;) foo()");
         test("while(x||!!y) foo()", "for(;x||y;) foo()");
         // TODO
-        // test("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
-        // test("while(!(!x&&y)) foo()", "for(;x||!y;) foo()");
-        // test("while(!(x||!y)) foo()", "for(;!x&&y;) foo()");
+        test("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
+        test("while(!(!x&&y)) foo()", "for(;x||!y;) foo()");
+        test("while(!(x||!y)) foo()", "for(;!x&&y;) foo()");
         // test("while(!(x||y)) foo()", "for(;!x&&!y;) foo()");
-        // test("while(!(!x||y-z)) foo()", "for(;x&&!(y-z;)) foo()");
-        // test("while(!(!(x/y)||z+w)) foo()", "for(;x/y&&!(z+w;)) foo()");
-        // test("while(!(x+y||z)) foo()", "for(;!(x+y||z);) foo()");
+        test("while(!(!x||y-z)) foo()", "for(;x&&!(y-z);) foo()");
+        test("while(!(!(x/y)||z+w)) foo()", "for(;x/y&&!(z+w);) foo()");
+        test("while(!(x+y||z)) foo()", "for(;!(x+y||z);) foo()");
         // test("while(!(x&&y*z)) foo()", "for(;!(x+y||z);) foo()");
-        // test("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
+        test("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
         // test("while(x&&!0) foo()", "for(;x;) foo()");
         // test("while(x||!1) foo()", "for(;x;) foo()");
         // test("while(!((x,y)&&z)) foo()", "for(;(x,!y)||!z;) foo()");
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_demorgan_remove_leading_not() {
         test("if(!(!a||!b)&&c) foo()", "((a&&b)&&c)&&foo()");
         test("if(!(x&&y)) foo()", "x&&y||foo()");
@@ -1557,14 +1596,12 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_demorgan2() {
         // Make sure trees with cloned functions are marked as changed
         test("(!(a&&!((function(){})())))||foo()", "!a||(function(){})()||foo()");
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_demorgan2b() {
         // Make sure unchanged trees with functions are not marked as changed
         test_same("!a||(function(){})()||foo()");
