@@ -192,7 +192,7 @@ impl Serialize for FormalParameters<'_> {
             kind: self.kind,
             items: ElementsAndRest::new(&self.items, converted_rest.as_ref()),
         };
-        converted.serialize(serializer)
+        converted.items.serialize(serializer)
     }
 }
 

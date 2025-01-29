@@ -1355,10 +1355,9 @@ impl Serialize for FunctionType {
 impl Serialize for FormalParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "FormalParameter")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("decorators", &self.decorators)?;
-        map.serialize_entry("pattern", &self.pattern)?;
+        self.pattern.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("accessibility", &self.accessibility)?;
         map.serialize_entry("readonly", &self.readonly)?;
         map.serialize_entry("override", &self.r#override)?;
