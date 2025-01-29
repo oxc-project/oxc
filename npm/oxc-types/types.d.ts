@@ -718,10 +718,12 @@ export interface Function extends Span {
   declare: boolean;
   typeParameters: TSTypeParameterDeclaration | null;
   thisParam: TSThisParameter | null;
-  params: FormalParameters;
+  params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
   body: FunctionBody | null;
 }
+
+export type ParamPattern = FormalParameter | FormalParameterRest;
 
 export type FunctionType =
   | 'FunctionDeclaration'
@@ -742,14 +744,15 @@ export interface FormalParameterRest extends Span {
   optional: boolean;
 }
 
-export interface FormalParameter extends Span {
-  type: 'FormalParameter';
-  decorators: Array<Decorator>;
-  pattern: BindingPattern;
-  accessibility: TSAccessibility | null;
-  readonly: boolean;
-  override: boolean;
-}
+export type FormalParameter =
+  & ({
+    decorators: Array<Decorator>;
+    accessibility: TSAccessibility | null;
+    readonly: boolean;
+    override: boolean;
+  })
+  & Span
+  & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
 
 export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
 
@@ -764,7 +767,7 @@ export interface ArrowFunctionExpression extends Span {
   expression: boolean;
   async: boolean;
   typeParameters: TSTypeParameterDeclaration | null;
-  params: FormalParameters;
+  params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
   body: FunctionBody;
 }
@@ -1532,7 +1535,7 @@ export interface TSCallSignatureDeclaration extends Span {
   type: 'TSCallSignatureDeclaration';
   typeParameters: TSTypeParameterDeclaration | null;
   thisParam: TSThisParameter | null;
-  params: FormalParameters;
+  params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
 }
 
@@ -1546,14 +1549,14 @@ export interface TSMethodSignature extends Span {
   kind: TSMethodSignatureKind;
   typeParameters: TSTypeParameterDeclaration | null;
   thisParam: TSThisParameter | null;
-  params: FormalParameters;
+  params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
 }
 
 export interface TSConstructSignatureDeclaration extends Span {
   type: 'TSConstructSignatureDeclaration';
   typeParameters: TSTypeParameterDeclaration | null;
-  params: FormalParameters;
+  params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
 }
 
@@ -1642,7 +1645,7 @@ export interface TSFunctionType extends Span {
   type: 'TSFunctionType';
   typeParameters: TSTypeParameterDeclaration | null;
   thisParam: TSThisParameter | null;
-  params: FormalParameters;
+  params: ParamPattern[];
   returnType: TSTypeAnnotation;
 }
 
@@ -1650,7 +1653,7 @@ export interface TSConstructorType extends Span {
   type: 'TSConstructorType';
   abstract: boolean;
   typeParameters: TSTypeParameterDeclaration | null;
-  params: FormalParameters;
+  params: ParamPattern[];
   returnType: TSTypeAnnotation;
 }
 
