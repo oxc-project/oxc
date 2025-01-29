@@ -155,15 +155,15 @@ fn js_parser_test() {
     test("const a=0; while (1) ;", "const a = 0;for (;;) ;");
     test("var a; for (var b;;) ;", "for (var a, b;;) ;");
     test("let a; for (let b;;) ;", "let a;for (let b;;) ;");
-    test("const a=0; for (const b = 1;;) ;", "const a = 0;for (const b = 1;;) ;");
+    test("const a=0; for (const b = 1;;) ;", "const a = 0;for (let b = 1;;) ;");
     test("export var a; while (1) ;", "export var a;for (;;) ;");
     test("export let a; while (1) ;", "export let a;for (;;) ;");
     test("export const a=0; while (1) ;", "export const a = 0;for (;;) ;");
     test("export var a; for (var b;;) ;", "export var a;for (var b;;) ;");
     test("export let a; for (let b;;) ;", "export let a;for (let b;;) ;");
-    test("export const a=0; for (const b = 1;;) ;", "export const a = 0;for (const b = 1;;) ;");
+    test("export const a=0; for (const b = 1;;) ;", "export const a = 0;for (let b = 1;;) ;");
     test("var a; for (let b;;) ;", "var a;for (let b;;) ;");
-    test("let a; for (const b=0;;) ;", "let a;for (const b = 0;;) ;");
+    test("let a; for (const b=0;;) ;", "let a;for (let b = 0;;) ;");
     test("const a=0; for (var b;;) ;", "const a = 0;for (var b;;) ;");
     test("a(); while (1) ;", "for (a();;) ;");
     test("a(); for (b();;) ;", "for (a(), b();;) ;");
@@ -272,7 +272,7 @@ fn js_parser_test() {
     // test("x['-2147483648']", "x[-2147483648];");
     test("x['-2147483649']", "x['-2147483649'];");
     test("while(1) { while (1) {} }", "for (;;) for (;;)  ;");
-    test("while(1) { const x = y; }", "for (;;) { const x = y;}");
+    test("while(1) { const x = y; }", "for (;;) { let x = y;}");
     test("while(1) { let x; }", "for (;;) { let x;}");
     // test("while(1) { var x; }", "for (;;) var x;");
     test("while(1) { class X {} }", "for (;;) { class X { }}");
@@ -2379,34 +2379,4 @@ fn test_ignored() {
     test("using x = null, y = undefined", "const x = null, y = void 0;");
     test("using x = null, y = z", "using x = null, y = z;");
     test("using x = z, y = undefined", "using x = z, y = void 0;");
-}
-
-#[test]
-#[ignore]
-fn js_printer_test() {
-    test("(1 ? eval : 2)(x)", "(0, eval)(x);");
-    test("(1 ? eval : 2)?.(x)", "eval?.(x);");
-    test("let x = '\n'", "let x = ``;");
-    test("let x = ``", "let x = ``;");
-    test("let x = '\n${}'", "let x = '\n${}';");
-    test("let x = `\\${}`", "let x = '\n${}';");
-    test("let x = `\\${}${y}\\${}`", "let x = `\\${}${y}\\${}`;");
-    test("true ** 2", "(!0) ** 2;");
-    test("false ** 2", "(!1) ** 2;");
-    test("x = '\n'", "x = ``;");
-    test("x = {'\n': 0}", "x = { '\n': 0 };");
-    test("x = class{'\n' = 0}", "x = class { '\n' = 0;};");
-    test("class Foo{'\n' = 0}", "class Foo { '\n' = 0;}");
-    test("x = Infinity", "x = 1 / 0;");
-    test("x = -Infinity", "x = -1 / 0;");
-    test("x = (Infinity).toString", "x = (1 / 0).toString;");
-    test("x = (-Infinity).toString", "x = (-1 / 0).toString;");
-    test("x = Infinity ** 2", "x = (1 / 0) ** 2;");
-    test("x = (-Infinity) ** 2", "x = (-1 / 0) ** 2;");
-    test("x = Infinity * y", "x = 1 / 0 * y;");
-    test("x = Infinity / y", "x = 1 / 0 / y;");
-    test("x = y * Infinity", "x = y * (1 / 0);");
-    test("x = y / Infinity", "x = y / (1 / 0);");
-    test("throw Infinity", "throw 1 / 0;");
-    test("x = (0, /*a*/ (0, /*b*/ (0, /*c*/ 1 == 2) + 3) * 4)", "x = /*a*//*b*/(/*c*/!1 + 3) * 4;");
 }

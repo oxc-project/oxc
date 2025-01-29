@@ -947,6 +947,11 @@ impl<'a> BindingPattern<'a> {
     pub fn get_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
         self.kind.get_binding_identifier()
     }
+
+    #[allow(missing_docs)]
+    pub fn get_binding_identifiers(&self) -> std::vec::Vec<&BindingIdentifier<'a>> {
+        self.kind.get_binding_identifiers()
+    }
 }
 
 impl<'a> BindingPatternKind<'a> {
@@ -966,6 +971,31 @@ impl<'a> BindingPatternKind<'a> {
             Self::AssignmentPattern(assign) => assign.left.get_binding_identifier(),
             _ => None,
         }
+    }
+
+    fn append_binding_identifiers<'b>(
+        &'b self,
+        idents: &mut std::vec::Vec<&'b BindingIdentifier<'a>>,
+    ) {
+        match self {
+            Self::BindingIdentifier(ident) => idents.push(ident),
+            Self::AssignmentPattern(assign) => assign.left.kind.append_binding_identifiers(idents),
+            Self::ArrayPattern(pattern) => pattern
+                .elements
+                .iter()
+                .filter_map(|item| item.as_ref())
+                .for_each(|item| item.kind.append_binding_identifiers(idents)),
+            Self::ObjectPattern(pattern) => pattern.properties.iter().for_each(|item| {
+                item.value.kind.append_binding_identifiers(idents);
+            }),
+        }
+    }
+
+    #[allow(missing_docs)]
+    pub fn get_binding_identifiers(&self) -> std::vec::Vec<&BindingIdentifier<'a>> {
+        let mut idents = vec![];
+        self.append_binding_identifiers(&mut idents);
+        idents
     }
 
     #[allow(missing_docs)]

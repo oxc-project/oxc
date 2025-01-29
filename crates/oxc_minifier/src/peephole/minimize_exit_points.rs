@@ -130,7 +130,7 @@ mod test {
         test(
             "function f(a) {
               if (a) {
-                const a = Math.random();
+                let a = Math.random();
                 if (a < 0.5) {
                     return a;
                 }
@@ -139,7 +139,7 @@ mod test {
             }",
             "function f(a) {
               if (a) {
-                const a = Math.random();
+                let a = Math.random();
                 if (a < 0.5) return a;
               }
               return a;

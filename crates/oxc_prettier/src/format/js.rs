@@ -949,17 +949,14 @@ impl<'a> Format<'a> for ArrayExpressionElement<'a> {
 
 impl<'a> Format<'a> for SpreadElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, SpreadElement, {
-            let argument_doc = self.argument.format(p);
-            array!(p, [text!("..."), argument_doc])
-        })
+        wrap!(p, self, SpreadElement, { array!(p, [text!("..."), self.argument.format(p)]) })
     }
 }
 
 impl<'a> Format<'a> for ArrayExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ArrayExpression, {
-            array::print_array(p, &array::Array::ArrayExpression(self))
+            array::print_array(p, &array::ArrayLike::ArrayExpression(self))
         })
     }
 }
@@ -1190,7 +1187,7 @@ impl<'a> Format<'a> for AssignmentTargetPattern<'a> {
 
 impl<'a> Format<'a> for ArrayAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array::print_array(p, &array::Array::ArrayAssignmentTarget(self))
+        array::print_array(p, &array::ArrayLike::ArrayAssignmentTarget(self))
     }
 }
 
@@ -1261,8 +1258,7 @@ impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
 
 impl<'a> Format<'a> for AssignmentTargetRest<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let target_doc = self.target.format(p);
-        array!(p, [text!("..."), target_doc])
+        array!(p, [text!("..."), self.target.format(p)])
     }
 }
 
@@ -1444,6 +1440,7 @@ impl<'a> Format<'a> for PrivateIdentifier<'a> {
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
+
         parts.push(match &self.kind {
             BindingPatternKind::BindingIdentifier(ident) => ident.format(p),
             BindingPatternKind::ObjectPattern(pattern) => pattern.format(p),
@@ -1456,9 +1453,9 @@ impl<'a> Format<'a> for BindingPattern<'a> {
         }
 
         if let Some(typ) = &self.type_annotation {
-            let type_annotation_doc = typ.type_annotation.format(p);
-            parts.push(array!(p, [text!(": "), type_annotation_doc]));
+            parts.push(array!(p, [text!(": "), typ.type_annotation.format(p)]));
         }
+
         array!(p, parts)
     }
 }
@@ -1494,14 +1491,15 @@ impl<'a> Format<'a> for BindingProperty<'a> {
 
 impl<'a> Format<'a> for BindingRestElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let argument_doc = self.argument.format(p);
-        array!(p, [text!("..."), argument_doc])
+        wrap!(p, self, BindingRestElement, { array!(p, [text!("..."), self.argument.format(p)]) })
     }
 }
 
 impl<'a> Format<'a> for ArrayPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ArrayPattern, { array::print_array(p, &array::Array::ArrayPattern(self)) })
+        wrap!(p, self, ArrayPattern, {
+            array::print_array(p, &array::ArrayLike::ArrayPattern(self))
+        })
     }
 }
 

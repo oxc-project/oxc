@@ -35,8 +35,16 @@ impl InternalFormatter for DefaultOutputFormatter {
         ))
     }
 
+    #[cfg(not(test))]
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(GraphicalReporter::default())
+    }
+
+    #[cfg(test)]
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        use crate::output_formatter::default::test_implementation::GraphicalReporterTester;
+
+        Box::new(GraphicalReporterTester::default())
     }
 }
 
@@ -58,61 +66,87 @@ struct GraphicalReporter {
     handler: GraphicalReportHandler,
 }
 
-#[cfg(not(test))]
 impl Default for GraphicalReporter {
     fn default() -> Self {
         Self { handler: GraphicalReportHandler::new() }
     }
 }
 
-#[cfg(test)]
-use oxc_diagnostics::GraphicalTheme;
-
-/// we need to override the GraphicalReport for the tests
-/// because our CI can not handle colors output and [`GraphicalReportHandler`] will auto detect the environment
-#[cfg(test)]
-impl Default for GraphicalReporter {
-    fn default() -> Self {
-        Self { handler: GraphicalReportHandler::new_themed(GraphicalTheme::none()) }
-    }
-}
-
 impl DiagnosticReporter for GraphicalReporter {
     fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-        let mut output = String::new();
-
-        if result.warnings_count() + result.errors_count() > 0 {
-            output.push('\n');
-        }
-
-        output.push_str(
-            format!(
-                "Found {} warning{} and {} error{}.\n",
-                result.warnings_count(),
-                if result.warnings_count() == 1 { "" } else { "s" },
-                result.errors_count(),
-                if result.errors_count() == 1 { "" } else { "s" },
-            )
-            .as_str(),
-        );
-
-        if result.max_warnings_exceeded() {
-            output.push_str(
-                format!(
-                    "Exceeded maximum number of warnings. Found {}.\n",
-                    result.warnings_count()
-                )
-                .as_str(),
-            );
-        }
-
-        Some(output)
+        Some(get_diagnostic_result_output(result))
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         let mut output = String::new();
         self.handler.render_report(&mut output, error.as_ref()).unwrap();
         Some(output)
+    }
+}
+
+fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
+    let mut output = String::new();
+
+    if result.warnings_count() + result.errors_count() > 0 {
+        output.push('\n');
+    }
+
+    output.push_str(
+        format!(
+            "Found {} warning{} and {} error{}.\n",
+            result.warnings_count(),
+            if result.warnings_count() == 1 { "" } else { "s" },
+            result.errors_count(),
+            if result.errors_count() == 1 { "" } else { "s" },
+        )
+        .as_str(),
+    );
+
+    if result.max_warnings_exceeded() {
+        output.push_str(
+            format!("Exceeded maximum number of warnings. Found {}.\n", result.warnings_count())
+                .as_str(),
+        );
+    }
+
+    output
+}
+
+#[cfg(test)]
+mod test_implementation {
+    use oxc_diagnostics::{
+        reporter::{DiagnosticReporter, DiagnosticResult, Info},
+        Error, GraphicalReportHandler, GraphicalTheme,
+    };
+
+    use crate::output_formatter::default::get_diagnostic_result_output;
+
+    #[derive(Default)]
+    pub struct GraphicalReporterTester {
+        diagnostics: Vec<Error>,
+    }
+
+    impl DiagnosticReporter for GraphicalReporterTester {
+        fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none());
+            let mut output = String::new();
+
+            self.diagnostics.sort_by_key(|diagnostic| Info::new(diagnostic).filename);
+            self.diagnostics.sort_by_key(|diagnostic| Info::new(diagnostic).start.line);
+
+            for diagnostic in &self.diagnostics {
+                handler.render_report(&mut output, diagnostic.as_ref()).unwrap();
+            }
+
+            output.push_str(&get_diagnostic_result_output(result));
+
+            Some(output)
+        }
+
+        fn render_error(&mut self, error: Error) -> Option<String> {
+            self.diagnostics.push(error);
+            None
+        }
     }
 }
 
@@ -124,12 +158,7 @@ mod test {
         default::{DefaultOutputFormatter, GraphicalReporter},
         InternalFormatter, LintCommandInfo,
     };
-    use miette::NamedSource;
-    use oxc_diagnostics::{
-        reporter::{DiagnosticReporter, DiagnosticResult},
-        OxcDiagnostic,
-    };
-    use oxc_span::Span;
+    use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
 
     #[test]
     fn all_rules() {
@@ -196,23 +225,6 @@ mod test {
         assert_eq!(
             result.unwrap(),
             "\nFound 6 warnings and 4 errors.\nExceeded maximum number of warnings. Found 6.\n"
-        );
-    }
-
-    #[test]
-    fn reporter_error() {
-        let mut reporter = GraphicalReporter::default();
-
-        let error = OxcDiagnostic::warn("error message")
-            .with_label(Span::new(0, 8))
-            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
-
-        let result = reporter.render_error(error);
-
-        assert!(result.is_some());
-        assert_eq!(
-            result.unwrap(),
-            "\n  ! error message\n   ,-[file://test.ts:1:1]\n 1 | debugger;\n   : ^^^^^^^^\n   `----\n"
         );
     }
 }

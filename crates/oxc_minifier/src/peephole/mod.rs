@@ -72,11 +72,6 @@ impl<'a> PeepholeOptimizations {
         *current_changed = true;
     }
 
-    pub fn is_current_function_changed(&self) -> bool {
-        let (_, _, current_changed) = self.current_function.last();
-        *current_changed
-    }
-
     #[inline]
     fn is_prev_function_changed(&self) -> bool {
         let (_, prev_changed, _) = self.current_function.last();
@@ -146,6 +141,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.collapse_variable_declarations(stmts, ctx);
         self.minimize_conditions_exit_statements(stmts, ctx);
         self.remove_dead_code_exit_statements(stmts, ctx);
+        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -155,6 +151,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         let ctx = Ctx(ctx);
         self.minimize_conditions_exit_statement(stmt, ctx);
         self.remove_dead_code_exit_statement(stmt, ctx);
+        self.substitute_exit_statement(stmt, ctx);
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -337,6 +334,7 @@ impl<'a> Traverse<'a> for DeadCodeElimination {
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.inner.remove_dead_code_exit_statements(stmts, Ctx(ctx));
+        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

@@ -202,7 +202,7 @@ pub use match_expression;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct IdentifierName<'a> {
     pub span: Span,
     pub name: Atom<'a>,
@@ -216,7 +216,7 @@ pub struct IdentifierName<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.
@@ -239,7 +239,7 @@ pub struct IdentifierReference<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct BindingIdentifier<'a> {
     pub span: Span,
     /// The identifier name being bound.
@@ -263,7 +263,7 @@ pub struct BindingIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct LabelIdentifier<'a> {
     pub span: Span,
     pub name: Atom<'a>,
@@ -287,7 +287,7 @@ pub struct ThisExpression {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrayExpression<'a> {
     pub span: Span,
-    #[estree(type = "Array<SpreadElement | Expression | null>")]
+    #[estree(ts_type = "Array<SpreadElement | Expression | null>")]
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
@@ -832,7 +832,7 @@ pub struct ObjectAssignmentTarget<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "RestElement")]
+#[estree(rename = "RestElement")]
 pub struct AssignmentTargetRest<'a> {
     pub span: Span,
     #[estree(rename = "argument")]
@@ -1441,7 +1441,7 @@ pub struct BindingPattern<'a> {
     // estree(flatten) the attributes because estree has no `BindingPattern`
     #[estree(
         flatten,
-        type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
+        ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
     )]
     #[span]
     pub kind: BindingPatternKind<'a>,
@@ -1520,7 +1520,7 @@ pub struct ArrayPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "RestElement")]
+#[estree(rename = "RestElement")]
 pub struct BindingRestElement<'a> {
     pub span: Span,
     pub argument: BindingPattern<'a>,
@@ -1649,7 +1649,7 @@ pub enum FunctionType {
 pub struct FormalParameters<'a> {
     pub span: Span,
     pub kind: FormalParameterKind,
-    #[estree(type = "Array<FormalParameter | FormalParameterRest>")]
+    #[estree(ts_type = "Array<FormalParameter | FormalParameterRest>")]
     pub items: Vec<'a, FormalParameter<'a>>,
     #[estree(skip)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
@@ -2196,7 +2196,7 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    #[estree(via = crate::serialize::OptionVecDefault, type = "Array<ImportDeclarationSpecifier>")]
+    #[estree(via = crate::serialize::OptionVecDefault, ts_type = "Array<ImportDeclarationSpecifier>")]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
     pub phase: Option<ImportPhase>,

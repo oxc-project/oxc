@@ -1,4 +1,4 @@
-use std::{fs, sync::OnceLock, time::Duration};
+use std::{fs, sync::OnceLock};
 
 use oxc_tasks_common::agent;
 use regex::Regex;
@@ -19,10 +19,10 @@ pub fn get_v8_test262_failure_paths() -> &'static Vec<String> {
         } else {
             let res = agent()
                 .get("http://raw.githubusercontent.com/v8/v8/main/test/test262/test262.status")
-                .timeout(Duration::from_secs(10))
                 .call()
                 .unwrap()
-                .into_string()
+                .body_mut()
+                .read_to_string()
                 .unwrap();
             let mut tests = Regex::new(r"'(.+)': \[(FAIL|SKIP)\]")
                 .unwrap()

@@ -159,7 +159,7 @@ impl ReferenceFlags {
     /// The identifier is only read from.
     #[inline]
     pub const fn is_read_only(&self) -> bool {
-        self.contains(Self::Read)
+        !self.contains(Self::Write)
     }
 
     /// The identifier is written to. It may also be read from.
@@ -171,7 +171,7 @@ impl ReferenceFlags {
     /// The identifier is only written to. It is not read from in this reference.
     #[inline]
     pub const fn is_write_only(&self) -> bool {
-        self.contains(Self::Write)
+        !self.contains(Self::Read)
     }
 
     /// The identifier is both read from and written to, e.g `a += 1`.

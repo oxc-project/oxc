@@ -30,7 +30,6 @@ impl<'a> PeepholeOptimizations {
             let mut local_change = false;
             self.try_replace_if(stmts, &mut local_change, ctx);
             if local_change {
-                stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
                 changed = local_change;
             } else {
                 break;
@@ -128,6 +127,7 @@ impl<'a> PeepholeOptimizations {
             .unwrap_or_else(|| Expression::UnaryExpression(ctx.ast.alloc(unary)))
     }
 
+    /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
     fn try_minimize_not(
         expr: &mut UnaryExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -136,21 +136,29 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         match &mut expr.argument {
+            // `!!true` -> `true`
+            // `!!false` -> `false`
             Expression::UnaryExpression(e)
                 if e.operator.is_not() && ValueType::from(&e.argument).is_boolean() =>
             {
                 Some(ctx.ast.move_expression(&mut e.argument))
             }
+            // `!(a == b)` => `a != b`
+            // `!(a != b)` => `a == b`
+            // `!(a === b)` => `a !== b`
+            // `!(a !== b)` => `a === b`
             Expression::BinaryExpression(e) if e.operator.is_equality() => {
                 e.operator = e.operator.equality_inverse_operator().unwrap();
                 Some(ctx.ast.move_expression(&mut expr.argument))
             }
-            Expression::ConditionalExpression(conditional_expr) => {
-                if let Expression::BinaryExpression(e) = &mut conditional_expr.test {
-                    if e.operator.is_equality() {
-                        e.operator = e.operator.equality_inverse_operator().unwrap();
-                        return Some(ctx.ast.move_expression(&mut expr.argument));
-                    }
+            // "!(a, b)" => "a, !b"
+            Expression::SequenceExpression(sequence_expr) => {
+                if let Some(e) = sequence_expr.expressions.pop() {
+                    let e = ctx.ast.expression_unary(e.span(), UnaryOperator::LogicalNot, e);
+                    let expressions = ctx.ast.vec_from_iter(
+                        sequence_expr.expressions.drain(..).chain(std::iter::once(e)),
+                    );
+                    return Some(ctx.ast.expression_sequence(sequence_expr.span, expressions));
                 }
                 None
             }
@@ -1107,11 +1115,12 @@ impl<'a> PeepholeOptimizations {
     /// Evaluation here means `Evaluation` in the spec.
     /// <https://tc39.es/ecma262/multipage/syntax-directed-operations.html#sec-evaluation>
     ///
-    /// Matches the following cases:
+    /// Matches the following cases (`a` can be `this`):
     ///
     /// - `a`, `a`
     /// - `a.b`, `a.b`
     /// - `a["b"]`, `a["b"]`
+    /// - `a[0]`, `a[0]`
     fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget,
         expr: &Expression,
@@ -1126,18 +1135,29 @@ impl<'a> PeepholeOptimizations {
         }
         if let Some(write_expr) = assignment_target.as_member_expression() {
             if let MemberExpression::ComputedMemberExpression(e) = write_expr {
-                if !matches!(e.expression, Expression::StringLiteral(_)) {
+                if !matches!(
+                    e.expression,
+                    Expression::StringLiteral(_) | Expression::NumericLiteral(_)
+                ) {
                     return false;
                 }
             }
-            let Expression::Identifier(write_expr_object_id) = &write_expr.object() else {
-                return false;
-            };
-            if let Some(read_expr) = expr.as_member_expression() {
+            let has_same_object = match &write_expr.object() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
-                return !ctx.is_global_reference(write_expr_object_id)
-                    && write_expr.content_eq(read_expr);
+                Expression::Identifier(ident) => !ctx.is_global_reference(ident),
+                Expression::ThisExpression(_) => {
+                    expr.as_member_expression().is_some_and(|read_expr| {
+                        matches!(read_expr.object(), Expression::ThisExpression(_))
+                    })
+                }
+                _ => false,
+            };
+            if !has_same_object {
+                return false;
+            }
+            if let Some(read_expr) = expr.as_member_expression() {
+                return write_expr.content_eq(read_expr);
             }
         }
         false
@@ -1267,7 +1287,10 @@ mod test {
 
         // Dot not fold `let` and `const`.
         // Lexical declaration cannot appear in a single-statement context.
-        test_same("if (foo) { const bar = 1 } else { const baz = 1 }");
+        test(
+            "if (foo) { const bar = 1 } else { const baz = 1 }",
+            "if (foo) { let bar = 1 } else { let baz = 1 }",
+        );
         test_same("if (foo) { let bar = 1 } else { let baz = 1 }");
         // test(
         // "if (foo) { var bar = 1 } else { var baz = 1 }",
@@ -1358,8 +1381,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_remove_duplicate_statements() {
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
         test("if (a) { x = 1; x++ } else { x = 2; x++ }", "x=(a) ? 1 : 2; x++");
         test(
             concat!(
@@ -1401,8 +1422,8 @@ mod test {
     fn test_fold_returns_integration2() {
         // if-then-else duplicate statement removal handles this case:
         test(
-            "function test(a) {if (a) {const a = Math.random();if(a) {return a;}} return a; }",
-            "function test(a) { if (a) { const a = Math.random(); if (a) return a; } return a; }",
+            "function test(a) {if (a) {let a = Math.random();if(a) {return a;}} return a; }",
+            "function test(a) { if (a) { let a = Math.random(); if (a) return a; } return a; }",
         );
     }
 
@@ -1412,7 +1433,7 @@ mod test {
         // refers to a different variable.
         // We only try removing duplicate statements if the AST is normalized and names are unique.
         test_same(
-            "if (Math.random() < 0.5) { const x = 3; alert(x); } else { const x = 5; alert(x); }",
+            "if (Math.random() < 0.5) { let x = 3; alert(x); } else { let x = 5; alert(x); }",
         );
     }
 
@@ -1435,29 +1456,28 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_logical_op_string_compare() {
         // side-effects
         // There is two way to parse two &&'s and both are correct.
-        test("if (foo() && false) z()", "(foo(), 0) && z()");
+        test("if (foo() && false) z()", "foo() && !1");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_not() {
-        test("while(!(x==y)){a=b;}", "while(x!=y){a=b;}");
-        test("while(!(x!=y)){a=b;}", "while(x==y){a=b;}");
-        test("while(!(x===y)){a=b;}", "while(x!==y){a=b;}");
-        test("while(!(x!==y)){a=b;}", "while(x===y){a=b;}");
+        test("for(; !(x==y) ;) a=b", "for(; x!=y ;) a=b");
+        test("for(; !(x!=y) ;) a=b", "for(; x==y ;) a=b");
+        test("for(; !(x===y) ;) a=b", "for(; x!==y ;) a=b");
+        test("for(; !(x!==y) ;) a=b", "for(; x===y ;) a=b");
         // Because !(x<NaN) != x>=NaN don't fold < and > cases.
-        test_same("while(!(x>y)){a=b;}");
-        test_same("while(!(x>=y)){a=b;}");
-        test_same("while(!(x<y)){a=b;}");
-        test_same("while(!(x<=y)){a=b;}");
-        test_same("while(!(x<=NaN)){a=b;}");
+        test_same("for(; !(x>y) ;) a=b");
+        test_same("for(; !(x>=y) ;) a=b");
+        test_same("for(; !(x<y) ;) a=b");
+        test_same("for(; !(x<=y) ;) a=b");
+        test_same("for(; !(x<=NaN) ;) a=b");
 
         // NOT forces a boolean context
-        test("x = !(y() && true)", "x = !y()");
+        test("x = !(y() && true)", "x = !(y() && !0)"); // FIXME: this can be `!y()`
+
         // This will be further optimized by PeepholeFoldConstants.
         test("x = !true", "x = !1");
     }
@@ -1500,26 +1520,26 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_while_condition() {
         // This test uses constant folding logic, so is only here for completeness.
-        test("while(!!true) foo()", "while(1) foo()");
+        test("while(!!true) foo()", "for(;;) foo()");
         // These test tryMinimizeCondition
-        test("while(!!x) foo()", "while(x) foo()");
-        test("while(!(!x&&!y)) foo()", "while(x||y) foo()");
-        test("while(x||!!y) foo()", "while(x||y) foo()");
-        test("while(!(!!x&&y)) foo()", "while(!x||!y) foo()");
-        test("while(!(!x&&y)) foo()", "while(x||!y) foo()");
-        test("while(!(x||!y)) foo()", "while(!x&&y) foo()");
-        test("while(!(x||y)) foo()", "while(!x&&!y) foo()");
-        test("while(!(!x||y-z)) foo()", "while(x&&!(y-z)) foo()");
-        test("while(!(!(x/y)||z+w)) foo()", "while(x/y&&!(z+w)) foo()");
-        test_same("while(!(x+y||z)) foo()");
-        test_same("while(!(x&&y*z)) foo()");
-        test("while(!(!!x&&y)) foo()", "while(!x||!y) foo()");
-        test("while(x&&!0) foo()", "while(x) foo()");
-        test("while(x||!1) foo()", "while(x) foo()");
-        test("while(!((x,y)&&z)) foo()", "while((x,!y)||!z) foo()");
+        test("while(!!x) foo()", "for(;x;) foo()");
+        // test("while(!(!x&&!y)) foo()", "for(;x||y;) foo()");
+        test("while(x||!!y) foo()", "for(;x||y;) foo()");
+        // TODO
+        // test("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
+        // test("while(!(!x&&y)) foo()", "for(;x||!y;) foo()");
+        // test("while(!(x||!y)) foo()", "for(;!x&&y;) foo()");
+        // test("while(!(x||y)) foo()", "for(;!x&&!y;) foo()");
+        // test("while(!(!x||y-z)) foo()", "for(;x&&!(y-z;)) foo()");
+        // test("while(!(!(x/y)||z+w)) foo()", "for(;x/y&&!(z+w;)) foo()");
+        // test("while(!(x+y||z)) foo()", "for(;!(x+y||z);) foo()");
+        // test("while(!(x&&y*z)) foo()", "for(;!(x+y||z);) foo()");
+        // test("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
+        // test("while(x&&!0) foo()", "for(;x;) foo()");
+        // test("while(x||!1) foo()", "for(;x;) foo()");
+        // test("while(!((x,y)&&z)) foo()", "for(;(x,!y)||!z;) foo()");
     }
 
     #[test]
@@ -1614,10 +1634,9 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_comma() {
-        test("while(!(inc(), test())) foo();", "while(inc(), !test()) foo();");
-        test("(inc(), !test()) ? foo() : bar()", "(inc(), test()) ? bar() : foo()");
+        test("while(!(inc(), test())) foo();", "for(;inc(), !test();) foo();");
+        test("(inc(), !test()) ? foo() : bar()", "inc(), test() ? bar() : foo()");
     }
 
     #[test]
@@ -1713,7 +1732,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_if_with_lower_operators_inside() {
         test("if (x + (y=5)) z && (w,z);", "x + (y=5) && (z && (w,z))");
         test("if (!(x+(y=5))) z && (w,z);", "x + (y=5) || z && (w,z)");
@@ -1726,9 +1744,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_substitute_return() {
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
-
         test("function f() { while(x) { return }}", "function f() { while(x) { break }}");
 
         test_same("function f() { while(x) { return 5 } }");
@@ -1826,9 +1841,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_substitute_break_for_throw() {
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
-
         test_same("function f() { while(x) { throw Error }}");
 
         test(
@@ -1994,35 +2006,15 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_nested_if_combine() {
-        test("if(x)if(y){while(1){}}", "if(x&&y){while(1){}}");
-        test("if(x||z)if(y){while(1){}}", "if((x||z)&&y){while(1){}}");
-        test("if(x)if(y||z){while(1){}}", "if((x)&&(y||z)){while(1){}}");
-        test_same("if(x||z)if(y||z){while(1){}}");
-        test("if(x)if(y){if(z){while(1){}}}", "if(x&&(y&&z)){while(1){}}");
-    }
-
-    // See: http://blickly.github.io/closure-compiler-issues/#291
-    #[test]
-    #[ignore]
-    fn test_issue291() {
-        test("if (true) { f.onchange(); }", "if (1) f.onchange();");
-        test_same("if (f) { f.onchange(); }");
-        test_same("if (f) { f.bar(); } else { f.onchange(); }");
-        test("if (f) { f.bonchange(); }", "f && f.bonchange();");
-        test_same("if (f) { f['x'](); }");
-
-        // optional versions
-        test("if (true) { f?.onchange(); }", "if (1) f?.onchange();");
-        test_same("if (f) { f?.onchange(); }");
-        test_same("if (f) { f?.bar(); } else { f?.onchange(); }");
-        test("if (f) { f?.bonchange(); }", "f && f?.bonchange();");
-        test_same("if (f) { f?.['x'](); }");
+        test("if(x)if(y){for(;;);}", "if(x&&y) for(;;);");
+        test("if(x||z)if(y){for(;;);}", "if((x||z)&&y) for(;;);");
+        test("if(x)if(y||z){for(;;);}", "if((x)&&(y||z)) for(;;);");
+        test("if(x||z)if(y||z){for(;;);}", "if((x||z)&&(y||z)) for(;;);"); // TODO: `if(x||z)if(y||z)for(;;);` is shorter
+        test("if(x)if(y){if(z){for(;;);}}", "if(x&&(y&&z)) for(;;);");
     }
 
     #[test]
-    #[ignore]
     fn test_remove_else_cause() {
         test(
             concat!(
@@ -2032,10 +2024,10 @@ mod test {
                 " else if(x) return 3 }"
             ),
             concat!(
-                "function f() {",
+                "function f() {", //
                 " if(x) return 1;",
-                "{ if(x) return 2;",
-                "{ if(x) return 3 } } }"
+                " if(x) return 2;",
+                " if(x) return 3 }"
             ),
         );
     }
@@ -2079,8 +2071,8 @@ mod test {
         );
     }
 
+    /// https://blickly.github.io/closure-compiler-issues/#925
     #[test]
-    #[ignore]
     fn test_issue925() {
         test(
             concat!(
@@ -2110,8 +2102,7 @@ mod test {
         );
 
         test("if (x++) { x += 2 } else { x += 3 }", "x++ ? x += 2 : x += 3");
-
-        test("if (x++) { x = x + 2 } else { x = x + 3 }", "x = x++ ? x + 2 : x + 3");
+        test("if (x++) { x = x + 2 } else { x = x + 3 }", "x++ ? x += 2 : x += 3");
     }
 
     #[test]
@@ -2221,7 +2212,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_if_with_new_target_condition() {
         // Related to https://github.com/google/closure-compiler/issues/3097
         test(
@@ -2307,6 +2297,8 @@ mod test {
         test("!!!delete x.y", "!delete x.y");
         test("!!!!delete x.y", "delete x.y");
         test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
+        test_same("!(a === 1 ? void 0 : a.b)"); // FIXME: can be compressed to `a === 1 || !a.b`
+        test("!(a, b)", "a, !b");
     }
 
     #[test]
@@ -2453,11 +2445,15 @@ mod test {
         test("x || (x = () => 'a')", "x ||= () => 'a'");
 
         test_same("x || (y = 3)");
+        test_same("var x; x.y || (x.z = 3)");
+        test_same("function _() { this.x || (this.y = 3) }");
 
         // GetValue(x) has no sideeffect when x is a resolved identifier
         test("var x; x.y || (x.y = 3)", "var x; x.y ||= 3");
         test("var x; x['y'] || (x['y'] = 3)", "var x; x.y ||= 3");
+        test("var x; x[0] || (x[0] = 3)", "var x; x[0] ||= 3");
         test("var x; x.#y || (x.#y = 3)", "var x; x.#y ||= 3");
+        test("function _() { this.x || (this.x = 3) }", "function _() { this.x ||= 3 }");
         test_same("x.y || (x.y = 3)");
         // this can be compressed if `y` does not have side effect
         test_same("var x; x[y] || (x[y] = 3)");

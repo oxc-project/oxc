@@ -4,6 +4,8 @@ use std::{
     sync::{mpsc, Arc},
 };
 
+use cow_utils::CowUtils;
+
 use crate::{
     reporter::{DiagnosticReporter, DiagnosticResult},
     Error, NamedSource, OxcDiagnostic, Severity,
@@ -131,7 +133,12 @@ impl DiagnosticService {
         diagnostics: Vec<OxcDiagnostic>,
     ) -> (PathBuf, Vec<Error>) {
         let path = path.as_ref();
-        let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
+        let path_display = path.to_string_lossy();
+        // replace windows \ path separator with posix style one
+        // reflects what eslint is outputting
+        let path_display = path_display.cow_replace('\\', "/");
+
+        let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
         let diagnostics = diagnostics
             .into_iter()
             .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))

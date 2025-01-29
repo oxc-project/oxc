@@ -119,13 +119,7 @@ impl Parse for ESTreeStructAttribute {
         let mut add_ts = None;
 
         loop {
-            let is_type = input.peek(Token![type]);
-            let ident = if is_type {
-                input.parse::<Token![type]>()?;
-                "type".to_string()
-            } else {
-                input.call(Ident::parse_any).unwrap().to_string()
-            };
+            let ident = input.call(Ident::parse_any).unwrap().to_string();
             match ident.as_str() {
                 "always_flatten" => {
                     if always_flatten {
@@ -146,7 +140,7 @@ impl Parse for ESTreeStructAttribute {
                         "Duplicate tag mode in #[estree(...)]"
                     );
                 }
-                "type" => {
+                "rename" => {
                     input.parse::<Token![=]>()?;
                     let value = input.parse::<LitStr>()?.value();
                     assert!(
@@ -240,13 +234,7 @@ impl Parse for ESTreeFieldAttribute {
         let mut via = None;
 
         loop {
-            let is_type = input.peek(Token![type]);
-            let ident = if is_type {
-                input.parse::<Token![type]>()?;
-                "type".to_string()
-            } else {
-                input.call(Ident::parse_any).unwrap().to_string()
-            };
+            let ident = input.call(Ident::parse_any).unwrap().to_string();
             match ident.as_str() {
                 "rename" => {
                     input.parse::<Token![=]>()?;
@@ -269,11 +257,11 @@ impl Parse for ESTreeFieldAttribute {
                         skip = true;
                     }
                 }
-                "type" => {
+                "ts_type" => {
                     input.parse::<Token![=]>()?;
                     assert!(
                         typescript_type.replace(input.parse::<LitStr>()?.value()).is_none(),
-                        "Duplicate estree(type)"
+                        "Duplicate estree(ts_type)"
                     );
                 }
                 "append_to" => {

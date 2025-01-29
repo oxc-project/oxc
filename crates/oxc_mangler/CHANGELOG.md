@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.1] - 2025-01-26
+
+### Features
+
+- 6589c3b mangler: Reuse variable names (#8562) (翠 / green)
+
+### Bug Fixes
+
+- 33de70a mangler: Handle cases where a var is declared in a block scope (#8706) (翠 / green)
+
+### Performance
+
+- dc0b0f2 manger: Remove useless `tmp_bindings` (#8735) (Dunqing)
+- e472ced mangler: Optimize handling of collecting lived scope ids (#8724) (Dunqing)
+
+### Refactor
+
+- 52a37d0 mangler: Simplify initialization of `slots` (#8734) (Dunqing)
+
 ## [0.48.0] - 2025-01-24
 
 ### Refactor

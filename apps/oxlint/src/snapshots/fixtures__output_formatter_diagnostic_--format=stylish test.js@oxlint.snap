@@ -2,7 +2,8 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
---format=stylish test.js
+arguments: --format=stylish test.js
+working directory: fixtures/output_formatter_diagnostic
 ----------
 
 [4mtest.js[0m

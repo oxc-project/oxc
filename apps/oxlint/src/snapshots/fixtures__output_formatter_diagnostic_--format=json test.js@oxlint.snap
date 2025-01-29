@@ -2,7 +2,8 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
---format=json test.js
+arguments: --format=json test.js
+working directory: fixtures/output_formatter_diagnostic
 ----------
 [
 	{"message": "`debugger` statement is not allowed","code": "eslint(no-debugger)","severity": "error","causes": [],"url": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html","help": "Delete this code.","filename": "test.js","labels": [{"span": {"offset": 38,"length": 9}}],"related": []},

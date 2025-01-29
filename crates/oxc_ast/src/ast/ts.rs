@@ -1042,7 +1042,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Identifier")]
+#[estree(rename = "Identifier")]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
     pub name: Atom<'a>,

@@ -303,6 +303,10 @@ impl<'a> PeepholeOptimizations {
                 }
                 // Only convert integers for other radix values.
                 let value = lit.value;
+                if value.is_infinite() {
+                    let s = if value.is_sign_negative() { "-Infinity" } else { "Infinity" };
+                    return Some(ctx.ast.expression_string_literal(span, s, None));
+                }
                 if value.is_nan() {
                     return Some(ctx.ast.expression_string_literal(span, "NaN", None));
                 }
@@ -535,8 +539,12 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
-        let Expression::ArrayExpression(array_expr) = &mut member.object else { return None };
+        let object = match callee {
+            Expression::StaticMemberExpression(member) => &mut member.object,
+            Expression::ComputedMemberExpression(member) => &mut member.object,
+            _ => unreachable!(),
+        };
+        let Expression::ArrayExpression(array_expr) = object else { return None };
 
         let can_merge_until = args
             .iter()
@@ -570,7 +578,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         if args.is_empty() {
-            Some(ctx.ast.move_expression(&mut member.object))
+            Some(ctx.ast.move_expression(object))
         } else if can_merge_until.is_some() {
             Some(ctx.ast.expression_call(
                 span,
@@ -1095,7 +1103,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_bug() {
         test_same("Math[0]()");
     }
@@ -1165,8 +1172,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    // @GwtIncompatible // TODO(b/155511629): Enable this test for J2CL
     fn test_fold_math_functions_fround_j2cl() {
         test_same("Math.fround(1.2)");
     }
@@ -1434,6 +1439,7 @@ mod test {
         test("var x; ''.concat(x.a).concat(x)", "var x; ''.concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
 
         // other
+        test("x = []['concat'](1)", "x = [1]");
         test_same("obj.concat([1,2]).concat(1)");
     }
 
@@ -1540,6 +1546,8 @@ mod test {
         test("x = NaN.toString()", "x = 'NaN';");
         test("x = NaN.toString(2)", "x = 'NaN';");
         test("x = Infinity.toString()", "x = 'Infinity';");
+        test("x = Infinity.toString(2)", "x = 'Infinity';");
+        test("x = (-Infinity).toString(2)", "x = '-Infinity';");
         test("x = 1n.toString()", "x = '1'");
         test_same("254n.toString(16);"); // unimplemented
                                          // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");

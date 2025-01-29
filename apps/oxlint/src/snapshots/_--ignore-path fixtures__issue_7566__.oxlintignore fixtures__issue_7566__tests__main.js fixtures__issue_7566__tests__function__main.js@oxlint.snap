@@ -1,0 +1,7 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --ignore-path fixtures/issue_7566/.oxlintignore fixtures/issue_7566/tests/main.js fixtures/issue_7566/tests/function/main.js
+working directory: 
+----------

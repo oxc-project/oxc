@@ -2,7 +2,8 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
--c fixtures/print_config/ban_rules/eslintrc.json -A all -D eqeqeq --print-config
+arguments: -A all --print-config
+working directory: 
 ----------
 {
   "plugins": [
@@ -12,14 +13,7 @@ source: apps/oxlint/src/tester.rs
     "oxc"
   ],
   "categories": {},
-  "rules": {
-    "eqeqeq": [
-      "deny",
-      [
-        "always"
-      ]
-    ]
-  },
+  "rules": {},
   "settings": {
     "jsx-a11y": {
       "polymorphicPropName": null,

@@ -1,0 +1,7 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --ignore-path fixtures/linter/.customignore fixtures/linter/nan.js
+working directory: 
+----------

@@ -77,7 +77,7 @@ fn main() {
         .get("https://raw.githubusercontent.com/sindresorhus/globals/main/globals.json")
         .call()
     {
-        Ok(response) => response.into_json().unwrap(),
+        Ok(mut response) => response.body_mut().read_json().unwrap(),
         Err(e) => {
             panic!("Failed to fetch globals.json: {e}");
         }

@@ -23,9 +23,6 @@ impl<'a, 'b> PeepholeOptimizations {
         stmts: &mut Vec<'a, Statement<'a>>,
         ctx: Ctx<'a, '_>,
     ) {
-        if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
-            stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
-        }
         self.dead_code_elimination(stmts, ctx);
     }
 
@@ -68,20 +65,19 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    /// Removes dead code thats comes after `return` statements after inlining `if` statements
+    /// Removes dead code thats comes after `return`, `throw`, `continue` and `break` statements.
     fn dead_code_elimination(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: Ctx<'a, 'b>) {
         // Remove code after `return` and `throw` statements
         let mut index = None;
         'outer: for (i, stmt) in stmts.iter().enumerate() {
-            if matches!(stmt, Statement::ReturnStatement(_) | Statement::ThrowStatement(_)) {
+            if Self::is_unreachable_statement(stmt) {
                 index.replace(i);
                 break;
             }
             // Double check block statements folded by if statements above
             if let Statement::BlockStatement(block_stmt) = stmt {
                 for stmt in &block_stmt.body {
-                    if matches!(stmt, Statement::ReturnStatement(_) | Statement::ThrowStatement(_))
-                    {
+                    if Self::is_unreachable_statement(stmt) {
                         index.replace(i);
                         break 'outer;
                     }
@@ -127,6 +123,16 @@ impl<'a, 'b> PeepholeOptimizations {
         if stmts.len() != len {
             self.mark_current_function_as_changed();
         }
+    }
+
+    fn is_unreachable_statement(stmt: &Statement<'a>) -> bool {
+        matches!(
+            stmt,
+            Statement::ReturnStatement(_)
+                | Statement::ThrowStatement(_)
+                | Statement::BreakStatement(_)
+                | Statement::ContinueStatement(_)
+        )
     }
 
     /// Remove block from single line blocks
@@ -303,8 +309,6 @@ impl<'a, 'b> PeepholeOptimizations {
     ) -> Option<Statement<'a>> {
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
-        // TODO find a better way to handle this.
-
         if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
             if *body.expression() {
                 return None;
@@ -316,6 +320,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
 
         match &mut stmt.expression {
+            Expression::MetaProperty(e) => Some(ctx.ast.statement_empty(e.span)),
             Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
             Expression::ObjectExpression(object_expr) => {
                 Self::try_fold_object_expression(object_expr, ctx)
@@ -865,6 +870,7 @@ mod test {
         test("-1", "");
         test("!1", "");
         test("1", "");
+        test("import.meta", "");
     }
 
     #[test]
@@ -914,5 +920,13 @@ mod test {
     fn remove_empty_spread_arguments() {
         test("foo(...[])", "foo()");
         test("new Foo(...[])", "new Foo()");
+    }
+
+    #[test]
+    fn remove_unreachable() {
+        test("while(true) { break a; unreachable;}", "for(;;) break a");
+        test("while(true) { continue a; unreachable;}", "for(;;) continue a");
+        test("while(true) { throw a; unreachable;}", "for(;;) throw a");
+        test("while(true) { return a; unreachable;}", "for(;;) return a");
     }
 }

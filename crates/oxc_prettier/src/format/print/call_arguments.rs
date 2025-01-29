@@ -6,7 +6,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{
     array, break_parent, conditional_group,
     format::print::{
-        array::{is_concisely_printed_array, Array},
+        array::{is_concisely_printed_array, ArrayLike},
         call_expression::{is_commons_js_or_amd_call, CallExpressionLike},
         misc,
     },

@@ -2,7 +2,8 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
---print-config
+arguments: --print-config
+working directory: 
 ----------
 {
   "plugins": [
