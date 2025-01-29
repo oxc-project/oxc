@@ -16,7 +16,7 @@ use oxc_span::VALID_EXTENSIONS;
 use serde_json::Value;
 
 use crate::{
-    cli::{CliRunResult, LintCommand, LintResult, MiscOptions, Runner, WarningOptions},
+    cli::{CliRunResult, LintCommand, MiscOptions, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::{Extensions, Walk},
 };
@@ -80,7 +80,7 @@ impl Runner for LintRunner {
             // filtered, return early.
             if provided_path_count > 0 {
                 // ToDo: when oxc_linter (config) validates the configuration, we can use exit_code = 1 to fail
-                return CliRunResult::LintResult(LintResult::default());
+                return CliRunResult::LintResult(ExitCode::SUCCESS);
             }
 
             paths.push(self.cwd.clone());
@@ -226,12 +226,7 @@ impl Runner for LintRunner {
             stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
         };
 
-        CliRunResult::LintResult(LintResult {
-            number_of_files,
-            number_of_warnings: diagnostic_result.warnings_count(),
-            number_of_errors: diagnostic_result.errors_count(),
-            exit_code: ExitCode::from(u8::from(diagnostic_failed)),
-        })
+        CliRunResult::LintResult(ExitCode::from(u8::from(diagnostic_failed)))
     }
 }
 

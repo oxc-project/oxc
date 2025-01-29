@@ -8,10 +8,5 @@ mod walk;
 
 pub mod cli {
 
-    pub use crate::{
-        command::*,
-        lint::LintRunner,
-        result::{CliRunResult, LintResult},
-        runner::Runner,
-    };
+    pub use crate::{command::*, lint::LintRunner, result::CliRunResult, runner::Runner};
 }
