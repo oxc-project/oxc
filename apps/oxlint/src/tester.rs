@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::cli::{lint_command, CliRunResult, LintResult, LintRunner};
+use crate::cli::{lint_command, CliRunResult, LintRunner};
 #[cfg(test)]
 use crate::runner::Runner;
 #[cfg(test)]
@@ -16,6 +16,11 @@ impl Tester {
     pub fn new() -> Self {
         let cwd = env::current_dir().unwrap();
 
+        // disable multiple workers for diagnostic
+        // because the snapshot could change every time when we are analyzing multiple files
+        // do not unwrap because we can set it only one time.
+        let _ = rayon::ThreadPoolBuilder::new().num_threads(1).build_global();
+
         Self { cwd }
     }
 
@@ -24,16 +29,13 @@ impl Tester {
         self
     }
 
-    pub fn get_lint_result(&self, args: &[&str]) -> LintResult {
+    pub fn test(&self, args: &[&str]) {
         let mut new_args = vec!["--silent"];
         new_args.extend(args);
 
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         let mut output = Vec::new();
-        match LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output) {
-            CliRunResult::LintResult(lint_result) => lint_result,
-            other => panic!("{other:?}"),
-        }
+        let _ = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
     }
 
     pub fn get_invalid_option_result(&self, args: &[&str]) -> String {
@@ -51,27 +53,49 @@ impl Tester {
     }
 
     pub fn test_and_snapshot(&self, args: &[&str]) {
-        let mut settings = insta::Settings::clone_current();
+        self.test_and_snapshot_multiple(&[args]);
+    }
 
-        let options = lint_command().run_inner(args).unwrap();
+    pub fn test_and_snapshot_multiple(&self, multiple_args: &[&[&str]]) {
         let mut output: Vec<u8> = Vec::new();
-        let args_string = args.join(" ");
+        let current_cwd = std::env::current_dir().unwrap();
+        let relative_dir = self.cwd.strip_prefix(current_cwd).unwrap_or(&self.cwd);
 
-        output.extend_from_slice(format!("########## \n{args_string}\n----------\n").as_bytes());
-        let _ = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
-        output.push(b'\n');
+        for args in multiple_args {
+            let options = lint_command().run_inner(*args).unwrap();
+            let args_string = args.join(" ");
 
+            output.extend_from_slice("########## \n".as_bytes());
+            output.extend_from_slice(format!("arguments: {args_string}\n").as_bytes());
+            output.extend_from_slice(
+                format!("working directory: {}\n", relative_dir.to_str().unwrap()).as_bytes(),
+            );
+            output.extend_from_slice("----------\n".as_bytes());
+            let _ = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
+            output.push(b'\n');
+        }
+
+        let mut settings = insta::Settings::clone_current();
         settings.set_prepend_module_to_snapshot(false);
         settings.set_omit_expression(true);
         settings.set_snapshot_suffix("oxlint");
 
-        let regex = Regex::new(r"\d+ms|\d+ threads?").unwrap();
+        let regex = Regex::new(r"\d+ms").unwrap();
 
         let output_string = &String::from_utf8(output).unwrap();
-        let output_string = regex.replace_all(output_string, "<variable>");
+        let output_string = regex.replace_all(output_string, "<variable>ms");
 
+        let full_args_list =
+            multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");
+
+        let snapshot_file_name = format!("{}_{}", relative_dir.to_str().unwrap(), full_args_list);
+
+        // windows can not handle filenames with *
+        // allow replace instead of cow_replace. It only test
+        #[allow(clippy::disallowed_methods)]
+        let snapshot_file_name = snapshot_file_name.replace('*', "_");
         settings.bind(|| {
-            insta::assert_snapshot!(format!("{}", args_string), output_string);
+            insta::assert_snapshot!(snapshot_file_name, output_string);
         });
     }
 }

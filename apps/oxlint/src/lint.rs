@@ -338,67 +338,49 @@ mod test {
         tester::Tester,
     };
 
+    // lints the full directory of fixtures,
+    // so do not snapshot it, test only
     #[test]
     fn no_arg() {
         let args = &[];
-        let result = Tester::new().get_lint_result(args);
-        assert!(result.number_of_warnings > 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test(args);
     }
 
     #[test]
     fn dir() {
         let args = &["fixtures/linter"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 3);
-        assert_eq!(result.number_of_warnings, 3);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn cwd() {
         let args = &["debugger.js"];
-        let result = Tester::new().with_cwd("fixtures/linter".into()).get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn file() {
         let args = &["fixtures/linter/debugger.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn multi_files() {
         let args = &["fixtures/linter/debugger.js", "fixtures/linter/nan.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 2);
-        assert_eq!(result.number_of_warnings, 2);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn wrong_extension() {
         let args = &["foo.asdf"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 0);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn ignore_pattern() {
         let args =
             &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/linter"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 0);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     /// When a file is explicitly passed as a path and `--no-ignore`
@@ -407,10 +389,7 @@ mod test {
     #[test]
     fn ignore_file_overrides_explicit_args() {
         let args = &["--ignore-path", "fixtures/linter/.customignore", "fixtures/linter/nan.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 0);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -421,85 +400,56 @@ mod test {
             "--no-ignore",
             "fixtures/linter/nan.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn ignore_flow() {
         let args = &["--import-plugin", "fixtures/flow/index.mjs"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     // https://github.com/oxc-project/oxc/issues/7406
     fn ignore_flow_import_plugin_directory() {
         let args = &["--import-plugin", "-A all", "-D no-cycle", "fixtures/flow/"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 2);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn filter_allow_all() {
         let args = &["-A", "all", "fixtures/linter"];
-        let result = Tester::new().get_lint_result(args);
-        assert!(result.number_of_files > 0);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn filter_allow_one() {
         let args = &["-W", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn filter_error() {
         let args = &["-D", "correctness", "fixtures/linter/debugger.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn eslintrc_error() {
         let args = &["-c", "fixtures/linter/eslintrc.json", "fixtures/linter/debugger.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn eslintrc_off() {
         let args = &["-c", "fixtures/eslintrc_off/eslintrc.json", "fixtures/eslintrc_off/test.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1); // triggered by no_empty_file
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn oxlint_config_auto_detection() {
         let args = &["debugger.js"];
-        let result =
-            Tester::new().with_cwd("fixtures/auto_config_detection".into()).get_lint_result(args);
-
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
+        Tester::new().with_cwd("fixtures/auto_config_detection".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -511,10 +461,7 @@ mod test {
             "fixtures/no_undef/eslintrc.json",
             "fixtures/no_undef/test.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -526,10 +473,7 @@ mod test {
             "fixtures/eslintrc_env/eslintrc_no_env.json",
             "fixtures/eslintrc_env/test.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -539,10 +483,7 @@ mod test {
             "fixtures/eslintrc_env/eslintrc_env_browser.json",
             "fixtures/eslintrc_env/test.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -554,10 +495,7 @@ mod test {
             "no-empty",
             "fixtures/no_empty_allow_empty_catch/test.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -569,20 +507,14 @@ mod test {
             "no-empty",
             "fixtures/no_empty_disallow_empty_catch/test.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn no_console_off() {
         let args =
             &["-c", "fixtures/no_console_off/eslintrc.json", "fixtures/no_console_off/test.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -592,10 +524,7 @@ mod test {
             "fixtures/typescript_eslint/eslintrc.json",
             "fixtures/typescript_eslint/test.ts",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 3);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -606,52 +535,37 @@ mod test {
             "--disable-typescript-plugin",
             "fixtures/typescript_eslint/test.ts",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 2);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_vue_file() {
         let args = &["fixtures/vue/debugger.vue"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 2);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_empty_vue_file() {
         let args = &["fixtures/vue/empty.vue"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_astro_file() {
         let args = &["fixtures/astro/debugger.astro"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 4);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn lint_svelte_file() {
         let args = &["fixtures/svelte/debugger.svelte"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn test_tsconfig_option() {
         // passed
-        Tester::new().get_lint_result(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
+        Tester::new().test(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
 
         // failed
         assert!(Tester::new()
@@ -666,10 +580,7 @@ mod test {
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
             "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -680,18 +591,13 @@ mod test {
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
             "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_errors, 1);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn test_import_plugin_enabled_in_config() {
         let args = &["-c", "fixtures/import/.oxlintrc.json", "fixtures/import/test.js"];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -705,7 +611,7 @@ mod test {
         assert_eq!(&content, "debugger\n");
 
         // Apply fix to the file.
-        let _ = Tester::new().get_lint_result(args);
+        Tester::new().test(args);
         #[expect(clippy::disallowed_methods)]
         let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
         assert_eq!(new_content, "\n");
@@ -713,7 +619,7 @@ mod test {
         // File should not be modified if no fix is applied.
         let modified_before: std::time::SystemTime =
             fs::metadata(file).unwrap().modified().unwrap();
-        let _ = Tester::new().get_lint_result(args);
+        Tester::new().test(args);
         let modified_after = fs::metadata(file).unwrap().modified().unwrap();
         assert_eq!(modified_before, modified_after);
 
@@ -756,36 +662,16 @@ mod test {
 
     #[test]
     fn test_overrides() {
-        let args = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.js"];
-        let result = Tester::new().get_lint_result(args);
-
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
-
-        let args = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.ts"];
-        let result = Tester::new().get_lint_result(args);
-
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
-        assert_eq!(result.number_of_errors, 1);
-
-        let args = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/other.jsx"];
-        let result = Tester::new().get_lint_result(args);
-
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
+        let args_1 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.js"];
+        let args_2 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.ts"];
+        let args_3 = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/other.jsx"];
+        Tester::new().test_and_snapshot_multiple(&[args_1, args_2, args_3]);
     }
 
     #[test]
     fn test_overrides_directories() {
         let args = &["-c", "fixtures/overrides/directories-config.json", "fixtures/overrides"];
-        let result = Tester::new().get_lint_result(args);
-
-        assert_eq!(result.number_of_files, 7);
-        assert_eq!(result.number_of_warnings, 2);
-        assert_eq!(result.number_of_errors, 2);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -795,18 +681,16 @@ mod test {
             "fixtures/config_ignore_patterns/ignore_extension/eslintrc.json",
             "fixtures/config_ignore_patterns/ignore_extension",
         ];
-        let result = Tester::new().get_lint_result(args);
 
-        assert_eq!(result.number_of_files, 1);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn test_config_ignore_patterns_directory() {
-        let result = Tester::new()
+        let args = &["-c", "eslintrc.json"];
+        Tester::new()
             .with_cwd("fixtures/config_ignore_patterns/ignore_directory".into())
-            .get_lint_result(&["-c", "eslintrc.json"]);
-
-        assert_eq!(result.number_of_files, 1);
+            .test_and_snapshot(args);
     }
 
     // Issue: <https://github.com/oxc-project/oxc/pull/7566>
@@ -818,56 +702,25 @@ mod test {
             "fixtures/issue_7566/tests/main.js",
             "fixtures/issue_7566/tests/function/main.js",
         ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 0);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn test_jest_and_vitest_alias_rules() {
-        let args = &[
-            "-c",
-            "fixtures/jest_and_vitest_alias_rules/oxlint-jest.json",
-            "fixtures/jest_and_vitest_alias_rules/test.js",
-        ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
-
-        let args = &[
-            "-c",
-            "fixtures/jest_and_vitest_alias_rules/oxlint-vitest.json",
-            "fixtures/jest_and_vitest_alias_rules/test.js",
-        ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
+        let args_1 = &["-c", "oxlint-jest.json", "test.js"];
+        let args_2 = &["-c", "oxlint-vitest.json", "test.js"];
+        Tester::new()
+            .with_cwd("fixtures/jest_and_vitest_alias_rules".into())
+            .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
     #[test]
     fn test_eslint_and_typescript_alias_rules() {
-        let args = &[
-            "-c",
-            "fixtures/eslint_and_typescript_alias_rules/oxlint-eslint.json",
-            "fixtures/eslint_and_typescript_alias_rules/test.js",
-        ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
-
-        let args = &[
-            "-c",
-            "fixtures/eslint_and_typescript_alias_rules/oxlint-typescript.json",
-            "fixtures/eslint_and_typescript_alias_rules/test.js",
-        ];
-        let result = Tester::new().get_lint_result(args);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
-        assert_eq!(result.number_of_errors, 1);
+        let args_1 = &["-c", "oxlint-eslint.json", "test.js"];
+        let args_2 = &["-c", "oxlint-typescript.json", "test.js"];
+        Tester::new()
+            .with_cwd("fixtures/eslint_and_typescript_alias_rules".into())
+            .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
     #[test]

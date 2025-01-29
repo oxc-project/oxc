@@ -19,4 +19,5 @@ workspace = true
 doctest = false
 
 [dependencies]
+cow-utils = { workspace = true }
 miette = { workspace = true }
