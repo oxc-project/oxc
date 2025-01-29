@@ -145,7 +145,7 @@ fn generate_enum_variant_builder_fn(
     let inner = quote!(self.#inner_builder(#(#fields),*));
 
     let article = article_for(enum_ident.to_string());
-    let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
+    let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]."))
         .with_params(&params);
     if does_alloc {
         let inner_name = var_type_name.inner_name();
@@ -485,13 +485,13 @@ impl ToTokens for DocComment<'_> {
                 let docs = param.docs.first();
                 let docs = match docs {
                     Some(docs) => {
-                        format!(" - {}: {}", param.ident, docs.trim())
+                        format!(" * `{}`: {}", param.ident, docs.trim())
                     }
                     None if param.ident == "span" => {
-                        " - span: The [`Span`] covering this node".to_string()
+                        " * `span`: The [`Span`] covering this node".to_string()
                     }
                     None => {
-                        format!(" - {}", param.ident)
+                        format!(" * `{}`", param.ident)
                     }
                 };
                 tokens.extend(quote!(#[doc = #docs]));
