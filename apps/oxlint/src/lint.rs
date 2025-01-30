@@ -86,7 +86,12 @@ impl Runner for LintRunner {
 
         let filter = match Self::get_filters(filter) {
             Ok(filter) => filter,
-            Err(e) => return e,
+            Err((result, message)) => {
+                stdout.write_all(message.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+                stdout.flush().unwrap();
+
+                return result;
+            }
         };
 
         let extensions = VALID_EXTENSIONS
@@ -99,7 +104,13 @@ impl Runner for LintRunner {
             Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
 
         if let Err(err) = config_search_result {
-            return err;
+            stdout
+                .write_all(format!("Failed to parse configuration file.\n{err}\n").as_bytes())
+                .or_else(Self::check_for_writer_error)
+                .unwrap();
+            stdout.flush().unwrap();
+
+            return CliRunResult::InvalidOptionConfig;
         }
 
         let mut oxlintrc = config_search_result.unwrap();
@@ -178,9 +189,13 @@ impl Runner for LintRunner {
                 let handler = GraphicalReportHandler::new();
                 let mut err = String::new();
                 handler.render_report(&mut err, &diagnostic).unwrap();
-                return CliRunResult::InvalidOptions {
-                    message: format!("Failed to parse configuration file.\n{err}"),
-                };
+                stdout
+                    .write_all(format!("Failed to parse configuration file.\n{err}\n").as_bytes())
+                    .or_else(Self::check_for_writer_error)
+                    .unwrap();
+                stdout.flush().unwrap();
+
+                return CliRunResult::InvalidOptionConfig;
             }
         };
 
@@ -193,11 +208,12 @@ impl Runner for LintRunner {
                 options = options.with_tsconfig(path);
             } else {
                 let path = if path.is_relative() { options.cwd().join(path) } else { path.clone() };
-                return CliRunResult::InvalidOptions {
-                    message: format!(
-                        "The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.",
-                    ),
-                };
+                stdout.write_all(format!(
+                    "The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.\n",
+                ).as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+                stdout.flush().unwrap();
+
+                return CliRunResult::InvalidOptionTsConfig;
             }
         }
 
@@ -262,7 +278,7 @@ impl LintRunner {
     // in one place.
     fn get_filters(
         filters_arg: Vec<(AllowWarnDeny, String)>,
-    ) -> Result<Vec<LintFilter>, CliRunResult> {
+    ) -> Result<Vec<LintFilter>, (CliRunResult, String)> {
         let mut filters = Vec::with_capacity(filters_arg.len());
 
         for (severity, filter_arg) in filters_arg {
@@ -271,23 +287,22 @@ impl LintRunner {
                     filters.push(filter);
                 }
                 Err(InvalidFilterKind::Empty) => {
-                    return Err(CliRunResult::InvalidOptions {
-                        message: format!("Cannot {severity} an empty filter."),
-                    });
+                    return Err((
+                        CliRunResult::InvalidOptionSeverityWithoutFilter,
+                        format!("Cannot {severity} an empty filter.\n"),
+                    ));
                 }
                 Err(InvalidFilterKind::PluginMissing(filter)) => {
-                    return Err(CliRunResult::InvalidOptions {
-                        message: format!(
-                            "Failed to {severity} filter {filter}: Plugin name is missing. Expected <plugin>/<rule>"
+                    return Err((CliRunResult::InvalidOptionSeverityWithoutPluginName, format!(
+                            "Failed to {severity} filter {filter}: Plugin name is missing. Expected <plugin>/<rule>\n"
                         ),
-                    });
+                    ));
                 }
                 Err(InvalidFilterKind::RuleMissing(filter)) => {
-                    return Err(CliRunResult::InvalidOptions {
-                        message: format!(
-                            "Failed to {severity} filter {filter}: Rule name is missing. Expected <plugin>/<rule>"
+                    return Err((CliRunResult::InvalidOptionSeverityWithoutRuleName, format!(
+                            "Failed to {severity} filter {filter}: Rule name is missing. Expected <plugin>/<rule>\n"
                         ),
-                    });
+                    ));
                 }
             }
         }
@@ -296,10 +311,10 @@ impl LintRunner {
     }
 
     // finds the oxlint config
-    // when config is provided, but not found, an CliRunResult is returned, else the oxlintrc config file is returned
+    // when config is provided, but not found, an String with the formatted error is returned, else the oxlintrc config file is returned
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
-    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
+    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, String> {
         if let Some(config_path) = config {
             let full_path = cwd.join(config_path);
             return match Oxlintrc::from_file(&full_path) {
@@ -308,9 +323,7 @@ impl LintRunner {
                     let handler = GraphicalReportHandler::new();
                     let mut err = String::new();
                     handler.render_report(&mut err, &diagnostic).unwrap();
-                    return Err(CliRunResult::InvalidOptions {
-                        message: format!("Failed to parse configuration file.\n{err}"),
-                    });
+                    return Err(err);
                 }
             };
         }
@@ -568,9 +581,7 @@ mod test {
         Tester::new().test(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
 
         // failed
-        assert!(Tester::new()
-            .get_invalid_option_result(&["--tsconfig", "oxc/tsconfig.json"])
-            .contains("oxc/tsconfig.json\" does not exist, Please provide a valid tsconfig file."));
+        Tester::new().test_and_snapshot(&["--tsconfig", "oxc/tsconfig.json"]);
     }
 
     #[test]

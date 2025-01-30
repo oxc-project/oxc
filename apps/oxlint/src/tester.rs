@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::cli::{lint_command, CliRunResult, LintRunner};
+use crate::cli::{lint_command, LintRunner};
 #[cfg(test)]
 use crate::runner::Runner;
 #[cfg(test)]
@@ -38,20 +38,6 @@ impl Tester {
         let _ = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
     }
 
-    pub fn get_invalid_option_result(&self, args: &[&str]) -> String {
-        let mut new_args = vec!["--silent"];
-        new_args.extend(args);
-
-        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
-        let mut output = Vec::new();
-        match LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output) {
-            CliRunResult::InvalidOptions { message } => message,
-            other => {
-                panic!("Expected InvalidOptions, got {other:?}");
-            }
-        }
-    }
-
     pub fn test_and_snapshot(&self, args: &[&str]) {
         self.test_and_snapshot_multiple(&[args]);
     }
@@ -59,7 +45,7 @@ impl Tester {
     pub fn test_and_snapshot_multiple(&self, multiple_args: &[&[&str]]) {
         let mut output: Vec<u8> = Vec::new();
         let current_cwd = std::env::current_dir().unwrap();
-        let relative_dir = self.cwd.strip_prefix(current_cwd).unwrap_or(&self.cwd);
+        let relative_dir = self.cwd.strip_prefix(&current_cwd).unwrap_or(&self.cwd);
 
         for args in multiple_args {
             let options = lint_command().run_inner(*args).unwrap();
@@ -84,6 +70,13 @@ impl Tester {
 
         let output_string = &String::from_utf8(output).unwrap();
         let output_string = regex.replace_all(output_string, "<variable>ms");
+
+        // do not output the current working directory, each machine has a different one
+        let cwd_string = current_cwd.to_str().unwrap();
+        #[allow(clippy::disallowed_methods)]
+        let cwd_string = cwd_string.replace('\\', "/");
+        #[allow(clippy::disallowed_methods)]
+        let output_string = output_string.replace(&cwd_string, "<cwd>");
 
         let full_args_list =
             multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");

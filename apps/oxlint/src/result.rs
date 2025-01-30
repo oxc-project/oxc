@@ -3,7 +3,11 @@ use std::process::{ExitCode, Termination};
 #[derive(Debug)]
 pub enum CliRunResult {
     None,
-    InvalidOptions { message: String },
+    InvalidOptionConfig,
+    InvalidOptionTsConfig,
+    InvalidOptionSeverityWithoutFilter,
+    InvalidOptionSeverityWithoutPluginName,
+    InvalidOptionSeverityWithoutRuleName,
     LintSucceeded,
     LintFoundErrors,
     LintMaxWarningsExceeded,
@@ -27,11 +31,12 @@ impl Termination for CliRunResult {
             Self::ConfigFileInitFailed
             | Self::LintFoundErrors
             | Self::LintNoWarningsAllowed
-            | Self::LintMaxWarningsExceeded => ExitCode::FAILURE,
-            Self::InvalidOptions { message } => {
-                println!("Invalid Options: {message}");
-                ExitCode::FAILURE
-            }
+            | Self::LintMaxWarningsExceeded
+            | Self::InvalidOptionConfig
+            | Self::InvalidOptionTsConfig
+            | Self::InvalidOptionSeverityWithoutFilter
+            | Self::InvalidOptionSeverityWithoutPluginName
+            | Self::InvalidOptionSeverityWithoutRuleName => ExitCode::FAILURE,
         }
     }
 }
