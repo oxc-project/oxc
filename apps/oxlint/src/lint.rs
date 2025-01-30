@@ -2,7 +2,6 @@ use std::{
     env, fs,
     io::{ErrorKind, Write},
     path::{Path, PathBuf},
-    process::ExitCode,
     time::Instant,
 };
 
@@ -79,8 +78,7 @@ impl Runner for LintRunner {
             // If explicit paths were provided, but all have been
             // filtered, return early.
             if provided_path_count > 0 {
-                // ToDo: when oxc_linter (config) validates the configuration, we can use exit_code = 1 to fail
-                return CliRunResult::LintResult(ExitCode::SUCCESS);
+                return CliRunResult::LintNoFilesFound;
             }
 
             paths.push(self.cwd.clone());
@@ -218,10 +216,6 @@ impl Runner for LintRunner {
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
-        let diagnostic_failed = diagnostic_result.max_warnings_exceeded()
-            || diagnostic_result.errors_count() > 0
-            || (warning_options.deny_warnings && diagnostic_result.warnings_count() > 0);
-
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
             number_of_rules: lint_service.linter().number_of_rules(),
@@ -232,7 +226,15 @@ impl Runner for LintRunner {
             stdout.flush().unwrap();
         };
 
-        CliRunResult::LintResult(ExitCode::from(u8::from(diagnostic_failed)))
+        if diagnostic_result.errors_count() > 0 {
+            CliRunResult::LintFoundErrors
+        } else if warning_options.deny_warnings && diagnostic_result.warnings_count() > 0 {
+            CliRunResult::LintNoWarningsAllowed
+        } else if diagnostic_result.max_warnings_exceeded() {
+            CliRunResult::LintMaxWarningsExceeded
+        } else {
+            CliRunResult::LintSucceeded
+        }
     }
 }
 
