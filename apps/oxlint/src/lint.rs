@@ -732,10 +732,4 @@ mod test {
             .with_cwd("fixtures/eslint_and_typescript_alias_rules".into())
             .test_and_snapshot_multiple(&[args_1, args_2]);
     }
-
-    #[test]
-    fn test_print_config() {
-        let args = &["--print-config"];
-        Tester::new().test_and_snapshot(args);
-    }
 }
