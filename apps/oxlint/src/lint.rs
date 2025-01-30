@@ -63,29 +63,6 @@ impl Runner for LintRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
-        // The ignore crate whitelists explicit paths, but priority
-        // should be given to the ignore file. Many users lint
-        // automatically and pass a list of changed files explicitly.
-        // To accommodate this, unless `--no-ignore` is passed,
-        // pre-filter the paths.
-        if !paths.is_empty() && !ignore_options.no_ignore {
-            let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
-            paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
-        }
-
-        // Append cwd to all paths
-        paths = paths.into_iter().map(|x| self.cwd.join(x)).collect();
-
-        if paths.is_empty() {
-            // If explicit paths were provided, but all have been
-            // filtered, return early.
-            if provided_path_count > 0 {
-                return CliRunResult::LintNoFilesFound;
-            }
-
-            paths.push(self.cwd.clone());
-        }
-
         let filter = match Self::get_filters(filter) {
             Ok(filter) => filter,
             Err((result, message)) => {
@@ -171,8 +148,7 @@ impl Runner for LintRunner {
             // If explicit paths were provided, but all have been
             // filtered, return early.
             if provided_path_count > 0 {
-                // ToDo: when oxc_linter (config) validates the configuration, we can use exit_code = 1 to fail
-                return CliRunResult::LintResult(LintResult::default());
+                return CliRunResult::LintNoFilesFound;
             }
 
             paths.push(self.cwd.clone());
@@ -772,11 +748,11 @@ mod test {
 
     #[test]
     fn test_ignore_patterns() {
-        let result = Tester::new()
-            .with_cwd("fixtures/config_ignore_patterns/with_oxlintrc".into())
-            .get_lint_result(&["-c", "./test/eslintrc.json", "--ignore-pattern", "*.ts", "."]);
+        let args = &["-c", "./test/eslintrc.json", "--ignore-pattern", "*.ts", "."];
 
-        assert_eq!(result.number_of_files, 1);
+        Tester::new()
+            .with_cwd("fixtures/config_ignore_patterns/with_oxlintrc".into())
+            .test_and_snapshot(args);
     }
 
     #[test]
@@ -797,9 +773,8 @@ mod test {
             "fixtures/config_ignore_patterns/ignore_extension/eslintrc.json",
             "fixtures/config_ignore_patterns/ignore_extension/main.js",
         ];
-        let result = Tester::new().get_lint_result(args);
 
-        assert_eq!(result.number_of_files, 0);
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]

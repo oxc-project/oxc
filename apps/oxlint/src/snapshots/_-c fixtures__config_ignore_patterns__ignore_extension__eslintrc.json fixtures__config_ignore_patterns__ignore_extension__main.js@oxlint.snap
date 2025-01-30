@@ -1,0 +1,10 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/config_ignore_patterns/ignore_extension/eslintrc.json fixtures/config_ignore_patterns/ignore_extension/main.js
+working directory: 
+----------
+----------
+CLI result: LintNoFilesFound
+----------
