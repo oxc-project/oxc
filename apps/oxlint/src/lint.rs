@@ -5,6 +5,7 @@ use std::{
     time::Instant,
 };
 
+use cow_utils::CowUtils;
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
@@ -209,7 +210,8 @@ impl Runner for LintRunner {
             } else {
                 let path = if path.is_relative() { options.cwd().join(path) } else { path.clone() };
                 stdout.write_all(format!(
-                    "The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.\n",
+                    "The tsconfig file {:?} does not exist, Please provide a valid tsconfig file.\n",
+                    path.to_string_lossy().cow_replace('\\', "/")
                 ).as_bytes()).or_else(Self::check_for_writer_error).unwrap();
                 stdout.flush().unwrap();
 
