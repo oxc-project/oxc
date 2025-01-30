@@ -57,7 +57,12 @@ impl Tester {
                 format!("working directory: {}\n", relative_dir.to_str().unwrap()).as_bytes(),
             );
             output.extend_from_slice("----------\n".as_bytes());
-            let _ = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
+            let result = LintRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
+
+            output.extend_from_slice("----------\n".as_bytes());
+            output.extend_from_slice(format!("CLI result: {result:?}\n").as_bytes());
+            output.extend_from_slice("----------\n".as_bytes());
+
             output.push(b'\n');
         }
 
