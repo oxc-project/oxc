@@ -151,18 +151,23 @@ impl Runner for LintRunner {
                 } else {
                     config_file
                 };
-                match fs::write(Self::DEFAULT_OXLINTRC, configuration) {
-                    Ok(()) => {
-                        return CliRunResult::ConfigFileInitResult {
-                            message: "Configuration file created".to_string(),
-                        }
-                    }
-                    Err(_) => {
-                        return CliRunResult::ConfigFileInitResult {
-                            message: "Failed to create configuration file".to_string(),
-                        }
-                    }
+
+                if fs::write(Self::DEFAULT_OXLINTRC, configuration).is_ok() {
+                    stdout
+                        .write_all("Configuration file created\n".as_bytes())
+                        .or_else(Self::check_for_writer_error)
+                        .unwrap();
+                    stdout.flush().unwrap();
+                    return CliRunResult::ConfigFileInitSucceeded;
                 }
+
+                // failed case
+                stdout
+                    .write_all("Failed to create configuration file\n".as_bytes())
+                    .or_else(Self::check_for_writer_error)
+                    .unwrap();
+                stdout.flush().unwrap();
+                return CliRunResult::ConfigFileInitFailed;
             }
         }
 
@@ -224,6 +229,7 @@ impl Runner for LintRunner {
             start_time: now.elapsed(),
         }) {
             stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+            stdout.flush().unwrap();
         };
 
         CliRunResult::LintResult(ExitCode::from(u8::from(diagnostic_failed)))
@@ -328,10 +334,7 @@ mod test {
     use std::fs;
 
     use super::LintRunner;
-    use crate::{
-        cli::{lint_command, CliRunResult, Runner},
-        tester::Tester,
-    };
+    use crate::tester::Tester;
 
     // lints the full directory of fixtures,
     // so do not snapshot it, test only
@@ -644,14 +647,13 @@ mod test {
 
     #[test]
     fn test_init_config() {
+        assert!(!fs::exists(LintRunner::DEFAULT_OXLINTRC).unwrap());
+
         let args = &["--init"];
-        let options = lint_command().run_inner(args).unwrap();
-        let mut output = Vec::new();
-        let ret = LintRunner::new(options).run(&mut output);
-        let CliRunResult::ConfigFileInitResult { message } = ret else {
-            panic!("Expected configuration file to be created, got {ret:?}")
-        };
-        assert_eq!(message, "Configuration file created");
+        Tester::new().test(args);
+
+        assert!(fs::exists(LintRunner::DEFAULT_OXLINTRC).unwrap());
+
         fs::remove_file(LintRunner::DEFAULT_OXLINTRC).unwrap();
     }
 

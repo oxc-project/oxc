@@ -9,25 +9,23 @@ pub enum CliRunResult {
     /// The exit unix code for, in general 0 or 1 (from `--deny-warnings` or `--max-warnings` for example)
     LintResult(ExitCode),
     PrintConfigResult,
-    ConfigFileInitResult {
-        message: String,
-    },
+    ConfigFileInitFailed,
+    ConfigFileInitSucceeded,
 }
 
 impl Termination for CliRunResult {
     #[allow(clippy::print_stdout, clippy::print_stderr)]
     fn report(self) -> ExitCode {
         match self {
-            Self::None | Self::PrintConfigResult => ExitCode::from(0),
+            Self::None | Self::PrintConfigResult | Self::ConfigFileInitSucceeded => {
+                ExitCode::SUCCESS
+            }
+            Self::ConfigFileInitFailed => ExitCode::FAILURE,
             Self::InvalidOptions { message } => {
                 println!("Invalid Options: {message}");
-                ExitCode::from(1)
+                ExitCode::FAILURE
             }
             Self::LintResult(exit_code) => exit_code,
-            Self::ConfigFileInitResult { message } => {
-                println!("{message}");
-                ExitCode::from(0)
-            }
         }
     }
 }
