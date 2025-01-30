@@ -65,6 +65,9 @@ impl<'a> PeepholeOptimizations {
             "toString" => Self::try_fold_to_string(*span, arguments, object, ctx),
             "pow" => self.try_fold_pow(*span, arguments, object, ctx),
             "sqrt" | "cbrt" => Self::try_fold_roots(*span, arguments, name, object, ctx),
+            "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" => {
+                Self::try_fold_math_unary(*span, arguments, name, object, ctx)
+            }
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -348,6 +351,15 @@ impl<'a> PeepholeOptimizations {
         result.into_iter().rev().collect()
     }
 
+    fn validate_global_reference(expr: &Expression<'a>, target: &str, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::Identifier(ident) = expr else { return false };
+        ctx.is_global_reference(ident) && ident.name == target
+    }
+
+    fn validate_arguments(args: &Arguments, expected_len: usize) -> bool {
+        args.len() == expected_len && args.iter().all(Argument::is_expression)
+    }
+
     /// `Math.pow(a, b)` -> `+(a) ** +b`
     fn try_fold_pow(
         &self,
@@ -359,12 +371,9 @@ impl<'a> PeepholeOptimizations {
         if self.target < ESTarget::ES2016 {
             return None;
         }
-
-        let Expression::Identifier(ident) = object else { return None };
-        if ident.name != "Math" || !ctx.is_global_reference(ident) {
-            return None;
-        }
-        if arguments.len() != 2 || arguments.iter().any(|arg| !arg.is_expression()) {
+        if !Self::validate_global_reference(object, "Math", ctx)
+            || !Self::validate_arguments(arguments, 2)
+        {
             return None;
         }
 
@@ -404,11 +413,9 @@ impl<'a> PeepholeOptimizations {
         object: &Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let Expression::Identifier(ident) = object else { return None };
-        if ident.name != "Math" || !ctx.is_global_reference(ident) {
-            return None;
-        }
-        if arguments.len() != 1 || !arguments[0].is_expression() {
+        if !Self::validate_global_reference(object, "Math", ctx)
+            || !Self::validate_arguments(arguments, 1)
+        {
             return None;
         }
         let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
@@ -433,15 +440,54 @@ impl<'a> PeepholeOptimizations {
             "cbrt" => arg_val.cbrt(),
             _ => unreachable!(),
         };
-        if calculated_val.fract() == 0.0 {
-            return Some(ctx.ast.expression_numeric_literal(
-                span,
-                calculated_val,
-                None,
-                NumberBase::Decimal,
-            ));
+        (calculated_val.fract() == 0.0).then(|| {
+            ctx.ast.expression_numeric_literal(span, calculated_val, None, NumberBase::Decimal)
+        })
+    }
+
+    fn try_fold_math_unary(
+        span: Span,
+        arguments: &Arguments,
+        name: &str,
+        object: &Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if !Self::validate_global_reference(object, "Math", ctx)
+            || !Self::validate_arguments(arguments, 1)
+        {
+            return None;
         }
-        None
+        let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
+        let result = match name {
+            "abs" => arg_val.abs(),
+            "ceil" => arg_val.ceil(),
+            "floor" => arg_val.floor(),
+            "round" => {
+                // We should be aware that the behavior in JavaScript and Rust towards `round` is different.
+                // In Rust, when facing `.5`, it may follow `half-away-from-zero` instead of round to upper bound.
+                // So we need to handle it manually.
+                let frac_part = arg_val.fract();
+                let epsilon = 2f64.powf(-52f64);
+                if (frac_part.abs() - 0.5).abs() < epsilon {
+                    // We should ceil it.
+                    arg_val.ceil()
+                } else {
+                    arg_val.round()
+                }
+            }
+            #[allow(clippy::cast_possible_truncation)]
+            "fround" if arg_val.fract() == 0f64 || arg_val.is_nan() || arg_val.is_infinite() => {
+                f64::from(arg_val as f32)
+            }
+            "fround" => return None,
+            "trunc" => arg_val.trunc(),
+            "sign" if arg_val.to_bits() == 0f64.to_bits() => 0f64,
+            "sign" if arg_val.to_bits() == (-0f64).to_bits() => -0f64,
+            "sign" => arg_val.signum(),
+            _ => unreachable!(),
+        };
+        // These results are always shorter to return as a number, so we can just return them as NumericLiteral.
+        Some(ctx.ast.expression_numeric_literal(span, result, None, NumberBase::Decimal))
     }
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
@@ -703,6 +749,14 @@ mod test {
     fn test_es2015(code: &str, expected: &str) {
         let opts = CompressOptions { target: ESTarget::ES2015, ..CompressOptions::default() };
         assert_eq!(run(code, Some(opts)), run(expected, None));
+    }
+
+    fn test_value(code: &str, expected: &str) {
+        test(format!("x = {code}").as_str(), format!("x = {expected}").as_str());
+    }
+
+    fn test_same_value(code: &str) {
+        test_same(format!("x = {code}").as_str());
     }
 
     #[test]
@@ -1108,99 +1162,106 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_abs() {
-        test_same("Math.abs(Math.random())");
+        test_same_value("Math.abs(Math.random())");
 
-        test("Math.abs('-1')", "1");
-        test("Math.abs(-2)", "2");
-        test("Math.abs(null)", "0");
-        test("Math.abs('')", "0");
-        test("Math.abs([])", "0");
-        test("Math.abs([2])", "2");
-        test("Math.abs([1,2])", "NaN");
-        test("Math.abs({})", "NaN");
-        test("Math.abs('string');", "NaN");
+        test_value("Math.abs('-1')", "1");
+        test_value("Math.abs(-2)", "2");
+        test_value("Math.abs(null)", "0");
+        test_value("Math.abs('')", "0");
+        test_value("Math.abs(NaN)", "NaN");
+        test_value("Math.abs(-0)", "0");
+        test_value("Math.abs(-Infinity)", "Infinity");
+        // TODO
+        // test_value("Math.abs([])", "0");
+        // test_value("Math.abs([2])", "2");
+        // test_value("Math.abs([1,2])", "NaN");
+        test_value("Math.abs({})", "NaN");
+        test_value("Math.abs('string');", "NaN");
     }
 
     #[test]
     #[ignore]
     fn test_fold_math_functions_imul() {
-        test_same("Math.imul(Math.random(),2)");
-        test("Math.imul(-1,1)", "-1");
-        test("Math.imul(2,2)", "4");
-        test("Math.imul(2)", "0");
-        test("Math.imul(2,3,5)", "6");
-        test("Math.imul(0xfffffffe, 5)", "-10");
-        test("Math.imul(0xffffffff, 5)", "-5");
-        test("Math.imul(0xfffffffffffff34f, 0xfffffffffff342)", "13369344");
-        test("Math.imul(0xfffffffffffff34f, -0xfffffffffff342)", "-13369344");
-        test("Math.imul(NaN, 2)", "0");
+        test_same_value("Math.imul(Math.random(),2)");
+        test_value("Math.imul(-1,1)", "-1");
+        test_value("Math.imul(2,2)", "4");
+        test_value("Math.imul(2)", "0");
+        test_value("Math.imul(2,3,5)", "6");
+        test_value("Math.imul(0xfffffffe, 5)", "-10");
+        test_value("Math.imul(0xffffffff, 5)", "-5");
+        test_value("Math.imul(0xfffffffffffff34f, 0xfffffffffff342)", "13369344");
+        test_value("Math.imul(0xfffffffffffff34f, -0xfffffffffff342)", "-13369344");
+        test_value("Math.imul(NaN, 2)", "0");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_ceil() {
-        test_same("Math.ceil(Math.random())");
+        test_same_value("Math.ceil(Math.random())");
 
-        test("Math.ceil(1)", "1");
-        test("Math.ceil(1.5)", "2");
-        test("Math.ceil(1.3)", "2");
-        test("Math.ceil(-1.3)", "-1");
+        test_value("Math.ceil(1)", "1");
+        test_value("Math.ceil(1.5)", "2");
+        test_value("Math.ceil(1.3)", "2");
+        test_value("Math.ceil(-1.3)", "-1");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_floor() {
-        test_same("Math.floor(Math.random())");
+        test_same_value("Math.floor(Math.random())");
 
-        test("Math.floor(1)", "1");
-        test("Math.floor(1.5)", "1");
-        test("Math.floor(1.3)", "1");
-        test("Math.floor(-1.3)", "-2");
+        test_value("Math.floor(1)", "1");
+        test_value("Math.floor(1.5)", "1");
+        test_value("Math.floor(1.3)", "1");
+        test_value("Math.floor(-1.3)", "-2");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_fround() {
-        test_same("Math.fround(Math.random())");
+        test_same_value("Math.fround(Math.random())");
 
-        test("Math.fround(NaN)", "NaN");
-        test("Math.fround(Infinity)", "Infinity");
-        test("Math.fround(1)", "1");
-        test("Math.fround(0)", "0");
+        test_value("Math.fround(NaN)", "NaN");
+        test_value("Math.fround(Infinity)", "Infinity");
+        test_value("Math.fround(-Infinity)", "-Infinity");
+        test_value("Math.fround(1)", "1");
+        test_value("Math.fround(0)", "0");
+        test_value("Math.fround(16777217)", "16777216");
+        test_value("Math.fround(16777218)", "16777218");
     }
 
     #[test]
     fn test_fold_math_functions_fround_j2cl() {
-        test_same("Math.fround(1.2)");
+        test_same_value("Math.fround(1.2)");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_round() {
-        test_same("Math.round(Math.random())");
-        test("Math.round(NaN)", "NaN");
-        test("Math.round(3.5)", "4");
-        test("Math.round(-3.5)", "-3");
+        test_same_value("Math.round(Math.random())");
+        test_value("Math.round(NaN)", "NaN");
+        test_value("Math.round(3)", "3");
+        test_value("Math.round(3.5)", "4");
+        test_value("Math.round(-3.5)", "-3");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_sign() {
-        test_same("Math.sign(Math.random())");
-        test("Math.sign(NaN)", "NaN");
-        test("Math.sign(3.5)", "1");
-        test("Math.sign(-3.5)", "-1");
+        test_same_value("Math.sign(Math.random())");
+        test_value("Math.sign(NaN)", "NaN");
+        test_value("Math.sign(0.0)", "0");
+        test_value("Math.sign(-0.0)", "-0");
+        test_value("Math.sign(0.01)", "1");
+        test_value("Math.sign(-0.01)", "-1");
+        test_value("Math.sign(3.5)", "1");
+        test_value("Math.sign(-3.5)", "-1");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_trunc() {
-        test_same("Math.trunc(Math.random())");
-        test("Math.sign(NaN)", "NaN");
-        test("Math.trunc(3.5)", "3");
-        test("Math.trunc(-3.5)", "-3");
+        test_same_value("Math.trunc(Math.random())");
+        test_value("Math.sign(NaN)", "NaN");
+        test_value("Math.trunc(3.5)", "3");
+        test_value("Math.trunc(-3.5)", "-3");
+        test_value("Math.trunc(0.5)", "0");
+        test_value("Math.trunc(-0.5)", "-0");
     }
 
     #[test]

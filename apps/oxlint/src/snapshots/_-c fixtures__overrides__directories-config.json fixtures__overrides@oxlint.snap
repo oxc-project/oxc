@@ -36,3 +36,6 @@ working directory:
 
 Found 2 warnings and 2 errors.
 Finished in <variable>ms on 7 files with 96 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

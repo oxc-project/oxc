@@ -16,6 +16,9 @@ working directory: fixtures/eslint_and_typescript_alias_rules
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
 
 ########## 
 arguments: -c oxlint-typescript.json test.js
@@ -32,3 +35,6 @@ working directory: fixtures/eslint_and_typescript_alias_rules
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

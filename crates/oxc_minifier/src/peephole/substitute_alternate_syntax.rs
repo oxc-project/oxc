@@ -433,7 +433,7 @@ impl<'a> PeepholeOptimizations {
         if !match argument {
             Expression::Identifier(ident) => ctx.is_identifier_undefined(ident),
             Expression::UnaryExpression(e) => {
-                e.operator.is_void() && !ctx.expression_may_have_side_efffects(argument)
+                e.operator.is_void() && !ctx.expression_may_have_side_effects(argument)
             }
             _ => false,
         } {

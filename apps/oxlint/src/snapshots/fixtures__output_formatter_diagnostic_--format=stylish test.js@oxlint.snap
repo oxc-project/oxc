@@ -12,3 +12,6 @@ working directory: fixtures/output_formatter_diagnostic
   [2m38:9[0m  [31merror[0m  `debugger` statement is not allowed  [2meslint(no-debugger)[0m
 
 [31m✖ 3 problems (1 error, 2 warnings)[0m
+----------
+CLI result: LintFoundErrors
+----------

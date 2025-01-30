@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --tsconfig oxc/tsconfig.json
+working directory: 
+----------
+The tsconfig file "<cwd>/oxc/tsconfig.json" does not exist, Please provide a valid tsconfig file.
+----------
+CLI result: InvalidOptionTsConfig
+----------
