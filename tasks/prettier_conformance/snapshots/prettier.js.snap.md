@@ -2,596 +2,395 @@ js compatibility: 251/641 (39.16%)
 
 # Failed
 
-### js/arrays
-* js/arrays/numbers-negative-comment-after-minus.js | 💥
-* js/arrays/numbers-negative.js | 💥
-* js/arrays/numbers-trailing-comma.js | 💥
-* js/arrays/numbers-with-holes.js | 💥
-* js/arrays/numbers-with-trailing-comments.js | 💥
-* js/arrays/numbers-with-tricky-comments.js | 💥
-* js/arrays/numbers2.js | 💥
-* js/arrays/numbers3.js | 💥
-* js/arrays/preserve_empty_lines.js | 💥
-
-### js/arrow-call
-* js/arrow-call/arrow_call.js | 💥💥💥
-* js/arrow-call/class-property.js | 💥💥💥
-
-### js/arrows
-* js/arrows/arrow-chain-with-trailing-comments.js | 💥💥
-* js/arrows/arrow_function_expression.js | 💥💥
-* js/arrows/assignment-chain-with-arrow-chain.js | 💥💥
-* js/arrows/call.js | 💥💥
-* js/arrows/chain-as-arg.js | 💥💥
-* js/arrows/chain-in-logical-expression.js | 💥💥
-* js/arrows/comment.js | 💥💥
-* js/arrows/curried.js | 💥💥
-* js/arrows/currying-2.js | 💥💥
-* js/arrows/currying-3.js | 💥💥
-* js/arrows/currying-4.js | 💥💥
-* js/arrows/currying.js | 💥💥
-* js/arrows/issue-1389-curry.js | 💥💥
-* js/arrows/long-call-no-args.js | 💥💥
-* js/arrows/parens.js | 💥💥
-
-### js/assignment
-* js/assignment/binaryish.js | 💥
-* js/assignment/call-with-template.js | 💥
-* js/assignment/chain-two-segments.js | 💥
-* js/assignment/chain.js | 💥
-* js/assignment/discussion-15196.js | 💥
-* js/assignment/issue-10218.js | 💥
-* js/assignment/issue-2184.js | 💥
-* js/assignment/issue-2540.js | 💥
-* js/assignment/issue-5610.js | 💥
-* js/assignment/issue-6922.js | 💥
-* js/assignment/issue-7572.js | 💥
-* js/assignment/issue-7961.js | 💥
-* js/assignment/lone-arg.js | 💥
-
-### js/assignment-comments
-* js/assignment-comments/call.js | 💥
-* js/assignment-comments/call2.js | 💥
-* js/assignment-comments/function.js | 💥
-* js/assignment-comments/identifier.js | 💥
-* js/assignment-comments/number.js | 💥
-* js/assignment-comments/string.js | 💥
-
-### js/async
-* js/async/inline-await.js | 💥
-* js/async/nested.js | 💥
-
-### js/binary-expressions
-* js/binary-expressions/arrow.js | 💥
-* js/binary-expressions/call.js | 💥
-* js/binary-expressions/comment.js | 💥
-* js/binary-expressions/if.js | 💥
-* js/binary-expressions/in_instanceof.js | 💥
-* js/binary-expressions/inline-jsx.js | 💥
-* js/binary-expressions/inline-object-array.js | 💥
-* js/binary-expressions/jsx_parent.js | 💥
-* js/binary-expressions/short-right.js | 💥
-* js/binary-expressions/test.js | 💥
-* js/binary-expressions/unary.js | 💥
-
-### js/break-calls
-* js/break-calls/break.js | 💥
-* js/break-calls/parent.js | 💥
-* js/break-calls/react.js | 💥
-
-### js/call/first-argument-expansion
-* js/call/first-argument-expansion/expression-2nd-arg.js | 💥
-* js/call/first-argument-expansion/issue-13237.js | 💥
-* js/call/first-argument-expansion/issue-2456.js | 💥
-* js/call/first-argument-expansion/issue-5172.js | 💥
-* js/call/first-argument-expansion/jsx.js | 💥
-* js/call/first-argument-expansion/test.js | 💥
-
-### js/call/no-argument
-* js/call/no-argument/special-cases.js | 💥
-
-### js/chain-expression
-* js/chain-expression/call-expression.js | 💥
-* js/chain-expression/issue-15785-1.js | 💥
-* js/chain-expression/issue-15785-2.js | 💥
-* js/chain-expression/issue-15785-3.js | 💥
-* js/chain-expression/issue-15916.js | 💥
-* js/chain-expression/member-expression.js | 💥
-* js/chain-expression/test-3.js | 💥
-* js/chain-expression/test-4.js | 💥
-* js/chain-expression/test.js | 💥
-
-### js/class-comment
-* js/class-comment/class-property.js | 💥
-* js/class-comment/misc.js | 💥
-* js/class-comment/superclass.js | 💥
-
-### js/class-extends
-* js/class-extends/extends.js | 💥
-
-### js/classes
-* js/classes/asi.js | 💥
-* js/classes/assignment.js | 💥
-* js/classes/empty.js | 💥
-* js/classes/method.js | 💥
-* js/classes/property.js | 💥
-
-### js/classes-private-fields
-* js/classes-private-fields/optional-chaining.js | 💥💥
-* js/classes-private-fields/with_comments.js | 💥💥
-
-### js/comments
-* js/comments/15661.js | 💥💥
-* js/comments/16398.js | 💥💥
-* js/comments/arrow.js | 💥💥
-* js/comments/assignment-pattern.js | 💥💥
-* js/comments/before-comma.js | 💥💥
-* js/comments/binary-expressions-block-comments.js | 💥💥
-* js/comments/binary-expressions-parens.js | 💥💥
-* js/comments/binary-expressions-single-comments.js | 💥💥
-* js/comments/binary-expressions.js | 💥💥
-* js/comments/blank.js | 💥💥
-* js/comments/break-continue-statements.js | 💥💥
-* js/comments/call_comment.js | 💥💥
-* js/comments/class.js | 💥💥
-* js/comments/dangling.js | 💥💥
-* js/comments/dangling_array.js | 💥💥
-* js/comments/dangling_for.js | 💥💥
-* js/comments/dynamic_imports.js | 💥💥
-* js/comments/emoji.js | 💥💥
-* js/comments/empty-statements.js | 💥💥
-* js/comments/export-and-import.js | 💥💥
-* js/comments/export.js | 💥💥
-* js/comments/first-line.js | 💥💥
-* js/comments/function-declaration.js | 💥💥
-* js/comments/if.js | 💥💥
-* js/comments/issue-3532.js | 💥💥
-* js/comments/issues.js | 💥💥
-* js/comments/jsdoc-nestled-dangling.js | 💥💥
-* js/comments/jsdoc-nestled.js | 💥💥
-* js/comments/jsdoc.js | 💥💥
-* js/comments/jsx.js | 💥💥
-* js/comments/last-arg.js | 💥💥
-* js/comments/multi-comments-2.js | 💥💥
-* js/comments/multi-comments-on-same-line-2.js | 💥💥
-* js/comments/multi-comments-on-same-line.js | 💥💥
-* js/comments/multi-comments.js | 💥💥
-* js/comments/preserve-new-line-last.js | 💥💥
-* js/comments/return-statement.js | 💥💥
-* js/comments/single-star-jsdoc.js | 💥💥
-* js/comments/switch.js | 💥💥
-* js/comments/tagged-template-literal.js | 💥💥
-* js/comments/template-literal.js | 💥💥
-* js/comments/trailing-jsdocs.js | 💥💥
-* js/comments/trailing_space.js | 💥💥
-* js/comments/try.js | 💥💥
-* js/comments/variable_declarator.js | 💥💥
-* js/comments/while.js | 💥💥
-
-### js/comments/flow-types
-* js/comments/flow-types/inline.js | 💥
-
-### js/comments/function
-* js/comments/function/between-parentheses-and-function-body.js | 💥
-
-### js/comments/html-like
-* js/comments/html-like/comment.js | 💥
-
-### js/comments-closure-typecast
-* js/comments-closure-typecast/binary-expr.js | 💥
-* js/comments-closure-typecast/closure-compiler-type-cast.js | 💥
-* js/comments-closure-typecast/comment-in-the-middle.js | 💥
-* js/comments-closure-typecast/comment-placement.js | 💥
-* js/comments-closure-typecast/extra-spaces-and-asterisks.js | 💥
-* js/comments-closure-typecast/iife-issue-5850-isolated.js | 💥
-* js/comments-closure-typecast/iife.js | 💥
-* js/comments-closure-typecast/issue-4124.js | 💥
-* js/comments-closure-typecast/issue-8045.js | 💥
-* js/comments-closure-typecast/issue-9358.js | 💥
-* js/comments-closure-typecast/member.js | 💥
-* js/comments-closure-typecast/nested.js | 💥
-* js/comments-closure-typecast/non-casts.js | 💥
-* js/comments-closure-typecast/object-with-comment.js | 💥
-* js/comments-closure-typecast/satisfies.js | 💥
-* js/comments-closure-typecast/superclass.js | 💥
-* js/comments-closure-typecast/ways-to-specify-type.js | 💥
-
-### js/conditional
-* js/conditional/comments.js | 💥💥
-* js/conditional/new-ternary-examples.js | 💥💥
-* js/conditional/new-ternary-spec.js | 💥💥
-* js/conditional/no-confusing-arrow.js | 💥💥
-* js/conditional/postfix-ternary-regressions.js | 💥💥
-
-### js/destructuring
-* js/destructuring/destructuring.js | 💥
-
-### js/destructuring-ignore
-* js/destructuring-ignore/ignore.js | 💥💥💥
-
-### js/directives
-* js/directives/escaped.js | 💥
-* js/directives/issue-7346.js | 💥
-* js/directives/newline.js | 💥
-
-### js/empty-paren-comment
-* js/empty-paren-comment/class-property.js | 💥
-* js/empty-paren-comment/class.js | 💥
-* js/empty-paren-comment/empty_paren_comment.js | 💥
-
-### js/export
-* js/export/blank-line-between-specifiers.js | 💥💥
-* js/export/same-local-and-exported.js | 💥💥
-
-### js/expression_statement
-* js/expression_statement/no_regression.js | 💥
-* js/expression_statement/use_strict.js | 💥
-
-### js/for
-* js/for/comment.js | 💥
-* js/for/continue-and-break-comment-1.js | 💥
-* js/for/continue-and-break-comment-2.js | 💥
-* js/for/continue-and-break-comment-without-blocks.js | 💥
-* js/for/for-in-with-initializer.js | 💥
-* js/for/parentheses.js | 💥
-
-### js/function
-* js/function/issue-10277.js | 💥
-
-### js/function-comments
-* js/function-comments/params-trail-comments.js | 💥
-
-### js/function-first-param
-* js/function-first-param/function_expression.js | 💥
-
-### js/function-single-destructuring
-* js/function-single-destructuring/array.js | 💥
-* js/function-single-destructuring/object.js | 💥
-
-### js/functional-composition
-* js/functional-composition/functional_compose.js | 💥
-* js/functional-composition/lodash_flow.js | 💥
-* js/functional-composition/lodash_flow_right.js | 💥
-* js/functional-composition/pipe-function-calls-with-comments.js | 💥
-* js/functional-composition/pipe-function-calls.js | 💥
-* js/functional-composition/ramda_compose.js | 💥
-* js/functional-composition/ramda_pipe.js | 💥
-* js/functional-composition/redux_connect.js | 💥
-* js/functional-composition/reselect_createselector.js | 💥
-* js/functional-composition/rxjs_pipe.js | 💥
-
-### js/generator
-* js/generator/async.js | 💥
-* js/generator/function-name-starts-with-get.js | 💥
-
-### js/identifier/parentheses
-* js/identifier/parentheses/let.js | 💥✨
-
-### js/if
-* js/if/comment_before_else.js | 💥
-* js/if/else.js | 💥
-* js/if/expr_and_same_line_comments.js | 💥
-* js/if/if_comments.js | 💥
-* js/if/issue-15168.js | 💥
-* js/if/non-block.js | 💥
-* js/if/trailing_comment.js | 💥
-
-### js/import
-* js/import/comments.js | 💥💥
-* js/import/empty-import.js | 💥💥
-* js/import/same-local-and-imported.js | 💥💥
-
-### js/import-assertions
-* js/import-assertions/empty.js | 💥
-* js/import-assertions/keyword-detect.js | 💥
-
-### js/import-attributes
-* js/import-attributes/empty.js | 💥
-* js/import-attributes/keyword-detect.js | 💥
-* js/import-attributes/long-sources.js | 💥
-
-### js/label
-* js/label/comment.js | 💥
-
-### js/last-argument-expansion
-* js/last-argument-expansion/arrow.js | 💥
-* js/last-argument-expansion/assignment-pattern.js | 💥
-* js/last-argument-expansion/break-parent.js | 💥
-* js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥
-* js/last-argument-expansion/edge_case.js | 💥
-* js/last-argument-expansion/empty-lines.js | 💥
-* js/last-argument-expansion/empty-object.js | 💥
-* js/last-argument-expansion/function-expression-issue-2239.js | 💥
-* js/last-argument-expansion/function-expression.js | 💥
-* js/last-argument-expansion/issue-10708.js | 💥
-* js/last-argument-expansion/issue-7518.js | 💥
-* js/last-argument-expansion/jsx.js | 💥
-* js/last-argument-expansion/overflow.js | 💥
-
-### js/line-suffix-boundary
-* js/line-suffix-boundary/boundary.js | 💥
-
-### js/literal
-* js/literal/number.js | 💥
-
-### js/logical_expressions
-* js/logical_expressions/issue-7024.js | 💥
-* js/logical_expressions/logical_expression_operators.js | 💥
-
-### js/member
-* js/member/conditional.js | 💥
-* js/member/expand.js | 💥
-* js/member/logical.js | 💥
-
-### js/method-chain
-* js/method-chain/bracket_0-1.js | 💥
-* js/method-chain/break-last-call.js | 💥
-* js/method-chain/break-last-member.js | 💥
-* js/method-chain/comment.js | 💥
-* js/method-chain/computed-merge.js | 💥
-* js/method-chain/computed.js | 💥
-* js/method-chain/conditional.js | 💥
-* js/method-chain/d3.js | 💥
-* js/method-chain/first_long.js | 💥
-* js/method-chain/fluent-configuration.js | 💥
-* js/method-chain/inline_merge.js | 💥
-* js/method-chain/issue-11298.js | 💥
-* js/method-chain/issue-3594.js | 💥
-* js/method-chain/issue-4125.js | 💥
-* js/method-chain/logical.js | 💥
-* js/method-chain/multiple-members.js | 💥
-* js/method-chain/object-literal.js | 💥
-* js/method-chain/pr-7889.js | 💥
-* js/method-chain/short-names.js | 💥
-* js/method-chain/square_0.js | 💥
-* js/method-chain/test.js | 💥
-* js/method-chain/this.js | 💥
-
-### js/new-expression
-* js/new-expression/with-member-expression.js | 💥
-
-### js/newline
-* js/newline/backslash_2028.js | 💥
-* js/newline/backslash_2029.js | 💥
-
-### js/no-semi
-* js/no-semi/class.js | 💥💥
-* js/no-semi/comments.js | 💥💥
-* js/no-semi/issue2006.js | 💥✨
-* js/no-semi/no-semi.js | 💥💥
-
-### js/non-strict
-* js/non-strict/keywords.js | 💥
-
-### js/nullish-coalescing
-* js/nullish-coalescing/nullish_coalesing_operator.js | 💥
-
-### js/numeric-separators
-* js/numeric-separators/number.js | 💥
-
-### js/object-prop-break-in
-* js/object-prop-break-in/comment.js | 💥
-* js/object-prop-break-in/short-keys.js | 💥
-
-### js/object-property-comment
-* js/object-property-comment/after-key.js | 💥
-
-### js/object-property-ignore
-* js/object-property-ignore/ignore.js | 💥💥💥
-* js/object-property-ignore/issue-5678.js | 💥💥💥
-
-### js/objects
-* js/objects/escape-sequence-key.js | 💥
-* js/objects/expand.js | 💥
-* js/objects/right-break.js | 💥
-
-### js/optional-chaining
-* js/optional-chaining/chaining.js | 💥
-* js/optional-chaining/comments.js | 💥
-* js/optional-chaining/eval.js | 💥
-
-### js/optional-chaining-assignment
-* js/optional-chaining-assignment/valid-complex-case.js | 💥
-* js/optional-chaining-assignment/valid-lhs-eq.js | 💥
-* js/optional-chaining-assignment/valid-lhs-plus-eq.js | 💥
-
-### js/performance
-* js/performance/nested-real.js | 💥
-
-### js/preserve-line
-* js/preserve-line/argument-list.js | 💥
-* js/preserve-line/comments.js | 💥
-* js/preserve-line/member-chain.js | 💥
-* js/preserve-line/parameter-list.js | 💥
-
-### js/quote-props
-* js/quote-props/numeric-separator.js | 💥💥💥💥
-* js/quote-props/objects.js | 💥💥💥💥
-
-### js/quotes
-* js/quotes/objects.js | 💥💥
-* js/quotes/strings.js | 💥💥
-
-### js/require-amd
-* js/require-amd/named-amd-module.js | 💥
-* js/require-amd/require.js | 💥
-
-### js/return
-* js/return/binaryish.js | 💥
-* js/return/comment.js | 💥
-
-### js/sequence-break
-* js/sequence-break/break.js | 💥
-
-### js/sequence-expression
-* js/sequence-expression/ignore.js | 💥
-* js/sequence-expression/parenthesized.js | 💥
-
-### js/strings
-* js/strings/escaped.js | 💥💥
-* js/strings/multiline-literal.js | 💥💥
-* js/strings/non-octal-eight-and-nine.js | 💥💥
-* js/strings/template-literals.js | 💥💥
-
-### js/switch
-* js/switch/comments.js | 💥
-* js/switch/comments2.js | 💥
-
-### js/template
-* js/template/call.js | 💥
-* js/template/comment.js | 💥
-* js/template/faulty-locations.js | 💥
-* js/template/graphql.js | 💥
-* js/template/indent.js | 💥
-* js/template/inline.js | 💥
-* js/template/parenthesis.js | 💥
-
-### js/template-align
-* js/template-align/indent.js | 💥💥
-
-### js/template-literals
-* js/template-literals/binary-exporessions.js | 💥
-* js/template-literals/conditional-expressions.js | 💥
-* js/template-literals/expressions.js | 💥
-* js/template-literals/indention.js | 💥
-* js/template-literals/logical-expressions.js | 💥
-* js/template-literals/sequence-expressions.js | 💥
-
-### js/ternaries
-* js/ternaries/binary.js | 💥💥💥💥💥💥💥💥
-* js/ternaries/func-call.js | 💥💥💥💥💥💥💥💥
-* js/ternaries/indent-after-paren.js | 💥💥💥💥💥💥💥💥
-* js/ternaries/indent.js | 💥💥💥💥💥💥💥💥
-* js/ternaries/nested-in-condition.js | 💥💥💥💥💥💥💥💥
-* js/ternaries/nested.js | 💥💥💥💥💥💥💥💥
-* js/ternaries/parenthesis.js | 💥💥💥💥💥💥💥💥
-* js/ternaries/test.js | 💥💥💥💥💥💥💥💥
-
-### js/ternaries/parenthesis
-* js/ternaries/parenthesis/await-expression.js | 💥💥
-
-### js/test-declarations
-* js/test-declarations/angular_async.js | 💥💥
-* js/test-declarations/angular_fakeAsync.js | 💥💥
-* js/test-declarations/angular_waitForAsync.js | 💥💥
-* js/test-declarations/angularjs_inject.js | 💥💥
-* js/test-declarations/jest-each-template-string.js | 💥💥
-* js/test-declarations/jest-each.js | 💥💥
-* js/test-declarations/test_declarations.js | 💥💥
-
-### js/throw_statement
-* js/throw_statement/binaryish.js | 💥
-* js/throw_statement/comment.js | 💥
-
-### js/trailing-comma
-* js/trailing-comma/es5.js | 💥💥✨
-* js/trailing-comma/function-calls.js | 💥💥✨
-* js/trailing-comma/jsx.js | 💥💥💥
-* js/trailing-comma/trailing_whitespace.js | 💥💥💥
-
-### js/try
-* js/try/catch.js | 💥
-* js/try/try.js | 💥
-
-### js/unary
-* js/unary/object.js | 💥
-
-### js/unary-expression
-* js/unary-expression/comments.js | 💥
-
-### js/unicode
-* js/unicode/combining-characters.js | 💥
-* js/unicode/nbsp-jsx.js | 💥
-
-### js/yield
-* js/yield/jsx-without-parenthesis.js | 💥
-* js/yield/jsx.js | 💥
-
-### jsx/attr-element
-* jsx/attr-element/attr-element.js | 💥
-
-### jsx/binary-expressions
-* jsx/binary-expressions/relational-operators.js | 💥
-
-### jsx/comments
-* jsx/comments/eslint-disable.js | 💥
-* jsx/comments/in-attributes.js | 💥
-* jsx/comments/in-end-tag.js | 💥
-* jsx/comments/in-tags.js | 💥
-* jsx/comments/jsx-tag-comment-after-prop.js | 💥
-* jsx/comments/like-a-comment-in-jsx-text.js | 💥
-
-### jsx/deprecated-jsx-bracket-same-line-option
-* jsx/deprecated-jsx-bracket-same-line-option/jsx.js | 💥💥💥💥
-
-### jsx/embed
-* jsx/embed/css-embed.js | 💥
-
-### jsx/escape
-* jsx/escape/nbsp.js | 💥
-
-### jsx/expression-with-types
-* jsx/expression-with-types/expression.js | 💥💥💥💥
-
-### jsx/fbt
-* jsx/fbt/test.js | 💥
-
-### jsx/fragment
-* jsx/fragment/fragment.js | 💥
-
-### jsx/ignore
-* jsx/ignore/jsx_ignore.js | 💥
-
-### jsx/jsx
-* jsx/jsx/array-iter.js | 💥💥💥💥
-* jsx/jsx/arrow.js | 💥💥💥💥
-* jsx/jsx/attr-comments.js | 💥💥💥💥
-* jsx/jsx/await.js | 💥💥💥💥
-* jsx/jsx/conditional-expression.js | 💥💥💥💥
-* jsx/jsx/expression.js | 💥💥💥💥
-* jsx/jsx/flow_fix_me.js | 💥💥💥💥
-* jsx/jsx/html_escape.js | 💥💥✨✨
-* jsx/jsx/hug.js | 💥💥💥💥
-* jsx/jsx/logical-expression.js | 💥💥💥💥
-* jsx/jsx/object-property.js | 💥💥💥💥
-* jsx/jsx/open-break.js | 💥💥💥💥
-* jsx/jsx/parens.js | 💥💥💥💥
-* jsx/jsx/quotes.js | 💥💥💥💥
-* jsx/jsx/regex.js | 💥💥💥💥
-* jsx/jsx/return-statement.js | 💥💥💥💥
-* jsx/jsx/spacing.js | 💥💥💥💥
-* jsx/jsx/template-literal-in-attr.js | 💥💥💥💥
-
-### jsx/last-line
-* jsx/last-line/last_line.js | 💥💥
-* jsx/last-line/single_prop_multiline_string.js | 💥💥
-
-### jsx/multiline-assign
-* jsx/multiline-assign/test.js | 💥
-
-### jsx/newlines
-* jsx/newlines/test.js | 💥
-* jsx/newlines/windows.js | 💥
-
-### jsx/optional-chaining
-* jsx/optional-chaining/optional-chaining.jsx | 💥
-
-### jsx/significant-space
-* jsx/significant-space/comments.js | 💥
-* jsx/significant-space/test.js | 💥
-
-### jsx/single-attribute-per-line
-* jsx/single-attribute-per-line/single-attribute-per-line.js | 💥💥
-
-### jsx/split-attrs
-* jsx/split-attrs/test.js | 💥
-
-### jsx/spread
-* jsx/spread/attribute.js | 💥
-* jsx/spread/child.js | 💥
-
-### jsx/stateless-arrow-fn
-* jsx/stateless-arrow-fn/test.js | 💥
-
-### jsx/text-wrap
-* jsx/text-wrap/test.js | 💥
+| Spec path | Failed or Passed | Match ratio |
+| :-------- | :--------------: | :---------: |
+| js/arrays/numbers-negative-comment-after-minus.js | 💥 | 17.28% |
+| js/arrays/numbers-negative.js | 💥 | 27.59% |
+| js/arrays/numbers-trailing-comma.js | 💥 | 88.89% |
+| js/arrays/numbers-with-holes.js | 💥 | 92.31% |
+| js/arrays/numbers-with-trailing-comments.js | 💥 | 28.57% |
+| js/arrays/numbers-with-tricky-comments.js | 💥 | 40.00% |
+| js/arrays/numbers2.js | 💥 | 93.62% |
+| js/arrays/numbers3.js | 💥 | 66.67% |
+| js/arrays/preserve_empty_lines.js | 💥 | 62.81% |
+| js/arrow-call/arrow_call.js | 💥💥💥 | 40.40% |
+| js/arrow-call/class-property.js | 💥💥💥 | 0.00% |
+| js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 6.67% |
+| js/arrows/arrow_function_expression.js | 💥💥 | 97.14% |
+| js/arrows/assignment-chain-with-arrow-chain.js | 💥💥 | 60.25% |
+| js/arrows/call.js | 💥💥 | 35.29% |
+| js/arrows/chain-as-arg.js | 💥💥 | 75.76% |
+| js/arrows/chain-in-logical-expression.js | 💥💥 | 28.57% |
+| js/arrows/comment.js | 💥💥 | 32.79% |
+| js/arrows/curried.js | 💥💥 | 31.42% |
+| js/arrows/currying-2.js | 💥💥 | 60.42% |
+| js/arrows/currying-3.js | 💥💥 | 42.62% |
+| js/arrows/currying-4.js | 💥💥 | 68.27% |
+| js/arrows/currying.js | 💥💥 | 87.50% |
+| js/arrows/issue-1389-curry.js | 💥💥 | 14.58% |
+| js/arrows/long-call-no-args.js | 💥💥 | 0.00% |
+| js/arrows/parens.js | 💥💥 | 83.64% |
+| js/assignment/binaryish.js | 💥 | 85.71% |
+| js/assignment/call-with-template.js | 💥 | 70.00% |
+| js/assignment/chain-two-segments.js | 💥 | 0.00% |
+| js/assignment/chain.js | 💥 | 80.65% |
+| js/assignment/discussion-15196.js | 💥 | 91.53% |
+| js/assignment/issue-10218.js | 💥 | 52.63% |
+| js/assignment/issue-2184.js | 💥 | 75.00% |
+| js/assignment/issue-2540.js | 💥 | 0.00% |
+| js/assignment/issue-5610.js | 💥 | 76.92% |
+| js/assignment/issue-6922.js | 💥 | 68.00% |
+| js/assignment/issue-7572.js | 💥 | 72.73% |
+| js/assignment/issue-7961.js | 💥 | 83.33% |
+| js/assignment/lone-arg.js | 💥 | 51.16% |
+| js/assignment-comments/call.js | 💥 | 66.67% |
+| js/assignment-comments/call2.js | 💥 | 0.00% |
+| js/assignment-comments/function.js | 💥 | 28.21% |
+| js/assignment-comments/identifier.js | 💥 | 46.15% |
+| js/assignment-comments/number.js | 💥 | 30.00% |
+| js/assignment-comments/string.js | 💥 | 52.11% |
+| js/async/inline-await.js | 💥 | 25.00% |
+| js/async/nested.js | 💥 | 0.00% |
+| js/binary-expressions/arrow.js | 💥 | 55.32% |
+| js/binary-expressions/call.js | 💥 | 76.79% |
+| js/binary-expressions/comment.js | 💥 | 34.48% |
+| js/binary-expressions/if.js | 💥 | 92.31% |
+| js/binary-expressions/in_instanceof.js | 💥 | 98.63% |
+| js/binary-expressions/inline-jsx.js | 💥 | 33.33% |
+| js/binary-expressions/inline-object-array.js | 💥 | 48.24% |
+| js/binary-expressions/jsx_parent.js | 💥 | 33.33% |
+| js/binary-expressions/short-right.js | 💥 | 68.75% |
+| js/binary-expressions/test.js | 💥 | 82.46% |
+| js/binary-expressions/unary.js | 💥 | 75.00% |
+| js/break-calls/break.js | 💥 | 71.74% |
+| js/break-calls/parent.js | 💥 | 0.00% |
+| js/break-calls/react.js | 💥 | 52.92% |
+| js/call/first-argument-expansion/expression-2nd-arg.js | 💥 | 87.18% |
+| js/call/first-argument-expansion/issue-13237.js | 💥 | 82.35% |
+| js/call/first-argument-expansion/issue-2456.js | 💥 | 63.64% |
+| js/call/first-argument-expansion/issue-5172.js | 💥 | 65.22% |
+| js/call/first-argument-expansion/jsx.js | 💥 | 0.00% |
+| js/call/first-argument-expansion/test.js | 💥 | 89.17% |
+| js/call/no-argument/special-cases.js | 💥 | 0.00% |
+| js/chain-expression/call-expression.js | 💥 | 30.77% |
+| js/chain-expression/issue-15785-1.js | 💥 | 50.00% |
+| js/chain-expression/issue-15785-2.js | 💥 | 16.67% |
+| js/chain-expression/issue-15785-3.js | 💥 | 50.00% |
+| js/chain-expression/issue-15916.js | 💥 | 53.33% |
+| js/chain-expression/member-expression.js | 💥 | 31.82% |
+| js/chain-expression/test-3.js | 💥 | 37.50% |
+| js/chain-expression/test-4.js | 💥 | 97.67% |
+| js/chain-expression/test.js | 💥 | 25.00% |
+| js/class-comment/class-property.js | 💥 | 76.92% |
+| js/class-comment/misc.js | 💥 | 50.00% |
+| js/class-comment/superclass.js | 💥 | 45.71% |
+| js/class-extends/extends.js | 💥 | 76.60% |
+| js/classes/asi.js | 💥 | 85.71% |
+| js/classes/assignment.js | 💥 | 81.25% |
+| js/classes/empty.js | 💥 | 63.64% |
+| js/classes/method.js | 💥 | 71.43% |
+| js/classes/property.js | 💥 | 81.25% |
+| js/classes-private-fields/optional-chaining.js | 💥💥 | 50.00% |
+| js/classes-private-fields/with_comments.js | 💥💥 | 40.00% |
+| js/comments/15661.js | 💥💥 | 22.00% |
+| js/comments/16398.js | 💥💥 | 60.00% |
+| js/comments/arrow.js | 💥💥 | 33.33% |
+| js/comments/assignment-pattern.js | 💥💥 | 33.33% |
+| js/comments/before-comma.js | 💥💥 | 60.00% |
+| js/comments/binary-expressions-block-comments.js | 💥💥 | 36.84% |
+| js/comments/binary-expressions-parens.js | 💥💥 | 66.67% |
+| js/comments/binary-expressions-single-comments.js | 💥💥 | 29.41% |
+| js/comments/binary-expressions.js | 💥💥 | 59.32% |
+| js/comments/blank.js | 💥💥 | 0.00% |
+| js/comments/break-continue-statements.js | 💥💥 | 45.45% |
+| js/comments/call_comment.js | 💥💥 | 48.00% |
+| js/comments/class.js | 💥💥 | 73.68% |
+| js/comments/dangling.js | 💥💥 | 0.00% |
+| js/comments/dangling_array.js | 💥💥 | 20.00% |
+| js/comments/dangling_for.js | 💥💥 | 75.00% |
+| js/comments/dynamic_imports.js | 💥💥 | 35.71% |
+| js/comments/emoji.js | 💥💥 | 33.33% |
+| js/comments/empty-statements.js | 💥💥 | 0.00% |
+| js/comments/export-and-import.js | 💥💥 | 33.33% |
+| js/comments/export.js | 💥💥 | 47.46% |
+| js/comments/first-line.js | 💥💥 | 50.00% |
+| js/comments/function-declaration.js | 💥💥 | 55.00% |
+| js/comments/if.js | 💥💥 | 45.05% |
+| js/comments/issue-3532.js | 💥💥 | 27.78% |
+| js/comments/issues.js | 💥💥 | 33.33% |
+| js/comments/jsdoc-nestled-dangling.js | 💥💥 | 77.78% |
+| js/comments/jsdoc-nestled.js | 💥💥 | 56.41% |
+| js/comments/jsdoc.js | 💥💥 | 19.51% |
+| js/comments/jsx.js | 💥💥 | 47.85% |
+| js/comments/last-arg.js | 💥💥 | 32.65% |
+| js/comments/multi-comments-2.js | 💥💥 | 90.91% |
+| js/comments/multi-comments-on-same-line-2.js | 💥💥 | 0.00% |
+| js/comments/multi-comments-on-same-line.js | 💥💥 | 54.55% |
+| js/comments/multi-comments.js | 💥💥 | 37.04% |
+| js/comments/preserve-new-line-last.js | 💥💥 | 76.47% |
+| js/comments/return-statement.js | 💥💥 | 51.32% |
+| js/comments/single-star-jsdoc.js | 💥💥 | 12.50% |
+| js/comments/switch.js | 💥💥 | 80.00% |
+| js/comments/tagged-template-literal.js | 💥💥 | 53.85% |
+| js/comments/template-literal.js | 💥💥 | 39.13% |
+| js/comments/trailing-jsdocs.js | 💥💥 | 0.00% |
+| js/comments/trailing_space.js | 💥💥 | 57.14% |
+| js/comments/try.js | 💥💥 | 44.44% |
+| js/comments/variable_declarator.js | 💥💥 | 51.69% |
+| js/comments/while.js | 💥💥 | 33.33% |
+| js/comments/flow-types/inline.js | 💥 | 16.67% |
+| js/comments/function/between-parentheses-and-function-body.js | 💥 | 72.00% |
+| js/comments/html-like/comment.js | 💥 | 0.00% |
+| js/comments-closure-typecast/binary-expr.js | 💥 | 0.00% |
+| js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 35.29% |
+| js/comments-closure-typecast/comment-in-the-middle.js | 💥 | 15.38% |
+| js/comments-closure-typecast/comment-placement.js | 💥 | 36.36% |
+| js/comments-closure-typecast/extra-spaces-and-asterisks.js | 💥 | 0.00% |
+| js/comments-closure-typecast/iife-issue-5850-isolated.js | 💥 | 0.00% |
+| js/comments-closure-typecast/iife.js | 💥 | 20.00% |
+| js/comments-closure-typecast/issue-4124.js | 💥 | 37.50% |
+| js/comments-closure-typecast/issue-8045.js | 💥 | 46.81% |
+| js/comments-closure-typecast/issue-9358.js | 💥 | 0.00% |
+| js/comments-closure-typecast/member.js | 💥 | 0.00% |
+| js/comments-closure-typecast/nested.js | 💥 | 13.33% |
+| js/comments-closure-typecast/non-casts.js | 💥 | 84.85% |
+| js/comments-closure-typecast/object-with-comment.js | 💥 | 10.53% |
+| js/comments-closure-typecast/satisfies.js | 💥 | 33.33% |
+| js/comments-closure-typecast/superclass.js | 💥 | 0.00% |
+| js/comments-closure-typecast/ways-to-specify-type.js | 💥 | 8.00% |
+| js/conditional/comments.js | 💥💥 | 30.58% |
+| js/conditional/new-ternary-examples.js | 💥💥 | 27.93% |
+| js/conditional/new-ternary-spec.js | 💥💥 | 33.16% |
+| js/conditional/no-confusing-arrow.js | 💥💥 | 40.00% |
+| js/conditional/postfix-ternary-regressions.js | 💥💥 | 52.77% |
+| js/destructuring/destructuring.js | 💥 | 75.73% |
+| js/destructuring-ignore/ignore.js | 💥💥💥 | 33.33% |
+| js/directives/escaped.js | 💥 | 69.84% |
+| js/directives/issue-7346.js | 💥 | 25.00% |
+| js/directives/newline.js | 💥 | 83.33% |
+| js/empty-paren-comment/class-property.js | 💥 | 22.22% |
+| js/empty-paren-comment/class.js | 💥 | 66.67% |
+| js/empty-paren-comment/empty_paren_comment.js | 💥 | 27.78% |
+| js/export/blank-line-between-specifiers.js | 💥💥 | 35.71% |
+| js/export/same-local-and-exported.js | 💥💥 | 66.67% |
+| js/expression_statement/no_regression.js | 💥 | 66.67% |
+| js/expression_statement/use_strict.js | 💥 | 0.00% |
+| js/for/comment.js | 💥 | 59.09% |
+| js/for/continue-and-break-comment-1.js | 💥 | 74.74% |
+| js/for/continue-and-break-comment-2.js | 💥 | 88.79% |
+| js/for/continue-and-break-comment-without-blocks.js | 💥 | 37.24% |
+| js/for/for-in-with-initializer.js | 💥 | 7.14% |
+| js/for/parentheses.js | 💥 | 98.00% |
+| js/function/issue-10277.js | 💥 | 36.36% |
+| js/function-comments/params-trail-comments.js | 💥 | 24.24% |
+| js/function-first-param/function_expression.js | 💥 | 96.55% |
+| js/function-single-destructuring/array.js | 💥 | 84.29% |
+| js/function-single-destructuring/object.js | 💥 | 76.79% |
+| js/functional-composition/functional_compose.js | 💥 | 38.96% |
+| js/functional-composition/lodash_flow.js | 💥 | 60.00% |
+| js/functional-composition/lodash_flow_right.js | 💥 | 60.00% |
+| js/functional-composition/pipe-function-calls-with-comments.js | 💥 | 31.43% |
+| js/functional-composition/pipe-function-calls.js | 💥 | 45.00% |
+| js/functional-composition/ramda_compose.js | 💥 | 60.87% |
+| js/functional-composition/ramda_pipe.js | 💥 | 73.68% |
+| js/functional-composition/redux_connect.js | 💥 | 0.00% |
+| js/functional-composition/reselect_createselector.js | 💥 | 33.33% |
+| js/functional-composition/rxjs_pipe.js | 💥 | 45.45% |
+| js/generator/async.js | 💥 | 92.86% |
+| js/generator/function-name-starts-with-get.js | 💥 | 83.33% |
+| js/identifier/parentheses/let.js | 💥✨ | 40.00% |
+| js/if/comment_before_else.js | 💥 | 66.67% |
+| js/if/else.js | 💥 | 94.44% |
+| js/if/expr_and_same_line_comments.js | 💥 | 41.98% |
+| js/if/if_comments.js | 💥 | 46.00% |
+| js/if/issue-15168.js | 💥 | 62.86% |
+| js/if/non-block.js | 💥 | 70.59% |
+| js/if/trailing_comment.js | 💥 | 64.52% |
+| js/import/comments.js | 💥💥 | 20.00% |
+| js/import/empty-import.js | 💥💥 | 12.50% |
+| js/import/same-local-and-imported.js | 💥💥 | 66.67% |
+| js/import-assertions/empty.js | 💥 | 71.43% |
+| js/import-assertions/keyword-detect.js | 💥 | 33.33% |
+| js/import-attributes/empty.js | 💥 | 71.43% |
+| js/import-attributes/keyword-detect.js | 💥 | 33.33% |
+| js/import-attributes/long-sources.js | 💥 | 65.57% |
+| js/label/comment.js | 💥 | 85.71% |
+| js/last-argument-expansion/arrow.js | 💥 | 12.90% |
+| js/last-argument-expansion/assignment-pattern.js | 💥 | 0.00% |
+| js/last-argument-expansion/break-parent.js | 💥 | 53.33% |
+| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
+| js/last-argument-expansion/edge_case.js | 💥 | 34.23% |
+| js/last-argument-expansion/empty-lines.js | 💥 | 12.50% |
+| js/last-argument-expansion/empty-object.js | 💥 | 54.17% |
+| js/last-argument-expansion/function-expression-issue-2239.js | 💥 | 0.00% |
+| js/last-argument-expansion/function-expression.js | 💥 | 26.32% |
+| js/last-argument-expansion/issue-10708.js | 💥 | 0.00% |
+| js/last-argument-expansion/issue-7518.js | 💥 | 72.00% |
+| js/last-argument-expansion/jsx.js | 💥 | 20.00% |
+| js/last-argument-expansion/overflow.js | 💥 | 51.02% |
+| js/line-suffix-boundary/boundary.js | 💥 | 40.00% |
+| js/literal/number.js | 💥 | 98.29% |
+| js/logical_expressions/issue-7024.js | 💥 | 18.18% |
+| js/logical_expressions/logical_expression_operators.js | 💥 | 95.08% |
+| js/member/conditional.js | 💥 | 57.14% |
+| js/member/expand.js | 💥 | 57.14% |
+| js/member/logical.js | 💥 | 85.71% |
+| js/method-chain/bracket_0-1.js | 💥 | 0.00% |
+| js/method-chain/break-last-call.js | 💥 | 83.33% |
+| js/method-chain/break-last-member.js | 💥 | 80.56% |
+| js/method-chain/comment.js | 💥 | 30.61% |
+| js/method-chain/computed-merge.js | 💥 | 41.38% |
+| js/method-chain/computed.js | 💥 | 0.00% |
+| js/method-chain/conditional.js | 💥 | 61.22% |
+| js/method-chain/d3.js | 💥 | 40.00% |
+| js/method-chain/first_long.js | 💥 | 57.14% |
+| js/method-chain/fluent-configuration.js | 💥 | 37.50% |
+| js/method-chain/inline_merge.js | 💥 | 64.29% |
+| js/method-chain/issue-11298.js | 💥 | 20.00% |
+| js/method-chain/issue-3594.js | 💥 | 50.00% |
+| js/method-chain/issue-4125.js | 💥 | 54.61% |
+| js/method-chain/logical.js | 💥 | 56.00% |
+| js/method-chain/multiple-members.js | 💥 | 45.65% |
+| js/method-chain/object-literal.js | 💥 | 7.69% |
+| js/method-chain/pr-7889.js | 💥 | 27.27% |
+| js/method-chain/short-names.js | 💥 | 0.00% |
+| js/method-chain/square_0.js | 💥 | 12.50% |
+| js/method-chain/test.js | 💥 | 54.55% |
+| js/method-chain/this.js | 💥 | 0.00% |
+| js/new-expression/with-member-expression.js | 💥 | 44.44% |
+| js/newline/backslash_2028.js | 💥 | 0.00% |
+| js/newline/backslash_2029.js | 💥 | 0.00% |
+| js/no-semi/class.js | 💥💥 | 88.37% |
+| js/no-semi/comments.js | 💥💥 | 71.43% |
+| js/no-semi/issue2006.js | 💥✨ | 37.50% |
+| js/no-semi/no-semi.js | 💥💥 | 84.12% |
+| js/non-strict/keywords.js | 💥 | 76.92% |
+| js/nullish-coalescing/nullish_coalesing_operator.js | 💥 | 80.00% |
+| js/numeric-separators/number.js | 💥 | 66.67% |
+| js/object-prop-break-in/comment.js | 💥 | 90.91% |
+| js/object-prop-break-in/short-keys.js | 💥 | 60.00% |
+| js/object-property-comment/after-key.js | 💥 | 71.43% |
+| js/object-property-ignore/ignore.js | 💥💥💥 | 69.14% |
+| js/object-property-ignore/issue-5678.js | 💥💥💥 | 23.88% |
+| js/objects/escape-sequence-key.js | 💥 | 66.67% |
+| js/objects/expand.js | 💥 | 50.00% |
+| js/objects/right-break.js | 💥 | 89.47% |
+| js/optional-chaining/chaining.js | 💥 | 83.91% |
+| js/optional-chaining/comments.js | 💥 | 17.91% |
+| js/optional-chaining/eval.js | 💥 | 82.93% |
+| js/optional-chaining-assignment/valid-complex-case.js | 💥 | 0.00% |
+| js/optional-chaining-assignment/valid-lhs-eq.js | 💥 | 0.00% |
+| js/optional-chaining-assignment/valid-lhs-plus-eq.js | 💥 | 0.00% |
+| js/performance/nested-real.js | 💥 | 97.04% |
+| js/preserve-line/argument-list.js | 💥 | 76.87% |
+| js/preserve-line/comments.js | 💥 | 75.47% |
+| js/preserve-line/member-chain.js | 💥 | 21.78% |
+| js/preserve-line/parameter-list.js | 💥 | 77.06% |
+| js/quote-props/numeric-separator.js | 💥💥💥💥 | 40.00% |
+| js/quote-props/objects.js | 💥💥💥💥 | 75.26% |
+| js/quotes/objects.js | 💥💥 | 80.00% |
+| js/quotes/strings.js | 💥💥 | 20.81% |
+| js/require-amd/named-amd-module.js | 💥 | 0.00% |
+| js/require-amd/require.js | 💥 | 2.17% |
+| js/return/binaryish.js | 💥 | 44.44% |
+| js/return/comment.js | 💥 | 58.82% |
+| js/sequence-break/break.js | 💥 | 35.09% |
+| js/sequence-expression/ignore.js | 💥 | 0.00% |
+| js/sequence-expression/parenthesized.js | 💥 | 23.53% |
+| js/strings/escaped.js | 💥💥 | 45.00% |
+| js/strings/multiline-literal.js | 💥💥 | 90.00% |
+| js/strings/non-octal-eight-and-nine.js | 💥💥 | 83.33% |
+| js/strings/template-literals.js | 💥💥 | 36.47% |
+| js/switch/comments.js | 💥 | 87.10% |
+| js/switch/comments2.js | 💥 | 58.82% |
+| js/template/call.js | 💥 | 57.14% |
+| js/template/comment.js | 💥 | 27.27% |
+| js/template/faulty-locations.js | 💥 | 84.62% |
+| js/template/graphql.js | 💥 | 34.48% |
+| js/template/indent.js | 💥 | 85.71% |
+| js/template/inline.js | 💥 | 81.48% |
+| js/template/parenthesis.js | 💥 | 81.32% |
+| js/template-align/indent.js | 💥💥 | 46.05% |
+| js/template-literals/binary-exporessions.js | 💥 | 0.00% |
+| js/template-literals/conditional-expressions.js | 💥 | 0.00% |
+| js/template-literals/expressions.js | 💥 | 63.64% |
+| js/template-literals/indention.js | 💥 | 51.16% |
+| js/template-literals/logical-expressions.js | 💥 | 0.00% |
+| js/template-literals/sequence-expressions.js | 💥 | 0.00% |
+| js/ternaries/binary.js | 💥💥💥💥💥💥💥💥 | 13.93% |
+| js/ternaries/func-call.js | 💥💥💥💥💥💥💥💥 | 45.20% |
+| js/ternaries/indent-after-paren.js | 💥💥💥💥💥💥💥💥 | 37.35% |
+| js/ternaries/indent.js | 💥💥💥💥💥💥💥💥 | 10.85% |
+| js/ternaries/nested-in-condition.js | 💥💥💥💥💥💥💥💥 | 15.90% |
+| js/ternaries/nested.js | 💥💥💥💥💥💥💥💥 | 26.56% |
+| js/ternaries/parenthesis.js | 💥💥💥💥💥💥💥💥 | 10.64% |
+| js/ternaries/test.js | 💥💥💥💥💥💥💥💥 | 30.99% |
+| js/ternaries/parenthesis/await-expression.js | 💥💥 | 14.29% |
+| js/test-declarations/angular_async.js | 💥💥 | 40.00% |
+| js/test-declarations/angular_fakeAsync.js | 💥💥 | 27.12% |
+| js/test-declarations/angular_waitForAsync.js | 💥💥 | 27.12% |
+| js/test-declarations/angularjs_inject.js | 💥💥 | 27.12% |
+| js/test-declarations/jest-each-template-string.js | 💥💥 | 25.00% |
+| js/test-declarations/jest-each.js | 💥💥 | 59.15% |
+| js/test-declarations/test_declarations.js | 💥💥 | 39.68% |
+| js/throw_statement/binaryish.js | 💥 | 40.74% |
+| js/throw_statement/comment.js | 💥 | 47.06% |
+| js/trailing-comma/es5.js | 💥💥✨ | 59.26% |
+| js/trailing-comma/function-calls.js | 💥💥✨ | 60.61% |
+| js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |
+| js/trailing-comma/trailing_whitespace.js | 💥💥💥 | 69.37% |
+| js/try/catch.js | 💥 | 50.00% |
+| js/try/try.js | 💥 | 85.71% |
+| js/unary/object.js | 💥 | 85.71% |
+| js/unary-expression/comments.js | 💥 | 18.23% |
+| js/unicode/combining-characters.js | 💥 | 0.00% |
+| js/unicode/nbsp-jsx.js | 💥 | 0.00% |
+| js/yield/jsx-without-parenthesis.js | 💥 | 50.00% |
+| js/yield/jsx.js | 💥 | 50.00% |
+| jsx/attr-element/attr-element.js | 💥 | 0.00% |
+| jsx/binary-expressions/relational-operators.js | 💥 | 78.95% |
+| jsx/comments/eslint-disable.js | 💥 | 0.00% |
+| jsx/comments/in-attributes.js | 💥 | 41.67% |
+| jsx/comments/in-end-tag.js | 💥 | 17.07% |
+| jsx/comments/in-tags.js | 💥 | 54.55% |
+| jsx/comments/jsx-tag-comment-after-prop.js | 💥 | 26.67% |
+| jsx/comments/like-a-comment-in-jsx-text.js | 💥 | 0.00% |
+| jsx/deprecated-jsx-bracket-same-line-option/jsx.js | 💥💥💥💥 | 45.33% |
+| jsx/embed/css-embed.js | 💥 | 0.00% |
+| jsx/escape/nbsp.js | 💥 | 70.00% |
+| jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
+| jsx/fbt/test.js | 💥 | 48.11% |
+| jsx/fragment/fragment.js | 💥 | 79.14% |
+| jsx/ignore/jsx_ignore.js | 💥 | 60.22% |
+| jsx/jsx/array-iter.js | 💥💥💥💥 | 20.97% |
+| jsx/jsx/arrow.js | 💥💥💥💥 | 29.17% |
+| jsx/jsx/attr-comments.js | 💥💥💥💥 | 0.00% |
+| jsx/jsx/await.js | 💥💥💥💥 | 16.47% |
+| jsx/jsx/conditional-expression.js | 💥💥💥💥 | 27.27% |
+| jsx/jsx/expression.js | 💥💥💥💥 | 32.74% |
+| jsx/jsx/flow_fix_me.js | 💥💥💥💥 | 0.00% |
+| jsx/jsx/html_escape.js | 💥💥✨✨ | 16.67% |
+| jsx/jsx/hug.js | 💥💥💥💥 | 33.85% |
+| jsx/jsx/logical-expression.js | 💥💥💥💥 | 35.82% |
+| jsx/jsx/object-property.js | 💥💥💥💥 | 52.63% |
+| jsx/jsx/open-break.js | 💥💥💥💥 | 21.43% |
+| jsx/jsx/parens.js | 💥💥💥💥 | 50.00% |
+| jsx/jsx/quotes.js | 💥💥💥💥 | 42.55% |
+| jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
+| jsx/jsx/return-statement.js | 💥💥💥💥 | 72.92% |
+| jsx/jsx/spacing.js | 💥💥💥💥 | 22.22% |
+| jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 26.67% |
+| jsx/last-line/last_line.js | 💥💥 | 44.51% |
+| jsx/last-line/single_prop_multiline_string.js | 💥💥 | 22.88% |
+| jsx/multiline-assign/test.js | 💥 | 34.62% |
+| jsx/newlines/test.js | 💥 | 41.96% |
+| jsx/newlines/windows.js | 💥 | 0.00% |
+| jsx/optional-chaining/optional-chaining.jsx | 💥 | 18.18% |
+| jsx/significant-space/comments.js | 💥 | 40.00% |
+| jsx/significant-space/test.js | 💥 | 32.09% |
+| jsx/single-attribute-per-line/single-attribute-per-line.js | 💥💥 | 55.77% |
+| jsx/split-attrs/test.js | 💥 | 13.57% |
+| jsx/spread/attribute.js | 💥 | 30.19% |
+| jsx/spread/child.js | 💥 | 26.67% |
+| jsx/stateless-arrow-fn/test.js | 💥 | 14.79% |
+| jsx/text-wrap/test.js | 💥 | 38.20% |

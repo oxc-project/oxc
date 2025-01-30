@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
+use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
@@ -74,7 +75,9 @@ impl TestRunner {
         let mut total_failed_file_count = 0;
         let mut failed_reports = String::new();
         failed_reports.push_str("# Failed\n");
-
+        failed_reports.push('\n');
+        failed_reports.push_str("| Spec path | Failed or Passed | Match ratio |\n");
+        failed_reports.push_str("| :-------- | :--------------: | :---------: |\n");
         for dir in &test_dirs {
             let inputs = collect_test_files(dir, None);
             let failed_test_files = test_snapshots(dir, &inputs, false);
@@ -82,21 +85,14 @@ impl TestRunner {
             total_tested_file_count += inputs.len();
             total_failed_file_count += failed_test_files.len();
 
-            if !failed_test_files.is_empty() {
-                // Use dir as header
+            for (path, (failed, passed, ratio)) in failed_test_files {
                 failed_reports.push_str(&format!(
-                    "\n### {}\n",
-                    &dir.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
+                    "| {} | {}{} | {:.2}% |\n",
+                    path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
+                    "💥".repeat(failed),
+                    "✨".repeat(passed),
+                    ratio * 100.0
                 ));
-                // Each failed test file
-                for (path, (failed, passed)) in failed_test_files {
-                    failed_reports.push_str(&format!(
-                        "* {} | {}{}\n",
-                        path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
-                        "💥".repeat(failed),
-                        "✨".repeat(passed),
-                    ));
-                }
             }
         }
 
@@ -191,7 +187,7 @@ fn test_snapshots(
     dir: &Path,
     test_files: &Vec<PathBuf>,
     has_debug_filter: bool,
-) -> Vec<(PathBuf, (usize, usize))> {
+) -> Vec<(PathBuf, (usize, usize, f32))> {
     // Parse all `runFormatTest()` calls and collect format options
     let spec_path = &dir.join(FORMAT_TEST_SPEC_NAME);
     let spec_calls = parse_spec(spec_path);
@@ -210,6 +206,7 @@ fn test_snapshots(
         let source_text = std::fs::read_to_string(path).unwrap();
 
         let mut failed_count = 0;
+        let mut total_diff_ratio = 0.0;
         // Check every combination of options!
         for (prettier_options, snapshot_options) in &spec_calls {
             // Single snapshot file contains multiple test cases, so need to find the right one
@@ -231,9 +228,11 @@ fn test_snapshots(
             );
 
             let result = expected == actual;
+            let diff = TextDiff::from_lines(&expected, &actual);
 
             if !result {
                 failed_count += 1;
+                total_diff_ratio += diff.ratio();
             }
 
             if has_debug_filter {
@@ -265,15 +264,21 @@ fn test_snapshots(
                     print_with_border(&format!("OxcOutput: {}LoC", actual.lines().count()));
                     println!("{actual}");
                     print_with_border("Diff");
-                    oxc_tasks_common::print_diff_in_terminal(&expected, &actual);
+                    oxc_tasks_common::print_diff_in_terminal(&diff);
                 }
                 println!();
             }
         }
 
         if failed_count != 0 {
-            let passed_count = spec_calls.len() - failed_count;
-            failed_test_files.push((path.clone(), (failed_count, passed_count)));
+            let total_count = spec_calls.len();
+            let passed_count = total_count - failed_count;
+            #[expect(clippy::cast_precision_loss)]
+            let max_diff_ratio = total_count as f32;
+            failed_test_files.push((
+                path.clone(),
+                (failed_count, passed_count, total_diff_ratio / max_diff_ratio),
+            ));
         }
     }
 
