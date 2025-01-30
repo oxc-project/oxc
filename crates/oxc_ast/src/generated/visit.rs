@@ -1363,7 +1363,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_span<'a, V: Visit<'a>>(visitor: &mut V, it: &Span) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
     }
 
     #[inline]
@@ -1607,7 +1607,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_template_element<'a, V: Visit<'a>>(visitor: &mut V, it: &TemplateElement<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
     }
 
@@ -1935,7 +1935,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_array_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSArrayType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.element_type);
     }
@@ -1956,7 +1956,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_constructor_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConstructorType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2015,7 +2015,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_binding_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingPattern<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_binding_pattern_kind(&it.kind);
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
@@ -2059,7 +2059,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_binding_property<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingProperty<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_property_key(&it.key);
         visitor.visit_binding_pattern(&it.value);
@@ -2132,7 +2132,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_function_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSFunctionType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2200,7 +2200,7 @@ pub mod walk {
         visitor: &mut V,
         it: &TSImportAttributes<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_identifier_name(&it.attributes_keyword);
         visitor.visit_ts_import_attribute_list(&it.elements);
@@ -2218,7 +2218,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_import_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &TSImportAttribute<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_import_attribute_name(&it.name);
         visitor.visit_expression(&it.value);
@@ -2360,14 +2360,14 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_optional_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSOptionalType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
     }
 
     #[inline]
     pub fn walk_ts_rest_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSRestType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
     }
@@ -2395,7 +2395,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_tuple_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTupleType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_tuple_elements(&it.element_types);
     }
@@ -2443,7 +2443,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_index_signature<'a, V: Visit<'a>>(visitor: &mut V, it: &TSIndexSignature<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_index_signature_names(&it.parameters);
         visitor.visit_ts_type_annotation(&it.type_annotation);
@@ -2464,7 +2464,7 @@ pub mod walk {
         visitor: &mut V,
         it: &TSIndexSignatureName<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_annotation(&it.type_annotation);
     }
@@ -2489,7 +2489,7 @@ pub mod walk {
         visitor: &mut V,
         it: &TSCallSignatureDeclaration<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2545,14 +2545,14 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_type_operator<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeOperator<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
     }
 
     #[inline]
     pub fn walk_ts_type_predicate<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypePredicate<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_predicate_name(&it.parameter_name);
         if let Some(type_annotation) = &it.type_annotation {
@@ -2634,7 +2634,7 @@ pub mod walk {
         visitor: &mut V,
         it: &JSDocNullableType<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
     }
@@ -2644,14 +2644,14 @@ pub mod walk {
         visitor: &mut V,
         it: &JSDocNonNullableType<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
     }
 
     #[inline]
     pub fn walk_js_doc_unknown_type<'a, V: Visit<'a>>(visitor: &mut V, it: &JSDocUnknownType) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
     }
 
@@ -2802,7 +2802,7 @@ pub mod walk {
         visitor: &mut V,
         it: &ComputedMemberExpression<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.object);
         visitor.visit_expression(&it.expression);
@@ -2813,7 +2813,7 @@ pub mod walk {
         visitor: &mut V,
         it: &StaticMemberExpression<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.object);
         visitor.visit_identifier_name(&it.property);
@@ -2824,7 +2824,7 @@ pub mod walk {
         visitor: &mut V,
         it: &PrivateFieldExpression<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.object);
         visitor.visit_private_identifier(&it.field);
@@ -2901,7 +2901,7 @@ pub mod walk {
         visitor: &mut V,
         it: &AssignmentTargetRest<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_assignment_target(&it.target);
     }
@@ -2951,7 +2951,7 @@ pub mod walk {
         visitor: &mut V,
         it: &AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_identifier_reference(&it.binding);
         if let Some(init) = &it.init {
@@ -2964,7 +2964,7 @@ pub mod walk {
         visitor: &mut V,
         it: &AssignmentTargetPropertyProperty<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_property_key(&it.name);
         visitor.visit_assignment_target_maybe_default(&it.binding);
@@ -3200,7 +3200,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_accessor_property<'a, V: Visit<'a>>(visitor: &mut V, it: &AccessorProperty<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
@@ -3496,7 +3496,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_jsx_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttribute<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_jsx_attribute_name(&it.name);
         if let Some(value) = &it.value {
@@ -3546,7 +3546,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_jsx_empty_expression<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXEmptyExpression) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
     }
 
@@ -3587,7 +3587,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_jsx_spread_child<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXSpreadChild<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.expression);
     }
@@ -3953,7 +3953,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_interface_body<'a, V: Visit<'a>>(visitor: &mut V, it: &TSInterfaceBody<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_ts_signatures(&it.body);
     }
@@ -4203,7 +4203,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_with_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &WithClause<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_identifier_name(&it.attributes_keyword);
         visitor.visit_import_attributes(&it.with_entries);
@@ -4221,7 +4221,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_import_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &ImportAttribute<'a>) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_import_attribute_key(&it.key);
         visitor.visit_string_literal(&it.value);
@@ -4347,7 +4347,7 @@ pub mod walk {
         visitor: &mut V,
         it: &TSNamespaceExportDeclaration<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        // No `AstKind` for this type
         visitor.visit_span(&it.span);
         visitor.visit_identifier_name(&it.id);
     }

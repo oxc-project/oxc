@@ -403,10 +403,8 @@ impl<'a> VisitBuilder<'a> {
             });
 
         let node_events = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-            let comment = format!(
-                "@ NOTE: {} doesn't exists!",
-                if self.is_mut { "AstType" } else { "AstKind" }
-            );
+            let comment =
+                format!("@ No `{}` for this type", if self.is_mut { "AstType" } else { "AstKind" });
             (quote!(#![doc = #comment]), TokenStream::default())
         } else {
             let kind = self.kind_type(&ident);

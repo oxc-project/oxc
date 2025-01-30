@@ -1358,7 +1358,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_span<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Span) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
     }
 
     #[inline]
@@ -1620,7 +1620,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TemplateElement<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
     }
 
@@ -1972,7 +1972,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_array_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSArrayType<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.element_type);
     }
@@ -1999,7 +1999,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSConstructorType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2064,7 +2064,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_binding_pattern<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BindingPattern<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_binding_pattern_kind(&mut it.kind);
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
@@ -2111,7 +2111,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut BindingProperty<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.key);
         visitor.visit_binding_pattern(&mut it.value);
@@ -2196,7 +2196,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSFunctionType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2270,7 +2270,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSImportAttributes<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_ts_import_attribute_list(&mut it.elements);
@@ -2291,7 +2291,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSImportAttribute<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_import_attribute_name(&mut it.name);
         visitor.visit_expression(&mut it.value);
@@ -2442,14 +2442,14 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSOptionalType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
 
     #[inline]
     pub fn walk_ts_rest_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSRestType<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
@@ -2477,7 +2477,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_tuple_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTupleType<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_tuple_elements(&mut it.element_types);
     }
@@ -2531,7 +2531,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSIndexSignature<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_index_signature_names(&mut it.parameters);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
@@ -2552,7 +2552,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSIndexSignatureName<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
     }
@@ -2577,7 +2577,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSCallSignatureDeclaration<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2639,7 +2639,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypeOperator<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
@@ -2649,7 +2649,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypePredicate<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_predicate_name(&mut it.parameter_name);
         if let Some(type_annotation) = &mut it.type_annotation {
@@ -2734,7 +2734,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocNullableType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
@@ -2744,7 +2744,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocNonNullableType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
@@ -2754,7 +2754,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocUnknownType,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
     }
 
@@ -2917,7 +2917,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ComputedMemberExpression<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_expression(&mut it.expression);
@@ -2928,7 +2928,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut StaticMemberExpression<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_identifier_name(&mut it.property);
@@ -2939,7 +2939,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut PrivateFieldExpression<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_private_identifier(&mut it.field);
@@ -3016,7 +3016,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetRest<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_assignment_target(&mut it.target);
     }
@@ -3066,7 +3066,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_reference(&mut it.binding);
         if let Some(init) = &mut it.init {
@@ -3079,7 +3079,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyProperty<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.name);
         visitor.visit_assignment_target_maybe_default(&mut it.binding);
@@ -3340,7 +3340,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AccessorProperty<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_decorators(&mut it.decorators);
         visitor.visit_property_key(&mut it.key);
@@ -3663,7 +3663,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_jsx_attribute<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXAttribute<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_attribute_name(&mut it.name);
         if let Some(value) = &mut it.value {
@@ -3722,7 +3722,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXEmptyExpression,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
     }
 
@@ -3766,7 +3766,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXSpreadChild<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.expression);
     }
@@ -4162,7 +4162,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSInterfaceBody<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_signatures(&mut it.body);
     }
@@ -4436,7 +4436,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_with_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut WithClause<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_import_attributes(&mut it.with_entries);
@@ -4457,7 +4457,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ImportAttribute<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_import_attribute_key(&mut it.key);
         visitor.visit_string_literal(&mut it.value);
@@ -4586,7 +4586,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSNamespaceExportDeclaration<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.id);
     }
