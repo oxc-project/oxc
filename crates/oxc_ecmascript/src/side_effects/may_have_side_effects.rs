@@ -6,7 +6,7 @@ use oxc_ast::ast::*;
 pub trait MayHaveSideEffects {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool;
 
-    fn expression_may_have_side_efffects(&self, e: &Expression<'_>) -> bool {
+    fn expression_may_have_side_effects(&self, e: &Expression<'_>) -> bool {
         match e {
             // Reference read can have a side effect.
             Expression::Identifier(ident) => match ident.name.as_str() {
@@ -24,19 +24,19 @@ pub trait MayHaveSideEffects {
             | Expression::ArrowFunctionExpression(_)
             | Expression::FunctionExpression(_) => false,
             Expression::TemplateLiteral(template) => {
-                template.expressions.iter().any(|e| self.expression_may_have_side_efffects(e))
+                template.expressions.iter().any(|e| self.expression_may_have_side_effects(e))
             }
             Expression::UnaryExpression(e) => self.unary_expression_may_have_side_effects(e),
             Expression::ParenthesizedExpression(e) => {
-                self.expression_may_have_side_efffects(&e.expression)
+                self.expression_may_have_side_effects(&e.expression)
             }
             Expression::ConditionalExpression(e) => {
-                self.expression_may_have_side_efffects(&e.test)
-                    || self.expression_may_have_side_efffects(&e.consequent)
-                    || self.expression_may_have_side_efffects(&e.alternate)
+                self.expression_may_have_side_effects(&e.test)
+                    || self.expression_may_have_side_effects(&e.consequent)
+                    || self.expression_may_have_side_effects(&e.alternate)
             }
             Expression::SequenceExpression(e) => {
-                e.expressions.iter().any(|e| self.expression_may_have_side_efffects(e))
+                e.expressions.iter().any(|e| self.expression_may_have_side_effects(e))
             }
             Expression::BinaryExpression(e) => self.binary_expression_may_have_side_effects(e),
             Expression::ObjectExpression(object_expr) => object_expr
@@ -57,7 +57,7 @@ pub trait MayHaveSideEffects {
             operator != UnaryOperator::Delete
         }
         if is_simple_unary_operator(e.operator) {
-            return self.expression_may_have_side_efffects(&e.argument);
+            return self.expression_may_have_side_effects(&e.argument);
         }
         true
     }
@@ -67,8 +67,8 @@ pub trait MayHaveSideEffects {
         if matches!(e.operator, BinaryOperator::In | BinaryOperator::Instanceof) {
             return true;
         }
-        self.expression_may_have_side_efffects(&e.left)
-            || self.expression_may_have_side_efffects(&e.right)
+        self.expression_may_have_side_effects(&e.left)
+            || self.expression_may_have_side_effects(&e.right)
     }
 
     fn array_expression_element_may_have_side_effects(
@@ -77,10 +77,10 @@ pub trait MayHaveSideEffects {
     ) -> bool {
         match e {
             ArrayExpressionElement::SpreadElement(e) => {
-                self.expression_may_have_side_efffects(&e.argument)
+                self.expression_may_have_side_effects(&e.argument)
             }
             match_expression!(ArrayExpressionElement) => {
-                self.expression_may_have_side_efffects(e.to_expression())
+                self.expression_may_have_side_effects(e.to_expression())
             }
             ArrayExpressionElement::Elision(_) => false,
         }
@@ -90,21 +90,21 @@ pub trait MayHaveSideEffects {
         match e {
             ObjectPropertyKind::ObjectProperty(o) => self.object_property_may_have_side_effects(o),
             ObjectPropertyKind::SpreadProperty(e) => {
-                self.expression_may_have_side_efffects(&e.argument)
+                self.expression_may_have_side_effects(&e.argument)
             }
         }
     }
 
     fn object_property_may_have_side_effects(&self, e: &ObjectProperty<'_>) -> bool {
         self.property_key_may_have_side_effects(&e.key)
-            || self.expression_may_have_side_efffects(&e.value)
+            || self.expression_may_have_side_effects(&e.value)
     }
 
     fn property_key_may_have_side_effects(&self, key: &PropertyKey<'_>) -> bool {
         match key {
             PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
-                self.expression_may_have_side_efffects(key.to_expression())
+                self.expression_may_have_side_effects(key.to_expression())
             }
         }
     }
