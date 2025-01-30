@@ -264,7 +264,6 @@ fn test_snapshots(
                     print_with_border(&format!("OxcOutput: {}LoC", actual.lines().count()));
                     println!("{actual}");
                     print_with_border("Diff");
-
                     oxc_tasks_common::print_diff_in_terminal(&diff);
                 }
                 println!();
