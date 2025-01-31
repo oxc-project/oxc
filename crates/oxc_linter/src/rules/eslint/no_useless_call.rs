@@ -25,6 +25,9 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     /// `Function.prototype.call()` and `Function.prototype.apply()` are slower than the normal function invocation.
     ///
+    /// This rule compares code statically to check whether or not thisArg is changed.
+    /// So if the code about thisArg is a dynamic expression, this rule cannot judge correctly.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
