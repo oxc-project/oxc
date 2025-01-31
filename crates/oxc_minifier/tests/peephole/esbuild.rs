@@ -592,12 +592,12 @@ fn js_parser_test() {
     test("a ? c : b || c", "a ? c : b || c;");
     test("a = b == null ? c : b", "a = b == null ? c : b;");
     test("a = b != null ? b : c", "a = b == null ? c : b;");
-    // test("let b; a = b == null ? c : b", "let b;a = b ?? c;");
-    // test("let b; a = b != null ? b : c", "let b;a = b ?? c;");
+    test("let b; a = b == null ? c : b", "let b;a = b ?? c;");
+    test("let b; a = b != null ? b : c", "let b;a = b ?? c;");
     test("let b; a = b == null ? b : c", "let b;a = b == null ? b : c;");
-    // test("let b; a = b != null ? c : b", "let b;a = b != null ? c : b;");
-    // test("let b; a = null == b ? c : b", "let b;a = b ?? c;");
-    // test("let b; a = null != b ? b : c", "let b;a = b ?? c;");
+    test("let b; a = b != null ? c : b", "let b;a = b == null ? b : c;");
+    test("let b; a = null == b ? c : b", "let b;a = b ?? c;");
+    test("let b; a = null != b ? b : c", "let b;a = b ?? c;");
     test("let b; a = null == b ? b : c", "let b;a = b == null ? b : c;");
     // test("let b; a = null != b ? c : b", "let b;a = b != null ? c : b;");
     test("let b; a = b.x == null ? c : b.x", "let b;a = b.x == null ? c : b.x;");
@@ -608,8 +608,8 @@ fn js_parser_test() {
     // test("let b; a = b !== null ? b : c", "let b;a = b !== null ? b : c;");
     test("let b; a = null === b ? c : b", "let b;a = b === null ? c : b;");
     // test("let b; a = null !== b ? b : c", "let b;a = b !== null ? b : c;");
-    // test("let b; a = null === b || b === undefined ? c : b", "let b;a = b ?? c;");
-    // test("let b; a = b !== undefined && b !== null ? b : c", "let b;a = b ?? c;");
+    test("let b; a = null === b || b === undefined ? c : b", "let b;a = b ?? c;");
+    test("let b; a = b !== undefined && b !== null ? b : c", "let b;a = b ?? c;");
     // test("a(b ? 0 : 0)", "a((b, 0));");
     // test("a(b ? +0 : -0)", "a(b ? 0 : -0);");
     // test("a(b ? +0 : 0)", "a((b, 0));");
@@ -639,10 +639,10 @@ fn js_parser_test() {
     test("return a ?? ((b ?? c) ?? (d ?? e))", "return a ?? b ?? c ?? d ?? e;");
     test("if (a) if (b) if (c) d", "a && b && c && d;");
     test("if (!a) if (!b) if (!c) d", "a || b || c || d;");
-    // test(
-    // "let a, b, c; return a != null ? a : b != null ? b : c",
-    // "let a, b, c;return a ?? b ?? c;",
-    // );
+    test(
+        "let a, b, c; return a != null ? a : b != null ? b : c",
+        "let a, b, c;return a ?? b ?? c;",
+    );
     test("if (a) return c; if (b) return d;", "if (a) return c;if (b) return d;");
     // test("if (a) return c; if (b) return c;", "if (a || b) return c;");
 }

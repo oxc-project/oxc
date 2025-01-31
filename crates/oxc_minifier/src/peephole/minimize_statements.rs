@@ -143,17 +143,12 @@ impl<'a> PeepholeOptimizations {
                             {
                                 // "if (a, b) return c; return d;" => "return a, b ? c : d;"
                                 let test = sequence_expr.expressions.pop().unwrap();
-                                let mut b = Self::minimize_conditional(
-                                    prev_if.span,
-                                    test,
-                                    left,
-                                    right,
-                                    ctx,
-                                );
+                                let mut b =
+                                    self.minimize_conditional(prev_if.span, test, left, right, ctx);
                                 Self::join_sequence(&mut prev_if.test, &mut b, ctx)
                             } else {
                                 // "if (a) return b; return c;" => "return a ? b : c;"
-                                let mut expr = Self::minimize_conditional(
+                                let mut expr = self.minimize_conditional(
                                     prev_if.span,
                                     ctx.ast.move_expression(&mut prev_if.test),
                                     left,
