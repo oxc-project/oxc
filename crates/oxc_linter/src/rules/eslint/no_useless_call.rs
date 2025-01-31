@@ -85,7 +85,7 @@ impl Rule for NoUselessCall {
     }
 }
 
-fn validate_this_argument<'a>(this_arg: &Expression<'a>, applied: &Expression<'a>) -> bool {
+fn validate_this_argument(this_arg: &Expression, applied: &Expression) -> bool {
     if this_arg.is_null_or_undefined() {
         return matches!(applied, Expression::Identifier(_));
     }
@@ -97,10 +97,7 @@ fn validate_this_argument<'a>(this_arg: &Expression<'a>, applied: &Expression<'a
     validate_member_expression(this_arg, applied_member)
 }
 
-fn validate_member_expression<'a>(
-    this_arg: &Expression<'a>,
-    applied_member: &MemberExpression<'a>,
-) -> bool {
+fn validate_member_expression(this_arg: &Expression, applied_member: &MemberExpression) -> bool {
     let applied_object = applied_member.object().without_parentheses();
 
     if let Some(this_arg_member) = as_member_expression_without_chain_expression(this_arg) {
