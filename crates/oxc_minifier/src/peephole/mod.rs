@@ -3,6 +3,7 @@ mod convert_to_dotted_properties;
 mod fold_constants;
 mod minimize_conditions;
 mod minimize_exit_points;
+mod minimize_statements;
 mod normalize;
 mod remove_dead_code;
 mod replace_known_methods;
@@ -137,11 +138,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             return;
         }
         let ctx = Ctx(ctx);
-        self.statement_fusion_exit_statements(stmts, ctx);
-        self.collapse_variable_declarations(stmts, ctx);
-        self.minimize_conditions_exit_statements(stmts, ctx);
-        self.remove_dead_code_exit_statements(stmts, ctx);
-        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+        self.minimize_statements(stmts, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -160,14 +157,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
         let ctx = Ctx(ctx);
         self.substitute_return_statement(stmt, ctx);
-    }
-
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
-        let ctx = Ctx(ctx);
-        self.minimize_exit_points(body, ctx);
     }
 
     fn exit_variable_declaration(

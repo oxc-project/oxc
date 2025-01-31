@@ -3,6 +3,8 @@ use crate::cli::{lint_command, LintRunner};
 #[cfg(test)]
 use crate::runner::Runner;
 #[cfg(test)]
+use cow_utils::CowUtils;
+#[cfg(test)]
 use regex::Regex;
 #[cfg(test)]
 use std::{env, path::PathBuf};
@@ -78,10 +80,8 @@ impl Tester {
 
         // do not output the current working directory, each machine has a different one
         let cwd_string = current_cwd.to_str().unwrap();
-        #[allow(clippy::disallowed_methods)]
-        let cwd_string = cwd_string.replace('\\', "/");
-        #[allow(clippy::disallowed_methods)]
-        let output_string = output_string.replace(&cwd_string, "<cwd>");
+        let cwd_string = cwd_string.cow_replace('\\', "/").to_string(); // for windows
+        let output_string = output_string.cow_replace(&cwd_string, "<cwd>");
 
         let full_args_list =
             multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");
@@ -90,8 +90,7 @@ impl Tester {
 
         // windows can not handle filenames with *
         // allow replace instead of cow_replace. It only test
-        #[allow(clippy::disallowed_methods)]
-        let snapshot_file_name = snapshot_file_name.replace('*', "_");
+        let snapshot_file_name = snapshot_file_name.cow_replace('*', "_").to_string();
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_file_name, output_string);
         });

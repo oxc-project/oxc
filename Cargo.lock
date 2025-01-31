@@ -1692,6 +1692,7 @@ dependencies = [
  "oxc_syntax",
  "pico-args",
  "rustc-hash",
+ "ryu-js",
 ]
 
 [[package]]
@@ -2271,6 +2272,7 @@ name = "oxlint"
 version = "0.15.8"
 dependencies = [
  "bpaf",
+ "cow-utils",
  "ignore",
  "insta",
  "jemallocator",

@@ -176,7 +176,11 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`MemberExpression`] with the specified `object`
+    /// name and `property` name.
+    ///
+    /// For example, `Array.from` is a specific member access with `object` `Array` and `property` `from`
+    /// and could be checked like `expr.is_specific_member_access("Array", "from")`.
     pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
         match self.get_inner_expression() {
             expr if expr.is_member_expression() => {
@@ -192,7 +196,12 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the expression inside of this one, if applicable, and takes ownership of it.
+    /// For example, if the expression is a [`ParenthesizedExpression`], it will return the
+    /// expression inside the parentheses. Or if this is part of a TypeScript expression
+    /// like `as`, `satisfies`, or `!`, then it will return the expression that is being type asserted.
+    ///
+    /// For getting a reference to the expression inside, use [`Expression::get_inner_expression`].
     #[must_use]
     pub fn into_inner_expression(self) -> Expression<'a> {
         let mut expr = self;
@@ -210,7 +219,13 @@ impl<'a> Expression<'a> {
         expr
     }
 
-    #[allow(missing_docs)]
+    /// Gets the expression inside of this one, if applicable, and returns a reference to it.
+    /// For example, if the expression is a [`ParenthesizedExpression`], it will return the
+    /// expression inside the parentheses. Or if this is part of a TypeScript expression
+    /// like `as`, `satisfies`, or `!`, then it will return the expression that is being type asserted.
+    ///
+    /// For taking ownership of the expression inside, use [`Expression::into_inner_expression`].
+    /// For getting a mutable reference to the expression inside, use [`Expression::get_inner_expression_mut`].
     pub fn get_inner_expression(&self) -> &Expression<'a> {
         let mut expr = self;
         loop {
@@ -227,7 +242,13 @@ impl<'a> Expression<'a> {
         expr
     }
 
-    #[allow(missing_docs)]
+    /// Gets the expression inside of this one, if applicable, and returns a mutable reference to it.
+    /// For example, if the expression is a [`ParenthesizedExpression`], it will return the
+    /// expression inside the parentheses. Or if this is part of a TypeScript expression
+    /// like `as`, `satisfies`, or `!`, then it will return the expression that is being type asserted.
+    ///
+    /// For taking ownership of the expression inside, use [`Expression::into_inner_expression`].
+    /// For getting an immutable reference to the expression inside, use [`Expression::get_inner_expression`].
     pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
         let mut expr = self;
         loop {
@@ -244,12 +265,27 @@ impl<'a> Expression<'a> {
         expr
     }
 
+    #[allow(missing_docs)]
+    pub fn into_chain_element(self) -> Option<ChainElement<'a>> {
+        match self {
+            Expression::StaticMemberExpression(e) => Some(ChainElement::StaticMemberExpression(e)),
+            Expression::ComputedMemberExpression(e) => {
+                Some(ChainElement::ComputedMemberExpression(e))
+            }
+            Expression::PrivateFieldExpression(e) => Some(ChainElement::PrivateFieldExpression(e)),
+            Expression::CallExpression(e) => Some(ChainElement::CallExpression(e)),
+            Expression::TSNonNullExpression(e) => Some(ChainElement::TSNonNullExpression(e)),
+            _ => None,
+        }
+    }
+
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`].
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns the [`IdentifierReference`] if this expression is an [`Expression::Identifier`],
+    /// or contains an [`Expression::Identifier`] and reurns `None` otherwise.
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
         match self.get_inner_expression() {
             Expression::Identifier(ident) => Some(ident),
@@ -302,7 +338,9 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns the [`MemberExpression`] if this expression is a [`MemberExpression`], contains a
+    /// [`MemberExpression`], or is or part of a [`ChainExpression`] (such as `a?.b`),
+    /// and returns `None` otherwise if this is not a member expression.
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
         match self.get_inner_expression() {
             Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
@@ -348,7 +386,9 @@ impl fmt::Display for BindingIdentifier<'_> {
 }
 
 impl ArrayExpressionElement<'_> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this array expression element is an [elision](Elision).
+    /// An elision is a comma in an array literal that is not followed by an expression.
+    /// For example, in `[1, , 3]`, the second element is an elision.
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
     }
@@ -372,7 +412,14 @@ impl ObjectPropertyKind<'_> {
 }
 
 impl<'a> PropertyKey<'a> {
-    #[allow(missing_docs)]
+    /// Returns the static name of this property, if it has one, or `None` otherwise.
+    ///
+    /// ## Example
+    ///
+    /// - `a: 1` in `{ a: 1 }` would return `a`
+    /// - `#a: 1` in `class C { #a: 1 }` would return `None`
+    /// - `'a': 1` in `{ 'a': 1 }` would return `a`
+    /// - `[a]: 1` in `{ [a]: 1 }` would return `None`
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
@@ -388,22 +435,29 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if the static name of this property key is exactly equal to the given name.
     pub fn is_specific_static_name(&self, name: &str) -> bool {
         self.static_name().is_some_and(|n| n == name)
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this property key is an identifier, such as `a` in `{ a: 1 }` or
+    /// `#a` in `class C { #a: 1 }`.
     pub fn is_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_) | Self::StaticIdentifier(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this property key is a private identifier, such as `#a` in
+    /// `class C { #a: 1 }`.
     pub fn is_private_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns the name of this property key, if it is a private identifier, or `None` otherwise.
+    ///
+    /// ## Example
+    ///
+    /// - `#a: 1` in `class C { #a: 1 }` would return `a`
+    /// - `a: 1` in `{ a: 1 }` would return `None`
     pub fn private_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::PrivateIdentifier(ident) => Some(ident.name),
@@ -411,7 +465,14 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the name of this property key if it is an identifier or literal value, or `None` otherwise.
+    ///
+    /// ## Example
+    ///
+    /// - `#a: 1` in `class C { #a: 1 }` would return `a`
+    /// - `a: 1` in `{ a: 1 }` would return `a`
+    /// - `'a': 1` in `{ 'a': 1 }` would return `a`
+    /// - `[a]: 1` in `{ [a]: 1 }` would return `None`
     pub fn name(&self) -> Option<Cow<'a, str>> {
         if self.is_private_identifier() {
             self.private_name().map(|name| Cow::Borrowed(name.as_str()))
@@ -420,7 +481,7 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this property key is exactly equal to the given identifier name.
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self {
             PropertyKey::StaticIdentifier(ident) => ident.name == name,
@@ -428,7 +489,7 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this property key is a string literal with the given value.
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
         matches!(self, Self::StringLiteral(s) if s.value == string)
     }
@@ -444,7 +505,13 @@ impl PropertyKind {
 }
 
 impl<'a> TemplateLiteral<'a> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this template literal is a [no-substitution template](https://tc39.es/ecma262/#prod-NoSubstitutionTemplate)
+    /// (a template literal with no expressions in it).
+    ///
+    /// ## Example
+    ///
+    /// - `` `foo` `` => `true`
+    /// - `` `foo${bar}qux` `` => `false`
     pub fn is_no_substitution_template(&self) -> bool {
         self.expressions.is_empty() && self.quasis.len() == 1
     }
@@ -456,12 +523,14 @@ impl<'a> TemplateLiteral<'a> {
 }
 
 impl<'a> MemberExpression<'a> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this member expression is a [`MemberExpression::ComputedMemberExpression`]. For example, `a[b]`
+    /// in `let a = { b: 1 }; a[b]` is a computed member expression.
     pub fn is_computed(&self) -> bool {
         matches!(self, MemberExpression::ComputedMemberExpression(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this member expression is an optionally chained member expression. For example, `a?.b`
+    /// in `let a = null; a?.b` is an optionally chained member expression.
     pub fn optional(&self) -> bool {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => expr.optional,
@@ -470,7 +539,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns a reference to the [`Expression`] that is the object of this member expression.
     pub fn object(&self) -> &Expression<'a> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => &expr.object,
@@ -479,7 +548,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns a mutable reference to the [`Expression`] that is the object of this member expression.
     pub fn object_mut(&mut self) -> &mut Expression<'a> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => &mut expr.object,
@@ -488,7 +557,16 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
+    ///
+    /// If you need the [`Span`] of the property name, use [`MemberExpression::static_property_info`] instead.
+    ///
+    /// ## Example
+    ///
+    /// - `a.b` would return `Some("b")`
+    /// - `a["b"]` would return `Some("b")`
+    /// - `a[b]` would return `None`
+    /// - `a.#b` would return `Some("b")`
     pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
@@ -499,7 +577,10 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
+    /// or `None` otherwise.
+    ///
+    /// If you don't need the [`Span`], use [`MemberExpression::static_property_name`] instead.
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
@@ -520,7 +601,8 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this member expression is a specific member access such as `a.b`, and takes
+    /// into account whether it might also be an optionally chained member access such as `a?.b`.
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parentheses() {
             Expression::ChainExpression(x) => match x.expression.member_expression() {
@@ -545,7 +627,7 @@ impl<'a> MemberExpression<'a> {
 }
 
 impl<'a> ComputedMemberExpression<'a> {
-    #[allow(missing_docs)]
+    /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
     pub fn static_property_name(&self) -> Option<Atom<'a>> {
         match &self.expression {
             Expression::StringLiteral(lit) => Some(lit.value),
@@ -561,7 +643,7 @@ impl<'a> ComputedMemberExpression<'a> {
 }
 
 impl<'a> StaticMemberExpression<'a> {
-    #[allow(missing_docs)]
+    /// Returns the first non-member expression in the chain of static member expressions. For example, will return `a` for `a?.b?.c`.
     pub fn get_first_object(&self) -> &Expression<'a> {
         let mut object = &self.object;
         loop {
@@ -598,7 +680,7 @@ impl<'a> ChainElement<'a> {
 }
 
 impl CallExpression<'_> {
-    #[allow(missing_docs)]
+    /// Returns the static name of the callee, if it has one, or `None` otherwise.
     pub fn callee_name(&self) -> Option<&str> {
         match &self.callee {
             Expression::Identifier(ident) => Some(ident.name.as_str()),
@@ -627,7 +709,8 @@ impl CallExpression<'_> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`CallExpression`] is a call to `Symbol`
+    /// or [`Symbol.for`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/for).
     pub fn is_symbol_or_symbol_for_call(&self) -> bool {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
@@ -642,7 +725,13 @@ impl CallExpression<'_> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this looks like a call to `require` in CommonJS (has a single string argument):
+    /// ```js
+    /// require('string') // => true
+    /// require('string', 'string') // => false
+    /// require() // => false
+    /// require(123) // => false
+    /// ```
     pub fn common_js_require(&self) -> Option<&StringLiteral> {
         if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
             return None;
@@ -655,7 +744,7 @@ impl CallExpression<'_> {
 }
 
 impl Argument<'_> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this argument is a spread element (like `...foo`).
     pub fn is_spread(&self) -> bool {
         matches!(self, Self::SpreadElement(_))
     }
@@ -760,7 +849,7 @@ impl AssignmentTargetMaybeDefault<'_> {
 }
 
 impl Statement<'_> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this statement uses any TypeScript syntax (such as `declare`).
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             match_declaration!(Self) => {
@@ -773,7 +862,16 @@ impl Statement<'_> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this statement uses iteration like `do`, `for`, or `while`.
+    ///
+    /// ## Example
+    ///
+    /// - `do { } while (true)` => `true`
+    /// - `for (let i = 0; i < 10; i++) { }` => `true`
+    /// - `for (let i in obj) { }` => `true`
+    /// - `for (let i of obj) { }` => `true`
+    /// - `while (true) { }` => `true`
+    /// - `if (true) { }` => `false`
     pub fn is_iteration_statement(&self) -> bool {
         matches!(
             self,
@@ -782,6 +880,17 @@ impl Statement<'_> {
                 | Statement::ForOfStatement(_)
                 | Statement::ForStatement(_)
                 | Statement::WhileStatement(_)
+        )
+    }
+
+    #[allow(missing_docs)]
+    pub fn is_jump_statement(&self) -> bool {
+        matches!(
+            self,
+            Self::ReturnStatement(_)
+                | Self::ThrowStatement(_)
+                | Self::BreakStatement(_)
+                | Self::ContinueStatement(_)
         )
     }
 
@@ -812,7 +921,7 @@ impl Directive<'_> {
 }
 
 impl<'a> Declaration<'a> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this declaration uses any TypeScript syntax such as `declare`, abstract classes, or function overload signatures.
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
@@ -842,7 +951,7 @@ impl<'a> Declaration<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this declaration was made using the `declare` keyword in TypeScript.
     pub fn declare(&self) -> bool {
         match self {
             Declaration::VariableDeclaration(decl) => decl.declare,
@@ -858,7 +967,7 @@ impl<'a> Declaration<'a> {
 }
 
 impl VariableDeclaration<'_> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this declaration uses the `declare` TypeScript syntax.
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare
     }
@@ -870,27 +979,29 @@ impl VariableDeclaration<'_> {
 }
 
 impl VariableDeclarationKind {
-    /// `var x`
+    /// Returns `true` if declared using `var` (such as `var x`)
     pub fn is_var(&self) -> bool {
         matches!(self, Self::Var)
     }
 
-    /// `const x`
+    /// Returns `true` if declared using `const` (such as `const x`)
     pub fn is_const(&self) -> bool {
         matches!(self, Self::Const)
     }
 
-    /// `let x` or `const x`
+    /// Returns `true` if declared using `let` or `const` (such as `let x` or `const x`)
     pub fn is_lexical(&self) -> bool {
         matches!(self, Self::Const | Self::Let)
     }
 
-    /// `await using x`
+    /// Returns `true` if declared using `await using` (such as `await using x`)
     pub fn is_await(&self) -> bool {
         matches!(self, Self::AwaitUsing)
     }
 
-    #[allow(missing_docs)]
+    /// Returns the code syntax for this [`VariableDeclarationKind`].
+    /// For example, [`Var`][`VariableDeclarationKind::Var`] would return `"var"` and
+    /// [`AwaitUsing`][`VariableDeclarationKind::AwaitUsing`] would return `"await using"`.
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Var => "var",
@@ -1067,7 +1178,7 @@ impl<'a> Function<'a> {
         self.id.as_ref().map(BindingIdentifier::symbol_id)
     }
 
-    /// `true` for overload signatures and `declare function` statements.
+    /// Returns `true` if this function uses overload signatures or `declare function` statements.
     pub fn is_typescript_syntax(&self) -> bool {
         matches!(
             self.r#type,
@@ -1231,7 +1342,7 @@ impl<'a> Class<'a> {
         self.r#type == ClassType::ClassDeclaration
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this class uses `declare class` or `abstract class` syntax.
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare || self.r#abstract
     }
@@ -1336,7 +1447,8 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this class element uses any TypeScript syntax such as index signatures (like `[key: string]: any`),
+    /// abstract properties, function overload signatures, or `declare`.
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) => true,
@@ -1412,7 +1524,7 @@ impl MethodDefinitionKind {
         matches!(self, Self::Get | Self::Set)
     }
 
-    #[allow(missing_docs)]
+    /// Returns the [`ScopeFlags`] for this method definition kind.
     pub fn scope_flags(self) -> ScopeFlags {
         match self {
             Self::Constructor => ScopeFlags::Constructor | ScopeFlags::Function,
@@ -1424,14 +1536,16 @@ impl MethodDefinitionKind {
 }
 
 impl MethodDefinitionType {
-    #[allow(missing_docs)]
+    /// Returns `true` if this method definition is a TypeScript `abstract` method.
+    ///
+    /// See: [`MethodDefinitionType::TSAbstractMethodDefinition`]
     pub fn is_abstract(&self) -> bool {
         matches!(self, Self::TSAbstractMethodDefinition)
     }
 }
 
 impl<'a> ModuleDeclaration<'a> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this module declaration uses any TypeScript syntax such as the `type` or `declare` keywords.
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             ModuleDeclaration::ImportDeclaration(_) => false,
@@ -1443,12 +1557,12 @@ impl<'a> ModuleDeclaration<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this is an [import declaration](`ModuleDeclaration::ImportDeclaration`).
     pub fn is_import(&self) -> bool {
         matches!(self, Self::ImportDeclaration(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this is an export declaration.
     pub fn is_export(&self) -> bool {
         matches!(
             self,
@@ -1460,12 +1574,18 @@ impl<'a> ModuleDeclaration<'a> {
         )
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true`` if this is a default export declaration.
     pub fn is_default_export(&self) -> bool {
         matches!(self, Self::ExportDefaultDeclaration(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns the import/export source of this module declaration, if it has one.
+    ///
+    /// ## Example
+    ///
+    /// - `import foo from "foo/thing"` => `"foo/thing"`
+    /// - `export * from "foo"` => `"foo"`
+    /// - `export default foo` => `None`
     pub fn source(&self) -> Option<&StringLiteral<'a>> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
@@ -1477,7 +1597,13 @@ impl<'a> ModuleDeclaration<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the with clause of an import/export declaration, if it has one.
+    ///
+    /// ## Example
+    ///
+    /// - `import thing from "lib" with { key: "data" }` => `Some(WithClause)`
+    /// - `export * from "lib" with { key: "data" }` => `Some(WithClause)`
+    /// - `export default thing` => `None`
     pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
         match self {
             Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
@@ -1491,14 +1617,16 @@ impl<'a> ModuleDeclaration<'a> {
 }
 
 impl AccessorPropertyType {
-    #[allow(missing_docs)]
+    /// Returns `true` if this accessor property is a TypeScript `abstract` accessor.
+    ///
+    /// See: [`AccessorPropertyType::TSAbstractAccessorProperty`]
     pub fn is_abstract(&self) -> bool {
         matches!(self, Self::TSAbstractAccessorProperty)
     }
 }
 
 impl<'a> ImportDeclarationSpecifier<'a> {
-    #[allow(missing_docs)]
+    /// Returns the bound local identifier of this import declaration specifier.
     pub fn local(&self) -> &BindingIdentifier<'a> {
         match self {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => &specifier.local,
@@ -1507,14 +1635,20 @@ impl<'a> ImportDeclarationSpecifier<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the name of the bound local identifier for this import declaration specifier.
+    ///
+    /// ## Example
+    ///
+    /// - `import { foo } from "lib"` => `"foo"`
+    /// - `import * as foo from "lib"` => `"foo"`
+    /// - `import foo from "lib"` => `"foo"`
     pub fn name(&self) -> Cow<'a, str> {
         Cow::Borrowed(self.local().name.as_str())
     }
 }
 
 impl<'a> ImportAttributeKey<'a> {
-    #[allow(missing_docs)]
+    /// Returns the string value of this import attribute key.
     pub fn as_atom(&self) -> Atom<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name,
@@ -1524,7 +1658,7 @@ impl<'a> ImportAttributeKey<'a> {
 }
 
 impl ExportNamedDeclaration<'_> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this export declaration uses any TypeScript syntax (such as `type` or `declare`).
     pub fn is_typescript_syntax(&self) -> bool {
         self.export_kind == ImportOrExportKind::Type
             || self.declaration.as_ref().is_some_and(Declaration::is_typescript_syntax)
@@ -1532,21 +1666,21 @@ impl ExportNamedDeclaration<'_> {
 }
 
 impl ExportDefaultDeclaration<'_> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this export declaration uses any TypeScript syntax (such as `declare` or `interface`).
     pub fn is_typescript_syntax(&self) -> bool {
         self.declaration.is_typescript_syntax()
     }
 }
 
 impl ExportAllDeclaration<'_> {
-    #[allow(missing_docs)]
+    /// Returns `true` if is a TypeScript type-only export (`import type` or `export type`).
     pub fn is_typescript_syntax(&self) -> bool {
         self.export_kind.is_type()
     }
 }
 
 impl ExportDefaultDeclarationKind<'_> {
-    #[allow(missing_docs)]
+    /// Returns `true` if this export declaration uses any TypeScript syntax (such as `declare` or `interface`).
     #[inline]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
@@ -1570,7 +1704,13 @@ impl fmt::Display for ModuleExportName<'_> {
 }
 
 impl<'a> ModuleExportName<'a> {
-    #[allow(missing_docs)]
+    /// Returns the exported name of this module export name.
+    ///
+    /// ## Example
+    ///
+    /// - `export { foo }` => `"foo"`
+    /// - `export { foo as bar }` => `"bar"`
+    /// - `export { foo as "anything" }` => `"anything"`
     pub fn name(&self) -> Atom<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name,
@@ -1579,7 +1719,13 @@ impl<'a> ModuleExportName<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the exported identifier name of this module export name.
+    ///
+    /// ## Example
+    ///
+    /// - `export { foo }` => `Some("foo")`
+    /// - `export { foo as bar }` => `Some("bar")`
+    /// - `export { foo as "anything" }` => `None`
     pub fn identifier_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::IdentifierName(identifier) => Some(identifier.name),
@@ -1590,7 +1736,12 @@ impl<'a> ModuleExportName<'a> {
 }
 
 impl ImportPhase {
-    #[allow(missing_docs)]
+    /// Returns the syntax associated with this [`ImportPhase`].
+    ///
+    /// ## Example
+    ///
+    /// - [`Source`][`ImportPhase::Source`] => `"source"`
+    /// - [`Defer`][`ImportPhase::Defer`] => `"defer"`
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Source => "source",

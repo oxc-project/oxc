@@ -9,6 +9,7 @@ pub mod class;
 pub mod function;
 pub mod function_parameters;
 pub mod literal;
+pub mod member;
 pub mod misc;
 pub mod module;
 pub mod object;
