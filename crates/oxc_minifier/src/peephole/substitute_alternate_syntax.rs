@@ -96,29 +96,6 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
             _ => {}
         }
-
-        // Fold
-        if let Some(folded_expr) = match expr {
-            Expression::LogicalExpression(e) => Self::try_compress_is_object_and_not_null(e, ctx)
-                .or_else(|| Self::try_rotate_logical_expression(e, ctx)),
-            Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
-            Expression::BinaryExpression(e) => Self::try_fold_loose_equals_undefined(e, ctx)
-                .or_else(|| Self::try_compress_typeof_undefined(e, ctx)),
-            Expression::NewExpression(e) => Self::get_fold_constructor_name(&e.callee, ctx)
-                .and_then(|name| {
-                    Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
-                })
-                .or_else(|| Self::try_fold_new_expression(e, ctx)),
-            Expression::CallExpression(e) => Self::get_fold_constructor_name(&e.callee, ctx)
-                .and_then(|name| {
-                    Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
-                })
-                .or_else(|| Self::try_fold_simple_function_call(e, ctx)),
-            _ => None,
-        } {
-            *expr = folded_expr;
-            self.mark_current_function_as_changed();
-        }
     }
 
     fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
@@ -164,7 +141,7 @@ impl<'a> PeepholeOptimizations {
     /// - `typeof foo.bar != "undefined"` -> `foo.bar !== undefined` (for any expression e.g.`typeof (foo + "")`)
     ///
     /// Enabled by `compress.typeofs`
-    fn try_compress_typeof_undefined(
+    pub fn try_compress_typeof_undefined(
         expr: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -201,7 +178,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `a || (b || c);` -> `(a || b) || c;`
-    fn try_rotate_logical_expression(
+    pub fn try_rotate_logical_expression(
         expr: &mut LogicalExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -245,7 +222,7 @@ impl<'a> PeepholeOptimizations {
     /// - If `foo` is an object, then `!!foo` is `true`. If `foo` is null, then `!!foo` is `false`.
     ///
     /// This compression is safe for `document.all` because `typeof document.all` is not `'object'`.
-    fn try_compress_is_object_and_not_null(
+    pub fn try_compress_is_object_and_not_null(
         expr: &mut LogicalExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -397,7 +374,7 @@ impl<'a> PeepholeOptimizations {
         ))
     }
 
-    fn try_fold_loose_equals_undefined(
+    pub fn try_fold_loose_equals_undefined(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -474,7 +451,7 @@ impl<'a> PeepholeOptimizations {
     /// `Number(0)` -> `0`
     /// `String()` -> `''`
     /// `BigInt(1)` -> `1`
-    fn try_fold_simple_function_call(
+    pub fn try_fold_simple_function_call(
         call_expr: &mut CallExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -557,7 +534,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Fold `Object` or `Array` constructor
-    fn get_fold_constructor_name(callee: &Expression<'a>, ctx: Ctx<'a, '_>) -> Option<&'a str> {
+    pub fn get_fold_constructor_name(callee: &Expression<'a>, ctx: Ctx<'a, '_>) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
                 if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
@@ -581,7 +558,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `window.Object()`, `new Object()`, `Object()`  -> `{}`
     /// `window.Array()`, `new Array()`, `Array()`  -> `[]`
-    fn try_fold_object_or_array_constructor(
+    pub fn try_fold_object_or_array_constructor(
         span: Span,
         name: &'a str,
         args: &mut Vec<'a, Argument<'a>>,
@@ -656,7 +633,7 @@ impl<'a> PeepholeOptimizations {
     /// `new AggregateError()` -> `AggregateError()`
     /// `new Function()` -> `Function()`
     /// `new RegExp()` -> `RegExp()`
-    fn try_fold_new_expression(
+    pub fn try_fold_new_expression(
         e: &mut NewExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -731,7 +708,10 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_template_literal(t: &TemplateLiteral, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
+    pub fn try_fold_template_literal(
+        t: &TemplateLiteral,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
         t.to_js_string().map(|val| ctx.ast.expression_string_literal(t.span(), val, None))
     }
 

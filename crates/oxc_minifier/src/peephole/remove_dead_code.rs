@@ -40,22 +40,22 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    pub fn remove_dead_code_exit_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) {
-        if let Some(folded_expr) = match expr {
-            Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
-            Expression::SequenceExpression(sequence_expression) => {
-                Self::try_fold_sequence_expression(sequence_expression, ctx)
-            }
-            _ => None,
-        } {
-            *expr = folded_expr;
-            self.mark_current_function_as_changed();
-        }
-    }
+    // pub fn remove_dead_code_exit_expression(
+    // &mut self,
+    // expr: &mut Expression<'a>,
+    // ctx: Ctx<'a, '_>,
+    // ) {
+    // if let Some(folded_expr) = match expr {
+    // Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
+    // Expression::SequenceExpression(sequence_expression) => {
+    // Self::try_fold_sequence_expression(sequence_expression, ctx)
+    // }
+    // _ => None,
+    // } {
+    // *expr = folded_expr;
+    // self.mark_current_function_as_changed();
+    // }
+    // }
 
     /// Removes dead code thats comes after `return`, `throw`, `continue` and `break` statements.
     pub fn remove_dead_code_exit_statements(
@@ -498,7 +498,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
-    fn try_fold_conditional_expression(
+    pub fn try_fold_conditional_expression(
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -533,7 +533,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_sequence_expression(
+    pub fn try_fold_sequence_expression(
         sequence_expr: &mut SequenceExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {

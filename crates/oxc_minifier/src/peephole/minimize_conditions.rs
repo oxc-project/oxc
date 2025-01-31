@@ -54,51 +54,31 @@ impl<'a> PeepholeOptimizations {
         };
     }
 
-    pub fn minimize_conditions_exit_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) {
-        let mut changed = false;
-        loop {
-            let mut local_change = false;
-            if let Some(folded_expr) = match expr {
-                Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
-                Expression::BinaryExpression(e) => Self::try_minimize_binary(e, ctx),
-                Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx)
-                    .or_else(|| {
-                        self.try_compress_logical_expression_to_assignment_expression(e, ctx)
-                    }),
-                Expression::ConditionalExpression(logical_expr) => {
-                    if Self::try_fold_expr_in_boolean_context(&mut logical_expr.test, ctx) {
-                        local_change = true;
-                    }
-                    self.try_minimize_conditional(logical_expr, ctx)
-                }
-                Expression::AssignmentExpression(e) => {
-                    if self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx) {
-                        local_change = true;
-                    }
-                    if Self::try_compress_normal_assignment_to_combined_assignment(e, ctx) {
-                        local_change = true;
-                    }
-                    Self::try_compress_assignment_to_update_expression(e, ctx)
-                }
-                _ => None,
-            } {
-                *expr = folded_expr;
-                local_change = true;
-            };
-            if local_change {
-                changed = true;
-            } else {
-                break;
-            }
-        }
-        if changed {
-            self.mark_current_function_as_changed();
-        }
-    }
+    // pub fn minimize_conditions_exit_expression(
+    // &mut self,
+    // expr: &mut Expression<'a>,
+    // ctx: Ctx<'a, '_>,
+    // ) {
+    // let mut changed = false;
+    // loop {
+    // let mut local_change = false;
+    // if let Some(folded_expr) = match expr {
+    // }
+    // _ => None,
+    // } {
+    // *expr = folded_expr;
+    // local_change = true;
+    // };
+    // if local_change {
+    // changed = true;
+    // } else {
+    // break;
+    // }
+    // }
+    // if changed {
+    // self.mark_current_function_as_changed();
+    // }
+    // }
 
     fn minimize_not(span: Span, expr: Expression<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
         let mut unary = ctx.ast.unary_expression(span, UnaryOperator::LogicalNot, expr);
@@ -107,7 +87,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
-    fn try_minimize_not(
+    pub fn try_minimize_not(
         expr: &mut UnaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -281,7 +261,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
-    fn try_minimize_conditional(
+    pub fn try_minimize_conditional(
         &self,
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -824,7 +804,7 @@ impl<'a> PeepholeOptimizations {
     /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
     ///
     /// <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
-    fn try_fold_expr_in_boolean_context(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    pub fn try_fold_expr_in_boolean_context(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         match expr {
             // "!!a" => "a"
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
@@ -920,7 +900,7 @@ impl<'a> PeepholeOptimizations {
     //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
     // `x >> y !== 0` -> `x >> y`
     //  ^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
-    fn try_minimize_binary(
+    pub fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -979,7 +959,7 @@ impl<'a> PeepholeOptimizations {
     /// If that assumption does not hold, this compression is not allowed.
     /// - `document.all === null || document.all === undefined` is `false`
     /// - `document.all == null` is `true`
-    fn try_compress_is_null_or_undefined(
+    pub fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -1115,7 +1095,7 @@ impl<'a> PeepholeOptimizations {
     /// Compress `a = a || b` to `a ||= b`
     ///
     /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
-    fn try_compress_normal_assignment_to_combined_logical_assignment(
+    pub fn try_compress_normal_assignment_to_combined_logical_assignment(
         &mut self,
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -1149,7 +1129,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Compress `a || (a = b)` to `a ||= b`
-    fn try_compress_logical_expression_to_assignment_expression(
+    pub fn try_compress_logical_expression_to_assignment_expression(
         &self,
         expr: &mut LogicalExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -1177,7 +1157,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Compress `a = a + b` to `a += b`
-    fn try_compress_normal_assignment_to_combined_assignment(
+    pub fn try_compress_normal_assignment_to_combined_assignment(
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> bool {
@@ -1252,7 +1232,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Compress `a = a + b` to `a += b`
-    fn try_compress_assignment_to_update_expression(
+    pub fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {

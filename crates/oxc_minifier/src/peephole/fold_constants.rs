@@ -14,30 +14,15 @@ use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
+/// Constant Folding
+///
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 impl<'a, 'b> PeepholeOptimizations {
-    /// Constant Folding
-    ///
-    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-    pub fn fold_constants_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        if let Some(folded_expr) = match expr {
-            Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
-                .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),
-            Expression::UnaryExpression(e) => Self::try_fold_unary_expr(e, ctx),
-            Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
-            Expression::ComputedMemberExpression(e) => Self::try_fold_computed_member_expr(e, ctx),
-            Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
-            Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
-            Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
-            Expression::ObjectExpression(e) => self.fold_object_spread(e, ctx),
-            _ => None,
-        } {
-            *expr = folded_expr;
-            self.mark_current_function_as_changed();
-        };
-    }
-
     #[expect(clippy::float_cmp)]
-    fn try_fold_unary_expr(e: &UnaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
+    pub fn try_fold_unary_expr(
+        e: &UnaryExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
         match e.operator {
             // Do not fold `void 0` back to `undefined`.
             UnaryOperator::Void if e.argument.is_number_0() => None,
@@ -51,7 +36,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_static_member_expr(
+    pub fn try_fold_static_member_expr(
         e: &mut StaticMemberExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -59,7 +44,7 @@ impl<'a, 'b> PeepholeOptimizations {
         ctx.eval_static_member_expression(e).map(|value| ctx.value_to_expr(e.span, value))
     }
 
-    fn try_fold_computed_member_expr(
+    pub fn try_fold_computed_member_expr(
         e: &mut ComputedMemberExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -67,7 +52,7 @@ impl<'a, 'b> PeepholeOptimizations {
         ctx.eval_computed_member_expression(e).map(|value| ctx.value_to_expr(e.span, value))
     }
 
-    fn try_fold_logical_expr(
+    pub fn try_fold_logical_expr(
         logical_expr: &mut LogicalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -77,7 +62,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_optional_chain(
+    pub fn try_fold_optional_chain(
         chain_expr: &mut ChainExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -212,7 +197,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    fn try_fold_binary_expr(
+    pub fn try_fold_binary_expr(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -555,7 +540,7 @@ impl<'a, 'b> PeepholeOptimizations {
         None
     }
 
-    fn try_fold_number_constructor(
+    pub fn try_fold_number_constructor(
         e: &CallExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -599,7 +584,7 @@ impl<'a, 'b> PeepholeOptimizations {
         Some(ctx.value_to_expr(e.span, value))
     }
 
-    fn try_fold_binary_typeof_comparison(
+    pub fn try_fold_binary_typeof_comparison(
         bin_expr: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -684,7 +669,7 @@ impl<'a, 'b> PeepholeOptimizations {
         None
     }
 
-    fn fold_object_spread(
+    pub fn fold_object_spread(
         &mut self,
         e: &mut ObjectExpression<'a>,
         ctx: Ctx<'a, 'b>,

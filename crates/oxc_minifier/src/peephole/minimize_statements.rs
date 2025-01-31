@@ -156,7 +156,7 @@ impl<'a> PeepholeOptimizations {
                                     right,
                                     ctx,
                                 );
-                                self.minimize_conditions_exit_expression(&mut expr, ctx);
+                                self.minimize_expression(&mut expr, ctx);
                                 expr
                             };
                             let last_return_stmt =

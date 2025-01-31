@@ -114,6 +114,97 @@ impl<'a> PeepholeOptimizations {
         }
         None
     }
+
+    pub fn minimize_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+        let mut changed = false;
+        loop {
+            let mut local_change = false;
+            if let Some(folded_expr) = match expr {
+                Expression::ConditionalExpression(e) => {
+                    if Self::try_fold_expr_in_boolean_context(&mut e.test, ctx) {
+                        local_change = true;
+                    }
+                    Self::try_fold_conditional_expression(e, ctx)
+                        .or_else(|| self.try_minimize_conditional(e, ctx))
+                }
+                Expression::SequenceExpression(sequence_expression) => {
+                    Self::try_fold_sequence_expression(sequence_expression, ctx)
+                }
+                Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
+                    .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx))
+                    .or_else(|| Self::try_minimize_binary(e, ctx))
+                    .or_else(|| Self::try_fold_loose_equals_undefined(e, ctx))
+                    .or_else(|| Self::try_compress_typeof_undefined(e, ctx)),
+                Expression::UnaryExpression(e) => {
+                    Self::try_fold_unary_expr(e, ctx).or_else(|| Self::try_minimize_not(e, ctx))
+                }
+                Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx)
+                    .or_else(|| {
+                        self.try_compress_logical_expression_to_assignment_expression(e, ctx)
+                    })
+                    .or_else(|| Self::try_fold_logical_expr(e, ctx))
+                    .or_else(|| Self::try_compress_is_object_and_not_null(e, ctx))
+                    .or_else(|| Self::try_rotate_logical_expression(e, ctx)),
+                Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
+                Expression::ComputedMemberExpression(e) => {
+                    Self::try_fold_computed_member_expr(e, ctx)
+                }
+                Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
+                Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx)
+                    .or_else(|| {
+                        Self::get_fold_constructor_name(&e.callee, ctx).and_then(|name| {
+                            Self::try_fold_object_or_array_constructor(
+                                e.span,
+                                name,
+                                &mut e.arguments,
+                                ctx,
+                            )
+                        })
+                    })
+                    .or_else(|| Self::try_fold_simple_function_call(e, ctx)),
+                Expression::ObjectExpression(e) => self.fold_object_spread(e, ctx),
+                Expression::AssignmentExpression(e) => {
+                    if self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx) {
+                        local_change = true;
+                    }
+                    if Self::try_compress_normal_assignment_to_combined_assignment(e, ctx) {
+                        local_change = true;
+                    }
+                    Self::try_compress_assignment_to_update_expression(e, ctx)
+                }
+                Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
+                Expression::NewExpression(e) => Self::get_fold_constructor_name(&e.callee, ctx)
+                    .and_then(|name| {
+                        Self::try_fold_object_or_array_constructor(
+                            e.span,
+                            name,
+                            &mut e.arguments,
+                            ctx,
+                        )
+                    })
+                    .or_else(|| Self::try_fold_new_expression(e, ctx)),
+                _ => None,
+            } {
+                *expr = folded_expr;
+                local_change = true;
+            };
+
+            // self.fold_constants_exit_expression(expr, ctx);
+            // self.minimize_conditions_exit_expression(expr, ctx);
+            // self.remove_dead_code_exit_expression(expr, ctx);
+            self.replace_known_methods_exit_expression(expr, ctx);
+            self.substitute_exit_expression(expr, ctx);
+
+            if local_change {
+                changed = true;
+            } else {
+                break;
+            }
+        }
+        if changed {
+            self.mark_current_function_as_changed();
+        }
+    }
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
@@ -176,11 +267,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             return;
         }
         let ctx = Ctx(ctx);
-        self.fold_constants_exit_expression(expr, ctx);
-        self.minimize_conditions_exit_expression(expr, ctx);
-        self.remove_dead_code_exit_expression(expr, ctx);
-        self.replace_known_methods_exit_expression(expr, ctx);
-        self.substitute_exit_expression(expr, ctx);
+        self.minimize_expression(expr, ctx);
     }
 
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -326,8 +413,8 @@ impl<'a> Traverse<'a> for DeadCodeElimination {
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.inner.fold_constants_exit_expression(expr, Ctx(ctx));
-        self.inner.remove_dead_code_exit_expression(expr, Ctx(ctx));
+    fn exit_expression(&mut self, _expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
+        // self.inner.fold_constants_exit_expression(expr, Ctx(ctx));
+        // self.inner.remove_dead_code_exit_expression(expr, Ctx(ctx));
     }
 }
