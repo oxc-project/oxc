@@ -950,10 +950,9 @@ impl<'a> LatePeepholeOptimizations {
 
         let Expression::ArrayExpression(array) = expr else { unreachable!() };
 
-        let is_all_string = array
-            .elements
-            .iter()
-            .all(|element| element.as_expression().is_some_and(Expression::is_string_literal));
+        let is_all_string = array.elements.iter().all(|element| {
+            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(_)))
+        });
         if !is_all_string {
             return None;
         }
@@ -1323,6 +1322,7 @@ mod test {
 
         test_same_with_longer_args("'1','2','3','4'");
         test_same_with_longer_args("'1','2','3','4','5'");
+        test_same_with_longer_args("`1${a}`,'2','3','4','5','6'");
         test_with_longer_args("'1','2','3','4','5','6'", "123456", "");
         test_with_longer_args("'1','2','3','4','5','00'", "1.2.3.4.5.00", ".");
         test_with_longer_args("'1','2','3','4','5','6','7'", "1234567", "");
@@ -1330,6 +1330,7 @@ mod test {
         test_with_longer_args("'.,',',',',',',',',',','", ".,(,(,(,(,(,", "(");
         test_with_longer_args("',,','.',',',',',',',','", ",,(.(,(,(,(,", "(");
         test_with_longer_args("'a,','.',',',',',',',','", "a,(.(,(,(,(,", "(");
+        test_with_longer_args("`1`,'2','3','4','5','6'", "123456", "");
 
         // all possible delimiters used, leave it alone
         test_same_with_longer_args("'.', ',', '(', ')', ' '");
