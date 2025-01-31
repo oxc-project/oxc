@@ -504,18 +504,4 @@ mod test {
             assert_eq!(rule.severity, AllowWarnDeny::Warn, "{config:?}");
         }
     }
-
-    #[test]
-    fn test_two_rules_with_same_name_and_different_plugin_names() {
-        // Issue: <https://github.com/oxc-project/oxc/issues/8485>
-        let configs =
-            [json!({ "eslint/no-nested-ternary": "off", "unicorn/no-nested-ternary": "off" })];
-
-        for config in &configs {
-            let mut rules = RuleSet::default();
-            r#override(&mut rules, config);
-
-            assert_eq!(rules.len(), 0, "{config:?}");
-        }
-    }
 }

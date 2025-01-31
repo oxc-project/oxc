@@ -825,6 +825,13 @@ mod test {
     }
 
     #[test]
+    fn test_two_rules_with_same_name_from_different_plugin_names() {
+        // Issue: <https://github.com/oxc-project/oxc/issues/8485>
+        let args = &["-c", ".oxlintrc.json", "test.js"];
+        Tester::new().with_cwd("fixtures/two_rules_with_same_name".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_adjust_ignore_patterns() {
         let base = PathBuf::from("/project/root");
         let path = PathBuf::from("/project/root/src");
