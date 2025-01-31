@@ -972,6 +972,7 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectProperty, {
+            // TODO: Use `function::print_method()`
             if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
                 let mut parts = Vec::new_in(p.allocator);
                 match self.kind {
@@ -1221,6 +1222,7 @@ impl<'a> Format<'a> for AssignmentTargetProperty<'a> {
 impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
+
         parts.push(self.binding.format(p));
 
         if let Some(init) = &self.init {
@@ -1234,7 +1236,11 @@ impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
 
 impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let left_doc = self.name.format(p);
+        let left_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(&self.name),
+            self.computed,
+        );
 
         // TODO: How to convert `AssignmentTargetMaybeDefault` to `Expression`?
         // Or `print_assignment` is not needed?
@@ -1467,7 +1473,11 @@ impl<'a> Format<'a> for BindingProperty<'a> {
             return self.value.format(p);
         }
 
-        let left_doc = self.key.format(p);
+        let left_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(&self.key),
+            self.computed,
+        );
 
         // TODO: How to convert `BindingPattern` to `Expression`...?
         // Or `print_assignment` is not needed?

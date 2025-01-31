@@ -9,6 +9,10 @@ pub enum PropertyKeyLike<'a, 'b> {
     PropertyKey(&'b PropertyKey<'a>),
 }
 
+/// This should be used for property keys when these conditions are met:
+/// - If `computed` property, wrap the key with `[]`
+/// - If the key is a string, align quoted or not
+/// Otherwise, just use `key.format()` directly.
 pub fn print_property_key<'a>(
     p: &mut Prettier<'a>,
     property_key: &PropertyKeyLike<'a, '_>,
