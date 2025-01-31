@@ -50,7 +50,7 @@ ts compatibility: 199/568 (35.04%)
 | jsx/spread/attribute.js | 💥 | 30.19% |
 | jsx/spread/child.js | 💥 | 26.67% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 14.79% |
-| jsx/text-wrap/test.js | 💥 | 38.20% |
+| jsx/text-wrap/test.js | 💥 | 38.05% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 61.54% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 38.46% |
@@ -80,7 +80,7 @@ ts compatibility: 199/568 (35.04%)
 | typescript/call-signature/call-signature.ts | 💥 | 86.44% |
 | typescript/cast/as-const.ts | 💥 | 44.44% |
 | typescript/cast/assert-and-assign.ts | 💥 | 0.00% |
-| typescript/cast/generic-cast.ts | 💥 | 38.38% |
+| typescript/cast/generic-cast.ts | 💥 | 37.75% |
 | typescript/cast/hug-args.ts | 💥 | 21.05% |
 | typescript/cast/parenthesis.ts | 💥 | 66.67% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |

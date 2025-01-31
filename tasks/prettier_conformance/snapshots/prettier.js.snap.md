@@ -241,7 +241,7 @@ js compatibility: 251/641 (39.16%)
 | js/method-chain/comment.js | 💥 | 30.61% |
 | js/method-chain/computed-merge.js | 💥 | 41.38% |
 | js/method-chain/computed.js | 💥 | 0.00% |
-| js/method-chain/conditional.js | 💥 | 61.22% |
+| js/method-chain/conditional.js | 💥 | 78.43% |
 | js/method-chain/d3.js | 💥 | 40.00% |
 | js/method-chain/first_long.js | 💥 | 57.14% |
 | js/method-chain/fluent-configuration.js | 💥 | 37.50% |
@@ -313,13 +313,13 @@ js compatibility: 251/641 (39.16%)
 | js/template-align/indent.js | 💥💥 | 46.05% |
 | js/template-literals/binary-exporessions.js | 💥 | 0.00% |
 | js/template-literals/conditional-expressions.js | 💥 | 0.00% |
-| js/template-literals/expressions.js | 💥 | 63.64% |
+| js/template-literals/expressions.js | 💥 | 62.69% |
 | js/template-literals/indention.js | 💥 | 51.16% |
 | js/template-literals/logical-expressions.js | 💥 | 0.00% |
 | js/template-literals/sequence-expressions.js | 💥 | 0.00% |
 | js/ternaries/binary.js | 💥💥💥💥💥💥💥💥 | 13.93% |
 | js/ternaries/func-call.js | 💥💥💥💥💥💥💥💥 | 45.20% |
-| js/ternaries/indent-after-paren.js | 💥💥💥💥💥💥💥💥 | 37.35% |
+| js/ternaries/indent-after-paren.js | 💥💥💥💥💥💥💥💥 | 39.32% |
 | js/ternaries/indent.js | 💥💥💥💥💥💥💥💥 | 10.85% |
 | js/ternaries/nested-in-condition.js | 💥💥💥💥💥💥💥💥 | 15.90% |
 | js/ternaries/nested.js | 💥💥💥💥💥💥💥💥 | 26.56% |
@@ -393,4 +393,4 @@ js compatibility: 251/641 (39.16%)
 | jsx/spread/attribute.js | 💥 | 30.19% |
 | jsx/spread/child.js | 💥 | 26.67% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 14.79% |
-| jsx/text-wrap/test.js | 💥 | 38.20% |
+| jsx/text-wrap/test.js | 💥 | 38.05% |
