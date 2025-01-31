@@ -2,18 +2,18 @@ mod checkstyle;
 mod default;
 mod github;
 mod json;
+mod junit;
 mod stylish;
 mod unix;
-mod junit;
 
 use std::str::FromStr;
 use std::time::Duration;
 
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
+use junit::JUnitOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
-use junit::JUnitOutputFormatter;
 
 use oxc_diagnostics::reporter::DiagnosticReporter;
 

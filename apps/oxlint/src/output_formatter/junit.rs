@@ -1,4 +1,7 @@
-use oxc_diagnostics::{reporter::{DiagnosticReporter, DiagnosticResult, Info}, Error, Severity};
+use oxc_diagnostics::{
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    Error, Severity,
+};
 use rustc_hash::FxHashMap;
 
 use super::InternalFormatter;
@@ -50,10 +53,15 @@ fn format_junit(diagnostics: &[Error]) -> String {
 
             let mut status = match diagnostic.severity() {
                 Some(Severity::Error) => TestCaseStatus::non_success(NonSuccessKind::Error),
-                _ => TestCaseStatus::non_success(NonSuccessKind::Failure)
+                _ => TestCaseStatus::non_success(NonSuccessKind::Failure),
             };
             status.set_message(message.clone());
-            status.set_description(format!("line {}, column {}, {}", start.line, start.column, message.clone()));
+            status.set_description(format!(
+                "line {}, column {}, {}",
+                start.line,
+                start.column,
+                message.clone()
+            ));
             let test_case = TestCase::new(rule, status);
             test_suite.add_test_case(test_case);
         }
