@@ -189,26 +189,23 @@ fn js_parser_test() {
     // "foo: while (a) while (x) { if (1) continue foo; z(); }",
     // "foo: for (; a; ) for (; x; ) continue foo;",
     // );
-    // test("while (x) { y(); if (1) break; z(); }", "for (; x; ) { y(); break;}");
-    // test("while (x) { y(); if (1) continue; z(); }", "for (; x; ) y();");
-    // test("while (x) { y(); debugger; if (1) continue; z(); }", "for (; x; ) { y(); debugger;}");
-    // test("while (x) { let y = z(); if (1) continue; z(); }", "for (; x; ) { let y = z();}");
-    // test(
-    // "while (x) { debugger; if (y) { if (1) break; z() } }",
-    // "for (; x; ) { debugger; if (y)  break;}",
-    // );
-    // test(
-    // "while (x) { debugger; if (y) { if (1) continue; z() } }",
-    // "for (; x; ) { debugger; y;}",
-    // );
-    // test(
-    // "while (x) { debugger; if (1) { if (1) break; z() } }",
-    // "for (; x; ) { debugger; break;}",
-    // );
-    // test("while (x) { debugger; if (1) { if (1) continue; z() } }", "for (; x; ) debugger;");
+    test("while (x) { y(); if (1) break; z(); }", "for (; x; ) { y(); break;}");
+    test("while (x) { y(); if (1) continue; z(); }", "for (; x; ) y();");
+    test("while (x) { y(); debugger; if (1) continue; z(); }", "for (; x; ) { y(); debugger; }");
+    test("while (x) { let y = z(); if (1) continue; z(); }", "for (; x; ) { let y = z();}");
+    test(
+        "while (x) { debugger; if (y) { if (1) break; z() } }",
+        "for (; x; ) { debugger; if (y) break; }",
+    );
+    // test("while (x) { debugger; if (y) { if (1) continue; z() } }", "for (; x; ) { debugger; y; }");
+    test(
+        "while (x) { debugger; if (1) { if (1) break; z() } }",
+        "for (; x; ) { debugger; break; }",
+    );
+    test("while (x) { debugger; if (1) { if (1) continue; z() } }", "for (; x; ) debugger;");
     // test("while (x()) continue", "for (; x(); ) ;");
-    // test("while (x) { y(); continue }", "for (; x; ) y();");
-    // test("while (x) { if (y) { z(); continue } }", "for (; x; ) if (y) {  z();  continue; }");
+    test("while (x) { y(); continue }", "for (; x; ) y();");
+    test("while (x) { if (y) { z(); continue } }", "for (; x; ) if (y) {  z();  continue; }");
     // test(
     // "label: while (x) while (y) { z(); continue label }",
     // "label: for (; x; ) for (; y; ) { z(); continue label;}",
@@ -220,24 +217,24 @@ fn js_parser_test() {
     // "while (x) { t(); if (y) continue; else z(); w(); }",
     // "for (; x; ) t(), !y && (z(), w());",
     // );
-    // test("while (x) { debugger; if (y) continue; z(); }", "for (; x; ) { debugger; y || z();}");
+    // test("while (x) { debugger; if (y) continue; z(); }", "for (; x; ) { debugger; y || z(); }");
     // test(
     // "while (x) { debugger; if (y) continue; else z(); w(); }",
     // "for (; x; ) { debugger; y || (z(), w());}",
     // );
     // test(
     // "while (x) { if (y) continue; function y() {} }",
-    // "for (; x; ) { let y = function() { }; var y = y;}",
+    // "for (; x; ) { let y = function() { }; var y = y; }",
     // );
-    // test("while (x) { if (y) continue; let y }", "for (; x; ) { if (y) continue; let y;}");
-    // test("while (x) { if (y) continue; var y }", "for (; x; ) if (!y)  var y;");
+    test("while (x) { if (y) continue; let y }", "for (; x; ) { if (y) continue; let y; }");
+    // test("while (x) { if (y) continue; var y }", "for (; x; ) if (!y) var y; ");
     test("console.log(undefined)", "console.log(void 0);");
     test("console.log(+undefined)", "console.log(NaN);");
     test("console.log(undefined + undefined)", "console.log(void 0 + void 0);");
     test("const x = undefined", "const x = void 0;");
     test("let x = undefined", "let x;");
     test("var x = undefined", "var x = void 0;");
-    // test("function foo(a) { if (!a) return undefined; a() }", "function foo(a) { a && a();}");
+    // test("function foo(a) { if (!a) return undefined; a() }", "function foo(a) { a && a(); }");
     test("delete undefined", "delete undefined;");
     test("undefined--", "undefined--;");
     test("undefined++", "undefined++;");
@@ -372,7 +369,7 @@ fn js_parser_test() {
     test("a = !(b != c)", "a = b == c;");
     test("a = !(b === c)", "a = b !== c;");
     test("a = !(b !== c)", "a = b === c;");
-    // test("if (!(a, b)) return c", "if (a, !b) return c;");
+    test("if (!(a, b)) return c", "if (a, !b) return c;");
     test("a = !(b < c)", "a = !(b < c);");
     test("a = !(b > c)", "a = !(b > c);");
     test("a = !(b <= c)", "a = !(b <= c);");
@@ -405,7 +402,7 @@ fn js_parser_test() {
     // test("a = !!(!b && !c)", "a = !b && !c;");
     // test("a = !!(!b || !c)", "a = !b || !c;");
     test("a = !!(!b ?? !c)", "a = !b;");
-    // test("a = !!(b, c)", "a = (b, !!c);");
+    test("a = !!(b, c)", "a = (b, !!c);");
     test("a = Boolean(b); var Boolean", "a = Boolean(b);var Boolean;");
     test("a = Boolean()", "a = !1;");
     test("a = Boolean(b)", "a = !!b;");
@@ -529,12 +526,12 @@ fn js_parser_test() {
     test("if (!!!a) b()", "a || b();");
     test("if (1) {} else a()", "");
     test("if (0) {} else a()", "a();");
-    // test("if (a) {} else b()", "a || b();");
-    // test("if (!a) {} else b()", "a && b();");
-    // test("if (!!a) {} else b()", "a || b();");
-    // test("if (!!!a) {} else b()", "a && b();");
-    // test("if (a) {} else throw b", "if (!a) throw b;");
-    // test("if (!a) {} else throw b", "if (a) throw b;");
+    test("if (a) {} else b()", "a || b();");
+    test("if (!a) {} else b()", "a && b();");
+    test("if (!!a) {} else b()", "a || b();");
+    test("if (!!!a) {} else b()", "a && b();");
+    test("if (a) {} else throw b", "if (!a) throw b;");
+    test("if (!a) {} else throw b", "if (a) throw b;");
     test("a(); if (b) throw c", "if (a(), b) throw c;");
     test("if (a) if (b) throw c", "if (a && b) throw c;");
     test("if (true) { let a = b; if (c) throw d }", "{ let a = b; if (c) throw d;}");
@@ -556,10 +553,10 @@ fn js_parser_test() {
     test("a = b ? false : true", "a = !b;");
     test("a = !b ? true : false", "a = !b;");
     test("a = !b ? false : true", "a = !!b;");
-    // test("a = b == c ? true : false", "a = b == c;");
-    // test("a = b != c ? true : false", "a = b != c;");
-    // test("a = b === c ? true : false", "a = b === c;");
-    // test("a = b !== c ? true : false", "a = b !== c;");
+    test("a = b == c ? true : false", "a = b == c;");
+    test("a = b != c ? true : false", "a = b != c;");
+    test("a = b === c ? true : false", "a = b === c;");
+    test("a = b !== c ? true : false", "a = b !== c;");
     test("a ? b(c) : b(d)", "a ? b(c) : b(d);");
     // test("let a; a ? b(c) : b(d)", "let a;a ? b(c) : b(d);");
     test("let a, b; a ? b(c) : b(d)", "let a, b;b(a ? c : d);");
@@ -644,51 +641,46 @@ fn js_parser_test() {
         "let a, b, c;return a ?? b ?? c;",
     );
     test("if (a) return c; if (b) return d;", "if (a) return c;if (b) return d;");
-    // test("if (a) return c; if (b) return c;", "if (a || b) return c;");
-}
-
-#[test]
-#[ignore]
-fn test_ignored() {
+    test("if (a) return c; if (b) return c;", "if (a || b) return c;");
     test("if (a) return c; if (b) return;", "if (a) return c;if (b) return;");
     test("if (a) return; if (b) return c;", "if (a) return;if (b) return c;");
     test("if (a) return; if (b) return;", "if (a || b) return;");
     test("if (a) throw c; if (b) throw d;", "if (a) throw c;if (b) throw d;");
     test("if (a) throw c; if (b) throw c;", "if (a || b) throw c;");
-    test("while (x) { if (a) break; if (b) break; }", "for (; x && !(a || b); ) ;");
-    test("while (x) { if (a) continue; if (b) continue; }", "for (; x; ) a || b;");
-    test(
-        "while (x) { debugger; if (a) break; if (b) break; }",
-        "for (; x; ) { debugger; if (a || b) break;}",
-    );
-    test(
-        "while (x) { debugger; if (a) continue; if (b) continue; }",
-        "for (; x; ) { debugger; a || b;}",
-    );
-    test(
-        "x: while (x) y: while (y) { if (a) break x; if (b) break y; }",
-        "x: for (; x; ) y: for (; y; ) { if (a) break x; if (b) break y;}",
-    );
-    test(
-        "x: while (x) y: while (y) { if (a) continue x; if (b) continue y; }",
-        "x: for (; x; ) y: for (; y; ) { if (a) continue x; if (b) continue y;}",
-    );
-    test(
-        "x: while (x) y: while (y) { if (a) break x; if (b) break x; }",
-        "x: for (; x; ) for (; y; ) if (a || b) break x;",
-    );
-    test(
-        "x: while (x) y: while (y) { if (a) continue x; if (b) continue x; }",
-        "x: for (; x; ) for (; y; ) if (a || b) continue x;",
-    );
-    test(
-        "x: while (x) y: while (y) { if (a) break y; if (b) break y; }",
-        "for (; x; ) y: for (; y; ) if (a || b) break y;",
-    );
-    test(
-        "x: while (x) y: while (y) { if (a) continue y; if (b) continue y; }",
-        "for (; x; ) y: for (; y; ) if (a || b) continue y;",
-    );
+    // test("while (x) { if (a) break; if (b) break; }", "for (; x && !(a || b); ) ;");
+    // test("while (x) { if (a) continue; if (b) continue; }", "for (; x; ) a || b;");
+    // test(
+    // "while (x) { debugger; if (a) break; if (b) break; }",
+    // "for (; x; ) { debugger; if (a || b) break;}",
+    // );
+    // test(
+    // "while (x) { debugger; if (a) continue; if (b) continue; }",
+    // "for (; x; ) { debugger; a || b;}",
+    // );
+    // test(
+    // "x: while (x) y: while (y) { if (a) break x; if (b) break y; }",
+    // "x: for (; x; ) y: for (; y; ) { if (a) break x; if (b) break y;}",
+    // );
+    // test(
+    // "x: while (x) y: while (y) { if (a) continue x; if (b) continue y; }",
+    // "x: for (; x; ) y: for (; y; ) { if (a) continue x; if (b) continue y;}",
+    // );
+    // test(
+    // "x: while (x) y: while (y) { if (a) break x; if (b) break x; }",
+    // "x: for (; x; ) for (; y; ) if (a || b) break x;",
+    // );
+    // test(
+    // "x: while (x) y: while (y) { if (a) continue x; if (b) continue x; }",
+    // "x: for (; x; ) for (; y; ) if (a || b) continue x;",
+    // );
+    // test(
+    // "x: while (x) y: while (y) { if (a) break y; if (b) break y; }",
+    // "for (; x; ) y: for (; y; ) if (a || b) break y;",
+    // );
+    // test(
+    // "x: while (x) y: while (y) { if (a) continue y; if (b) continue y; }",
+    // "for (; x; ) y: for (; y; ) if (a || b) continue y;",
+    // );
     test("if (x ? y : 0) foo()", "x && y && foo();");
     test("if (x ? y : 1) foo()", "(!x || y) && foo();");
     test("if (x ? 0 : y) foo()", "!x && y && foo();");
@@ -715,8 +707,8 @@ fn test_ignored() {
     test("if ((a << b) !== 0) throw 0", "if (a << b) throw 0;");
     test("if ((a >> b) !== 0) throw 0", "if (a >> b) throw 0;");
     test("if ((a >>> b) !== 0) throw 0", "if (a >>> b) throw 0;");
-    test("if (+a !== 0) throw 0", "if (+a != 0) throw 0;");
-    test("if (~a !== 0) throw 0", "if (~a) throw 0;");
+    // test("if (+a !== 0) throw 0", "if (+a != 0) throw 0;");
+    // test("if (~a !== 0) throw 0", "if (~a) throw 0;");
     test("if (0 != (a + b)) throw 0", "if (a + b != 0) throw 0;");
     test("if (0 != (a | b)) throw 0", "if (a | b) throw 0;");
     test("if (0 != (a & b)) throw 0", "if (a & b) throw 0;");
@@ -724,8 +716,8 @@ fn test_ignored() {
     test("if (0 != (a << b)) throw 0", "if (a << b) throw 0;");
     test("if (0 != (a >> b)) throw 0", "if (a >> b) throw 0;");
     test("if (0 != (a >>> b)) throw 0", "if (a >>> b) throw 0;");
-    test("if (0 != +a) throw 0", "if (+a != 0) throw 0;");
-    test("if (0 != ~a) throw 0", "if (~a) throw 0;");
+    // test("if (0 != +a) throw 0", "if (+a != 0) throw 0;");
+    // test("if (0 != ~a) throw 0", "if (~a) throw 0;");
     test("if ((a + b) === 0) throw 0", "if (a + b === 0) throw 0;");
     test("if ((a | b) === 0) throw 0", "if (!(a | b)) throw 0;");
     test("if ((a & b) === 0) throw 0", "if (!(a & b)) throw 0;");
@@ -733,8 +725,8 @@ fn test_ignored() {
     test("if ((a << b) === 0) throw 0", "if (!(a << b)) throw 0;");
     test("if ((a >> b) === 0) throw 0", "if (!(a >> b)) throw 0;");
     test("if ((a >>> b) === 0) throw 0", "if (!(a >>> b)) throw 0;");
-    test("if (+a === 0) throw 0", "if (+a == 0) throw 0;");
-    test("if (~a === 0) throw 0", "if (!~a) throw 0;");
+    // test("if (+a === 0) throw 0", "if (+a == 0) throw 0;");
+    // test("if (~a === 0) throw 0", "if (!~a) throw 0;");
     test("if (0 == (a + b)) throw 0", "if (a + b == 0) throw 0;");
     test("if (0 == (a | b)) throw 0", "if (!(a | b)) throw 0;");
     test("if (0 == (a & b)) throw 0", "if (!(a & b)) throw 0;");
@@ -742,8 +734,8 @@ fn test_ignored() {
     test("if (0 == (a << b)) throw 0", "if (!(a << b)) throw 0;");
     test("if (0 == (a >> b)) throw 0", "if (!(a >> b)) throw 0;");
     test("if (0 == (a >>> b)) throw 0", "if (!(a >>> b)) throw 0;");
-    test("if (0 == +a) throw 0", "if (+a == 0) throw 0;");
-    test("if (0 == ~a) throw 0", "if (!~a) throw 0;");
+    // test("if (0 == +a) throw 0", "if (+a == 0) throw 0;");
+    // test("if (0 == ~a) throw 0", "if (!~a) throw 0;");
     test("if (a) { if (b) return c } else return d", "if (a) { if (b) return c;} else return d;");
     test(
         "if (a) while (1) { if (b) return c } else return d",
@@ -769,6 +761,11 @@ fn test_ignored() {
         "if (a) x: { if (b) break x } else return c",
         "if (a) { x:  if (b) break x;} else return c;",
     );
+}
+
+#[test]
+#[ignore]
+fn test_ignored() {
     test("let a; return a != null ? a.b : undefined", "let a;return a?.b;");
     test("let a; return a != null ? a[b] : undefined", "let a;return a?.[b];");
     test("let a; return a != null ? a(b) : undefined", "let a;return a?.(b);");
