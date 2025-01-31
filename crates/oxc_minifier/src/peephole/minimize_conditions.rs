@@ -960,7 +960,7 @@ impl<'a> PeepholeOptimizations {
         let is_null_or_undefined = |a: &Expression| {
             if a.is_null() {
                 Some(LeftPairValueResult::Null(a.span()))
-            } else if a.evaluate_to_undefined() {
+            } else if ctx.is_expression_undefined(a) {
                 Some(LeftPairValueResult::Undefined)
             } else {
                 None
@@ -996,7 +996,7 @@ impl<'a> PeepholeOptimizations {
         let (right_value, right_id) = Self::commutative_pair(
             (&right_binary_expr.left, &right_binary_expr.right),
             |a| match left_value {
-                LeftPairValueResult::Null(_) => a.evaluate_to_undefined().then_some(None),
+                LeftPairValueResult::Null(_) => ctx.is_expression_undefined(a).then_some(None),
                 LeftPairValueResult::Undefined => a.is_null().then_some(Some(a.span())),
             },
             |b| {
@@ -2403,6 +2403,7 @@ mod test {
         test("foo === null || foo === void 0 || foo === 1", "foo == null || foo === 1");
         test("foo === 1 || foo === null || foo === void 0", "foo === 1 || foo == null");
         test_same("foo === void 0 || bar === null");
+        test_same("var undefined = 1; foo === null || foo === undefined");
         test_same("foo !== 1 && foo === void 0 || foo === null");
         test_same("foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
 
