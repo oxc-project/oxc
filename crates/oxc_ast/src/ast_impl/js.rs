@@ -869,6 +869,17 @@ impl Statement<'_> {
         )
     }
 
+    #[allow(missing_docs)]
+    pub fn is_jump_statement(&self) -> bool {
+        matches!(
+            self,
+            Self::ReturnStatement(_)
+                | Self::ThrowStatement(_)
+                | Self::BreakStatement(_)
+                | Self::ContinueStatement(_)
+        )
+    }
+
     /// Returns the single statement from block statement, or self
     pub fn get_one_child(&self) -> Option<&Self> {
         if let Statement::BlockStatement(block_stmt) = self {

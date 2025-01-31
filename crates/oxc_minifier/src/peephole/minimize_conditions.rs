@@ -1,4 +1,3 @@
-use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
@@ -20,26 +19,6 @@ use super::PeepholeOptimizations;
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_conditions_exit_statements(
-        &mut self,
-        stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
-        ctx: Ctx<'a, '_>,
-    ) {
-        let mut changed = false;
-        loop {
-            let mut local_change = false;
-            self.try_replace_if(stmts, &mut local_change, ctx);
-            if local_change {
-                changed = local_change;
-            } else {
-                break;
-            }
-        }
-        if changed {
-            self.mark_current_function_as_changed();
-        }
-    }
-
     pub fn minimize_conditions_exit_statement(
         &mut self,
         stmt: &mut Statement<'a>,
@@ -166,6 +145,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9190>
     fn try_minimize_if(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Option<Statement<'a>> {
         let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
 
@@ -276,58 +256,6 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
-    fn try_replace_if(
-        &mut self,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        changed: &mut bool,
-        ctx: Ctx<'a, '_>,
-    ) {
-        for i in 0..stmts.len() {
-            let Statement::IfStatement(if_stmt) = &stmts[i] else {
-                continue;
-            };
-            let then_branch = &if_stmt.consequent;
-            let else_branch = &if_stmt.alternate;
-            let next_node = stmts.get(i + 1);
-
-            if next_node.is_some_and(|s| matches!(s, Statement::IfStatement(_)))
-                && else_branch.is_none()
-                && Self::is_return_block(then_branch)
-            {
-                /* TODO */
-            } else if next_node.is_some_and(Self::is_return_expression)
-                && else_branch.is_none()
-                && Self::is_return_block(then_branch)
-            {
-                // `if (x) return; return 1` -> `return x ? void 0 : 1`
-                let Statement::IfStatement(if_stmt) = ctx.ast.move_statement(&mut stmts[i]) else {
-                    unreachable!()
-                };
-                let mut if_stmt = if_stmt.unbox();
-                let consequent = Self::get_block_return_expression(&mut if_stmt.consequent, ctx);
-                let alternate = Self::take_return_argument(&mut stmts[i + 1], ctx);
-                let mut argument = Self::minimize_conditional(
-                    if_stmt.span,
-                    if_stmt.test,
-                    consequent,
-                    alternate,
-                    ctx,
-                );
-                self.minimize_conditions_exit_expression(&mut argument, ctx);
-                stmts[i] = ctx.ast.statement_return(if_stmt.span, Some(argument));
-                *changed = true;
-                break;
-            } else if else_branch.is_some() && Self::statement_must_exit_parent(then_branch) {
-                let Statement::IfStatement(if_stmt) = &mut stmts[i] else {
-                    unreachable!();
-                };
-                let else_branch = if_stmt.alternate.take().unwrap();
-                stmts.insert(i + 1, else_branch);
-                *changed = true;
-            }
-        }
-    }
-
     fn is_foldable_express_block(stmt: &Statement<'a>) -> bool {
         matches!(stmt.get_one_child(), Some(Statement::ExpressionStatement(_)))
     }
@@ -337,40 +265,6 @@ impl<'a> PeepholeOptimizations {
             unreachable!()
         };
         ctx.ast.move_expression(&mut s.expression)
-    }
-
-    fn is_return_block(stmt: &Statement<'a>) -> bool {
-        matches!(stmt.get_one_child(), Some(Statement::ReturnStatement(_)))
-    }
-
-    fn is_return_expression(stmt: &Statement<'a>) -> bool {
-        matches!(stmt, Statement::ReturnStatement(return_stmt) if return_stmt.argument.is_some())
-    }
-
-    fn statement_must_exit_parent(stmt: &Statement<'a>) -> bool {
-        match stmt {
-            Statement::ThrowStatement(_) | Statement::ReturnStatement(_) => true,
-            Statement::BlockStatement(block_stmt) => {
-                block_stmt.body.last().is_some_and(Self::statement_must_exit_parent)
-            }
-            _ => false,
-        }
-    }
-
-    fn get_block_return_expression(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
-        let Some(stmt) = stmt.get_one_child_mut() else { unreachable!() };
-        Self::take_return_argument(stmt, ctx)
-    }
-
-    fn take_return_argument(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
-        let Statement::ReturnStatement(return_stmt) = ctx.ast.move_statement(stmt) else {
-            unreachable!()
-        };
-        let return_stmt = return_stmt.unbox();
-        match return_stmt.argument {
-            Some(e) => e,
-            None => ctx.ast.void_0(return_stmt.span),
-        }
     }
 
     pub fn minimize_conditional(
@@ -385,7 +279,7 @@ impl<'a> PeepholeOptimizations {
             .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
     }
 
-    // <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
+    // `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
     fn try_minimize_conditional(
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -416,31 +310,33 @@ impl<'a> PeepholeOptimizations {
                     let test = ctx.ast.move_expression(&mut test_expr.argument);
                     let consequent = ctx.ast.move_expression(&mut expr.alternate);
                     let alternate = ctx.ast.move_expression(&mut expr.consequent);
-                    return Some(
-                        ctx.ast.expression_conditional(expr.span, test, consequent, alternate),
-                    );
+                    return Some(Self::minimize_conditional(
+                        expr.span, test, consequent, alternate, ctx,
+                    ));
                 }
             }
-            // "a ? a : b" => "a || b"
             Expression::Identifier(id) => {
+                // "a ? a : b" => "a || b"
                 if let Expression::Identifier(id2) = &expr.consequent {
                     if id.name == id2.name {
-                        return Some(ctx.ast.expression_logical(
+                        return Some(Self::join_with_left_associative_op(
                             expr.span,
-                            ctx.ast.move_expression(&mut expr.test),
                             LogicalOperator::Or,
+                            ctx.ast.move_expression(&mut expr.test),
                             ctx.ast.move_expression(&mut expr.alternate),
+                            ctx,
                         ));
                     }
                 }
                 // "a ? b : a" => "a && b"
                 if let Expression::Identifier(id2) = &expr.alternate {
                     if id.name == id2.name {
-                        return Some(ctx.ast.expression_logical(
+                        return Some(Self::join_with_left_associative_op(
                             expr.span,
-                            ctx.ast.move_expression(&mut expr.test),
                             LogicalOperator::And,
+                            ctx.ast.move_expression(&mut expr.test),
                             ctx.ast.move_expression(&mut expr.consequent),
+                            ctx,
                         ));
                     }
                 }
@@ -455,9 +351,9 @@ impl<'a> PeepholeOptimizations {
                     let test = ctx.ast.move_expression(&mut expr.test);
                     let consequent = ctx.ast.move_expression(&mut expr.consequent);
                     let alternate = ctx.ast.move_expression(&mut expr.alternate);
-                    return Some(
-                        ctx.ast.expression_conditional(expr.span, test, alternate, consequent),
-                    );
+                    return Some(Self::minimize_conditional(
+                        expr.span, test, alternate, consequent, ctx,
+                    ));
                 }
             }
             _ => {}
@@ -468,16 +364,17 @@ impl<'a> PeepholeOptimizations {
         if let (Expression::BooleanLiteral(left), Expression::BooleanLiteral(right)) =
             (&expr.consequent, &expr.alternate)
         {
-            let op = UnaryOperator::LogicalNot;
             match (left.value, right.value) {
-                (false, true) => {
-                    let ident = ctx.ast.move_expression(&mut expr.test);
-                    return Some(ctx.ast.expression_unary(expr.span, op, ident));
-                }
                 (true, false) => {
-                    let ident = ctx.ast.move_expression(&mut expr.test);
-                    let unary = ctx.ast.expression_unary(expr.span, op, ident);
-                    return Some(ctx.ast.expression_unary(expr.span, op, unary));
+                    let test = ctx.ast.move_expression(&mut expr.test);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    return Some(test);
+                }
+                (false, true) => {
+                    let test = ctx.ast.move_expression(&mut expr.test);
+                    let test = Self::minimize_not(expr.span, test, ctx);
+                    return Some(test);
                 }
                 _ => {}
             }
@@ -488,11 +385,12 @@ impl<'a> PeepholeOptimizations {
             if ctx.expr_eq(&consequent.alternate, &expr.alternate) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
-                    ctx.ast.expression_logical(
+                    Self::join_with_left_associative_op(
                         expr.test.span(),
-                        ctx.ast.move_expression(&mut expr.test),
                         LogicalOperator::And,
+                        ctx.ast.move_expression(&mut expr.test),
                         ctx.ast.move_expression(&mut consequent.test),
+                        ctx,
                     ),
                     ctx.ast.move_expression(&mut consequent.consequent),
                     ctx.ast.move_expression(&mut consequent.alternate),
@@ -505,11 +403,12 @@ impl<'a> PeepholeOptimizations {
             if ctx.expr_eq(&alternate.consequent, &expr.consequent) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
-                    ctx.ast.expression_logical(
+                    Self::join_with_left_associative_op(
                         expr.test.span(),
-                        ctx.ast.move_expression(&mut expr.test),
                         LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut expr.test),
                         ctx.ast.move_expression(&mut alternate.test),
+                        ctx,
                     ),
                     ctx.ast.move_expression(&mut expr.consequent),
                     ctx.ast.move_expression(&mut alternate.alternate),
@@ -525,11 +424,12 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
                     ctx.ast.vec_from_array([
-                        ctx.ast.expression_logical(
+                        Self::join_with_left_associative_op(
                             expr.test.span(),
-                            ctx.ast.move_expression(&mut expr.test),
                             LogicalOperator::Or,
+                            ctx.ast.move_expression(&mut expr.test),
                             ctx.ast.move_expression(&mut alternate.expressions[0]),
+                            ctx,
                         ),
                         ctx.ast.move_expression(&mut expr.consequent),
                     ]),
@@ -545,11 +445,12 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
                     ctx.ast.vec_from_array([
-                        ctx.ast.expression_logical(
+                        Self::join_with_left_associative_op(
                             expr.test.span(),
-                            ctx.ast.move_expression(&mut expr.test),
                             LogicalOperator::And,
+                            ctx.ast.move_expression(&mut expr.test),
                             ctx.ast.move_expression(&mut consequent.expressions[0]),
+                            ctx,
                         ),
                         ctx.ast.move_expression(&mut expr.alternate),
                     ]),
@@ -564,11 +465,12 @@ impl<'a> PeepholeOptimizations {
             {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
-                    ctx.ast.expression_logical(
+                    Self::join_with_left_associative_op(
                         expr.test.span(),
-                        ctx.ast.move_expression(&mut expr.test),
                         LogicalOperator::And,
+                        ctx.ast.move_expression(&mut expr.test),
                         ctx.ast.move_expression(&mut logical_expr.left),
+                        ctx,
                     ),
                     LogicalOperator::Or,
                     ctx.ast.move_expression(&mut expr.alternate),
@@ -583,11 +485,12 @@ impl<'a> PeepholeOptimizations {
             {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
-                    ctx.ast.expression_logical(
+                    Self::join_with_left_associative_op(
                         expr.test.span(),
-                        ctx.ast.move_expression(&mut expr.test),
                         LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut expr.test),
                         ctx.ast.move_expression(&mut logical_expr.left),
+                        ctx,
                     ),
                     LogicalOperator::And,
                     ctx.ast.move_expression(&mut expr.consequent),
@@ -688,6 +591,48 @@ impl<'a> PeepholeOptimizations {
         }
 
         None
+    }
+
+    // The goal of this function is to "rotate" the AST if it's possible to use the
+    // left-associative property of the operator to avoid unnecessary parentheses.
+    //
+    // When using this, make absolutely sure that the operator is actually
+    // associative. For example, the "+" operator is not associative for
+    // floating-point numbers.
+    pub fn join_with_left_associative_op(
+        span: Span,
+        op: LogicalOperator,
+        a: Expression<'a>,
+        b: Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Expression<'a> {
+        // "(a, b) op c" => "a, b op c"
+        if let Expression::SequenceExpression(mut sequence_expr) = a {
+            if let Some(right) = sequence_expr.expressions.pop() {
+                sequence_expr
+                    .expressions
+                    .push(Self::join_with_left_associative_op(span, op, right, b, ctx));
+            }
+            return Expression::SequenceExpression(sequence_expr);
+        }
+        let mut a = a;
+        let mut b = b;
+        // "a op (b op c)" => "(a op b) op c"
+        // "a op (b op (c op d))" => "((a op b) op c) op d"
+        loop {
+            if let Expression::LogicalExpression(logical_expr) = &mut b {
+                if logical_expr.operator == op {
+                    let right = ctx.ast.move_expression(&mut logical_expr.left);
+                    a = Self::join_with_left_associative_op(span, op, a, right, ctx);
+                    b = ctx.ast.move_expression(&mut logical_expr.right);
+                    continue;
+                }
+            }
+            break;
+        }
+        // "a op b" => "a op b"
+        // "(a op b) op c" => "(a op b) op c"
+        ctx.ast.expression_logical(span, a, op, b)
     }
 
     /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
@@ -792,31 +737,29 @@ impl<'a> PeepholeOptimizations {
                 if let Some(boolean) = ctx.get_side_free_boolean_value(&e.consequent) {
                     let right = ctx.ast.move_expression(&mut e.alternate);
                     let left = ctx.ast.move_expression(&mut e.test);
-                    if boolean {
+                    let span = e.span;
+                    let (op, left) = if boolean {
                         // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
-                        *expr =
-                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
+                        (LogicalOperator::Or, left)
                     } else {
                         // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
-                        let left = Self::minimize_not(left.span(), left, ctx);
-                        *expr =
-                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::And, right);
-                    }
+                        (LogicalOperator::And, Self::minimize_not(left.span(), left, ctx))
+                    };
+                    *expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
                     return true;
                 }
                 if let Some(boolean) = ctx.get_side_free_boolean_value(&e.alternate) {
                     let left = ctx.ast.move_expression(&mut e.test);
                     let right = ctx.ast.move_expression(&mut e.consequent);
-                    if boolean {
+                    let span = e.span;
+                    let (op, left) = if boolean {
                         // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
-                        let left = Self::minimize_not(left.span(), left, ctx);
-                        *expr =
-                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
+                        (LogicalOperator::Or, Self::minimize_not(left.span(), left, ctx))
                     } else {
                         // "if (anything1 ? anything2 : falsyNoSideEffects)" => "if (anything1 && anything2)"
-                        *expr =
-                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::And, right);
-                    }
+                        (LogicalOperator::And, left)
+                    };
+                    *expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
                     return true;
                 }
             }
@@ -2056,8 +1999,8 @@ mod test {
     #[test]
     fn test_remove_else_cause3() {
         test(
-            "function f() { a:{if (x) break a; else f() } }",
-            "function f() { a: if (x) break a; else f() }",
+            "function f() { a: { if (x) break a; else f() } }",
+            "function f() { a: { if (x) break a; f() } }",
         );
         test("function f() { if (x) { a:{ break a } } else f() }", "function f() { x || f() }");
         test("function f() { if (x) a:{ break a } else f() }", "function f() { x || f() }");
