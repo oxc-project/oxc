@@ -11,11 +11,27 @@ pub enum MemberExpressionLike<'a, 'b> {
 }
 
 impl<'a> MemberExpressionLike<'a, '_> {
-    pub fn object(&self) -> &Expression<'a> {
+    pub fn format_object(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            MemberExpressionLike::ComputedMemberExpression(expr) => &expr.object,
-            MemberExpressionLike::StaticMemberExpression(expr) => &expr.object,
-            MemberExpressionLike::PrivateFieldExpression(expr) => &expr.object,
+            MemberExpressionLike::ComputedMemberExpression(expr) => expr.object.format(p),
+            MemberExpressionLike::StaticMemberExpression(expr) => expr.object.format(p),
+            MemberExpressionLike::PrivateFieldExpression(expr) => expr.object.format(p),
+        }
+    }
+
+    pub fn optional(&self) -> bool {
+        match self {
+            MemberExpressionLike::ComputedMemberExpression(expr) => expr.optional,
+            MemberExpressionLike::StaticMemberExpression(expr) => expr.optional,
+            MemberExpressionLike::PrivateFieldExpression(expr) => expr.optional,
+        }
+    }
+
+    pub fn format_property(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            MemberExpressionLike::ComputedMemberExpression(expr) => expr.expression.format(p),
+            MemberExpressionLike::StaticMemberExpression(expr) => expr.property.format(p),
+            MemberExpressionLike::PrivateFieldExpression(expr) => expr.field.format(p),
         }
     }
 }
@@ -26,7 +42,7 @@ pub fn print_member_expression<'a>(
 ) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
 
-    parts.push(member_expr.object().format(p));
+    parts.push(member_expr.format_object(p));
 
     let lookup_doc = print_member_lookup(p, member_expr);
 
@@ -48,22 +64,14 @@ pub fn print_member_lookup<'a>(
     member_expr: &MemberExpressionLike<'a, '_>,
 ) -> Doc<'a> {
     match member_expr {
-        MemberExpressionLike::StaticMemberExpression(expr) => {
+        MemberExpressionLike::StaticMemberExpression(_)
+        | MemberExpressionLike::PrivateFieldExpression(_) => {
             let mut parts = Vec::new_in(p.allocator);
-            if expr.optional {
+            if member_expr.optional() {
                 parts.push(text!("?"));
             }
             parts.push(text!("."));
-            parts.push(expr.property.format(p));
-            array!(p, parts)
-        }
-        MemberExpressionLike::PrivateFieldExpression(expr) => {
-            let mut parts = Vec::new_in(p.allocator);
-            if expr.optional {
-                parts.push(text!("?"));
-            }
-            parts.push(text!("."));
-            parts.push(expr.field.format(p));
+            parts.push(member_expr.format_property(p));
             array!(p, parts)
         }
         MemberExpressionLike::ComputedMemberExpression(expr) => {
@@ -78,7 +86,6 @@ pub fn print_member_lookup<'a>(
                 return array!(p, parts);
             }
 
-            // TODO: Examine this is rellay needed or not
             let mut parts = Vec::new_in(p.allocator);
             if expr.optional {
                 parts.push(text!("?."));
