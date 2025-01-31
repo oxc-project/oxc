@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{cmp::ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
@@ -339,6 +340,37 @@ impl<'a> PeepholeOptimizations {
                     _ => {}
                 }
                 result.push(Statement::ForStatement(for_stmt));
+            }
+            Statement::ForInStatement(mut for_in_stmt) => {
+                // "a; for (var b in c) d" => "for (var b in a, c) d"
+                if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
+                    // Annex B.3.5 allows initializers in non-strict mode
+                    // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
+                    // If there's a side-effectful initializer, we should not move the previous statement inside.
+                    let has_side_effectful_initializer = {
+                        if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
+                            if var_decl.declarations.len() == 1 {
+                                // only var can have a initializer
+                                var_decl.kind.is_var()
+                                    && var_decl.declarations[0].init.as_ref().is_some_and(|init| {
+                                        ctx.expression_may_have_side_effects(init)
+                                    })
+                            } else {
+                                // the spec does not allow multiple declarations though
+                                true
+                            }
+                        } else {
+                            false
+                        }
+                    };
+                    if !has_side_effectful_initializer {
+                        let a = &mut prev_expr_stmt.expression;
+                        for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
+                        result.pop();
+                        self.mark_current_function_as_changed();
+                    }
+                }
+                result.push(Statement::ForInStatement(for_in_stmt));
             }
             stmt => result.push(stmt),
         }
