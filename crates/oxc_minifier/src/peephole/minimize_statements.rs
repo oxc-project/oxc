@@ -16,14 +16,15 @@ impl<'a> PeepholeOptimizations {
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/StatementFusion.java>
     ///
     /// ## Collapse variable declarations
-    ///
-    /// ## Join Vars
     /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
     ///
     /// ## Collapse into for statements:
     /// `var a = 0; for(;a<0;a++) {}` => `for(var a = 0;a<0;a++) {}`
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Denormalize.java>
+    ///
+    /// ## MinimizeExitPoints:
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: Ctx<'a, '_>) {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;

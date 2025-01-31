@@ -159,14 +159,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.substitute_return_statement(stmt, ctx);
     }
 
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
-        let ctx = Ctx(ctx);
-        self.minimize_exit_points(body, ctx);
-    }
-
     fn exit_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
