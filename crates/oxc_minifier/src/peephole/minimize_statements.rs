@@ -407,6 +407,38 @@ impl<'a> PeepholeOptimizations {
                 }
                 result.push(Statement::ForInStatement(for_in_stmt));
             }
+            Statement::ForOfStatement(mut for_of_stmt) => {
+                // "var a; for (a of b) c" => "for (var a of b) c"
+                if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
+                    if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left {
+                        let prev_var_decl_no_init_item = {
+                            if prev_var_decl.kind.is_var()
+                                && prev_var_decl.declarations.len() == 1
+                                && prev_var_decl.declarations[0].init.is_none()
+                            {
+                                Some(&prev_var_decl.declarations[0])
+                            } else {
+                                None
+                            }
+                        };
+                        if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
+                            if let BindingPatternKind::BindingIdentifier(decl_id) =
+                                &prev_var_decl_item.id.kind
+                            {
+                                if id.name == decl_id.name {
+                                    for_of_stmt.left =
+                                        ForStatementLeft::VariableDeclaration(ctx.ast.alloc(
+                                            ctx.ast.move_variable_declaration(prev_var_decl),
+                                        ));
+                                    result.pop();
+                                    self.mark_current_function_as_changed();
+                                }
+                            }
+                        }
+                    }
+                }
+                result.push(Statement::ForOfStatement(for_of_stmt));
+            }
             stmt => result.push(stmt),
         }
     }

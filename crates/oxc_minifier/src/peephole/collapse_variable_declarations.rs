@@ -225,7 +225,6 @@ mod test {
         }
 
         #[test]
-        #[ignore]
         fn test_for_of() {
             test("var a; for (a of b) foo()", "for (var a of b) foo()");
             test_same("a = 0; for (a of b) foo()");
