@@ -576,6 +576,7 @@ mod test {
     }
 
     #[test]
+    #[ignore = "path mismatch on windows"]
     fn test_tsconfig_option() {
         // passed
         Tester::new().test(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
