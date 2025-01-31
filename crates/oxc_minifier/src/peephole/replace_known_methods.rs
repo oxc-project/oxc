@@ -68,6 +68,7 @@ impl<'a> PeepholeOptimizations {
             "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" => {
                 Self::try_fold_math_unary(*span, arguments, name, object, ctx)
             }
+            "min" | "max" => Self::try_fold_math_variadic(*span, arguments, name, object, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -357,7 +358,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn validate_arguments(args: &Arguments, expected_len: usize) -> bool {
-        args.len() == expected_len && args.iter().all(Argument::is_expression)
+        (args.len() == expected_len) && args.iter().all(Argument::is_expression)
     }
 
     /// `Math.pow(a, b)` -> `+(a) ** +b`
@@ -487,6 +488,46 @@ impl<'a> PeepholeOptimizations {
             _ => unreachable!(),
         };
         // These results are always shorter to return as a number, so we can just return them as NumericLiteral.
+        Some(ctx.ast.expression_numeric_literal(span, result, None, NumberBase::Decimal))
+    }
+
+    fn try_fold_math_variadic(
+        span: Span,
+        arguments: &Arguments,
+        name: &str,
+        object: &Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if !Self::validate_global_reference(object, "Math", ctx) {
+            return None;
+        }
+        let numbers = arguments
+            .iter()
+            .map(|arg| arg.as_expression().map(|e| ctx.get_side_free_number_value(e))?)
+            .collect::<Option<Vec<_>>>()?;
+        let result = if numbers.iter().any(|n| n.is_nan()) {
+            f64::NAN
+        } else {
+            match name {
+                // TODO
+                // see <https://github.com/rust-lang/rust/issues/83984>, we can't use `min` and `max` here due to inconsistency
+                "min" => numbers.iter().copied().fold(f64::INFINITY, |a, b| {
+                    if a < b || ((a == 0f64) && (b == 0f64) && (a.to_bits() > b.to_bits())) {
+                        a
+                    } else {
+                        b
+                    }
+                }),
+                "max" => numbers.iter().copied().fold(f64::NEG_INFINITY, |a, b| {
+                    if a > b || ((a == 0f64) && (b == 0f64) && (a.to_bits() < b.to_bits())) {
+                        a
+                    } else {
+                        b
+                    }
+                }),
+                _ => return None,
+            }
+        };
         Some(ctx.ast.expression_numeric_literal(span, result, None, NumberBase::Decimal))
     }
 
@@ -1289,25 +1330,33 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_max() {
-        test_same("Math.max(Math.random(), 1)");
+        test_same_value("Math.max(Math.random(), 1)");
 
-        test("Math.max()", "-Infinity");
-        test("Math.max(0)", "0");
-        test("Math.max(0, 1)", "1");
-        test("Math.max(0, 1, -1, 200)", "200");
+        test_value("Math.max()", "-Infinity");
+        test_value("Math.max(0)", "0");
+        test_value("Math.max(0, 1)", "1");
+        test_value("Math.max(0, 1, -1, 200)", "200");
+        test_value("Math.max(0, -1, -Infinity)", "0");
+        test_value("Math.max(0, -1, -Infinity, NaN)", "NaN");
+        test_value("Math.max(0, -0)", "0");
+        test_value("Math.max(-0, 0)", "0");
+        test_same_value("Math.max(...a, 1)");
     }
 
     #[test]
-    #[ignore]
     fn test_fold_math_functions_min() {
-        test_same("Math.min(Math.random(), 1)");
+        test_same_value("Math.min(Math.random(), 1)");
 
-        test("Math.min()", "Infinity");
-        test("Math.min(3)", "3");
-        test("Math.min(0, 1)", "0");
-        test("Math.min(0, 1, -1, 200)", "-1");
+        test_value("Math.min()", "Infinity");
+        test_value("Math.min(3)", "3");
+        test_value("Math.min(0, 1)", "0");
+        test_value("Math.min(0, 1, -1, 200)", "-1");
+        test_value("Math.min(0, -1, -Infinity)", "-Infinity");
+        test_value("Math.min(0, -1, -Infinity, NaN)", "NaN");
+        test_value("Math.min(0, -0)", "-0");
+        test_value("Math.min(-0, 0)", "-0");
+        test_same_value("Math.min(...a, 1)");
     }
 
     #[test]
