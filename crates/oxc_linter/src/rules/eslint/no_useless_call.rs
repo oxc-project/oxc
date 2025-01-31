@@ -9,8 +9,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_useless_call_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid unnecessary use of .call() and .apply()")
+fn no_useless_call_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Avoid unnecessary use of .{name}()"))
         .with_help("Replace with a normal function invocation")
         .with_label(span)
 }
@@ -80,7 +80,10 @@ impl Rule for NoUselessCall {
         let Some(this_arg) = first_arg.as_expression() else { return };
 
         if validate_this_argument(this_arg, applied) {
-            ctx.diagnostic(no_useless_call_diagnostic(call_expr.span));
+            ctx.diagnostic(no_useless_call_diagnostic(
+                callee.static_property_name().unwrap(),
+                call_expr.span,
+            ));
         }
     }
 }
