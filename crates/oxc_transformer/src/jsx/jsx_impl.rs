@@ -872,8 +872,10 @@ impl<'a> JsxImpl<'a, '_> {
                     // SAFETY: `ast.copy` is unsound! We need to fix.
                     unsafe { ctx.ast.copy(e.to_expression()) }
                 }
-                JSXExpression::EmptyExpression(e) => {
-                    ctx.ast.expression_boolean_literal(e.span, true)
+                JSXExpression::EmptyExpression(_) => {
+                    // `<div attr={}></div>`
+                    //            ^^ Invalid empty expression here
+                    unreachable!()
                 }
             },
             None => ctx.ast.expression_boolean_literal(SPAN, true),
