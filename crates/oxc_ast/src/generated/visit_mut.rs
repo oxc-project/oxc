@@ -1358,7 +1358,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_span<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Span) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
     }
 
     #[inline]
@@ -1371,7 +1371,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_directives<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Directive<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_directive(el);
         }
     }
@@ -1395,12 +1395,13 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_statements<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Statement<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_statement(el);
         }
     }
 
     pub fn walk_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Statement<'a>) {
+        // No `AstType` for this type
         match it {
             Statement::BlockStatement(it) => visitor.visit_block_statement(it),
             Statement::BreakStatement(it) => visitor.visit_break_statement(it),
@@ -1499,6 +1500,7 @@ pub mod walk_mut {
     }
 
     pub fn walk_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Expression<'a>) {
+        // No `AstType` for this type
         match it {
             Expression::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
             Expression::NullLiteral(it) => visitor.visit_null_literal(it),
@@ -1610,7 +1612,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TemplateElement<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_template_element(el);
         }
     }
@@ -1620,7 +1622,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TemplateElement<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
     }
 
@@ -1629,7 +1631,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, Expression<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_expression(el);
         }
     }
@@ -1691,7 +1693,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ArrayExpressionElement<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_array_expression_element(el);
         }
     }
@@ -1777,7 +1779,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSTypeParameter<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_type_parameter(el);
         }
     }
@@ -1812,6 +1814,7 @@ pub mod walk_mut {
     }
 
     pub fn walk_ts_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSType<'a>) {
+        // No `AstType` for this type
         match it {
             TSType::TSAnyKeyword(it) => visitor.visit_ts_any_keyword(it),
             TSType::TSBigIntKeyword(it) => visitor.visit_ts_big_int_keyword(it),
@@ -1972,7 +1975,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_array_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSArrayType<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.element_type);
     }
@@ -1999,7 +2002,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSConstructorType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2028,7 +2031,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, FormalParameter<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_formal_parameter(el);
         }
     }
@@ -2048,7 +2051,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_decorators<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Decorator<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_decorator(el);
         }
     }
@@ -2064,7 +2067,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_binding_pattern<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BindingPattern<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_binding_pattern_kind(&mut it.kind);
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
@@ -2076,6 +2079,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut BindingPatternKind<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             BindingPatternKind::BindingIdentifier(it) => visitor.visit_binding_identifier(it),
             BindingPatternKind::ObjectPattern(it) => visitor.visit_object_pattern(it),
@@ -2101,7 +2105,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, BindingProperty<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_binding_property(el);
         }
     }
@@ -2111,7 +2115,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut BindingProperty<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.key);
         visitor.visit_binding_pattern(&mut it.value);
@@ -2196,7 +2200,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSFunctionType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2270,7 +2274,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSImportAttributes<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_ts_import_attribute_list(&mut it.elements);
@@ -2281,7 +2285,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSImportAttribute<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_import_attribute(el);
         }
     }
@@ -2291,7 +2295,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSImportAttribute<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_import_attribute_name(&mut it.name);
         visitor.visit_expression(&mut it.value);
@@ -2302,6 +2306,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSImportAttributeName<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             TSImportAttributeName::Identifier(it) => visitor.visit_identifier_name(it),
             TSImportAttributeName::StringLiteral(it) => visitor.visit_string_literal(it),
@@ -2322,7 +2327,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_types<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, TSType<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_type(el);
         }
     }
@@ -2371,6 +2376,7 @@ pub mod walk_mut {
     }
 
     pub fn walk_ts_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSLiteral<'a>) {
+        // No `AstType` for this type
         match it {
             TSLiteral::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
             TSLiteral::NullLiteral(it) => visitor.visit_null_literal(it),
@@ -2430,6 +2436,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTupleElement<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             TSTupleElement::TSOptionalType(it) => visitor.visit_ts_optional_type(it),
             TSTupleElement::TSRestType(it) => visitor.visit_ts_rest_type(it),
@@ -2442,14 +2449,14 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSOptionalType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
 
     #[inline]
     pub fn walk_ts_rest_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSRestType<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
@@ -2477,7 +2484,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_tuple_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTupleType<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_tuple_elements(&mut it.element_types);
     }
@@ -2487,7 +2494,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSTupleElement<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_tuple_element(el);
         }
     }
@@ -2506,13 +2513,14 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSSignature<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_signature(el);
         }
     }
 
     #[inline]
     pub fn walk_ts_signature<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSSignature<'a>) {
+        // No `AstType` for this type
         match it {
             TSSignature::TSIndexSignature(it) => visitor.visit_ts_index_signature(it),
             TSSignature::TSPropertySignature(it) => visitor.visit_ts_property_signature(it),
@@ -2531,7 +2539,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSIndexSignature<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_index_signature_names(&mut it.parameters);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
@@ -2542,7 +2550,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSIndexSignatureName<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_index_signature_name(el);
         }
     }
@@ -2552,7 +2560,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSIndexSignatureName<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
     }
@@ -2577,7 +2585,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSCallSignatureDeclaration<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2639,7 +2647,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypeOperator<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
@@ -2649,7 +2657,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypePredicate<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_predicate_name(&mut it.parameter_name);
         if let Some(type_annotation) = &mut it.type_annotation {
@@ -2662,6 +2670,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypePredicateName<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             TSTypePredicateName::Identifier(it) => visitor.visit_identifier_name(it),
             TSTypePredicateName::This(it) => visitor.visit_ts_this_type(it),
@@ -2685,6 +2694,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypeQueryExprName<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             TSTypeQueryExprName::TSImportType(it) => visitor.visit_ts_import_type(it),
             match_ts_type_name!(TSTypeQueryExprName) => {
@@ -2734,7 +2744,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocNullableType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
@@ -2744,7 +2754,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocNonNullableType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
     }
@@ -2754,7 +2764,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocUnknownType,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
     }
 
@@ -2917,7 +2927,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ComputedMemberExpression<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_expression(&mut it.expression);
@@ -2928,7 +2938,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut StaticMemberExpression<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_identifier_name(&mut it.property);
@@ -2939,7 +2949,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut PrivateFieldExpression<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_private_identifier(&mut it.field);
@@ -2988,6 +2998,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetMaybeDefault<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(it) => {
                 visitor.visit_assignment_target_with_default(it)
@@ -3016,7 +3027,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetRest<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_assignment_target(&mut it.target);
     }
@@ -3041,7 +3052,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, AssignmentTargetProperty<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_assignment_target_property(el);
         }
     }
@@ -3051,6 +3062,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetProperty<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(it) => {
                 visitor.visit_assignment_target_property_identifier(it)
@@ -3066,7 +3078,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_reference(&mut it.binding);
         if let Some(init) = &mut it.init {
@@ -3079,7 +3091,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyProperty<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.name);
         visitor.visit_assignment_target_maybe_default(&mut it.binding);
@@ -3125,7 +3137,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_arguments<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Argument<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_argument(el);
         }
     }
@@ -3155,6 +3167,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_chain_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ChainElement<'a>) {
+        // No `AstType` for this type
         match it {
             ChainElement::CallExpression(it) => visitor.visit_call_expression(it),
             ChainElement::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
@@ -3195,7 +3208,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSClassImplements<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_class_implements(el);
         }
     }
@@ -3229,13 +3242,14 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ClassElement<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_class_element(el);
         }
     }
 
     #[inline]
     pub fn walk_class_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassElement<'a>) {
+        // No `AstType` for this type
         match it {
             ClassElement::StaticBlock(it) => visitor.visit_static_block(it),
             ClassElement::MethodDefinition(it) => visitor.visit_method_definition(it),
@@ -3340,7 +3354,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AccessorProperty<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_decorators(&mut it.decorators);
         visitor.visit_property_key(&mut it.key);
@@ -3425,7 +3439,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ObjectPropertyKind<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_object_property_kind(el);
         }
     }
@@ -3435,6 +3449,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ObjectPropertyKind<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             ObjectPropertyKind::ObjectProperty(it) => visitor.visit_object_property(it),
             ObjectPropertyKind::SpreadProperty(it) => visitor.visit_spread_element(it),
@@ -3642,7 +3657,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, JSXAttributeItem<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_jsx_attribute_item(el);
         }
     }
@@ -3663,7 +3678,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_jsx_attribute<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXAttribute<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_attribute_name(&mut it.name);
         if let Some(value) = &mut it.value {
@@ -3676,6 +3691,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXAttributeName<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             JSXAttributeName::Identifier(it) => visitor.visit_jsx_identifier(it),
             JSXAttributeName::NamespacedName(it) => visitor.visit_jsx_namespaced_name(it),
@@ -3687,6 +3703,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXAttributeValue<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             JSXAttributeValue::StringLiteral(it) => visitor.visit_string_literal(it),
             JSXAttributeValue::ExpressionContainer(it) => {
@@ -3711,6 +3728,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_jsx_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXExpression<'a>) {
+        // No `AstType` for this type
         match it {
             JSXExpression::EmptyExpression(it) => visitor.visit_jsx_empty_expression(it),
             match_expression!(JSXExpression) => visitor.visit_expression(it.to_expression_mut()),
@@ -3722,7 +3740,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXEmptyExpression,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
     }
 
@@ -3737,13 +3755,14 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_jsx_children<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, JSXChild<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_jsx_child(el);
         }
     }
 
     #[inline]
     pub fn walk_jsx_child<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXChild<'a>) {
+        // No `AstType` for this type
         match it {
             JSXChild::Text(it) => visitor.visit_jsx_text(it),
             JSXChild::Element(it) => visitor.visit_jsx_element(it),
@@ -3766,7 +3785,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXSpreadChild<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.expression);
     }
@@ -3836,6 +3855,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ForStatementLeft<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             ForStatementLeft::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
             match_assignment_target!(ForStatementLeft) => {
@@ -3861,7 +3881,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, VariableDeclarator<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_variable_declarator(el);
         }
     }
@@ -3991,7 +4011,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, SwitchCase<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_switch_case(el);
         }
     }
@@ -4076,6 +4096,7 @@ pub mod walk_mut {
     }
 
     pub fn walk_declaration<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Declaration<'a>) {
+        // No `AstType` for this type
         match it {
             Declaration::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
             Declaration::FunctionDeclaration(it) => {
@@ -4137,7 +4158,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSInterfaceHeritage<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_interface_heritage(el);
         }
     }
@@ -4162,7 +4183,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSInterfaceBody<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_signatures(&mut it.body);
     }
@@ -4187,7 +4208,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSEnumMember<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_enum_member(el);
         }
     }
@@ -4209,6 +4230,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSEnumMemberName<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             TSEnumMemberName::Identifier(it) => visitor.visit_identifier_name(it),
             TSEnumMemberName::String(it) => visitor.visit_string_literal(it),
@@ -4246,6 +4268,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSModuleDeclarationName<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             TSModuleDeclarationName::Identifier(it) => visitor.visit_binding_identifier(it),
             TSModuleDeclarationName::StringLiteral(it) => visitor.visit_string_literal(it),
@@ -4257,6 +4280,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSModuleDeclarationBody<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             TSModuleDeclarationBody::TSModuleDeclaration(it) => {
                 visitor.visit_ts_module_declaration(it)
@@ -4364,7 +4388,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ImportDeclarationSpecifier<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_import_declaration_specifier(el);
         }
     }
@@ -4374,6 +4398,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ImportDeclarationSpecifier<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             ImportDeclarationSpecifier::ImportSpecifier(it) => visitor.visit_import_specifier(it),
             ImportDeclarationSpecifier::ImportDefaultSpecifier(it) => {
@@ -4403,6 +4428,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ModuleExportName<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             ModuleExportName::IdentifierName(it) => visitor.visit_identifier_name(it),
             ModuleExportName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
@@ -4436,7 +4462,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_with_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut WithClause<'a>) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_import_attributes(&mut it.with_entries);
@@ -4447,7 +4473,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ImportAttribute<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_import_attribute(el);
         }
     }
@@ -4457,7 +4483,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ImportAttribute<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_import_attribute_key(&mut it.key);
         visitor.visit_string_literal(&mut it.value);
@@ -4468,6 +4494,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ImportAttributeKey<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             ImportAttributeKey::Identifier(it) => visitor.visit_identifier_name(it),
             ImportAttributeKey::StringLiteral(it) => visitor.visit_string_literal(it),
@@ -4510,6 +4537,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ExportDefaultDeclarationKind<'a>,
     ) {
+        // No `AstType` for this type
         match it {
             ExportDefaultDeclarationKind::FunctionDeclaration(it) => {
                 let flags = ScopeFlags::Function;
@@ -4551,7 +4579,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ExportSpecifier<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_export_specifier(el);
         }
     }
@@ -4586,7 +4614,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSNamespaceExportDeclaration<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        // No `AstType` for this type
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.id);
     }

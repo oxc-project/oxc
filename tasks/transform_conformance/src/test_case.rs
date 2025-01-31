@@ -4,6 +4,7 @@ use std::{
 };
 
 use cow_utils::CowUtils;
+use similar::TextDiff;
 
 use oxc::{
     allocator::Allocator,
@@ -349,8 +350,9 @@ impl TestCase {
                 if let Some(actual_errors) = &actual_errors {
                     println!("{actual_errors}\n");
                     if !passed {
+                        let diff = TextDiff::from_lines(&output, actual_errors);
                         println!("Diff:\n");
-                        print_diff_in_terminal(&output, actual_errors);
+                        print_diff_in_terminal(&diff);
                     }
                 }
             } else {
@@ -365,8 +367,9 @@ impl TestCase {
                     println!("{actual_errors}\n");
                 }
                 if !passed {
+                    let diff = TextDiff::from_lines(&output, &transformed_code);
                     println!("Diff:\n");
-                    print_diff_in_terminal(&output, &transformed_code);
+                    print_diff_in_terminal(&diff);
                 }
             }
 

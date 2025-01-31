@@ -378,7 +378,6 @@ impl AstKind<'_> {
 }
 
 impl GetSpan for AstKind<'_> {
-    #[allow(clippy::match_same_arms)]
     fn span(&self) -> Span {
         match self {
             Self::BooleanLiteral(it) => it.span(),

@@ -178,7 +178,6 @@ impl Generator for AstKindGenerator {
 
                 ///@@line_break
                 impl GetSpan for AstKind<'_> {
-                    #[allow(clippy::match_same_arms)]
                     fn span(&self) -> Span {
                         match self {
                             #(#span_matches),*,

@@ -248,10 +248,9 @@ impl<'a> VisitBuilder<'a> {
 
         let (walk_body, may_inline) = if collection {
             let singular_visit = self.get_visitor(def, false);
-            let iter = if self.is_mut { quote!(it.iter_mut()) } else { quote!(it) };
             (
                 quote! {
-                    for el in #iter {
+                    for el in it {
                         visitor.#singular_visit(el);
                     }
                 },
@@ -357,7 +356,14 @@ impl<'a> VisitBuilder<'a> {
 
         let with_node_events = |tk| {
             if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-                tk
+                let comment = format!(
+                    "@ No `{}` for this type",
+                    if self.is_mut { "AstType" } else { "AstKind" }
+                );
+                quote! {
+                    #![doc = #comment]
+                    #tk
+                }
             } else {
                 let kind = self.kind_type(&ident);
                 quote! {
@@ -403,10 +409,8 @@ impl<'a> VisitBuilder<'a> {
             });
 
         let node_events = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-            let comment = format!(
-                "@ NOTE: {} doesn't exists!",
-                if self.is_mut { "AstType" } else { "AstKind" }
-            );
+            let comment =
+                format!("@ No `{}` for this type", if self.is_mut { "AstType" } else { "AstKind" });
             (quote!(#![doc = #comment]), TokenStream::default())
         } else {
             let kind = self.kind_type(&ident);

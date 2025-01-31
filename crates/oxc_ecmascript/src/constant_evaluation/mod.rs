@@ -32,7 +32,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
         // and there are only a very few cases where we can compute a number value, but there could
         // also be side effects. e.g. `void doSomething()` has value NaN, regardless of the behavior
         // of `doSomething()`
-        if value.is_some() && self.expression_may_have_side_efffects(expr) {
+        if value.is_some() && self.expression_may_have_side_effects(expr) {
             None
         } else {
             value
@@ -41,7 +41,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
 
     fn get_side_free_string_value(&self, expr: &Expression<'a>) -> Option<Cow<'a, str>> {
         let value = expr.to_js_string();
-        if value.is_some() && !self.expression_may_have_side_efffects(expr) {
+        if value.is_some() && !self.expression_may_have_side_effects(expr) {
             return value;
         }
         None
@@ -49,7 +49,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
 
     fn get_side_free_boolean_value(&self, expr: &Expression<'a>) -> Option<bool> {
         let value = self.get_boolean_value(expr);
-        if value.is_some() && !self.expression_may_have_side_efffects(expr) {
+        if value.is_some() && !self.expression_may_have_side_effects(expr) {
             return value;
         }
         None
@@ -57,7 +57,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
 
     fn get_side_free_bigint_value(&self, expr: &Expression<'a>) -> Option<BigInt> {
         let value = expr.to_big_int();
-        if value.is_some() && self.expression_may_have_side_efffects(expr) {
+        if value.is_some() && self.expression_may_have_side_effects(expr) {
             None
         } else {
             value
@@ -201,8 +201,8 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
     ) -> Option<ConstantValue<'a>> {
         match operator {
             BinaryOperator::Addition => {
-                if self.expression_may_have_side_efffects(left)
-                    || self.expression_may_have_side_efffects(right)
+                if self.expression_may_have_side_effects(left)
+                    || self.expression_may_have_side_effects(right)
                 {
                     return None;
                 }
@@ -319,7 +319,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 None
             }
             BinaryOperator::Instanceof => {
-                if self.expression_may_have_side_efffects(left) {
+                if self.expression_may_have_side_effects(left) {
                     return None;
                 }
                 if let Expression::Identifier(right_ident) = right {
@@ -379,21 +379,22 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 Some(ConstantValue::String(Cow::Borrowed(s)))
             }
             UnaryOperator::Void => (expr.argument.is_literal()
-                || !self.expression_may_have_side_efffects(&expr.argument))
+                || !self.expression_may_have_side_effects(&expr.argument))
             .then_some(ConstantValue::Undefined),
             UnaryOperator::LogicalNot => self
                 .get_side_free_boolean_value(&expr.argument)
                 .map(|b| !b)
                 .map(ConstantValue::Boolean),
             UnaryOperator::UnaryPlus => {
-                self.eval_to_number(&expr.argument).map(ConstantValue::Number)
+                self.get_side_free_number_value(&expr.argument).map(ConstantValue::Number)
             }
             UnaryOperator::UnaryNegation => match ValueType::from(&expr.argument) {
-                ValueType::BigInt => {
-                    self.eval_to_big_int(&expr.argument).map(|v| -v).map(ConstantValue::BigInt)
-                }
+                ValueType::BigInt => self
+                    .get_side_free_bigint_value(&expr.argument)
+                    .map(|v| -v)
+                    .map(ConstantValue::BigInt),
                 ValueType::Number => self
-                    .eval_to_number(&expr.argument)
+                    .get_side_free_number_value(&expr.argument)
                     .map(|v| if v.is_nan() { v } else { -v })
                     .map(ConstantValue::Number),
                 ValueType::Undefined => Some(ConstantValue::Number(f64::NAN)),
@@ -401,12 +402,13 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 _ => None,
             },
             UnaryOperator::BitwiseNot => match ValueType::from(&expr.argument) {
-                ValueType::BigInt => {
-                    self.eval_to_big_int(&expr.argument).map(|v| !v).map(ConstantValue::BigInt)
-                }
+                ValueType::BigInt => self
+                    .get_side_free_bigint_value(&expr.argument)
+                    .map(|v| !v)
+                    .map(ConstantValue::BigInt),
                 #[expect(clippy::cast_lossless)]
                 _ => self
-                    .eval_to_number(&expr.argument)
+                    .get_side_free_number_value(&expr.argument)
                     .map(|v| (!v.to_int_32()) as f64)
                     .map(ConstantValue::Number),
             },
@@ -423,7 +425,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
                 } else {
-                    if self.expression_may_have_side_efffects(&expr.object) {
+                    if self.expression_may_have_side_effects(&expr.object) {
                         return None;
                     }
                     if let Expression::ArrayExpression(arr) = &expr.object {
@@ -446,7 +448,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
                 } else {
-                    if self.expression_may_have_side_efffects(&expr.object) {
+                    if self.expression_may_have_side_effects(&expr.object) {
                         return None;
                     }
                     if let Expression::ArrayExpression(arr) = &expr.object {
