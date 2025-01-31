@@ -669,11 +669,7 @@ impl<'a, 'b> PeepholeOptimizations {
         None
     }
 
-    pub fn fold_object_spread(
-        &mut self,
-        e: &mut ObjectExpression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
+    pub fn fold_object_spread(e: &mut ObjectExpression<'a>, ctx: Ctx<'a, 'b>) -> bool {
         let len = e.properties.len();
         e.properties.retain(|p| {
             if let ObjectPropertyKind::SpreadProperty(spread_element) = p {
@@ -695,10 +691,7 @@ impl<'a, 'b> PeepholeOptimizations {
             }
             true
         });
-        if e.properties.len() != len {
-            self.mark_current_function_as_changed();
-        }
-        None
+        e.properties.len() != len
     }
 }
 

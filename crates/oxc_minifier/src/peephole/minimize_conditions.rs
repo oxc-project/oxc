@@ -54,32 +54,6 @@ impl<'a> PeepholeOptimizations {
         };
     }
 
-    // pub fn minimize_conditions_exit_expression(
-    // &mut self,
-    // expr: &mut Expression<'a>,
-    // ctx: Ctx<'a, '_>,
-    // ) {
-    // let mut changed = false;
-    // loop {
-    // let mut local_change = false;
-    // if let Some(folded_expr) = match expr {
-    // }
-    // _ => None,
-    // } {
-    // *expr = folded_expr;
-    // local_change = true;
-    // };
-    // if local_change {
-    // changed = true;
-    // } else {
-    // break;
-    // }
-    // }
-    // if changed {
-    // self.mark_current_function_as_changed();
-    // }
-    // }
-
     fn minimize_not(span: Span, expr: Expression<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
         let mut unary = ctx.ast.unary_expression(span, UnaryOperator::LogicalNot, expr);
         Self::try_minimize_not(&mut unary, ctx)

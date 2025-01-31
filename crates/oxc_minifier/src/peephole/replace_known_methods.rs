@@ -17,21 +17,15 @@ use super::PeepholeOptimizations;
 
 type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 
+/// Minimize With Known Methods
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 impl<'a> PeepholeOptimizations {
-    /// Minimize With Known Methods
-    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
-    pub fn replace_known_methods_exit_expression(
+    pub fn try_fold_known_string_methods(
         &mut self,
         node: &mut Expression<'a>,
         ctx: Ctx<'a, '_>,
-    ) {
-        self.try_fold_concat_chain(node, ctx);
-        self.try_fold_known_string_methods(node, ctx);
-        self.try_fold_known_property_access(node, ctx);
-    }
-
-    fn try_fold_known_string_methods(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        let Expression::CallExpression(ce) = node else { return };
+    ) -> bool {
+        let Expression::CallExpression(ce) = node else { return false };
         let CallExpression { span, callee, arguments, .. } = ce.as_mut();
         let (name, object) = match &callee {
             Expression::StaticMemberExpression(member) if !member.optional => {
@@ -40,10 +34,10 @@ impl<'a> PeepholeOptimizations {
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
                     Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
-                    _ => return,
+                    _ => return false,
                 }
             }
-            _ => return,
+            _ => return false,
         };
         let replacement = match name {
             "toLowerCase" | "toUpperCase" | "trim" => {
@@ -72,9 +66,10 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         };
         if let Some(replacement) = replacement {
-            self.mark_current_function_as_changed();
             *node = replacement;
+            return true;
         }
+        false
     }
 
     fn try_fold_string_casing(
@@ -533,15 +528,15 @@ impl<'a> PeepholeOptimizations {
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
-    fn try_fold_concat_chain(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+    pub fn try_fold_concat_chain(node: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
         } else {
-            return;
+            return false;
         };
 
         if matches!(ctx.parent(), Ancestor::StaticMemberExpressionObject(_)) {
-            return;
+            return false;
         }
 
         let mut current_node: &mut Expression = node;
@@ -549,13 +544,13 @@ impl<'a> PeepholeOptimizations {
         let new_root_callee: &mut Expression<'a>;
         loop {
             let Expression::CallExpression(ce) = current_node else {
-                return;
+                return false;
             };
             let Expression::StaticMemberExpression(member) = &ce.callee else {
-                return;
+                return false;
             };
             if member.optional || member.property.name != "concat" {
-                return;
+                return false;
             }
 
             // We don't need to check if the arguments has a side effect here.
@@ -597,7 +592,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         if collected_arguments.len() <= 1 {
-            return;
+            return false;
         }
 
         *node = ctx.ast.expression_call(
@@ -609,7 +604,7 @@ impl<'a> PeepholeOptimizations {
             ),
             false,
         );
-        self.mark_current_function_as_changed();
+        true
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`
@@ -679,7 +674,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_known_property_access(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+    pub fn try_fold_known_property_access(
+        &mut self,
+        node: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> bool {
         let (name, object, span) = match &node {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 (member.property.name.as_str(), &member.object, member.span)
@@ -687,15 +686,15 @@ impl<'a> PeepholeOptimizations {
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
                     Expression::StringLiteral(s) => (s.value.as_str(), &member.object, member.span),
-                    _ => return,
+                    _ => return false,
                 }
             }
-            _ => return,
+            _ => return false,
         };
-        let Expression::Identifier(ident) = object else { return };
+        let Expression::Identifier(ident) = object else { return false };
 
         if !ctx.is_global_reference(ident) {
-            return;
+            return false;
         }
 
         let replacement = match ident.name.as_str() {
@@ -703,9 +702,10 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         };
         if let Some(replacement) = replacement {
-            self.mark_current_function_as_changed();
             *node = replacement;
+            return true;
         }
+        false
     }
 
     /// replace `Number.*` constants

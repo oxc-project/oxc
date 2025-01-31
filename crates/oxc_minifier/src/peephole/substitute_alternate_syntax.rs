@@ -88,31 +88,22 @@ impl<'a> PeepholeOptimizations {
         self.try_compress_call_expression_arguments(expr, ctx);
     }
 
-    pub fn substitute_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        // Change syntax
-        match expr {
-            Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
-            Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
-            Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
-            _ => {}
-        }
-    }
-
-    fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
+    pub fn swap_binary_expressions(e: &mut BinaryExpression<'a>) -> bool {
         if e.operator.is_equality()
             && (e.left.is_literal() || e.left.is_no_substitution_template())
             && !e.right.is_literal()
         {
             std::mem::swap(&mut e.left, &mut e.right);
+            return true;
         }
+        false
     }
 
     /// `() => { return foo })` -> `() => foo`
-    fn try_compress_arrow_expression(
-        &mut self,
+    pub fn try_compress_arrow_expression(
         arrow_expr: &mut ArrowFunctionExpression<'a>,
         ctx: Ctx<'a, '_>,
-    ) {
+    ) -> bool {
         if !arrow_expr.expression
             && arrow_expr.body.directives.is_empty()
             && arrow_expr.body.statements.len() == 1
@@ -124,11 +115,12 @@ impl<'a> PeepholeOptimizations {
                     if let Some(arg) = return_stmt_arg {
                         *body = ctx.ast.statement_expression(arg.span(), arg);
                         arrow_expr.expression = true;
-                        self.mark_current_function_as_changed();
+                        return true;
                     }
                 }
             }
         }
+        false
     }
 
     /// Compress `typeof foo == "undefined"`
@@ -688,11 +680,10 @@ impl<'a> PeepholeOptimizations {
         )
     }
 
-    fn try_compress_chain_call_expression(
-        &mut self,
+    pub fn try_compress_chain_call_expression(
         chain_expr: &mut ChainExpression<'a>,
         ctx: Ctx<'a, '_>,
-    ) {
+    ) -> bool {
         if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
             // `window.Object?.()` -> `Object?.()`
             if call_expr.arguments.is_empty()
@@ -703,9 +694,10 @@ impl<'a> PeepholeOptimizations {
             {
                 call_expr.callee =
                     ctx.ast.expression_identifier_reference(call_expr.callee.span(), "Object");
-                self.mark_current_function_as_changed();
+                return true;
             }
         }
+        false
     }
 
     pub fn try_fold_template_literal(
@@ -880,22 +872,8 @@ impl<'a> PeepholeOptimizations {
 }
 
 impl<'a> LatePeepholeOptimizations {
-    pub fn substitute_exit_expression(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        if let Expression::NewExpression(e) = expr {
-            Self::try_compress_typed_array_constructor(e, ctx);
-        }
-
-        if let Some(folded_expr) = match expr {
-            Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
-            Expression::ArrayExpression(_) => Self::try_compress_array_expression(expr, ctx),
-            _ => None,
-        } {
-            *expr = folded_expr;
-        }
-    }
-
     /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
-    fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: Ctx<'a, '_>) {
+    pub fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: Ctx<'a, '_>) {
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
@@ -909,7 +887,10 @@ impl<'a> LatePeepholeOptimizations {
     }
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
-    fn try_compress_boolean(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
+    pub fn try_compress_boolean(
+        expr: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
         let Expression::BooleanLiteral(lit) = expr else { return None };
         let num = ctx.ast.expression_numeric_literal(
             lit.span,
@@ -921,7 +902,7 @@ impl<'a> LatePeepholeOptimizations {
     }
 
     /// Transforms long array expression with string literals to `"str1,str2".split(',')`
-    fn try_compress_array_expression(
+    pub fn try_compress_array_expression(
         expr: &mut Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
