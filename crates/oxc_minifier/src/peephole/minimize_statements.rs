@@ -16,14 +16,15 @@ impl<'a> PeepholeOptimizations {
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/StatementFusion.java>
     ///
     /// ## Collapse variable declarations
-    ///
-    /// ## Join Vars
     /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
     ///
     /// ## Collapse into for statements:
     /// `var a = 0; for(;a<0;a++) {}` => `for(var a = 0;a<0;a++) {}`
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Denormalize.java>
+    ///
+    /// ## MinimizeExitPoints:
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: Ctx<'a, '_>) {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;
@@ -143,17 +144,12 @@ impl<'a> PeepholeOptimizations {
                             {
                                 // "if (a, b) return c; return d;" => "return a, b ? c : d;"
                                 let test = sequence_expr.expressions.pop().unwrap();
-                                let mut b = Self::minimize_conditional(
-                                    prev_if.span,
-                                    test,
-                                    left,
-                                    right,
-                                    ctx,
-                                );
+                                let mut b =
+                                    self.minimize_conditional(prev_if.span, test, left, right, ctx);
                                 Self::join_sequence(&mut prev_if.test, &mut b, ctx)
                             } else {
                                 // "if (a) return b; return c;" => "return a ? b : c;"
-                                let mut expr = Self::minimize_conditional(
+                                let mut expr = self.minimize_conditional(
                                     prev_if.span,
                                     ctx.ast.move_expression(&mut prev_if.test),
                                     left,

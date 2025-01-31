@@ -1,6 +1,5 @@
-use std::borrow::Cow;
-
 use cow_utils::CowUtils;
+use std::borrow::Cow;
 
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
@@ -26,11 +25,11 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) {
         self.try_fold_concat_chain(node, ctx);
-        self.try_fold_known_string_methods(node, ctx);
+        self.try_fold_known_global_methods(node, ctx);
         self.try_fold_known_property_access(node, ctx);
     }
 
-    fn try_fold_known_string_methods(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+    fn try_fold_known_global_methods(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
         let Expression::CallExpression(ce) = node else { return };
         let CallExpression { span, callee, arguments, .. } = ce.as_mut();
         let (name, object) = match &callee {
@@ -69,6 +68,7 @@ impl<'a> PeepholeOptimizations {
                 Self::try_fold_math_unary(*span, arguments, name, object, ctx)
             }
             "min" | "max" => Self::try_fold_math_variadic(*span, arguments, name, object, ctx),
+            "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -774,6 +774,26 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return None,
         })
+    }
+
+    fn try_fold_array_of(
+        span: Span,
+        arguments: &mut Arguments<'a>,
+        name: &str,
+        object: &Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if !Self::validate_global_reference(object, "Array", ctx) {
+            return None;
+        }
+        if name != "of" {
+            return None;
+        }
+        Some(ctx.ast.expression_array(
+            span,
+            ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
+            None,
+        ))
     }
 }
 
@@ -1575,17 +1595,16 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_array_of_spread() {
-        test("x = Array.of(...['a', 'b', 'c'])", "x = [...['a', 'b', 'c']]");
-        test("x = Array.of(...['a', 'b', 'c',])", "x = [...['a', 'b', 'c']]");
-        test("x = Array.of(...['a'], ...['b', 'c'])", "x = [...['a'], ...['b', 'c']]");
-        test("x = Array.of('a', ...['b', 'c'])", "x = ['a', ...['b', 'c']]");
-        test("x = Array.of('a', ...['b', 'c'])", "x = ['a', ...['b', 'c']]");
+        // Here, since our tests are fully opened, the dce may automatically optimize it into a simple array, instead of simply substitute the function call.
+        test("x = Array.of(...['a', 'b', 'c'])", "x = ['a', 'b', 'c']");
+        test("x = Array.of(...['a', 'b', 'c',])", "x = ['a', 'b', 'c']");
+        test("x = Array.of(...['a'], ...['b', 'c'])", "x = ['a', 'b', 'c']");
+        test("x = Array.of('a', ...['b', 'c'])", "x = ['a', 'b', 'c']");
+        test("x = Array.of('a', ...['b', 'c'])", "x = ['a', 'b', 'c']");
     }
 
     #[test]
-    #[ignore]
     fn test_array_of_no_spread() {
         test("x = Array.of('a', 'b', 'c')", "x = ['a', 'b', 'c']");
         test("x = Array.of('a', ['b', 'c'])", "x = ['a', ['b', 'c']]");
@@ -1593,13 +1612,11 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_array_of_no_args() {
         test("x = Array.of()", "x = []");
     }
 
     #[test]
-    #[ignore]
     fn test_array_of_no_change() {
         test_same("x = Array.of.apply(window, ['a', 'b', 'c'])");
         test_same("x = ['a', 'b', 'c']");
@@ -1607,7 +1624,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_array_bug() {
         test_same("Array[123]()");
     }
