@@ -416,7 +416,7 @@ impl<'a> Format<'a> for TSTupleType<'a> {
 impl<'a> Format<'a> for TSTypeLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, TSTypeLiteral, {
-            object::print_object(p, object::ObjectLike::TSTypeLiteral(self))
+            object::print_object(p, &object::ObjectLike::TSTypeLiteral(self))
         })
     }
 }
