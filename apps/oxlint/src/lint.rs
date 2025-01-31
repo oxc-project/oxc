@@ -829,7 +829,9 @@ mod test {
         // Issue: <https://github.com/oxc-project/oxc/issues/8485>
         let args_1 = &["-c", ".oxlintrc-eslint.json", "test.js"];
         let args_2 = &["-c", ".oxlintrc-unicorn.json", "test.js"];
-        Tester::new().with_cwd("fixtures/disable_eslint_and_unicorn_alias_rules".into()).test_and_snapshot_multiple(&[args_1, args_2]);
+        Tester::new()
+            .with_cwd("fixtures/disable_eslint_and_unicorn_alias_rules".into())
+            .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
     #[test]
