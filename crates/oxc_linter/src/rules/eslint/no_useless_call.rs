@@ -23,7 +23,7 @@ declare_oxc_lint!(
     /// Disallow unnecessary calls to `.call()` and `.apply()`
     ///
     /// ### Why is this bad?
-    /// Function.prototype.call() and Function.prototype.apply() are slower than the normal function invocation.
+    /// `Function.prototype.call()` and `Function.prototype.apply()` are slower than the normal function invocation.
     ///
     /// ### Examples
     ///
