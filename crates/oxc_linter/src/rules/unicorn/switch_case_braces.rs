@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::get_preceding_indent_str, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Clone, Copy)]
 enum Diagnostic {
@@ -158,8 +158,31 @@ impl Rule for SwitchCaseBraces {
                                     formatter.print_ascii_byte(b'{');
 
                                     let source_text = ctx.source_text();
+
                                     for x in &case.consequent {
+                                        if matches!(
+                                            x,
+                                            Statement::ExpressionStatement(_)
+                                                | Statement::BreakStatement(_)
+                                        ) {
+                                            // indent the statement in the case consequent, if needed
+                                            if let Some(indent_str) =
+                                                get_preceding_indent_str(source_text, x.span())
+                                            {
+                                                formatter.print_ascii_byte(b'\n');
+                                                formatter.print_str(indent_str);
+                                            }
+                                        }
+
                                         formatter.print_str(x.span().source_text(source_text));
+                                    }
+
+                                    // indent the closing case bracket, if needed
+                                    if let Some(case_indent_str) =
+                                        get_preceding_indent_str(source_text, case.span())
+                                    {
+                                        formatter.print_ascii_byte(b'\n');
+                                        formatter.print_str(case_indent_str);
                                     }
 
                                     formatter.print_ascii_byte(b'}');
@@ -226,6 +249,35 @@ fn test() {
             "switch(foo) { default: {doSomething();} }",
             "switch(foo) { default: doSomething(); }",
             Some(serde_json::json!(["avoid"])),
+        ),
+        // Issue: https://github.com/oxc-project/oxc/issues/8491
+        (
+            "
+                const alpha = 7
+                let beta = ''
+                let gamma = 0
+
+                switch (alpha) {
+                    case 1: 
+                        beta = 'one'
+                        gamma = 1
+                        break
+                }
+            ",
+            "
+                const alpha = 7
+                let beta = ''
+                let gamma = 0
+
+                switch (alpha) {
+                    case 1: {
+                        beta = 'one'
+                        gamma = 1
+                        break
+                    }
+                }
+            ",
+            None,
         ),
     ];
 
