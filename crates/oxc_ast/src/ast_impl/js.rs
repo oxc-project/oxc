@@ -265,6 +265,20 @@ impl<'a> Expression<'a> {
         expr
     }
 
+    #[allow(missing_docs)]
+    pub fn into_chain_element(self) -> Option<ChainElement<'a>> {
+        match self {
+            Expression::StaticMemberExpression(e) => Some(ChainElement::StaticMemberExpression(e)),
+            Expression::ComputedMemberExpression(e) => {
+                Some(ChainElement::ComputedMemberExpression(e))
+            }
+            Expression::PrivateFieldExpression(e) => Some(ChainElement::PrivateFieldExpression(e)),
+            Expression::CallExpression(e) => Some(ChainElement::CallExpression(e)),
+            Expression::TSNonNullExpression(e) => Some(ChainElement::TSNonNullExpression(e)),
+            _ => None,
+        }
+    }
+
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`].
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))

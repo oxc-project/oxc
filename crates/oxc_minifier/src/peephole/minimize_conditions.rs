@@ -612,7 +612,23 @@ impl<'a> PeepholeOptimizations {
                             ));
                         }
 
-                        // TODO: try using optional chaining
+                        // "a == null ? undefined : a.b.c[d](e)" => "a?.b.c[d](e)"
+                        // "a != null ? a.b.c[d](e) : undefined" => "a?.b.c[d](e)"
+                        let target_expr =
+                            if is_negate { &expr.alternate } else { &expr.consequent };
+                        if ctx.is_expression_undefined(target_expr) {
+                            let expr_to_inject_optional_chaining =
+                                if is_negate { &mut expr.consequent } else { &mut expr.alternate };
+                            if Self::inject_optional_chaining_if_matched(
+                                id_expr,
+                                expr_to_inject_optional_chaining,
+                                ctx,
+                            ) {
+                                return Some(
+                                    ctx.ast.move_expression(expr_to_inject_optional_chaining),
+                                );
+                            }
+                        }
                     }
                 }
             }
@@ -676,6 +692,91 @@ impl<'a> PeepholeOptimizations {
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
         ctx.ast.expression_logical(span, a, op, b)
+    }
+
+    /// Modify `expr` if that has `target_expr` as a parent, and returns true if modified.
+    ///
+    /// For `target_expr` = `a`, `expr` = `a.b`, this function changes `expr` to `a?.b` and returns true.
+    fn inject_optional_chaining_if_matched(
+        target_expr: &Expression<'a>,
+        expr: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> bool {
+        fn inject(target_expr: &Expression<'_>, expr: &mut Expression<'_>) -> bool {
+            match expr {
+                Expression::StaticMemberExpression(e) => {
+                    if e.object.content_eq(target_expr) {
+                        e.optional = true;
+                        return true;
+                    }
+                    if inject(target_expr, &mut e.object) {
+                        return true;
+                    }
+                }
+                Expression::ComputedMemberExpression(e) => {
+                    if e.object.content_eq(target_expr) {
+                        e.optional = true;
+                        return true;
+                    }
+                    if inject(target_expr, &mut e.object) {
+                        return true;
+                    }
+                }
+                Expression::CallExpression(e) => {
+                    if e.callee.content_eq(target_expr) {
+                        e.optional = true;
+                        return true;
+                    }
+                    if inject(target_expr, &mut e.callee) {
+                        return true;
+                    }
+                }
+                Expression::ChainExpression(e) => match &mut e.expression {
+                    ChainElement::StaticMemberExpression(e) => {
+                        if e.object.content_eq(target_expr) {
+                            e.optional = true;
+                            return true;
+                        }
+                        if inject(target_expr, &mut e.object) {
+                            return true;
+                        }
+                    }
+                    ChainElement::ComputedMemberExpression(e) => {
+                        if e.object.content_eq(target_expr) {
+                            e.optional = true;
+                            return true;
+                        }
+                        if inject(target_expr, &mut e.object) {
+                            return true;
+                        }
+                    }
+                    ChainElement::CallExpression(e) => {
+                        if e.callee.content_eq(target_expr) {
+                            e.optional = true;
+                            return true;
+                        }
+                        if inject(target_expr, &mut e.callee) {
+                            return true;
+                        }
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+            false
+        }
+
+        if inject(target_expr, expr) {
+            if !matches!(expr, Expression::ChainExpression(_)) {
+                *expr = ctx.ast.expression_chain(
+                    expr.span(),
+                    ctx.ast.move_expression(expr).into_chain_element().unwrap(),
+                );
+            }
+            true
+        } else {
+            false
+        }
     }
 
     /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
@@ -2319,7 +2420,16 @@ mod test {
         test("var a; a != null ? a : b", "var a; a ?? b");
         test("a != null ? a : b", "a == null ? b : a"); // accessing global `a` may have a getter with side effects
         test_es2019("var a; a != null ? a : b", "var a; a == null ? b : a");
-        // test("a != null ? a.b.c[d](e) : undefined", "a?.b.c[d](e)");
+        test("var a; a != null ? a.b.c[d](e) : undefined", "var a; a?.b.c[d](e)");
+        test("a != null ? a.b.c[d](e) : undefined", "a != null && a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
+        test(
+            "var a, undefined = 1; a != null ? a.b.c[d](e) : undefined",
+            "var a, undefined = 1; a == null ? undefined : a.b.c[d](e)",
+        );
+        test_es2019(
+            "var a; a != null ? a.b.c[d](e) : undefined",
+            "var a; a != null && a.b.c[d](e)",
+        );
         test("cmp !== 0 ? cmp : (bar, cmp);", "cmp === 0 && bar, cmp;");
         test("cmp === 0 ? cmp : (bar, cmp);", "cmp === 0 || bar, cmp;");
         test("cmp !== 0 ? (bar, cmp) : cmp;", "cmp === 0 || bar, cmp;");

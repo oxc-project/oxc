@@ -761,11 +761,6 @@ fn js_parser_test() {
         "if (a) x: { if (b) break x } else return c",
         "if (a) { x:  if (b) break x;} else return c;",
     );
-}
-
-#[test]
-#[ignore]
-fn test_ignored() {
     test("let a; return a != null ? a.b : undefined", "let a;return a?.b;");
     test("let a; return a != null ? a[b] : undefined", "let a;return a?.[b];");
     test("let a; return a != null ? a(b) : undefined", "let a;return a?.(b);");
@@ -778,17 +773,22 @@ fn test_ignored() {
     test("let a; return null == a ? undefined : a.b", "let a;return a?.b;");
     test("let a; return null == a ? undefined : a[b]", "let a;return a?.[b];");
     test("let a; return null == a ? undefined : a(b)", "let a;return a?.(b);");
-    test("return a != null ? a.b : undefined", "return a != null ? a.b : void 0;");
-    test("let a; return a != null ? a.b : null", "let a;return a != null ? a.b : null;");
-    test("let a; return a != null ? b.a : undefined", "let a;return a != null ? b.a : void 0;");
-    test("let a; return a != 0 ? a.b : undefined", "let a;return a != 0 ? a.b : void 0;");
-    test("let a; return a !== null ? a.b : undefined", "let a;return a !== null ? a.b : void 0;");
+    test("return a != null ? a.b : undefined", "return a == null ? void 0 : a.b;");
+    test("let a; return a != null ? a.b : null", "let a;return a == null ? null : a.b;");
+    test("let a; return a != null ? b.a : undefined", "let a;return a == null ? void 0 : b.a;");
+    test("let a; return a != 0 ? a.b : undefined", "let a;return a == 0 ? void 0 : a.b;");
+    test("let a; return a !== null ? a.b : undefined", "let a;return a === null ? void 0 : a.b;");
     test("let a; return a != undefined ? a.b : undefined", "let a;return a?.b;");
     test("let a; return a != null ? a?.b : undefined", "let a;return a?.b;");
     test("let a; return a != null ? a.b.c[d](e) : undefined", "let a;return a?.b.c[d](e);");
     test("let a; return a != null ? a?.b.c[d](e) : undefined", "let a;return a?.b.c[d](e);");
     test("let a; return a != null ? a.b.c?.[d](e) : undefined", "let a;return a?.b.c?.[d](e);");
     test("let a; return a != null ? a?.b.c?.[d](e) : undefined", "let a;return a?.b.c?.[d](e);");
+}
+
+#[test]
+#[ignore]
+fn test_ignored() {
     test("a != null && a.b()", "a?.b();");
     test("a == null || a.b()", "a?.b();");
     test("null != a && a.b()", "a?.b();");
