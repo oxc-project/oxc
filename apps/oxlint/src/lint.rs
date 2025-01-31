@@ -6,7 +6,6 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
