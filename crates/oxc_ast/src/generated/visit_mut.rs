@@ -1371,7 +1371,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_directives<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Directive<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_directive(el);
         }
     }
@@ -1395,7 +1395,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_statements<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Statement<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_statement(el);
         }
     }
@@ -1610,7 +1610,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TemplateElement<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_template_element(el);
         }
     }
@@ -1629,7 +1629,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, Expression<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_expression(el);
         }
     }
@@ -1691,7 +1691,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ArrayExpressionElement<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_array_expression_element(el);
         }
     }
@@ -1777,7 +1777,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSTypeParameter<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_type_parameter(el);
         }
     }
@@ -2028,7 +2028,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, FormalParameter<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_formal_parameter(el);
         }
     }
@@ -2048,7 +2048,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_decorators<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Decorator<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_decorator(el);
         }
     }
@@ -2101,7 +2101,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, BindingProperty<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_binding_property(el);
         }
     }
@@ -2281,7 +2281,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSImportAttribute<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_import_attribute(el);
         }
     }
@@ -2322,7 +2322,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_types<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, TSType<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_type(el);
         }
     }
@@ -2487,7 +2487,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSTupleElement<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_tuple_element(el);
         }
     }
@@ -2506,7 +2506,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSSignature<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_signature(el);
         }
     }
@@ -2542,7 +2542,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSIndexSignatureName<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_index_signature_name(el);
         }
     }
@@ -3041,7 +3041,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, AssignmentTargetProperty<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_assignment_target_property(el);
         }
     }
@@ -3125,7 +3125,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_arguments<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Argument<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_argument(el);
         }
     }
@@ -3195,7 +3195,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSClassImplements<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_class_implements(el);
         }
     }
@@ -3229,7 +3229,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ClassElement<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_class_element(el);
         }
     }
@@ -3425,7 +3425,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ObjectPropertyKind<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_object_property_kind(el);
         }
     }
@@ -3642,7 +3642,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, JSXAttributeItem<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_jsx_attribute_item(el);
         }
     }
@@ -3737,7 +3737,7 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_jsx_children<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, JSXChild<'a>>) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_jsx_child(el);
         }
     }
@@ -3861,7 +3861,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, VariableDeclarator<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_variable_declarator(el);
         }
     }
@@ -3991,7 +3991,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, SwitchCase<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_switch_case(el);
         }
     }
@@ -4137,7 +4137,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSInterfaceHeritage<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_interface_heritage(el);
         }
     }
@@ -4187,7 +4187,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, TSEnumMember<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_ts_enum_member(el);
         }
     }
@@ -4364,7 +4364,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ImportDeclarationSpecifier<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_import_declaration_specifier(el);
         }
     }
@@ -4447,7 +4447,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ImportAttribute<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_import_attribute(el);
         }
     }
@@ -4551,7 +4551,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut Vec<'a, ExportSpecifier<'a>>,
     ) {
-        for el in it.iter_mut() {
+        for el in it {
             visitor.visit_export_specifier(el);
         }
     }

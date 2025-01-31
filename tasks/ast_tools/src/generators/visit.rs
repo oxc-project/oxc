@@ -248,10 +248,9 @@ impl<'a> VisitBuilder<'a> {
 
         let (walk_body, may_inline) = if collection {
             let singular_visit = self.get_visitor(def, false);
-            let iter = if self.is_mut { quote!(it.iter_mut()) } else { quote!(it) };
             (
                 quote! {
-                    for el in #iter {
+                    for el in it {
                         visitor.#singular_visit(el);
                     }
                 },
