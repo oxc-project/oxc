@@ -203,16 +203,16 @@ mod test {
 
         #[test]
         fn test_for_in() {
-            // test("var a; for(a in b) foo()", "for (var a in b) foo()");
+            test("var a; for(a in b) foo()", "for (var a in b) foo()");
             test("a = 0; for(a in b) foo()", "for (a in a = 0, b) foo();");
-            // test_same("var a = 0; for(a in b) foo()");
+            test_same("var a = 0; for(a in b) foo()");
 
             // We don't handle labels yet.
-            // test_same("var a; a:for(a in b) foo()");
-            // test_same("var a; a:b:for(a in b) foo()");
+            test_same("var a; a:for(a in b) foo()");
+            test_same("var a; a:b:for(a in b) foo()");
 
             // Verify FOR inside IFs.
-            // test("if(x){var a; for(a in b) foo()}", "if(x) for(var a in b) foo()");
+            test("if(x){var a; for(a in b) foo()}", "if(x) for(var a in b) foo()");
 
             // Any other expression.
             test("init(); for(a in b) foo()", "for (a in init(), b) foo();");
@@ -221,7 +221,7 @@ mod test {
             test_same("function f(){ for(a in b) foo() }");
 
             // We don't handle destructuring patterns yet.
-            // test("var a; var b; for ([a, b] in c) foo();", "var a, b; for ([a, b] in c) foo();");
+            test("var a; var b; for ([a, b] in c) foo();", "var a, b; for ([a, b] in c) foo();");
         }
 
         #[test]
