@@ -42,7 +42,7 @@ declare_oxc_lint!(
 
 impl Rule for Eqeqeq {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let first_arg = value.get(0).and_then(serde_json::Value::as_str).map(CompareType::from);
+        let first_arg = value.get(0).and_then(serde_json::Value::as_str);
 
         let null_type = value
             .get(usize::from(first_arg.is_some()))
@@ -51,7 +51,7 @@ impl Rule for Eqeqeq {
             .map(NullType::from)
             .unwrap_or_default();
 
-        let compare_type = first_arg.unwrap_or_default();
+        let compare_type = first_arg.map(CompareType::from).unwrap_or_default();
 
         Self { compare_type, null_type }
     }
