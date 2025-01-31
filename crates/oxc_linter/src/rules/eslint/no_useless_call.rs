@@ -27,6 +27,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```js
     /// // These are same as `foo(1, 2, 3);`
     /// foo.call(undefined, 1, 2, 3);
@@ -39,6 +40,7 @@ declare_oxc_lint!(
     /// obj.foo.apply(obj, [1, 2, 3]);
     /// ```
     ///
+    /// Examples of **correct** code for this rule:
     /// ```js
     /// // The `this` binding is different.
     /// foo.call(obj, 1, 2, 3);
