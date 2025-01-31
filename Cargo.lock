@@ -1692,6 +1692,7 @@ dependencies = [
  "oxc_syntax",
  "pico-args",
  "rustc-hash",
+ "ryu-js",
 ]
 
 [[package]]
