@@ -7,18 +7,49 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_index::Idx;
-use oxc_semantic::{ReferenceId, ScopeTree, Semantic, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_semantic::{ScopeTree, Semantic, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::Atom;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
+    /// Also mangle exported variables.
     pub top_level: bool,
+    /// Use more readable mangled names
+    /// (e.g. `slot_0`, `slot_1`, `slot_2`, ...) for debugging.
+    ///
+    /// Uses base54 if false.
     pub debug: bool,
 }
 
 type Slot = usize;
 
 /// # Name Mangler / Symbol Minification
+///
+/// ## Example
+///
+/// ```rust
+/// use oxc_codegen::{Codegen, CodegenOptions};
+/// use oxc_ast::ast::Program;
+/// use oxc_parser::Parser;
+/// use oxc_allocator::Allocator;
+/// use oxc_span::SourceType;
+/// use oxc_mangler::{MangleOptions, Mangler};
+///
+/// let allocator = Allocator::default();
+/// let source = "const result = 1 + 2;";
+/// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+/// assert!(parsed.errors.is_empty());
+///
+/// let mangled_symbols = Mangler::new()
+///     .with_options(MangleOptions { top_level: true, debug: true })
+///     .build(&parsed.program);
+///
+/// let js = Codegen::new().with_symbol_table(mangled_symbols).build(&parsed.program);
+/// // this will be `const a = 1 + 2;` if debug = false
+/// assert_eq!(js.code, "const slot_0 = 1 + 2;\n");
+/// ```
+///
+/// ## Implementation
 ///
 /// See:
 ///   * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/docs/architecture.md#symbol-minification)
@@ -61,7 +92,7 @@ type Slot = usize;
 /// }
 /// ```
 ///
-/// ## Name Reuse Calculation
+/// ### Name Reuse Calculation
 ///
 /// This improvement was inspired by [evanw/esbuild#2614](https://github.com/evanw/esbuild/pull/2614).
 ///
@@ -112,8 +143,6 @@ type Slot = usize;
 /// - slot 3: `bar`
 #[derive(Default)]
 pub struct Mangler {
-    symbol_table: SymbolTable,
-
     options: MangleOptions,
 }
 
@@ -129,17 +158,10 @@ impl Mangler {
         self
     }
 
-    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &str {
-        self.symbol_table.get_name(symbol_id)
-    }
-
-    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
-        let symbol_id = self.symbol_table.get_reference(reference_id).symbol_id()?;
-        Some(self.symbol_table.get_name(symbol_id))
-    }
-
+    /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
+    /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
-    pub fn build(self, program: &Program<'_>) -> Mangler {
+    pub fn build(self, program: &Program<'_>) -> SymbolTable {
         let semantic =
             SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
         self.build_with_semantic(semantic, program)
@@ -149,7 +171,7 @@ impl Mangler {
     ///
     /// Panics if the child_ids does not exist in scope_tree.
     #[must_use]
-    pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> Mangler {
+    pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> SymbolTable {
         if self.options.debug {
             self.build_with_symbols_and_scopes_impl(semantic, program, debug_name)
         } else {
@@ -161,11 +183,11 @@ impl Mangler {
         const CAPACITY: usize,
         G: Fn(usize) -> InlineString<CAPACITY>,
     >(
-        mut self,
+        self,
         semantic: Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
-    ) -> Mangler {
+    ) -> SymbolTable {
         let (mut symbol_table, scope_tree, ast_nodes) = semantic.into_symbols_scopes_nodes();
 
         assert!(scope_tree.has_child_ids(), "child_id needs to be generated");
@@ -331,8 +353,7 @@ impl Mangler {
             }
         }
 
-        self.symbol_table = symbol_table;
-        self
+        symbol_table
     }
 
     fn tally_slot_frequencies<'a>(

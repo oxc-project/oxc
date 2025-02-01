@@ -19,7 +19,7 @@ use oxc_ast::ast::{
     BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
 };
 use oxc_data_structures::stack::Stack;
-use oxc_mangler::Mangler;
+use oxc_semantic::SymbolTable;
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_part_ascii, LS, PS},
@@ -79,7 +79,7 @@ pub struct Codegen<'a> {
     /// Original source code of the AST
     source_text: &'a str,
 
-    mangler: Option<Mangler>,
+    symbol_table: Option<SymbolTable>,
 
     /// Output Code
     code: CodeBuffer,
@@ -162,7 +162,7 @@ impl<'a> Codegen<'a> {
         Self {
             options,
             source_text: "",
-            mangler: None,
+            symbol_table: None,
             code: CodeBuffer::default(),
             needs_semicolon: false,
             need_space_before_dot: 0,
@@ -194,10 +194,12 @@ impl<'a> Codegen<'a> {
         self
     }
 
-    /// Set the mangler for mangling identifiers.
+    /// Set the symbol table used for identifier renaming.
+    ///
+    /// Can be used for easy renaming of variables (based on semantic analysis).
     #[must_use]
-    pub fn with_mangler(mut self, mangler: Option<Mangler>) -> Self {
-        self.mangler = mangler;
+    pub fn with_symbol_table(mut self, symbol_table: Option<SymbolTable>) -> Self {
+        self.symbol_table = symbol_table;
         self
     }
 
@@ -516,9 +518,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
-        if let Some(mangler) = &self.mangler {
+        if let Some(symbol_table) = &self.symbol_table {
             if let Some(reference_id) = reference.reference_id.get() {
-                if let Some(name) = mangler.get_reference_name(reference_id) {
+                if let Some(name) = symbol_table.get_reference_name(reference_id) {
                     // SAFETY: Hack the lifetime to be part of the allocator.
                     return unsafe { std::mem::transmute_copy(&name) };
                 }
@@ -528,9 +530,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
-        if let Some(mangler) = &self.mangler {
+        if let Some(symbol_table) = &self.symbol_table {
             if let Some(symbol_id) = ident.symbol_id.get() {
-                let name = mangler.get_symbol_name(symbol_id);
+                let name = symbol_table.get_name(symbol_id);
                 // SAFETY: Hack the lifetime to be part of the allocator.
                 return unsafe { std::mem::transmute_copy(&name) };
             }

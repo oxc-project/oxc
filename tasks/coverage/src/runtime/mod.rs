@@ -208,17 +208,17 @@ impl Test262RuntimeCase {
             );
         }
 
-        let mangler = if minify {
+        let symbol_table = if minify {
             Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
                 .build(&allocator, &mut program)
-                .mangler
+                .symbol_table
         } else {
             None
         };
 
         let mut text = CodeGenerator::new()
             .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
-            .with_mangler(mangler)
+            .with_symbol_table(symbol_table)
             .build(&program)
             .code;
         if is_only_strict {

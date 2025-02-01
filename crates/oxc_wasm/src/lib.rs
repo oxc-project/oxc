@@ -265,7 +265,7 @@ impl Oxc {
             }
         }
 
-        let mangler = if minifier_options.compress.unwrap_or_default()
+        let symbol_table = if minifier_options.compress.unwrap_or_default()
             || minifier_options.mangle.unwrap_or_default()
         {
             let compress_options = minifier_options.compress_options.unwrap_or_default();
@@ -281,13 +281,13 @@ impl Oxc {
                     CompressOptions::all_false()
                 }),
             };
-            Minifier::new(options).build(&allocator, &mut program).mangler
+            Minifier::new(options).build(&allocator, &mut program).symbol_table
         } else {
             None
         };
 
         self.codegen_text = CodeGenerator::new()
-            .with_mangler(mangler)
+            .with_symbol_table(symbol_table)
             .with_options(CodegenOptions {
                 minify: minifier_options.whitespace.unwrap_or_default(),
                 ..CodegenOptions::default()
