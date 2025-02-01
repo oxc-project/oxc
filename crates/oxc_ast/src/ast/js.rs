@@ -33,7 +33,7 @@ use super::{macros::inherit_variants, *};
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Program<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub source_type: SourceType,
@@ -214,7 +214,7 @@ pub use match_expression;
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct IdentifierName<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub name: Atom<'a>,
@@ -230,7 +230,7 @@ pub struct IdentifierName<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct IdentifierReference<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The name of the identifier being referenced.
     pub name: Atom<'a>,
@@ -254,7 +254,7 @@ pub struct IdentifierReference<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct BindingIdentifier<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The identifier name being bound.
     pub name: Atom<'a>,
@@ -279,7 +279,7 @@ pub struct BindingIdentifier<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct LabelIdentifier<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub name: Atom<'a>,
@@ -292,7 +292,7 @@ pub struct LabelIdentifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ThisExpression {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -303,7 +303,7 @@ pub struct ThisExpression {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrayExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[estree(ts_type = "Array<SpreadElement | Expression | null>")]
     #[allow(missing_docs)]
@@ -345,7 +345,7 @@ pub enum ArrayExpressionElement<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 pub struct Elision {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -356,7 +356,7 @@ pub struct Elision {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ObjectExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// Properties declared in the object
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
@@ -383,7 +383,7 @@ pub enum ObjectPropertyKind<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ObjectProperty<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub kind: PropertyKind,
@@ -438,7 +438,7 @@ pub enum PropertyKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TemplateLiteral<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub quasis: Vec<'a, TemplateElement<'a>>,
@@ -453,7 +453,7 @@ pub struct TemplateLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TaggedTemplateExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub tag: Expression<'a>,
@@ -471,7 +471,7 @@ pub struct TaggedTemplateExpression<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TemplateElement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub tail: bool,
@@ -529,7 +529,7 @@ pub use match_member_expression;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ComputedMemberExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub object: Expression<'a>,
@@ -546,7 +546,7 @@ pub struct ComputedMemberExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct StaticMemberExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub object: Expression<'a>,
@@ -563,7 +563,7 @@ pub struct StaticMemberExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct PrivateFieldExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub object: Expression<'a>,
@@ -593,7 +593,7 @@ pub struct PrivateFieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct CallExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub callee: Expression<'a>,
@@ -622,7 +622,7 @@ pub struct CallExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct NewExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub callee: Expression<'a>,
@@ -640,7 +640,7 @@ pub struct NewExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct MetaProperty<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub meta: IdentifierName<'a>,
@@ -655,7 +655,7 @@ pub struct MetaProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct SpreadElement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The expression being spread.
     pub argument: Expression<'a>,
@@ -685,7 +685,7 @@ pub enum Argument<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct UpdateExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub operator: UpdateOperator,
@@ -702,7 +702,7 @@ pub struct UpdateExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct UnaryExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub operator: UnaryOperator,
@@ -717,7 +717,7 @@ pub struct UnaryExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct BinaryExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub left: Expression<'a>,
@@ -734,7 +734,7 @@ pub struct BinaryExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct PrivateInExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub left: PrivateIdentifier<'a>,
@@ -751,7 +751,7 @@ pub struct PrivateInExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct LogicalExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub left: Expression<'a>,
@@ -768,7 +768,7 @@ pub struct LogicalExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ConditionalExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub test: Expression<'a>,
@@ -785,7 +785,7 @@ pub struct ConditionalExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub operator: AssignmentOperator,
@@ -905,7 +905,7 @@ pub use match_assignment_target_pattern;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrayAssignmentTarget<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
@@ -924,7 +924,7 @@ pub struct ArrayAssignmentTarget<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ObjectAssignmentTarget<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
@@ -941,7 +941,7 @@ pub struct ObjectAssignmentTarget<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "RestElement")]
 pub struct AssignmentTargetRest<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     #[estree(rename = "argument")]
@@ -970,7 +970,7 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentTargetWithDefault<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub binding: AssignmentTarget<'a>,
@@ -996,7 +996,7 @@ pub enum AssignmentTargetProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub binding: IdentifierReference<'a>,
@@ -1011,7 +1011,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentTargetPropertyProperty<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub name: PropertyKey<'a>,
@@ -1028,7 +1028,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct SequenceExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expressions: Vec<'a, Expression<'a>>,
@@ -1041,7 +1041,7 @@ pub struct SequenceExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Super {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -1052,7 +1052,7 @@ pub struct Super {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AwaitExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub argument: Expression<'a>,
@@ -1065,7 +1065,7 @@ pub struct AwaitExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ChainExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: ChainElement<'a>,
@@ -1097,7 +1097,7 @@ pub enum ChainElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ParenthesizedExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1165,7 +1165,7 @@ pub enum Statement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Directive<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// Directive with any escapes unescaped
     pub expression: StringLiteral<'a>,
@@ -1180,7 +1180,7 @@ pub struct Directive<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Hashbang<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub value: Atom<'a>,
@@ -1194,7 +1194,7 @@ pub struct Hashbang<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct BlockStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub body: Vec<'a, Statement<'a>>,
@@ -1251,7 +1251,7 @@ pub use match_declaration;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct VariableDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub kind: VariableDeclarationKind,
@@ -1292,7 +1292,7 @@ pub enum VariableDeclarationKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct VariableDeclarator<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     #[estree(skip)]
@@ -1311,7 +1311,7 @@ pub struct VariableDeclarator<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct EmptyStatement {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -1320,7 +1320,7 @@ pub struct EmptyStatement {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExpressionStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1331,7 +1331,7 @@ pub struct ExpressionStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct IfStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub test: Expression<'a>,
@@ -1346,7 +1346,7 @@ pub struct IfStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct DoWhileStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub body: Statement<'a>,
@@ -1359,7 +1359,7 @@ pub struct DoWhileStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct WhileStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub test: Expression<'a>,
@@ -1373,7 +1373,7 @@ pub struct WhileStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ForStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub init: Option<ForStatementInit<'a>>,
@@ -1412,7 +1412,7 @@ pub enum ForStatementInit<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ForInStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub left: ForStatementLeft<'a>,
@@ -1448,7 +1448,7 @@ pub enum ForStatementLeft<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ForOfStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub r#await: bool,
@@ -1469,7 +1469,7 @@ pub struct ForOfStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ContinueStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub label: Option<LabelIdentifier<'a>>,
@@ -1480,7 +1480,7 @@ pub struct ContinueStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct BreakStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub label: Option<LabelIdentifier<'a>>,
@@ -1491,7 +1491,7 @@ pub struct BreakStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ReturnStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub argument: Option<Expression<'a>>,
@@ -1502,7 +1502,7 @@ pub struct ReturnStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct WithStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub object: Expression<'a>,
@@ -1516,7 +1516,7 @@ pub struct WithStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct SwitchStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub discriminant: Expression<'a>,
@@ -1534,7 +1534,7 @@ pub struct SwitchStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct SwitchCase<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub test: Option<Expression<'a>>,
@@ -1547,7 +1547,7 @@ pub struct SwitchCase<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct LabeledStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub label: LabelIdentifier<'a>,
@@ -1566,7 +1566,7 @@ pub struct LabeledStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ThrowStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The expression being thrown, e.g. `err` in `throw err;`
     pub argument: Expression<'a>,
@@ -1591,7 +1591,7 @@ pub struct ThrowStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TryStatement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// Statements in the `try` block
     pub block: Box<'a, BlockStatement<'a>>,
@@ -1618,7 +1618,7 @@ pub struct TryStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct CatchClause<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The caught error parameter, e.g. `e` in `catch (e) {}`
     pub param: Option<CatchParameter<'a>>,
@@ -1647,7 +1647,7 @@ pub struct CatchClause<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct CatchParameter<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The bound error
     pub pattern: BindingPattern<'a>,
@@ -1664,7 +1664,7 @@ pub struct CatchParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct DebuggerStatement {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -1714,7 +1714,7 @@ pub enum BindingPatternKind<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentPattern<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub left: BindingPattern<'a>,
@@ -1727,7 +1727,7 @@ pub struct AssignmentPattern<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ObjectPattern<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub properties: Vec<'a, BindingProperty<'a>>,
@@ -1741,7 +1741,7 @@ pub struct ObjectPattern<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct BindingProperty<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub key: PropertyKey<'a>,
@@ -1758,7 +1758,7 @@ pub struct BindingProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrayPattern<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
@@ -1781,7 +1781,7 @@ pub struct ArrayPattern<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "RestElement")]
 pub struct BindingRestElement<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub argument: BindingPattern<'a>,
@@ -1831,7 +1831,7 @@ pub struct BindingRestElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Function<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub r#type: FunctionType,
@@ -1918,7 +1918,7 @@ pub enum FunctionType {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(custom_serialize)]
 pub struct FormalParameters<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub kind: FormalParameterKind,
@@ -1935,7 +1935,7 @@ pub struct FormalParameters<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct FormalParameter<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     #[ts]
@@ -1974,7 +1974,7 @@ pub enum FormalParameterKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct FunctionBody<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub directives: Vec<'a, Directive<'a>>,
@@ -1991,7 +1991,7 @@ pub struct FunctionBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrowFunctionExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
@@ -2018,7 +2018,7 @@ pub struct ArrowFunctionExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct YieldExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub delegate: bool,
@@ -2032,7 +2032,7 @@ pub struct YieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Class<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub r#type: ClassType,
@@ -2131,7 +2131,7 @@ pub enum ClassType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ClassBody<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub body: Vec<'a, ClassElement<'a>>,
@@ -2185,7 +2185,7 @@ pub enum ClassElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct MethodDefinition<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// Method definition type
     ///
@@ -2238,7 +2238,7 @@ pub enum MethodDefinitionType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct PropertyDefinition<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub r#type: PropertyDefinitionType,
@@ -2360,7 +2360,7 @@ pub enum MethodDefinitionKind {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct PrivateIdentifier<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub name: Atom<'a>,
@@ -2384,7 +2384,7 @@ pub struct PrivateIdentifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct StaticBlock<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub body: Vec<'a, Statement<'a>>,
@@ -2476,7 +2476,7 @@ pub enum AccessorPropertyType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AccessorProperty<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub r#type: AccessorPropertyType,
@@ -2538,7 +2538,7 @@ pub struct ImportExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     #[estree(via = crate::serialize::OptionVecDefault, ts_type = "Array<ImportDeclarationSpecifier>")]
@@ -2591,7 +2591,7 @@ pub enum ImportDeclarationSpecifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportSpecifier<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub imported: ModuleExportName<'a>,
@@ -2623,7 +2623,7 @@ pub struct ImportSpecifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportDefaultSpecifier<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The name of the imported symbol.
     pub local: BindingIdentifier<'a>,
@@ -2639,7 +2639,7 @@ pub struct ImportDefaultSpecifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportNamespaceSpecifier<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub local: BindingIdentifier<'a>,
@@ -2650,7 +2650,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct WithClause<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
@@ -2663,7 +2663,7 @@ pub struct WithClause<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportAttribute<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub key: ImportAttributeKey<'a>,
@@ -2697,7 +2697,7 @@ pub enum ImportAttributeKey<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportNamedDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub declaration: Option<Declaration<'a>>,
@@ -2726,7 +2726,7 @@ pub struct ExportNamedDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportDefaultDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub declaration: ExportDefaultDeclarationKind<'a>,
@@ -2747,7 +2747,7 @@ pub struct ExportDefaultDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportAllDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// If this declaration is re-named
     pub exported: Option<ModuleExportName<'a>>,
@@ -2776,7 +2776,7 @@ pub struct ExportAllDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportSpecifier<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub local: ModuleExportName<'a>,

@@ -35,7 +35,7 @@ use super::{inherit_variants, js::*, literal::*};
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSThisParameter<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     #[estree(skip)]
@@ -69,7 +69,7 @@ pub struct TSThisParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSEnumDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub id: BindingIdentifier<'a>,
@@ -107,7 +107,7 @@ pub struct TSEnumDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSEnumMember<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub id: TSEnumMemberName<'a>,
@@ -166,7 +166,7 @@ pub struct TSTypeAnnotation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSLiteralType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub literal: TSLiteral<'a>,
@@ -355,7 +355,7 @@ pub use match_ts_type;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConditionalType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The type before `extends` in the test expression.
     pub check_type: TSType<'a>,
@@ -386,7 +386,7 @@ pub struct TSConditionalType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSUnionType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The types in the union.
     pub types: Vec<'a, TSType<'a>>,
@@ -409,7 +409,7 @@ pub struct TSUnionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIntersectionType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub types: Vec<'a, TSType<'a>>,
@@ -428,7 +428,7 @@ pub struct TSIntersectionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSParenthesizedType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
@@ -447,7 +447,7 @@ pub struct TSParenthesizedType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeOperator<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub operator: TSTypeOperatorOperator,
@@ -483,7 +483,7 @@ pub enum TSTypeOperatorOperator {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSArrayType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub element_type: TSType<'a>,
@@ -504,7 +504,7 @@ pub struct TSArrayType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIndexedAccessType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub object_type: TSType<'a>,
@@ -525,7 +525,7 @@ pub struct TSIndexedAccessType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTupleType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub element_types: Vec<'a, TSTupleElement<'a>>,
@@ -545,7 +545,7 @@ pub struct TSTupleType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNamedTupleMember<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub element_type: TSTupleElement<'a>,
@@ -568,7 +568,7 @@ pub struct TSNamedTupleMember<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSOptionalType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
@@ -586,7 +586,7 @@ pub struct TSOptionalType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSRestType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
@@ -628,7 +628,7 @@ pub enum TSTupleElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSAnyKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -645,7 +645,7 @@ pub struct TSAnyKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSStringKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -662,7 +662,7 @@ pub struct TSStringKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSBooleanKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -679,7 +679,7 @@ pub struct TSBooleanKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNumberKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -697,7 +697,7 @@ pub struct TSNumberKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNeverKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -715,7 +715,7 @@ pub struct TSNeverKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIntrinsicKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -734,7 +734,7 @@ pub struct TSIntrinsicKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSUnknownKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -752,7 +752,7 @@ pub struct TSUnknownKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNullKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -772,7 +772,7 @@ pub struct TSNullKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSUndefinedKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -781,7 +781,7 @@ pub struct TSUndefinedKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSVoidKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -790,7 +790,7 @@ pub struct TSVoidKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSSymbolKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -799,7 +799,7 @@ pub struct TSSymbolKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSThisType {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -808,7 +808,7 @@ pub struct TSThisType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSObjectKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -817,7 +817,7 @@ pub struct TSObjectKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSBigIntKeyword {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
 
@@ -833,7 +833,7 @@ pub struct TSBigIntKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeReference<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub type_name: TSTypeName<'a>,
@@ -875,7 +875,7 @@ pub use match_ts_type_name;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSQualifiedName<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub left: TSTypeName<'a>,
@@ -888,7 +888,7 @@ pub struct TSQualifiedName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeParameterInstantiation<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub params: Vec<'a, TSType<'a>>,
@@ -915,7 +915,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeParameter<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
     pub name: BindingIdentifier<'a>,
@@ -936,7 +936,7 @@ pub struct TSTypeParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeParameterDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub params: Vec<'a, TSTypeParameter<'a>>,
@@ -955,7 +955,7 @@ pub struct TSTypeParameterDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeAliasDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     pub id: BindingIdentifier<'a>,
@@ -999,7 +999,7 @@ pub enum TSAccessibility {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSClassImplements<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: TSTypeName<'a>,
@@ -1027,7 +1027,7 @@ pub struct TSClassImplements<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInterfaceDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
@@ -1051,7 +1051,7 @@ pub struct TSInterfaceDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInterfaceBody<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub body: Vec<'a, TSSignature<'a>>,
@@ -1076,7 +1076,7 @@ pub struct TSInterfaceBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSPropertySignature<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub computed: bool,
@@ -1122,7 +1122,7 @@ pub enum TSSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIndexSignature<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
@@ -1139,7 +1139,7 @@ pub struct TSIndexSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSCallSignatureDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1180,7 +1180,7 @@ pub enum TSMethodSignatureKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSMethodSignature<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub key: PropertyKey<'a>,
@@ -1210,7 +1210,7 @@ pub struct TSMethodSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConstructSignatureDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1230,7 +1230,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct TSIndexSignatureName<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub name: Atom<'a>,
@@ -1243,7 +1243,7 @@ pub struct TSIndexSignatureName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInterfaceHeritage<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1275,7 +1275,7 @@ pub struct TSInterfaceHeritage<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypePredicate<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The identifier the predicate operates on
     pub parameter_name: TSTypePredicateName<'a>,
@@ -1335,7 +1335,7 @@ pub enum TSTypePredicateName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSModuleDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The name of the module/namespace being declared.
     ///
@@ -1427,7 +1427,7 @@ pub enum TSModuleDeclarationBody<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(custom_serialize)]
 pub struct TSModuleBlock<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     #[estree(skip)]
@@ -1441,7 +1441,7 @@ pub struct TSModuleBlock<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeLiteral<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub members: Vec<'a, TSSignature<'a>>,
@@ -1464,7 +1464,7 @@ pub struct TSTypeLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInferType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The type bound when the
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1483,7 +1483,7 @@ pub struct TSInferType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeQuery<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expr_name: TSTypeQueryExprName<'a>,
@@ -1513,7 +1513,7 @@ pub enum TSTypeQueryExprName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSImportType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// `true` for `typeof import("foo")`
     pub is_type_of: bool,
@@ -1531,7 +1531,7 @@ pub struct TSImportType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSImportAttributes<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
@@ -1574,7 +1574,7 @@ pub enum TSImportAttributeName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSFunctionType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// Generic type parameters
     ///
@@ -1605,7 +1605,7 @@ pub struct TSFunctionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConstructorType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub r#abstract: bool,
@@ -1643,7 +1643,7 @@ pub struct TSConstructorType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSMappedType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1713,7 +1713,7 @@ pub enum TSMappedTypeModifierOperator {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTemplateLiteralType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The string parts of the template literal.
     pub quasis: Vec<'a, TemplateElement<'a>>,
@@ -1726,7 +1726,7 @@ pub struct TSTemplateLiteralType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSAsExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1750,7 +1750,7 @@ pub struct TSAsExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSSatisfiesExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     /// The value expression being constrained.
     pub expression: Expression<'a>,
@@ -1763,7 +1763,7 @@ pub struct TSSatisfiesExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeAssertion<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1776,7 +1776,7 @@ pub struct TSTypeAssertion<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSImportEqualsDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub id: BindingIdentifier<'a>,
@@ -1808,7 +1808,7 @@ pub enum TSModuleReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSExternalModuleReference<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: StringLiteral<'a>,
@@ -1819,7 +1819,7 @@ pub struct TSExternalModuleReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNonNullExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1853,7 +1853,7 @@ pub struct TSNonNullExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Decorator<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1866,7 +1866,7 @@ pub struct Decorator<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSExportAssignment<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1879,7 +1879,7 @@ pub struct TSExportAssignment<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNamespaceExportDeclaration<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub id: IdentifierName<'a>,
@@ -1890,7 +1890,7 @@ pub struct TSNamespaceExportDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInstantiationExpression<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub expression: Expression<'a>,
@@ -1916,7 +1916,7 @@ pub enum ImportOrExportKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSDocNullableType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
@@ -1929,7 +1929,7 @@ pub struct JSDocNullableType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSDocNonNullableType<'a> {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
     #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
@@ -1942,6 +1942,6 @@ pub struct JSDocNonNullableType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSDocUnknownType {
-    #[allow(missing_docs)]
+    #[doc = include_str!("../../docs/shared_span.md")]
     pub span: Span,
 }
