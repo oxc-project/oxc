@@ -52,15 +52,13 @@ pub trait Derive {
                 .chain(["*"])
                 .join("::");
             let use_module: ItemUse = parse_str(format!("use {local_path};").as_str()).unwrap();
-            quote! {
-                ///@@line_break
-                #use_module
-            }
+            quote!( #use_module )
         });
 
         quote! {
             #prelude
 
+            ///@@line_break
             #(#use_modules)*
 
             ///@@line_break

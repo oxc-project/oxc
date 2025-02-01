@@ -6,11 +6,8 @@
 use oxc_span::{GetSpanMut, Span};
 
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::literal::*;
-
 use crate::ast::ts::*;
 
 impl GetSpanMut for BooleanLiteral {

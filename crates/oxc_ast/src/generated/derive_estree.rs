@@ -6,11 +6,8 @@
 use serde::{ser::SerializeMap, Serialize, Serializer};
 
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::literal::*;
-
 use crate::ast::ts::*;
 
 impl Serialize for BooleanLiteral {
