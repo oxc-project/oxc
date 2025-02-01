@@ -523,7 +523,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 match &decl.declaration {
                     Some(Declaration::VariableDeclaration(var)) => {
                         for declarator in &var.declarations {
-                            if let Some(name) = declarator.id.get_identifier() {
+                            if let Some(name) = declarator.id.get_identifier_name() {
                                 assignable_properties_for_namespace
                                     .entry(&ident.name)
                                     .or_default()
@@ -580,7 +580,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             if declarator.id.type_annotation.is_none()
                                 && declarator.init.as_ref().is_some_and(Expression::is_function)
                             {
-                                if let Some(name) = declarator.id.get_identifier() {
+                                if let Some(name) = declarator.id.get_identifier_name() {
                                     can_expando_function_names.insert(name);
                                 }
                             }
@@ -613,7 +613,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         if declarator.id.type_annotation.is_none()
                             && declarator.init.as_ref().is_some_and(Expression::is_function)
                         {
-                            if let Some(name) = declarator.id.get_identifier() {
+                            if let Some(name) = declarator.id.get_identifier_name() {
                                 if self.scope.has_reference(&name) {
                                     can_expando_function_names.insert(name);
                                 }

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.9] - 2025-02-01
+
+### Bug Fixes
+
+- 5041cb3 vscode: Fix commands by reverting commit `259a47b` (#8819) (Alexander S.)
+
 ## [0.15.8] - 2025-01-24
 
 ### Refactor

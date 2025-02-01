@@ -110,28 +110,43 @@ impl OxlintRules {
                     }
                 }
                 _ => {
-                    // For overlapping rule names, use the "error" one
-                    // "no-loss-of-precision": "off",
-                    // "@typescript-eslint/no-loss-of-precision": "error"
-                    if let Some(rule_config) =
-                        rule_configs.iter().find(|r| r.severity.is_warn_deny())
-                    {
-                        let config = rule_config.config.clone().unwrap_or_default();
+                    let rules = rules_for_override
+                        .iter()
+                        .filter_map(|r| {
+                            if r.name() == *name {
+                                Some((r.plugin_name(), r))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<FxHashMap<_, _>>();
 
-                        if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
-                            rules_to_replace
-                                .push(RuleWithSeverity::new(rule.read_json(config), rule.severity));
-                        }
-                        // If the given rule is not found in the rule list (for example, if all rules are disabled),
-                        // then look it up in the entire rules list and add it.
-                        else if let Some(rule) = all_rules.iter().find(|r| r.name() == *name) {
-                            rules_to_replace.push(RuleWithSeverity::new(
-                                rule.read_json(config),
-                                rule_config.severity,
-                            ));
-                        }
-                    } else if rule_configs.iter().all(|r| r.severity.is_allow()) {
-                        if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
+                    for rule_config in rule_configs {
+                        let (rule_name, plugin_name) = transform_rule_and_plugin_name(
+                            &rule_config.rule_name,
+                            &rule_config.plugin_name,
+                        );
+
+                        if rule_config.severity.is_warn_deny() {
+                            let config = rule_config.config.clone().unwrap_or_default();
+                            if let Some(rule) = rules.get(&plugin_name) {
+                                rules_to_replace.push(RuleWithSeverity::new(
+                                    rule.read_json(config),
+                                    rule.severity,
+                                ));
+                            }
+                            // If the given rule is not found in the rule list (for example, if all rules are disabled),
+                            // then look it up in the entire rules list and add it.
+                            else if let Some(rule) = all_rules
+                                .iter()
+                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                            {
+                                rules_to_replace.push(RuleWithSeverity::new(
+                                    rule.read_json(config),
+                                    rule_config.severity,
+                                ));
+                            }
+                        } else if let Some(&rule) = rules.get(&plugin_name) {
                             rules_to_remove.push(rule.clone());
                         }
                     }
@@ -152,17 +167,12 @@ fn transform_rule_and_plugin_name<'a>(
     rule_name: &'a str,
     plugin_name: &'a str,
 ) -> (&'a str, &'a str) {
-    if plugin_name == "vitest" && is_jest_rule_adapted_to_vitest(rule_name) {
-        return (rule_name, "jest");
-    }
-
-    if plugin_name == "typescript" && is_eslint_rule_adapted_to_typescript(rule_name) {
-        return (rule_name, "eslint");
-    }
-
-    if plugin_name == "unicorn" && rule_name == "no-negated-condition" {
-        return ("no-negated-condition", "eslint");
-    }
+    let plugin_name = match plugin_name {
+        "vitest" if is_jest_rule_adapted_to_vitest(rule_name) => "jest",
+        "unicorn" if rule_name == "no-negated-condition" => "eslint",
+        "typescript" if is_eslint_rule_adapted_to_typescript(rule_name) => "eslint",
+        _ => plugin_name,
+    };
 
     (rule_name, plugin_name)
 }

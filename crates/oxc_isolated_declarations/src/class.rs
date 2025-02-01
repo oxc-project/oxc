@@ -199,7 +199,7 @@ impl<'a> IsolatedDeclarations<'a> {
         param: &FormalParameter<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Option<ClassElement<'a>> {
-        let Some(ident_name) = param.pattern.get_identifier() else {
+        let Some(ident_name) = param.pattern.get_identifier_name() else {
             // A parameter property may not be declared using a binding pattern.(1187)
             return None;
         };

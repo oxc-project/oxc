@@ -135,6 +135,7 @@ mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_useless_call;
     pub mod no_useless_catch;
     pub mod no_useless_concat;
     pub mod no_useless_constructor;
@@ -146,6 +147,7 @@ mod eslint {
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
+    pub mod prefer_object_spread;
     pub mod prefer_promise_reject_errors;
     pub mod prefer_rest_params;
     pub mod prefer_spread;
@@ -546,6 +548,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_useless_call,
     eslint::no_extra_label,
     eslint::no_multi_assign,
     eslint::no_nested_ternary,
@@ -645,10 +648,11 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_void,
     eslint::no_with,
     eslint::prefer_promise_reject_errors,
-    eslint::prefer_rest_params,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
     eslint::prefer_object_has_own,
+    eslint::prefer_object_spread,
+    eslint::prefer_rest_params,
     eslint::prefer_spread,
     eslint::radix,
     eslint::require_await,

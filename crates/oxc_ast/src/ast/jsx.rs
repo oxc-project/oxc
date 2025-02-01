@@ -272,8 +272,8 @@ pub enum JSXExpression<'a> {
     ///
     /// ## Example
     /// ```tsx
-    /// <Foo bar={} />
-    /// //       ^^
+    /// <Foo>{}</Foo>
+    /// //   ^^
     /// ```
     EmptyExpression(JSXEmptyExpression) = 64,
     // `Expression` variants added here by `inherit_variants!` macro

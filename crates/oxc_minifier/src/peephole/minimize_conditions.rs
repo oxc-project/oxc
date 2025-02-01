@@ -1054,28 +1054,18 @@ impl<'a> PeepholeOptimizations {
                 None
             }
         };
-        let is_id_or_assign_to_id = |b: &Expression<'a>| match b {
-            Expression::Identifier(id) => Some(id.name),
-            Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::Assign {
-                    if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left {
-                        return Some(id.name);
-                    }
-                }
-                None
-            }
-            _ => None,
-        };
         let (left_value, (left_non_value_expr, left_id_name)) = {
             let left_value;
             let left_non_value;
             if let Some(v) = is_null_or_undefined(&left_binary_expr.left) {
                 left_value = v;
-                let left_non_value_id = is_id_or_assign_to_id(&left_binary_expr.right)?;
+                let left_non_value_id =
+                    Self::extract_id_or_assign_to_id(&left_binary_expr.right)?.name;
                 left_non_value = (&mut left_binary_expr.right, left_non_value_id);
             } else {
                 left_value = is_null_or_undefined(&left_binary_expr.right)?;
-                let left_non_value_id = is_id_or_assign_to_id(&left_binary_expr.left)?;
+                let left_non_value_id =
+                    Self::extract_id_or_assign_to_id(&left_binary_expr.left)?.name;
                 left_non_value = (&mut left_binary_expr.left, left_non_value_id);
             }
             (left_value, left_non_value)
@@ -1110,6 +1100,24 @@ impl<'a> PeepholeOptimizations {
             replace_op,
             ctx.ast.expression_null_literal(null_expr_span),
         ))
+    }
+
+    /// Returns the identifier or the assignment target's identifier of the given expression.
+    fn extract_id_or_assign_to_id<'b>(
+        expr: &'b Expression<'a>,
+    ) -> Option<&'b IdentifierReference<'a>> {
+        match expr {
+            Expression::Identifier(id) => Some(id),
+            Expression::AssignmentExpression(assign_expr) => {
+                if assign_expr.operator == AssignmentOperator::Assign {
+                    if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left {
+                        return Some(id);
+                    }
+                }
+                None
+            }
+            _ => None,
+        }
     }
 
     /// Compress `a = a || b` to `a ||= b`

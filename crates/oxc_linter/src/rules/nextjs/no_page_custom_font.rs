@@ -101,7 +101,7 @@ fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
                 let AstKind::VariableDeclarator(declarator) = parent_parent_kind else {
                     return None;
                 };
-                declarator.id.get_identifier().map(|id| id.to_string())
+                declarator.id.get_identifier_name().map(|id| id.to_string())
             },
             |id| Some(id.name.to_string()),
         );

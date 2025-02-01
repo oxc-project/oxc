@@ -625,7 +625,7 @@ impl<'a> JsxImpl<'a, '_> {
         // Append children to object properties in automatic mode
         if is_automatic {
             let mut children = ctx.ast.vec_from_iter(
-                children.iter().filter_map(|child| self.transform_jsx_child(child, ctx)),
+                children.iter().filter_map(|child| self.transform_jsx_child_automatic(child, ctx)),
             );
             children_len = children.len();
             if children_len != 0 {
@@ -750,10 +750,7 @@ impl<'a> JsxImpl<'a, '_> {
             // React.createElement(type, arguments, ...children)
             //                                      ^^^^^^^^^^^
             arguments.extend(
-                children
-                    .iter()
-                    .filter_map(|child| self.transform_jsx_child(child, ctx))
-                    .map(Argument::from),
+                children.iter().filter_map(|child| self.transform_jsx_child_classic(child, ctx)),
             );
         }
 
@@ -883,6 +880,40 @@ impl<'a> JsxImpl<'a, '_> {
         }
     }
 
+    fn transform_jsx_child_automatic(
+        &mut self,
+        child: &JSXChild<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // Align spread child behavior with esbuild.
+        // Instead of Babel throwing `Spread children are not supported in React.`
+        // `<>{...foo}</>` -> `jsxs(Fragment, { children: [ ...foo ] })`
+        if let JSXChild::Spread(e) = child {
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            let argument = unsafe { ctx.ast.copy(&e.expression) };
+            let spread_element = ctx.ast.array_expression_element_spread_element(e.span, argument);
+            let elements = ctx.ast.vec1(spread_element);
+            return Some(ctx.ast.expression_array(e.span, elements, None));
+        }
+        self.transform_jsx_child(child, ctx)
+    }
+
+    fn transform_jsx_child_classic(
+        &mut self,
+        child: &JSXChild<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Argument<'a>> {
+        // Align spread child behavior with esbuild.
+        // Instead of Babel throwing `Spread children are not supported in React.`
+        // `<>{...foo}</>` -> `React.createElement(React.Fragment, null, ...foo)`
+        if let JSXChild::Spread(e) = child {
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            let argument = unsafe { ctx.ast.copy(&e.expression) };
+            return Some(ctx.ast.argument_spread_element(e.span, argument));
+        }
+        self.transform_jsx_child(child, ctx).map(Argument::from)
+    }
+
     fn transform_jsx_child(
         &mut self,
         child: &JSXChild<'a>,
@@ -903,10 +934,7 @@ impl<'a> JsxImpl<'a, '_> {
             JSXChild::Fragment(e) => {
                 Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx))
             }
-            JSXChild::Spread(e) => {
-                self.ctx.error(diagnostics::spread_children_are_not_supported(e.span));
-                None
-            }
+            JSXChild::Spread(_) => unreachable!(),
         }
     }
 

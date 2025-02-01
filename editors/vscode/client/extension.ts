@@ -1,26 +1,41 @@
-import { ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
+import { promises as fsPromises } from 'node:fs';
 
 import {
-  Executable,
-  LanguageClient,
-  LanguageClientOptions,
+  CodeAction,
+  Command,
+  commands,
+  ExtensionContext,
+  StatusBarAlignment,
+  StatusBarItem,
+  ThemeColor,
+  window,
+  workspace,
+} from 'vscode';
+
+import {
+  CodeActionRequest,
+  CodeActionTriggerKind,
   MessageType,
-  ServerOptions,
+  Position,
+  Range,
   ShowMessageNotification,
-} from 'vscode-languageclient/node';
+} from 'vscode-languageclient';
 
-import {
-  applyAllFixesFileCommand,
-  OxcCommands,
-  restartServerCommand,
-  showOutputChannelCommand,
-  toggleEnabledCommand,
-} from './commands';
+import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+
+import { join } from 'node:path';
 import { ConfigService } from './ConfigService';
-import findBinary from './findBinary';
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
+const commandPrefix = 'oxc';
+
+const enum OxcCommands {
+  RestartServer = `${commandPrefix}.restartServer`,
+  ApplyAllFixesFile = `${commandPrefix}.applyAllFixesFile`,
+  ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
+  ToggleEnable = `${commandPrefix}.toggleEnable`,
+}
 
 let client: LanguageClient;
 
@@ -28,18 +43,146 @@ let myStatusBarItem: StatusBarItem;
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
+  const restartCommand = commands.registerCommand(
+    OxcCommands.RestartServer,
+    async () => {
+      if (!client) {
+        window.showErrorMessage('oxc client not found');
+        return;
+      }
+
+      try {
+        if (client.isRunning()) {
+          await client.restart();
+
+          window.showInformationMessage('oxc server restarted.');
+        } else {
+          await client.start();
+        }
+      } catch (err) {
+        client.error('Restarting client failed', err, 'force');
+      }
+    },
+  );
+
+  const showOutputCommand = commands.registerCommand(
+    OxcCommands.ShowOutputChannel,
+    () => {
+      client?.outputChannel?.show();
+    },
+  );
+
+  const toggleEnable = commands.registerCommand(
+    OxcCommands.ToggleEnable,
+    () => {
+      configService.config.updateEnable(!configService.config.enable);
+    },
+  );
+
+  const applyAllFixesFile = commands.registerCommand(
+    OxcCommands.ApplyAllFixesFile,
+    async () => {
+      if (!client) {
+        window.showErrorMessage('oxc client not found');
+        return;
+      }
+      const textEditor = window.activeTextEditor;
+      if (!textEditor) {
+        window.showErrorMessage('active text editor not found');
+        return;
+      }
+
+      const lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
+      const codeActionResult = await client.sendRequest(CodeActionRequest.type, {
+        textDocument: {
+          uri: textEditor.document.uri.toString(),
+        },
+        range: Range.create(Position.create(0, 0), lastLine.range.end),
+        context: {
+          diagnostics: [],
+          only: [],
+          triggerKind: CodeActionTriggerKind.Invoked,
+        },
+      });
+      const commandsOrCodeActions = await client.protocol2CodeConverter.asCodeActionResult(codeActionResult || []);
+
+      await Promise.all(
+        commandsOrCodeActions
+          .map(async (codeActionOrCommand) => {
+            // Commands are always applied. Regardless of whether it's a Command or CodeAction#command.
+            if (isCommand(codeActionOrCommand)) {
+              await commands.executeCommand(codeActionOrCommand.command, codeActionOrCommand.arguments);
+            } else {
+              // Only preferred edits are applied
+              // LSP states edits must be run first, then commands
+              if (codeActionOrCommand.edit && codeActionOrCommand.isPreferred) {
+                await workspace.applyEdit(codeActionOrCommand.edit);
+              }
+              if (codeActionOrCommand.command) {
+                await commands.executeCommand(
+                  codeActionOrCommand.command.command,
+                  codeActionOrCommand.command.arguments,
+                );
+              }
+            }
+          }),
+      );
+
+      function isCommand(codeActionOrCommand: CodeAction | Command): codeActionOrCommand is Command {
+        return typeof codeActionOrCommand.command === 'string';
+      }
+    },
+  );
 
   context.subscriptions.push(
-    applyAllFixesFileCommand(client),
-    restartServerCommand(client),
-    showOutputChannelCommand(client),
-    toggleEnabledCommand(configService.config),
+    applyAllFixesFile,
+    restartCommand,
+    showOutputCommand,
+    toggleEnable,
     configService,
   );
 
   const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
-  const command = await findBinary(context, configService.config);
+  async function findBinary(): Promise<string> {
+    let bin = configService.config.binPath;
+    if (bin) {
+      try {
+        await fsPromises.access(bin);
+        return bin;
+      } catch {}
+    }
+
+    const workspaceFolders = workspace.workspaceFolders;
+    const isWindows = process.platform === 'win32';
+
+    if (workspaceFolders?.length && !isWindows) {
+      try {
+        return await Promise.any(
+          workspaceFolders.map(async (folder) => {
+            const binPath = join(
+              folder.uri.fsPath,
+              'node_modules',
+              '.bin',
+              'oxc_language_server',
+            );
+
+            await fsPromises.access(binPath);
+            return binPath;
+          }),
+        );
+      } catch {}
+    }
+
+    const ext = isWindows ? '.exe' : '';
+    // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
+    return (
+      process.env.SERVER_PATH_DEV ??
+        join(context.extensionPath, `./target/release/oxc_language_server${ext}`)
+    );
+  }
+
+  const command = await findBinary();
   const run: Executable = {
     command: command!,
     options: {
@@ -89,7 +232,6 @@ export async function activate(context: ExtensionContext) {
     serverOptions,
     clientOptions,
   );
-
   client.onNotification(ShowMessageNotification.type, (params) => {
     switch (params.type) {
       case MessageType.Debug:
