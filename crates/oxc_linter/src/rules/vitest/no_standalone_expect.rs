@@ -22,29 +22,22 @@ pub struct NoStandaloneExpect;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Prevents `expect` statements outside of a `test` or `it` block. An `expect`
+    /// within a helper function (but outside of a `test` or `it` block) will not
+    /// trigger this rule.
     ///
-    /// ### Why is this bad?
+    /// Statements like `expect.hasAssertions()` will NOT trigger this rule since these
+    /// calls will execute if they are not in a test block.
     ///
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ### Example
+    /// ```javascript
+    /// describe('a test', () => {
+    ///     expect(1).toBe(1);
+    /// });
     /// ```
     NoStandaloneExpect,
     vitest,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    correctness,
 );
 
 impl Rule for NoStandaloneExpect {
@@ -134,5 +127,7 @@ fn test() {
     ];
 
     Tester::new(NoStandaloneExpect::NAME, NoStandaloneExpect::PLUGIN, pass, fail)
+        .with_vitest_plugin(true)
+        .with_snapshot_suffix("vitest")
         .test_and_snapshot();
 }
