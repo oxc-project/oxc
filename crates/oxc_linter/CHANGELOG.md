@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.9] - 2025-02-01
+
+### Features
+
+- 1a41181 linter: Implement `eslint/prefer-object-spread` (#8216) (tbashiyy)
+- adb8ebd linter: Implement no-useless-call rule (#8789) (keita hino)
+- 3790933 linter: Add vitest/prefer-lowercase-title rule (#8152) (Tyler Earls)
+- e8e6917 linter: Unicorn/switch-cases-braces support options (#8704) (1zumii)
+
+### Bug Fixes
+
+- 8ce21d1 linter: Can't disable `no-nested-ternary` rule anymore (#8600) (dalaoshu)
+- 4f30a17 linter: Unicorn/switch-case-braces mangles code when applying fix (#8758) (Tyler Earls)
+- 1de6f85 linter: No-lone-blocks erroring on block statements containing comments (#8720) (Tyler Earls)
+- 77ef61a linter: Fix diagnostic spans for `oxc/no-async-await` (#8721) (camchenry)
+- f15bdce linter: Catch `Promise` in `typescript/array-type` rule (#8702) (Rintaro Itokawa)
+
+### Performance
+
+- d318238 linter: Remove sorting of rules in cache (#8718) (camchenry)
+
+### Documentation
+
+- 57b7ca8 ast: Add documentation for all remaining JS AST methods (#8820) (Cam McHenry)
+
+### Refactor
+
+- c2fdfc4 linter: Correctly handle loose options for `eslint/eqeqeq` (#8798) (dalaoshu)
+- 0aeaedd linter: Support loose options for `eslint/eqeqeq` (#8790) (dalaoshu)
+
 ## [0.15.8] - 2025-01-24
 
 ### Features
