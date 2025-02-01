@@ -396,18 +396,18 @@ fn get_declaration_identifier<'a>(
 
             match parent.kind() {
                 AstKind::VariableDeclarator(decl) => {
-                    decl.id.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
+                    decl.id.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
                 }
                 // useHook = () => {};
                 AstKind::AssignmentExpression(expr)
                     if matches!(expr.operator, AssignmentOperator::Assign) =>
                 {
-                    expr.left.get_identifier().map(std::convert::Into::into)
+                    expr.left.get_identifier_name().map(std::convert::Into::into)
                 }
                 // const {useHook = () => {}} = {};
                 // ({useHook = () => {}} = {});
                 AstKind::AssignmentPattern(patt) => {
-                    patt.left.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
+                    patt.left.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
                 }
                 // { useHook: () => {} }
                 // { useHook() {} }

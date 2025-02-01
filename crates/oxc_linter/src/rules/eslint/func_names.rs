@@ -485,10 +485,10 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<C
             | AstKind::TSNonNullExpression(_)
             | AstKind::TSSatisfiesExpression(_) => continue,
             AstKind::AssignmentExpression(assign) => {
-                return assign.left.get_identifier().map(Cow::Borrowed);
+                return assign.left.get_identifier_name().map(Cow::Borrowed);
             }
             AstKind::VariableDeclarator(decl) => {
-                return decl.id.get_identifier().as_ref().map(Atom::as_str).map(Cow::Borrowed);
+                return decl.id.get_identifier_name().as_ref().map(Atom::as_str).map(Cow::Borrowed);
             }
             AstKind::ObjectProperty(prop) => {
                 return prop.key.static_name().and_then(|name| {

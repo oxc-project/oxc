@@ -100,8 +100,10 @@ impl Rule for PreferAwaitToCallbacks {
                         return;
                     };
 
-                    if matches!(param.pattern.get_identifier().as_deref(), Some("err" | "error"))
-                        && !Self::is_inside_yield_or_await(node.id(), ctx)
+                    if matches!(
+                        param.pattern.get_identifier_name().as_deref(),
+                        Some("err" | "error")
+                    ) && !Self::is_inside_yield_or_await(node.id(), ctx)
                     {
                         ctx.diagnostic(prefer_await_to_callbacks(last_arg.span()));
                     }
@@ -124,7 +126,7 @@ impl PreferAwaitToCallbacks {
             return;
         };
 
-        let id = param.pattern.get_identifier();
+        let id = param.pattern.get_identifier_name();
         if matches!(id.as_deref(), Some("callback" | "cb")) {
             ctx.diagnostic(prefer_await_to_callbacks(param.span));
         }
