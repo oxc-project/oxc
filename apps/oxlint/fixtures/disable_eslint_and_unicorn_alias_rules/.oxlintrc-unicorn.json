@@ -3,6 +3,6 @@
     "unicorn"
   ],
   "rules": {
-    "unicorn/no-nested-ternary": "off"
+    "unicorn/no-negated-condition": "off"
   }
 }

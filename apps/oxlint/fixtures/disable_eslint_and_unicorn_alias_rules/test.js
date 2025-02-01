@@ -1,1 +1,5 @@
-console.log(bar ? baz : qux === quxx ? bing : bam);
+if (!condition) {
+  console.log(123)
+} else {
+  console.log(666)
+}

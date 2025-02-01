@@ -1,6 +1,6 @@
 {
   "plugins": [],
   "rules": {
-    "eslint/no-nested-ternary": "off"
+    "eslint/no-negated-condition": "off"
   }
 }
