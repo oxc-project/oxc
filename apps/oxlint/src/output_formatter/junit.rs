@@ -4,8 +4,7 @@ use oxc_diagnostics::{
 };
 use rustc_hash::FxHashMap;
 
-use super::InternalFormatter;
-use quick_junit::{NonSuccessKind, Report, TestCase, TestCaseStatus, TestSuite};
+use super::{xml_utils::xml_escape, InternalFormatter};
 
 #[derive(Default)]
 pub struct JUnitOutputFormatter;
@@ -34,40 +33,54 @@ impl DiagnosticReporter for JUnitReporter {
 
 fn format_junit(diagnostics: &[Error]) -> String {
     let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
+    let mut total_errors = 0;
+    let mut total_warnings = 0;
 
     for diagnostic in diagnostics {
         let info = Info::new(diagnostic);
         grouped.entry(info.filename).or_default().push(diagnostic);
     }
 
-    let mut report = Report::new("Oxlint");
+    let mut test_suite = String::new();
     for diagnostics in grouped.values() {
         let diagnostic = diagnostics[0];
         let filename = Info::new(diagnostic).filename;
-
-        let mut test_suite = TestSuite::new(filename);
+        let mut test_cases = String::new();
+        let mut error = 0;
+        let mut warning = 0;
 
         for diagnostic in diagnostics {
             let rule = diagnostic.code().map_or_else(String::new, |code| code.to_string());
             let Info { message, start, .. } = Info::new(diagnostic);
 
-            let mut status = match diagnostic.severity() {
-                Some(Severity::Error) => TestCaseStatus::non_success(NonSuccessKind::Error),
-                _ => TestCaseStatus::non_success(NonSuccessKind::Failure),
+            let severity = if let Some(Severity::Error) = diagnostic.severity() {
+                total_errors += 1;
+                error += 1;
+                "error"
+            } else {
+                total_warnings += 1;
+                warning += 1;
+                "failure"
             };
-            status.set_message(message.clone());
-            status.set_description(format!(
-                "line {}, column {}, {}",
-                start.line,
-                start.column,
-                message.clone()
-            ));
-            let test_case = TestCase::new(rule, status);
-            test_suite.add_test_case(test_case);
+            let description =
+                format!("line {}, column {}, {}", start.line, start.column, xml_escape(&message));
+
+            let status = format!(
+                "            <{} message=\"{}\">{}</{}>",
+                severity,
+                xml_escape(&message),
+                description,
+                severity
+            );
+            let test_case =
+                format!("\n        <testcase name=\"{rule}\">\n{status}\n        </testcase>");
+            test_cases = format!("{test_cases}{test_case}");
         }
-        report.add_test_suite(test_suite);
+        test_suite = format!("    <testsuite name=\"{}\" tests=\"{}\" disabled=\"0\" errors=\"{}\" failures=\"{}\">{}\n    </testsuite>", filename, diagnostics.len(), error, warning, test_cases);
     }
-    report.to_string().unwrap()
+    let test_suites = format!("<testsuites name=\"Oxlint\" tests=\"{}\" failures=\"{}\" errors=\"{}\">\n{}\n</testsuites>\n", total_errors + total_warnings, total_warnings, total_errors, test_suite);
+
+    format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{test_suites}")
 }
 
 #[cfg(test)]

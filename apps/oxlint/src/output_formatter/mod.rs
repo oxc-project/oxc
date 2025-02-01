@@ -5,6 +5,7 @@ mod json;
 mod junit;
 mod stylish;
 mod unix;
+mod xml_utils;
 
 use std::str::FromStr;
 use std::time::Duration;
@@ -164,6 +165,13 @@ mod test {
     #[test]
     fn test_output_formatter_diagnostic_stylish() {
         let args = &["--format=stylish", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_output_formatter_diagnostic_junit() {
+        let args = &["--format=junit", "test.js"];
 
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
