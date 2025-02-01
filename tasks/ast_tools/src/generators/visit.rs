@@ -465,8 +465,8 @@ impl<'a> VisitBuilder<'a> {
                     TypeWrapper::VecOpt => {
                         let iter = if self.is_mut { quote!(iter_mut) } else { quote!(iter) };
                         quote! {
-                            for #name in it.#name.#iter().flatten() {
-                                visitor.#visit(#name #(#args)*);
+                            for el in it.#name.#iter().flatten() {
+                                visitor.#visit(el #(#args)*);
                             }
                         }
                     }
