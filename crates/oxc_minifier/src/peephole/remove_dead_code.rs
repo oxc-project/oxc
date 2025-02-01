@@ -18,14 +18,6 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 impl<'a, 'b> PeepholeOptimizations {
-    pub fn remove_dead_code_exit_statements(
-        &mut self,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: Ctx<'a, '_>,
-    ) {
-        self.dead_code_elimination(stmts, ctx);
-    }
-
     pub fn remove_dead_code_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
         if let Some(new_stmt) = match stmt {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
@@ -66,18 +58,22 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     /// Removes dead code thats comes after `return`, `throw`, `continue` and `break` statements.
-    fn dead_code_elimination(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: Ctx<'a, 'b>) {
+    pub fn remove_dead_code_exit_statements(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: Ctx<'a, '_>,
+    ) {
         // Remove code after `return` and `throw` statements
         let mut index = None;
         'outer: for (i, stmt) in stmts.iter().enumerate() {
-            if Self::is_unreachable_statement(stmt) {
+            if stmt.is_jump_statement() {
                 index.replace(i);
                 break;
             }
             // Double check block statements folded by if statements above
             if let Statement::BlockStatement(block_stmt) = stmt {
                 for stmt in &block_stmt.body {
-                    if Self::is_unreachable_statement(stmt) {
+                    if stmt.is_jump_statement() {
                         index.replace(i);
                         break 'outer;
                     }
@@ -123,16 +119,6 @@ impl<'a, 'b> PeepholeOptimizations {
         if stmts.len() != len {
             self.mark_current_function_as_changed();
         }
-    }
-
-    fn is_unreachable_statement(stmt: &Statement<'a>) -> bool {
-        matches!(
-            stmt,
-            Statement::ReturnStatement(_)
-                | Statement::ThrowStatement(_)
-                | Statement::BreakStatement(_)
-                | Statement::ContinueStatement(_)
-        )
     }
 
     /// Remove block from single line blocks
@@ -677,16 +663,8 @@ mod test {
         test("a: break a;", "");
         test("a: { break a; }", "");
 
-        test(
-            //
-            "a: { break a; console.log('unreachable'); }", //
-            "",
-        );
-        test(
-            //
-            "a: { break a; var x = 1; } x = 2;", //
-            "var x; x = 2;",
-        );
+        test("a: { break a; console.log('unreachable'); }", "");
+        test("a: { break a; var x = 1; } x = 2;", "var x; x = 2;");
 
         test_same("b: { var x = 1; } x = 2;");
         test_same("a: b: { var x = 1; } x = 2;");

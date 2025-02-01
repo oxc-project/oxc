@@ -1692,6 +1692,7 @@ dependencies = [
  "oxc_syntax",
  "pico-args",
  "rustc-hash",
+ "ryu-js",
 ]
 
 [[package]]
@@ -1822,7 +1823,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.15.8"
+version = "0.15.9"
 dependencies = [
  "bitflags 2.7.0",
  "convert_case 0.7.1",
@@ -2268,9 +2269,10 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.15.8"
+version = "0.15.9"
 dependencies = [
  "bpaf",
+ "cow-utils",
  "ignore",
  "insta",
  "jemallocator",

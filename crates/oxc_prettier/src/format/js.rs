@@ -11,7 +11,7 @@ use crate::{
     format::{
         print::{
             array, arrow_function, assignment, binaryish, block, call_expression, class, function,
-            function_parameters, literal, misc, module, object, property, statement,
+            function_parameters, literal, member, misc, module, object, property, statement,
             template_literal, ternary,
         },
         Format,
@@ -870,6 +870,7 @@ impl<'a> Format<'a> for ThisExpression {
 
 impl<'a> Format<'a> for MemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        // This `wrap!` should be used for each type, but they are not listed in the `AstKind`
         wrap!(p, self, MemberExpression, {
             match self {
                 Self::ComputedMemberExpression(expr) => expr.format(p),
@@ -882,38 +883,28 @@ impl<'a> Format<'a> for MemberExpression<'a> {
 
 impl<'a> Format<'a> for ComputedMemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(self.object.format(p));
-        if self.optional {
-            parts.push(text!("?."));
-        }
-        parts.push(text!("["));
-        parts.push(self.expression.format(p));
-        parts.push(text!("]"));
-        array!(p, parts)
+        member::print_member_expression(
+            p,
+            &member::MemberExpressionLike::ComputedMemberExpression(self),
+        )
     }
 }
 
 impl<'a> Format<'a> for StaticMemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(self.object.format(p));
-        if self.optional {
-            parts.push(text!("?"));
-        }
-        parts.push(text!("."));
-        parts.push(self.property.format(p));
-        array!(p, parts)
+        member::print_member_expression(
+            p,
+            &member::MemberExpressionLike::StaticMemberExpression(self),
+        )
     }
 }
 
 impl<'a> Format<'a> for PrivateFieldExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(self.object.format(p));
-        parts.push(if self.optional { text!("?.") } else { text!(".") });
-        parts.push(self.field.format(p));
-        array!(p, parts)
+        member::print_member_expression(
+            p,
+            &member::MemberExpressionLike::PrivateFieldExpression(self),
+        )
     }
 }
 

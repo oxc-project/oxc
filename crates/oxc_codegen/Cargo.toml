@@ -27,13 +27,14 @@ oxc_index = { workspace = true }
 oxc_mangler = { workspace = true }
 oxc_sourcemap = { workspace = true }
 oxc_span = { workspace = true }
-oxc_syntax = { workspace = true, features = ["to_js_string"] }
+oxc_syntax = { workspace = true }
 
 assert-unchecked = { workspace = true }
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
 nonmax = { workspace = true }
 rustc-hash = { workspace = true }
+ryu-js = { workspace = true }
 
 [dev-dependencies]
 base64 = { workspace = true }

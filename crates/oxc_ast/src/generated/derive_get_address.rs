@@ -6,9 +6,7 @@
 use oxc_allocator::{Address, GetAddress};
 
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::ts::*;
 
 impl GetAddress for Expression<'_> {

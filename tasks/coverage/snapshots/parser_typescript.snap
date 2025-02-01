@@ -3,7 +3,7 @@ commit: d85767ab
 parser_typescript Summary:
 AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
-Negative Passed: 1283/5747 (22.32%)
+Negative Passed: 1284/5747 (22.34%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -1279,7 +1279,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeCas
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeNongenericInstantiationAttempt.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefMissingType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxCallElaborationCheckNoCrash1.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildWrongType.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildrenArrayWrongType.tsx
@@ -8918,6 +8917,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ const x = <div foo= ></div>;
    ·                     ─
  2 │ const y = 0;
+   ╰────
+
+  × TS(17000): JSX attributes must only be assigned a non-empty 'expression'.
+   ╭─[typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx:4:35]
+ 3 │     <ListView refreshControl={
+ 4 │         <RefreshControl onRefresh={} refreshing={} />
+   ·                                   ──
+ 5 │     } dataSource={this.state.ds} renderRow={}>
+   ╰────
+
+  × TS(17000): JSX attributes must only be assigned a non-empty 'expression'.
+   ╭─[typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx:4:49]
+ 3 │     <ListView refreshControl={
+ 4 │         <RefreshControl onRefresh={} refreshing={} />
+   ·                                                 ──
+ 5 │     } dataSource={this.state.ds} renderRow={}>
+   ╰────
+
+  × TS(17000): JSX attributes must only be assigned a non-empty 'expression'.
+   ╭─[typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx:5:44]
+ 4 │         <RefreshControl onRefresh={} refreshing={} />
+ 5 │     } dataSource={this.state.ds} renderRow={}>
+   ·                                            ──
+ 6 │     </ListView>
    ╰────
 
   × Unexpected token

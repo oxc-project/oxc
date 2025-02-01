@@ -112,7 +112,7 @@ fn get_function_name_and_kind<'a>(
                 return (kind, method.key.name());
             }
             AstKind::VariableDeclarator(decl) => {
-                return ("function", decl.id.get_identifier().map(Into::into));
+                return ("function", decl.id.get_identifier_name().map(Into::into));
             }
             _ => return ("function", None),
         }

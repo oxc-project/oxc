@@ -6,13 +6,9 @@
 use oxc_allocator::{Allocator, CloneIn};
 
 use crate::ast::comment::*;
-
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::literal::*;
-
 use crate::ast::ts::*;
 
 impl<'alloc> CloneIn<'alloc> for BooleanLiteral {

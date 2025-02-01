@@ -106,7 +106,7 @@ impl Rule for NoPlusplus {
             return;
         }
 
-        let ident = expr.argument.get_identifier();
+        let ident = expr.argument.get_identifier_name();
 
         if let Some(ident) = ident {
             let operator = match expr.operator {

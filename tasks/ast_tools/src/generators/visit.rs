@@ -356,7 +356,14 @@ impl<'a> VisitBuilder<'a> {
 
         let with_node_events = |tk| {
             if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-                tk
+                let comment = format!(
+                    "@ No `{}` for this type",
+                    if self.is_mut { "AstType" } else { "AstKind" }
+                );
+                quote! {
+                    #![doc = #comment]
+                    #tk
+                }
             } else {
                 let kind = self.kind_type(&ident);
                 quote! {
@@ -458,8 +465,8 @@ impl<'a> VisitBuilder<'a> {
                     TypeWrapper::VecOpt => {
                         let iter = if self.is_mut { quote!(iter_mut) } else { quote!(iter) };
                         quote! {
-                            for #name in it.#name.#iter().flatten() {
-                                visitor.#visit(#name #(#args)*);
+                            for el in it.#name.#iter().flatten() {
+                                visitor.#visit(el #(#args)*);
                             }
                         }
                     }

@@ -907,6 +907,7 @@ impl<'a> LatePeepholeOptimizations {
 
         if let Some(folded_expr) = match expr {
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
+            Expression::ArrayExpression(_) => Self::try_compress_array_expression(expr, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -937,6 +938,77 @@ impl<'a> LatePeepholeOptimizations {
             NumberBase::Decimal,
         );
         Some(ctx.ast.expression_unary(lit.span, UnaryOperator::LogicalNot, num))
+    }
+
+    /// Transforms long array expression with string literals to `"str1,str2".split(',')`
+    fn try_compress_array_expression(
+        expr: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        // this threshold is chosen by hand by checking the minsize output
+        const THRESHOLD: usize = 40;
+
+        let Expression::ArrayExpression(array) = expr else { unreachable!() };
+
+        let is_all_string = array.elements.iter().all(|element| {
+            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(_)))
+        });
+        if !is_all_string {
+            return None;
+        }
+
+        let element_count = array.elements.len();
+        // replace with `.split` only when the saved size is great enough
+        // because using `.split` in some places and not in others may cause gzipped size to be bigger
+        let can_save = element_count * 2 > ".split('.')".len() + THRESHOLD;
+        if !can_save {
+            return None;
+        }
+
+        let strings = array.elements.iter().map(|element| {
+            let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
+            str.value.as_str()
+        });
+        let delimiter = Self::pick_delimiter(&strings)?;
+
+        let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
+
+        // "str1,str2".split(',')
+        Some(ctx.ast.expression_call(
+            expr.span(),
+            Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
+                expr.span(),
+                ctx.ast.expression_string_literal(
+                    expr.span(),
+                    ctx.ast.atom(&concatenated_string),
+                    None,
+                ),
+                ctx.ast.identifier_name(expr.span(), "split"),
+                false,
+            )),
+            Option::<TSTypeParameterInstantiation>::None,
+            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
+                expr.span(),
+                ctx.ast.atom(delimiter),
+                None,
+            ))),
+            false,
+        ))
+    }
+
+    fn pick_delimiter<'s>(
+        strings: &(impl Iterator<Item = &'s str> + Clone),
+    ) -> Option<&'static str> {
+        // These delimiters are chars that appears a lot in the program
+        // therefore probably have a small Huffman encoding.
+        const DELIMITERS: [&str; 5] = [".", ",", "(", ")", " "];
+
+        let is_all_length_1 = strings.clone().all(|s| s.len() == 1);
+        if is_all_length_1 {
+            return Some("");
+        }
+
+        DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
     }
 
     pub fn substitute_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: Ctx<'a, '_>) {
@@ -1233,20 +1305,35 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_string_array_splitting() {
-        test_same("var x=['1','2','3','4']");
-        test_same("var x=['1','2','3','4','5']");
-        test("var x=['1','2','3','4','5','6']", "var x='123456'.split('')");
-        test("var x=['1','2','3','4','5','00']", "var x='1 2 3 4 5 00'.split(' ')");
-        test("var x=['1','2','3','4','5','6','7']", "var x='1234567'.split('')");
-        test("var x=['1','2','3','4','5','6','00']", "var x='1 2 3 4 5 6 00'.split(' ')");
-        test("var x=[' ,',',',',',',',',',',']", "var x=' ,;,;,;,;,;,'.split(';')");
-        test("var x=[',,',' ',',',',',',',',']", "var x=',,; ;,;,;,;,'.split(';')");
-        test("var x=['a,',' ',',',',',',',',']", "var x='a,; ;,;,;,;,'.split(';')");
+        const REPEAT: usize = 20;
+        let additional_args = ",'1'".repeat(REPEAT);
+        let test_with_longer_args =
+            |source_text_partial: &str, expected_partial: &str, delimiter: &str| {
+                let expected = &format!(
+                    "var x='{expected_partial}{}'.split('{delimiter}')",
+                    format!("{delimiter}1").repeat(REPEAT)
+                );
+                test(&format!("var x=[{source_text_partial}{additional_args}]"), expected);
+            };
+        let test_same_with_longer_args = |source_text_partial: &str| {
+            test_same(&format!("var x=[{source_text_partial}{additional_args}]"));
+        };
+
+        test_same_with_longer_args("'1','2','3','4'");
+        test_same_with_longer_args("'1','2','3','4','5'");
+        test_same_with_longer_args("`1${a}`,'2','3','4','5','6'");
+        test_with_longer_args("'1','2','3','4','5','6'", "123456", "");
+        test_with_longer_args("'1','2','3','4','5','00'", "1.2.3.4.5.00", ".");
+        test_with_longer_args("'1','2','3','4','5','6','7'", "1234567", "");
+        test_with_longer_args("'1','2','3','4','5','6','00'", "1.2.3.4.5.6.00", ".");
+        test_with_longer_args("'.,',',',',',',',',',','", ".,(,(,(,(,(,", "(");
+        test_with_longer_args("',,','.',',',',',',',','", ",,(.(,(,(,(,", "(");
+        test_with_longer_args("'a,','.',',',',',',',','", "a,(.(,(,(,(,", "(");
+        test_with_longer_args("`1`,'2','3','4','5','6'", "123456", "");
 
         // all possible delimiters used, leave it alone
-        test_same("var x=[',', ' ', ';', '{', '}']");
+        test_same_with_longer_args("'.', ',', '(', ')', ' '");
     }
 
     #[test]

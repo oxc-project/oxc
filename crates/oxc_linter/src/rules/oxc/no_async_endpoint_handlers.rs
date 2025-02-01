@@ -234,7 +234,7 @@ impl NoAsyncEndpointHandlers {
                             if let Expression::Identifier(id) = &init {
                                 if decl
                                     .id
-                                    .get_identifier()
+                                    .get_identifier_name()
                                     .is_some_and(|declared| declared == id.name)
                                 {
                                     return;
