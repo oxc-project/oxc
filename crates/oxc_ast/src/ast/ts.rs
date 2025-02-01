@@ -1,8 +1,11 @@
+// FIXME: Many items in this file have `#![allow(missing_docs)]` and it would be a huge help
+// to remove all of these and add documentation. If you have time, please write some, it would
+// be a huge help :)
+#![warn(missing_docs)]
 //! TypeScript Definitions
 //!
 //! - [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec)
 //! - [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
-#![allow(missing_docs)] // FIXME
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -32,7 +35,9 @@ use super::{inherit_variants, js::*, literal::*};
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSThisParameter<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     #[estree(skip)]
     pub this_span: Span,
     /// Type type the `this` keyword will have in the function
@@ -64,13 +69,18 @@ pub struct TSThisParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSEnumDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub id: BindingIdentifier<'a>,
+    #[allow(missing_docs)]
     #[scope(enter_before)]
     pub members: Vec<'a, TSEnumMember<'a>>,
     /// `true` for const enums
     pub r#const: bool,
+    #[allow(missing_docs)]
     pub declare: bool,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -97,8 +107,11 @@ pub struct TSEnumDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSEnumMember<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub id: TSEnumMemberName<'a>,
+    #[allow(missing_docs)]
     pub initializer: Option<Expression<'a>>,
 }
 
@@ -107,7 +120,9 @@ pub struct TSEnumMember<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSEnumMemberName<'a> {
+    #[allow(missing_docs)]
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
+    #[allow(missing_docs)]
     String(Box<'a, StringLiteral<'a>>) = 1,
 }
 
@@ -151,7 +166,9 @@ pub struct TSTypeAnnotation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSLiteralType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub literal: TSLiteral<'a>,
 }
 
@@ -160,13 +177,21 @@ pub struct TSLiteralType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSLiteral<'a> {
+    #[allow(missing_docs)]
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+    #[allow(missing_docs)]
     NullLiteral(Box<'a, NullLiteral>) = 1,
+    #[allow(missing_docs)]
     NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+    #[allow(missing_docs)]
     BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+    #[allow(missing_docs)]
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+    #[allow(missing_docs)]
     StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+    #[allow(missing_docs)]
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
+    #[allow(missing_docs)]
     UnaryExpression(Box<'a, UnaryExpression<'a>>) = 7,
 }
 
@@ -186,45 +211,83 @@ pub enum TSLiteral<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSType<'a> {
     // Keyword
+    #[allow(missing_docs)]
     TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
+    #[allow(missing_docs)]
     TSBigIntKeyword(Box<'a, TSBigIntKeyword>) = 1,
+    #[allow(missing_docs)]
     TSBooleanKeyword(Box<'a, TSBooleanKeyword>) = 2,
+    #[allow(missing_docs)]
     TSIntrinsicKeyword(Box<'a, TSIntrinsicKeyword>) = 3,
+    #[allow(missing_docs)]
     TSNeverKeyword(Box<'a, TSNeverKeyword>) = 4,
+    #[allow(missing_docs)]
     TSNullKeyword(Box<'a, TSNullKeyword>) = 5,
+    #[allow(missing_docs)]
     TSNumberKeyword(Box<'a, TSNumberKeyword>) = 6,
+    #[allow(missing_docs)]
     TSObjectKeyword(Box<'a, TSObjectKeyword>) = 7,
+    #[allow(missing_docs)]
     TSStringKeyword(Box<'a, TSStringKeyword>) = 8,
+    #[allow(missing_docs)]
     TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 9,
+    #[allow(missing_docs)]
     TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 11,
+    #[allow(missing_docs)]
     TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 12,
+    #[allow(missing_docs)]
     TSVoidKeyword(Box<'a, TSVoidKeyword>) = 13,
     // Compound
+    #[allow(missing_docs)]
     TSArrayType(Box<'a, TSArrayType<'a>>) = 14,
+    #[allow(missing_docs)]
     TSConditionalType(Box<'a, TSConditionalType<'a>>) = 15,
+    #[allow(missing_docs)]
     TSConstructorType(Box<'a, TSConstructorType<'a>>) = 16,
+    #[allow(missing_docs)]
     TSFunctionType(Box<'a, TSFunctionType<'a>>) = 17,
+    #[allow(missing_docs)]
     TSImportType(Box<'a, TSImportType<'a>>) = 18,
+    #[allow(missing_docs)]
     TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 19,
+    #[allow(missing_docs)]
     TSInferType(Box<'a, TSInferType<'a>>) = 20,
+    #[allow(missing_docs)]
     TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 21,
+    #[allow(missing_docs)]
     TSLiteralType(Box<'a, TSLiteralType<'a>>) = 22,
+    #[allow(missing_docs)]
     TSMappedType(Box<'a, TSMappedType<'a>>) = 23,
+    #[allow(missing_docs)]
     TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 24,
+    #[allow(missing_docs)]
     TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 25,
+    #[allow(missing_docs)]
     TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 26,
+    #[allow(missing_docs)]
     TSThisType(Box<'a, TSThisType>) = 10,
+    #[allow(missing_docs)]
     TSTupleType(Box<'a, TSTupleType<'a>>) = 27,
+    #[allow(missing_docs)]
     TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 28,
+    #[allow(missing_docs)]
     TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 29,
+    #[allow(missing_docs)]
     TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 30,
+    #[allow(missing_docs)]
     TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 31,
+    #[allow(missing_docs)]
     TSTypeReference(Box<'a, TSTypeReference<'a>>) = 32,
+    #[allow(missing_docs)]
     TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
+    #[allow(missing_docs)]
     TSParenthesizedType(Box<'a, TSParenthesizedType<'a>>) = 34,
     // JSDoc
+    #[allow(missing_docs)]
     JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 35,
+    #[allow(missing_docs)]
     JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 36,
+    #[allow(missing_docs)]
     JSDocUnknownType(Box<'a, JSDocUnknownType>) = 37,
 }
 
@@ -292,6 +355,7 @@ pub use match_ts_type;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConditionalType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The type before `extends` in the test expression.
     pub check_type: TSType<'a>,
@@ -303,6 +367,7 @@ pub struct TSConditionalType<'a> {
     /// The type evaluated to if the test is false.
     #[scope(exit_before)]
     pub false_type: TSType<'a>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -321,6 +386,7 @@ pub struct TSConditionalType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSUnionType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The types in the union.
     pub types: Vec<'a, TSType<'a>>,
@@ -343,7 +409,9 @@ pub struct TSUnionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIntersectionType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub types: Vec<'a, TSType<'a>>,
 }
 
@@ -360,7 +428,9 @@ pub struct TSIntersectionType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSParenthesizedType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
 }
 
@@ -377,7 +447,9 @@ pub struct TSParenthesizedType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeOperator<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub operator: TSTypeOperatorOperator,
     /// The type being operated on
     pub type_annotation: TSType<'a>,
@@ -388,8 +460,11 @@ pub struct TSTypeOperator<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum TSTypeOperatorOperator {
+    #[allow(missing_docs)]
     Keyof = 0,
+    #[allow(missing_docs)]
     Unique = 1,
+    #[allow(missing_docs)]
     Readonly = 2,
 }
 
@@ -408,7 +483,9 @@ pub enum TSTypeOperatorOperator {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSArrayType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub element_type: TSType<'a>,
 }
 
@@ -427,8 +504,11 @@ pub struct TSArrayType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIndexedAccessType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub object_type: TSType<'a>,
+    #[allow(missing_docs)]
     pub index_type: TSType<'a>,
 }
 
@@ -445,7 +525,9 @@ pub struct TSIndexedAccessType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTupleType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub element_types: Vec<'a, TSTupleElement<'a>>,
 }
 
@@ -463,9 +545,13 @@ pub struct TSTupleType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNamedTupleMember<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub element_type: TSTupleElement<'a>,
+    #[allow(missing_docs)]
     pub label: IdentifierName<'a>,
+    #[allow(missing_docs)]
     pub optional: bool,
 }
 
@@ -482,7 +568,9 @@ pub struct TSNamedTupleMember<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSOptionalType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
 }
 
@@ -498,7 +586,9 @@ pub struct TSOptionalType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSRestType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
 }
 
@@ -516,7 +606,9 @@ inherit_variants! {
 pub enum TSTupleElement<'a> {
     // Discriminants start at 64, so that `TSTupleElement::is_ts_type` is a single
     // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
+    #[allow(missing_docs)]
     TSOptionalType(Box<'a, TSOptionalType<'a>>) = 64,
+    #[allow(missing_docs)]
     TSRestType(Box<'a, TSRestType<'a>>) = 65,
     // `TSType` variants added here by `inherit_variants!` macro
     @inherit TSType
@@ -536,6 +628,7 @@ pub enum TSTupleElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSAnyKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -552,6 +645,7 @@ pub struct TSAnyKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSStringKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -568,6 +662,7 @@ pub struct TSStringKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSBooleanKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -584,6 +679,7 @@ pub struct TSBooleanKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNumberKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -601,6 +697,7 @@ pub struct TSNumberKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNeverKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -618,6 +715,7 @@ pub struct TSNeverKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIntrinsicKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -636,6 +734,7 @@ pub struct TSIntrinsicKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSUnknownKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -653,6 +752,7 @@ pub struct TSUnknownKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNullKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -672,41 +772,52 @@ pub struct TSNullKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSUndefinedKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSVoidKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSSymbolKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSThisType {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSObjectKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSBigIntKeyword {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -722,8 +833,11 @@ pub struct TSBigIntKeyword {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeReference<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub type_name: TSTypeName<'a>,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -734,7 +848,9 @@ pub struct TSTypeReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSTypeName<'a> {
+    #[allow(missing_docs)]
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
+    #[allow(missing_docs)]
     QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
 }
 
@@ -759,16 +875,22 @@ pub use match_ts_type_name;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSQualifiedName<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub left: TSTypeName<'a>,
+    #[allow(missing_docs)]
     pub right: IdentifierName<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeParameterInstantiation<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub params: Vec<'a, TSType<'a>>,
 }
 
@@ -793,6 +915,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeParameter<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
     pub name: BindingIdentifier<'a>,
@@ -808,11 +931,14 @@ pub struct TSTypeParameter<'a> {
     pub r#const: bool,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeParameterDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub params: Vec<'a, TSTypeParameter<'a>>,
 }
 
@@ -829,24 +955,33 @@ pub struct TSTypeParameterDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeAliasDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     pub id: BindingIdentifier<'a>,
+    #[allow(missing_docs)]
     #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
+    #[allow(missing_docs)]
     pub declare: bool,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum TSAccessibility {
+    #[allow(missing_docs)]
     Private = 0,
+    #[allow(missing_docs)]
     Protected = 1,
+    #[allow(missing_docs)]
     Public = 2,
 }
 
@@ -864,8 +999,11 @@ pub enum TSAccessibility {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSClassImplements<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: TSTypeName<'a>,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -889,6 +1027,7 @@ pub struct TSClassImplements<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInterfaceDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
@@ -897,9 +1036,11 @@ pub struct TSInterfaceDeclaration<'a> {
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     /// Type parameters that get bound to the interface.
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[allow(missing_docs)]
     pub body: Box<'a, TSInterfaceBody<'a>>,
     /// `true` for `declare interface Foo {}`
     pub declare: bool,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -910,7 +1051,9 @@ pub struct TSInterfaceDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInterfaceBody<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub body: Vec<'a, TSSignature<'a>>,
 }
 
@@ -933,22 +1076,34 @@ pub struct TSInterfaceBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSPropertySignature<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub computed: bool,
+    #[allow(missing_docs)]
     pub optional: bool,
+    #[allow(missing_docs)]
     pub readonly: bool,
+    #[allow(missing_docs)]
     pub key: PropertyKey<'a>,
+    #[allow(missing_docs)]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSSignature<'a> {
+    #[allow(missing_docs)]
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 0,
+    #[allow(missing_docs)]
     TSPropertySignature(Box<'a, TSPropertySignature<'a>>) = 1,
+    #[allow(missing_docs)]
     TSCallSignatureDeclaration(Box<'a, TSCallSignatureDeclaration<'a>>) = 2,
+    #[allow(missing_docs)]
     TSConstructSignatureDeclaration(Box<'a, TSConstructSignatureDeclaration<'a>>) = 3,
+    #[allow(missing_docs)]
     TSMethodSignature(Box<'a, TSMethodSignature<'a>>) = 4,
 }
 
@@ -967,30 +1122,45 @@ pub enum TSSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIndexSignature<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
+    #[allow(missing_docs)]
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
+    #[allow(missing_docs)]
     pub readonly: bool,
+    #[allow(missing_docs)]
     pub r#static: bool,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSCallSignatureDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[allow(missing_docs)]
     pub this_param: Option<TSThisParameter<'a>>,
+    #[allow(missing_docs)]
     pub params: Box<'a, FormalParameters<'a>>,
+    #[allow(missing_docs)]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum TSMethodSignatureKind {
+    #[allow(missing_docs)]
     Method = 0,
+    #[allow(missing_docs)]
     Get = 1,
+    #[allow(missing_docs)]
     Set = 2,
 }
 
@@ -1010,15 +1180,25 @@ pub enum TSMethodSignatureKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSMethodSignature<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub key: PropertyKey<'a>,
+    #[allow(missing_docs)]
     pub computed: bool,
+    #[allow(missing_docs)]
     pub optional: bool,
+    #[allow(missing_docs)]
     pub kind: TSMethodSignatureKind,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[allow(missing_docs)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
+    #[allow(missing_docs)]
     pub params: Box<'a, FormalParameters<'a>>,
+    #[allow(missing_docs)]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1030,31 +1210,44 @@ pub struct TSMethodSignature<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConstructSignatureDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[allow(missing_docs)]
     pub params: Box<'a, FormalParameters<'a>>,
+    #[allow(missing_docs)]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct TSIndexSignatureName<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub name: Atom<'a>,
+    #[allow(missing_docs)]
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInterfaceHeritage<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -1082,6 +1275,7 @@ pub struct TSInterfaceHeritage<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypePredicate<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The identifier the predicate operates on
     pub parameter_name: TSTypePredicateName<'a>,
@@ -1092,14 +1286,18 @@ pub struct TSTypePredicate<'a> {
     /// declare function isString(x: any): asserts x is string; // true
     /// ```
     pub asserts: bool,
+    #[allow(missing_docs)]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum TSTypePredicateName<'a> {
+    #[allow(missing_docs)]
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
+    #[allow(missing_docs)]
     This(TSThisType) = 1,
 }
 
@@ -1137,11 +1335,13 @@ pub enum TSTypePredicateName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSModuleDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The name of the module/namespace being declared.
     ///
     /// Note that for `declare global {}`, no symbol will be created for the module name.
     pub id: TSModuleDeclarationName<'a>,
+    #[allow(missing_docs)]
     #[scope(enter_before)]
     pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration.
@@ -1158,12 +1358,15 @@ pub struct TSModuleDeclaration<'a> {
     ///         ^^^^^^
     /// ```
     pub kind: TSModuleDeclarationKind,
+    #[allow(missing_docs)]
     pub declare: bool,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
@@ -1200,35 +1403,47 @@ pub enum TSModuleDeclarationKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum TSModuleDeclarationName<'a> {
+    #[allow(missing_docs)]
     Identifier(BindingIdentifier<'a>) = 0,
+    #[allow(missing_docs)]
     StringLiteral(StringLiteral<'a>) = 1,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSModuleDeclarationBody<'a> {
+    #[allow(missing_docs)]
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
+    #[allow(missing_docs)]
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
 // See serializer in serialize.rs
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(custom_serialize)]
 pub struct TSModuleBlock<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     #[estree(skip)]
     pub directives: Vec<'a, Directive<'a>>,
+    #[allow(missing_docs)]
     pub body: Vec<'a, Statement<'a>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeLiteral<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub members: Vec<'a, TSSignature<'a>>,
 }
 
@@ -1249,6 +1464,7 @@ pub struct TSTypeLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInferType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The type bound when the
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1267,8 +1483,11 @@ pub struct TSInferType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeQuery<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expr_name: TSTypeQueryExprName<'a>,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -1282,48 +1501,64 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSTypeQueryExprName<'a> {
+    #[allow(missing_docs)]
     TSImportType(Box<'a, TSImportType<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSImportType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// `true` for `typeof import("foo")`
     pub is_type_of: bool,
     pub parameter: TSType<'a>,
+    #[allow(missing_docs)]
     pub qualifier: Option<TSTypeName<'a>>,
+    #[allow(missing_docs)]
     pub attributes: Option<Box<'a, TSImportAttributes<'a>>>,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSImportAttributes<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    #[allow(missing_docs)]
     pub elements: Vec<'a, TSImportAttribute<'a>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSImportAttribute<'a> {
     pub span: Span,
+    #[allow(missing_docs)]
     pub name: TSImportAttributeName<'a>,
+    #[allow(missing_docs)]
     pub value: Expression<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum TSImportAttributeName<'a> {
+    #[allow(missing_docs)]
     Identifier(IdentifierName<'a>) = 0,
+    #[allow(missing_docs)]
     StringLiteral(StringLiteral<'a>) = 1,
 }
 
@@ -1339,6 +1574,7 @@ pub enum TSImportAttributeName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSFunctionType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// Generic type parameters
     ///
@@ -1364,14 +1600,20 @@ pub struct TSFunctionType<'a> {
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConstructorType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub r#abstract: bool,
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[allow(missing_docs)]
     pub params: Box<'a, FormalParameters<'a>>,
+    #[allow(missing_docs)]
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
 }
 
@@ -1401,10 +1643,13 @@ pub struct TSConstructorType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSMappedType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
+    #[allow(missing_docs)]
     pub name_type: Option<TSType<'a>>,
+    #[allow(missing_docs)]
     pub type_annotation: Option<TSType<'a>>,
     /// Optional modifier on type annotation
     ///
@@ -1430,11 +1675,13 @@ pub struct TSMappedType<'a> {
     /// type Qux = { [P in keyof T]: T[P] }           // None
     /// ```
     pub readonly: TSMappedTypeModifierOperator,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
@@ -1466,6 +1713,7 @@ pub enum TSMappedTypeModifierOperator {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTemplateLiteralType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The string parts of the template literal.
     pub quasis: Vec<'a, TemplateElement<'a>>,
@@ -1473,12 +1721,16 @@ pub struct TSTemplateLiteralType<'a> {
     pub types: Vec<'a, TSType<'a>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSAsExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
+    #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
 }
 
@@ -1498,6 +1750,7 @@ pub struct TSAsExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSSatisfiesExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The value expression being constrained.
     pub expression: Expression<'a>,
@@ -1505,22 +1758,31 @@ pub struct TSSatisfiesExpression<'a> {
     pub type_annotation: TSType<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeAssertion<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
+    #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSImportEqualsDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub id: BindingIdentifier<'a>,
+    #[allow(missing_docs)]
     pub module_reference: TSModuleReference<'a>,
+    #[allow(missing_docs)]
     pub import_kind: ImportOrExportKind,
 }
 
@@ -1534,25 +1796,32 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSModuleReference<'a> {
+    #[allow(missing_docs)]
     ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSExternalModuleReference<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: StringLiteral<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNonNullExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
 }
 
@@ -1584,7 +1853,9 @@ pub struct TSNonNullExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Decorator<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
 }
 
@@ -1595,7 +1866,9 @@ pub struct Decorator<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSExportAssignment<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
 }
 
@@ -1606,16 +1879,22 @@ pub struct TSExportAssignment<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNamespaceExportDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub id: IdentifierName<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSInstantiationExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
+    #[allow(missing_docs)]
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
@@ -1637,7 +1916,9 @@ pub enum ImportOrExportKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSDocNullableType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
     /// Was `?` after the type annotation?
     pub postfix: bool,
@@ -1648,14 +1929,19 @@ pub struct JSDocNullableType<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSDocNonNullableType<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub type_annotation: TSType<'a>,
+    #[allow(missing_docs)]
     pub postfix: bool,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSDocUnknownType {
+    #[allow(missing_docs)]
     pub span: Span,
 }

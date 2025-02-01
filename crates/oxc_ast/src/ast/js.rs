@@ -1,4 +1,7 @@
-#![allow(missing_docs)] // FIXME
+// FIXME: Many items in this file have `#![allow(missing_docs)]` and it would be a huge help
+// to remove all of these and add documentation. If you have time, please write some, it would
+// be a huge help :)
+#![warn(missing_docs)]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -30,18 +33,25 @@ use super::{macros::inherit_variants, *};
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Program<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub source_type: SourceType,
     #[estree(skip)]
+    #[allow(missing_docs)]
     pub source_text: &'a str,
     /// Sorted comments
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
+    #[allow(missing_docs)]
     pub hashbang: Option<Hashbang<'a>>,
+    #[allow(missing_docs)]
     pub directives: Vec<'a, Directive<'a>>,
+    #[allow(missing_docs)]
     pub body: Vec<'a, Statement<'a>>,
     #[estree(skip)]
     #[clone_in(default)]
+    #[allow(missing_docs)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -204,7 +214,9 @@ pub use match_expression;
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct IdentifierName<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub name: Atom<'a>,
 }
 
@@ -218,6 +230,7 @@ pub struct IdentifierName<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct IdentifierReference<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The name of the identifier being referenced.
     pub name: Atom<'a>,
@@ -241,6 +254,7 @@ pub struct IdentifierReference<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct BindingIdentifier<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The identifier name being bound.
     pub name: Atom<'a>,
@@ -265,7 +279,9 @@ pub struct BindingIdentifier<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "Identifier")]
 pub struct LabelIdentifier<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub name: Atom<'a>,
 }
 
@@ -276,6 +292,7 @@ pub struct LabelIdentifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ThisExpression {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -286,8 +303,10 @@ pub struct ThisExpression {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrayExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     #[estree(ts_type = "Array<SpreadElement | Expression | null>")]
+    #[allow(missing_docs)]
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
@@ -326,6 +345,7 @@ pub enum ArrayExpressionElement<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 pub struct Elision {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -336,10 +356,12 @@ pub struct Elision {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ObjectExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// Properties declared in the object
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
     #[estree(skip)]
+    #[allow(missing_docs)]
     pub trailing_comma: Option<Span>,
 }
 
@@ -361,12 +383,19 @@ pub enum ObjectPropertyKind<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ObjectProperty<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub kind: PropertyKind,
+    #[allow(missing_docs)]
     pub key: PropertyKey<'a>,
+    #[allow(missing_docs)]
     pub value: Expression<'a>,
+    #[allow(missing_docs)]
     pub method: bool,
+    #[allow(missing_docs)]
     pub shorthand: bool,
+    #[allow(missing_docs)]
     pub computed: bool,
 }
 
@@ -409,8 +438,11 @@ pub enum PropertyKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TemplateLiteral<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub quasis: Vec<'a, TemplateElement<'a>>,
+    #[allow(missing_docs)]
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
@@ -421,10 +453,14 @@ pub struct TemplateLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TaggedTemplateExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub tag: Expression<'a>,
+    #[allow(missing_docs)]
     pub quasi: TemplateLiteral<'a>,
     #[ts]
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -435,8 +471,11 @@ pub struct TaggedTemplateExpression<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TemplateElement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub tail: bool,
+    #[allow(missing_docs)]
     pub value: TemplateElementValue<'a>,
 }
 
@@ -490,9 +529,13 @@ pub use match_member_expression;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ComputedMemberExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub object: Expression<'a>,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
+    #[allow(missing_docs)]
     pub optional: bool, // for optional chaining
 }
 
@@ -503,9 +546,13 @@ pub struct ComputedMemberExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct StaticMemberExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub object: Expression<'a>,
+    #[allow(missing_docs)]
     pub property: IdentifierName<'a>,
+    #[allow(missing_docs)]
     pub optional: bool, // for optional chaining
 }
 
@@ -516,9 +563,13 @@ pub struct StaticMemberExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct PrivateFieldExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub object: Expression<'a>,
+    #[allow(missing_docs)]
     pub field: PrivateIdentifier<'a>,
+    #[allow(missing_docs)]
     pub optional: bool, // for optional chaining
 }
 
@@ -542,11 +593,16 @@ pub struct PrivateFieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct CallExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub callee: Expression<'a>,
     #[ts]
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    #[allow(missing_docs)]
     pub arguments: Vec<'a, Argument<'a>>,
+    #[allow(missing_docs)]
     pub optional: bool, // for optional chaining
 }
 
@@ -566,10 +622,14 @@ pub struct CallExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct NewExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub callee: Expression<'a>,
+    #[allow(missing_docs)]
     pub arguments: Vec<'a, Argument<'a>>,
     #[ts]
+    #[allow(missing_docs)]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -580,8 +640,11 @@ pub struct NewExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct MetaProperty<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub meta: IdentifierName<'a>,
+    #[allow(missing_docs)]
     pub property: IdentifierName<'a>,
 }
 
@@ -592,6 +655,7 @@ pub struct MetaProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct SpreadElement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The expression being spread.
     pub argument: Expression<'a>,
@@ -621,9 +685,13 @@ pub enum Argument<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct UpdateExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub operator: UpdateOperator,
+    #[allow(missing_docs)]
     pub prefix: bool,
+    #[allow(missing_docs)]
     pub argument: SimpleAssignmentTarget<'a>,
 }
 
@@ -634,8 +702,11 @@ pub struct UpdateExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct UnaryExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub operator: UnaryOperator,
+    #[allow(missing_docs)]
     pub argument: Expression<'a>,
 }
 
@@ -646,9 +717,13 @@ pub struct UnaryExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct BinaryExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub left: Expression<'a>,
+    #[allow(missing_docs)]
     pub operator: BinaryOperator,
+    #[allow(missing_docs)]
     pub right: Expression<'a>,
 }
 
@@ -659,9 +734,13 @@ pub struct BinaryExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct PrivateInExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub left: PrivateIdentifier<'a>,
+    #[allow(missing_docs)]
     pub operator: BinaryOperator, // BinaryOperator::In
+    #[allow(missing_docs)]
     pub right: Expression<'a>,
 }
 
@@ -672,9 +751,13 @@ pub struct PrivateInExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct LogicalExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub left: Expression<'a>,
+    #[allow(missing_docs)]
     pub operator: LogicalOperator,
+    #[allow(missing_docs)]
     pub right: Expression<'a>,
 }
 
@@ -685,9 +768,13 @@ pub struct LogicalExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ConditionalExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub test: Expression<'a>,
+    #[allow(missing_docs)]
     pub consequent: Expression<'a>,
+    #[allow(missing_docs)]
     pub alternate: Expression<'a>,
 }
 
@@ -698,9 +785,13 @@ pub struct ConditionalExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub operator: AssignmentOperator,
+    #[allow(missing_docs)]
     pub left: AssignmentTarget<'a>,
+    #[allow(missing_docs)]
     pub right: Expression<'a>,
 }
 
@@ -732,11 +823,17 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum SimpleAssignmentTarget<'a> {
+    #[allow(missing_docs)]
     AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
+    #[allow(missing_docs)]
     TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
+    #[allow(missing_docs)]
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
+    #[allow(missing_docs)]
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
+    #[allow(missing_docs)]
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+    #[allow(missing_docs)]
     TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 5,
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
@@ -781,11 +878,14 @@ macro_rules! match_simple_assignment_target {
 }
 pub use match_simple_assignment_target;
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum AssignmentTargetPattern<'a> {
+    #[allow(missing_docs)]
     ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>) = 8,
+    #[allow(missing_docs)]
     ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>) = 9,
 }
 
@@ -805,10 +905,14 @@ pub use match_assignment_target_pattern;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrayAssignmentTarget<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
+    #[allow(missing_docs)]
     #[estree(append_to = "elements")]
     pub rest: Option<AssignmentTargetRest<'a>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     pub trailing_comma: Option<Span>,
 }
@@ -820,8 +924,11 @@ pub struct ArrayAssignmentTarget<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ObjectAssignmentTarget<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
+    #[allow(missing_docs)]
     #[estree(append_to = "properties")]
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
@@ -834,7 +941,9 @@ pub struct ObjectAssignmentTarget<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "RestElement")]
 pub struct AssignmentTargetRest<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     #[estree(rename = "argument")]
     pub target: AssignmentTarget<'a>,
 }
@@ -849,26 +958,34 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum AssignmentTargetMaybeDefault<'a> {
+    #[allow(missing_docs)]
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
 }
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentTargetWithDefault<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub binding: AssignmentTarget<'a>,
+    #[allow(missing_docs)]
     pub init: Expression<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum AssignmentTargetProperty<'a> {
+    #[allow(missing_docs)]
     AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a>>) = 0,
+    #[allow(missing_docs)]
     AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>) = 1,
 }
 
@@ -879,8 +996,11 @@ pub enum AssignmentTargetProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub binding: IdentifierReference<'a>,
+    #[allow(missing_docs)]
     pub init: Option<Expression<'a>>,
 }
 
@@ -891,8 +1011,11 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentTargetPropertyProperty<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub name: PropertyKey<'a>,
+    #[allow(missing_docs)]
     pub binding: AssignmentTargetMaybeDefault<'a>,
     /// Property was declared with a computed key
     pub computed: bool,
@@ -905,7 +1028,9 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct SequenceExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
@@ -916,6 +1041,7 @@ pub struct SequenceExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Super {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -926,7 +1052,9 @@ pub struct Super {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AwaitExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub argument: Expression<'a>,
 }
 
@@ -937,7 +1065,9 @@ pub struct AwaitExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ChainExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: ChainElement<'a>,
 }
 
@@ -951,6 +1081,7 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ChainElement<'a> {
+    #[allow(missing_docs)]
     CallExpression(Box<'a, CallExpression<'a>>) = 0,
     /// `foo?.baz!` or `foo?.[bar]!`
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 1,
@@ -966,7 +1097,9 @@ pub enum ChainElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ParenthesizedExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
 }
 
@@ -982,23 +1115,41 @@ inherit_variants! {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum Statement<'a> {
     // Statements
+    #[allow(missing_docs)]
     BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
+    #[allow(missing_docs)]
     BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
+    #[allow(missing_docs)]
     ContinueStatement(Box<'a, ContinueStatement<'a>>) = 2,
+    #[allow(missing_docs)]
     DebuggerStatement(Box<'a, DebuggerStatement>) = 3,
+    #[allow(missing_docs)]
     DoWhileStatement(Box<'a, DoWhileStatement<'a>>) = 4,
+    #[allow(missing_docs)]
     EmptyStatement(Box<'a, EmptyStatement>) = 5,
+    #[allow(missing_docs)]
     ExpressionStatement(Box<'a, ExpressionStatement<'a>>) = 6,
+    #[allow(missing_docs)]
     ForInStatement(Box<'a, ForInStatement<'a>>) = 7,
+    #[allow(missing_docs)]
     ForOfStatement(Box<'a, ForOfStatement<'a>>) = 8,
+    #[allow(missing_docs)]
     ForStatement(Box<'a, ForStatement<'a>>) = 9,
+    #[allow(missing_docs)]
     IfStatement(Box<'a, IfStatement<'a>>) = 10,
+    #[allow(missing_docs)]
     LabeledStatement(Box<'a, LabeledStatement<'a>>) = 11,
+    #[allow(missing_docs)]
     ReturnStatement(Box<'a, ReturnStatement<'a>>) = 12,
+    #[allow(missing_docs)]
     SwitchStatement(Box<'a, SwitchStatement<'a>>) = 13,
+    #[allow(missing_docs)]
     ThrowStatement(Box<'a, ThrowStatement<'a>>) = 14,
+    #[allow(missing_docs)]
     TryStatement(Box<'a, TryStatement<'a>>) = 15,
+    #[allow(missing_docs)]
     WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
+    #[allow(missing_docs)]
     WithStatement(Box<'a, WithStatement<'a>>) = 17,
     // `Declaration` variants added here by `inherit_variants!` macro
     @inherit Declaration
@@ -1014,6 +1165,7 @@ pub enum Statement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Directive<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// Directive with any escapes unescaped
     pub expression: StringLiteral<'a>,
@@ -1028,7 +1180,9 @@ pub struct Directive<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Hashbang<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub value: Atom<'a>,
 }
 
@@ -1040,8 +1194,11 @@ pub struct Hashbang<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct BlockStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub body: Vec<'a, Statement<'a>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1052,15 +1209,22 @@ pub struct BlockStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum Declaration<'a> {
+    #[allow(missing_docs)]
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+    #[allow(missing_docs)]
     #[visit(args(flags = ScopeFlags::Function))]
     FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+    #[allow(missing_docs)]
     ClassDeclaration(Box<'a, Class<'a>>) = 34,
-
+    #[allow(missing_docs)]
     TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 35,
+    #[allow(missing_docs)]
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
+    #[allow(missing_docs)]
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
+    #[allow(missing_docs)]
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
+    #[allow(missing_docs)]
     TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 39,
 }
 
@@ -1087,21 +1251,31 @@ pub use match_declaration;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct VariableDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub kind: VariableDeclarationKind,
+    #[allow(missing_docs)]
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
+    #[allow(missing_docs)]
     #[ts]
     pub declare: bool,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum VariableDeclarationKind {
+    #[allow(missing_docs)]
     Var = 0,
+    #[allow(missing_docs)]
     Const = 1,
+    #[allow(missing_docs)]
     Let = 2,
+    #[allow(missing_docs)]
     Using = 3,
+    #[allow(missing_docs)]
     #[estree(rename = "await using")]
     AwaitUsing = 4,
 }
@@ -1118,11 +1292,16 @@ pub enum VariableDeclarationKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct VariableDeclarator<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     #[estree(skip)]
     pub kind: VariableDeclarationKind,
+    #[allow(missing_docs)]
     pub id: BindingPattern<'a>,
+    #[allow(missing_docs)]
     pub init: Option<Expression<'a>>,
+    #[allow(missing_docs)]
     #[ts]
     pub definite: bool,
 }
@@ -1132,6 +1311,7 @@ pub struct VariableDeclarator<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct EmptyStatement {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -1140,7 +1320,9 @@ pub struct EmptyStatement {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExpressionStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub expression: Expression<'a>,
 }
 
@@ -1149,9 +1331,13 @@ pub struct ExpressionStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct IfStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub test: Expression<'a>,
+    #[allow(missing_docs)]
     pub consequent: Statement<'a>,
+    #[allow(missing_docs)]
     pub alternate: Option<Statement<'a>>,
 }
 
@@ -1160,8 +1346,11 @@ pub struct IfStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct DoWhileStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub body: Statement<'a>,
+    #[allow(missing_docs)]
     pub test: Expression<'a>,
 }
 
@@ -1170,8 +1359,11 @@ pub struct DoWhileStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct WhileStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub test: Expression<'a>,
+    #[allow(missing_docs)]
     pub body: Statement<'a>,
 }
 
@@ -1181,11 +1373,17 @@ pub struct WhileStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ForStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub init: Option<ForStatementInit<'a>>,
+    #[allow(missing_docs)]
     pub test: Option<Expression<'a>>,
+    #[allow(missing_docs)]
     pub update: Option<Expression<'a>>,
+    #[allow(missing_docs)]
     pub body: Statement<'a>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1201,6 +1399,7 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ForStatementInit<'a> {
+    #[allow(missing_docs)]
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
@@ -1213,10 +1412,15 @@ pub enum ForStatementInit<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ForInStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub left: ForStatementLeft<'a>,
+    #[allow(missing_docs)]
     pub right: Expression<'a>,
+    #[allow(missing_docs)]
     pub body: Statement<'a>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1232,6 +1436,7 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ForStatementLeft<'a> {
+    #[allow(missing_docs)]
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
@@ -1243,11 +1448,17 @@ pub enum ForStatementLeft<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ForOfStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub r#await: bool,
+    #[allow(missing_docs)]
     pub left: ForStatementLeft<'a>,
+    #[allow(missing_docs)]
     pub right: Expression<'a>,
+    #[allow(missing_docs)]
     pub body: Statement<'a>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1258,7 +1469,9 @@ pub struct ForOfStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ContinueStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub label: Option<LabelIdentifier<'a>>,
 }
 
@@ -1267,7 +1480,9 @@ pub struct ContinueStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct BreakStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub label: Option<LabelIdentifier<'a>>,
 }
 
@@ -1276,7 +1491,9 @@ pub struct BreakStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ReturnStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub argument: Option<Expression<'a>>,
 }
 
@@ -1285,8 +1502,11 @@ pub struct ReturnStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct WithStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub object: Expression<'a>,
+    #[allow(missing_docs)]
     pub body: Statement<'a>,
 }
 
@@ -1296,21 +1516,29 @@ pub struct WithStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct SwitchStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub discriminant: Expression<'a>,
+    #[allow(missing_docs)]
     #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct SwitchCase<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub test: Option<Expression<'a>>,
+    #[allow(missing_docs)]
     pub consequent: Vec<'a, Statement<'a>>,
 }
 
@@ -1319,8 +1547,11 @@ pub struct SwitchCase<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct LabeledStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub label: LabelIdentifier<'a>,
+    #[allow(missing_docs)]
     pub body: Statement<'a>,
 }
 
@@ -1335,6 +1566,7 @@ pub struct LabeledStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ThrowStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The expression being thrown, e.g. `err` in `throw err;`
     pub argument: Expression<'a>,
@@ -1359,6 +1591,7 @@ pub struct ThrowStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TryStatement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// Statements in the `try` block
     pub block: Box<'a, BlockStatement<'a>>,
@@ -1385,11 +1618,13 @@ pub struct TryStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct CatchClause<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The caught error parameter, e.g. `e` in `catch (e) {}`
     pub param: Option<CatchParameter<'a>>,
     /// The statements run when an error is caught
     pub body: Box<'a, BlockStatement<'a>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1412,6 +1647,7 @@ pub struct CatchClause<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct CatchParameter<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The bound error
     pub pattern: BindingPattern<'a>,
@@ -1428,6 +1664,7 @@ pub struct CatchParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct DebuggerStatement {
+    #[allow(missing_docs)]
     pub span: Span,
 }
 
@@ -1444,13 +1681,17 @@ pub struct BindingPattern<'a> {
         ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
     )]
     #[span]
+    #[allow(missing_docs)]
     pub kind: BindingPatternKind<'a>,
+    #[allow(missing_docs)]
     #[ts]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    #[allow(missing_docs)]
     #[ts]
     pub optional: bool,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
@@ -1468,42 +1709,60 @@ pub enum BindingPatternKind<'a> {
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>) = 3,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AssignmentPattern<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub left: BindingPattern<'a>,
+    #[allow(missing_docs)]
     pub right: Expression<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ObjectPattern<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub properties: Vec<'a, BindingProperty<'a>>,
+    #[allow(missing_docs)]
     #[estree(append_to = "properties")]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct BindingProperty<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub key: PropertyKey<'a>,
+    #[allow(missing_docs)]
     pub value: BindingPattern<'a>,
+    #[allow(missing_docs)]
     pub shorthand: bool,
+    #[allow(missing_docs)]
     pub computed: bool,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrayPattern<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
+    #[allow(missing_docs)]
     #[estree(append_to = "elements")]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
@@ -1522,7 +1781,9 @@ pub struct ArrayPattern<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "RestElement")]
 pub struct BindingRestElement<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub argument: BindingPattern<'a>,
 }
 
@@ -1570,7 +1831,9 @@ pub struct BindingRestElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Function<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub r#type: FunctionType,
     /// The function identifier. [`None`] for anonymous function expressions.
     pub id: Option<BindingIdentifier<'a>>,
@@ -1581,9 +1844,12 @@ pub struct Function<'a> {
     /// function bar() { }  // <- generator: false
     /// ```
     pub generator: bool,
+    #[allow(missing_docs)]
     pub r#async: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub declare: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -1624,18 +1890,23 @@ pub struct Function<'a> {
     /// }
     /// ```
     pub body: Option<Box<'a, FunctionBody<'a>>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 #[estree(no_rename_variants)]
 pub enum FunctionType {
+    #[allow(missing_docs)]
     FunctionDeclaration = 0,
+    #[allow(missing_docs)]
     FunctionExpression = 1,
+    #[allow(missing_docs)]
     TSDeclareFunction = 2,
     /// <https://github.com/typescript-eslint/typescript-eslint/pull/1289>
     TSEmptyBodyFunctionExpression = 3,
@@ -1647,30 +1918,42 @@ pub enum FunctionType {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(custom_serialize)]
 pub struct FormalParameters<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub kind: FormalParameterKind,
+    #[allow(missing_docs)]
     #[estree(ts_type = "Array<FormalParameter | FormalParameterRest>")]
     pub items: Vec<'a, FormalParameter<'a>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct FormalParameter<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
+    #[allow(missing_docs)]
     pub pattern: BindingPattern<'a>,
+    #[allow(missing_docs)]
     #[ts]
     pub accessibility: Option<TSAccessibility>,
+    #[allow(missing_docs)]
     #[ts]
     pub readonly: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub r#override: bool,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
@@ -1691,8 +1974,11 @@ pub enum FormalParameterKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct FunctionBody<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub directives: Vec<'a, Directive<'a>>,
+    #[allow(missing_docs)]
     pub statements: Vec<'a, Statement<'a>>,
 }
 
@@ -1705,17 +1991,23 @@ pub struct FunctionBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ArrowFunctionExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
+    #[allow(missing_docs)]
     pub r#async: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[allow(missing_docs)]
     pub params: Box<'a, FormalParameters<'a>>,
+    #[allow(missing_docs)]
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
     pub body: Box<'a, FunctionBody<'a>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1726,8 +2018,11 @@ pub struct ArrowFunctionExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct YieldExpression<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub delegate: bool,
+    #[allow(missing_docs)]
     pub argument: Option<Expression<'a>>,
 }
 
@@ -1737,7 +2032,9 @@ pub struct YieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Class<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub r#type: ClassType,
     /// Decorators applied to the class.
     ///
@@ -1753,6 +2050,7 @@ pub struct Class<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Class identifier, AKA the name
     pub id: Option<BindingIdentifier<'a>>,
+    #[allow(missing_docs)]
     #[scope(enter_before)]
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1783,6 +2081,7 @@ pub struct Class<'a> {
     /// ```
     #[ts]
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
+    #[allow(missing_docs)]
     pub body: Box<'a, ClassBody<'a>>,
     /// Whether the class is abstract
     ///
@@ -1808,6 +2107,7 @@ pub struct Class<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
@@ -1826,11 +2126,14 @@ pub enum ClassType {
     ClassExpression = 1,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ClassBody<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub body: Vec<'a, ClassElement<'a>>,
 }
 
@@ -1856,12 +2159,15 @@ pub struct ClassBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ClassElement<'a> {
+    #[allow(missing_docs)]
     StaticBlock(Box<'a, StaticBlock<'a>>) = 0,
     /// Class Methods
     ///
     /// Includes static and non-static methods, constructors, getters, and setters.
     MethodDefinition(Box<'a, MethodDefinition<'a>>) = 1,
+    #[allow(missing_docs)]
     PropertyDefinition(Box<'a, PropertyDefinition<'a>>) = 2,
+    #[allow(missing_docs)]
     AccessorProperty(Box<'a, AccessorProperty<'a>>) = 3,
     /// Index Signature
     ///
@@ -1874,18 +2180,23 @@ pub enum ClassElement<'a> {
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 4,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct MethodDefinition<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// Method definition type
     ///
     /// This will always be true when an `abstract` modifier is used on the method.
     pub r#type: MethodDefinitionType,
+    #[allow(missing_docs)]
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
+    #[allow(missing_docs)]
     pub key: PropertyKey<'a>,
+    #[allow(missing_docs)]
     #[visit(args(flags = match self.kind {
         MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
         MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
@@ -1893,31 +2204,43 @@ pub struct MethodDefinition<'a> {
         MethodDefinitionKind::Method => ScopeFlags::Function,
     }))]
     pub value: Box<'a, Function<'a>>, // FunctionExpression
+    #[allow(missing_docs)]
     pub kind: MethodDefinitionKind,
+    #[allow(missing_docs)]
     pub computed: bool,
+    #[allow(missing_docs)]
     pub r#static: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub r#override: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub optional: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub accessibility: Option<TSAccessibility>,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 #[estree(no_rename_variants)]
 pub enum MethodDefinitionType {
+    #[allow(missing_docs)]
     MethodDefinition = 0,
+    #[allow(missing_docs)]
     TSAbstractMethodDefinition = 1,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct PropertyDefinition<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub r#type: PropertyDefinitionType,
     /// Decorators applied to the property.
     ///
@@ -1968,11 +2291,13 @@ pub struct PropertyDefinition<'a> {
     /// ```
     #[ts]
     pub declare: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub r#override: bool,
     /// `true` when created with an optional modifier (`?`)
     #[ts]
     pub optional: bool,
+    #[allow(missing_docs)]
     #[ts]
     pub definite: bool,
     /// `true` when declared with a `readonly` modifier
@@ -2001,15 +2326,19 @@ pub struct PropertyDefinition<'a> {
     pub accessibility: Option<TSAccessibility>,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 #[estree(no_rename_variants)]
 pub enum PropertyDefinitionType {
+    #[allow(missing_docs)]
     PropertyDefinition = 0,
+    #[allow(missing_docs)]
     TSAbstractPropertyDefinition = 1,
 }
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
@@ -2031,7 +2360,9 @@ pub enum MethodDefinitionKind {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct PrivateIdentifier<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub name: Atom<'a>,
 }
 
@@ -2053,8 +2384,11 @@ pub struct PrivateIdentifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct StaticBlock<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub body: Vec<'a, Statement<'a>>,
+    #[allow(missing_docs)]
     #[estree(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -2118,12 +2452,15 @@ macro_rules! match_module_declaration {
 }
 pub use match_module_declaration;
 
+#[allow(missing_docs)]
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 #[estree(no_rename_variants)]
 pub enum AccessorPropertyType {
+    #[allow(missing_docs)]
     AccessorProperty = 0,
+    #[allow(missing_docs)]
     TSAbstractAccessorProperty = 1,
 }
 
@@ -2139,7 +2476,9 @@ pub enum AccessorPropertyType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct AccessorProperty<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub r#type: AccessorPropertyType,
     /// Decorators applied to the accessor property.
     ///
@@ -2180,25 +2519,33 @@ pub struct AccessorProperty<'a> {
     pub accessibility: Option<TSAccessibility>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportExpression<'a> {
     pub span: Span,
+    #[allow(missing_docs)]
     pub source: Expression<'a>,
+    #[allow(missing_docs)]
     pub arguments: Vec<'a, Expression<'a>>,
+    #[allow(missing_docs)]
     pub phase: Option<ImportPhase>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     #[estree(via = crate::serialize::OptionVecDefault, ts_type = "Array<ImportDeclarationSpecifier>")]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
+    #[allow(missing_docs)]
     pub source: StringLiteral<'a>,
+    #[allow(missing_docs)]
     pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
     #[ts]
@@ -2217,10 +2564,13 @@ pub struct ImportDeclaration<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum ImportPhase {
+    #[allow(missing_docs)]
     Source = 0,
+    #[allow(missing_docs)]
     Defer = 1,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
@@ -2236,11 +2586,14 @@ pub enum ImportDeclarationSpecifier<'a> {
 
 // import {imported} from "source"
 // import {imported as local} from "source"
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportSpecifier<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub imported: ModuleExportName<'a>,
     /// The name of the imported symbol.
     ///
@@ -2254,6 +2607,7 @@ pub struct ImportSpecifier<'a> {
     /// //              ^^^
     /// ```
     pub local: BindingIdentifier<'a>,
+    #[allow(missing_docs)]
     #[ts]
     pub import_kind: ImportOrExportKind,
 }
@@ -2269,6 +2623,7 @@ pub struct ImportSpecifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportDefaultSpecifier<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// The name of the imported symbol.
     pub local: BindingIdentifier<'a>,
@@ -2284,33 +2639,46 @@ pub struct ImportDefaultSpecifier<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportNamespaceSpecifier<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub local: BindingIdentifier<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct WithClause<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    #[allow(missing_docs)]
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ImportAttribute<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub key: ImportAttributeKey<'a>,
+    #[allow(missing_docs)]
     pub value: StringLiteral<'a>,
 }
 
+#[allow(missing_docs)]
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum ImportAttributeKey<'a> {
+    #[allow(missing_docs)]
     Identifier(IdentifierName<'a>) = 0,
+    #[allow(missing_docs)]
     StringLiteral(StringLiteral<'a>) = 1,
 }
 
@@ -2329,9 +2697,13 @@ pub enum ImportAttributeKey<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportNamedDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub declaration: Option<Declaration<'a>>,
+    #[allow(missing_docs)]
     pub specifiers: Vec<'a, ExportSpecifier<'a>>,
+    #[allow(missing_docs)]
     pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     #[ts]
@@ -2354,8 +2726,11 @@ pub struct ExportNamedDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportDefaultDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub declaration: ExportDefaultDeclarationKind<'a>,
+    #[allow(missing_docs)]
     pub exported: ModuleExportName<'a>, // the `default` Keyword
 }
 
@@ -2372,13 +2747,16 @@ pub struct ExportDefaultDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportAllDeclaration<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
     /// If this declaration is re-named
     pub exported: Option<ModuleExportName<'a>>,
+    #[allow(missing_docs)]
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
     #[ts]
     pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
+    #[allow(missing_docs)]
     #[ts]
     pub export_kind: ImportOrExportKind, // `export type *`
 }
@@ -2398,10 +2776,14 @@ pub struct ExportAllDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportSpecifier<'a> {
+    #[allow(missing_docs)]
     pub span: Span,
+    #[allow(missing_docs)]
     pub local: ModuleExportName<'a>,
+    #[allow(missing_docs)]
     pub exported: ModuleExportName<'a>,
     #[ts]
+    #[allow(missing_docs)]
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 
@@ -2416,9 +2798,12 @@ inherit_variants! {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum ExportDefaultDeclarationKind<'a> {
     #[visit(args(flags = ScopeFlags::Function))]
+    #[allow(missing_docs)]
     FunctionDeclaration(Box<'a, Function<'a>>) = 64,
+    #[allow(missing_docs)]
     ClassDeclaration(Box<'a, Class<'a>>) = 65,
 
+    #[allow(missing_docs)]
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
 
     // `Expression` variants added here by `inherit_variants!` macro
@@ -2437,8 +2822,10 @@ pub enum ExportDefaultDeclarationKind<'a> {
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum ModuleExportName<'a> {
+    #[allow(missing_docs)]
     IdentifierName(IdentifierName<'a>) = 0,
     /// For `local` in `ExportSpecifier`: `foo` in `export { foo }`
     IdentifierReference(IdentifierReference<'a>) = 1,
+    #[allow(missing_docs)]
     StringLiteral(StringLiteral<'a>) = 2,
 }
