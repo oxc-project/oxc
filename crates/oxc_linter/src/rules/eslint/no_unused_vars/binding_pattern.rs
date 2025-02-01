@@ -64,7 +64,8 @@ impl<'a> HasAnyUsedBinding<'a> for ArrayPattern<'a> {
     fn has_any_used_binding(&self, ctx: BindingContext<'_, 'a>) -> bool {
         self.elements.iter().flatten().any(|el| {
             // if the destructured element is ignored, it is considered used
-            el.get_identifier().is_some_and(|name| ctx.options.is_ignored_array_destructured(&name))
+            el.get_identifier_name()
+                .is_some_and(|name| ctx.options.is_ignored_array_destructured(&name))
                 || el.has_any_used_binding(ctx)
         }) || self.rest.as_ref().is_some_and(|rest| rest.argument.has_any_used_binding(ctx))
     }
