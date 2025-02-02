@@ -1,14 +1,19 @@
 use tower_lsp::lsp_types::{
-    ClientCapabilities, CodeActionKind, CodeActionOptions, CodeActionProviderCapability, OneOf,
-    ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, WorkDoneProgressOptions,
-    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    ClientCapabilities, CodeActionKind, CodeActionOptions, CodeActionProviderCapability,
+    ExecuteCommandOptions, OneOf, ServerCapabilities, TextDocumentSyncCapability,
+    TextDocumentSyncKind, WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities,
+    WorkspaceServerCapabilities,
 };
+
+use crate::commands::LSP_COMMANDS;
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
 
+#[derive(Clone)]
 pub struct Capabilities {
     pub code_action_provider: bool,
+    pub workspace_edit: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -21,13 +26,23 @@ impl From<ClientCapabilities> for Capabilities {
                 })
             })
         });
+        let workspace_edit =
+            value.workspace.is_some_and(|capability| capability.workspace_edit.is_some());
 
-        Self { code_action_provider }
+        Self { code_action_provider, workspace_edit }
     }
 }
 
 impl From<Capabilities> for ServerCapabilities {
     fn from(value: Capabilities) -> Self {
+        let commands = LSP_COMMANDS
+            .iter()
+            .filter_map(|c| match c.available(value.clone()) {
+                true => Some(c.command_id()),
+                false => None,
+            })
+            .collect();
+
         Self {
             text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
             workspace: Some(WorkspaceServerCapabilities {
@@ -51,6 +66,10 @@ impl From<Capabilities> for ServerCapabilities {
             } else {
                 None
             },
+            execute_command_provider: Some(ExecuteCommandOptions {
+                commands,
+                ..Default::default()
+            }),
             ..ServerCapabilities::default()
         }
     }
