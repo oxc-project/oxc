@@ -9,7 +9,7 @@ use crate::{ctx::Ctx, keep_var::KeepVar};
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8798>
+    /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
     ///
     /// See also
     ///

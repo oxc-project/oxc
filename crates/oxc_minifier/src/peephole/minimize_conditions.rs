@@ -145,7 +145,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9190>
+    /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
     fn try_minimize_if(&self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Option<Statement<'a>> {
         let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
 
