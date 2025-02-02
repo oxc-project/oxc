@@ -4,8 +4,8 @@ use oxc_ecmascript::{
     ToInt32,
 };
 use oxc_span::{cmp::ContentEq, GetSpan};
-use oxc_syntax::es_target::ESTarget;
-use oxc_traverse::Ancestor;
+use oxc_syntax::{es_target::ESTarget, scope::ScopeFlags};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
 use crate::ctx::Ctx;
 
@@ -19,11 +19,7 @@ use super::PeepholeOptimizations;
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_conditions_exit_statement(
-        &mut self,
-        stmt: &mut Statement<'a>,
-        ctx: Ctx<'a, '_>,
-    ) {
+    pub fn minimize_conditions_exit_statement(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
         let expr = match stmt {
             Statement::IfStatement(s) => Some(&mut s.test),
             Statement::WhileStatement(s) => Some(&mut s.test),
@@ -43,15 +39,6 @@ impl<'a> PeepholeOptimizations {
         if let Some(expr) = expr {
             Self::try_fold_expr_in_boolean_context(expr, ctx);
         }
-
-        if let Some(folded_stmt) = match stmt {
-            // If the condition is a literal, we'll let other optimizations try to remove useless code.
-            Statement::IfStatement(_) => self.try_minimize_if(stmt, ctx),
-            _ => None,
-        } {
-            *stmt = folded_stmt;
-            self.mark_current_function_as_changed();
-        };
     }
 
     pub fn minimize_conditions_exit_expression(
@@ -146,125 +133,146 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
-    fn try_minimize_if(&self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Option<Statement<'a>> {
-        let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
-
-        // `if (x) foo()` -> `x && foo()`
-        if !if_stmt.test.is_literal() {
-            let then_branch = &if_stmt.consequent;
-            let else_branch = &if_stmt.alternate;
-            match else_branch {
-                None => {
-                    if Self::is_foldable_express_block(&if_stmt.consequent) {
-                        let right = Self::get_block_expression(&mut if_stmt.consequent, ctx);
-                        let test = ctx.ast.move_expression(&mut if_stmt.test);
-                        // `if(!x) foo()` -> `x || foo()`
-                        if let Expression::UnaryExpression(unary_expr) = test {
-                            if unary_expr.operator.is_not() {
-                                let left = unary_expr.unbox().argument;
-                                let logical_expr = ctx.ast.expression_logical(
-                                    if_stmt.span,
-                                    left,
-                                    LogicalOperator::Or,
-                                    right,
-                                );
-                                return Some(
-                                    ctx.ast.statement_expression(if_stmt.span, logical_expr),
-                                );
-                            }
-                        } else {
-                            // `if(x) foo()` -> `x && foo()`
-                            let logical_expr = ctx.ast.expression_logical(
-                                if_stmt.span,
-                                test,
-                                LogicalOperator::And,
-                                right,
-                            );
-                            return Some(ctx.ast.statement_expression(if_stmt.span, logical_expr));
-                        }
-                    } else {
-                        // `if (x) if (y) z` -> `if (x && y) z`
-                        if let Some(Statement::IfStatement(then_if_stmt)) =
-                            then_branch.get_one_child()
-                        {
-                            if then_if_stmt.alternate.is_none() {
-                                let and_left = ctx.ast.move_expression(&mut if_stmt.test);
-                                let Some(then_if_stmt) = if_stmt.consequent.get_one_child_mut()
-                                else {
-                                    unreachable!()
-                                };
-                                let Statement::IfStatement(mut then_if_stmt) =
-                                    ctx.ast.move_statement(then_if_stmt)
-                                else {
-                                    unreachable!()
-                                };
-                                let and_right = ctx.ast.move_expression(&mut then_if_stmt.test);
-                                then_if_stmt.test = ctx.ast.expression_logical(
-                                    and_left.span(),
-                                    and_left,
-                                    LogicalOperator::And,
-                                    and_right,
-                                );
-                                return Some(Statement::IfStatement(then_if_stmt));
-                            }
-                        }
+    pub fn try_minimize_if(
+        &mut self,
+        if_stmt: &mut IfStatement<'a>,
+        traverse_ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        self.wrap_to_avoid_ambiguous_else(if_stmt, traverse_ctx);
+        let ctx = Ctx(traverse_ctx);
+        if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
+            if if_stmt.alternate.is_none() {
+                let (op, e) = match &mut if_stmt.test {
+                    // "if (!a) b();" => "a || b();"
+                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                        (LogicalOperator::Or, &mut unary_expr.argument)
                     }
-                }
-                Some(else_branch) => {
-                    let then_branch_is_expression_block =
-                        Self::is_foldable_express_block(then_branch);
-                    let else_branch_is_expression_block =
-                        Self::is_foldable_express_block(else_branch);
-                    // `if(foo) bar else baz` -> `foo ? bar : baz`
-                    if then_branch_is_expression_block && else_branch_is_expression_block {
-                        let test = ctx.ast.move_expression(&mut if_stmt.test);
-                        let consequent = Self::get_block_expression(&mut if_stmt.consequent, ctx);
-                        let else_branch = if_stmt.alternate.as_mut().unwrap();
-                        let alternate = Self::get_block_expression(else_branch, ctx);
-                        let expr = self.minimize_conditional(
-                            if_stmt.span,
-                            test,
-                            consequent,
-                            alternate,
+                    // "if (a) b();" => "a && b();"
+                    e => (LogicalOperator::And, e),
+                };
+                let a = ctx.ast.move_expression(e);
+                let b = ctx.ast.move_expression(&mut expr_stmt.expression);
+                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+            } else if let Some(Statement::ExpressionStatement(alternate_expr_stmt)) =
+                &mut if_stmt.alternate
+            {
+                // "if (a) b(); else c();" => "a ? b() : c();"
+                let test = ctx.ast.move_expression(&mut if_stmt.test);
+                let consequent = ctx.ast.move_expression(&mut expr_stmt.expression);
+                let alternate = ctx.ast.move_expression(&mut alternate_expr_stmt.expression);
+                let expr =
+                    self.minimize_conditional(if_stmt.span, test, consequent, alternate, ctx);
+                return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+            }
+        } else if Self::is_statement_empty(&if_stmt.consequent) {
+            if if_stmt.alternate.is_none()
+                || if_stmt.alternate.as_ref().is_some_and(Self::is_statement_empty)
+            {
+                // "if (a) {}" => "a;"
+                let expr = ctx.ast.move_expression(&mut if_stmt.test);
+                return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+            } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
+                let (op, e) = match &mut if_stmt.test {
+                    // "if (!a) {} else b();" => "a && b();"
+                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                        (LogicalOperator::And, &mut unary_expr.argument)
+                    }
+                    // "if (a) {} else b();" => "a || b();"
+                    e => (LogicalOperator::Or, e),
+                };
+                let a = ctx.ast.move_expression(e);
+                let b = ctx.ast.move_expression(&mut expr_stmt.expression);
+                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+            } else if let Some(stmt) = &mut if_stmt.alternate {
+                // "yes" is missing and "no" is not missing (and is not an expression)
+                match &mut if_stmt.test {
+                    // "if (!a) {} else return b;" => "if (a) return b;"
+                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                        if_stmt.test = ctx.ast.move_expression(&mut unary_expr.argument);
+                        if_stmt.consequent = ctx.ast.move_statement(stmt);
+                        if_stmt.alternate = None;
+                        self.mark_current_function_as_changed();
+                    }
+                    // "if (a) {} else return b;" => "if (!a) return b;"
+                    _ => {
+                        if_stmt.test = Self::minimize_not(
+                            if_stmt.test.span(),
+                            ctx.ast.move_expression(&mut if_stmt.test),
                             ctx,
                         );
-                        return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+                        if_stmt.consequent = ctx.ast.move_statement(stmt);
+                        if_stmt.alternate = None;
+                        self.mark_current_function_as_changed();
+                    }
+                }
+            }
+        } else {
+            // "yes" is not missing (and is not an expression)
+            if let Some(alternate) = &mut if_stmt.alternate {
+                // "yes" is not missing (and is not an expression) and "no" is not missing
+                if let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test {
+                    if unary_expr.operator.is_not() {
+                        // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
+                        if_stmt.test = ctx.ast.move_expression(&mut unary_expr.argument);
+                        std::mem::swap(&mut if_stmt.consequent, alternate);
+                        self.wrap_to_avoid_ambiguous_else(if_stmt, traverse_ctx);
+                        self.mark_current_function_as_changed();
+                    }
+                }
+                // "if (a) return b; else {}" => "if (a) return b;" is handled by remove_dead_code
+            } else {
+                // "no" is missing
+                if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent {
+                    if if2_stmt.alternate.is_none() {
+                        // "if (a) if (b) return c;" => "if (a && b) return c;"
+                        let a = ctx.ast.move_expression(&mut if_stmt.test);
+                        let b = ctx.ast.move_expression(&mut if2_stmt.test);
+                        if_stmt.test = Self::join_with_left_associative_op(
+                            if_stmt.test.span(),
+                            LogicalOperator::And,
+                            a,
+                            b,
+                            ctx,
+                        );
+                        if_stmt.consequent = ctx.ast.move_statement(&mut if2_stmt.consequent);
+                        self.mark_current_function_as_changed();
                     }
                 }
             }
         }
-
-        // `if (x) {} else foo` -> `if (!x) foo`
-        if match &if_stmt.consequent {
-            Statement::EmptyStatement(_) => true,
-            Statement::BlockStatement(block_stmt) => block_stmt.body.is_empty(),
-            _ => false,
-        } && if_stmt.alternate.is_some()
-        {
-            return Some(ctx.ast.statement_if(
-                if_stmt.span,
-                ctx.ast.expression_unary(
-                    if_stmt.test.span(),
-                    UnaryOperator::LogicalNot,
-                    ctx.ast.move_expression(&mut if_stmt.test),
-                ),
-                ctx.ast.move_statement(if_stmt.alternate.as_mut().unwrap()),
-                None,
-            ));
-        }
-
         None
     }
 
-    fn is_foldable_express_block(stmt: &Statement<'a>) -> bool {
-        matches!(stmt.get_one_child(), Some(Statement::ExpressionStatement(_)))
+    /// Wrap to avoid ambiguous else.
+    /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
+    fn wrap_to_avoid_ambiguous_else(
+        &mut self,
+        if_stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
+            if if2.consequent.is_jump_statement() && if2.alternate.is_some() {
+                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+                if_stmt.consequent = Statement::BlockStatement(ctx.ast.alloc(
+                    ctx.ast.block_statement_with_scope_id(
+                        if_stmt.consequent.span(),
+                        ctx.ast.vec1(ctx.ast.move_statement(&mut if_stmt.consequent)),
+                        scope_id,
+                    ),
+                ));
+                self.mark_current_function_as_changed();
+            }
+        }
     }
 
-    fn get_block_expression(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
-        let Some(Statement::ExpressionStatement(s)) = stmt.get_one_child_mut() else {
-            unreachable!()
-        };
-        ctx.ast.move_expression(&mut s.expression)
+    fn is_statement_empty(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::BlockStatement(block_stmt) if block_stmt.body.is_empty() => true,
+            Statement::EmptyStatement(_) => true,
+            _ => false,
+        }
     }
 
     pub fn minimize_conditional(
@@ -1778,8 +1786,20 @@ mod test {
     }
 
     #[test]
-    fn test_no_swap_with_dangling_else() {
-        test_same("if(!x) {for(;;)foo(); for(;;)bar()} else if(y) for(;;) f()");
+    fn test_dangling_else() {
+        test(
+            "
+        if (!x) {
+          for (;;) foo();
+          for (;;) bar();
+        } else if (y) for (;;) f();",
+            "
+        if (x) {
+          if (y) for (; ; ) f();
+        } else {
+          for (; ; ) foo();
+          for (; ; ) bar();}",
+        );
         test_same("if(!a&&!b) {for(;;)foo(); for(;;)bar()} else if(y) for(;;) f()");
     }
 
@@ -2673,6 +2693,68 @@ mod test {
         assert_eq!(
             run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
             run(code, None)
+        );
+    }
+
+    #[test]
+    fn test_minimize_if() {
+        test(
+            "function writeInteger(int) {
+                if (int >= 0)
+                    if (int <= 0xffffffff) return this.u32(int);
+                    else if (int > -0x80000000) return this.n32(int);
+            }",
+            "function writeInteger(int) {
+                if (int >= 0) {
+                    if (int <= 4294967295) return this.u32(int);
+                    if (int > -2147483648) return this.n32(int);
+                }
+            }",
+        );
+
+        test(
+            "function bar() {
+              if (!x) {
+                return null;
+              } else if (y) {
+                return foo;
+              } else if (z) {
+                return bar;
+              }
+            }",
+            "function bar() {
+              if (x) {
+                if (y)
+                  return foo;
+                if (z)
+                  return bar;
+              } else return null;
+            }",
+        );
+
+        test(
+            "function f() {
+              if (foo)
+                if (bar) return X;
+                else return Y;
+              return Z;
+            }",
+            "function f() {
+              return foo ? bar ? X : Y : Z;
+            }",
+        );
+
+        test(
+            "function _() {
+                if (currentChar === '\\n')
+                    return pos + 1;
+                else if (currentChar !== ' ' && currentChar !== '\\t')
+                    return pos + 1;
+            }",
+            "function _() {
+                if (currentChar === '\\n' || currentChar !== ' ' && currentChar !== '\\t')
+                    return pos + 1;
+            }",
         );
     }
 }

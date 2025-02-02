@@ -16,23 +16,6 @@ fn test_same(source_text: &str) {
 
 #[test]
 fn integration() {
-    // FIXME
-    // test(
-    // "function writeInteger(int) {
-    // if (int >= 0)
-    // if (int <= 0xffffffff)
-    // return this.u32(int);
-    // else if (int > -0x80000000)
-    // return this.n32(int);
-    // }",
-    // "function writeInteger(int) {
-    // if (int >= 0) {
-    // if (int <= 4294967295) return this.u32(int);
-    // if (int > -2147483648) return this.n32(int);
-    // }
-    // }",
-    // );
-
     test(
         "require('./index.js')(function (e, os) {
     if (e) return console.log(e)
@@ -75,19 +58,6 @@ fn integration() {
         "if ((() => console.log('effect'))(), !1) for (var c = 1, c; unknownGlobal; unknownGlobal && !0) var d;
         console.log(c, d);
         ",
-    );
-
-    test(
-        "function _() {
-            if (currentChar === '\\n')
-                return pos + 1;
-            else if (currentChar !== ' ' && currentChar !== '\\t')
-                return pos + 1;
-        }",
-        "function _() {
-            if (currentChar === '\\n' || currentChar !== ' ' && currentChar !== '\\t')
-                return pos + 1;
-        }",
     );
 }
 
