@@ -7,7 +7,10 @@ use std::{
     sync::Arc,
 };
 
-use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
+use rayon::{
+    iter::{IntoParallelRefIterator, ParallelBridge},
+    prelude::ParallelIterator,
+};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
@@ -288,7 +291,7 @@ impl Runtime {
         self.modules.len() - self.paths.len()
     }
 
-    pub(super) fn iter_paths(&self) -> impl Iterator<Item = &Box<Path>> + '_ {
-        self.paths.iter()
+    pub(super) fn par_iter_paths(&self) -> impl ParallelIterator<Item = &Box<Path>> {
+        self.paths.par_iter()
     }
 }
