@@ -132,7 +132,7 @@ impl OxlintRules {
                             if let Some(rule) = rules.get(&plugin_name) {
                                 rules_to_replace.push(RuleWithSeverity::new(
                                     rule.read_json(config),
-                                    rule.severity,
+                                    rule_config.severity,
                                 ));
                             }
                             // If the given rule is not found in the rule list (for example, if all rules are disabled),
@@ -474,8 +474,7 @@ mod test {
     #[test]
     fn test_override_plugin_prefix_duplicates() {
         let configs = [
-            // FIXME: this should be valid
-            // json!({ "@typescript-eslint/no-unused-vars": "error" }),
+            json!({ "@typescript-eslint/no-unused-vars": "error" }),
             json!({ "no-unused-vars": "off", "typescript/no-unused-vars": "error" }),
             json!({ "no-unused-vars": "off", "@typescript-eslint/no-unused-vars": "error" }),
         ];
@@ -501,7 +500,7 @@ mod test {
             assert_eq!(rules.len(), 1, "{config:?}");
             let rule = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
-            assert_eq!(rule.severity, AllowWarnDeny::Warn, "{config:?}");
+            assert_eq!(rule.severity, AllowWarnDeny::Deny, "{config:?}");
         }
     }
 }
