@@ -11,7 +11,7 @@ pub fn print_javascript(code: &str, generator_path: &str) -> String {
     format(&code)
 }
 
-/// Format JS/TS code with dprint.
+/// Format JS/TS code with `dprint`.
 fn format(source_text: &str) -> String {
     let mut dprint = Command::new("dprint")
         .stdin(Stdio::piped())
