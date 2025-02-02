@@ -1,23 +1,23 @@
+//! Derive for `GetAddress` trait.
+
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::{
-    schema::{EnumDef, Schema, ToType, TypeDef},
-    util::TypeWrapper,
-};
+use crate::schema::{Def, EnumDef, Schema};
 
-use super::{define_derive, Derive};
+use super::{define_derive, Derive, StructOrEnum};
 
+/// Derive for `GetAddress` trait.
 pub struct DeriveGetAddress;
 
 define_derive!(DeriveGetAddress);
 
 impl Derive for DeriveGetAddress {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "GetAddress"
     }
 
-    fn prelude() -> TokenStream {
+    fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]
 
@@ -26,31 +26,36 @@ impl Derive for DeriveGetAddress {
         }
     }
 
-    fn derive(&mut self, def: &TypeDef, _schema: &Schema) -> TokenStream {
-        if let TypeDef::Enum(enum_def) = def {
-            derive_enum(enum_def)
+    fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
+        if let StructOrEnum::Enum(enum_def) = type_def {
+            derive_enum(enum_def, schema)
         } else {
-            panic!("`GetAddress` can only be implemented with `#[generate_derive]` on enums");
+            panic!(
+                "`GetAddress` can only be implemented with `#[generate_derive]` on enums: `{}`",
+                type_def.name()
+            );
         }
     }
 }
 
-fn derive_enum(def: &EnumDef) -> TokenStream {
-    let target_type = def.to_elided_type();
+fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    let ty = enum_def.ty_anon(schema);
 
-    let matches = def.all_variants().map(|variant| {
+    let matches = enum_def.all_variants(schema).map(|variant| {
+        let variant_type = variant.field_type(schema).unwrap();
         assert!(
-            variant.fields.len() == 1
-                && variant.fields[0].typ.analysis().wrapper == TypeWrapper::Box,
-            "`GetAddress` can only be derived on enums where all variants are boxed"
+            variant_type.is_box(),
+            "`GetAddress` can only be derived on enums where all variants are boxed: `{}::{}`",
+            enum_def.name(),
+            variant.name(),
         );
 
         let ident = variant.ident();
-        quote!(Self::#ident(it) => GetAddress::address(it))
+        quote!( Self::#ident(it) => GetAddress::address(it) )
     });
 
     quote! {
-        impl GetAddress for #target_type {
+        impl GetAddress for #ty {
             ///@ `#[inline]` because compiler should boil this down to a single assembly instruction
             #[inline]
             fn address(&self) -> Address {

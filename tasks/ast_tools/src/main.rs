@@ -1,35 +1,26 @@
-use std::{cell::RefCell, io::Read, path::PathBuf, rc::Rc};
+use std::fmt::Write;
 
 use bpaf::{Bpaf, Parser};
-use codegen::{AstCodegen, AstCodegenResult};
-use itertools::Itertools;
-use syn::parse_file;
+use rayon::prelude::*;
 
 mod codegen;
 mod derives;
 mod generators;
-mod layout;
 mod logger;
-mod markers;
 mod output;
-mod passes;
-mod rust_ast;
+mod parse;
 mod schema;
-mod util;
+mod utils;
 
-use derives::{
-    DeriveCloneIn, DeriveContentEq, DeriveESTree, DeriveGetAddress, DeriveGetSpan, DeriveGetSpanMut,
-};
-use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GetIdGenerator,
-    TypescriptGenerator, VisitGenerator, VisitMutGenerator,
-};
-use logger::{log, log_failed, log_result, log_success};
+use codegen::{get_runners, Codegen, Runner};
+use derives::Derive;
+use generators::Generator;
+use logger::{log, log_failed, log_result, log_success, logln};
 use output::{Output, RawOutput};
-use passes::{CalcLayout, Linker};
+use parse::parse_files;
 use schema::Schema;
-use util::NormalizeError;
 
+/// Paths to source files containing AST types
 static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/ast/literal.rs",
     "crates/oxc_ast/src/ast/js.rs",
@@ -43,94 +34,123 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_regular_expression/src/ast.rs",
 ];
 
+/// Path to `oxc_ast` crate
 const AST_CRATE: &str = "crates/oxc_ast";
-const TYPESCRIPT_PACKAGE: &str = "npm/oxc-types";
+
+/// Path to write TS type definitions to
+const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
+
+/// Path to write CI filter list to
 const GITHUB_WATCH_LIST_PATH: &str = ".github/.generated_ast_watch_list.yml";
-const SCHEMA_PATH: &str = "schema.json";
 
-type Result<R> = std::result::Result<R, String>;
-type TypeId = usize;
+/// Derives (for use with `#[generate_derive]`)
+const DERIVES: &[&(dyn Derive + Sync)] = &[
+    &derives::DeriveCloneIn,
+    &derives::DeriveGetAddress,
+    &derives::DeriveGetSpan,
+    &derives::DeriveGetSpanMut,
+    &derives::DeriveContentEq,
+    &derives::DeriveESTree,
+];
 
+/// Code generators
+const GENERATORS: &[&(dyn Generator + Sync)] = &[
+    &generators::AssertLayouts,
+    &generators::AstKindGenerator,
+    &generators::AstBuilderGenerator,
+    &generators::GetIdGenerator,
+    &generators::VisitGenerator,
+    &generators::TypescriptGenerator,
+];
+
+type Result<R> = std::result::Result<R, ()>;
+
+/// CLI options.
 #[derive(Debug, Bpaf)]
-pub struct CliOptions {
-    /// Runs all generators but won't write anything down.
-    #[bpaf(switch)]
+struct CliOptions {
+    /// Run all generators but don't write to disk
     dry_run: bool,
-    /// Prints no logs.
+    /// Run all generators in series (useful when debugging)
+    serial: bool,
+    /// Print no logs
     quiet: bool,
-    /// Output JSON schema.
-    schema: bool,
 }
 
-fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let cli_options = cli_options().run();
+fn main() {
+    // Parse CLI options
+    let options = cli_options().run();
 
-    if cli_options.quiet {
-        logger::quiet().normalize_with("Failed to set logger to `quiet` mode.")?;
+    // Init logger
+    if options.quiet {
+        logger::quiet();
     }
 
-    let AstCodegenResult { mut outputs, schema } = SOURCE_PATHS
-        .iter()
-        .fold(AstCodegen::default(), AstCodegen::add_file)
-        .pass(Linker)
-        .pass(CalcLayout)
-        .generate(DeriveCloneIn)
-        .generate(DeriveGetAddress)
-        .generate(DeriveGetSpan)
-        .generate(DeriveGetSpanMut)
-        .generate(DeriveContentEq)
-        .generate(DeriveESTree)
-        .generate(AssertLayouts)
-        .generate(AstKindGenerator)
-        .generate(AstBuilderGenerator)
-        .generate(GetIdGenerator)
-        .generate(VisitGenerator)
-        .generate(VisitMutGenerator)
-        .generate(TypescriptGenerator)
-        .run()?;
+    // Parse inputs and generate `Schema`
+    let codegen = Codegen::new();
+    let mut schema = parse_files(SOURCE_PATHS, &codegen);
 
+    // Run `prepare` actions
+    let runners = get_runners();
+    for runner in &runners {
+        runner.prepare(&mut schema);
+    }
+
+    // Run generators
+    let mut outputs = if options.serial {
+        // Run in series
+        let mut outputs = vec![];
+        for runner in &runners {
+            outputs.extend(runner.run(&schema, &codegen));
+        }
+        outputs
+    } else {
+        // Run in parallel
+        runners.par_iter().map(|runner| runner.run(&schema, &codegen)).reduce(
+            Vec::new,
+            |mut outputs, runner_outputs| {
+                outputs.extend(runner_outputs);
+                outputs
+            },
+        )
+    };
+
+    logln!("All Derives and Generators... Done!");
+
+    // Add CI filter file to outputs
+    outputs.sort_unstable_by(|o1, o2| o1.path.cmp(&o2.path));
     outputs.push(generate_ci_filter(&outputs));
 
-    if cli_options.schema {
-        outputs.push(generate_json_schema(&schema)?);
-    }
-
-    if !cli_options.dry_run {
+    // Write outputs to disk
+    if !options.dry_run {
         for output in outputs {
-            output.write_to_file()?;
+            output.write_to_file().unwrap();
         }
     }
-
-    Ok(())
 }
 
+/// Generate CI filter list file.
+///
+/// This is used in `ast_changes` CI job to skip running `oxc_ast_tools`
+/// unless relevant files have changed.
+///
+/// List includes source files, generated files, and all files in `oxc_ast_tools` itself.
 fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
     log!("Generate CI filter... ");
 
+    let mut paths = SOURCE_PATHS
+        .iter()
+        .copied()
+        .chain(outputs.iter().map(|output| output.path.as_str()))
+        .chain(["tasks/ast_tools/src/**", GITHUB_WATCH_LIST_PATH])
+        .collect::<Vec<_>>();
+    paths.sort_unstable();
+
     let mut code = "src:\n".to_string();
-    let mut push_item = |path: &str| code.push_str(format!("  - '{path}'\n").as_str());
-
-    for input in SOURCE_PATHS {
-        push_item(input);
+    for path in paths {
+        writeln!(&mut code, "  - '{path}'").unwrap();
     }
-
-    for output in outputs {
-        push_item(output.path.as_str());
-    }
-
-    push_item("tasks/ast_tools/src/**");
-    push_item(GITHUB_WATCH_LIST_PATH);
 
     log_success!();
 
     Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
-}
-
-fn generate_json_schema(schema: &Schema) -> Result<RawOutput> {
-    log!("Generate JSON schema... ");
-    let result = serde_json::to_string_pretty(&schema.defs).normalize();
-    log_result!(result);
-    let schema = result?;
-    let output = Output::Raw { path: SCHEMA_PATH.to_string(), code: schema }.into_raw(file!());
-    Ok(output)
 }

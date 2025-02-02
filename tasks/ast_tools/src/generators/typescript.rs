@@ -1,39 +1,74 @@
-use convert_case::{Case, Casing};
+//! Generator for TypeScript type definitions for all AST types.
+
+use std::borrow::Cow;
+
 use itertools::Itertools;
-use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    output::Output,
-    schema::{
-        serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
-        EnumDef, FieldDef, GetIdent, Schema, StructDef, TypeDef, TypeName,
+    derives::estree::{
+        get_fieldless_variant_value, get_struct_field_name, should_add_type_field_to_struct,
+        should_flatten_field,
     },
-    Generator, TypeId,
+    output::Output,
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    Codegen, Generator, Result, TYPESCRIPT_DEFINITIONS_PATH,
 };
 
-use super::define_generator;
+use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
 
 const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/custom_types.d.ts");
 
+/// Generator for TypeScript type definitions.
 pub struct TypescriptGenerator;
 
 define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
-    fn generate(&mut self, schema: &Schema) -> Output {
+    /// Register that accept `#[ts]` attr on struct fields and enum variants.
+    fn attrs(&self) -> &[(&'static str, AttrPositions)] {
+        &[("ts", attr_positions!(StructField | EnumVariant))]
+    }
+
+    /// Parse `#[ts]` on struct field or enum variant.
+    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
+        // No need to check attr name is `ts`, because that's the only attribute this derive handles.
+        if !matches!(part, AttrPart::None) {
+            return Err(());
+        }
+
+        // Location can only be `StructField` or `EnumVariant`
+        match location {
+            AttrLocation::StructField(struct_def, field_index) => {
+                struct_def.fields[field_index].estree.is_ts = true;
+            }
+            AttrLocation::EnumVariant(enum_def, variant_index) => {
+                enum_def.variants[variant_index].estree.is_ts = true;
+            }
+            _ => unreachable!(),
+        }
+
+        Ok(())
+    }
+
+    /// Generate Typescript type definitions for all AST types.
+    fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
+        let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
+
         let mut code = String::new();
-
-        let always_flatten_structs = get_always_flatten_structs(schema);
-
-        for def in &schema.defs {
-            if !def.generates_derive("ESTree") {
+        for type_def in &schema.types {
+            if !type_def.generates_derive(estree_derive_id) {
                 continue;
             }
-            let ts_type_def = match def {
-                TypeDef::Struct(it) => Some(typescript_struct(it, &always_flatten_structs)),
-                TypeDef::Enum(it) => typescript_enum(it),
+
+            let ts_type_def = match type_def {
+                TypeDef::Struct(struct_def) => generate_ts_type_def_for_struct(struct_def, schema),
+                TypeDef::Enum(enum_def) => {
+                    let ts_type_def = generate_ts_type_def_for_enum(enum_def, schema);
+                    let Some(ts_type_def) = ts_type_def else { continue };
+                    ts_type_def
+                }
+                _ => unreachable!(),
             };
-            let Some(ts_type_def) = ts_type_def else { continue };
 
             code.push_str(&ts_type_def);
             code.push_str("\n\n");
@@ -41,138 +76,135 @@ impl Generator for TypescriptGenerator {
 
         code.push_str(CUSTOM_TYPESCRIPT);
 
-        Output::Javascript { path: format!("{}/types.d.ts", crate::TYPESCRIPT_PACKAGE), code }
+        Output::Javascript { path: TYPESCRIPT_DEFINITIONS_PATH.to_string(), code }
     }
 }
 
-// Untagged enums: `type Expression = BooleanLiteral | NullLiteral`
-// Tagged enums: `type PropertyKind = 'init' | 'get' | 'set'`
-fn typescript_enum(def: &EnumDef) -> Option<String> {
-    if def.markers.estree.custom_ts_def {
+/// Generate Typescript type definition for a struct.
+fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> String {
+    let type_name = struct_def.name();
+    let mut fields_str = String::new();
+    let mut extends = vec![];
+
+    if should_add_type_field_to_struct(struct_def) {
+        let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
+        fields_str.push_str(&format!("\n\ttype: '{type_name}';"));
+    }
+
+    let mut output_as_type = false;
+    for field in &struct_def.fields {
+        if field.estree.skip {
+            continue;
+        }
+
+        let field_type_name = if let Some(append_field_index) = field.estree.append_field_index {
+            let appended_field = struct_def.fields[append_field_index].type_def(schema);
+            let appended_field = appended_field.as_option().unwrap();
+            let appended_type_name = ts_type_name(appended_field.inner_type(schema), schema);
+
+            let field_type = field.type_def(schema);
+            let (vec_def, is_option) = match field_type {
+                TypeDef::Vec(vec_def) => (vec_def, false),
+                TypeDef::Option(option_def) => {
+                    let vec_def = option_def.inner_type(schema).as_vec().unwrap();
+                    (vec_def, true)
+                }
+                _ => panic!(
+                    "Can only append a field to a `Vec<T>` or `Option<Vec<T>>`: `{}::{}`",
+                    type_name,
+                    field.name()
+                ),
+            };
+            let inner_type_name = ts_type_name(vec_def.inner_type(schema), schema);
+
+            // TODO: Reverse these two
+            let mut field_type_name = format!("Array<{appended_type_name} | {inner_type_name}>");
+            if is_option {
+                field_type_name.push_str(" | null");
+            }
+            Cow::Owned(field_type_name)
+        } else {
+            get_field_type_name(field, schema)
+        };
+
+        if should_flatten_field(field, schema) {
+            if !output_as_type && field_type_name.contains('|') {
+                output_as_type = true;
+            }
+            extends.push(field_type_name);
+            continue;
+        }
+
+        let field_camel_name = get_struct_field_name(field);
+        fields_str.push_str(&format!("\n\t{field_camel_name}: {field_type_name};"));
+    }
+
+    if let Some(add_ts) = struct_def.estree.add_ts.as_deref() {
+        fields_str.push_str(&format!("\n\t{add_ts};"));
+    }
+
+    if extends.is_empty() {
+        format!("export interface {type_name} {{{fields_str}\n}}")
+    } else if output_as_type {
+        format!("export type {type_name} = ({{{fields_str}\n}}) & {};", extends.join(" & "))
+    } else {
+        format!("export interface {type_name} extends {} {{{fields_str}\n}}", extends.join(", "))
+    }
+}
+
+/// Generate Typescript type definition for an enum.
+fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<String> {
+    if enum_def.estree.custom_ts_def {
         return None;
     }
 
-    let is_untagged = def.all_variants().all(|var| var.fields.len() == 1);
-
-    let union = if is_untagged {
-        def.all_variants().map(|var| type_to_string(var.fields[0].typ.name())).join(" | ")
+    let union = if enum_def.is_fieldless() {
+        enum_def
+            .all_variants(schema)
+            .map(|variant| format!("'{}'", get_fieldless_variant_value(enum_def, variant)))
+            .join(" | ")
     } else {
-        def.all_variants().map(|var| format!("'{}'", enum_variant_name(var, def))).join(" | ")
-    };
-    let ident = def.ident();
-    Some(format!("export type {ident} = {union};"))
-}
-
-fn typescript_struct(def: &StructDef, always_flatten_structs: &FxHashSet<TypeId>) -> String {
-    let ident = def.ident();
-    let mut fields = String::new();
-    let mut extends = vec![];
-
-    if let Some(type_tag) = get_type_tag(def) {
-        fields.push_str(&format!("\n\ttype: '{type_tag}';"));
-    }
-
-    let mut append_to: FxHashMap<String, &FieldDef> = FxHashMap::default();
-
-    // Scan through to find all append_to fields
-    for field in &def.fields {
-        let Some(parent) = field.markers.derive_attributes.estree.append_to.as_ref() else {
-            continue;
-        };
-        assert!(
-            append_to.insert(parent.clone(), field).is_none(),
-            "Duplicate append_to target (on {ident})"
-        );
-    }
-
-    for field in &def.fields {
-        if field.markers.derive_attributes.estree.skip
-            || field.markers.derive_attributes.estree.append_to.is_some()
-        {
-            continue;
-        }
-        let mut ty = match &field.markers.derive_attributes.estree.typescript_type {
-            Some(ty) => ty.clone(),
-            None => type_to_string(field.typ.name()),
-        };
-
-        let always_flatten = match field.typ.type_id() {
-            Some(id) => always_flatten_structs.contains(&id),
-            None => false,
-        };
-
-        if always_flatten || field.markers.derive_attributes.estree.flatten {
-            extends.push(ty);
-            continue;
-        }
-
-        let ident = field.ident().unwrap();
-        if let Some(append_after) = append_to.get(&ident.to_string()) {
-            let ts_type = &append_after.markers.derive_attributes.estree.typescript_type;
-            let after_type = if let Some(ty) = ts_type {
-                ty.clone()
-            } else {
-                let typ = append_after.typ.name();
-                if let TypeName::Opt(inner) = typ {
-                    type_to_string(inner)
-                } else {
-                    panic!(
-                        "expected field labeled with append_to to be Option<...>, but found {typ}"
-                    );
-                }
-            };
-
-            if let Some(inner) = ty.strip_prefix("Array<") {
-                ty = format!("Array<{after_type} | {inner}");
-            } else {
-                panic!("expected append_to target to be a Vec, but found {ty}");
-            }
-        }
-
-        let name = match &field.markers.derive_attributes.estree.rename {
-            Some(rename) => rename.to_string(),
-            None => field.name.clone().unwrap().to_case(Case::Camel),
-        };
-
-        fields.push_str(&format!("\n\t{name}: {ty};"));
-    }
-
-    let extends_union = extends.iter().any(|it| it.contains('|'));
-
-    let body = if let Some(extra_ts) = def.markers.estree.as_ref().and_then(|e| e.add_ts.as_ref()) {
-        format!("{{{fields}\n\t{extra_ts}\n}}")
-    } else {
-        format!("{{{fields}\n}}")
+        enum_def
+            .all_variants(schema)
+            .map(|variant| ts_type_name(variant.field_type(schema).unwrap(), schema))
+            .join(" | ")
     };
 
-    if extends_union {
-        let extends =
-            if extends.is_empty() { String::new() } else { format!(" & {}", extends.join(" & ")) };
-        format!("export type {ident} = ({body}){extends};")
-    } else {
-        let extends = if extends.is_empty() {
-            String::new()
-        } else {
-            format!(" extends {}", extends.join(", "))
-        };
-        format!("export interface {ident}{extends} {body}")
-    }
+    let enum_name = enum_def.name();
+    Some(format!("export type {enum_name} = {union};"))
 }
 
-fn type_to_string(ty: &TypeName) -> String {
-    match ty {
-        TypeName::Ident(ident) => match ident.as_str() {
-            "f64" | "f32" | "usize" | "u64" | "u32" | "u16" | "u8" | "i64" | "i32" | "i16"
-            | "i8" => "number",
+/// Get TS type name for a type.
+fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
+    match type_def {
+        TypeDef::Struct(struct_def) => Cow::Borrowed(struct_def.name()),
+        TypeDef::Enum(enum_def) => Cow::Borrowed(enum_def.name()),
+        TypeDef::Primitive(primitive_def) => Cow::Borrowed(match primitive_def.name() {
+            #[rustfmt::skip]
+            "u8" | "u16" | "u32" | "u64" | "u128" | "usize"
+            | "i8" | "i16" | "i32" | "i64" | "i128" | "isize"
+            | "f32" | "f64" => "number",
             "bool" => "boolean",
-            "str" | "String" | "Atom" | "CompactStr" => "string",
-            ty => ty,
+            "&str" | "Atom" => "string",
+            name => name,
+        }),
+        TypeDef::Option(option_def) => {
+            Cow::Owned(format!("{} | null", ts_type_name(option_def.inner_type(schema), schema)))
         }
-        .to_string(),
-        TypeName::Vec(type_name) => format!("Array<{}>", type_to_string(type_name)),
-        TypeName::Box(type_name) | TypeName::Ref(type_name) | TypeName::Complex(type_name) => {
-            type_to_string(type_name)
+        TypeDef::Vec(vec_def) => {
+            Cow::Owned(format!("Array<{}>", ts_type_name(vec_def.inner_type(schema), schema)))
         }
-        TypeName::Opt(type_name) => format!("{} | null", type_to_string(type_name)),
+        TypeDef::Box(box_def) => ts_type_name(box_def.inner_type(schema), schema),
+        TypeDef::Cell(cell_def) => ts_type_name(cell_def.inner_type(schema), schema),
+    }
+}
+
+/// Get type name for a field.
+fn get_field_type_name<'s>(field: &'s FieldDef, schema: &'s Schema) -> Cow<'s, str> {
+    if let Some(ts_type) = field.estree.ts_type.as_deref() {
+        Cow::Borrowed(ts_type)
+    } else {
+        let field_type = field.type_def(schema);
+        ts_type_name(field_type, schema)
     }
 }

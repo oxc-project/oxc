@@ -1605,18 +1605,21 @@ dependencies = [
 name = "oxc_ast_tools"
 version = "0.0.0"
 dependencies = [
+ "bitflags 2.7.0",
  "bpaf",
  "convert_case 0.7.1",
  "cow-utils",
+ "indexmap",
  "itertools",
  "lazy_static",
+ "oxc_index",
  "prettyplease",
  "proc-macro2",
  "quote",
+ "rayon",
  "regex",
  "rustc-hash",
  "serde",
- "serde_json",
  "syn",
 ]
 
