@@ -8,6 +8,9 @@ use serde::{Serialize, Serializer};
 
 use crate::{node::NodeId, symbol::SymbolId};
 
+use oxc_ast_macros::ast;
+
+#[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ReferenceId(NonMaxU32);
 

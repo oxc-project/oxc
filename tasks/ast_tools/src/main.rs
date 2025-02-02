@@ -32,6 +32,9 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_span/src/span/types.rs",
     "crates/oxc_span/src/source_type/mod.rs",
     "crates/oxc_regular_expression/src/ast.rs",
+    "crates/oxc_syntax/src/scope.rs",
+    "crates/oxc_syntax/src/symbol.rs",
+    "crates/oxc_syntax/src/reference.rs",
 ];
 
 /// Path to `oxc_ast` crate

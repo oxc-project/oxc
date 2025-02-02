@@ -369,9 +369,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "f64" => Layout::from_type::<f64>(),
         "&str" => str_layout.clone(),
         "Atom" => str_layout,
-        "ScopeId" => semantic_id_layout.clone(),
-        "SymbolId" => semantic_id_layout.clone(),
-        "ReferenceId" => semantic_id_layout,
+        "NonMaxU32" => semantic_id_layout.clone(),
         "PointerAlign" => Layout {
             layout_64: PlatformLayout::from_size_align(0, 8),
             layout_32: PlatformLayout::from_size_align(0, 4),
