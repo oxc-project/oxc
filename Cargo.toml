@@ -169,7 +169,6 @@ markdown = "1.0.0-alpha.21"
 memchr = "2.7.4"
 miette = { package = "oxc-miette", version = "1.0.2", features = ["fancy-no-syscall"] }
 mimalloc = "0.1.43"
-mime_guess = "2.0.5"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
