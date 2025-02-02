@@ -50,7 +50,14 @@ impl<'a> PeepholeOptimizations {
         loop {
             let mut local_change = false;
             if let Some(folded_expr) = match expr {
-                Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
+                Expression::UnaryExpression(e) => {
+                    if e.operator.is_not()
+                        && Self::try_fold_expr_in_boolean_context(&mut e.argument, ctx)
+                    {
+                        local_change = true;
+                    }
+                    Self::try_minimize_not(e, ctx)
+                }
                 Expression::BinaryExpression(e) => Self::try_minimize_binary(e, ctx),
                 Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx)
                     .or_else(|| {
@@ -893,7 +900,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
     ///
-    /// <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
+    /// `SimplifyBooleanExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
     fn try_fold_expr_in_boolean_context(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         match expr {
             // "!!a" => "a"
@@ -1650,7 +1657,7 @@ mod test {
         test_same("for(; !(x<=NaN) ;) a=b");
 
         // NOT forces a boolean context
-        test("x = !(y() && true)", "x = !(y() && !0)"); // FIXME: this can be `!y()`
+        test("x = !(y() && true)", "x = !y();");
 
         // This will be further optimized by PeepholeFoldConstants.
         test("x = !true", "x = !1");
@@ -2483,7 +2490,7 @@ mod test {
         test("!!!delete x.y", "!delete x.y");
         test("!!!!delete x.y", "delete x.y");
         test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
-        test_same("!(a === 1 ? void 0 : a.b)"); // FIXME: can be compressed to `a === 1 || !a.b`
+        test("!(a === 1 ? void 0 : a.b)", "!(a !== 1 && a.b)"); // FIXME: can be compressed to `a === 1 || !a.b`
         test("!(a, b)", "a, !b");
     }
 

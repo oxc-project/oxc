@@ -105,17 +105,6 @@ impl<'a, 'b> PeepholeOptimizations {
         let left_val = ctx.get_boolean_value(left);
 
         if let Some(lval) = left_val {
-            // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
-            if !lval {
-                if let Expression::AssignmentExpression(assign_expr) = &logical_expr.right {
-                    if let Some(member_expr) = assign_expr.left.as_member_expression() {
-                        if member_expr.is_specific_member_access("module", "exports") {
-                            return None;
-                        }
-                    }
-                }
-            }
-
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if if lval { op == LogicalOperator::Or } else { op == LogicalOperator::And } {

@@ -953,11 +953,10 @@ fn test_ignored1() {
 }
 
 #[test]
-#[ignore]
 fn test_ignored2() {
-    test("y(x && false)", "y(x && false);");
-    test("y(x || false)", "y(x || false);");
-    test("y(!(x && false))", "y(!(x && false));");
+    test("y(x && false)", "y(x && !1);");
+    test("y(x || false)", "y(x || !1);");
+    test("y(!(x && false))", "y(!(x && !1));");
     test("y(!(x || false))", "y(!x);");
     test("if (x && false) y", "x;");
     test("if (x || false) y", "x && y;");
@@ -965,11 +964,11 @@ fn test_ignored2() {
     test("if (x || false) y; else z", "x ? y : z;");
     test("y(x && false ? y : z)", "y((x, z));");
     test("y(x || false ? y : z)", "y(x ? y : z);");
-    test("while (false) x()", "for (; false; ) x();");
-    test("for (; false; ) x()", "for (; false; ) x();");
+    test("while (false) x()", "");
+    test("for (; false; ) x()", "");
     test("y(x && '')", "y(x && '');");
     test("y(x || '')", "y(x || '');");
-    test("y(!(x && ''))", "y(!(x && false));");
+    test("y(!(x && ''))", "y(!(x && ''));");
     test("y(!(x || ''))", "y(!x);");
     test("if (x && '') y", "x;");
     test("if (x || '') y", "x && y;");
@@ -977,11 +976,11 @@ fn test_ignored2() {
     test("if (x || '') y; else z", "x ? y : z;");
     test("y(x && '' ? y : z)", "y((x, z));");
     test("y(x || '' ? y : z)", "y(x ? y : z);");
-    test("while ('') x()", "for (; false; ) x();");
-    test("for (; ''; ) x()", "for (; false; ) x();");
+    test("while ('') x()", "");
+    test("for (; ''; ) x()", "");
     test("y(x && 0)", "y(x && 0);");
     test("y(x || 0)", "y(x || 0);");
-    test("y(!(x && 0))", "y(!(x && false));");
+    test("y(!(x && 0))", "y(!(x && 0));");
     test("y(!(x || 0))", "y(!x);");
     test("if (x && 0) y", "x;");
     test("if (x || 0) y", "x && y;");
@@ -989,11 +988,11 @@ fn test_ignored2() {
     test("if (x || 0) y; else z", "x ? y : z;");
     test("y(x && 0 ? y : z)", "y((x, z));");
     test("y(x || 0 ? y : z)", "y(x ? y : z);");
-    test("while (0) x()", "for (; false; ) x();");
-    test("for (; 0; ) x()", "for (; false; ) x();");
+    test("while (0) x()", "");
+    test("for (; 0; ) x()", "");
     test("y(x && 0n)", "y(x && 0n);");
     test("y(x || 0n)", "y(x || 0n);");
-    test("y(!(x && 0n))", "y(!(x && false));");
+    test("y(!(x && 0n))", "y(!(x && 0n));");
     test("y(!(x || 0n))", "y(!x);");
     test("if (x && 0n) y", "x;");
     test("if (x || 0n) y", "x && y;");
@@ -1001,11 +1000,11 @@ fn test_ignored2() {
     test("if (x || 0n) y; else z", "x ? y : z;");
     test("y(x && 0n ? y : z)", "y((x, z));");
     test("y(x || 0n ? y : z)", "y(x ? y : z);");
-    test("while (0n) x()", "for (; false; ) x();");
-    test("for (; 0n; ) x()", "for (; false; ) x();");
+    test("while (0n) x()", "");
+    test("for (; 0n; ) x()", "");
     test("y(x && null)", "y(x && null);");
     test("y(x || null)", "y(x || null);");
-    test("y(!(x && null))", "y(!(x && false));");
+    test("y(!(x && null))", "y(!(x && null));");
     test("y(!(x || null))", "y(!x);");
     test("if (x && null) y", "x;");
     test("if (x || null) y", "x && y;");
@@ -1013,11 +1012,11 @@ fn test_ignored2() {
     test("if (x || null) y; else z", "x ? y : z;");
     test("y(x && null ? y : z)", "y((x, z));");
     test("y(x || null ? y : z)", "y(x ? y : z);");
-    test("while (null) x()", "for (; false; ) x();");
-    test("for (; null; ) x()", "for (; false; ) x();");
+    test("while (null) x()", "");
+    test("for (; null; ) x()", "");
     test("y(x && void 0)", "y(x && void 0);");
     test("y(x || void 0)", "y(x || void 0);");
-    test("y(!(x && void 0))", "y(!(x && false));");
+    test("y(!(x && void 0))", "y(!(x && void 0));");
     test("y(!(x || void 0))", "y(!x);");
     test("if (x && void 0) y", "x;");
     test("if (x || void 0) y", "x && y;");
@@ -1025,12 +1024,12 @@ fn test_ignored2() {
     test("if (x || void 0) y; else z", "x ? y : z;");
     test("y(x && void 0 ? y : z)", "y((x, z));");
     test("y(x || void 0 ? y : z)", "y(x ? y : z);");
-    test("while (void 0) x()", "for (; false; ) x();");
-    test("for (; void 0; ) x()", "for (; false; ) x();");
-    test("y(x && true)", "y(x && true);");
-    test("y(x || true)", "y(x || true);");
+    test("while (void 0) x()", "");
+    test("for (; void 0; ) x()", "");
+    test("y(x && true)", "y(x && !0);");
+    test("y(x || true)", "y(x || !0);");
     test("y(!(x && true))", "y(!x);");
-    test("y(!(x || true))", "y(!(x || true));");
+    test("y(!(x || true))", "y(!(x || !0));");
     test("if (x && true) y", "x && y;");
     test("if (x || true) y", "x, y;");
     test("if (x && true) y; else z", "x ? y : z;");
@@ -1042,7 +1041,7 @@ fn test_ignored2() {
     test("y(x && ' ')", "y(x && ' ');");
     test("y(x || ' ')", "y(x || ' ');");
     test("y(!(x && ' '))", "y(!x);");
-    test("y(!(x || ' '))", "y(!(x || true));");
+    test("y(!(x || ' '))", "y(!(x || ' '));");
     test("if (x && ' ') y", "x && y;");
     test("if (x || ' ') y", "x, y;");
     test("if (x && ' ') y; else z", "x ? y : z;");
@@ -1054,7 +1053,7 @@ fn test_ignored2() {
     test("y(x && 1)", "y(x && 1);");
     test("y(x || 1)", "y(x || 1);");
     test("y(!(x && 1))", "y(!x);");
-    test("y(!(x || 1))", "y(!(x || true));");
+    test("y(!(x || 1))", "y(!(x || 1));");
     test("if (x && 1) y", "x && y;");
     test("if (x || 1) y", "x, y;");
     test("if (x && 1) y; else z", "x ? y : z;");
@@ -1066,7 +1065,7 @@ fn test_ignored2() {
     test("y(x && 1n)", "y(x && 1n);");
     test("y(x || 1n)", "y(x || 1n);");
     test("y(!(x && 1n))", "y(!x);");
-    test("y(!(x || 1n))", "y(!(x || true));");
+    test("y(!(x || 1n))", "y(!(x || 1n));");
     test("if (x && 1n) y", "x && y;");
     test("if (x || 1n) y", "x, y;");
     test("if (x && 1n) y; else z", "x ? y : z;");
@@ -1078,7 +1077,7 @@ fn test_ignored2() {
     test("y(x && /./)", "y(x && /./);");
     test("y(x || /./)", "y(x || /./);");
     test("y(!(x && /./))", "y(!x);");
-    test("y(!(x || /./))", "y(!(x || true));");
+    test("y(!(x || /./))", "y(!(x || /./));");
     test("if (x && /./) y", "x && y;");
     test("if (x || /./) y", "x, y;");
     test("if (x && /./) y; else z", "x ? y : z;");
