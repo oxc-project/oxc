@@ -767,8 +767,8 @@ impl Gen for Function<'_> {
                 this_param.print(p, ctx);
                 if !self.params.is_empty() || self.params.rest.is_some() {
                     p.print_str(",");
+                    p.print_soft_space();
                 }
-                p.print_soft_space();
             }
             self.params.print(p, ctx);
             p.print_ascii_byte(b')');
@@ -2675,6 +2675,13 @@ impl Gen for MethodDefinition<'_> {
             type_parameters.print(p, ctx);
         }
         p.print_ascii_byte(b'(');
+        if let Some(this_param) = &self.value.this_param {
+            this_param.print(p, ctx);
+            if !self.value.params.is_empty() || self.value.params.rest.is_some() {
+                p.print_str(",");
+                p.print_soft_space();
+            }
+        }
         self.value.params.print(p, ctx);
         p.print_ascii_byte(b')');
         if let Some(return_type) = &self.value.return_type {
@@ -3365,8 +3372,8 @@ impl Gen for TSFunctionType<'_> {
             this_param.print(p, ctx);
             if !self.params.is_empty() || self.params.rest.is_some() {
                 p.print_str(",");
+                p.print_soft_space();
             }
-            p.print_soft_space();
         }
         self.params.print(p, ctx);
         p.print_str(")");
@@ -3401,8 +3408,8 @@ impl Gen for TSSignature<'_> {
                     this_param.print(p, ctx);
                     if !signature.params.is_empty() || signature.params.rest.is_some() {
                         p.print_str(",");
+                        p.print_soft_space();
                     }
-                    p.print_soft_space();
                 }
                 signature.params.print(p, ctx);
                 p.print_str(")");
@@ -3460,8 +3467,8 @@ impl Gen for TSSignature<'_> {
                     this_param.print(p, ctx);
                     if !signature.params.is_empty() || signature.params.rest.is_some() {
                         p.print_str(",");
+                        p.print_soft_space();
                     }
-                    p.print_soft_space();
                 }
                 signature.params.print(p, ctx);
                 p.print_str(")");
