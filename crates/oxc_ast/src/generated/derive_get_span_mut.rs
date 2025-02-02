@@ -62,48 +62,48 @@ impl GetSpanMut for Program<'_> {
 impl GetSpanMut for Expression<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::BooleanLiteral(it) => it.span_mut(),
+            Self::NullLiteral(it) => it.span_mut(),
+            Self::NumericLiteral(it) => it.span_mut(),
+            Self::BigIntLiteral(it) => it.span_mut(),
+            Self::RegExpLiteral(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::TemplateLiteral(it) => it.span_mut(),
+            Self::Identifier(it) => it.span_mut(),
+            Self::MetaProperty(it) => it.span_mut(),
+            Self::Super(it) => it.span_mut(),
+            Self::ArrayExpression(it) => it.span_mut(),
+            Self::ArrowFunctionExpression(it) => it.span_mut(),
+            Self::AssignmentExpression(it) => it.span_mut(),
+            Self::AwaitExpression(it) => it.span_mut(),
+            Self::BinaryExpression(it) => it.span_mut(),
+            Self::CallExpression(it) => it.span_mut(),
+            Self::ChainExpression(it) => it.span_mut(),
+            Self::ClassExpression(it) => it.span_mut(),
+            Self::ConditionalExpression(it) => it.span_mut(),
+            Self::FunctionExpression(it) => it.span_mut(),
+            Self::ImportExpression(it) => it.span_mut(),
+            Self::LogicalExpression(it) => it.span_mut(),
+            Self::NewExpression(it) => it.span_mut(),
+            Self::ObjectExpression(it) => it.span_mut(),
+            Self::ParenthesizedExpression(it) => it.span_mut(),
+            Self::SequenceExpression(it) => it.span_mut(),
+            Self::TaggedTemplateExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
+            Self::UnaryExpression(it) => it.span_mut(),
+            Self::UpdateExpression(it) => it.span_mut(),
+            Self::YieldExpression(it) => it.span_mut(),
+            Self::PrivateInExpression(it) => it.span_mut(),
+            Self::JSXElement(it) => it.span_mut(),
+            Self::JSXFragment(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -153,50 +153,50 @@ impl GetSpanMut for ArrayExpression<'_> {
 impl GetSpanMut for ArrayExpressionElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::SpreadElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Elision(it) => GetSpanMut::span_mut(it),
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::SpreadElement(it) => it.span_mut(),
+            Self::Elision(it) => it.span_mut(),
+            Self::BooleanLiteral(it) => it.span_mut(),
+            Self::NullLiteral(it) => it.span_mut(),
+            Self::NumericLiteral(it) => it.span_mut(),
+            Self::BigIntLiteral(it) => it.span_mut(),
+            Self::RegExpLiteral(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::TemplateLiteral(it) => it.span_mut(),
+            Self::Identifier(it) => it.span_mut(),
+            Self::MetaProperty(it) => it.span_mut(),
+            Self::Super(it) => it.span_mut(),
+            Self::ArrayExpression(it) => it.span_mut(),
+            Self::ArrowFunctionExpression(it) => it.span_mut(),
+            Self::AssignmentExpression(it) => it.span_mut(),
+            Self::AwaitExpression(it) => it.span_mut(),
+            Self::BinaryExpression(it) => it.span_mut(),
+            Self::CallExpression(it) => it.span_mut(),
+            Self::ChainExpression(it) => it.span_mut(),
+            Self::ClassExpression(it) => it.span_mut(),
+            Self::ConditionalExpression(it) => it.span_mut(),
+            Self::FunctionExpression(it) => it.span_mut(),
+            Self::ImportExpression(it) => it.span_mut(),
+            Self::LogicalExpression(it) => it.span_mut(),
+            Self::NewExpression(it) => it.span_mut(),
+            Self::ObjectExpression(it) => it.span_mut(),
+            Self::ParenthesizedExpression(it) => it.span_mut(),
+            Self::SequenceExpression(it) => it.span_mut(),
+            Self::TaggedTemplateExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
+            Self::UnaryExpression(it) => it.span_mut(),
+            Self::UpdateExpression(it) => it.span_mut(),
+            Self::YieldExpression(it) => it.span_mut(),
+            Self::PrivateInExpression(it) => it.span_mut(),
+            Self::JSXElement(it) => it.span_mut(),
+            Self::JSXFragment(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -218,8 +218,8 @@ impl GetSpanMut for ObjectExpression<'_> {
 impl GetSpanMut for ObjectPropertyKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::ObjectProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SpreadProperty(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ObjectProperty(it) => it.span_mut(),
+            Self::SpreadProperty(it) => it.span_mut(),
         }
     }
 }
@@ -234,50 +234,50 @@ impl GetSpanMut for ObjectProperty<'_> {
 impl GetSpanMut for PropertyKey<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::StaticIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticIdentifier(it) => it.span_mut(),
+            Self::PrivateIdentifier(it) => it.span_mut(),
+            Self::BooleanLiteral(it) => it.span_mut(),
+            Self::NullLiteral(it) => it.span_mut(),
+            Self::NumericLiteral(it) => it.span_mut(),
+            Self::BigIntLiteral(it) => it.span_mut(),
+            Self::RegExpLiteral(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::TemplateLiteral(it) => it.span_mut(),
+            Self::Identifier(it) => it.span_mut(),
+            Self::MetaProperty(it) => it.span_mut(),
+            Self::Super(it) => it.span_mut(),
+            Self::ArrayExpression(it) => it.span_mut(),
+            Self::ArrowFunctionExpression(it) => it.span_mut(),
+            Self::AssignmentExpression(it) => it.span_mut(),
+            Self::AwaitExpression(it) => it.span_mut(),
+            Self::BinaryExpression(it) => it.span_mut(),
+            Self::CallExpression(it) => it.span_mut(),
+            Self::ChainExpression(it) => it.span_mut(),
+            Self::ClassExpression(it) => it.span_mut(),
+            Self::ConditionalExpression(it) => it.span_mut(),
+            Self::FunctionExpression(it) => it.span_mut(),
+            Self::ImportExpression(it) => it.span_mut(),
+            Self::LogicalExpression(it) => it.span_mut(),
+            Self::NewExpression(it) => it.span_mut(),
+            Self::ObjectExpression(it) => it.span_mut(),
+            Self::ParenthesizedExpression(it) => it.span_mut(),
+            Self::SequenceExpression(it) => it.span_mut(),
+            Self::TaggedTemplateExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
+            Self::UnaryExpression(it) => it.span_mut(),
+            Self::UpdateExpression(it) => it.span_mut(),
+            Self::YieldExpression(it) => it.span_mut(),
+            Self::PrivateInExpression(it) => it.span_mut(),
+            Self::JSXElement(it) => it.span_mut(),
+            Self::JSXFragment(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -306,9 +306,9 @@ impl GetSpanMut for TemplateElement<'_> {
 impl GetSpanMut for MemberExpression<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -365,49 +365,49 @@ impl GetSpanMut for SpreadElement<'_> {
 impl GetSpanMut for Argument<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::SpreadElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::SpreadElement(it) => it.span_mut(),
+            Self::BooleanLiteral(it) => it.span_mut(),
+            Self::NullLiteral(it) => it.span_mut(),
+            Self::NumericLiteral(it) => it.span_mut(),
+            Self::BigIntLiteral(it) => it.span_mut(),
+            Self::RegExpLiteral(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::TemplateLiteral(it) => it.span_mut(),
+            Self::Identifier(it) => it.span_mut(),
+            Self::MetaProperty(it) => it.span_mut(),
+            Self::Super(it) => it.span_mut(),
+            Self::ArrayExpression(it) => it.span_mut(),
+            Self::ArrowFunctionExpression(it) => it.span_mut(),
+            Self::AssignmentExpression(it) => it.span_mut(),
+            Self::AwaitExpression(it) => it.span_mut(),
+            Self::BinaryExpression(it) => it.span_mut(),
+            Self::CallExpression(it) => it.span_mut(),
+            Self::ChainExpression(it) => it.span_mut(),
+            Self::ClassExpression(it) => it.span_mut(),
+            Self::ConditionalExpression(it) => it.span_mut(),
+            Self::FunctionExpression(it) => it.span_mut(),
+            Self::ImportExpression(it) => it.span_mut(),
+            Self::LogicalExpression(it) => it.span_mut(),
+            Self::NewExpression(it) => it.span_mut(),
+            Self::ObjectExpression(it) => it.span_mut(),
+            Self::ParenthesizedExpression(it) => it.span_mut(),
+            Self::SequenceExpression(it) => it.span_mut(),
+            Self::TaggedTemplateExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
+            Self::UnaryExpression(it) => it.span_mut(),
+            Self::UpdateExpression(it) => it.span_mut(),
+            Self::YieldExpression(it) => it.span_mut(),
+            Self::PrivateInExpression(it) => it.span_mut(),
+            Self::JSXElement(it) => it.span_mut(),
+            Self::JSXFragment(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -464,17 +464,17 @@ impl GetSpanMut for AssignmentExpression<'_> {
 impl GetSpanMut for AssignmentTarget<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::AssignmentTargetIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
+            Self::AssignmentTargetIdentifier(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
+            Self::ArrayAssignmentTarget(it) => it.span_mut(),
+            Self::ObjectAssignmentTarget(it) => it.span_mut(),
         }
     }
 }
@@ -482,15 +482,15 @@ impl GetSpanMut for AssignmentTarget<'_> {
 impl GetSpanMut for SimpleAssignmentTarget<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::AssignmentTargetIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::AssignmentTargetIdentifier(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -498,8 +498,8 @@ impl GetSpanMut for SimpleAssignmentTarget<'_> {
 impl GetSpanMut for AssignmentTargetPattern<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::ArrayAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ArrayAssignmentTarget(it) => it.span_mut(),
+            Self::ObjectAssignmentTarget(it) => it.span_mut(),
         }
     }
 }
@@ -528,18 +528,18 @@ impl GetSpanMut for AssignmentTargetRest<'_> {
 impl GetSpanMut for AssignmentTargetMaybeDefault<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::AssignmentTargetWithDefault(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentTargetIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
+            Self::AssignmentTargetWithDefault(it) => it.span_mut(),
+            Self::AssignmentTargetIdentifier(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
+            Self::ArrayAssignmentTarget(it) => it.span_mut(),
+            Self::ObjectAssignmentTarget(it) => it.span_mut(),
         }
     }
 }
@@ -554,8 +554,8 @@ impl GetSpanMut for AssignmentTargetWithDefault<'_> {
 impl GetSpanMut for AssignmentTargetProperty<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::AssignmentTargetPropertyIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentTargetPropertyProperty(it) => GetSpanMut::span_mut(&mut **it),
+            Self::AssignmentTargetPropertyIdentifier(it) => it.span_mut(),
+            Self::AssignmentTargetPropertyProperty(it) => it.span_mut(),
         }
     }
 }
@@ -605,11 +605,11 @@ impl GetSpanMut for ChainExpression<'_> {
 impl GetSpanMut for ChainElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CallExpression(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -624,38 +624,38 @@ impl GetSpanMut for ParenthesizedExpression<'_> {
 impl GetSpanMut for Statement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::BlockStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BreakStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ContinueStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::DebuggerStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::DoWhileStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::EmptyStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExpressionStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ForInStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ForOfStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ForStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::IfStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LabeledStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ReturnStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SwitchStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThrowStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TryStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::WhileStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::WithStatement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAliasDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInterfaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSEnumDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportDefaultDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportNamedDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSExportAssignment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNamespaceExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::BlockStatement(it) => it.span_mut(),
+            Self::BreakStatement(it) => it.span_mut(),
+            Self::ContinueStatement(it) => it.span_mut(),
+            Self::DebuggerStatement(it) => it.span_mut(),
+            Self::DoWhileStatement(it) => it.span_mut(),
+            Self::EmptyStatement(it) => it.span_mut(),
+            Self::ExpressionStatement(it) => it.span_mut(),
+            Self::ForInStatement(it) => it.span_mut(),
+            Self::ForOfStatement(it) => it.span_mut(),
+            Self::ForStatement(it) => it.span_mut(),
+            Self::IfStatement(it) => it.span_mut(),
+            Self::LabeledStatement(it) => it.span_mut(),
+            Self::ReturnStatement(it) => it.span_mut(),
+            Self::SwitchStatement(it) => it.span_mut(),
+            Self::ThrowStatement(it) => it.span_mut(),
+            Self::TryStatement(it) => it.span_mut(),
+            Self::WhileStatement(it) => it.span_mut(),
+            Self::WithStatement(it) => it.span_mut(),
+            Self::VariableDeclaration(it) => it.span_mut(),
+            Self::FunctionDeclaration(it) => it.span_mut(),
+            Self::ClassDeclaration(it) => it.span_mut(),
+            Self::TSTypeAliasDeclaration(it) => it.span_mut(),
+            Self::TSInterfaceDeclaration(it) => it.span_mut(),
+            Self::TSEnumDeclaration(it) => it.span_mut(),
+            Self::TSModuleDeclaration(it) => it.span_mut(),
+            Self::TSImportEqualsDeclaration(it) => it.span_mut(),
+            Self::ImportDeclaration(it) => it.span_mut(),
+            Self::ExportAllDeclaration(it) => it.span_mut(),
+            Self::ExportDefaultDeclaration(it) => it.span_mut(),
+            Self::ExportNamedDeclaration(it) => it.span_mut(),
+            Self::TSExportAssignment(it) => it.span_mut(),
+            Self::TSNamespaceExportDeclaration(it) => it.span_mut(),
         }
     }
 }
@@ -684,14 +684,14 @@ impl GetSpanMut for BlockStatement<'_> {
 impl GetSpanMut for Declaration<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAliasDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInterfaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSEnumDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::VariableDeclaration(it) => it.span_mut(),
+            Self::FunctionDeclaration(it) => it.span_mut(),
+            Self::ClassDeclaration(it) => it.span_mut(),
+            Self::TSTypeAliasDeclaration(it) => it.span_mut(),
+            Self::TSInterfaceDeclaration(it) => it.span_mut(),
+            Self::TSEnumDeclaration(it) => it.span_mut(),
+            Self::TSModuleDeclaration(it) => it.span_mut(),
+            Self::TSImportEqualsDeclaration(it) => it.span_mut(),
         }
     }
 }
@@ -755,49 +755,49 @@ impl GetSpanMut for ForStatement<'_> {
 impl GetSpanMut for ForStatementInit<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::VariableDeclaration(it) => it.span_mut(),
+            Self::BooleanLiteral(it) => it.span_mut(),
+            Self::NullLiteral(it) => it.span_mut(),
+            Self::NumericLiteral(it) => it.span_mut(),
+            Self::BigIntLiteral(it) => it.span_mut(),
+            Self::RegExpLiteral(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::TemplateLiteral(it) => it.span_mut(),
+            Self::Identifier(it) => it.span_mut(),
+            Self::MetaProperty(it) => it.span_mut(),
+            Self::Super(it) => it.span_mut(),
+            Self::ArrayExpression(it) => it.span_mut(),
+            Self::ArrowFunctionExpression(it) => it.span_mut(),
+            Self::AssignmentExpression(it) => it.span_mut(),
+            Self::AwaitExpression(it) => it.span_mut(),
+            Self::BinaryExpression(it) => it.span_mut(),
+            Self::CallExpression(it) => it.span_mut(),
+            Self::ChainExpression(it) => it.span_mut(),
+            Self::ClassExpression(it) => it.span_mut(),
+            Self::ConditionalExpression(it) => it.span_mut(),
+            Self::FunctionExpression(it) => it.span_mut(),
+            Self::ImportExpression(it) => it.span_mut(),
+            Self::LogicalExpression(it) => it.span_mut(),
+            Self::NewExpression(it) => it.span_mut(),
+            Self::ObjectExpression(it) => it.span_mut(),
+            Self::ParenthesizedExpression(it) => it.span_mut(),
+            Self::SequenceExpression(it) => it.span_mut(),
+            Self::TaggedTemplateExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
+            Self::UnaryExpression(it) => it.span_mut(),
+            Self::UpdateExpression(it) => it.span_mut(),
+            Self::YieldExpression(it) => it.span_mut(),
+            Self::PrivateInExpression(it) => it.span_mut(),
+            Self::JSXElement(it) => it.span_mut(),
+            Self::JSXFragment(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -812,18 +812,18 @@ impl GetSpanMut for ForInStatement<'_> {
 impl GetSpanMut for ForStatementLeft<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentTargetIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
+            Self::VariableDeclaration(it) => it.span_mut(),
+            Self::AssignmentTargetIdentifier(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
+            Self::ArrayAssignmentTarget(it) => it.span_mut(),
+            Self::ObjectAssignmentTarget(it) => it.span_mut(),
         }
     }
 }
@@ -922,17 +922,17 @@ impl GetSpanMut for DebuggerStatement {
 impl GetSpanMut for BindingPattern<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
-        GetSpanMut::span_mut(&mut self.kind)
+        self.kind.span_mut()
     }
 }
 
 impl GetSpanMut for BindingPatternKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::BindingIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectPattern(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayPattern(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentPattern(it) => GetSpanMut::span_mut(&mut **it),
+            Self::BindingIdentifier(it) => it.span_mut(),
+            Self::ObjectPattern(it) => it.span_mut(),
+            Self::ArrayPattern(it) => it.span_mut(),
+            Self::AssignmentPattern(it) => it.span_mut(),
         }
     }
 }
@@ -1031,11 +1031,11 @@ impl GetSpanMut for ClassBody<'_> {
 impl GetSpanMut for ClassElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::StaticBlock(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MethodDefinition(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PropertyDefinition(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AccessorProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSIndexSignature(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticBlock(it) => it.span_mut(),
+            Self::MethodDefinition(it) => it.span_mut(),
+            Self::PropertyDefinition(it) => it.span_mut(),
+            Self::AccessorProperty(it) => it.span_mut(),
+            Self::TSIndexSignature(it) => it.span_mut(),
         }
     }
 }
@@ -1071,12 +1071,12 @@ impl GetSpanMut for StaticBlock<'_> {
 impl GetSpanMut for ModuleDeclaration<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportDefaultDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExportNamedDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSExportAssignment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNamespaceExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportDeclaration(it) => it.span_mut(),
+            Self::ExportAllDeclaration(it) => it.span_mut(),
+            Self::ExportDefaultDeclaration(it) => it.span_mut(),
+            Self::ExportNamedDeclaration(it) => it.span_mut(),
+            Self::TSExportAssignment(it) => it.span_mut(),
+            Self::TSNamespaceExportDeclaration(it) => it.span_mut(),
         }
     }
 }
@@ -1105,9 +1105,9 @@ impl GetSpanMut for ImportDeclaration<'_> {
 impl GetSpanMut for ImportDeclarationSpecifier<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::ImportSpecifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportDefaultSpecifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportNamespaceSpecifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportSpecifier(it) => it.span_mut(),
+            Self::ImportDefaultSpecifier(it) => it.span_mut(),
+            Self::ImportNamespaceSpecifier(it) => it.span_mut(),
         }
     }
 }
@@ -1150,8 +1150,8 @@ impl GetSpanMut for ImportAttribute<'_> {
 impl GetSpanMut for ImportAttributeKey<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(it),
+            Self::Identifier(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
         }
     }
 }
@@ -1187,51 +1187,51 @@ impl GetSpanMut for ExportSpecifier<'_> {
 impl GetSpanMut for ExportDefaultDeclarationKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::FunctionDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInterfaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::FunctionDeclaration(it) => it.span_mut(),
+            Self::ClassDeclaration(it) => it.span_mut(),
+            Self::TSInterfaceDeclaration(it) => it.span_mut(),
+            Self::BooleanLiteral(it) => it.span_mut(),
+            Self::NullLiteral(it) => it.span_mut(),
+            Self::NumericLiteral(it) => it.span_mut(),
+            Self::BigIntLiteral(it) => it.span_mut(),
+            Self::RegExpLiteral(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::TemplateLiteral(it) => it.span_mut(),
+            Self::Identifier(it) => it.span_mut(),
+            Self::MetaProperty(it) => it.span_mut(),
+            Self::Super(it) => it.span_mut(),
+            Self::ArrayExpression(it) => it.span_mut(),
+            Self::ArrowFunctionExpression(it) => it.span_mut(),
+            Self::AssignmentExpression(it) => it.span_mut(),
+            Self::AwaitExpression(it) => it.span_mut(),
+            Self::BinaryExpression(it) => it.span_mut(),
+            Self::CallExpression(it) => it.span_mut(),
+            Self::ChainExpression(it) => it.span_mut(),
+            Self::ClassExpression(it) => it.span_mut(),
+            Self::ConditionalExpression(it) => it.span_mut(),
+            Self::FunctionExpression(it) => it.span_mut(),
+            Self::ImportExpression(it) => it.span_mut(),
+            Self::LogicalExpression(it) => it.span_mut(),
+            Self::NewExpression(it) => it.span_mut(),
+            Self::ObjectExpression(it) => it.span_mut(),
+            Self::ParenthesizedExpression(it) => it.span_mut(),
+            Self::SequenceExpression(it) => it.span_mut(),
+            Self::TaggedTemplateExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
+            Self::UnaryExpression(it) => it.span_mut(),
+            Self::UpdateExpression(it) => it.span_mut(),
+            Self::YieldExpression(it) => it.span_mut(),
+            Self::PrivateInExpression(it) => it.span_mut(),
+            Self::JSXElement(it) => it.span_mut(),
+            Self::JSXFragment(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -1239,9 +1239,9 @@ impl GetSpanMut for ExportDefaultDeclarationKind<'_> {
 impl GetSpanMut for ModuleExportName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::IdentifierName(it) => GetSpanMut::span_mut(it),
-            Self::IdentifierReference(it) => GetSpanMut::span_mut(it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(it),
+            Self::IdentifierName(it) => it.span_mut(),
+            Self::IdentifierReference(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
         }
     }
 }
@@ -1270,8 +1270,8 @@ impl GetSpanMut for TSEnumMember<'_> {
 impl GetSpanMut for TSEnumMemberName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::String(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Identifier(it) => it.span_mut(),
+            Self::String(it) => it.span_mut(),
         }
     }
 }
@@ -1293,14 +1293,14 @@ impl GetSpanMut for TSLiteralType<'_> {
 impl GetSpanMut for TSLiteral<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::BooleanLiteral(it) => it.span_mut(),
+            Self::NullLiteral(it) => it.span_mut(),
+            Self::NumericLiteral(it) => it.span_mut(),
+            Self::BigIntLiteral(it) => it.span_mut(),
+            Self::RegExpLiteral(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::TemplateLiteral(it) => it.span_mut(),
+            Self::UnaryExpression(it) => it.span_mut(),
         }
     }
 }
@@ -1308,44 +1308,44 @@ impl GetSpanMut for TSLiteral<'_> {
 impl GetSpanMut for TSType<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::TSAnyKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSBigIntKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSBooleanKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSIntrinsicKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNeverKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNullKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNumberKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSObjectKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSStringKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSymbolKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSUndefinedKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSUnknownKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSVoidKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSArrayType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSConditionalType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSConstructorType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSFunctionType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSImportType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSIndexedAccessType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInferType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSIntersectionType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSLiteralType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSMappedType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNamedTupleMember(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSQualifiedName(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTemplateLiteralType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSThisType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTupleType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeOperatorType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypePredicate(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeQuery(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSUnionType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSParenthesizedType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSDocNullableType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSDocNonNullableType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSDocUnknownType(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSAnyKeyword(it) => it.span_mut(),
+            Self::TSBigIntKeyword(it) => it.span_mut(),
+            Self::TSBooleanKeyword(it) => it.span_mut(),
+            Self::TSIntrinsicKeyword(it) => it.span_mut(),
+            Self::TSNeverKeyword(it) => it.span_mut(),
+            Self::TSNullKeyword(it) => it.span_mut(),
+            Self::TSNumberKeyword(it) => it.span_mut(),
+            Self::TSObjectKeyword(it) => it.span_mut(),
+            Self::TSStringKeyword(it) => it.span_mut(),
+            Self::TSSymbolKeyword(it) => it.span_mut(),
+            Self::TSUndefinedKeyword(it) => it.span_mut(),
+            Self::TSUnknownKeyword(it) => it.span_mut(),
+            Self::TSVoidKeyword(it) => it.span_mut(),
+            Self::TSArrayType(it) => it.span_mut(),
+            Self::TSConditionalType(it) => it.span_mut(),
+            Self::TSConstructorType(it) => it.span_mut(),
+            Self::TSFunctionType(it) => it.span_mut(),
+            Self::TSImportType(it) => it.span_mut(),
+            Self::TSIndexedAccessType(it) => it.span_mut(),
+            Self::TSInferType(it) => it.span_mut(),
+            Self::TSIntersectionType(it) => it.span_mut(),
+            Self::TSLiteralType(it) => it.span_mut(),
+            Self::TSMappedType(it) => it.span_mut(),
+            Self::TSNamedTupleMember(it) => it.span_mut(),
+            Self::TSQualifiedName(it) => it.span_mut(),
+            Self::TSTemplateLiteralType(it) => it.span_mut(),
+            Self::TSThisType(it) => it.span_mut(),
+            Self::TSTupleType(it) => it.span_mut(),
+            Self::TSTypeLiteral(it) => it.span_mut(),
+            Self::TSTypeOperatorType(it) => it.span_mut(),
+            Self::TSTypePredicate(it) => it.span_mut(),
+            Self::TSTypeQuery(it) => it.span_mut(),
+            Self::TSTypeReference(it) => it.span_mut(),
+            Self::TSUnionType(it) => it.span_mut(),
+            Self::TSParenthesizedType(it) => it.span_mut(),
+            Self::JSDocNullableType(it) => it.span_mut(),
+            Self::JSDocNonNullableType(it) => it.span_mut(),
+            Self::JSDocUnknownType(it) => it.span_mut(),
         }
     }
 }
@@ -1430,46 +1430,46 @@ impl GetSpanMut for TSRestType<'_> {
 impl GetSpanMut for TSTupleElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::TSOptionalType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSRestType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAnyKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSBigIntKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSBooleanKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSIntrinsicKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNeverKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNullKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNumberKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSObjectKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSStringKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSymbolKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSUndefinedKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSUnknownKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSVoidKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSArrayType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSConditionalType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSConstructorType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSFunctionType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSImportType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSIndexedAccessType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInferType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSIntersectionType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSLiteralType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSMappedType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNamedTupleMember(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSQualifiedName(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTemplateLiteralType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSThisType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTupleType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeOperatorType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypePredicate(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeQuery(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSUnionType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSParenthesizedType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSDocNullableType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSDocNonNullableType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSDocUnknownType(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSOptionalType(it) => it.span_mut(),
+            Self::TSRestType(it) => it.span_mut(),
+            Self::TSAnyKeyword(it) => it.span_mut(),
+            Self::TSBigIntKeyword(it) => it.span_mut(),
+            Self::TSBooleanKeyword(it) => it.span_mut(),
+            Self::TSIntrinsicKeyword(it) => it.span_mut(),
+            Self::TSNeverKeyword(it) => it.span_mut(),
+            Self::TSNullKeyword(it) => it.span_mut(),
+            Self::TSNumberKeyword(it) => it.span_mut(),
+            Self::TSObjectKeyword(it) => it.span_mut(),
+            Self::TSStringKeyword(it) => it.span_mut(),
+            Self::TSSymbolKeyword(it) => it.span_mut(),
+            Self::TSUndefinedKeyword(it) => it.span_mut(),
+            Self::TSUnknownKeyword(it) => it.span_mut(),
+            Self::TSVoidKeyword(it) => it.span_mut(),
+            Self::TSArrayType(it) => it.span_mut(),
+            Self::TSConditionalType(it) => it.span_mut(),
+            Self::TSConstructorType(it) => it.span_mut(),
+            Self::TSFunctionType(it) => it.span_mut(),
+            Self::TSImportType(it) => it.span_mut(),
+            Self::TSIndexedAccessType(it) => it.span_mut(),
+            Self::TSInferType(it) => it.span_mut(),
+            Self::TSIntersectionType(it) => it.span_mut(),
+            Self::TSLiteralType(it) => it.span_mut(),
+            Self::TSMappedType(it) => it.span_mut(),
+            Self::TSNamedTupleMember(it) => it.span_mut(),
+            Self::TSQualifiedName(it) => it.span_mut(),
+            Self::TSTemplateLiteralType(it) => it.span_mut(),
+            Self::TSThisType(it) => it.span_mut(),
+            Self::TSTupleType(it) => it.span_mut(),
+            Self::TSTypeLiteral(it) => it.span_mut(),
+            Self::TSTypeOperatorType(it) => it.span_mut(),
+            Self::TSTypePredicate(it) => it.span_mut(),
+            Self::TSTypeQuery(it) => it.span_mut(),
+            Self::TSTypeReference(it) => it.span_mut(),
+            Self::TSUnionType(it) => it.span_mut(),
+            Self::TSParenthesizedType(it) => it.span_mut(),
+            Self::JSDocNullableType(it) => it.span_mut(),
+            Self::JSDocNonNullableType(it) => it.span_mut(),
+            Self::JSDocUnknownType(it) => it.span_mut(),
         }
     }
 }
@@ -1582,8 +1582,8 @@ impl GetSpanMut for TSTypeReference<'_> {
 impl GetSpanMut for TSTypeName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
+            Self::IdentifierReference(it) => it.span_mut(),
+            Self::QualifiedName(it) => it.span_mut(),
         }
     }
 }
@@ -1654,11 +1654,11 @@ impl GetSpanMut for TSPropertySignature<'_> {
 impl GetSpanMut for TSSignature<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::TSIndexSignature(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSPropertySignature(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSCallSignatureDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSConstructSignatureDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSMethodSignature(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSIndexSignature(it) => it.span_mut(),
+            Self::TSPropertySignature(it) => it.span_mut(),
+            Self::TSCallSignatureDeclaration(it) => it.span_mut(),
+            Self::TSConstructSignatureDeclaration(it) => it.span_mut(),
+            Self::TSMethodSignature(it) => it.span_mut(),
         }
     }
 }
@@ -1715,8 +1715,8 @@ impl GetSpanMut for TSTypePredicate<'_> {
 impl GetSpanMut for TSTypePredicateName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::This(it) => GetSpanMut::span_mut(it),
+            Self::Identifier(it) => it.span_mut(),
+            Self::This(it) => it.span_mut(),
         }
     }
 }
@@ -1731,8 +1731,8 @@ impl GetSpanMut for TSModuleDeclaration<'_> {
 impl GetSpanMut for TSModuleDeclarationName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(it),
+            Self::Identifier(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
         }
     }
 }
@@ -1740,8 +1740,8 @@ impl GetSpanMut for TSModuleDeclarationName<'_> {
 impl GetSpanMut for TSModuleDeclarationBody<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSModuleBlock(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSModuleDeclaration(it) => it.span_mut(),
+            Self::TSModuleBlock(it) => it.span_mut(),
         }
     }
 }
@@ -1777,9 +1777,9 @@ impl GetSpanMut for TSTypeQuery<'_> {
 impl GetSpanMut for TSTypeQueryExprName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::TSImportType(it) => GetSpanMut::span_mut(&mut **it),
-            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSImportType(it) => it.span_mut(),
+            Self::IdentifierReference(it) => it.span_mut(),
+            Self::QualifiedName(it) => it.span_mut(),
         }
     }
 }
@@ -1808,8 +1808,8 @@ impl GetSpanMut for TSImportAttribute<'_> {
 impl GetSpanMut for TSImportAttributeName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(it),
+            Self::Identifier(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
         }
     }
 }
@@ -1873,9 +1873,9 @@ impl GetSpanMut for TSImportEqualsDeclaration<'_> {
 impl GetSpanMut for TSModuleReference<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::ExternalModuleReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExternalModuleReference(it) => it.span_mut(),
+            Self::IdentifierReference(it) => it.span_mut(),
+            Self::QualifiedName(it) => it.span_mut(),
         }
     }
 }
@@ -1988,11 +1988,11 @@ impl GetSpanMut for JSXClosingFragment {
 impl GetSpanMut for JSXElementName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NamespacedName(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Identifier(it) => it.span_mut(),
+            Self::IdentifierReference(it) => it.span_mut(),
+            Self::NamespacedName(it) => it.span_mut(),
+            Self::MemberExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
         }
     }
 }
@@ -2014,9 +2014,9 @@ impl GetSpanMut for JSXMemberExpression<'_> {
 impl GetSpanMut for JSXMemberExpressionObject<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::IdentifierReference(it) => it.span_mut(),
+            Self::MemberExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
         }
     }
 }
@@ -2031,49 +2031,49 @@ impl GetSpanMut for JSXExpressionContainer<'_> {
 impl GetSpanMut for JSXExpression<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::EmptyExpression(it) => GetSpanMut::span_mut(it),
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::EmptyExpression(it) => it.span_mut(),
+            Self::BooleanLiteral(it) => it.span_mut(),
+            Self::NullLiteral(it) => it.span_mut(),
+            Self::NumericLiteral(it) => it.span_mut(),
+            Self::BigIntLiteral(it) => it.span_mut(),
+            Self::RegExpLiteral(it) => it.span_mut(),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::TemplateLiteral(it) => it.span_mut(),
+            Self::Identifier(it) => it.span_mut(),
+            Self::MetaProperty(it) => it.span_mut(),
+            Self::Super(it) => it.span_mut(),
+            Self::ArrayExpression(it) => it.span_mut(),
+            Self::ArrowFunctionExpression(it) => it.span_mut(),
+            Self::AssignmentExpression(it) => it.span_mut(),
+            Self::AwaitExpression(it) => it.span_mut(),
+            Self::BinaryExpression(it) => it.span_mut(),
+            Self::CallExpression(it) => it.span_mut(),
+            Self::ChainExpression(it) => it.span_mut(),
+            Self::ClassExpression(it) => it.span_mut(),
+            Self::ConditionalExpression(it) => it.span_mut(),
+            Self::FunctionExpression(it) => it.span_mut(),
+            Self::ImportExpression(it) => it.span_mut(),
+            Self::LogicalExpression(it) => it.span_mut(),
+            Self::NewExpression(it) => it.span_mut(),
+            Self::ObjectExpression(it) => it.span_mut(),
+            Self::ParenthesizedExpression(it) => it.span_mut(),
+            Self::SequenceExpression(it) => it.span_mut(),
+            Self::TaggedTemplateExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
+            Self::UnaryExpression(it) => it.span_mut(),
+            Self::UpdateExpression(it) => it.span_mut(),
+            Self::YieldExpression(it) => it.span_mut(),
+            Self::PrivateInExpression(it) => it.span_mut(),
+            Self::JSXElement(it) => it.span_mut(),
+            Self::JSXFragment(it) => it.span_mut(),
+            Self::TSAsExpression(it) => it.span_mut(),
+            Self::TSSatisfiesExpression(it) => it.span_mut(),
+            Self::TSTypeAssertion(it) => it.span_mut(),
+            Self::TSNonNullExpression(it) => it.span_mut(),
+            Self::TSInstantiationExpression(it) => it.span_mut(),
+            Self::ComputedMemberExpression(it) => it.span_mut(),
+            Self::StaticMemberExpression(it) => it.span_mut(),
+            Self::PrivateFieldExpression(it) => it.span_mut(),
         }
     }
 }
@@ -2088,8 +2088,8 @@ impl GetSpanMut for JSXEmptyExpression {
 impl GetSpanMut for JSXAttributeItem<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Attribute(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SpreadAttribute(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Attribute(it) => it.span_mut(),
+            Self::SpreadAttribute(it) => it.span_mut(),
         }
     }
 }
@@ -2111,8 +2111,8 @@ impl GetSpanMut for JSXSpreadAttribute<'_> {
 impl GetSpanMut for JSXAttributeName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NamespacedName(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Identifier(it) => it.span_mut(),
+            Self::NamespacedName(it) => it.span_mut(),
         }
     }
 }
@@ -2120,10 +2120,10 @@ impl GetSpanMut for JSXAttributeName<'_> {
 impl GetSpanMut for JSXAttributeValue<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExpressionContainer(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Element(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Fragment(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StringLiteral(it) => it.span_mut(),
+            Self::ExpressionContainer(it) => it.span_mut(),
+            Self::Element(it) => it.span_mut(),
+            Self::Fragment(it) => it.span_mut(),
         }
     }
 }
@@ -2138,11 +2138,11 @@ impl GetSpanMut for JSXIdentifier<'_> {
 impl GetSpanMut for JSXChild<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Text(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Element(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Fragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExpressionContainer(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Spread(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Text(it) => it.span_mut(),
+            Self::Element(it) => it.span_mut(),
+            Self::Fragment(it) => it.span_mut(),
+            Self::ExpressionContainer(it) => it.span_mut(),
+            Self::Spread(it) => it.span_mut(),
         }
     }
 }
