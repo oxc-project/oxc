@@ -163,12 +163,12 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: clippy
           components: clippy
-          tools: ast-grep
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
       # Waiting for https://github.com/rust-lang/rust-clippy/pull/13435
       - name: Check Char and Byte Offset
         run: |
+          npm i @ast-grep/cli -g
           output=$(sg -p '$A.chars().enumerate()' -r '$A.char_indices()' -l rs)
           echo "Output: $output"
           if [ -n "$output" ]; then
