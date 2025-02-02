@@ -79,7 +79,8 @@ impl From<Capabilities> for ServerCapabilities {
 mod test {
     use tower_lsp::lsp_types::{
         ClientCapabilities, CodeActionClientCapabilities, CodeActionKindLiteralSupport,
-        CodeActionLiteralSupport, TextDocumentClientCapabilities,
+        CodeActionLiteralSupport, TextDocumentClientCapabilities, WorkspaceClientCapabilities,
+        WorkspaceEditClientCapabilities,
     };
 
     use super::Capabilities;
@@ -111,12 +112,20 @@ mod test {
                 }),
                 ..TextDocumentClientCapabilities::default()
             }),
+            workspace: Some(WorkspaceClientCapabilities {
+                workspace_edit: Some(WorkspaceEditClientCapabilities {
+                    document_changes: Some(true),
+                    ..WorkspaceEditClientCapabilities::default()
+                }),
+                ..WorkspaceClientCapabilities::default()
+            }),
             ..ClientCapabilities::default()
         };
 
         let capabilities = Capabilities::from(client_capabilities);
 
         assert!(capabilities.code_action_provider);
+        assert!(capabilities.workspace_edit);
     }
 
     #[test]
@@ -141,11 +150,19 @@ mod test {
                 }),
                 ..TextDocumentClientCapabilities::default()
             }),
+            workspace: Some(WorkspaceClientCapabilities {
+                workspace_edit: Some(WorkspaceEditClientCapabilities {
+                    document_changes: Some(true),
+                    ..WorkspaceEditClientCapabilities::default()
+                }),
+                ..WorkspaceClientCapabilities::default()
+            }),
             ..ClientCapabilities::default()
         };
 
         let capabilities = Capabilities::from(client_capabilities);
 
         assert!(capabilities.code_action_provider);
+        assert!(capabilities.workspace_edit);
     }
 }
