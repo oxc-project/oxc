@@ -262,6 +262,7 @@ impl<'a> PeepholeOptimizations {
                                 if if_stmt.consequent.is_jump_statement() {
                                     if let Some(stmt) = if_stmt.alternate.take() {
                                         result.push(stmt);
+                                        self.mark_current_function_as_changed();
                                         continue;
                                     }
                                 }

@@ -76,6 +76,19 @@ fn integration() {
         console.log(c, d);
         ",
     );
+
+    test(
+        "function _() {
+            if (currentChar === '\\n')
+                return pos + 1;
+            else if (currentChar !== ' ' && currentChar !== '\\t')
+                return pos + 1;
+        }",
+        "function _() {
+            if (currentChar === '\\n' || currentChar !== ' ' && currentChar !== '\\t')
+                return pos + 1;
+        }",
+    );
 }
 
 #[test]
