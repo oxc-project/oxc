@@ -1,8 +1,12 @@
 mod collapse_variable_declarations;
 mod convert_to_dotted_properties;
 mod fold_constants;
+mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_exit_points;
+mod minimize_expression_in_boolean_context;
+mod minimize_if_statement;
+mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
 mod remove_dead_code;
@@ -145,7 +149,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        Self::minimize_conditions_exit_statement(stmt, Ctx(traverse_ctx));
+        Self::try_fold_stmt_in_boolean_context(stmt, Ctx(traverse_ctx));
         self.remove_dead_code_exit_statement(stmt, Ctx(traverse_ctx));
         if let Statement::IfStatement(if_stmt) = stmt {
             if let Some(folded_stmt) = self.try_minimize_if(if_stmt, traverse_ctx) {
