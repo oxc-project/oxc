@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.2] - 2025-02-02
+
+### Features
+
+- 86b6219 mangler: Use characters in the order of their likely frequency (#8771) (sapphi-red)
+- d553318 minifier: Complete `MangleIf` (#8810) (Boshen)
+- 5cfea76 minifier: Compress `(a = _a) != null ? a : b` and `(a = _a) != null ? a.b() : undefined` (#8823) (sapphi-red)
+- f02d9e9 minifier: Merge single var declarations without init into for-of (#8813) (sapphi-red)
+- 99b47ed minifier: Merge single var declarations without init into for-in (#8812) (sapphi-red)
+- d9f1d0d minifier: Merge expressions in for-in statement head (#8811) (sapphi-red)
+- 18f1b15 minifier: Implement known method `Array.of` (#8805) (7086cmd)
+- e525e60 minifier: Compress `a != null ? a.b : undefined` to `a?.b` (#8802) (#8808) (Boshen)
+- e353a01 minifier: Compress `a != null ? a.b : undefined` to `a?.b` (#8802) (sapphi-red)
+- 72d74a2 minifier: Compress `a != null ? a : b` into `a ?? b` (#8801) (sapphi-red)
+- 249895f minifier: Implement variadic Math methods in known methods (#8783) (Ethan Goh)
+- 7ea99f4 minifier: Compress array of string literals to `'str1,str2'.split(',')` (#8786) (sapphi-red)
+- 6c627df minifier: Implement unary Math functions in known methods (#8781) (7086cmd)
+- ad14403 minifier: Compress `typeof a.b === 'undefined'` to `a.b === void 0` (#8751) (sapphi-red)
+- f7f2d2f minifier: Compress `a == null && b` to `a ?? b` when return value is ignored (#8749) (sapphi-red)
+- 3c1c92c minifier: Support `a[0]` and `this.a` in `has_no_side_effect_for_evaluation_same_target` (#8748) (sapphi-red)
+- 29417dd minifier: Minimize `!(a, b)` -> `a, !b` (#8746) (Boshen)
+- 3ece991 minifier: Remove unused `import.meta` statement (#8744) (Boshen)
+- 3ef980a minifier: Remove unreachable statements after `break` and `continue` (#8743) (Boshen)
+
+### Bug Fixes
+
+- 831928d minifier: Mark as changed when `else if` was converted to `if` (#8837) (翠 / green)
+- f8548ec minifier: Unreachable error when compressing string literal arrays with `.split()` (#8806) (sapphi-red)
+- 2eac9c0 minifier: Fix `var undefined = 1; foo === null || foo === undefined` should not be compressed (#8803) (sapphi-red)
+- ae7f670 minifier: Avoid minifying `+void unknown` to `NaN` and fix typo (#8784) (7086cmd)
+- 8781537 minifier: `{ let foo; const bar = undefined; }` -> `{ let foo, bar; }` (#8764) (Boshen)
+- 8a6ae8a minifier: Do not change `const` to `let` if assignment to constant variable. (#8761) (Boshen)
+- 66c33ed minifier: Remove incorrect not + conditional expression compression (#8759) (翠 / green)
+- a3b078a minifier: Fix crash with `[]['concat'](1)` (#8750) (sapphi-red)
+
+### Refactor
+
+- 6aa2dde codegen: Accept SymbolTable instead of Mangler (#8829) (Daniel Bulant)
+- 3abf2f7 minifier: Extract `extract_id_or_assign_to_id` method (#8822) (sapphi-red)
+- a861d93 minifier: Port esbuild's `mangleStmts` (#8770) (Boshen)
+- 0fcff20 minifier: Remove `EmptyStatement` in a single place (#8745) (Boshen)
+
+### Testing
+
+- dc4c388 minifier: Fail tests when parse fails (#8836) (sapphi-red)
+- 3ac5020 minifier: Enable more passed esbuild tests (#8804) (Boshen)
+- 0c4c739 minifier: Cleanup some tests in substitute_alternate_syntax (#8768) (sapphi-red)
+- 79d5481 minifier: Add and enable some tests in fold_constants (#8769) (sapphi-red)
+- ef55e7c minifier: Check idempotency for all tests (#8754) (Boshen)
+- d072f09 minifier: Enable more ignored tests (#8753) (Boshen)
+- e78e468 minifier: Cleanup some tests in minimize_conditions (#8752) (sapphi-red)
+
 ## [0.48.1] - 2025-01-26
 
 ### Features
