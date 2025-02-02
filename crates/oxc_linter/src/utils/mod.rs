@@ -7,13 +7,14 @@ mod promise;
 mod react;
 mod react_perf;
 mod unicorn;
+mod url;
 mod vitest;
 
 use std::{io, path::Path};
 
 pub use self::{
     config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*, react_perf::*,
-    unicorn::*, vitest::*,
+    unicorn::*, url::*, vitest::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.

@@ -1848,7 +1848,6 @@ dependencies = [
  "serde",
  "serde_json",
  "simdutf8",
- "url",
 ]
 
 [[package]]
@@ -2142,7 +2141,6 @@ dependencies = [
  "project-root",
  "similar",
  "ureq",
- "url",
 ]
 
 [[package]]
