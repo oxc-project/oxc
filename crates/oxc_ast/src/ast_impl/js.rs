@@ -953,13 +953,15 @@ impl Statement<'_> {
     /// - `continue` => `true`
     /// - `if (true) { }` => `false`
     pub fn is_jump_statement(&self) -> bool {
-        matches!(
-            self,
-            Self::ReturnStatement(_)
-                | Self::ThrowStatement(_)
-                | Self::BreakStatement(_)
-                | Self::ContinueStatement(_)
-        )
+        self.get_one_child().is_some_and(|stmt| {
+            matches!(
+                stmt,
+                Self::ReturnStatement(_)
+                    | Self::ThrowStatement(_)
+                    | Self::BreakStatement(_)
+                    | Self::ContinueStatement(_)
+            )
+        })
     }
 
     /// Returns the single statement from block statement, or self
