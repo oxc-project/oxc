@@ -13,7 +13,8 @@ pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
 #[derive(Clone)]
 pub struct Capabilities {
     pub code_action_provider: bool,
-    pub workspace_edit: bool,
+    pub workspace_apply_edit: bool,
+    pub workspace_execute_command: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -26,10 +27,12 @@ impl From<ClientCapabilities> for Capabilities {
                 })
             })
         });
-        let workspace_edit =
-            value.workspace.is_some_and(|capability| capability.workspace_edit.is_some());
+        let workspace_apply_edit =
+            value.workspace.clone().is_some_and(|workspace| workspace.apply_edit.is_some());
+        let workspace_execute_command =
+            value.workspace.is_some_and(|workspace| workspace.execute_command.is_some());
 
-        Self { code_action_provider, workspace_edit }
+        Self { code_action_provider, workspace_apply_edit, workspace_execute_command }
     }
 }
 
@@ -66,10 +69,10 @@ impl From<Capabilities> for ServerCapabilities {
             } else {
                 None
             },
-            execute_command_provider: Some(ExecuteCommandOptions {
-                commands,
-                ..Default::default()
-            }),
+            execute_command_provider: match value.workspace_execute_command {
+                true => Some(ExecuteCommandOptions { commands, ..Default::default() }),
+                false => None,
+            },
             ..ServerCapabilities::default()
         }
     }
@@ -79,8 +82,8 @@ impl From<Capabilities> for ServerCapabilities {
 mod test {
     use tower_lsp::lsp_types::{
         ClientCapabilities, CodeActionClientCapabilities, CodeActionKindLiteralSupport,
-        CodeActionLiteralSupport, TextDocumentClientCapabilities, WorkspaceClientCapabilities,
-        WorkspaceEditClientCapabilities,
+        CodeActionLiteralSupport, DynamicRegistrationClientCapabilities,
+        TextDocumentClientCapabilities, WorkspaceClientCapabilities,
     };
 
     use super::Capabilities;
@@ -112,20 +115,12 @@ mod test {
                 }),
                 ..TextDocumentClientCapabilities::default()
             }),
-            workspace: Some(WorkspaceClientCapabilities {
-                workspace_edit: Some(WorkspaceEditClientCapabilities {
-                    document_changes: Some(true),
-                    ..WorkspaceEditClientCapabilities::default()
-                }),
-                ..WorkspaceClientCapabilities::default()
-            }),
             ..ClientCapabilities::default()
         };
 
         let capabilities = Capabilities::from(client_capabilities);
 
         assert!(capabilities.code_action_provider);
-        assert!(capabilities.workspace_edit);
     }
 
     #[test]
@@ -150,10 +145,53 @@ mod test {
                 }),
                 ..TextDocumentClientCapabilities::default()
             }),
+            ..ClientCapabilities::default()
+        };
+
+        let capabilities = Capabilities::from(client_capabilities);
+
+        assert!(capabilities.code_action_provider);
+    }
+
+    #[test]
+    fn test_code_action_provider_nvim() {
+        let client_capabilities = ClientCapabilities {
+            text_document: Some(TextDocumentClientCapabilities {
+                code_action: Some(CodeActionClientCapabilities {
+                    code_action_literal_support: Some(CodeActionLiteralSupport {
+                        code_action_kind: CodeActionKindLiteralSupport {
+                            // nvim 0.10.3
+                            value_set: vec![
+                                "".into(),
+                                "quickfix".into(),
+                                "refactor".into(),
+                                "refactor.extract".into(),
+                                "refactor.inline".into(),
+                                "refactor.rewrite".into(),
+                                "source".into(),
+                                "source.organizeImports".into(),
+                            ],
+                        },
+                    }),
+                    ..CodeActionClientCapabilities::default()
+                }),
+                ..TextDocumentClientCapabilities::default()
+            }),
+            ..ClientCapabilities::default()
+        };
+
+        let capabilities = Capabilities::from(client_capabilities);
+
+        assert!(capabilities.code_action_provider);
+    }
+
+    // This tests code, intellij and neovim (at least nvim 0.10.0+), as they all support dynamic registration.
+    #[test]
+    fn test_workspace_execute_command() {
+        let client_capabilities = ClientCapabilities {
             workspace: Some(WorkspaceClientCapabilities {
-                workspace_edit: Some(WorkspaceEditClientCapabilities {
-                    document_changes: Some(true),
-                    ..WorkspaceEditClientCapabilities::default()
+                execute_command: Some(DynamicRegistrationClientCapabilities {
+                    dynamic_registration: Some(true),
                 }),
                 ..WorkspaceClientCapabilities::default()
             }),
@@ -162,7 +200,22 @@ mod test {
 
         let capabilities = Capabilities::from(client_capabilities);
 
-        assert!(capabilities.code_action_provider);
-        assert!(capabilities.workspace_edit);
+        assert!(capabilities.workspace_execute_command);
+    }
+
+    #[test]
+    fn test_workspace_edit_nvim() {
+        let client_capabilities = ClientCapabilities {
+            workspace: Some(WorkspaceClientCapabilities {
+                // Nvim 0.10.3
+                apply_edit: Some(true),
+                ..WorkspaceClientCapabilities::default()
+            }),
+            ..ClientCapabilities::default()
+        };
+
+        let capabilities = Capabilities::from(client_capabilities);
+
+        assert!(capabilities.workspace_apply_edit);
     }
 }

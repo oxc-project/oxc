@@ -72,7 +72,7 @@ impl WorkspaceCommand for FixAllCommand {
         "oxc.fixAll".into()
     }
     fn available(&self, cap: Capabilities) -> bool {
-        cap.workspace_edit
+        cap.workspace_apply_edit
     }
     type CommandArgs<'a> = (FixAllCommandArg,);
 
@@ -98,7 +98,10 @@ impl WorkspaceCommand for FixAllCommand {
             let _ = backend
                 .client
                 .send_request::<ApplyWorkspaceEdit>(ApplyWorkspaceEditParams {
-                    label: Some("Oxlint fix all".into()),
+                    label: Some(match edits.len() {
+                        1 => "Oxlint: 1 fix applied".into(),
+                        n => format!("Oxlint: {} fixes applied", n),
+                    }),
                     edit: WorkspaceEdit {
                         changes: Some(std::collections::HashMap::from([(
                             url.clone(),
