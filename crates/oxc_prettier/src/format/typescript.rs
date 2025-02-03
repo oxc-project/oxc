@@ -416,7 +416,7 @@ impl<'a> Format<'a> for TSTupleType<'a> {
 impl<'a> Format<'a> for TSTypeLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, TSTypeLiteral, {
-            object::print_object(p, object::ObjectLike::TSTypeLiteral(self))
+            object::print_object(p, &object::ObjectLike::TSTypeLiteral(self))
         })
     }
 }
@@ -1059,11 +1059,11 @@ impl<'a> Format<'a> for TSMethodSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
 
-        let key_doc = if self.computed {
-            array!(p, [text!("["), self.key.format(p), text!("]")])
-        } else {
-            self.key.format(p)
-        };
+        let key_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(&self.key),
+            self.computed,
+        );
         parts.push(key_doc);
 
         if self.optional {

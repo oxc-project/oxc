@@ -955,7 +955,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
 impl<'a> Format<'a> for ObjectExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectExpression, {
-            object::print_object(p, object::ObjectLike::Expression(self))
+            object::print_object(p, &object::ObjectLike::ObjectExpression(self))
         })
     }
 }
@@ -972,31 +972,12 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectProperty, {
-            if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
-                let mut parts = Vec::new_in(p.allocator);
-                match self.kind {
-                    PropertyKind::Get => {
-                        parts.push(text!("get "));
-                    }
-                    PropertyKind::Set => {
-                        parts.push(text!("set "));
-                    }
-                    PropertyKind::Init => (),
-                }
-                if let Expression::FunctionExpression(func_expr) = &self.value {
-                    parts.push(wrap!(p, func_expr, Function, {
-                        function::print_function(
-                            p,
-                            func_expr,
-                            Some(self.key.span().source_text(p.source_text)),
-                        )
-                    }));
-                }
-                return group!(p, parts);
-            }
-
             if self.shorthand {
                 return self.value.format(p);
+            }
+
+            if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
+                return function::print_object_method(p, self);
             }
 
             let left_doc = property::print_property_key(
@@ -1195,7 +1176,9 @@ impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
 
 impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object(p, object::ObjectLike::AssignmentTarget(self))
+        wrap!(p, self, ObjectAssignmentTarget, {
+            object::print_object(p, &object::ObjectLike::ObjectAssignmentTarget(self))
+        })
     }
 }
 
@@ -1219,6 +1202,7 @@ impl<'a> Format<'a> for AssignmentTargetProperty<'a> {
 impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
+
         parts.push(self.binding.format(p));
 
         if let Some(init) = &self.init {
@@ -1232,7 +1216,11 @@ impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
 
 impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let left_doc = self.name.format(p);
+        let left_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(&self.name),
+            self.computed,
+        );
 
         // TODO: How to convert `AssignmentTargetMaybeDefault` to `Expression`?
         // Or `print_assignment` is not needed?
@@ -1454,7 +1442,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectPattern, {
-            object::print_object(p, object::ObjectLike::Pattern(self))
+            object::print_object(p, &object::ObjectLike::ObjectPattern(self))
         })
     }
 }
@@ -1465,7 +1453,11 @@ impl<'a> Format<'a> for BindingProperty<'a> {
             return self.value.format(p);
         }
 
-        let left_doc = self.key.format(p);
+        let left_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(&self.key),
+            self.computed,
+        );
 
         // TODO: How to convert `BindingPattern` to `Expression`...?
         // Or `print_assignment` is not needed?

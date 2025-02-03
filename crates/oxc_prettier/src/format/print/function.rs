@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     array, dynamic_text,
-    format::print::{function_parameters, property},
+    format::print::{function, function_parameters, property},
     group, if_break, indent,
     ir::Doc,
     softline, text, Format, Prettier,
@@ -73,25 +73,28 @@ pub fn print_function<'a>(
     array!(p, parts)
 }
 
-pub fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
+pub fn print_object_method<'a>(p: &mut Prettier<'a>, method: &ObjectProperty<'a>) -> Doc<'a> {
+    let Expression::FunctionExpression(func_expr) = &method.value else {
+        unreachable!();
+    };
+
     let mut parts = Vec::new_in(p.allocator);
 
     match method.kind {
-        MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
-        MethodDefinitionKind::Get => {
+        PropertyKind::Init => {
+            if func_expr.r#async {
+                parts.push(text!("async "));
+            }
+            if func_expr.generator {
+                parts.push(text!("*"));
+            }
+        }
+        PropertyKind::Get => {
             parts.push(text!("get "));
         }
-        MethodDefinitionKind::Set => {
+        PropertyKind::Set => {
             parts.push(text!("set "));
         }
-    }
-
-    if method.value.r#async {
-        parts.push(text!("async "));
-    }
-
-    if method.value.generator {
-        parts.push(text!("*"));
     }
 
     parts.push(property::print_property_key(
@@ -100,6 +103,36 @@ pub fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> 
         method.computed,
     ));
 
+    parts.push(function::print_method_value(p, func_expr));
+
+    array!(p, parts)
+}
+
+pub fn print_class_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
+    let mut parts = Vec::new_in(p.allocator);
+
+    match method.kind {
+        MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {
+            if method.value.r#async {
+                parts.push(text!("async "));
+            }
+            if method.value.generator {
+                parts.push(text!("*"));
+            }
+        }
+        MethodDefinitionKind::Get => {
+            parts.push(text!("get "));
+        }
+        MethodDefinitionKind::Set => {
+            parts.push(text!("set "));
+        }
+    }
+
+    parts.push(property::print_property_key(
+        p,
+        &property::PropertyKeyLike::PropertyKey(&method.key),
+        method.computed,
+    ));
     if method.optional {
         parts.push(text!("?"));
     }

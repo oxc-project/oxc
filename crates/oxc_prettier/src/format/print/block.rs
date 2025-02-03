@@ -31,8 +31,9 @@ pub fn print_block<'a>(
                     | AstKind::DoWhileStatement(_)
                     | AstKind::MethodDefinition(_)
                     | AstKind::PropertyDefinition(_)
+                    | AstKind::ObjectProperty(_) // For object method
             ) || (matches!(parent, AstKind::CatchClause(_))
-                && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
+                && !matches!(parent_parent, Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
                 || matches!(p.current_kind(), AstKind::StaticBlock(_)))
         {
             parts.push(hardline!(p));
