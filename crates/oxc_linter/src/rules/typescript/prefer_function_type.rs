@@ -316,8 +316,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
 }
 
 impl Rule for PreferFunctionType {
-    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run(ctx.source_type().is_typescript())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

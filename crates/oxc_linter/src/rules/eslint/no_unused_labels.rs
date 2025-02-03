@@ -39,11 +39,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnusedLabels {
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(
-            ctx.file_path().extension().is_some_and(|ext| ext != "svelte"),
-        )
-        .with_run_once(true)
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> crate::rule::ShouldRunMeta {
+        let enable = ctx.file_path().extension().is_some_and(|ext| ext != "svelte");
+        crate::rule::ShouldRunMeta::new().with_run_once(enable)
     }
 
     fn run_once(&self, ctx: &LintContext) {

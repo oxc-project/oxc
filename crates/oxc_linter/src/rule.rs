@@ -15,44 +15,55 @@ use crate::{
     AllowWarnDeny, AstNode, FixKind, RuleEnum,
 };
 
-#[derive(Debug, Clone, Copy)]
-pub struct ShouldRunState {
-    pub enable: bool,
-    pub run: bool,
-    pub run_once: bool,
-    pub run_on_symbol: bool,
-    pub run_on_jest_node: bool,
-}
-
-impl From<bool> for ShouldRunState {
-    fn from(value: bool) -> Self {
-        Self::new(value)
+bitflags::bitflags! {
+    #[derive(Debug)]
+    pub struct ShouldRunMeta: u8 {
+        const IS_RUN = 1;
+        const IS_RUN_ONCE = 1 << 1;
+        const IS_RUN_ON_SYMBOL = 1 << 2;
+        const IS_RUN_ON_JEST_NODE = 1 << 3;
     }
 }
 
-impl ShouldRunState {
-    pub fn new(enable: bool) -> Self {
-        Self { enable, run: false, run_once: false, run_on_symbol: false, run_on_jest_node: false }
+impl ShouldRunMeta {
+    pub fn new() -> Self {
+        ShouldRunMeta::empty()
     }
 
-    pub fn with_run(mut self, yes: bool) -> Self {
-        self.run = yes;
-        self
+    pub fn with_run(self, yes: bool) -> Self {
+        let other = ShouldRunMeta::IS_RUN;
+        if yes {
+            self.union(other)
+        } else {
+            self.difference(other)
+        }
     }
 
-    pub fn with_run_once(mut self, yes: bool) -> Self {
-        self.run_once = yes;
-        self
+    pub fn with_run_once(self, yes: bool) -> Self {
+        let other = ShouldRunMeta::IS_RUN_ONCE;
+        if yes {
+            self.union(other)
+        } else {
+            self.difference(other)
+        }
     }
 
-    pub fn with_run_on_symbol(mut self, yes: bool) -> Self {
-        self.run_on_symbol = yes;
-        self
+    pub fn with_run_on_symbol(self, yes: bool) -> Self {
+        let other = ShouldRunMeta::IS_RUN_ON_SYMBOL;
+        if yes {
+            self.union(other)
+        } else {
+            self.difference(other)
+        }
     }
 
-    pub fn with_run_on_jest_node(mut self, yes: bool) -> Self {
-        self.run_on_jest_node = yes;
-        self
+    pub fn with_run_on_jest_node(self, yes: bool) -> Self {
+        let other = ShouldRunMeta::IS_RUN_ON_JEST_NODE;
+        if yes {
+            self.union(other)
+        } else {
+            self.difference(other)
+        }
     }
 }
 
@@ -98,8 +109,8 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// [`linter`]: crate::Linter
     #[expect(unused_variables)]
     #[inline]
-    fn should_run(&self, ctx: &ContextHost) -> ShouldRunState {
-        ShouldRunState::new(true).with_run(true)
+    fn should_run(&self, ctx: &ContextHost) -> ShouldRunMeta {
+        ShouldRunMeta::new().with_run(true)
     }
 }
 

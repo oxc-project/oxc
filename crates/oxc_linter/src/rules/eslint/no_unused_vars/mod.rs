@@ -214,16 +214,14 @@ impl Rule for NoUnusedVars {
         self.run_on_symbol_internal(&symbol, ctx);
     }
 
-    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunMeta {
         // ignore .d.ts and vue/svelte files.
         // 1. declarations have side effects (they get merged together)
         // 2. vue/svelte scripts declare variables that get used in the template, which
         //    we can't detect
-        crate::rule::ShouldRunState::new(
-            !ctx.source_type().is_typescript_definition()
-                && !ctx.file_path().extension().is_some_and(|ext| ext == "vue" || ext == "svelte"),
-        )
-        .with_run_on_symbol(true)
+        let enable = !ctx.source_type().is_typescript_definition()
+            && !ctx.file_path().extension().is_some_and(|ext| ext == "vue" || ext == "svelte");
+        crate::rule::ShouldRunMeta::new().with_run_on_symbol(enable)
     }
 }
 

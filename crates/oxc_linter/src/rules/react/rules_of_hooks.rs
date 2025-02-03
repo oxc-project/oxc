@@ -109,14 +109,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for RulesOfHooks {
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunMeta {
         // disable this rule in vue/nuxt and svelte(kit) files
         // react hook can be build in only `.ts` files,
         // but `useX` functions are popular and can be false positive in other frameworks
-        crate::rule::ShouldRunState::new(
+        crate::rule::ShouldRunMeta::new().with_run(
             !ctx.file_path().extension().is_some_and(|ext| ext == "vue" || ext == "svelte"),
         )
-        .with_run(true)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

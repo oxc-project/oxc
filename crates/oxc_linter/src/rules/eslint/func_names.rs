@@ -370,8 +370,8 @@ impl Rule for FuncNames {
         Self { default_config, generators_config }
     }
 
-    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run_once(true)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

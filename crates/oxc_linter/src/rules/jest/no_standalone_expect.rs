@@ -72,8 +72,8 @@ impl Rule for NoStandaloneExpect {
         Self(Box::new(NoStandaloneExpectConfig { additional_test_block_functions }))
     }
 
-    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run_once(true)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

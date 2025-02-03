@@ -60,8 +60,8 @@ impl Rule for NoRedeclare {
         Self { built_in_globals }
     }
 
-    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(true).with_run_on_symbol(true)
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run_on_symbol(true)
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {

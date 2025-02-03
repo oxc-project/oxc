@@ -479,8 +479,8 @@ impl Rule for NoUnknownProperty {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run(ctx.source_type().is_jsx())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

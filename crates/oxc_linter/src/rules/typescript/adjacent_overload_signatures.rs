@@ -281,8 +281,8 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
 }
 
 impl Rule for AdjacentOverloadSignatures {
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run(ctx.source_type().is_typescript())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

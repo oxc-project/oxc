@@ -48,8 +48,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferTsExpectError {
-    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run_once(true)
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run_once(ctx.source_type().is_typescript())
     }
 
     fn run_once(&self, ctx: &LintContext) {

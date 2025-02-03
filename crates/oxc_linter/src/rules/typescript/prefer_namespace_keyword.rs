@@ -45,8 +45,8 @@ fn is_valid_module(module: &TSModuleDeclaration) -> bool {
 }
 
 impl Rule for PreferNamespaceKeyword {
-    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run(ctx.source_type().is_typescript())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

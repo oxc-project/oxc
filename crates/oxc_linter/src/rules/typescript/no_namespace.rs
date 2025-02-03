@@ -57,11 +57,12 @@ impl Rule for NoNamespace {
         }
     }
 
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunMeta {
+        let meta = crate::rule::ShouldRunMeta::new();
         if self.allow_definition_files && ctx.source_type().is_typescript_definition() {
-            return false.into();
+            return meta;
         }
-        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+        meta.with_run(ctx.source_type().is_typescript())
     }
 
     #[allow(clippy::cast_possible_truncation)]

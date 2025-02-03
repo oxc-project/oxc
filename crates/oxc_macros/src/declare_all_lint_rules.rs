@@ -78,7 +78,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, ShouldRunState},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, ShouldRunMeta},
             utils::PossibleJestNode,
             AstNode
         };
@@ -164,7 +164,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub(super) fn should_run(&self, ctx: &ContextHost) -> ShouldRunState {
+            pub(super) fn should_run(&self, ctx: &ContextHost) -> ShouldRunMeta {
                 match self {
                     #(Self::#struct_names(rule) => rule.should_run(ctx)),*
                 }

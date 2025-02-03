@@ -83,8 +83,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateEnumValues {
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
-        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunMeta {
+        crate::rule::ShouldRunMeta::new().with_run(ctx.source_type().is_typescript())
     }
 
     #[allow(clippy::float_cmp)]
