@@ -972,30 +972,11 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectProperty, {
-            // TODO: Use `function::print_method()`
             if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
-                let mut parts = Vec::new_in(p.allocator);
-                match self.kind {
-                    PropertyKind::Get => {
-                        parts.push(text!("get "));
-                    }
-                    PropertyKind::Set => {
-                        parts.push(text!("set "));
-                    }
-                    PropertyKind::Init => (),
-                }
-                if let Expression::FunctionExpression(func_expr) = &self.value {
-                    parts.push(wrap!(p, func_expr, Function, {
-                        function::print_function(
-                            p,
-                            func_expr,
-                            Some(self.key.span().source_text(p.source_text)),
-                        )
-                    }));
-                }
-                return group!(p, parts);
+                return function::print_object_method(p, self);
             }
 
+            // TODO: Move this to top?
             if self.shorthand {
                 return self.value.format(p);
             }
