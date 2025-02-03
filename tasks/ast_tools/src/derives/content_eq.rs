@@ -1,31 +1,25 @@
-use itertools::Itertools;
+//! Derive for `ContentEq` trait.
+
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 
-use crate::{
-    schema::{EnumDef, GetGenerics, Schema, StructDef, ToType, TypeDef},
-    util::ToIdent,
-};
+use crate::schema::{Def, EnumDef, Schema, StructDef};
 
-use super::{define_derive, Derive};
+use super::{define_derive, Derive, StructOrEnum};
 
-const IGNORE_FIELD_TYPES: [/* type name */ &str; 4] = [
-    "Span",
-    "ScopeId",
-    "SymbolId",
-    "ReferenceId",
-];
+const IGNORE_FIELD_TYPES: [&str; 4] = ["Span", "ScopeId", "SymbolId", "ReferenceId"];
 
+/// Derive for `ContentEq` trait.
 pub struct DeriveContentEq;
 
 define_derive!(DeriveContentEq);
 
 impl Derive for DeriveContentEq {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "ContentEq"
     }
 
-    fn prelude() -> TokenStream {
+    fn prelude(&self) -> TokenStream {
         quote! {
             // NOTE: writing long match expressions formats better than using `matches` macro.
             #![allow(clippy::match_like_matches_macro)]
@@ -35,24 +29,45 @@ impl Derive for DeriveContentEq {
         }
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
-        let (other, body) = match &def {
-            TypeDef::Enum(it) => derive_enum(it),
-            TypeDef::Struct(it) => derive_struct(it),
-        };
-
-        impl_content_eq(def, other, &body)
+    fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
+        match type_def {
+            StructOrEnum::Struct(struct_def) => derive_struct(struct_def, schema),
+            StructOrEnum::Enum(enum_def) => derive_enum(enum_def, schema),
+        }
     }
 }
 
-fn derive_enum(def: &EnumDef) -> (&str, TokenStream) {
-    let body = if def.is_unit() {
-        // we assume unit enums implement `PartialEq`
+fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+    let fields = struct_def
+        .fields
+        .iter()
+        .filter(|field| {
+            let innermost_type = field.type_def(schema).innermost_type(schema);
+            !IGNORE_FIELD_TYPES.contains(&innermost_type.name())
+        })
+        .map(|field| {
+            let ident = field.ident();
+            quote!( ContentEq::content_eq(&self.#ident, &other.#ident) )
+        });
+
+    let mut body = quote!( #(#fields)&&* );
+    let mut other_name = "other";
+    if body.is_empty() {
+        body = quote!(true);
+        other_name = "_";
+    };
+
+    generate_impl(&struct_def.ty_anon(schema), other_name, &body)
+}
+
+fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    let body = if enum_def.is_fieldless() {
+        // We assume fieldless enums implement `PartialEq`
         quote!(self == other)
     } else {
-        let matches = def.all_variants().map(|var| {
-            let ident = var.ident();
-            if var.is_unit() {
+        let matches = enum_def.all_variants(schema).map(|variant| {
+            let ident = variant.ident();
+            if variant.is_fieldless() {
                 quote!( (Self::#ident, Self::#ident) => true )
             } else {
                 quote!( (Self::#ident(a), Self::#ident(b)) => a.content_eq(b) )
@@ -67,39 +82,14 @@ fn derive_enum(def: &EnumDef) -> (&str, TokenStream) {
         }
     };
 
-    ("other", body)
+    generate_impl(&enum_def.ty_anon(schema), "other", &body)
 }
 
-fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
-    if def.fields.is_empty() {
-        ("_", quote!(true))
-    } else {
-        let fields = def
-            .fields
-            .iter()
-            .filter(|field| {
-                !IGNORE_FIELD_TYPES.iter().any(|it| field.typ.name().inner_name() == *it)
-            })
-            .map(|field| {
-                let ident = field.ident();
-                quote!(ContentEq::content_eq(&self.#ident, &other.#ident))
-            })
-            .collect_vec();
-        if fields.is_empty() {
-            ("_", quote!(true))
-        } else {
-            ("other", quote!(#(#fields)&&*))
-        }
-    }
-}
-
-fn impl_content_eq(def: &TypeDef, other_name: &str, body: &TokenStream) -> TokenStream {
-    let ty = if def.has_lifetime() { def.to_elided_type() } else { def.to_type_elide() };
-    let other = other_name.to_ident();
-
+fn generate_impl(ty: &TokenStream, other_name: &str, body: &TokenStream) -> TokenStream {
+    let other_ident = format_ident!("{other_name}");
     quote! {
         impl ContentEq for #ty {
-            fn content_eq(&self, #other: &Self) -> bool {
+            fn content_eq(&self, #other_ident: &Self) -> bool {
                 #body
             }
         }

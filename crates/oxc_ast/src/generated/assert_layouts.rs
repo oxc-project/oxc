@@ -1568,6 +1568,9 @@ const _: () = {
     assert!(align_of::<NamedReference>() == 8usize);
     assert!(offset_of!(NamedReference, span) == 0usize);
     assert!(offset_of!(NamedReference, name) == 8usize);
+
+    assert!(size_of::<RegExpFlags>() == 1usize);
+    assert!(align_of::<RegExpFlags>() == 1usize);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -3131,6 +3134,9 @@ const _: () = {
     assert!(align_of::<NamedReference>() == 4usize);
     assert!(offset_of!(NamedReference, span) == 0usize);
     assert!(offset_of!(NamedReference, name) == 8usize);
+
+    assert!(size_of::<RegExpFlags>() == 1usize);
+    assert!(align_of::<RegExpFlags>() == 1usize);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
