@@ -1,4 +1,4 @@
-use std::{fs, io::Read};
+use std::fs;
 
 use indexmap::map::Entry;
 use syn::{
@@ -28,9 +28,7 @@ use super::{
 ///
 /// This is the bare minimum to be able to "link up" types to each other in next pass.
 pub fn load_file(file_id: FileId, file_path: &str, skeletons: &mut FxIndexMap<String, Skeleton>) {
-    let mut file = fs::File::open(file_path).unwrap();
-    let mut content = String::new();
-    file.read_to_string(&mut content).unwrap();
+    let content = fs::read_to_string(file_path).unwrap();
 
     let file = parse_file(content.as_str()).unwrap();
 

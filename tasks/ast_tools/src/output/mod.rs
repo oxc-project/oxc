@@ -1,8 +1,4 @@
-use std::{
-    fs,
-    io::{self, Write},
-    path::Path,
-};
+use std::{fs, io, path::Path};
 
 use cow_utils::CowUtils;
 use proc_macro2::TokenStream;
@@ -91,6 +87,5 @@ fn write_to_file_impl(data: &[u8], path: &str) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let mut file = fs::File::create(path)?;
-    file.write_all(data)
+    fs::write(path, data)
 }
