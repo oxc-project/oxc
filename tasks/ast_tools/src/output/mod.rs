@@ -83,6 +83,13 @@ impl RawOutput {
 }
 
 fn write_to_file_impl(data: &[u8], path: &str) -> io::Result<()> {
+    // If contents hasn't changed, don't touch the file
+    if let Ok(existing_data) = fs::read(path) {
+        if existing_data == data {
+            return Ok(());
+        }
+    }
+
     let path = Path::new(path);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
