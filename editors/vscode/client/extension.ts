@@ -1,20 +1,8 @@
 import { promises as fsPromises } from 'node:fs';
 
-import {
-  commands,
-  ExtensionContext,
-  StatusBarAlignment,
-  StatusBarItem,
-  ThemeColor,
-  window,
-  workspace,
-} from 'vscode';
+import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
 
-import {
-  ExecuteCommandRequest,
-  MessageType,
-  ShowMessageNotification,
-} from 'vscode-languageclient';
+import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -95,10 +83,10 @@ export async function activate(context: ExtensionContext) {
         command: LspCommands.FixAll,
         arguments: [{
           uri: textEditor.document.uri.toString(),
-        }]
-      }
+        }],
+      };
 
-      await client.sendRequest(ExecuteCommandRequest.type, params)
+      await client.sendRequest(ExecuteCommandRequest.type, params);
     },
   );
 
