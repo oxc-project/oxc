@@ -489,14 +489,13 @@ fn generate_doc_comment_for_params(params: &[Param]) -> TokenStream {
 
     let lines = params.iter().map(|param| {
         let field = param.field;
-        // TODO: `field.name()` would be better.
-        let field_ident = field.ident();
+        let field_name = field.name();
         let field_comment = if let Some(field_comment) = field.doc_comment.as_deref() {
-            format!(" * `{field_ident}`: {field_comment}")
+            format!(" * `{field_name}`: {field_comment}")
         } else if field.name() == "span" {
             " * `span`: The [`Span`] covering this node".to_string()
         } else {
-            format!(" * `{field_ident}`")
+            format!(" * `{field_name}`")
         };
         quote!( #[doc = #field_comment] )
     });

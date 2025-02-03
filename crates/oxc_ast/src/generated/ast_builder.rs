@@ -563,7 +563,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    /// * `r#async`
+    /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
@@ -699,7 +699,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
@@ -707,7 +707,7 @@ impl<'a> AstBuilder<'a> {
     /// * `super_type_parameters`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
-    /// * `r#abstract`: Whether the class is abstract
+    /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
     pub fn expression_class<T1, T2, T3>(
@@ -772,10 +772,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `id`: The function identifier. [`None`] for anonymous function expressions.
     /// * `generator`: Is this a generator function?
-    /// * `r#async`
+    /// * `async`
     /// * `declare`
     /// * `type_parameters`
     /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -3247,7 +3247,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#await`
+    /// * `await`
     /// * `left`
     /// * `right`
     /// * `body`
@@ -3593,10 +3593,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `id`: The function identifier. [`None`] for anonymous function expressions.
     /// * `generator`: Is this a generator function?
-    /// * `r#async`
+    /// * `async`
     /// * `declare`
     /// * `type_parameters`
     /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -3646,7 +3646,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
@@ -3654,7 +3654,7 @@ impl<'a> AstBuilder<'a> {
     /// * `super_type_parameters`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
-    /// * `r#abstract`: Whether the class is abstract
+    /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
     pub fn declaration_class<T1, T2, T3>(
@@ -3765,7 +3765,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`
     /// * `members`
-    /// * `r#const`: `true` for const enums
+    /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
     pub fn declaration_ts_enum(
@@ -4318,7 +4318,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#await`
+    /// * `await`
     /// * `left`
     /// * `right`
     /// * `body`
@@ -4340,7 +4340,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#await`
+    /// * `await`
     /// * `left`
     /// * `right`
     /// * `body`
@@ -4362,7 +4362,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#await`
+    /// * `await`
     /// * `left`
     /// * `right`
     /// * `body`
@@ -4386,7 +4386,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#await`
+    /// * `await`
     /// * `left`
     /// * `right`
     /// * `body`
@@ -5244,10 +5244,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `id`: The function identifier. [`None`] for anonymous function expressions.
     /// * `generator`: Is this a generator function?
-    /// * `r#async`
+    /// * `async`
     /// * `declare`
     /// * `type_parameters`
     /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -5298,10 +5298,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `id`: The function identifier. [`None`] for anonymous function expressions.
     /// * `generator`: Is this a generator function?
-    /// * `r#async`
+    /// * `async`
     /// * `declare`
     /// * `type_parameters`
     /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -5354,10 +5354,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `id`: The function identifier. [`None`] for anonymous function expressions.
     /// * `generator`: Is this a generator function?
-    /// * `r#async`
+    /// * `async`
     /// * `declare`
     /// * `type_parameters`
     /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -5410,10 +5410,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `id`: The function identifier. [`None`] for anonymous function expressions.
     /// * `generator`: Is this a generator function?
-    /// * `r#async`
+    /// * `async`
     /// * `declare`
     /// * `type_parameters`
     /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -5519,7 +5519,7 @@ impl<'a> AstBuilder<'a> {
     /// * `pattern`
     /// * `accessibility`
     /// * `readonly`
-    /// * `r#override`
+    /// * `override`
     #[inline]
     pub fn formal_parameter(
         self,
@@ -5543,7 +5543,7 @@ impl<'a> AstBuilder<'a> {
     /// * `pattern`
     /// * `accessibility`
     /// * `readonly`
-    /// * `r#override`
+    /// * `override`
     #[inline]
     pub fn alloc_formal_parameter(
         self,
@@ -5603,7 +5603,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    /// * `r#async`
+    /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
@@ -5644,7 +5644,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    /// * `r#async`
+    /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
@@ -5687,7 +5687,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    /// * `r#async`
+    /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
@@ -5730,7 +5730,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    /// * `r#async`
+    /// * `async`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
@@ -5811,7 +5811,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
@@ -5819,7 +5819,7 @@ impl<'a> AstBuilder<'a> {
     /// * `super_type_parameters`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
-    /// * `r#abstract`: Whether the class is abstract
+    /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
     pub fn class<T1, T2, T3>(
@@ -5863,7 +5863,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
@@ -5871,7 +5871,7 @@ impl<'a> AstBuilder<'a> {
     /// * `super_type_parameters`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
-    /// * `r#abstract`: Whether the class is abstract
+    /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
     pub fn alloc_class<T1, T2, T3>(
@@ -5917,7 +5917,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
@@ -5925,7 +5925,7 @@ impl<'a> AstBuilder<'a> {
     /// * `super_type_parameters`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
-    /// * `r#abstract`: Whether the class is abstract
+    /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
@@ -5971,7 +5971,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
@@ -5979,7 +5979,7 @@ impl<'a> AstBuilder<'a> {
     /// * `super_type_parameters`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
-    /// * `r#abstract`: Whether the class is abstract
+    /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
@@ -6072,14 +6072,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`: Method definition type
+    /// * `type`: Method definition type
     /// * `decorators`
     /// * `key`
     /// * `value`
     /// * `kind`
     /// * `computed`
-    /// * `r#static`
-    /// * `r#override`
+    /// * `static`
+    /// * `override`
     /// * `optional`
     /// * `accessibility`
     #[inline]
@@ -6121,14 +6121,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
-    /// * `r#static`: Property was declared with a `static` modifier
+    /// * `static`: Property was declared with a `static` modifier
     /// * `declare`: Property is declared with a `declare` modifier.
-    /// * `r#override`
+    /// * `override`
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
@@ -6179,12 +6179,12 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
-    /// * `r#static`: Property was declared with a `static` modifier
+    /// * `static`: Property was declared with a `static` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
@@ -6228,7 +6228,7 @@ impl<'a> AstBuilder<'a> {
     /// * `parameters`
     /// * `type_annotation`
     /// * `readonly`
-    /// * `r#static`
+    /// * `static`
     #[inline]
     pub fn class_element_ts_index_signature<T1>(
         self,
@@ -6256,14 +6256,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`: Method definition type
+    /// * `type`: Method definition type
     /// * `decorators`
     /// * `key`
     /// * `value`
     /// * `kind`
     /// * `computed`
-    /// * `r#static`
-    /// * `r#override`
+    /// * `static`
+    /// * `override`
     /// * `optional`
     /// * `accessibility`
     #[inline]
@@ -6305,14 +6305,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`: Method definition type
+    /// * `type`: Method definition type
     /// * `decorators`
     /// * `key`
     /// * `value`
     /// * `kind`
     /// * `computed`
-    /// * `r#static`
-    /// * `r#override`
+    /// * `static`
+    /// * `override`
     /// * `optional`
     /// * `accessibility`
     #[inline]
@@ -6357,14 +6357,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
-    /// * `r#static`: Property was declared with a `static` modifier
+    /// * `static`: Property was declared with a `static` modifier
     /// * `declare`: Property is declared with a `declare` modifier.
-    /// * `r#override`
+    /// * `override`
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
@@ -6415,14 +6415,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the property.
     /// * `key`: The expression used to declare the property.
     /// * `value`: Initialized value in the declaration.
     /// * `computed`: Property was declared with a computed key
-    /// * `r#static`: Property was declared with a `static` modifier
+    /// * `static`: Property was declared with a `static` modifier
     /// * `declare`: Property is declared with a `declare` modifier.
-    /// * `r#override`
+    /// * `override`
     /// * `optional`: `true` when created with an optional modifier (`?`)
     /// * `definite`
     /// * `readonly`: `true` when declared with a `readonly` modifier
@@ -6725,12 +6725,12 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
-    /// * `r#static`: Property was declared with a `static` modifier
+    /// * `static`: Property was declared with a `static` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
@@ -6771,12 +6771,12 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the accessor property.
     /// * `key`: The expression used to declare the property.
     /// * `value`: Initialized value in the declaration, if present.
     /// * `computed`: Property was declared with a computed key
-    /// * `r#static`: Property was declared with a `static` modifier
+    /// * `static`: Property was declared with a `static` modifier
     /// * `definite`: Property has a `!` after its key.
     /// * `type_annotation`: Type annotation on the property.
     /// * `accessibility`: Accessibility modifier.
@@ -7403,10 +7403,10 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `id`: The function identifier. [`None`] for anonymous function expressions.
     /// * `generator`: Is this a generator function?
-    /// * `r#async`
+    /// * `async`
     /// * `declare`
     /// * `type_parameters`
     /// * `this_param`: Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -7456,7 +7456,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#type`
+    /// * `type`
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
@@ -7464,7 +7464,7 @@ impl<'a> AstBuilder<'a> {
     /// * `super_type_parameters`: Type parameters passed to super class.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
-    /// * `r#abstract`: Whether the class is abstract
+    /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
     pub fn export_default_declaration_kind_class<T1, T2, T3>(
@@ -7639,7 +7639,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`
     /// * `members`
-    /// * `r#const`: `true` for const enums
+    /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
     pub fn ts_enum_declaration(
@@ -7661,7 +7661,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`
     /// * `members`
-    /// * `r#const`: `true` for const enums
+    /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
     pub fn alloc_ts_enum_declaration(
@@ -7683,7 +7683,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`
     /// * `members`
-    /// * `r#const`: `true` for const enums
+    /// * `const`: `true` for const enums
     /// * `declare`
     /// * `scope_id`
     #[inline]
@@ -7714,7 +7714,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`
     /// * `members`
-    /// * `r#const`: `true` for const enums
+    /// * `const`: `true` for const enums
     /// * `declare`
     /// * `scope_id`
     #[inline]
@@ -8193,7 +8193,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#abstract`
+    /// * `abstract`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
@@ -9582,9 +9582,9 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
     /// * `constraint`: Constrains what types can be passed to the type parameter.
     /// * `default`: Default value of the type parameter if no type is provided when using the type.
-    /// * `r#in`: Was an `in` modifier keyword present?
+    /// * `in`: Was an `in` modifier keyword present?
     /// * `out`: Was an `out` modifier keyword present?
-    /// * `r#const`: Was a `const` modifier keyword present?
+    /// * `const`: Was a `const` modifier keyword present?
     #[inline]
     pub fn ts_type_parameter(
         self,
@@ -9608,9 +9608,9 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
     /// * `constraint`: Constrains what types can be passed to the type parameter.
     /// * `default`: Default value of the type parameter if no type is provided when using the type.
-    /// * `r#in`: Was an `in` modifier keyword present?
+    /// * `in`: Was an `in` modifier keyword present?
     /// * `out`: Was an `out` modifier keyword present?
-    /// * `r#const`: Was a `const` modifier keyword present?
+    /// * `const`: Was a `const` modifier keyword present?
     #[inline]
     pub fn alloc_ts_type_parameter(
         self,
@@ -10088,7 +10088,7 @@ impl<'a> AstBuilder<'a> {
     /// * `parameters`
     /// * `type_annotation`
     /// * `readonly`
-    /// * `r#static`
+    /// * `static`
     #[inline]
     pub fn ts_signature_index_signature<T1>(
         self,
@@ -10262,7 +10262,7 @@ impl<'a> AstBuilder<'a> {
     /// * `parameters`
     /// * `type_annotation`
     /// * `readonly`
-    /// * `r#static`
+    /// * `static`
     #[inline]
     pub fn ts_index_signature<T1>(
         self,
@@ -10293,7 +10293,7 @@ impl<'a> AstBuilder<'a> {
     /// * `parameters`
     /// * `type_annotation`
     /// * `readonly`
-    /// * `r#static`
+    /// * `static`
     #[inline]
     pub fn alloc_ts_index_signature<T1>(
         self,
@@ -11482,7 +11482,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#abstract`
+    /// * `abstract`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
@@ -11515,7 +11515,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `r#abstract`
+    /// * `abstract`
     /// * `type_parameters`
     /// * `params`
     /// * `return_type`
