@@ -167,28 +167,29 @@ fn js_parser_test() {
     test("const a=0; for (var b;;) ;", "const a = 0;for (var b;;) ;");
     test("a(); while (1) ;", "for (a();;) ;");
     test("a(); for (b();;) ;", "for (a(), b();;) ;");
-    // test("for (; ;) if (x) break;", "for (; !x; ) ;");
-    // test("for (; ;) if (!x) break;", "for (; x; ) ;");
-    // test("for (; a;) if (x) break;", "for (; a && !x; ) ;");
-    // test("for (; a;) if (!x) break;", "for (; a && x; ) ;");
+    test("for (; ;) if (x) break;", "for (; !x; ) ;");
+    test("for (; ;) if (!x) break;", "for (; x; ) ;");
+    test("for (; a;) if (x) break;", "for (; a && !x; ) ;");
+    test("for (; a;) if (!x) break;", "for (; a && x; ) ;");
+    // TODO: optimizeImplicitJump in `mangleStmts`
     // test("for (; ;) { if (x) break; y(); }", "for (; !x; ) y();");
     // test("for (; a;) { if (x) break; y(); }", "for (; a && !x; ) y();");
-    // test("for (; ;) if (x) break; else y();", "for (; !x; ) y();");
-    // test("for (; a;) if (x) break; else y();", "for (; a && !x; ) y();");
+    test("for (; ;) if (x) break; else y();", "for (; !x; ) y();");
+    test("for (; a;) if (x) break; else y();", "for (; a && !x; ) y();");
     // test("for (; ;) { if (x) break; else y(); z(); }", "for (; !x; ) y(), z();");
     // test("for (; a;) { if (x) break; else y(); z(); }", "for (; a && !x; ) y(), z();");
-    // test("for (; ;) if (x) y(); else break;", "for (; x; ) y();");
-    // test("for (; ;) if (!x) y(); else break;", "for (; !x; ) y();");
-    // test("for (; a;) if (x) y(); else break;", "for (; a && x; ) y();");
-    // test("for (; a;) if (!x) y(); else break;", "for (; a && !x; ) y();");
+    test("for (; ;) if (x) y(); else break;", "for (; x; ) y();");
+    test("for (; ;) if (!x) y(); else break;", "for (; !x; ) y();");
+    test("for (; a;) if (x) y(); else break;", "for (; a && x; ) y();");
+    test("for (; a;) if (!x) y(); else break;", "for (; a && !x; ) y();");
     // test("for (; ;) { if (x) y(); else break; z(); }", "for (; x; ) { y(); z();}");
     // test("for (; a;) { if (x) y(); else break; z(); }", "for (; a && x; ) { y(); z();}");
-    // test("while (x) { if (1) break; z(); }", "for (; x; ) break;");
-    // test("while (x) { if (1) continue; z(); }", "for (; x; ) ;");
-    // test(
-    // "foo: while (a) while (x) { if (1) continue foo; z(); }",
-    // "foo: for (; a; ) for (; x; ) continue foo;",
-    // );
+    test("while (x) { if (1) break; z(); }", "for (; x; ) break;");
+    test("while (x) { if (1) continue; z(); }", "for (; x; ) ;");
+    test(
+        "foo: while (a) while (x) { if (1) continue foo; z(); }",
+        "foo: for (; a; ) for (; x; ) continue foo;",
+    );
     test("while (x) { y(); if (1) break; z(); }", "for (; x; ) { y(); break;}");
     test("while (x) { y(); if (1) continue; z(); }", "for (; x; ) y();");
     test("while (x) { y(); debugger; if (1) continue; z(); }", "for (; x; ) { y(); debugger; }");
@@ -206,10 +207,10 @@ fn js_parser_test() {
     // test("while (x()) continue", "for (; x(); ) ;");
     test("while (x) { y(); continue }", "for (; x; ) y();");
     test("while (x) { if (y) { z(); continue } }", "for (; x; ) if (y) { z(); continue; }");
-    // test(
-    // "label: while (x) while (y) { z(); continue label }",
-    // "label: for (; x; ) for (; y; ) { z(); continue label;}",
-    // );
+    test(
+        "label: while (x) while (y) { z(); continue label }",
+        "label: for (; x; ) for (; y; ) { z(); continue label;}",
+    );
     // test("while (x) { if (y) continue; z(); }", "for (; x; ) y || z();");
     // test("while (x) { if (y) continue; else z(); w(); }", "for (; x; ) y || (z(), w());");
     // test("while (x) { t(); if (y) continue; z(); }", "for (; x; ) t(), !y && z();");

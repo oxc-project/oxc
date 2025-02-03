@@ -5,6 +5,7 @@ mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_exit_points;
 mod minimize_expression_in_boolean_context;
+mod minimize_for_statement;
 mod minimize_if_statement;
 mod minimize_not_expression;
 mod minimize_statements;
@@ -158,6 +159,13 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             }
         }
         self.substitute_exit_statement(stmt, Ctx(traverse_ctx));
+    }
+
+    fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.is_prev_function_changed() {
+            return;
+        }
+        self.minimize_for_statement(stmt, Ctx(ctx));
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
