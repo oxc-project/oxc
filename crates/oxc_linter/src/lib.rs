@@ -107,7 +107,7 @@ impl Linter {
         let rules = rules.iter().filter_map(|rule| {
             let state = rule.should_run(&ctx_host);
             if state.enable {
-                Some((rule, Rc::clone(&ctx_host).spawn(rule), state))
+                Some(Rc::new((rule, Rc::clone(&ctx_host).spawn(rule), state)))
             } else {
                 None
             }
@@ -136,60 +136,81 @@ impl Linter {
         // don't thrash the cache too much. Feel free to tweak based on benchmarking.
         //
         // See https://github.com/oxc-project/oxc/pull/6600 for more context.
+        if semantic.stats().nodes > 200_000 {
+            // Use fold to categorize rules into separate vectors
+            let (run, run_once, run_on_symbol, run_on_jest_node) = rules.fold(
+                (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+                |(mut run, mut run_once, mut run_on_symbol, mut run_on_jest_node), rule| {
+                    if rule.2.run_once {
+                        run_once.push(Rc::clone(&rule));
+                    }
+                    if rule.2.run_on_symbol {
+                        run_on_symbol.push(Rc::clone(&rule));
+                    }
+                    if rule.2.run_on_jest_node {
+                        run_on_jest_node.push(Rc::clone(&rule));
+                    }
+                    if rule.2.run {
+                        run.push(rule);
+                    }
+                    (run, run_once, run_on_symbol, run_on_jest_node)
+                },
+            );
 
-        // TODO(shulaoda): Check if it still works
-        // if semantic.stats().nodes > 200_000 {
-        //     // Collect rules into a Vec so that we can iterate over the rules multiple times
-        //     let rules = rules.collect::<Vec<_>>();
-
-        //     for (rule, ctx, _) in rules.iter() {
-        //         rule.run_once(ctx);
-        //     }
-
-        //     for symbol in semantic.symbols().symbol_ids() {
-        //         for (rule, ctx, _) in rules.iter() {
-        //             rule.run_on_symbol(symbol, ctx);
-        //         }
-        //     }
-
-        //     for node in semantic.nodes() {
-        //         for (rule, ctx, _) in rules.iter() {
-        //             rule.run(node, ctx);
-        //         }
-        //     }
-
-        //     if should_run_on_jest_node {
-        //         for jest_node in iter_possible_jest_call_node(semantic) {
-        //             for (rule, ctx, _) in rules.iter() {
-        //                 rule.run_on_jest_node(&jest_node, ctx);
-        //             }
-        //         }
-        //     }
-        // } else {
-        for (rule, ref ctx, state) in rules {
-            if state.run_once {
+            for rule in &run_once {
+                let (rule, ref ctx, _) = rule.as_ref();
                 rule.run_once(ctx);
             }
 
-            if state.run_on_symbol {
+            if !run_on_symbol.is_empty() {
                 for symbol in semantic.symbols().symbol_ids() {
-                    rule.run_on_symbol(symbol, ctx);
+                    for rule in &run_on_symbol {
+                        let (rule, ref ctx, _) = rule.as_ref();
+                        rule.run_on_symbol(symbol, ctx);
+                    }
                 }
             }
 
-            if state.run {
+            if !run.is_empty() {
                 for node in semantic.nodes() {
-                    rule.run(node, ctx);
+                    for rule in &run {
+                        let (rule, ref ctx, _) = rule.as_ref();
+                        rule.run(node, ctx);
+                    }
                 }
             }
 
-            if state.run_on_jest_node && should_run_on_jest_node {
+            if should_run_on_jest_node && !run_on_jest_node.is_empty() {
                 for jest_node in iter_possible_jest_call_node(semantic) {
-                    rule.run_on_jest_node(&jest_node, ctx);
+                    for rule in &run_on_jest_node {
+                        let (rule, ref ctx, _) = rule.as_ref();
+                        rule.run_on_jest_node(&jest_node, ctx);
+                    }
+                }
+            }
+        } else {
+            for rule in rules {
+                let (rule, ref ctx, state) = rule.as_ref();
+                if state.run_once {
+                    rule.run_once(ctx);
+                }
+                if state.run_on_symbol {
+                    for symbol in semantic.symbols().symbol_ids() {
+                        rule.run_on_symbol(symbol, ctx);
+                    }
+                }
+                if state.run {
+                    for node in semantic.nodes() {
+                        rule.run(node, ctx);
+                    }
+                }
+                if state.run_on_jest_node && should_run_on_jest_node {
+                    for jest_node in iter_possible_jest_call_node(semantic) {
+                        rule.run_on_jest_node(&jest_node, ctx);
+                    }
                 }
             }
         }
-        // }
 
         ctx_host.take_diagnostics()
     }
