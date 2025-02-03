@@ -3,11 +3,8 @@ use serde::Deserialize;
 use tower_lsp::{
     jsonrpc::{self, Error},
     lsp_types::{
-        request::ApplyWorkspaceEdit, ApplyWorkspaceEditParams, DidChangeTextDocumentParams,
-        TextDocumentContentChangeEvent, TextEdit, Url, VersionedTextDocumentIdentifier,
-        WorkspaceEdit,
+        request::ApplyWorkspaceEdit, ApplyWorkspaceEditParams, TextEdit, Url, WorkspaceEdit,
     },
-    LanguageServer,
 };
 
 use crate::{capabilities::Capabilities, Backend};
