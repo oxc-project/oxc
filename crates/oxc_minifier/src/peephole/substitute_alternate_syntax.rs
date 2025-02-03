@@ -503,20 +503,10 @@ impl<'a> PeepholeOptimizations {
             "Boolean" => match arg {
                 None => Some(ctx.ast.expression_boolean_literal(span, false)),
                 Some(arg) => {
-                    if let Expression::UnaryExpression(unary_expr) = arg {
-                        if unary_expr.operator == UnaryOperator::LogicalNot {
-                            return Some(ctx.ast.move_expression(arg));
-                        }
-                    }
-                    Some(ctx.ast.expression_unary(
-                        span,
-                        UnaryOperator::LogicalNot,
-                        ctx.ast.expression_unary(
-                            span,
-                            UnaryOperator::LogicalNot,
-                            ctx.ast.move_expression(arg),
-                        ),
-                    ))
+                    let mut arg = ctx.ast.move_expression(arg);
+                    Self::try_fold_expr_in_boolean_context(&mut arg, ctx);
+                    let arg = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, arg);
+                    Some(Self::minimize_not(span, arg, ctx))
                 }
             },
             "String" => {

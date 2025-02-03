@@ -403,8 +403,8 @@ fn js_parser_test() {
     test("a = !!(b && !c)", "a = !!(b && !c);");
     test("a = !!(b || !c)", "a = !!(b || !c);");
     test("a = !!(b ?? !c)", "a = !!(b ?? !c);");
-    // test("a = !!(!b && !c)", "a = !b && !c;");
-    // test("a = !!(!b || !c)", "a = !b || !c;");
+    test("a = !!(!b && !c)", "a = !b && !c;");
+    test("a = !!(!b || !c)", "a = !b || !c;");
     test("a = !!(!b ?? !c)", "a = !b;");
     test("a = !!(b, c)", "a = (b, !!c);");
     test("a = Boolean(b); var Boolean", "a = Boolean(b);var Boolean;");
@@ -414,9 +414,9 @@ fn js_parser_test() {
     test("a = Boolean(!!b)", "a = !!b;");
     test("a = Boolean(b ? true : false)", "a = !!b;");
     test("a = Boolean(b ? false : true)", "a = !b;");
-    // test("a = Boolean(b ? c > 0 : c < 0)", "a = b ? c > 0 : c < 0;");
-    // test("a = Boolean((b | c) !== 0)", "a = !!(b | c);");
-    // test("a = Boolean(b ? (c | d) !== 0 : (d | e) !== 0)", "a = !!(b ? c | d : d | e);");
+    test("a = Boolean(b ? c > 0 : c < 0)", "a = b ? c > 0 : c < 0;");
+    test("a = Boolean((b | c) !== 0)", "a = !!(b | c);");
+    test("a = Boolean(b ? (c | d) !== 0 : (d | e) !== 0)", "a = !!(b ? c | d : d | e);");
     test("a = Number(x)", "a = Number(x);");
     test("a = Number(0n)", "a = Number(0n);");
     test("a = Number(false); var Number", "a = Number(!1);var Number;");
