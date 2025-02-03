@@ -972,13 +972,12 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectProperty, {
-            if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
-                return function::print_object_method(p, self);
-            }
-
-            // TODO: Move this to top?
             if self.shorthand {
                 return self.value.format(p);
+            }
+
+            if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
+                return function::print_object_method(p, self);
             }
 
             let left_doc = property::print_property_key(
