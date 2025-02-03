@@ -24,202 +24,6 @@ pub struct AstBuilder<'a> {
 }
 
 impl<'a> AstBuilder<'a> {
-    /// Build a [`BooleanLiteral`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_boolean_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The boolean value itself
-    #[inline]
-    pub fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
-        BooleanLiteral { span, value }
-    }
-
-    /// Build a [`BooleanLiteral`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::boolean_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The boolean value itself
-    #[inline]
-    pub fn alloc_boolean_literal(self, span: Span, value: bool) -> Box<'a, BooleanLiteral> {
-        Box::new_in(self.boolean_literal(span, value), self.allocator)
-    }
-
-    /// Build a [`NullLiteral`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_null_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    #[inline]
-    pub fn null_literal(self, span: Span) -> NullLiteral {
-        NullLiteral { span }
-    }
-
-    /// Build a [`NullLiteral`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::null_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    #[inline]
-    pub fn alloc_null_literal(self, span: Span) -> Box<'a, NullLiteral> {
-        Box::new_in(self.null_literal(span), self.allocator)
-    }
-
-    /// Build a [`NumericLiteral`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_numeric_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The value of the number, converted into base 10
-    /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
-    #[inline]
-    pub fn numeric_literal(
-        self,
-        span: Span,
-        value: f64,
-        raw: Option<Atom<'a>>,
-        base: NumberBase,
-    ) -> NumericLiteral<'a> {
-        NumericLiteral { span, value, raw, base }
-    }
-
-    /// Build a [`NumericLiteral`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::numeric_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The value of the number, converted into base 10
-    /// * `raw`: The number as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
-    #[inline]
-    pub fn alloc_numeric_literal(
-        self,
-        span: Span,
-        value: f64,
-        raw: Option<Atom<'a>>,
-        base: NumberBase,
-    ) -> Box<'a, NumericLiteral<'a>> {
-        Box::new_in(self.numeric_literal(span, value, raw, base), self.allocator)
-    }
-
-    /// Build a [`StringLiteral`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    #[inline]
-    pub fn string_literal<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> StringLiteral<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        StringLiteral { span, value: value.into_in(self.allocator), raw }
-    }
-
-    /// Build a [`StringLiteral`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    #[inline]
-    pub fn alloc_string_literal<A>(
-        self,
-        span: Span,
-        value: A,
-        raw: Option<Atom<'a>>,
-    ) -> Box<'a, StringLiteral<'a>>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        Box::new_in(self.string_literal(span, value, raw), self.allocator)
-    }
-
-    /// Build a [`BigIntLiteral`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_big_int_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
-    #[inline]
-    pub fn big_int_literal<A>(self, span: Span, raw: A, base: BigintBase) -> BigIntLiteral<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        BigIntLiteral { span, raw: raw.into_in(self.allocator), base }
-    }
-
-    /// Build a [`BigIntLiteral`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::big_int_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `raw`: The bigint as it appears in source code
-    /// * `base`: The base representation used by the literal in source code
-    #[inline]
-    pub fn alloc_big_int_literal<A>(
-        self,
-        span: Span,
-        raw: A,
-        base: BigintBase,
-    ) -> Box<'a, BigIntLiteral<'a>>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        Box::new_in(self.big_int_literal(span, raw, base), self.allocator)
-    }
-
-    /// Build a [`RegExpLiteral`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_reg_exp_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
-    /// * `raw`: The regular expression as it appears in source code
-    #[inline]
-    pub fn reg_exp_literal(
-        self,
-        span: Span,
-        regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
-    ) -> RegExpLiteral<'a> {
-        RegExpLiteral { span, regex, raw }
-    }
-
-    /// Build a [`RegExpLiteral`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::reg_exp_literal`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
-    /// * `raw`: The regular expression as it appears in source code
-    #[inline]
-    pub fn alloc_reg_exp_literal(
-        self,
-        span: Span,
-        regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
-    ) -> Box<'a, RegExpLiteral<'a>> {
-        Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
-    }
-
     /// Build a [`Program`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_program`] instead.
@@ -7585,6 +7389,1069 @@ impl<'a> AstBuilder<'a> {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
     }
 
+    /// Build a [`BooleanLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_boolean_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The boolean value itself
+    #[inline]
+    pub fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
+        BooleanLiteral { span, value }
+    }
+
+    /// Build a [`BooleanLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::boolean_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The boolean value itself
+    #[inline]
+    pub fn alloc_boolean_literal(self, span: Span, value: bool) -> Box<'a, BooleanLiteral> {
+        Box::new_in(self.boolean_literal(span, value), self.allocator)
+    }
+
+    /// Build a [`NullLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_null_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn null_literal(self, span: Span) -> NullLiteral {
+        NullLiteral { span }
+    }
+
+    /// Build a [`NullLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::null_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn alloc_null_literal(self, span: Span) -> Box<'a, NullLiteral> {
+        Box::new_in(self.null_literal(span), self.allocator)
+    }
+
+    /// Build a [`NumericLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_numeric_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the number, converted into base 10
+    /// * `raw`: The number as it appears in source code
+    /// * `base`: The base representation used by the literal in source code
+    #[inline]
+    pub fn numeric_literal(
+        self,
+        span: Span,
+        value: f64,
+        raw: Option<Atom<'a>>,
+        base: NumberBase,
+    ) -> NumericLiteral<'a> {
+        NumericLiteral { span, value, raw, base }
+    }
+
+    /// Build a [`NumericLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::numeric_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the number, converted into base 10
+    /// * `raw`: The number as it appears in source code
+    /// * `base`: The base representation used by the literal in source code
+    #[inline]
+    pub fn alloc_numeric_literal(
+        self,
+        span: Span,
+        value: f64,
+        raw: Option<Atom<'a>>,
+        base: NumberBase,
+    ) -> Box<'a, NumericLiteral<'a>> {
+        Box::new_in(self.numeric_literal(span, value, raw, base), self.allocator)
+    }
+
+    /// Build a [`StringLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    #[inline]
+    pub fn string_literal<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> StringLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        StringLiteral { span, value: value.into_in(self.allocator), raw }
+    }
+
+    /// Build a [`StringLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    #[inline]
+    pub fn alloc_string_literal<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+    ) -> Box<'a, StringLiteral<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(self.string_literal(span, value, raw), self.allocator)
+    }
+
+    /// Build a [`BigIntLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_big_int_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `raw`: The bigint as it appears in source code
+    /// * `base`: The base representation used by the literal in source code
+    #[inline]
+    pub fn big_int_literal<A>(self, span: Span, raw: A, base: BigintBase) -> BigIntLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        BigIntLiteral { span, raw: raw.into_in(self.allocator), base }
+    }
+
+    /// Build a [`BigIntLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::big_int_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `raw`: The bigint as it appears in source code
+    /// * `base`: The base representation used by the literal in source code
+    #[inline]
+    pub fn alloc_big_int_literal<A>(
+        self,
+        span: Span,
+        raw: A,
+        base: BigintBase,
+    ) -> Box<'a, BigIntLiteral<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(self.big_int_literal(span, raw, base), self.allocator)
+    }
+
+    /// Build a [`RegExpLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_reg_exp_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// * `raw`: The regular expression as it appears in source code
+    #[inline]
+    pub fn reg_exp_literal(
+        self,
+        span: Span,
+        regex: RegExp<'a>,
+        raw: Option<Atom<'a>>,
+    ) -> RegExpLiteral<'a> {
+        RegExpLiteral { span, regex, raw }
+    }
+
+    /// Build a [`RegExpLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::reg_exp_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
+    /// * `raw`: The regular expression as it appears in source code
+    #[inline]
+    pub fn alloc_reg_exp_literal(
+        self,
+        span: Span,
+        regex: RegExp<'a>,
+        raw: Option<Atom<'a>>,
+    ) -> Box<'a, RegExpLiteral<'a>> {
+        Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
+    }
+
+    /// Build a [`JSXElement`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_element`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `opening_element`: Opening tag of the element.
+    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    #[inline]
+    pub fn jsx_element<T1, T2>(
+        self,
+        span: Span,
+        opening_element: T1,
+        closing_element: T2,
+        children: Vec<'a, JSXChild<'a>>,
+    ) -> JSXElement<'a>
+    where
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+    {
+        JSXElement {
+            span,
+            opening_element: opening_element.into_in(self.allocator),
+            closing_element: closing_element.into_in(self.allocator),
+            children,
+        }
+    }
+
+    /// Build a [`JSXElement`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_element`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `opening_element`: Opening tag of the element.
+    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    #[inline]
+    pub fn alloc_jsx_element<T1, T2>(
+        self,
+        span: Span,
+        opening_element: T1,
+        closing_element: T2,
+        children: Vec<'a, JSXChild<'a>>,
+    ) -> Box<'a, JSXElement<'a>>
+    where
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+    {
+        Box::new_in(
+            self.jsx_element(span, opening_element, closing_element, children),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`JSXOpeningElement`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_opening_element`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `self_closing`: Is this tag self-closing?
+    /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
+    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
+    /// * `type_parameters`: Type parameters for generic JSX elements.
+    #[inline]
+    pub fn jsx_opening_element<T1>(
+        self,
+        span: Span,
+        self_closing: bool,
+        name: JSXElementName<'a>,
+        attributes: Vec<'a, JSXAttributeItem<'a>>,
+        type_parameters: T1,
+    ) -> JSXOpeningElement<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        JSXOpeningElement {
+            span,
+            self_closing,
+            name,
+            attributes,
+            type_parameters: type_parameters.into_in(self.allocator),
+        }
+    }
+
+    /// Build a [`JSXOpeningElement`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_opening_element`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `self_closing`: Is this tag self-closing?
+    /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
+    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
+    /// * `type_parameters`: Type parameters for generic JSX elements.
+    #[inline]
+    pub fn alloc_jsx_opening_element<T1>(
+        self,
+        span: Span,
+        self_closing: bool,
+        name: JSXElementName<'a>,
+        attributes: Vec<'a, JSXAttributeItem<'a>>,
+        type_parameters: T1,
+    ) -> Box<'a, JSXOpeningElement<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        Box::new_in(
+            self.jsx_opening_element(span, self_closing, name, attributes, type_parameters),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`JSXClosingElement`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_closing_element`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The tag name, e.g. `Foo` in `</Foo>`.
+    #[inline]
+    pub fn jsx_closing_element(
+        self,
+        span: Span,
+        name: JSXElementName<'a>,
+    ) -> JSXClosingElement<'a> {
+        JSXClosingElement { span, name }
+    }
+
+    /// Build a [`JSXClosingElement`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_closing_element`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The tag name, e.g. `Foo` in `</Foo>`.
+    #[inline]
+    pub fn alloc_jsx_closing_element(
+        self,
+        span: Span,
+        name: JSXElementName<'a>,
+    ) -> Box<'a, JSXClosingElement<'a>> {
+        Box::new_in(self.jsx_closing_element(span, name), self.allocator)
+    }
+
+    /// Build a [`JSXFragment`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `opening_fragment`: `<>`
+    /// * `closing_fragment`: `</>`
+    /// * `children`: Elements inside the fragment.
+    #[inline]
+    pub fn jsx_fragment(
+        self,
+        span: Span,
+        opening_fragment: JSXOpeningFragment,
+        closing_fragment: JSXClosingFragment,
+        children: Vec<'a, JSXChild<'a>>,
+    ) -> JSXFragment<'a> {
+        JSXFragment { span, opening_fragment, closing_fragment, children }
+    }
+
+    /// Build a [`JSXFragment`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `opening_fragment`: `<>`
+    /// * `closing_fragment`: `</>`
+    /// * `children`: Elements inside the fragment.
+    #[inline]
+    pub fn alloc_jsx_fragment(
+        self,
+        span: Span,
+        opening_fragment: JSXOpeningFragment,
+        closing_fragment: JSXClosingFragment,
+        children: Vec<'a, JSXChild<'a>>,
+    ) -> Box<'a, JSXFragment<'a>> {
+        Box::new_in(
+            self.jsx_fragment(span, opening_fragment, closing_fragment, children),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`JSXElementName::Identifier`].
+    ///
+    /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The name of the identifier.
+    #[inline]
+    pub fn jsx_element_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXElementName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXElementName::Identifier(self.alloc_jsx_identifier(span, name))
+    }
+
+    /// Build a [`JSXElementName::IdentifierReference`].
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    #[inline]
+    pub fn jsx_element_name_identifier_reference<A>(self, span: Span, name: A) -> JSXElementName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXElementName::IdentifierReference(self.alloc_identifier_reference(span, name))
+    }
+
+    /// Build a [`JSXElementName::NamespacedName`].
+    ///
+    /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
+    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    #[inline]
+    pub fn jsx_element_name_jsx_namespaced_name(
+        self,
+        span: Span,
+        namespace: JSXIdentifier<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> JSXElementName<'a> {
+        JSXElementName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
+    }
+
+    /// Build a [`JSXElementName::MemberExpression`].
+    ///
+    /// This node contains a [`JSXMemberExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `object`: The object being accessed. This is everything before the last `.`.
+    /// * `property`: The property being accessed. This is everything after the last `.`.
+    #[inline]
+    pub fn jsx_element_name_jsx_member_expression(
+        self,
+        span: Span,
+        object: JSXMemberExpressionObject<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> JSXElementName<'a> {
+        JSXElementName::MemberExpression(self.alloc_jsx_member_expression(span, object, property))
+    }
+
+    /// Build a [`JSXElementName::ThisExpression`].
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn jsx_element_name_this_expression(self, span: Span) -> JSXElementName<'a> {
+        JSXElementName::ThisExpression(self.alloc_this_expression(span))
+    }
+
+    /// Build a [`JSXNamespacedName`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_namespaced_name`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
+    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    #[inline]
+    pub fn jsx_namespaced_name(
+        self,
+        span: Span,
+        namespace: JSXIdentifier<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> JSXNamespacedName<'a> {
+        JSXNamespacedName { span, namespace, property }
+    }
+
+    /// Build a [`JSXNamespacedName`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_namespaced_name`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
+    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    #[inline]
+    pub fn alloc_jsx_namespaced_name(
+        self,
+        span: Span,
+        namespace: JSXIdentifier<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> Box<'a, JSXNamespacedName<'a>> {
+        Box::new_in(self.jsx_namespaced_name(span, namespace, property), self.allocator)
+    }
+
+    /// Build a [`JSXMemberExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_member_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `object`: The object being accessed. This is everything before the last `.`.
+    /// * `property`: The property being accessed. This is everything after the last `.`.
+    #[inline]
+    pub fn jsx_member_expression(
+        self,
+        span: Span,
+        object: JSXMemberExpressionObject<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> JSXMemberExpression<'a> {
+        JSXMemberExpression { span, object, property }
+    }
+
+    /// Build a [`JSXMemberExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_member_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `object`: The object being accessed. This is everything before the last `.`.
+    /// * `property`: The property being accessed. This is everything after the last `.`.
+    #[inline]
+    pub fn alloc_jsx_member_expression(
+        self,
+        span: Span,
+        object: JSXMemberExpressionObject<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> Box<'a, JSXMemberExpression<'a>> {
+        Box::new_in(self.jsx_member_expression(span, object, property), self.allocator)
+    }
+
+    /// Build a [`JSXMemberExpressionObject::IdentifierReference`].
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    #[inline]
+    pub fn jsx_member_expression_object_identifier_reference<A>(
+        self,
+        span: Span,
+        name: A,
+    ) -> JSXMemberExpressionObject<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXMemberExpressionObject::IdentifierReference(self.alloc_identifier_reference(span, name))
+    }
+
+    /// Build a [`JSXMemberExpressionObject::MemberExpression`].
+    ///
+    /// This node contains a [`JSXMemberExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `object`: The object being accessed. This is everything before the last `.`.
+    /// * `property`: The property being accessed. This is everything after the last `.`.
+    #[inline]
+    pub fn jsx_member_expression_object_jsx_member_expression(
+        self,
+        span: Span,
+        object: JSXMemberExpressionObject<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> JSXMemberExpressionObject<'a> {
+        JSXMemberExpressionObject::MemberExpression(
+            self.alloc_jsx_member_expression(span, object, property),
+        )
+    }
+
+    /// Build a [`JSXMemberExpressionObject::ThisExpression`].
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn jsx_member_expression_object_this_expression(
+        self,
+        span: Span,
+    ) -> JSXMemberExpressionObject<'a> {
+        JSXMemberExpressionObject::ThisExpression(self.alloc_this_expression(span))
+    }
+
+    /// Build a [`JSXExpressionContainer`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_expression_container`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `expression`: The expression inside the container.
+    #[inline]
+    pub fn jsx_expression_container(
+        self,
+        span: Span,
+        expression: JSXExpression<'a>,
+    ) -> JSXExpressionContainer<'a> {
+        JSXExpressionContainer { span, expression }
+    }
+
+    /// Build a [`JSXExpressionContainer`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_expression_container`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `expression`: The expression inside the container.
+    #[inline]
+    pub fn alloc_jsx_expression_container(
+        self,
+        span: Span,
+        expression: JSXExpression<'a>,
+    ) -> Box<'a, JSXExpressionContainer<'a>> {
+        Box::new_in(self.jsx_expression_container(span, expression), self.allocator)
+    }
+
+    /// Build a [`JSXExpression::EmptyExpression`].
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn jsx_expression_jsx_empty_expression(self, span: Span) -> JSXExpression<'a> {
+        JSXExpression::EmptyExpression(self.jsx_empty_expression(span))
+    }
+
+    /// Build a [`JSXEmptyExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_empty_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
+        JSXEmptyExpression { span }
+    }
+
+    /// Build a [`JSXEmptyExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_empty_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn alloc_jsx_empty_expression(self, span: Span) -> Box<'a, JSXEmptyExpression> {
+        Box::new_in(self.jsx_empty_expression(span), self.allocator)
+    }
+
+    /// Build a [`JSXAttributeItem::Attribute`].
+    ///
+    /// This node contains a [`JSXAttribute`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The name of the attribute. This is a prop in React-like applications.
+    /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    #[inline]
+    pub fn jsx_attribute_item_jsx_attribute(
+        self,
+        span: Span,
+        name: JSXAttributeName<'a>,
+        value: Option<JSXAttributeValue<'a>>,
+    ) -> JSXAttributeItem<'a> {
+        JSXAttributeItem::Attribute(self.alloc_jsx_attribute(span, name, value))
+    }
+
+    /// Build a [`JSXAttributeItem::SpreadAttribute`].
+    ///
+    /// This node contains a [`JSXSpreadAttribute`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `argument`: The expression being spread.
+    #[inline]
+    pub fn jsx_attribute_item_jsx_spread_attribute(
+        self,
+        span: Span,
+        argument: Expression<'a>,
+    ) -> JSXAttributeItem<'a> {
+        JSXAttributeItem::SpreadAttribute(self.alloc_jsx_spread_attribute(span, argument))
+    }
+
+    /// Build a [`JSXAttribute`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_attribute`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The name of the attribute. This is a prop in React-like applications.
+    /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    #[inline]
+    pub fn jsx_attribute(
+        self,
+        span: Span,
+        name: JSXAttributeName<'a>,
+        value: Option<JSXAttributeValue<'a>>,
+    ) -> JSXAttribute<'a> {
+        JSXAttribute { span, name, value }
+    }
+
+    /// Build a [`JSXAttribute`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_attribute`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The name of the attribute. This is a prop in React-like applications.
+    /// * `value`: The value of the attribute. This can be a string literal, an expression,
+    #[inline]
+    pub fn alloc_jsx_attribute(
+        self,
+        span: Span,
+        name: JSXAttributeName<'a>,
+        value: Option<JSXAttributeValue<'a>>,
+    ) -> Box<'a, JSXAttribute<'a>> {
+        Box::new_in(self.jsx_attribute(span, name, value), self.allocator)
+    }
+
+    /// Build a [`JSXSpreadAttribute`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_spread_attribute`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `argument`: The expression being spread.
+    #[inline]
+    pub fn jsx_spread_attribute(
+        self,
+        span: Span,
+        argument: Expression<'a>,
+    ) -> JSXSpreadAttribute<'a> {
+        JSXSpreadAttribute { span, argument }
+    }
+
+    /// Build a [`JSXSpreadAttribute`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_spread_attribute`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `argument`: The expression being spread.
+    #[inline]
+    pub fn alloc_jsx_spread_attribute(
+        self,
+        span: Span,
+        argument: Expression<'a>,
+    ) -> Box<'a, JSXSpreadAttribute<'a>> {
+        Box::new_in(self.jsx_spread_attribute(span, argument), self.allocator)
+    }
+
+    /// Build a [`JSXAttributeName::Identifier`].
+    ///
+    /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The name of the identifier.
+    #[inline]
+    pub fn jsx_attribute_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXAttributeName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXAttributeName::Identifier(self.alloc_jsx_identifier(span, name))
+    }
+
+    /// Build a [`JSXAttributeName::NamespacedName`].
+    ///
+    /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
+    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    #[inline]
+    pub fn jsx_attribute_name_jsx_namespaced_name(
+        self,
+        span: Span,
+        namespace: JSXIdentifier<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> JSXAttributeName<'a> {
+        JSXAttributeName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
+    }
+
+    /// Build a [`JSXAttributeValue::StringLiteral`].
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    #[inline]
+    pub fn jsx_attribute_value_string_literal<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+    ) -> JSXAttributeValue<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
+    }
+
+    /// Build a [`JSXAttributeValue::ExpressionContainer`].
+    ///
+    /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `expression`: The expression inside the container.
+    #[inline]
+    pub fn jsx_attribute_value_jsx_expression_container(
+        self,
+        span: Span,
+        expression: JSXExpression<'a>,
+    ) -> JSXAttributeValue<'a> {
+        JSXAttributeValue::ExpressionContainer(
+            self.alloc_jsx_expression_container(span, expression),
+        )
+    }
+
+    /// Build a [`JSXAttributeValue::Element`].
+    ///
+    /// This node contains a [`JSXElement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `opening_element`: Opening tag of the element.
+    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    #[inline]
+    pub fn jsx_attribute_value_jsx_element<T1, T2>(
+        self,
+        span: Span,
+        opening_element: T1,
+        closing_element: T2,
+        children: Vec<'a, JSXChild<'a>>,
+    ) -> JSXAttributeValue<'a>
+    where
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+    {
+        JSXAttributeValue::Element(self.alloc_jsx_element(
+            span,
+            opening_element,
+            closing_element,
+            children,
+        ))
+    }
+
+    /// Build a [`JSXAttributeValue::Fragment`].
+    ///
+    /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `opening_fragment`: `<>`
+    /// * `closing_fragment`: `</>`
+    /// * `children`: Elements inside the fragment.
+    #[inline]
+    pub fn jsx_attribute_value_jsx_fragment(
+        self,
+        span: Span,
+        opening_fragment: JSXOpeningFragment,
+        closing_fragment: JSXClosingFragment,
+        children: Vec<'a, JSXChild<'a>>,
+    ) -> JSXAttributeValue<'a> {
+        JSXAttributeValue::Fragment(self.alloc_jsx_fragment(
+            span,
+            opening_fragment,
+            closing_fragment,
+            children,
+        ))
+    }
+
+    /// Build a [`JSXIdentifier`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_identifier`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The name of the identifier.
+    #[inline]
+    pub fn jsx_identifier<A>(self, span: Span, name: A) -> JSXIdentifier<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXIdentifier { span, name: name.into_in(self.allocator) }
+    }
+
+    /// Build a [`JSXIdentifier`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_identifier`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `name`: The name of the identifier.
+    #[inline]
+    pub fn alloc_jsx_identifier<A>(self, span: Span, name: A) -> Box<'a, JSXIdentifier<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(self.jsx_identifier(span, name), self.allocator)
+    }
+
+    /// Build a [`JSXChild::Text`].
+    ///
+    /// This node contains a [`JSXText`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The text content.
+    #[inline]
+    pub fn jsx_child_jsx_text<A>(self, span: Span, value: A) -> JSXChild<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXChild::Text(self.alloc_jsx_text(span, value))
+    }
+
+    /// Build a [`JSXChild::Element`].
+    ///
+    /// This node contains a [`JSXElement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `opening_element`: Opening tag of the element.
+    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// * `children`: Children of the element. This can be text, other elements, or expressions.
+    #[inline]
+    pub fn jsx_child_jsx_element<T1, T2>(
+        self,
+        span: Span,
+        opening_element: T1,
+        closing_element: T2,
+        children: Vec<'a, JSXChild<'a>>,
+    ) -> JSXChild<'a>
+    where
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
+    {
+        JSXChild::Element(self.alloc_jsx_element(span, opening_element, closing_element, children))
+    }
+
+    /// Build a [`JSXChild::Fragment`].
+    ///
+    /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `opening_fragment`: `<>`
+    /// * `closing_fragment`: `</>`
+    /// * `children`: Elements inside the fragment.
+    #[inline]
+    pub fn jsx_child_jsx_fragment(
+        self,
+        span: Span,
+        opening_fragment: JSXOpeningFragment,
+        closing_fragment: JSXClosingFragment,
+        children: Vec<'a, JSXChild<'a>>,
+    ) -> JSXChild<'a> {
+        JSXChild::Fragment(self.alloc_jsx_fragment(
+            span,
+            opening_fragment,
+            closing_fragment,
+            children,
+        ))
+    }
+
+    /// Build a [`JSXChild::ExpressionContainer`].
+    ///
+    /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `expression`: The expression inside the container.
+    #[inline]
+    pub fn jsx_child_jsx_expression_container(
+        self,
+        span: Span,
+        expression: JSXExpression<'a>,
+    ) -> JSXChild<'a> {
+        JSXChild::ExpressionContainer(self.alloc_jsx_expression_container(span, expression))
+    }
+
+    /// Build a [`JSXChild::Spread`].
+    ///
+    /// This node contains a [`JSXSpreadChild`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `expression`: The expression being spread.
+    #[inline]
+    pub fn jsx_child_jsx_spread_child(
+        self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> JSXChild<'a> {
+        JSXChild::Spread(self.alloc_jsx_spread_child(span, expression))
+    }
+
+    /// Build a [`JSXSpreadChild`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_spread_child`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `expression`: The expression being spread.
+    #[inline]
+    pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
+        JSXSpreadChild { span, expression }
+    }
+
+    /// Build a [`JSXSpreadChild`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_spread_child`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `expression`: The expression being spread.
+    #[inline]
+    pub fn alloc_jsx_spread_child(
+        self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> Box<'a, JSXSpreadChild<'a>> {
+        Box::new_in(self.jsx_spread_child(span, expression), self.allocator)
+    }
+
+    /// Build a [`JSXText`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_text`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The text content.
+    #[inline]
+    pub fn jsx_text<A>(self, span: Span, value: A) -> JSXText<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXText { span, value: value.into_in(self.allocator) }
+    }
+
+    /// Build a [`JSXText`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_text`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The text content.
+    #[inline]
+    pub fn alloc_jsx_text<A>(self, span: Span, value: A) -> Box<'a, JSXText<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(self.jsx_text(span, value), self.allocator)
+    }
+
     /// Build a [`TSThisParameter`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_this_parameter`] instead.
@@ -12186,872 +13053,5 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_js_doc_unknown_type(self, span: Span) -> Box<'a, JSDocUnknownType> {
         Box::new_in(self.js_doc_unknown_type(span), self.allocator)
-    }
-
-    /// Build a [`JSXElement`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_element`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
-    #[inline]
-    pub fn jsx_element<T1, T2>(
-        self,
-        span: Span,
-        opening_element: T1,
-        closing_element: T2,
-        children: Vec<'a, JSXChild<'a>>,
-    ) -> JSXElement<'a>
-    where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
-    {
-        JSXElement {
-            span,
-            opening_element: opening_element.into_in(self.allocator),
-            closing_element: closing_element.into_in(self.allocator),
-            children,
-        }
-    }
-
-    /// Build a [`JSXElement`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_element`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
-    #[inline]
-    pub fn alloc_jsx_element<T1, T2>(
-        self,
-        span: Span,
-        opening_element: T1,
-        closing_element: T2,
-        children: Vec<'a, JSXChild<'a>>,
-    ) -> Box<'a, JSXElement<'a>>
-    where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
-    {
-        Box::new_in(
-            self.jsx_element(span, opening_element, closing_element, children),
-            self.allocator,
-        )
-    }
-
-    /// Build a [`JSXOpeningElement`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_opening_element`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `self_closing`: Is this tag self-closing?
-    /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
-    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
-    /// * `type_parameters`: Type parameters for generic JSX elements.
-    #[inline]
-    pub fn jsx_opening_element<T1>(
-        self,
-        span: Span,
-        self_closing: bool,
-        name: JSXElementName<'a>,
-        attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: T1,
-    ) -> JSXOpeningElement<'a>
-    where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
-        JSXOpeningElement {
-            span,
-            self_closing,
-            name,
-            attributes,
-            type_parameters: type_parameters.into_in(self.allocator),
-        }
-    }
-
-    /// Build a [`JSXOpeningElement`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_opening_element`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `self_closing`: Is this tag self-closing?
-    /// * `name`: The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
-    /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
-    /// * `type_parameters`: Type parameters for generic JSX elements.
-    #[inline]
-    pub fn alloc_jsx_opening_element<T1>(
-        self,
-        span: Span,
-        self_closing: bool,
-        name: JSXElementName<'a>,
-        attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: T1,
-    ) -> Box<'a, JSXOpeningElement<'a>>
-    where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
-        Box::new_in(
-            self.jsx_opening_element(span, self_closing, name, attributes, type_parameters),
-            self.allocator,
-        )
-    }
-
-    /// Build a [`JSXClosingElement`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_closing_element`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The tag name, e.g. `Foo` in `</Foo>`.
-    #[inline]
-    pub fn jsx_closing_element(
-        self,
-        span: Span,
-        name: JSXElementName<'a>,
-    ) -> JSXClosingElement<'a> {
-        JSXClosingElement { span, name }
-    }
-
-    /// Build a [`JSXClosingElement`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_closing_element`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The tag name, e.g. `Foo` in `</Foo>`.
-    #[inline]
-    pub fn alloc_jsx_closing_element(
-        self,
-        span: Span,
-        name: JSXElementName<'a>,
-    ) -> Box<'a, JSXClosingElement<'a>> {
-        Box::new_in(self.jsx_closing_element(span, name), self.allocator)
-    }
-
-    /// Build a [`JSXFragment`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_fragment`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
-    /// * `children`: Elements inside the fragment.
-    #[inline]
-    pub fn jsx_fragment(
-        self,
-        span: Span,
-        opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
-        children: Vec<'a, JSXChild<'a>>,
-    ) -> JSXFragment<'a> {
-        JSXFragment { span, opening_fragment, closing_fragment, children }
-    }
-
-    /// Build a [`JSXFragment`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_fragment`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
-    /// * `children`: Elements inside the fragment.
-    #[inline]
-    pub fn alloc_jsx_fragment(
-        self,
-        span: Span,
-        opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
-        children: Vec<'a, JSXChild<'a>>,
-    ) -> Box<'a, JSXFragment<'a>> {
-        Box::new_in(
-            self.jsx_fragment(span, opening_fragment, closing_fragment, children),
-            self.allocator,
-        )
-    }
-
-    /// Build a [`JSXElementName::Identifier`].
-    ///
-    /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The name of the identifier.
-    #[inline]
-    pub fn jsx_element_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXElementName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXElementName::Identifier(self.alloc_jsx_identifier(span, name))
-    }
-
-    /// Build a [`JSXElementName::IdentifierReference`].
-    ///
-    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`: The name of the identifier being referenced.
-    #[inline]
-    pub fn jsx_element_name_identifier_reference<A>(self, span: Span, name: A) -> JSXElementName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXElementName::IdentifierReference(self.alloc_identifier_reference(span, name))
-    }
-
-    /// Build a [`JSXElementName::NamespacedName`].
-    ///
-    /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
-    #[inline]
-    pub fn jsx_element_name_jsx_namespaced_name(
-        self,
-        span: Span,
-        namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
-    ) -> JSXElementName<'a> {
-        JSXElementName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
-    }
-
-    /// Build a [`JSXElementName::MemberExpression`].
-    ///
-    /// This node contains a [`JSXMemberExpression`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `object`: The object being accessed. This is everything before the last `.`.
-    /// * `property`: The property being accessed. This is everything after the last `.`.
-    #[inline]
-    pub fn jsx_element_name_jsx_member_expression(
-        self,
-        span: Span,
-        object: JSXMemberExpressionObject<'a>,
-        property: JSXIdentifier<'a>,
-    ) -> JSXElementName<'a> {
-        JSXElementName::MemberExpression(self.alloc_jsx_member_expression(span, object, property))
-    }
-
-    /// Build a [`JSXElementName::ThisExpression`].
-    ///
-    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    #[inline]
-    pub fn jsx_element_name_this_expression(self, span: Span) -> JSXElementName<'a> {
-        JSXElementName::ThisExpression(self.alloc_this_expression(span))
-    }
-
-    /// Build a [`JSXNamespacedName`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_namespaced_name`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
-    #[inline]
-    pub fn jsx_namespaced_name(
-        self,
-        span: Span,
-        namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
-    ) -> JSXNamespacedName<'a> {
-        JSXNamespacedName { span, namespace, property }
-    }
-
-    /// Build a [`JSXNamespacedName`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_namespaced_name`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
-    #[inline]
-    pub fn alloc_jsx_namespaced_name(
-        self,
-        span: Span,
-        namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
-    ) -> Box<'a, JSXNamespacedName<'a>> {
-        Box::new_in(self.jsx_namespaced_name(span, namespace, property), self.allocator)
-    }
-
-    /// Build a [`JSXMemberExpression`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_member_expression`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `object`: The object being accessed. This is everything before the last `.`.
-    /// * `property`: The property being accessed. This is everything after the last `.`.
-    #[inline]
-    pub fn jsx_member_expression(
-        self,
-        span: Span,
-        object: JSXMemberExpressionObject<'a>,
-        property: JSXIdentifier<'a>,
-    ) -> JSXMemberExpression<'a> {
-        JSXMemberExpression { span, object, property }
-    }
-
-    /// Build a [`JSXMemberExpression`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_member_expression`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `object`: The object being accessed. This is everything before the last `.`.
-    /// * `property`: The property being accessed. This is everything after the last `.`.
-    #[inline]
-    pub fn alloc_jsx_member_expression(
-        self,
-        span: Span,
-        object: JSXMemberExpressionObject<'a>,
-        property: JSXIdentifier<'a>,
-    ) -> Box<'a, JSXMemberExpression<'a>> {
-        Box::new_in(self.jsx_member_expression(span, object, property), self.allocator)
-    }
-
-    /// Build a [`JSXMemberExpressionObject::IdentifierReference`].
-    ///
-    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`: The name of the identifier being referenced.
-    #[inline]
-    pub fn jsx_member_expression_object_identifier_reference<A>(
-        self,
-        span: Span,
-        name: A,
-    ) -> JSXMemberExpressionObject<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXMemberExpressionObject::IdentifierReference(self.alloc_identifier_reference(span, name))
-    }
-
-    /// Build a [`JSXMemberExpressionObject::MemberExpression`].
-    ///
-    /// This node contains a [`JSXMemberExpression`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `object`: The object being accessed. This is everything before the last `.`.
-    /// * `property`: The property being accessed. This is everything after the last `.`.
-    #[inline]
-    pub fn jsx_member_expression_object_jsx_member_expression(
-        self,
-        span: Span,
-        object: JSXMemberExpressionObject<'a>,
-        property: JSXIdentifier<'a>,
-    ) -> JSXMemberExpressionObject<'a> {
-        JSXMemberExpressionObject::MemberExpression(
-            self.alloc_jsx_member_expression(span, object, property),
-        )
-    }
-
-    /// Build a [`JSXMemberExpressionObject::ThisExpression`].
-    ///
-    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    #[inline]
-    pub fn jsx_member_expression_object_this_expression(
-        self,
-        span: Span,
-    ) -> JSXMemberExpressionObject<'a> {
-        JSXMemberExpressionObject::ThisExpression(self.alloc_this_expression(span))
-    }
-
-    /// Build a [`JSXExpressionContainer`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_expression_container`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `expression`: The expression inside the container.
-    #[inline]
-    pub fn jsx_expression_container(
-        self,
-        span: Span,
-        expression: JSXExpression<'a>,
-    ) -> JSXExpressionContainer<'a> {
-        JSXExpressionContainer { span, expression }
-    }
-
-    /// Build a [`JSXExpressionContainer`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_expression_container`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `expression`: The expression inside the container.
-    #[inline]
-    pub fn alloc_jsx_expression_container(
-        self,
-        span: Span,
-        expression: JSXExpression<'a>,
-    ) -> Box<'a, JSXExpressionContainer<'a>> {
-        Box::new_in(self.jsx_expression_container(span, expression), self.allocator)
-    }
-
-    /// Build a [`JSXExpression::EmptyExpression`].
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    #[inline]
-    pub fn jsx_expression_jsx_empty_expression(self, span: Span) -> JSXExpression<'a> {
-        JSXExpression::EmptyExpression(self.jsx_empty_expression(span))
-    }
-
-    /// Build a [`JSXEmptyExpression`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_empty_expression`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    #[inline]
-    pub fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
-        JSXEmptyExpression { span }
-    }
-
-    /// Build a [`JSXEmptyExpression`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_empty_expression`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    #[inline]
-    pub fn alloc_jsx_empty_expression(self, span: Span) -> Box<'a, JSXEmptyExpression> {
-        Box::new_in(self.jsx_empty_expression(span), self.allocator)
-    }
-
-    /// Build a [`JSXAttributeItem::Attribute`].
-    ///
-    /// This node contains a [`JSXAttribute`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The name of the attribute. This is a prop in React-like applications.
-    /// * `value`: The value of the attribute. This can be a string literal, an expression,
-    #[inline]
-    pub fn jsx_attribute_item_jsx_attribute(
-        self,
-        span: Span,
-        name: JSXAttributeName<'a>,
-        value: Option<JSXAttributeValue<'a>>,
-    ) -> JSXAttributeItem<'a> {
-        JSXAttributeItem::Attribute(self.alloc_jsx_attribute(span, name, value))
-    }
-
-    /// Build a [`JSXAttributeItem::SpreadAttribute`].
-    ///
-    /// This node contains a [`JSXSpreadAttribute`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `argument`: The expression being spread.
-    #[inline]
-    pub fn jsx_attribute_item_jsx_spread_attribute(
-        self,
-        span: Span,
-        argument: Expression<'a>,
-    ) -> JSXAttributeItem<'a> {
-        JSXAttributeItem::SpreadAttribute(self.alloc_jsx_spread_attribute(span, argument))
-    }
-
-    /// Build a [`JSXAttribute`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The name of the attribute. This is a prop in React-like applications.
-    /// * `value`: The value of the attribute. This can be a string literal, an expression,
-    #[inline]
-    pub fn jsx_attribute(
-        self,
-        span: Span,
-        name: JSXAttributeName<'a>,
-        value: Option<JSXAttributeValue<'a>>,
-    ) -> JSXAttribute<'a> {
-        JSXAttribute { span, name, value }
-    }
-
-    /// Build a [`JSXAttribute`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The name of the attribute. This is a prop in React-like applications.
-    /// * `value`: The value of the attribute. This can be a string literal, an expression,
-    #[inline]
-    pub fn alloc_jsx_attribute(
-        self,
-        span: Span,
-        name: JSXAttributeName<'a>,
-        value: Option<JSXAttributeValue<'a>>,
-    ) -> Box<'a, JSXAttribute<'a>> {
-        Box::new_in(self.jsx_attribute(span, name, value), self.allocator)
-    }
-
-    /// Build a [`JSXSpreadAttribute`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_spread_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `argument`: The expression being spread.
-    #[inline]
-    pub fn jsx_spread_attribute(
-        self,
-        span: Span,
-        argument: Expression<'a>,
-    ) -> JSXSpreadAttribute<'a> {
-        JSXSpreadAttribute { span, argument }
-    }
-
-    /// Build a [`JSXSpreadAttribute`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_spread_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `argument`: The expression being spread.
-    #[inline]
-    pub fn alloc_jsx_spread_attribute(
-        self,
-        span: Span,
-        argument: Expression<'a>,
-    ) -> Box<'a, JSXSpreadAttribute<'a>> {
-        Box::new_in(self.jsx_spread_attribute(span, argument), self.allocator)
-    }
-
-    /// Build a [`JSXAttributeName::Identifier`].
-    ///
-    /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The name of the identifier.
-    #[inline]
-    pub fn jsx_attribute_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXAttributeName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXAttributeName::Identifier(self.alloc_jsx_identifier(span, name))
-    }
-
-    /// Build a [`JSXAttributeName::NamespacedName`].
-    ///
-    /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
-    #[inline]
-    pub fn jsx_attribute_name_jsx_namespaced_name(
-        self,
-        span: Span,
-        namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
-    ) -> JSXAttributeName<'a> {
-        JSXAttributeName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
-    }
-
-    /// Build a [`JSXAttributeValue::StringLiteral`].
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    #[inline]
-    pub fn jsx_attribute_value_string_literal<A>(
-        self,
-        span: Span,
-        value: A,
-        raw: Option<Atom<'a>>,
-    ) -> JSXAttributeValue<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
-    }
-
-    /// Build a [`JSXAttributeValue::ExpressionContainer`].
-    ///
-    /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `expression`: The expression inside the container.
-    #[inline]
-    pub fn jsx_attribute_value_jsx_expression_container(
-        self,
-        span: Span,
-        expression: JSXExpression<'a>,
-    ) -> JSXAttributeValue<'a> {
-        JSXAttributeValue::ExpressionContainer(
-            self.alloc_jsx_expression_container(span, expression),
-        )
-    }
-
-    /// Build a [`JSXAttributeValue::Element`].
-    ///
-    /// This node contains a [`JSXElement`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
-    #[inline]
-    pub fn jsx_attribute_value_jsx_element<T1, T2>(
-        self,
-        span: Span,
-        opening_element: T1,
-        closing_element: T2,
-        children: Vec<'a, JSXChild<'a>>,
-    ) -> JSXAttributeValue<'a>
-    where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
-    {
-        JSXAttributeValue::Element(self.alloc_jsx_element(
-            span,
-            opening_element,
-            closing_element,
-            children,
-        ))
-    }
-
-    /// Build a [`JSXAttributeValue::Fragment`].
-    ///
-    /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
-    /// * `children`: Elements inside the fragment.
-    #[inline]
-    pub fn jsx_attribute_value_jsx_fragment(
-        self,
-        span: Span,
-        opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
-        children: Vec<'a, JSXChild<'a>>,
-    ) -> JSXAttributeValue<'a> {
-        JSXAttributeValue::Fragment(self.alloc_jsx_fragment(
-            span,
-            opening_fragment,
-            closing_fragment,
-            children,
-        ))
-    }
-
-    /// Build a [`JSXIdentifier`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_identifier`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The name of the identifier.
-    #[inline]
-    pub fn jsx_identifier<A>(self, span: Span, name: A) -> JSXIdentifier<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXIdentifier { span, name: name.into_in(self.allocator) }
-    }
-
-    /// Build a [`JSXIdentifier`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_identifier`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `name`: The name of the identifier.
-    #[inline]
-    pub fn alloc_jsx_identifier<A>(self, span: Span, name: A) -> Box<'a, JSXIdentifier<'a>>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        Box::new_in(self.jsx_identifier(span, name), self.allocator)
-    }
-
-    /// Build a [`JSXChild::Text`].
-    ///
-    /// This node contains a [`JSXText`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The text content.
-    #[inline]
-    pub fn jsx_child_jsx_text<A>(self, span: Span, value: A) -> JSXChild<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXChild::Text(self.alloc_jsx_text(span, value))
-    }
-
-    /// Build a [`JSXChild::Element`].
-    ///
-    /// This node contains a [`JSXElement`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `opening_element`: Opening tag of the element.
-    /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
-    /// * `children`: Children of the element. This can be text, other elements, or expressions.
-    #[inline]
-    pub fn jsx_child_jsx_element<T1, T2>(
-        self,
-        span: Span,
-        opening_element: T1,
-        closing_element: T2,
-        children: Vec<'a, JSXChild<'a>>,
-    ) -> JSXChild<'a>
-    where
-        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
-    {
-        JSXChild::Element(self.alloc_jsx_element(span, opening_element, closing_element, children))
-    }
-
-    /// Build a [`JSXChild::Fragment`].
-    ///
-    /// This node contains a [`JSXFragment`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `opening_fragment`: `<>`
-    /// * `closing_fragment`: `</>`
-    /// * `children`: Elements inside the fragment.
-    #[inline]
-    pub fn jsx_child_jsx_fragment(
-        self,
-        span: Span,
-        opening_fragment: JSXOpeningFragment,
-        closing_fragment: JSXClosingFragment,
-        children: Vec<'a, JSXChild<'a>>,
-    ) -> JSXChild<'a> {
-        JSXChild::Fragment(self.alloc_jsx_fragment(
-            span,
-            opening_fragment,
-            closing_fragment,
-            children,
-        ))
-    }
-
-    /// Build a [`JSXChild::ExpressionContainer`].
-    ///
-    /// This node contains a [`JSXExpressionContainer`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `expression`: The expression inside the container.
-    #[inline]
-    pub fn jsx_child_jsx_expression_container(
-        self,
-        span: Span,
-        expression: JSXExpression<'a>,
-    ) -> JSXChild<'a> {
-        JSXChild::ExpressionContainer(self.alloc_jsx_expression_container(span, expression))
-    }
-
-    /// Build a [`JSXChild::Spread`].
-    ///
-    /// This node contains a [`JSXSpreadChild`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `expression`: The expression being spread.
-    #[inline]
-    pub fn jsx_child_jsx_spread_child(
-        self,
-        span: Span,
-        expression: Expression<'a>,
-    ) -> JSXChild<'a> {
-        JSXChild::Spread(self.alloc_jsx_spread_child(span, expression))
-    }
-
-    /// Build a [`JSXSpreadChild`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_spread_child`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `expression`: The expression being spread.
-    #[inline]
-    pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
-        JSXSpreadChild { span, expression }
-    }
-
-    /// Build a [`JSXSpreadChild`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_spread_child`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `expression`: The expression being spread.
-    #[inline]
-    pub fn alloc_jsx_spread_child(
-        self,
-        span: Span,
-        expression: Expression<'a>,
-    ) -> Box<'a, JSXSpreadChild<'a>> {
-        Box::new_in(self.jsx_spread_child(span, expression), self.allocator)
-    }
-
-    /// Build a [`JSXText`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_text`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The text content.
-    #[inline]
-    pub fn jsx_text<A>(self, span: Span, value: A) -> JSXText<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXText { span, value: value.into_in(self.allocator) }
-    }
-
-    /// Build a [`JSXText`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_text`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The text content.
-    #[inline]
-    pub fn alloc_jsx_text<A>(self, span: Span, value: A) -> Box<'a, JSXText<'a>>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        Box::new_in(self.jsx_text(span, value), self.allocator)
     }
 }

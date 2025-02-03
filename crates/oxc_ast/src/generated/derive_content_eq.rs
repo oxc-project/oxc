@@ -11,25 +11,6 @@ use crate::ast::jsx::*;
 use crate::ast::literal::*;
 use crate::ast::ts::*;
 
-impl ContentEq for BooleanLiteral {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.value, &other.value)
-    }
-}
-
-impl ContentEq for NullLiteral {
-    fn content_eq(&self, _: &Self) -> bool {
-        true
-    }
-}
-
-impl ContentEq for RegExp<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.pattern, &other.pattern)
-            && ContentEq::content_eq(&self.flags, &other.flags)
-    }
-}
-
 impl ContentEq for Program<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.source_type, &other.source_type)
@@ -1465,6 +1446,251 @@ impl ContentEq for ModuleExportName<'_> {
     }
 }
 
+impl ContentEq for BooleanLiteral {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for NullLiteral {
+    fn content_eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+impl ContentEq for RegExp<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.pattern, &other.pattern)
+            && ContentEq::content_eq(&self.flags, &other.flags)
+    }
+}
+
+impl ContentEq for JSXElement<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.opening_element, &other.opening_element)
+            && ContentEq::content_eq(&self.closing_element, &other.closing_element)
+            && ContentEq::content_eq(&self.children, &other.children)
+    }
+}
+
+impl ContentEq for JSXOpeningElement<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.self_closing, &other.self_closing)
+            && ContentEq::content_eq(&self.name, &other.name)
+            && ContentEq::content_eq(&self.attributes, &other.attributes)
+            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+    }
+}
+
+impl ContentEq for JSXClosingElement<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.name, &other.name)
+    }
+}
+
+impl ContentEq for JSXFragment<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.opening_fragment, &other.opening_fragment)
+            && ContentEq::content_eq(&self.closing_fragment, &other.closing_fragment)
+            && ContentEq::content_eq(&self.children, &other.children)
+    }
+}
+
+impl ContentEq for JSXOpeningFragment {
+    fn content_eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+impl ContentEq for JSXClosingFragment {
+    fn content_eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+impl ContentEq for JSXElementName<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
+            (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
+            (Self::NamespacedName(a), Self::NamespacedName(b)) => a.content_eq(b),
+            (Self::MemberExpression(a), Self::MemberExpression(b)) => a.content_eq(b),
+            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for JSXNamespacedName<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.namespace, &other.namespace)
+            && ContentEq::content_eq(&self.property, &other.property)
+    }
+}
+
+impl ContentEq for JSXMemberExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.object, &other.object)
+            && ContentEq::content_eq(&self.property, &other.property)
+    }
+}
+
+impl ContentEq for JSXMemberExpressionObject<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
+            (Self::MemberExpression(a), Self::MemberExpression(b)) => a.content_eq(b),
+            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for JSXExpressionContainer<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.expression, &other.expression)
+    }
+}
+
+impl ContentEq for JSXExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::EmptyExpression(a), Self::EmptyExpression(b)) => a.content_eq(b),
+            (Self::BooleanLiteral(a), Self::BooleanLiteral(b)) => a.content_eq(b),
+            (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
+            (Self::NumericLiteral(a), Self::NumericLiteral(b)) => a.content_eq(b),
+            (Self::BigIntLiteral(a), Self::BigIntLiteral(b)) => a.content_eq(b),
+            (Self::RegExpLiteral(a), Self::RegExpLiteral(b)) => a.content_eq(b),
+            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
+            (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
+            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
+            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
+            (Self::Super(a), Self::Super(b)) => a.content_eq(b),
+            (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
+            (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
+            (Self::AssignmentExpression(a), Self::AssignmentExpression(b)) => a.content_eq(b),
+            (Self::AwaitExpression(a), Self::AwaitExpression(b)) => a.content_eq(b),
+            (Self::BinaryExpression(a), Self::BinaryExpression(b)) => a.content_eq(b),
+            (Self::CallExpression(a), Self::CallExpression(b)) => a.content_eq(b),
+            (Self::ChainExpression(a), Self::ChainExpression(b)) => a.content_eq(b),
+            (Self::ClassExpression(a), Self::ClassExpression(b)) => a.content_eq(b),
+            (Self::ConditionalExpression(a), Self::ConditionalExpression(b)) => a.content_eq(b),
+            (Self::FunctionExpression(a), Self::FunctionExpression(b)) => a.content_eq(b),
+            (Self::ImportExpression(a), Self::ImportExpression(b)) => a.content_eq(b),
+            (Self::LogicalExpression(a), Self::LogicalExpression(b)) => a.content_eq(b),
+            (Self::NewExpression(a), Self::NewExpression(b)) => a.content_eq(b),
+            (Self::ObjectExpression(a), Self::ObjectExpression(b)) => a.content_eq(b),
+            (Self::ParenthesizedExpression(a), Self::ParenthesizedExpression(b)) => a.content_eq(b),
+            (Self::SequenceExpression(a), Self::SequenceExpression(b)) => a.content_eq(b),
+            (Self::TaggedTemplateExpression(a), Self::TaggedTemplateExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
+            (Self::UnaryExpression(a), Self::UnaryExpression(b)) => a.content_eq(b),
+            (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
+            (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
+            (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
+            (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
+            (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
+            (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
+            (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
+            (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
+            (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
+            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::StaticMemberExpression(a), Self::StaticMemberExpression(b)) => a.content_eq(b),
+            (Self::PrivateFieldExpression(a), Self::PrivateFieldExpression(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for JSXEmptyExpression {
+    fn content_eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+impl ContentEq for JSXAttributeItem<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Attribute(a), Self::Attribute(b)) => a.content_eq(b),
+            (Self::SpreadAttribute(a), Self::SpreadAttribute(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for JSXAttribute<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.name, &other.name)
+            && ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for JSXSpreadAttribute<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.argument, &other.argument)
+    }
+}
+
+impl ContentEq for JSXAttributeName<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
+            (Self::NamespacedName(a), Self::NamespacedName(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for JSXAttributeValue<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
+            (Self::ExpressionContainer(a), Self::ExpressionContainer(b)) => a.content_eq(b),
+            (Self::Element(a), Self::Element(b)) => a.content_eq(b),
+            (Self::Fragment(a), Self::Fragment(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for JSXIdentifier<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.name, &other.name)
+    }
+}
+
+impl ContentEq for JSXChild<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Text(a), Self::Text(b)) => a.content_eq(b),
+            (Self::Element(a), Self::Element(b)) => a.content_eq(b),
+            (Self::Fragment(a), Self::Fragment(b)) => a.content_eq(b),
+            (Self::ExpressionContainer(a), Self::ExpressionContainer(b)) => a.content_eq(b),
+            (Self::Spread(a), Self::Spread(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
+impl ContentEq for JSXSpreadChild<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.expression, &other.expression)
+    }
+}
+
+impl ContentEq for JSXText<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
 impl ContentEq for TSThisParameter<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
@@ -2219,232 +2445,6 @@ impl ContentEq for JSDocNonNullableType<'_> {
 impl ContentEq for JSDocUnknownType {
     fn content_eq(&self, _: &Self) -> bool {
         true
-    }
-}
-
-impl ContentEq for JSXElement<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.opening_element, &other.opening_element)
-            && ContentEq::content_eq(&self.closing_element, &other.closing_element)
-            && ContentEq::content_eq(&self.children, &other.children)
-    }
-}
-
-impl ContentEq for JSXOpeningElement<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.self_closing, &other.self_closing)
-            && ContentEq::content_eq(&self.name, &other.name)
-            && ContentEq::content_eq(&self.attributes, &other.attributes)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
-    }
-}
-
-impl ContentEq for JSXClosingElement<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
-    }
-}
-
-impl ContentEq for JSXFragment<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.opening_fragment, &other.opening_fragment)
-            && ContentEq::content_eq(&self.closing_fragment, &other.closing_fragment)
-            && ContentEq::content_eq(&self.children, &other.children)
-    }
-}
-
-impl ContentEq for JSXOpeningFragment {
-    fn content_eq(&self, _: &Self) -> bool {
-        true
-    }
-}
-
-impl ContentEq for JSXClosingFragment {
-    fn content_eq(&self, _: &Self) -> bool {
-        true
-    }
-}
-
-impl ContentEq for JSXElementName<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
-            (Self::NamespacedName(a), Self::NamespacedName(b)) => a.content_eq(b),
-            (Self::MemberExpression(a), Self::MemberExpression(b)) => a.content_eq(b),
-            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for JSXNamespacedName<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.namespace, &other.namespace)
-            && ContentEq::content_eq(&self.property, &other.property)
-    }
-}
-
-impl ContentEq for JSXMemberExpression<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.object, &other.object)
-            && ContentEq::content_eq(&self.property, &other.property)
-    }
-}
-
-impl ContentEq for JSXMemberExpressionObject<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
-            (Self::MemberExpression(a), Self::MemberExpression(b)) => a.content_eq(b),
-            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for JSXExpressionContainer<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.expression, &other.expression)
-    }
-}
-
-impl ContentEq for JSXExpression<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::EmptyExpression(a), Self::EmptyExpression(b)) => a.content_eq(b),
-            (Self::BooleanLiteral(a), Self::BooleanLiteral(b)) => a.content_eq(b),
-            (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
-            (Self::NumericLiteral(a), Self::NumericLiteral(b)) => a.content_eq(b),
-            (Self::BigIntLiteral(a), Self::BigIntLiteral(b)) => a.content_eq(b),
-            (Self::RegExpLiteral(a), Self::RegExpLiteral(b)) => a.content_eq(b),
-            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
-            (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
-            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::MetaProperty(a), Self::MetaProperty(b)) => a.content_eq(b),
-            (Self::Super(a), Self::Super(b)) => a.content_eq(b),
-            (Self::ArrayExpression(a), Self::ArrayExpression(b)) => a.content_eq(b),
-            (Self::ArrowFunctionExpression(a), Self::ArrowFunctionExpression(b)) => a.content_eq(b),
-            (Self::AssignmentExpression(a), Self::AssignmentExpression(b)) => a.content_eq(b),
-            (Self::AwaitExpression(a), Self::AwaitExpression(b)) => a.content_eq(b),
-            (Self::BinaryExpression(a), Self::BinaryExpression(b)) => a.content_eq(b),
-            (Self::CallExpression(a), Self::CallExpression(b)) => a.content_eq(b),
-            (Self::ChainExpression(a), Self::ChainExpression(b)) => a.content_eq(b),
-            (Self::ClassExpression(a), Self::ClassExpression(b)) => a.content_eq(b),
-            (Self::ConditionalExpression(a), Self::ConditionalExpression(b)) => a.content_eq(b),
-            (Self::FunctionExpression(a), Self::FunctionExpression(b)) => a.content_eq(b),
-            (Self::ImportExpression(a), Self::ImportExpression(b)) => a.content_eq(b),
-            (Self::LogicalExpression(a), Self::LogicalExpression(b)) => a.content_eq(b),
-            (Self::NewExpression(a), Self::NewExpression(b)) => a.content_eq(b),
-            (Self::ObjectExpression(a), Self::ObjectExpression(b)) => a.content_eq(b),
-            (Self::ParenthesizedExpression(a), Self::ParenthesizedExpression(b)) => a.content_eq(b),
-            (Self::SequenceExpression(a), Self::SequenceExpression(b)) => a.content_eq(b),
-            (Self::TaggedTemplateExpression(a), Self::TaggedTemplateExpression(b)) => {
-                a.content_eq(b)
-            }
-            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
-            (Self::UnaryExpression(a), Self::UnaryExpression(b)) => a.content_eq(b),
-            (Self::UpdateExpression(a), Self::UpdateExpression(b)) => a.content_eq(b),
-            (Self::YieldExpression(a), Self::YieldExpression(b)) => a.content_eq(b),
-            (Self::PrivateInExpression(a), Self::PrivateInExpression(b)) => a.content_eq(b),
-            (Self::JSXElement(a), Self::JSXElement(b)) => a.content_eq(b),
-            (Self::JSXFragment(a), Self::JSXFragment(b)) => a.content_eq(b),
-            (Self::TSAsExpression(a), Self::TSAsExpression(b)) => a.content_eq(b),
-            (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
-            (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
-            (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
-                a.content_eq(b)
-            }
-            (Self::StaticMemberExpression(a), Self::StaticMemberExpression(b)) => a.content_eq(b),
-            (Self::PrivateFieldExpression(a), Self::PrivateFieldExpression(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for JSXEmptyExpression {
-    fn content_eq(&self, _: &Self) -> bool {
-        true
-    }
-}
-
-impl ContentEq for JSXAttributeItem<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Attribute(a), Self::Attribute(b)) => a.content_eq(b),
-            (Self::SpreadAttribute(a), Self::SpreadAttribute(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for JSXAttribute<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
-            && ContentEq::content_eq(&self.value, &other.value)
-    }
-}
-
-impl ContentEq for JSXSpreadAttribute<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.argument, &other.argument)
-    }
-}
-
-impl ContentEq for JSXAttributeName<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::NamespacedName(a), Self::NamespacedName(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for JSXAttributeValue<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
-            (Self::ExpressionContainer(a), Self::ExpressionContainer(b)) => a.content_eq(b),
-            (Self::Element(a), Self::Element(b)) => a.content_eq(b),
-            (Self::Fragment(a), Self::Fragment(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for JSXIdentifier<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
-    }
-}
-
-impl ContentEq for JSXChild<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Text(a), Self::Text(b)) => a.content_eq(b),
-            (Self::Element(a), Self::Element(b)) => a.content_eq(b),
-            (Self::Fragment(a), Self::Fragment(b)) => a.content_eq(b),
-            (Self::ExpressionContainer(a), Self::ExpressionContainer(b)) => a.content_eq(b),
-            (Self::Spread(a), Self::Spread(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for JSXSpreadChild<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.expression, &other.expression)
-    }
-}
-
-impl ContentEq for JSXText<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.value, &other.value)
     }
 }
 

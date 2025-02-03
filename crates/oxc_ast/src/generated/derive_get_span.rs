@@ -10,48 +10,6 @@ use crate::ast::jsx::*;
 use crate::ast::literal::*;
 use crate::ast::ts::*;
 
-impl GetSpan for BooleanLiteral {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for NullLiteral {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for NumericLiteral<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for StringLiteral<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for BigIntLiteral<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for RegExpLiteral<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
 impl GetSpan for Program<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1246,6 +1204,266 @@ impl GetSpan for ModuleExportName<'_> {
     }
 }
 
+impl GetSpan for BooleanLiteral {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for NullLiteral {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for NumericLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for StringLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for BigIntLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for RegExpLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXElement<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXOpeningElement<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXClosingElement<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXFragment<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXOpeningFragment {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXClosingFragment {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXElementName<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Identifier(it) => GetSpan::span(it.as_ref()),
+            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
+            Self::NamespacedName(it) => GetSpan::span(it.as_ref()),
+            Self::MemberExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
+        }
+    }
+}
+
+impl GetSpan for JSXNamespacedName<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXMemberExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXMemberExpressionObject<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
+            Self::MemberExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
+        }
+    }
+}
+
+impl GetSpan for JSXExpressionContainer<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXExpression<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::EmptyExpression(it) => GetSpan::span(it),
+            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::Identifier(it) => GetSpan::span(it.as_ref()),
+            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
+            Self::Super(it) => GetSpan::span(it.as_ref()),
+            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
+            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
+            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
+            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
+            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
+            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
+            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
+            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
+            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
+            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
+            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
+            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
+            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
+            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
+            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
+            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
+            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
+            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
+            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
+            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+        }
+    }
+}
+
+impl GetSpan for JSXEmptyExpression {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXAttributeItem<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Attribute(it) => GetSpan::span(it.as_ref()),
+            Self::SpreadAttribute(it) => GetSpan::span(it.as_ref()),
+        }
+    }
+}
+
+impl GetSpan for JSXAttribute<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXSpreadAttribute<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXAttributeName<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Identifier(it) => GetSpan::span(it.as_ref()),
+            Self::NamespacedName(it) => GetSpan::span(it.as_ref()),
+        }
+    }
+}
+
+impl GetSpan for JSXAttributeValue<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
+            Self::ExpressionContainer(it) => GetSpan::span(it.as_ref()),
+            Self::Element(it) => GetSpan::span(it.as_ref()),
+            Self::Fragment(it) => GetSpan::span(it.as_ref()),
+        }
+    }
+}
+
+impl GetSpan for JSXIdentifier<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXChild<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Text(it) => GetSpan::span(it.as_ref()),
+            Self::Element(it) => GetSpan::span(it.as_ref()),
+            Self::Fragment(it) => GetSpan::span(it.as_ref()),
+            Self::ExpressionContainer(it) => GetSpan::span(it.as_ref()),
+            Self::Spread(it) => GetSpan::span(it.as_ref()),
+        }
+    }
+}
+
+impl GetSpan for JSXSpreadChild<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXText<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for TSThisParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1937,224 +2155,6 @@ impl GetSpan for JSDocNonNullableType<'_> {
 }
 
 impl GetSpan for JSDocUnknownType {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXElement<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXOpeningElement<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXClosingElement<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXFragment<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXOpeningFragment {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXClosingFragment {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXElementName<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
-            Self::NamespacedName(it) => GetSpan::span(it.as_ref()),
-            Self::MemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXNamespacedName<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXMemberExpression<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXMemberExpressionObject<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
-            Self::MemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXExpressionContainer<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXExpression<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::EmptyExpression(it) => GetSpan::span(it),
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
-            Self::Super(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
-            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
-            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
-            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
-            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
-            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXEmptyExpression {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXAttributeItem<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Attribute(it) => GetSpan::span(it.as_ref()),
-            Self::SpreadAttribute(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXAttribute<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXSpreadAttribute<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXAttributeName<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::NamespacedName(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXAttributeValue<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::ExpressionContainer(it) => GetSpan::span(it.as_ref()),
-            Self::Element(it) => GetSpan::span(it.as_ref()),
-            Self::Fragment(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXIdentifier<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXChild<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Text(it) => GetSpan::span(it.as_ref()),
-            Self::Element(it) => GetSpan::span(it.as_ref()),
-            Self::Fragment(it) => GetSpan::span(it.as_ref()),
-            Self::ExpressionContainer(it) => GetSpan::span(it.as_ref()),
-            Self::Spread(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXSpreadChild<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXText<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span

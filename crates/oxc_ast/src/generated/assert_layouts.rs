@@ -9,48 +9,6 @@ use crate::ast::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
-    assert!(size_of::<BooleanLiteral>() == 16usize);
-    assert!(align_of::<BooleanLiteral>() == 8usize);
-    assert!(offset_of!(BooleanLiteral, span) == 0usize);
-    assert!(offset_of!(BooleanLiteral, value) == 8usize);
-
-    assert!(size_of::<NullLiteral>() == 8usize);
-    assert!(align_of::<NullLiteral>() == 8usize);
-    assert!(offset_of!(NullLiteral, span) == 0usize);
-
-    assert!(size_of::<NumericLiteral>() == 40usize);
-    assert!(align_of::<NumericLiteral>() == 8usize);
-    assert!(offset_of!(NumericLiteral, span) == 0usize);
-    assert!(offset_of!(NumericLiteral, value) == 8usize);
-    assert!(offset_of!(NumericLiteral, raw) == 16usize);
-    assert!(offset_of!(NumericLiteral, base) == 32usize);
-
-    assert!(size_of::<StringLiteral>() == 40usize);
-    assert!(align_of::<StringLiteral>() == 8usize);
-    assert!(offset_of!(StringLiteral, span) == 0usize);
-    assert!(offset_of!(StringLiteral, value) == 8usize);
-    assert!(offset_of!(StringLiteral, raw) == 24usize);
-
-    assert!(size_of::<BigIntLiteral>() == 32usize);
-    assert!(align_of::<BigIntLiteral>() == 8usize);
-    assert!(offset_of!(BigIntLiteral, span) == 0usize);
-    assert!(offset_of!(BigIntLiteral, raw) == 8usize);
-    assert!(offset_of!(BigIntLiteral, base) == 24usize);
-
-    assert!(size_of::<RegExpLiteral>() == 56usize);
-    assert!(align_of::<RegExpLiteral>() == 8usize);
-    assert!(offset_of!(RegExpLiteral, span) == 0usize);
-    assert!(offset_of!(RegExpLiteral, regex) == 8usize);
-    assert!(offset_of!(RegExpLiteral, raw) == 40usize);
-
-    assert!(size_of::<RegExp>() == 32usize);
-    assert!(align_of::<RegExp>() == 8usize);
-    assert!(offset_of!(RegExp, pattern) == 0usize);
-    assert!(offset_of!(RegExp, flags) == 24usize);
-
-    assert!(size_of::<RegExpPattern>() == 24usize);
-    assert!(align_of::<RegExpPattern>() == 8usize);
-
     assert!(size_of::<Program>() == 160usize);
     assert!(align_of::<Program>() == 8usize);
     assert!(offset_of!(Program, span) == 0usize);
@@ -788,6 +746,151 @@ const _: () = {
     assert!(size_of::<ModuleExportName>() == 48usize);
     assert!(align_of::<ModuleExportName>() == 8usize);
 
+    assert!(size_of::<BooleanLiteral>() == 16usize);
+    assert!(align_of::<BooleanLiteral>() == 8usize);
+    assert!(offset_of!(BooleanLiteral, span) == 0usize);
+    assert!(offset_of!(BooleanLiteral, value) == 8usize);
+
+    assert!(size_of::<NullLiteral>() == 8usize);
+    assert!(align_of::<NullLiteral>() == 8usize);
+    assert!(offset_of!(NullLiteral, span) == 0usize);
+
+    assert!(size_of::<NumericLiteral>() == 40usize);
+    assert!(align_of::<NumericLiteral>() == 8usize);
+    assert!(offset_of!(NumericLiteral, span) == 0usize);
+    assert!(offset_of!(NumericLiteral, value) == 8usize);
+    assert!(offset_of!(NumericLiteral, raw) == 16usize);
+    assert!(offset_of!(NumericLiteral, base) == 32usize);
+
+    assert!(size_of::<StringLiteral>() == 40usize);
+    assert!(align_of::<StringLiteral>() == 8usize);
+    assert!(offset_of!(StringLiteral, span) == 0usize);
+    assert!(offset_of!(StringLiteral, value) == 8usize);
+    assert!(offset_of!(StringLiteral, raw) == 24usize);
+
+    assert!(size_of::<BigIntLiteral>() == 32usize);
+    assert!(align_of::<BigIntLiteral>() == 8usize);
+    assert!(offset_of!(BigIntLiteral, span) == 0usize);
+    assert!(offset_of!(BigIntLiteral, raw) == 8usize);
+    assert!(offset_of!(BigIntLiteral, base) == 24usize);
+
+    assert!(size_of::<RegExpLiteral>() == 56usize);
+    assert!(align_of::<RegExpLiteral>() == 8usize);
+    assert!(offset_of!(RegExpLiteral, span) == 0usize);
+    assert!(offset_of!(RegExpLiteral, regex) == 8usize);
+    assert!(offset_of!(RegExpLiteral, raw) == 40usize);
+
+    assert!(size_of::<RegExp>() == 32usize);
+    assert!(align_of::<RegExp>() == 8usize);
+    assert!(offset_of!(RegExp, pattern) == 0usize);
+    assert!(offset_of!(RegExp, flags) == 24usize);
+
+    assert!(size_of::<RegExpPattern>() == 24usize);
+    assert!(align_of::<RegExpPattern>() == 8usize);
+
+    assert!(size_of::<JSXElement>() == 56usize);
+    assert!(align_of::<JSXElement>() == 8usize);
+    assert!(offset_of!(JSXElement, span) == 0usize);
+    assert!(offset_of!(JSXElement, opening_element) == 8usize);
+    assert!(offset_of!(JSXElement, closing_element) == 16usize);
+    assert!(offset_of!(JSXElement, children) == 24usize);
+
+    assert!(size_of::<JSXOpeningElement>() == 72usize);
+    assert!(align_of::<JSXOpeningElement>() == 8usize);
+    assert!(offset_of!(JSXOpeningElement, span) == 0usize);
+    assert!(offset_of!(JSXOpeningElement, self_closing) == 8usize);
+    assert!(offset_of!(JSXOpeningElement, name) == 16usize);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 32usize);
+    assert!(offset_of!(JSXOpeningElement, type_parameters) == 64usize);
+
+    assert!(size_of::<JSXClosingElement>() == 24usize);
+    assert!(align_of::<JSXClosingElement>() == 8usize);
+    assert!(offset_of!(JSXClosingElement, span) == 0usize);
+    assert!(offset_of!(JSXClosingElement, name) == 8usize);
+
+    assert!(size_of::<JSXFragment>() == 56usize);
+    assert!(align_of::<JSXFragment>() == 8usize);
+    assert!(offset_of!(JSXFragment, span) == 0usize);
+    assert!(offset_of!(JSXFragment, opening_fragment) == 8usize);
+    assert!(offset_of!(JSXFragment, closing_fragment) == 16usize);
+    assert!(offset_of!(JSXFragment, children) == 24usize);
+
+    assert!(size_of::<JSXOpeningFragment>() == 8usize);
+    assert!(align_of::<JSXOpeningFragment>() == 8usize);
+    assert!(offset_of!(JSXOpeningFragment, span) == 0usize);
+
+    assert!(size_of::<JSXClosingFragment>() == 8usize);
+    assert!(align_of::<JSXClosingFragment>() == 8usize);
+    assert!(offset_of!(JSXClosingFragment, span) == 0usize);
+
+    assert!(size_of::<JSXElementName>() == 16usize);
+    assert!(align_of::<JSXElementName>() == 8usize);
+
+    assert!(size_of::<JSXNamespacedName>() == 56usize);
+    assert!(align_of::<JSXNamespacedName>() == 8usize);
+    assert!(offset_of!(JSXNamespacedName, span) == 0usize);
+    assert!(offset_of!(JSXNamespacedName, namespace) == 8usize);
+    assert!(offset_of!(JSXNamespacedName, property) == 32usize);
+
+    assert!(size_of::<JSXMemberExpression>() == 48usize);
+    assert!(align_of::<JSXMemberExpression>() == 8usize);
+    assert!(offset_of!(JSXMemberExpression, span) == 0usize);
+    assert!(offset_of!(JSXMemberExpression, object) == 8usize);
+    assert!(offset_of!(JSXMemberExpression, property) == 24usize);
+
+    assert!(size_of::<JSXMemberExpressionObject>() == 16usize);
+    assert!(align_of::<JSXMemberExpressionObject>() == 8usize);
+
+    assert!(size_of::<JSXExpressionContainer>() == 24usize);
+    assert!(align_of::<JSXExpressionContainer>() == 8usize);
+    assert!(offset_of!(JSXExpressionContainer, span) == 0usize);
+    assert!(offset_of!(JSXExpressionContainer, expression) == 8usize);
+
+    assert!(size_of::<JSXExpression>() == 16usize);
+    assert!(align_of::<JSXExpression>() == 8usize);
+
+    assert!(size_of::<JSXEmptyExpression>() == 8usize);
+    assert!(align_of::<JSXEmptyExpression>() == 8usize);
+    assert!(offset_of!(JSXEmptyExpression, span) == 0usize);
+
+    assert!(size_of::<JSXAttributeItem>() == 16usize);
+    assert!(align_of::<JSXAttributeItem>() == 8usize);
+
+    assert!(size_of::<JSXAttribute>() == 40usize);
+    assert!(align_of::<JSXAttribute>() == 8usize);
+    assert!(offset_of!(JSXAttribute, span) == 0usize);
+    assert!(offset_of!(JSXAttribute, name) == 8usize);
+    assert!(offset_of!(JSXAttribute, value) == 24usize);
+
+    assert!(size_of::<JSXSpreadAttribute>() == 24usize);
+    assert!(align_of::<JSXSpreadAttribute>() == 8usize);
+    assert!(offset_of!(JSXSpreadAttribute, span) == 0usize);
+    assert!(offset_of!(JSXSpreadAttribute, argument) == 8usize);
+
+    assert!(size_of::<JSXAttributeName>() == 16usize);
+    assert!(align_of::<JSXAttributeName>() == 8usize);
+
+    assert!(size_of::<JSXAttributeValue>() == 16usize);
+    assert!(align_of::<JSXAttributeValue>() == 8usize);
+
+    assert!(size_of::<JSXIdentifier>() == 24usize);
+    assert!(align_of::<JSXIdentifier>() == 8usize);
+    assert!(offset_of!(JSXIdentifier, span) == 0usize);
+    assert!(offset_of!(JSXIdentifier, name) == 8usize);
+
+    assert!(size_of::<JSXChild>() == 16usize);
+    assert!(align_of::<JSXChild>() == 8usize);
+
+    assert!(size_of::<JSXSpreadChild>() == 24usize);
+    assert!(align_of::<JSXSpreadChild>() == 8usize);
+    assert!(offset_of!(JSXSpreadChild, span) == 0usize);
+    assert!(offset_of!(JSXSpreadChild, expression) == 8usize);
+
+    assert!(size_of::<JSXText>() == 24usize);
+    assert!(align_of::<JSXText>() == 8usize);
+    assert!(offset_of!(JSXText, span) == 0usize);
+    assert!(offset_of!(JSXText, value) == 8usize);
+
     assert!(size_of::<TSThisParameter>() == 24usize);
     assert!(align_of::<TSThisParameter>() == 8usize);
     assert!(offset_of!(TSThisParameter, span) == 0usize);
@@ -1275,109 +1378,6 @@ const _: () = {
     assert!(align_of::<JSDocUnknownType>() == 8usize);
     assert!(offset_of!(JSDocUnknownType, span) == 0usize);
 
-    assert!(size_of::<JSXElement>() == 56usize);
-    assert!(align_of::<JSXElement>() == 8usize);
-    assert!(offset_of!(JSXElement, span) == 0usize);
-    assert!(offset_of!(JSXElement, opening_element) == 8usize);
-    assert!(offset_of!(JSXElement, closing_element) == 16usize);
-    assert!(offset_of!(JSXElement, children) == 24usize);
-
-    assert!(size_of::<JSXOpeningElement>() == 72usize);
-    assert!(align_of::<JSXOpeningElement>() == 8usize);
-    assert!(offset_of!(JSXOpeningElement, span) == 0usize);
-    assert!(offset_of!(JSXOpeningElement, self_closing) == 8usize);
-    assert!(offset_of!(JSXOpeningElement, name) == 16usize);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 32usize);
-    assert!(offset_of!(JSXOpeningElement, type_parameters) == 64usize);
-
-    assert!(size_of::<JSXClosingElement>() == 24usize);
-    assert!(align_of::<JSXClosingElement>() == 8usize);
-    assert!(offset_of!(JSXClosingElement, span) == 0usize);
-    assert!(offset_of!(JSXClosingElement, name) == 8usize);
-
-    assert!(size_of::<JSXFragment>() == 56usize);
-    assert!(align_of::<JSXFragment>() == 8usize);
-    assert!(offset_of!(JSXFragment, span) == 0usize);
-    assert!(offset_of!(JSXFragment, opening_fragment) == 8usize);
-    assert!(offset_of!(JSXFragment, closing_fragment) == 16usize);
-    assert!(offset_of!(JSXFragment, children) == 24usize);
-
-    assert!(size_of::<JSXOpeningFragment>() == 8usize);
-    assert!(align_of::<JSXOpeningFragment>() == 8usize);
-    assert!(offset_of!(JSXOpeningFragment, span) == 0usize);
-
-    assert!(size_of::<JSXClosingFragment>() == 8usize);
-    assert!(align_of::<JSXClosingFragment>() == 8usize);
-    assert!(offset_of!(JSXClosingFragment, span) == 0usize);
-
-    assert!(size_of::<JSXElementName>() == 16usize);
-    assert!(align_of::<JSXElementName>() == 8usize);
-
-    assert!(size_of::<JSXNamespacedName>() == 56usize);
-    assert!(align_of::<JSXNamespacedName>() == 8usize);
-    assert!(offset_of!(JSXNamespacedName, span) == 0usize);
-    assert!(offset_of!(JSXNamespacedName, namespace) == 8usize);
-    assert!(offset_of!(JSXNamespacedName, property) == 32usize);
-
-    assert!(size_of::<JSXMemberExpression>() == 48usize);
-    assert!(align_of::<JSXMemberExpression>() == 8usize);
-    assert!(offset_of!(JSXMemberExpression, span) == 0usize);
-    assert!(offset_of!(JSXMemberExpression, object) == 8usize);
-    assert!(offset_of!(JSXMemberExpression, property) == 24usize);
-
-    assert!(size_of::<JSXMemberExpressionObject>() == 16usize);
-    assert!(align_of::<JSXMemberExpressionObject>() == 8usize);
-
-    assert!(size_of::<JSXExpressionContainer>() == 24usize);
-    assert!(align_of::<JSXExpressionContainer>() == 8usize);
-    assert!(offset_of!(JSXExpressionContainer, span) == 0usize);
-    assert!(offset_of!(JSXExpressionContainer, expression) == 8usize);
-
-    assert!(size_of::<JSXExpression>() == 16usize);
-    assert!(align_of::<JSXExpression>() == 8usize);
-
-    assert!(size_of::<JSXEmptyExpression>() == 8usize);
-    assert!(align_of::<JSXEmptyExpression>() == 8usize);
-    assert!(offset_of!(JSXEmptyExpression, span) == 0usize);
-
-    assert!(size_of::<JSXAttributeItem>() == 16usize);
-    assert!(align_of::<JSXAttributeItem>() == 8usize);
-
-    assert!(size_of::<JSXAttribute>() == 40usize);
-    assert!(align_of::<JSXAttribute>() == 8usize);
-    assert!(offset_of!(JSXAttribute, span) == 0usize);
-    assert!(offset_of!(JSXAttribute, name) == 8usize);
-    assert!(offset_of!(JSXAttribute, value) == 24usize);
-
-    assert!(size_of::<JSXSpreadAttribute>() == 24usize);
-    assert!(align_of::<JSXSpreadAttribute>() == 8usize);
-    assert!(offset_of!(JSXSpreadAttribute, span) == 0usize);
-    assert!(offset_of!(JSXSpreadAttribute, argument) == 8usize);
-
-    assert!(size_of::<JSXAttributeName>() == 16usize);
-    assert!(align_of::<JSXAttributeName>() == 8usize);
-
-    assert!(size_of::<JSXAttributeValue>() == 16usize);
-    assert!(align_of::<JSXAttributeValue>() == 8usize);
-
-    assert!(size_of::<JSXIdentifier>() == 24usize);
-    assert!(align_of::<JSXIdentifier>() == 8usize);
-    assert!(offset_of!(JSXIdentifier, span) == 0usize);
-    assert!(offset_of!(JSXIdentifier, name) == 8usize);
-
-    assert!(size_of::<JSXChild>() == 16usize);
-    assert!(align_of::<JSXChild>() == 8usize);
-
-    assert!(size_of::<JSXSpreadChild>() == 24usize);
-    assert!(align_of::<JSXSpreadChild>() == 8usize);
-    assert!(offset_of!(JSXSpreadChild, span) == 0usize);
-    assert!(offset_of!(JSXSpreadChild, expression) == 8usize);
-
-    assert!(size_of::<JSXText>() == 24usize);
-    assert!(align_of::<JSXText>() == 8usize);
-    assert!(offset_of!(JSXText, span) == 0usize);
-    assert!(offset_of!(JSXText, value) == 8usize);
-
     assert!(size_of::<CommentKind>() == 1usize);
     assert!(align_of::<CommentKind>() == 1usize);
 
@@ -1575,48 +1575,6 @@ const _: () = {
 
 #[cfg(target_pointer_width = "32")]
 const _: () = {
-    assert!(size_of::<BooleanLiteral>() == 12usize);
-    assert!(align_of::<BooleanLiteral>() == 4usize);
-    assert!(offset_of!(BooleanLiteral, span) == 0usize);
-    assert!(offset_of!(BooleanLiteral, value) == 8usize);
-
-    assert!(size_of::<NullLiteral>() == 8usize);
-    assert!(align_of::<NullLiteral>() == 4usize);
-    assert!(offset_of!(NullLiteral, span) == 0usize);
-
-    assert!(size_of::<NumericLiteral>() == 32usize);
-    assert!(align_of::<NumericLiteral>() == 8usize);
-    assert!(offset_of!(NumericLiteral, span) == 0usize);
-    assert!(offset_of!(NumericLiteral, value) == 8usize);
-    assert!(offset_of!(NumericLiteral, raw) == 16usize);
-    assert!(offset_of!(NumericLiteral, base) == 24usize);
-
-    assert!(size_of::<StringLiteral>() == 24usize);
-    assert!(align_of::<StringLiteral>() == 4usize);
-    assert!(offset_of!(StringLiteral, span) == 0usize);
-    assert!(offset_of!(StringLiteral, value) == 8usize);
-    assert!(offset_of!(StringLiteral, raw) == 16usize);
-
-    assert!(size_of::<BigIntLiteral>() == 20usize);
-    assert!(align_of::<BigIntLiteral>() == 4usize);
-    assert!(offset_of!(BigIntLiteral, span) == 0usize);
-    assert!(offset_of!(BigIntLiteral, raw) == 8usize);
-    assert!(offset_of!(BigIntLiteral, base) == 16usize);
-
-    assert!(size_of::<RegExpLiteral>() == 32usize);
-    assert!(align_of::<RegExpLiteral>() == 4usize);
-    assert!(offset_of!(RegExpLiteral, span) == 0usize);
-    assert!(offset_of!(RegExpLiteral, regex) == 8usize);
-    assert!(offset_of!(RegExpLiteral, raw) == 24usize);
-
-    assert!(size_of::<RegExp>() == 16usize);
-    assert!(align_of::<RegExp>() == 4usize);
-    assert!(offset_of!(RegExp, pattern) == 0usize);
-    assert!(offset_of!(RegExp, flags) == 12usize);
-
-    assert!(size_of::<RegExpPattern>() == 12usize);
-    assert!(align_of::<RegExpPattern>() == 4usize);
-
     assert!(size_of::<Program>() == 88usize);
     assert!(align_of::<Program>() == 4usize);
     assert!(offset_of!(Program, span) == 0usize);
@@ -2354,6 +2312,151 @@ const _: () = {
     assert!(size_of::<ModuleExportName>() == 28usize);
     assert!(align_of::<ModuleExportName>() == 4usize);
 
+    assert!(size_of::<BooleanLiteral>() == 12usize);
+    assert!(align_of::<BooleanLiteral>() == 4usize);
+    assert!(offset_of!(BooleanLiteral, span) == 0usize);
+    assert!(offset_of!(BooleanLiteral, value) == 8usize);
+
+    assert!(size_of::<NullLiteral>() == 8usize);
+    assert!(align_of::<NullLiteral>() == 4usize);
+    assert!(offset_of!(NullLiteral, span) == 0usize);
+
+    assert!(size_of::<NumericLiteral>() == 32usize);
+    assert!(align_of::<NumericLiteral>() == 8usize);
+    assert!(offset_of!(NumericLiteral, span) == 0usize);
+    assert!(offset_of!(NumericLiteral, value) == 8usize);
+    assert!(offset_of!(NumericLiteral, raw) == 16usize);
+    assert!(offset_of!(NumericLiteral, base) == 24usize);
+
+    assert!(size_of::<StringLiteral>() == 24usize);
+    assert!(align_of::<StringLiteral>() == 4usize);
+    assert!(offset_of!(StringLiteral, span) == 0usize);
+    assert!(offset_of!(StringLiteral, value) == 8usize);
+    assert!(offset_of!(StringLiteral, raw) == 16usize);
+
+    assert!(size_of::<BigIntLiteral>() == 20usize);
+    assert!(align_of::<BigIntLiteral>() == 4usize);
+    assert!(offset_of!(BigIntLiteral, span) == 0usize);
+    assert!(offset_of!(BigIntLiteral, raw) == 8usize);
+    assert!(offset_of!(BigIntLiteral, base) == 16usize);
+
+    assert!(size_of::<RegExpLiteral>() == 32usize);
+    assert!(align_of::<RegExpLiteral>() == 4usize);
+    assert!(offset_of!(RegExpLiteral, span) == 0usize);
+    assert!(offset_of!(RegExpLiteral, regex) == 8usize);
+    assert!(offset_of!(RegExpLiteral, raw) == 24usize);
+
+    assert!(size_of::<RegExp>() == 16usize);
+    assert!(align_of::<RegExp>() == 4usize);
+    assert!(offset_of!(RegExp, pattern) == 0usize);
+    assert!(offset_of!(RegExp, flags) == 12usize);
+
+    assert!(size_of::<RegExpPattern>() == 12usize);
+    assert!(align_of::<RegExpPattern>() == 4usize);
+
+    assert!(size_of::<JSXElement>() == 32usize);
+    assert!(align_of::<JSXElement>() == 4usize);
+    assert!(offset_of!(JSXElement, span) == 0usize);
+    assert!(offset_of!(JSXElement, opening_element) == 8usize);
+    assert!(offset_of!(JSXElement, closing_element) == 12usize);
+    assert!(offset_of!(JSXElement, children) == 16usize);
+
+    assert!(size_of::<JSXOpeningElement>() == 40usize);
+    assert!(align_of::<JSXOpeningElement>() == 4usize);
+    assert!(offset_of!(JSXOpeningElement, span) == 0usize);
+    assert!(offset_of!(JSXOpeningElement, self_closing) == 8usize);
+    assert!(offset_of!(JSXOpeningElement, name) == 12usize);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 20usize);
+    assert!(offset_of!(JSXOpeningElement, type_parameters) == 36usize);
+
+    assert!(size_of::<JSXClosingElement>() == 16usize);
+    assert!(align_of::<JSXClosingElement>() == 4usize);
+    assert!(offset_of!(JSXClosingElement, span) == 0usize);
+    assert!(offset_of!(JSXClosingElement, name) == 8usize);
+
+    assert!(size_of::<JSXFragment>() == 40usize);
+    assert!(align_of::<JSXFragment>() == 4usize);
+    assert!(offset_of!(JSXFragment, span) == 0usize);
+    assert!(offset_of!(JSXFragment, opening_fragment) == 8usize);
+    assert!(offset_of!(JSXFragment, closing_fragment) == 16usize);
+    assert!(offset_of!(JSXFragment, children) == 24usize);
+
+    assert!(size_of::<JSXOpeningFragment>() == 8usize);
+    assert!(align_of::<JSXOpeningFragment>() == 4usize);
+    assert!(offset_of!(JSXOpeningFragment, span) == 0usize);
+
+    assert!(size_of::<JSXClosingFragment>() == 8usize);
+    assert!(align_of::<JSXClosingFragment>() == 4usize);
+    assert!(offset_of!(JSXClosingFragment, span) == 0usize);
+
+    assert!(size_of::<JSXElementName>() == 8usize);
+    assert!(align_of::<JSXElementName>() == 4usize);
+
+    assert!(size_of::<JSXNamespacedName>() == 40usize);
+    assert!(align_of::<JSXNamespacedName>() == 4usize);
+    assert!(offset_of!(JSXNamespacedName, span) == 0usize);
+    assert!(offset_of!(JSXNamespacedName, namespace) == 8usize);
+    assert!(offset_of!(JSXNamespacedName, property) == 24usize);
+
+    assert!(size_of::<JSXMemberExpression>() == 32usize);
+    assert!(align_of::<JSXMemberExpression>() == 4usize);
+    assert!(offset_of!(JSXMemberExpression, span) == 0usize);
+    assert!(offset_of!(JSXMemberExpression, object) == 8usize);
+    assert!(offset_of!(JSXMemberExpression, property) == 16usize);
+
+    assert!(size_of::<JSXMemberExpressionObject>() == 8usize);
+    assert!(align_of::<JSXMemberExpressionObject>() == 4usize);
+
+    assert!(size_of::<JSXExpressionContainer>() == 20usize);
+    assert!(align_of::<JSXExpressionContainer>() == 4usize);
+    assert!(offset_of!(JSXExpressionContainer, span) == 0usize);
+    assert!(offset_of!(JSXExpressionContainer, expression) == 8usize);
+
+    assert!(size_of::<JSXExpression>() == 12usize);
+    assert!(align_of::<JSXExpression>() == 4usize);
+
+    assert!(size_of::<JSXEmptyExpression>() == 8usize);
+    assert!(align_of::<JSXEmptyExpression>() == 4usize);
+    assert!(offset_of!(JSXEmptyExpression, span) == 0usize);
+
+    assert!(size_of::<JSXAttributeItem>() == 8usize);
+    assert!(align_of::<JSXAttributeItem>() == 4usize);
+
+    assert!(size_of::<JSXAttribute>() == 24usize);
+    assert!(align_of::<JSXAttribute>() == 4usize);
+    assert!(offset_of!(JSXAttribute, span) == 0usize);
+    assert!(offset_of!(JSXAttribute, name) == 8usize);
+    assert!(offset_of!(JSXAttribute, value) == 16usize);
+
+    assert!(size_of::<JSXSpreadAttribute>() == 16usize);
+    assert!(align_of::<JSXSpreadAttribute>() == 4usize);
+    assert!(offset_of!(JSXSpreadAttribute, span) == 0usize);
+    assert!(offset_of!(JSXSpreadAttribute, argument) == 8usize);
+
+    assert!(size_of::<JSXAttributeName>() == 8usize);
+    assert!(align_of::<JSXAttributeName>() == 4usize);
+
+    assert!(size_of::<JSXAttributeValue>() == 8usize);
+    assert!(align_of::<JSXAttributeValue>() == 4usize);
+
+    assert!(size_of::<JSXIdentifier>() == 16usize);
+    assert!(align_of::<JSXIdentifier>() == 4usize);
+    assert!(offset_of!(JSXIdentifier, span) == 0usize);
+    assert!(offset_of!(JSXIdentifier, name) == 8usize);
+
+    assert!(size_of::<JSXChild>() == 8usize);
+    assert!(align_of::<JSXChild>() == 4usize);
+
+    assert!(size_of::<JSXSpreadChild>() == 16usize);
+    assert!(align_of::<JSXSpreadChild>() == 4usize);
+    assert!(offset_of!(JSXSpreadChild, span) == 0usize);
+    assert!(offset_of!(JSXSpreadChild, expression) == 8usize);
+
+    assert!(size_of::<JSXText>() == 16usize);
+    assert!(align_of::<JSXText>() == 4usize);
+    assert!(offset_of!(JSXText, span) == 0usize);
+    assert!(offset_of!(JSXText, value) == 8usize);
+
     assert!(size_of::<TSThisParameter>() == 20usize);
     assert!(align_of::<TSThisParameter>() == 4usize);
     assert!(offset_of!(TSThisParameter, span) == 0usize);
@@ -2840,109 +2943,6 @@ const _: () = {
     assert!(size_of::<JSDocUnknownType>() == 8usize);
     assert!(align_of::<JSDocUnknownType>() == 4usize);
     assert!(offset_of!(JSDocUnknownType, span) == 0usize);
-
-    assert!(size_of::<JSXElement>() == 32usize);
-    assert!(align_of::<JSXElement>() == 4usize);
-    assert!(offset_of!(JSXElement, span) == 0usize);
-    assert!(offset_of!(JSXElement, opening_element) == 8usize);
-    assert!(offset_of!(JSXElement, closing_element) == 12usize);
-    assert!(offset_of!(JSXElement, children) == 16usize);
-
-    assert!(size_of::<JSXOpeningElement>() == 40usize);
-    assert!(align_of::<JSXOpeningElement>() == 4usize);
-    assert!(offset_of!(JSXOpeningElement, span) == 0usize);
-    assert!(offset_of!(JSXOpeningElement, self_closing) == 8usize);
-    assert!(offset_of!(JSXOpeningElement, name) == 12usize);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 20usize);
-    assert!(offset_of!(JSXOpeningElement, type_parameters) == 36usize);
-
-    assert!(size_of::<JSXClosingElement>() == 16usize);
-    assert!(align_of::<JSXClosingElement>() == 4usize);
-    assert!(offset_of!(JSXClosingElement, span) == 0usize);
-    assert!(offset_of!(JSXClosingElement, name) == 8usize);
-
-    assert!(size_of::<JSXFragment>() == 40usize);
-    assert!(align_of::<JSXFragment>() == 4usize);
-    assert!(offset_of!(JSXFragment, span) == 0usize);
-    assert!(offset_of!(JSXFragment, opening_fragment) == 8usize);
-    assert!(offset_of!(JSXFragment, closing_fragment) == 16usize);
-    assert!(offset_of!(JSXFragment, children) == 24usize);
-
-    assert!(size_of::<JSXOpeningFragment>() == 8usize);
-    assert!(align_of::<JSXOpeningFragment>() == 4usize);
-    assert!(offset_of!(JSXOpeningFragment, span) == 0usize);
-
-    assert!(size_of::<JSXClosingFragment>() == 8usize);
-    assert!(align_of::<JSXClosingFragment>() == 4usize);
-    assert!(offset_of!(JSXClosingFragment, span) == 0usize);
-
-    assert!(size_of::<JSXElementName>() == 8usize);
-    assert!(align_of::<JSXElementName>() == 4usize);
-
-    assert!(size_of::<JSXNamespacedName>() == 40usize);
-    assert!(align_of::<JSXNamespacedName>() == 4usize);
-    assert!(offset_of!(JSXNamespacedName, span) == 0usize);
-    assert!(offset_of!(JSXNamespacedName, namespace) == 8usize);
-    assert!(offset_of!(JSXNamespacedName, property) == 24usize);
-
-    assert!(size_of::<JSXMemberExpression>() == 32usize);
-    assert!(align_of::<JSXMemberExpression>() == 4usize);
-    assert!(offset_of!(JSXMemberExpression, span) == 0usize);
-    assert!(offset_of!(JSXMemberExpression, object) == 8usize);
-    assert!(offset_of!(JSXMemberExpression, property) == 16usize);
-
-    assert!(size_of::<JSXMemberExpressionObject>() == 8usize);
-    assert!(align_of::<JSXMemberExpressionObject>() == 4usize);
-
-    assert!(size_of::<JSXExpressionContainer>() == 20usize);
-    assert!(align_of::<JSXExpressionContainer>() == 4usize);
-    assert!(offset_of!(JSXExpressionContainer, span) == 0usize);
-    assert!(offset_of!(JSXExpressionContainer, expression) == 8usize);
-
-    assert!(size_of::<JSXExpression>() == 12usize);
-    assert!(align_of::<JSXExpression>() == 4usize);
-
-    assert!(size_of::<JSXEmptyExpression>() == 8usize);
-    assert!(align_of::<JSXEmptyExpression>() == 4usize);
-    assert!(offset_of!(JSXEmptyExpression, span) == 0usize);
-
-    assert!(size_of::<JSXAttributeItem>() == 8usize);
-    assert!(align_of::<JSXAttributeItem>() == 4usize);
-
-    assert!(size_of::<JSXAttribute>() == 24usize);
-    assert!(align_of::<JSXAttribute>() == 4usize);
-    assert!(offset_of!(JSXAttribute, span) == 0usize);
-    assert!(offset_of!(JSXAttribute, name) == 8usize);
-    assert!(offset_of!(JSXAttribute, value) == 16usize);
-
-    assert!(size_of::<JSXSpreadAttribute>() == 16usize);
-    assert!(align_of::<JSXSpreadAttribute>() == 4usize);
-    assert!(offset_of!(JSXSpreadAttribute, span) == 0usize);
-    assert!(offset_of!(JSXSpreadAttribute, argument) == 8usize);
-
-    assert!(size_of::<JSXAttributeName>() == 8usize);
-    assert!(align_of::<JSXAttributeName>() == 4usize);
-
-    assert!(size_of::<JSXAttributeValue>() == 8usize);
-    assert!(align_of::<JSXAttributeValue>() == 4usize);
-
-    assert!(size_of::<JSXIdentifier>() == 16usize);
-    assert!(align_of::<JSXIdentifier>() == 4usize);
-    assert!(offset_of!(JSXIdentifier, span) == 0usize);
-    assert!(offset_of!(JSXIdentifier, name) == 8usize);
-
-    assert!(size_of::<JSXChild>() == 8usize);
-    assert!(align_of::<JSXChild>() == 4usize);
-
-    assert!(size_of::<JSXSpreadChild>() == 16usize);
-    assert!(align_of::<JSXSpreadChild>() == 4usize);
-    assert!(offset_of!(JSXSpreadChild, span) == 0usize);
-    assert!(offset_of!(JSXSpreadChild, expression) == 8usize);
-
-    assert!(size_of::<JSXText>() == 16usize);
-    assert!(align_of::<JSXText>() == 4usize);
-    assert!(offset_of!(JSXText, span) == 0usize);
-    assert!(offset_of!(JSXText, value) == 8usize);
 
     assert!(size_of::<CommentKind>() == 1usize);
     assert!(align_of::<CommentKind>() == 1usize);

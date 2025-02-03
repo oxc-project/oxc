@@ -1,51 +1,6 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`
 
-export interface BooleanLiteral extends Span {
-  type: 'Literal';
-  value: boolean;
-  raw: string | null;
-}
-
-export interface NullLiteral extends Span {
-  type: 'Literal';
-  value: null;
-  raw: 'null' | null;
-}
-
-export interface NumericLiteral extends Span {
-  type: 'Literal';
-  value: number;
-  raw: string | null;
-}
-
-export interface StringLiteral extends Span {
-  type: 'Literal';
-  value: string;
-  raw: string | null;
-}
-
-export interface BigIntLiteral extends Span {
-  type: 'Literal';
-  raw: string | null;
-  value: null;
-  bigint: string;
-}
-
-export interface RegExpLiteral extends Span {
-  type: 'Literal';
-  raw: string | null;
-  value: {} | null;
-  regex: { pattern: string; flags: string };
-}
-
-export interface RegExp {
-  pattern: RegExpPattern;
-  flags: RegExpFlags;
-}
-
-export type RegExpPattern = string | string | Pattern;
-
 export interface Program extends Span {
   type: 'Program';
   sourceType: SourceType;
@@ -1032,6 +987,186 @@ export type ExportDefaultDeclarationKind =
 
 export type ModuleExportName = IdentifierName | IdentifierReference | StringLiteral;
 
+export interface BooleanLiteral extends Span {
+  type: 'Literal';
+  value: boolean;
+  raw: string | null;
+}
+
+export interface NullLiteral extends Span {
+  type: 'Literal';
+  value: null;
+  raw: 'null' | null;
+}
+
+export interface NumericLiteral extends Span {
+  type: 'Literal';
+  value: number;
+  raw: string | null;
+}
+
+export interface StringLiteral extends Span {
+  type: 'Literal';
+  value: string;
+  raw: string | null;
+}
+
+export interface BigIntLiteral extends Span {
+  type: 'Literal';
+  raw: string | null;
+  value: null;
+  bigint: string;
+}
+
+export interface RegExpLiteral extends Span {
+  type: 'Literal';
+  raw: string | null;
+  value: {} | null;
+  regex: { pattern: string; flags: string };
+}
+
+export interface RegExp {
+  pattern: RegExpPattern;
+  flags: RegExpFlags;
+}
+
+export type RegExpPattern = string | string | Pattern;
+
+export interface JSXElement extends Span {
+  type: 'JSXElement';
+  openingElement: JSXOpeningElement;
+  closingElement: JSXClosingElement | null;
+  children: Array<JSXChild>;
+}
+
+export interface JSXOpeningElement extends Span {
+  type: 'JSXOpeningElement';
+  selfClosing: boolean;
+  name: JSXElementName;
+  attributes: Array<JSXAttributeItem>;
+  typeParameters: TSTypeParameterInstantiation | null;
+}
+
+export interface JSXClosingElement extends Span {
+  type: 'JSXClosingElement';
+  name: JSXElementName;
+}
+
+export interface JSXFragment extends Span {
+  type: 'JSXFragment';
+  openingFragment: JSXOpeningFragment;
+  closingFragment: JSXClosingFragment;
+  children: Array<JSXChild>;
+}
+
+export interface JSXOpeningFragment extends Span {
+  type: 'JSXOpeningFragment';
+}
+
+export interface JSXClosingFragment extends Span {
+  type: 'JSXClosingFragment';
+}
+
+export interface JSXNamespacedName extends Span {
+  type: 'JSXNamespacedName';
+  namespace: JSXIdentifier;
+  property: JSXIdentifier;
+}
+
+export interface JSXMemberExpression extends Span {
+  type: 'JSXMemberExpression';
+  object: JSXMemberExpressionObject;
+  property: JSXIdentifier;
+}
+
+export interface JSXExpressionContainer extends Span {
+  type: 'JSXExpressionContainer';
+  expression: JSXExpression;
+}
+
+export type JSXExpression =
+  | JSXEmptyExpression
+  | BooleanLiteral
+  | NullLiteral
+  | NumericLiteral
+  | BigIntLiteral
+  | RegExpLiteral
+  | StringLiteral
+  | TemplateLiteral
+  | IdentifierReference
+  | MetaProperty
+  | Super
+  | ArrayExpression
+  | ArrowFunctionExpression
+  | AssignmentExpression
+  | AwaitExpression
+  | BinaryExpression
+  | CallExpression
+  | ChainExpression
+  | Class
+  | ConditionalExpression
+  | Function
+  | ImportExpression
+  | LogicalExpression
+  | NewExpression
+  | ObjectExpression
+  | ParenthesizedExpression
+  | SequenceExpression
+  | TaggedTemplateExpression
+  | ThisExpression
+  | UnaryExpression
+  | UpdateExpression
+  | YieldExpression
+  | PrivateInExpression
+  | JSXElement
+  | JSXFragment
+  | TSAsExpression
+  | TSSatisfiesExpression
+  | TSTypeAssertion
+  | TSNonNullExpression
+  | TSInstantiationExpression
+  | ComputedMemberExpression
+  | StaticMemberExpression
+  | PrivateFieldExpression;
+
+export interface JSXEmptyExpression extends Span {
+  type: 'JSXEmptyExpression';
+}
+
+export type JSXAttributeItem = JSXAttribute | JSXSpreadAttribute;
+
+export interface JSXAttribute extends Span {
+  type: 'JSXAttribute';
+  name: JSXAttributeName;
+  value: JSXAttributeValue | null;
+}
+
+export interface JSXSpreadAttribute extends Span {
+  type: 'JSXSpreadAttribute';
+  argument: Expression;
+}
+
+export type JSXAttributeName = JSXIdentifier | JSXNamespacedName;
+
+export type JSXAttributeValue = StringLiteral | JSXExpressionContainer | JSXElement | JSXFragment;
+
+export interface JSXIdentifier extends Span {
+  type: 'JSXIdentifier';
+  name: string;
+}
+
+export type JSXChild = JSXText | JSXElement | JSXFragment | JSXExpressionContainer | JSXSpreadChild;
+
+export interface JSXSpreadChild extends Span {
+  type: 'JSXSpreadChild';
+  expression: Expression;
+}
+
+export interface JSXText extends Span {
+  type: 'JSXText';
+  value: string;
+}
+
 export interface TSThisParameter extends Span {
   type: 'TSThisParameter';
   typeAnnotation: TSTypeAnnotation | null;
@@ -1580,141 +1715,6 @@ export interface JSDocNonNullableType extends Span {
 
 export interface JSDocUnknownType extends Span {
   type: 'JSDocUnknownType';
-}
-
-export interface JSXElement extends Span {
-  type: 'JSXElement';
-  openingElement: JSXOpeningElement;
-  closingElement: JSXClosingElement | null;
-  children: Array<JSXChild>;
-}
-
-export interface JSXOpeningElement extends Span {
-  type: 'JSXOpeningElement';
-  selfClosing: boolean;
-  name: JSXElementName;
-  attributes: Array<JSXAttributeItem>;
-  typeParameters: TSTypeParameterInstantiation | null;
-}
-
-export interface JSXClosingElement extends Span {
-  type: 'JSXClosingElement';
-  name: JSXElementName;
-}
-
-export interface JSXFragment extends Span {
-  type: 'JSXFragment';
-  openingFragment: JSXOpeningFragment;
-  closingFragment: JSXClosingFragment;
-  children: Array<JSXChild>;
-}
-
-export interface JSXOpeningFragment extends Span {
-  type: 'JSXOpeningFragment';
-}
-
-export interface JSXClosingFragment extends Span {
-  type: 'JSXClosingFragment';
-}
-
-export interface JSXNamespacedName extends Span {
-  type: 'JSXNamespacedName';
-  namespace: JSXIdentifier;
-  property: JSXIdentifier;
-}
-
-export interface JSXMemberExpression extends Span {
-  type: 'JSXMemberExpression';
-  object: JSXMemberExpressionObject;
-  property: JSXIdentifier;
-}
-
-export interface JSXExpressionContainer extends Span {
-  type: 'JSXExpressionContainer';
-  expression: JSXExpression;
-}
-
-export type JSXExpression =
-  | JSXEmptyExpression
-  | BooleanLiteral
-  | NullLiteral
-  | NumericLiteral
-  | BigIntLiteral
-  | RegExpLiteral
-  | StringLiteral
-  | TemplateLiteral
-  | IdentifierReference
-  | MetaProperty
-  | Super
-  | ArrayExpression
-  | ArrowFunctionExpression
-  | AssignmentExpression
-  | AwaitExpression
-  | BinaryExpression
-  | CallExpression
-  | ChainExpression
-  | Class
-  | ConditionalExpression
-  | Function
-  | ImportExpression
-  | LogicalExpression
-  | NewExpression
-  | ObjectExpression
-  | ParenthesizedExpression
-  | SequenceExpression
-  | TaggedTemplateExpression
-  | ThisExpression
-  | UnaryExpression
-  | UpdateExpression
-  | YieldExpression
-  | PrivateInExpression
-  | JSXElement
-  | JSXFragment
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSTypeAssertion
-  | TSNonNullExpression
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
-
-export interface JSXEmptyExpression extends Span {
-  type: 'JSXEmptyExpression';
-}
-
-export type JSXAttributeItem = JSXAttribute | JSXSpreadAttribute;
-
-export interface JSXAttribute extends Span {
-  type: 'JSXAttribute';
-  name: JSXAttributeName;
-  value: JSXAttributeValue | null;
-}
-
-export interface JSXSpreadAttribute extends Span {
-  type: 'JSXSpreadAttribute';
-  argument: Expression;
-}
-
-export type JSXAttributeName = JSXIdentifier | JSXNamespacedName;
-
-export type JSXAttributeValue = StringLiteral | JSXExpressionContainer | JSXElement | JSXFragment;
-
-export interface JSXIdentifier extends Span {
-  type: 'JSXIdentifier';
-  name: string;
-}
-
-export type JSXChild = JSXText | JSXElement | JSXFragment | JSXExpressionContainer | JSXSpreadChild;
-
-export interface JSXSpreadChild extends Span {
-  type: 'JSXSpreadChild';
-  expression: Expression;
-}
-
-export interface JSXText extends Span {
-  type: 'JSXText';
-  value: string;
 }
 
 export type AssignmentOperator =

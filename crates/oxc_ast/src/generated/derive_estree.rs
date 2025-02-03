@@ -10,61 +10,6 @@ use crate::ast::jsx::*;
 use crate::ast::literal::*;
 use crate::ast::ts::*;
 
-impl Serialize for BooleanLiteral {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
-    }
-}
-
-impl Serialize for NullLiteral {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
-    }
-}
-
-impl Serialize for NumericLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
-    }
-}
-
-impl Serialize for StringLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
-    }
-}
-
-impl Serialize for BigIntLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
-    }
-}
-
-impl Serialize for RegExpLiteral<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
-    }
-}
-
-impl Serialize for RegExp<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("pattern", &self.pattern)?;
-        map.serialize_entry("flags", &self.flags)?;
-        map.end()
-    }
-}
-
-impl Serialize for RegExpPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            RegExpPattern::Raw(it) => Serialize::serialize(it, serializer),
-            RegExpPattern::Invalid(it) => Serialize::serialize(it, serializer),
-            RegExpPattern::Pattern(it) => Serialize::serialize(it, serializer),
-        }
-    }
-}
-
 impl Serialize for Program<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -1986,6 +1931,309 @@ impl Serialize for ModuleExportName<'_> {
     }
 }
 
+impl Serialize for BooleanLiteral {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+    }
+}
+
+impl Serialize for NullLiteral {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+    }
+}
+
+impl Serialize for NumericLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+    }
+}
+
+impl Serialize for StringLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+    }
+}
+
+impl Serialize for BigIntLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+    }
+}
+
+impl Serialize for RegExpLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+    }
+}
+
+impl Serialize for RegExp<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("pattern", &self.pattern)?;
+        map.serialize_entry("flags", &self.flags)?;
+        map.end()
+    }
+}
+
+impl Serialize for RegExpPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            RegExpPattern::Raw(it) => Serialize::serialize(it, serializer),
+            RegExpPattern::Invalid(it) => Serialize::serialize(it, serializer),
+            RegExpPattern::Pattern(it) => Serialize::serialize(it, serializer),
+        }
+    }
+}
+
+impl Serialize for JSXElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXElement")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("openingElement", &self.opening_element)?;
+        map.serialize_entry("closingElement", &self.closing_element)?;
+        map.serialize_entry("children", &self.children)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXOpeningElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXOpeningElement")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("selfClosing", &self.self_closing)?;
+        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("attributes", &self.attributes)?;
+        map.serialize_entry("typeParameters", &self.type_parameters)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXClosingElement<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXClosingElement")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("name", &self.name)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXFragment<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXFragment")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("openingFragment", &self.opening_fragment)?;
+        map.serialize_entry("closingFragment", &self.closing_fragment)?;
+        map.serialize_entry("children", &self.children)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXOpeningFragment {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXOpeningFragment")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXClosingFragment {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXClosingFragment")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXNamespacedName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXNamespacedName")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("namespace", &self.namespace)?;
+        map.serialize_entry("property", &self.property)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXMemberExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXMemberExpression")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("object", &self.object)?;
+        map.serialize_entry("property", &self.property)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXExpressionContainer<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXExpressionContainer")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("expression", &self.expression)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            JSXExpression::EmptyExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::BooleanLiteral(it) => Serialize::serialize(it, serializer),
+            JSXExpression::NullLiteral(it) => Serialize::serialize(it, serializer),
+            JSXExpression::NumericLiteral(it) => Serialize::serialize(it, serializer),
+            JSXExpression::BigIntLiteral(it) => Serialize::serialize(it, serializer),
+            JSXExpression::RegExpLiteral(it) => Serialize::serialize(it, serializer),
+            JSXExpression::StringLiteral(it) => Serialize::serialize(it, serializer),
+            JSXExpression::TemplateLiteral(it) => Serialize::serialize(it, serializer),
+            JSXExpression::Identifier(it) => Serialize::serialize(it, serializer),
+            JSXExpression::MetaProperty(it) => Serialize::serialize(it, serializer),
+            JSXExpression::Super(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ArrayExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ArrowFunctionExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::AssignmentExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::AwaitExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::BinaryExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::CallExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ChainExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ClassExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ConditionalExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::FunctionExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ImportExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::LogicalExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::NewExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ObjectExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ParenthesizedExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::SequenceExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::TaggedTemplateExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ThisExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::UnaryExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::UpdateExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::YieldExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::PrivateInExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::JSXElement(it) => Serialize::serialize(it, serializer),
+            JSXExpression::JSXFragment(it) => Serialize::serialize(it, serializer),
+            JSXExpression::TSAsExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
+            JSXExpression::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
+        }
+    }
+}
+
+impl Serialize for JSXEmptyExpression {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXEmptyExpression")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXAttributeItem<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            JSXAttributeItem::Attribute(it) => Serialize::serialize(it, serializer),
+            JSXAttributeItem::SpreadAttribute(it) => Serialize::serialize(it, serializer),
+        }
+    }
+}
+
+impl Serialize for JSXAttribute<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXAttribute")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("value", &self.value)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXSpreadAttribute<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXSpreadAttribute")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("argument", &self.argument)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXAttributeName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            JSXAttributeName::Identifier(it) => Serialize::serialize(it, serializer),
+            JSXAttributeName::NamespacedName(it) => Serialize::serialize(it, serializer),
+        }
+    }
+}
+
+impl Serialize for JSXAttributeValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            JSXAttributeValue::StringLiteral(it) => Serialize::serialize(it, serializer),
+            JSXAttributeValue::ExpressionContainer(it) => Serialize::serialize(it, serializer),
+            JSXAttributeValue::Element(it) => Serialize::serialize(it, serializer),
+            JSXAttributeValue::Fragment(it) => Serialize::serialize(it, serializer),
+        }
+    }
+}
+
+impl Serialize for JSXIdentifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXIdentifier")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("name", &self.name)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXChild<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            JSXChild::Text(it) => Serialize::serialize(it, serializer),
+            JSXChild::Element(it) => Serialize::serialize(it, serializer),
+            JSXChild::Fragment(it) => Serialize::serialize(it, serializer),
+            JSXChild::ExpressionContainer(it) => Serialize::serialize(it, serializer),
+            JSXChild::Spread(it) => Serialize::serialize(it, serializer),
+        }
+    }
+}
+
+impl Serialize for JSXSpreadChild<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXSpreadChild")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("expression", &self.expression)?;
+        map.end()
+    }
+}
+
+impl Serialize for JSXText<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "JSXText")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("value", &self.value)?;
+        map.end()
+    }
+}
+
 impl Serialize for TSThisParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
@@ -3048,254 +3296,6 @@ impl Serialize for JSDocUnknownType {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocUnknownType")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("openingElement", &self.opening_element)?;
-        map.serialize_entry("closingElement", &self.closing_element)?;
-        map.serialize_entry("children", &self.children)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXOpeningElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXOpeningElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("selfClosing", &self.self_closing)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("attributes", &self.attributes)?;
-        map.serialize_entry("typeParameters", &self.type_parameters)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXClosingElement<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXClosingElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXFragment<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXFragment")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("openingFragment", &self.opening_fragment)?;
-        map.serialize_entry("closingFragment", &self.closing_fragment)?;
-        map.serialize_entry("children", &self.children)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXOpeningFragment {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXOpeningFragment")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXClosingFragment {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXClosingFragment")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXNamespacedName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXNamespacedName")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("namespace", &self.namespace)?;
-        map.serialize_entry("property", &self.property)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXMemberExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXMemberExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("property", &self.property)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXExpressionContainer<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXExpressionContainer")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXExpression<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXExpression::EmptyExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::BooleanLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::NullLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::NumericLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::StringLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TemplateLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::Identifier(it) => Serialize::serialize(it, serializer),
-            JSXExpression::MetaProperty(it) => Serialize::serialize(it, serializer),
-            JSXExpression::Super(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ArrayExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ArrowFunctionExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::AssignmentExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::AwaitExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::BinaryExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::CallExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ChainExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ClassExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ConditionalExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::FunctionExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ImportExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::LogicalExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::NewExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ObjectExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ParenthesizedExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::SequenceExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TaggedTemplateExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ThisExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::UnaryExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::UpdateExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::YieldExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::PrivateInExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::JSXElement(it) => Serialize::serialize(it, serializer),
-            JSXExpression::JSXFragment(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
-        }
-    }
-}
-
-impl Serialize for JSXEmptyExpression {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXEmptyExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXAttributeItem<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXAttributeItem::Attribute(it) => Serialize::serialize(it, serializer),
-            JSXAttributeItem::SpreadAttribute(it) => Serialize::serialize(it, serializer),
-        }
-    }
-}
-
-impl Serialize for JSXAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXAttribute")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXSpreadAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXSpreadAttribute")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("argument", &self.argument)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXAttributeName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXAttributeName::Identifier(it) => Serialize::serialize(it, serializer),
-            JSXAttributeName::NamespacedName(it) => Serialize::serialize(it, serializer),
-        }
-    }
-}
-
-impl Serialize for JSXAttributeValue<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXAttributeValue::StringLiteral(it) => Serialize::serialize(it, serializer),
-            JSXAttributeValue::ExpressionContainer(it) => Serialize::serialize(it, serializer),
-            JSXAttributeValue::Element(it) => Serialize::serialize(it, serializer),
-            JSXAttributeValue::Fragment(it) => Serialize::serialize(it, serializer),
-        }
-    }
-}
-
-impl Serialize for JSXIdentifier<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXIdentifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("name", &self.name)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXChild<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            JSXChild::Text(it) => Serialize::serialize(it, serializer),
-            JSXChild::Element(it) => Serialize::serialize(it, serializer),
-            JSXChild::Fragment(it) => Serialize::serialize(it, serializer),
-            JSXChild::ExpressionContainer(it) => Serialize::serialize(it, serializer),
-            JSXChild::Spread(it) => Serialize::serialize(it, serializer),
-        }
-    }
-}
-
-impl Serialize for JSXSpreadChild<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXSpreadChild")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("expression", &self.expression)?;
-        map.end()
-    }
-}
-
-impl Serialize for JSXText<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "JSXText")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
         map.end()
     }
 }
