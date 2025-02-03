@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use oxc_index::IndexVec;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use syn::{parse_str, punctuated::Punctuated, Expr, Ident, Meta, MetaList, Token};
+use syn::{parse_str, punctuated::Punctuated, token::Comma, Expr, Ident, Meta, MetaList};
 
 use crate::{
     output::{output_path, Output},
@@ -73,7 +73,7 @@ fn parse_visit_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         (AttrPart::List("args", meta_list), location) => {
             // Parse args as a list of `x = expr` parts
             let metas = meta_list
-                .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                .parse_args_with(Punctuated::<Meta, Comma>::parse_terminated)
                 .map_err(|_| ())?;
             let mut args = vec![];
             for meta in metas {
@@ -122,7 +122,7 @@ fn parse_scope_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
 
     fn parse_list(meta_list: &MetaList) -> Result<String> {
         let exprs = meta_list
-            .parse_args_with(Punctuated::<Expr, Token![,]>::parse_terminated)
+            .parse_args_with(Punctuated::<Expr, Comma>::parse_terminated)
             .map_err(|_| ())?;
         if exprs.len() == 1 {
             Ok(exprs.first().unwrap().to_token_stream().to_string())

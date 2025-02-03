@@ -2,9 +2,9 @@ use oxc_index::IndexVec;
 use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::{
-    punctuated::Punctuated, AttrStyle, Attribute, Expr, ExprLit, Field, Fields, GenericArgument,
-    Generics, Ident, ItemEnum, ItemStruct, Lit, Meta, PathArguments, PathSegment, Token, Type,
-    TypePath, TypeReference, Variant, Visibility as SynVisibility,
+    punctuated::Punctuated, token::Comma, AttrStyle, Attribute, Expr, ExprLit, Field, Fields,
+    GenericArgument, Generics, Ident, ItemEnum, ItemStruct, Lit, Meta, PathArguments, PathSegment,
+    Type, TypePath, TypeReference, Variant, Visibility as SynVisibility,
 };
 
 use crate::{
@@ -579,7 +579,7 @@ impl<'c> Parser<'c> {
         let parts = match &attr.meta {
             Meta::Path(_) => return,
             Meta::List(meta_list) => meta_list
-                .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                .parse_args_with(Punctuated::<Meta, Comma>::parse_terminated)
                 .map_err(|_| ()),
             Meta::NameValue(_) => Err(()),
         };
@@ -628,7 +628,7 @@ impl<'c> Parser<'c> {
         let mut derives = Derives::none();
         for attr in attrs {
             if attr.path().is_ident("generate_derive") {
-                let args = attr.parse_args_with(Punctuated::<Ident, Token![,]>::parse_terminated);
+                let args = attr.parse_args_with(Punctuated::<Ident, Comma>::parse_terminated);
                 let Ok(args) = args else {
                     panic!("Unable to parse `#[generated_derives]` on `{type_name}` type");
                 };
@@ -692,7 +692,7 @@ fn process_attr(
         Meta::Path(_) => process_attr_part(processor, attr_name, location, AttrPart::None),
         Meta::List(meta_list) => {
             let parts = meta_list
-                .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                .parse_args_with(Punctuated::<Meta, Comma>::parse_terminated)
                 .map_err(|_| ())?;
             for meta in parts {
                 match &meta {
