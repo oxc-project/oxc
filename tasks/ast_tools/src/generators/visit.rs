@@ -14,7 +14,7 @@ use crate::{
         TypeId, VecDef,
     },
     utils::create_ident_tokens,
-    Codegen, Generator, Result, AST_CRATE,
+    Codegen, Generator, Result, AST_CRATE_PATH,
 };
 
 use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
@@ -50,9 +50,11 @@ impl Generator for VisitGenerator {
         let (visit_output, visit_mut_output) = generate_outputs(schema);
 
         let visit_output =
-            Output::Rust { path: output_path(AST_CRATE, "visit.rs"), tokens: visit_output };
-        let visit_mut_output =
-            Output::Rust { path: output_path(AST_CRATE, "visit_mut.rs"), tokens: visit_mut_output };
+            Output::Rust { path: output_path(AST_CRATE_PATH, "visit.rs"), tokens: visit_output };
+        let visit_mut_output = Output::Rust {
+            path: output_path(AST_CRATE_PATH, "visit_mut.rs"),
+            tokens: visit_mut_output,
+        };
 
         vec![visit_output, visit_mut_output]
     }

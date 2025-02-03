@@ -15,7 +15,7 @@ use syn::LitInt;
 use crate::{
     output::{output_path, Output},
     schema::{Def, Schema, TypeDef},
-    Codegen, Generator,
+    Codegen, Generator, AST_CRATE_PATH,
 };
 
 use super::define_generator;
@@ -222,6 +222,6 @@ impl Generator for AstKindGenerator {
             }
         };
 
-        Output::Rust { path: output_path(crate::AST_CRATE, "ast_kind.rs"), tokens: output }
+        Output::Rust { path: output_path(AST_CRATE_PATH, "ast_kind.rs"), tokens: output }
     }
 }

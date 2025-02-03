@@ -206,10 +206,10 @@ static SOURCE_PATHS: &[&str] = &[
 ];
 
 /// Path to `oxc_ast` crate
-const AST_CRATE: &str = "crates/oxc_ast";
+const AST_CRATE_PATH: &str = "crates/oxc_ast";
 
-/// Path to `oxc_ast_macros` crate's `lib.rs` file
-const AST_MACROS_LIB_PATH: &str = "crates/oxc_ast_macros/src/lib.rs";
+/// Path to `oxc_ast_macros` crate
+const AST_MACROS_CRATE_PATH: &str = "crates/oxc_ast_macros";
 
 /// Path to write TS type definitions to
 const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
@@ -346,11 +346,12 @@ fn generate_updated_proc_macro(codegen: &Codegen) -> RawOutput {
 
     // Load `oxc_ast_macros` crate's `lib.rs` file.
     // Substitute list of used attrs into `#[proc_macro_derive(Ast, attributes(...))]`.
-    let code = fs::read_to_string(AST_MACROS_LIB_PATH).unwrap();
+    let path = format!("{AST_MACROS_CRATE_PATH}/src/lib.rs");
+    let code = fs::read_to_string(&path).unwrap();
     let (start, end) = code.split_once("#[proc_macro_derive(").unwrap();
     let (_, end) = end.split_once(")]").unwrap();
     assert!(end.starts_with("\npub fn ast_derive("));
     let code = format!("{start}#[proc_macro_derive(Ast, attributes({attrs}))]{end}");
 
-    Output::RustString { path: AST_MACROS_LIB_PATH.to_string(), code }.into_raw("")
+    Output::RustString { path, code }.into_raw("")
 }

@@ -9,7 +9,7 @@ use crate::{
     output::{output_path, Output},
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
     utils::is_reserved_name,
-    Codegen, Generator,
+    Codegen, Generator, AST_CRATE_PATH,
 };
 
 use super::define_generator;
@@ -78,7 +78,7 @@ impl Generator for AstBuilderGenerator {
             }
         };
 
-        Output::Rust { path: output_path(crate::AST_CRATE, "ast_builder.rs"), tokens: output }
+        Output::Rust { path: output_path(AST_CRATE_PATH, "ast_builder.rs"), tokens: output }
     }
 }
 

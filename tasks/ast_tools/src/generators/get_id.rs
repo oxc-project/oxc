@@ -9,7 +9,7 @@ use quote::{format_ident, quote};
 use crate::{
     output::{output_path, Output},
     schema::{Def, Schema, TypeDef},
-    Codegen, Generator,
+    Codegen, Generator, AST_CRATE_PATH,
 };
 
 use super::define_generator;
@@ -36,7 +36,7 @@ impl Generator for GetIdGenerator {
             #(#impls)*
         };
 
-        Output::Rust { path: output_path(crate::AST_CRATE, "get_id.rs"), tokens: output }
+        Output::Rust { path: output_path(AST_CRATE_PATH, "get_id.rs"), tokens: output }
     }
 }
 

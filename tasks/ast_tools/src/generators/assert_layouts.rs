@@ -16,7 +16,7 @@ use crate::{
         extensions::layout::{Layout, Niche, Offset, PlatformLayout},
         Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
     },
-    Codegen, Generator,
+    Codegen, Generator, AST_CRATE_PATH,
 };
 
 use super::define_generator;
@@ -61,7 +61,7 @@ impl Generator for AssertLayouts {
             const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
         };
 
-        Output::Rust { path: output_path(crate::AST_CRATE, "assert_layouts.rs"), tokens: output }
+        Output::Rust { path: output_path(AST_CRATE_PATH, "assert_layouts.rs"), tokens: output }
     }
 }
 
