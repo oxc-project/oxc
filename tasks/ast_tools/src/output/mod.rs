@@ -9,7 +9,7 @@ mod javascript;
 mod rust;
 mod yaml;
 use javascript::print_javascript;
-use rust::print_rust;
+use rust::{print_rust, rust_fmt};
 use yaml::print_yaml;
 
 /// Get path for an output.
@@ -32,6 +32,7 @@ fn add_header(code: &str, generator_path: &str, comment_start: &str) -> String {
 #[expect(dead_code)]
 pub enum Output {
     Rust { path: String, tokens: TokenStream },
+    RustString { path: String, code: String },
     Javascript { path: String, code: String },
     Yaml { path: String, code: String },
     Raw { path: String, code: String },
@@ -47,6 +48,10 @@ impl Output {
         let (path, code) = match self {
             Self::Rust { path, tokens } => {
                 let code = print_rust(tokens, &generator_path);
+                (path, code)
+            }
+            Self::RustString { path, code } => {
+                let code = rust_fmt(&code);
                 (path, code)
             }
             Self::Javascript { path, code } => {

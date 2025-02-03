@@ -147,7 +147,6 @@
 //! * Implement [`Generator::attrs`] / [`Derive::attrs`] to declare the generator's custom attributes.
 //! * Implement [`Generator::parse_attr`] / [`Derive::parse_attr`] to parse those attributes
 //!   and mutate the "extension" types in [`Schema`] as required.
-//! * Add the attributes' names to the list on `ast_derive` in `crates/oxc_ast_macros/src/lib.rs`.
 //!
 //! #### Attributes
 //!
@@ -170,7 +169,7 @@
 //! [`AttrLocation`]: parse::attr::AttrLocation
 //! [`AttrPart`]: parse::attr::AttrPart
 
-use std::fmt::Write;
+use std::{fmt::Write, fs};
 
 use bpaf::{Bpaf, Parser};
 use rayon::prelude::*;
@@ -208,6 +207,9 @@ static SOURCE_PATHS: &[&str] = &[
 
 /// Path to `oxc_ast` crate
 const AST_CRATE: &str = "crates/oxc_ast";
+
+/// Path to `oxc_ast_macros` crate's `lib.rs` file
+const AST_MACROS_LIB_PATH: &str = "crates/oxc_ast_macros/src/lib.rs";
 
 /// Path to write TS type definitions to
 const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
@@ -288,6 +290,9 @@ fn main() {
 
     logln!("All Derives and Generators... Done!");
 
+    // Edit `lib.rs` in `oxc_ast_macros` crate
+    outputs.push(generate_updated_proc_macro(&codegen));
+
     // Add CI filter file to outputs
     outputs.sort_unstable_by(|o1, o2| o1.path.cmp(&o2.path));
     outputs.push(generate_ci_filter(&outputs));
@@ -325,4 +330,27 @@ fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
     log_success!();
 
     Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
+}
+
+/// Update the list of helper attributes for `Ast` derive proc macro in `oxc_ast_macros` crate
+/// to include all attrs which generators/derives utilize.
+///
+/// Unfortunately we can't add a separate generated file for this, as proc macros can only be declared
+/// in the main `lib.rs` of a proc macro crate. So we have to edit the existing file.
+fn generate_updated_proc_macro(codegen: &Codegen) -> RawOutput {
+    // Get all attrs which derives/generators use
+    let mut attrs = codegen.attrs();
+    attrs.push("generate_derive");
+    attrs.sort_unstable();
+    let attrs = attrs.join(", ");
+
+    // Load `oxc_ast_macros` crate's `lib.rs` file.
+    // Substitute list of used attrs into `#[proc_macro_derive(Ast, attributes(...))]`.
+    let code = fs::read_to_string(AST_MACROS_LIB_PATH).unwrap();
+    let (start, end) = code.split_once("#[proc_macro_derive(").unwrap();
+    let (_, end) = end.split_once(")]").unwrap();
+    assert!(end.starts_with("\npub fn ast_derive("));
+    let code = format!("{start}#[proc_macro_derive(Ast, attributes({attrs}))]{end}");
+
+    Output::RustString { path: AST_MACROS_LIB_PATH.to_string(), code }.into_raw("")
 }

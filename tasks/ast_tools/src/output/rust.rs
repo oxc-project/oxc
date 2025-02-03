@@ -21,7 +21,7 @@ pub fn print_rust(tokens: TokenStream, generator_path: &str) -> String {
 /// Format Rust code with `rustfmt`.
 ///
 /// Does not format on disk - interfaces with `rustfmt` via stdin/stdout.
-fn rust_fmt(source_text: &str) -> String {
+pub fn rust_fmt(source_text: &str) -> String {
     let mut rustfmt = Command::new("rustfmt")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

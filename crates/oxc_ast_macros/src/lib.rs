@@ -84,7 +84,7 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// Its only purpose is to allow the occurrence of helper attributes used in `tasks/ast_tools`.
 ///
 /// Read [`macro@ast`] for further details.
-#[proc_macro_derive(Ast, attributes(scope, visit, span, generate_derive, clone_in, estree, ts))]
+#[proc_macro_derive(Ast, attributes(clone_in, estree, generate_derive, scope, span, ts, visit))]
 pub fn ast_derive(_input: TokenStream) -> TokenStream {
     TokenStream::new()
 }

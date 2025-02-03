@@ -73,6 +73,11 @@ impl Codegen {
     pub fn attr_processor(&self, attr_name: &str) -> Option<(AttrProcessor, AttrPositions)> {
         self.attr_processors.get(attr_name).copied()
     }
+
+    /// Get all attributes which derives and generators handle.
+    pub fn attrs(&self) -> Vec<&'static str> {
+        self.attr_processors.keys().copied().collect()
+    }
 }
 
 /// Runner trait.
