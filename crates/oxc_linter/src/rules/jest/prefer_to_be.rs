@@ -89,7 +89,7 @@ impl Rule for PreferToBe {
     }
 
     fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
-        crate::rule::ShouldRunMeta::new().with_run_on_jest_node(true)
+        crate::rule::ShouldRunMeta::IS_RUN_ON_JEST_NODE
     }
 }
 

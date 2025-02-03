@@ -45,7 +45,7 @@ const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 
 impl Rule for NoJasmineGlobals {
     fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
-        crate::rule::ShouldRunMeta::new().with_run(true).with_run_once(true)
+        crate::rule::ShouldRunMeta::IS_RUN.with_run_once(true)
     }
 
     fn run_once(&self, ctx: &LintContext) {

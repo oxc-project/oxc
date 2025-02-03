@@ -99,7 +99,7 @@ impl Rule for EmptyTags {
     }
 
     fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
-        crate::rule::ShouldRunMeta::new().with_run_once(true)
+        crate::rule::ShouldRunMeta::IS_RUN_ONCE
     }
 
     fn run_once(&self, ctx: &LintContext) {

@@ -40,7 +40,7 @@ declare_oxc_lint!(
 
 impl Rule for NoShadowRestrictedNames {
     fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
-        crate::rule::ShouldRunMeta::new().with_run_on_symbol(true)
+        crate::rule::ShouldRunMeta::IS_RUN_ON_SYMBOL
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {

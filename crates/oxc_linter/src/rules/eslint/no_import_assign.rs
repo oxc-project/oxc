@@ -52,7 +52,7 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
 
 impl Rule for NoImportAssign {
     fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
-        crate::rule::ShouldRunMeta::new().with_run_on_symbol(true)
+        crate::rule::ShouldRunMeta::IS_RUN_ON_SYMBOL
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {

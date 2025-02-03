@@ -26,44 +26,29 @@ bitflags::bitflags! {
 }
 
 impl ShouldRunMeta {
+    #[inline]
     pub fn new() -> Self {
         ShouldRunMeta::empty()
     }
 
-    pub fn with_run(self, yes: bool) -> Self {
-        let other = ShouldRunMeta::IS_RUN;
-        if yes {
-            self.union(other)
-        } else {
-            self.difference(other)
-        }
+    pub fn with_run(mut self, yes: bool) -> Self {
+        self.set(ShouldRunMeta::IS_RUN, yes);
+        self
     }
 
-    pub fn with_run_once(self, yes: bool) -> Self {
-        let other = ShouldRunMeta::IS_RUN_ONCE;
-        if yes {
-            self.union(other)
-        } else {
-            self.difference(other)
-        }
+    pub fn with_run_once(mut self, yes: bool) -> Self {
+        self.set(ShouldRunMeta::IS_RUN_ONCE, yes);
+        self
     }
 
-    pub fn with_run_on_symbol(self, yes: bool) -> Self {
-        let other = ShouldRunMeta::IS_RUN_ON_SYMBOL;
-        if yes {
-            self.union(other)
-        } else {
-            self.difference(other)
-        }
+    pub fn with_run_on_symbol(mut self, yes: bool) -> Self {
+        self.set(ShouldRunMeta::IS_RUN_ON_SYMBOL, yes);
+        self
     }
 
-    pub fn with_run_on_jest_node(self, yes: bool) -> Self {
-        let other = ShouldRunMeta::IS_RUN_ON_JEST_NODE;
-        if yes {
-            self.union(other)
-        } else {
-            self.difference(other)
-        }
+    pub fn with_run_on_jest_node(mut self, yes: bool) -> Self {
+        self.set(ShouldRunMeta::IS_RUN_ON_JEST_NODE, yes);
+        self
     }
 }
 
@@ -110,7 +95,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[expect(unused_variables)]
     #[inline]
     fn should_run(&self, ctx: &ContextHost) -> ShouldRunMeta {
-        ShouldRunMeta::new().with_run(true)
+        ShouldRunMeta::IS_RUN
     }
 }
 

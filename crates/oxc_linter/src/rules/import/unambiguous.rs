@@ -49,7 +49,7 @@ declare_oxc_lint!(
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/unambiguous.md>
 impl Rule for Unambiguous {
     fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunMeta {
-        crate::rule::ShouldRunMeta::new().with_run_once(true)
+        crate::rule::ShouldRunMeta::IS_RUN_ONCE
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
