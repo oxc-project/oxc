@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
@@ -42,7 +43,7 @@ impl Case for EstreeTest262Case {
             return;
         };
         // FIXME: `called `Result::unwrap()` on an `Err` value: Error("unexpected end of hex escape", line: 307, column: 33)`
-        let acorn_json = match serde_json::from_str::<serde_json::Value>(&acorn_file) {
+        let mut acorn_json = match serde_json::from_str::<serde_json::Value>(&acorn_file) {
             Err(e) => {
                 self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
                 return;
@@ -56,22 +57,13 @@ impl Case for EstreeTest262Case {
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         // Ignore empty AST or parse errors.
         if ret.program.is_empty() || ret.panicked || !ret.errors.is_empty() {
-            self.base.set_result(TestResult::GenericError("Parser", "".to_string()));
+            self.base.set_result(TestResult::GenericError("Parser", String::new()));
             return;
         }
-        let oxc_json = serde_json::from_str::<serde_json::Value>(&ret.program.to_json()).unwrap();
+        let mut oxc_json =
+            serde_json::from_str::<serde_json::Value>(&ret.program.to_json()).unwrap();
 
-        // TODO: check what mismatches
-        // - span
-        // - extra properties
-        // - others
-        // let mut mismatch_span = false;
-        // let mut mismatch_extra = false;
-        // let mut mismatch_other = false;
-
-        // check excess property
-        // check span difference
-        // check other differences
+        process_estree(&mut acorn_json, &mut oxc_json);
 
         let acorn_json = serde_json::to_string_pretty(&acorn_json).unwrap();
         let oxc_json = serde_json::to_string_pretty(&oxc_json).unwrap();
@@ -83,17 +75,43 @@ impl Case for EstreeTest262Case {
                 .join(self.path().strip_prefix("test262").unwrap())
                 .with_extension("diff");
             std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
-            std::fs::write(
-                diff_path,
-                format!(
-                    "{}",
-                    similar::TextDiff::from_lines(&acorn_json, &oxc_json)
-                        .unified_diff()
-                        .missing_newline_hint(false)
-                ),
+            write!(
+                std::fs::File::create(diff_path).unwrap(),
+                "{}",
+                similar::TextDiff::from_lines(&acorn_json, &oxc_json)
+                    .unified_diff()
+                    .missing_newline_hint(false)
             )
             .unwrap();
-            self.base.set_result(TestResult::Mismatch("Mismatch", "".to_string(), "".to_string()));
+            self.base.set_result(TestResult::Mismatch("Mismatch", String::new(), String::new()));
         }
+    }
+}
+
+fn process_estree(old: &mut serde_json::Value, new: &mut serde_json::Value) {
+    match new {
+        serde_json::Value::Object(new) => {
+            if let serde_json::Value::Object(old) = old {
+                // remove extra keys which exists only on oxc
+                let keys_to_remove: Vec<String> =
+                    new.keys().filter(|key| !old.contains_key(*key)).cloned().collect();
+                for key in keys_to_remove {
+                    new.remove(&key);
+                }
+                for (key, value) in new {
+                    if let Some(old_value) = old.get_mut(key) {
+                        process_estree(old_value, value);
+                    }
+                }
+            }
+        }
+        serde_json::Value::Array(new) => {
+            if let serde_json::Value::Array(old) = old {
+                for (i, value) in new.iter_mut().enumerate() {
+                    process_estree(&mut old[i], value);
+                }
+            }
+        }
+        _ => {}
     }
 }
