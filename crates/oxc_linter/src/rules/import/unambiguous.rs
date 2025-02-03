@@ -48,6 +48,10 @@ declare_oxc_lint!(
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/unambiguous.md>
 impl Rule for Unambiguous {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext<'_>) {
         if !ctx.module_record().has_module_syntax {
             ctx.diagnostic(unambiguous_diagnostic(Span::default()));

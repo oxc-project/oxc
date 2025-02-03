@@ -127,6 +127,40 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxNoTargetBlank {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
+
+        Self {
+            enforce_dynamic_links: value
+                .and_then(|val| val.get("enforceDynamicLinks").and_then(serde_json::Value::as_str))
+                .map_or(EnforceDynamicLinksEnum::Always, |str| {
+                    if str == "always" {
+                        EnforceDynamicLinksEnum::Always
+                    } else {
+                        EnforceDynamicLinksEnum::Never
+                    }
+                }),
+            warn_on_spread_attributes: value
+                .and_then(|val| {
+                    val.get("warnOnSpreadAttributes").and_then(serde_json::Value::as_bool)
+                })
+                .unwrap_or(false),
+            links: value
+                .and_then(|val| val.get("links").and_then(serde_json::Value::as_bool))
+                .unwrap_or(true),
+            forms: value
+                .and_then(|val| val.get("forms").and_then(serde_json::Value::as_bool))
+                .unwrap_or(false),
+            allow_referrer: value
+                .and_then(|val| val.get("allowReferrer").and_then(serde_json::Value::as_bool))
+                .unwrap_or(false),
+        }
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
             let Some(tag_name) = &jsx_ele.name.get_identifier_name() else {
@@ -216,40 +250,6 @@ impl Rule for JsxNoTargetBlank {
                 }
             }
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            enforce_dynamic_links: value
-                .and_then(|val| val.get("enforceDynamicLinks").and_then(serde_json::Value::as_str))
-                .map_or(EnforceDynamicLinksEnum::Always, |str| {
-                    if str == "always" {
-                        EnforceDynamicLinksEnum::Always
-                    } else {
-                        EnforceDynamicLinksEnum::Never
-                    }
-                }),
-            warn_on_spread_attributes: value
-                .and_then(|val| {
-                    val.get("warnOnSpreadAttributes").and_then(serde_json::Value::as_bool)
-                })
-                .unwrap_or(false),
-            links: value
-                .and_then(|val| val.get("links").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            forms: value
-                .and_then(|val| val.get("forms").and_then(serde_json::Value::as_bool))
-                .unwrap_or(false),
-            allow_referrer: value
-                .and_then(|val| val.get("allowReferrer").and_then(serde_json::Value::as_bool))
-                .unwrap_or(false),
-        }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

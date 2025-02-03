@@ -5,10 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-};
+use crate::{context::LintContext, rule::Rule};
 
 fn comment(ts_comment_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -155,6 +152,10 @@ impl Rule for BanTsComment {
         }))
     }
 
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().comments();
         for comm in comments {
@@ -215,10 +216,6 @@ impl Rule for BanTsComment {
                 }
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

@@ -335,6 +335,10 @@ impl Rule for JsxCurlyBracePresence {
         }
     }
 
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(el) => {
@@ -353,10 +357,6 @@ impl Rule for JsxCurlyBracePresence {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 
@@ -790,7 +790,7 @@ fn test() {
         (
             r#"
 			        import React from "react";
-			
+
 			        const Component = () => {
 			          return <span>{"/*"}</span>;
 			        };

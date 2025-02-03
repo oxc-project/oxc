@@ -9,11 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn adjacent_overload_signatures_diagnostic(
     fn_name: &str,
@@ -285,6 +281,10 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
 }
 
 impl Rule for AdjacentOverloadSignatures {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Class(class) => {
@@ -323,10 +323,6 @@ impl Rule for AdjacentOverloadSignatures {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

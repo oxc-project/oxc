@@ -50,6 +50,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireRenderReturn {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
             return;
@@ -78,10 +82,6 @@ impl Rule for RequireRenderReturn {
                 _ => {}
             };
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

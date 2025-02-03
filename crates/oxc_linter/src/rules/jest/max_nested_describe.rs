@@ -133,6 +133,10 @@ impl Rule for MaxNestedDescribe {
         Self { max }
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let mut describes_hooks_depth: Vec<ScopeId> = vec![];
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
@@ -422,7 +426,7 @@ fn test() {
                     describe('another suite', () => {
                         describe('another suite', () => {
                             describe('another suite', () => {
-                            
+
                             })
                         })
                     })
@@ -441,7 +445,7 @@ fn test() {
                             describe('another suite', () => {
                                 describe('another suite', () => {
                                     describe('another suite', () => {
-                                
+
                                     })
                                 })
                             })

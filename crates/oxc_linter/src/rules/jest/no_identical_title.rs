@@ -72,6 +72,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoIdenticalTitle {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
         let mut title_to_span_mapping = FxHashMap::default();

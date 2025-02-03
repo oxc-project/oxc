@@ -55,6 +55,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMisusedNew {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(interface_decl) => {
@@ -113,10 +117,6 @@ impl Rule for NoMisusedNew {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

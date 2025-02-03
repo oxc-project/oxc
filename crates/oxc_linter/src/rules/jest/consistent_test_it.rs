@@ -202,6 +202,10 @@ impl Rule for ConsistentTestIt {
         Self(Box::new(ConsistentTestItConfig { within_describe, within_fn }))
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let mut describe_nesting_hash: FxHashMap<ScopeId, i32> = FxHashMap::default();
         let mut possible_jest_nodes = collect_possible_jest_call_node(ctx);

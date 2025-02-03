@@ -91,6 +91,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireLocalTestContextForConcurrentSnapshots {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_on_jest_node(true)
+    }
+
     fn run_on_jest_node<'a, 'c>(
         &self,
         jest_node: &PossibleJestNode<'a, 'c>,
@@ -164,12 +168,12 @@ fn test() {
         r#"it.concurrent("something", (context) => { expect(true).toMatchSnapshot() })"#,
         r#"it.concurrent("something", () => {
 			                 expect(true).toMatchSnapshot();
-			
+
 			                 expect(true).toMatchSnapshot();
 			            })"#,
         r#"it.concurrent("something", () => {
 			                 expect(true).toBe(true);
-			
+
 			                 expect(true).toMatchSnapshot();
 			            })"#,
         r#"it.concurrent("should fail", () => { expect(true).toMatchFileSnapshot("./test/basic.output.html") })"#,

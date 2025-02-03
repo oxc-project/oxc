@@ -139,6 +139,10 @@ impl Rule for FilenameCase {
         Self::default()
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {
         let file_path = ctx.file_path();
         let Some(filename) = file_path.file_stem().and_then(|s| s.to_str()) else {

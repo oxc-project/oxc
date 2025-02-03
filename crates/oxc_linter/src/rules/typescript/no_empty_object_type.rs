@@ -119,6 +119,10 @@ impl Rule for NoEmptyObjectType {
         }))
     }
 
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(interface) if interface.body.body.len() == 0 => {
@@ -140,10 +144,6 @@ impl Rule for NoEmptyObjectType {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 
@@ -265,11 +265,11 @@ fn test() {
 			interface Base {
 			  name: string;
 			}
-			
+
 			interface Derived {
 			  age: number;
 			}
-			
+
 			// valid because extending multiple interfaces can be used instead of a union type
 			interface Both extends Base, Derived {}
 			    ",
@@ -288,7 +288,7 @@ fn test() {
 			interface Base {
 			  name: string;
 			}
-			
+
 			interface Derived extends Base {}
 			      ",
             Some(serde_json::json!([{ "allowInterfaces": "with-single-extends" }])),
@@ -300,9 +300,9 @@ fn test() {
 			interface Base {
 			  props: string;
 			}
-			
+
 			interface Derived extends Base {}
-			
+
 			class Derived {}
 			      ",
             Some(serde_json::json!([{ "allowInterfaces": "with-single-extends" }])),
@@ -348,9 +348,9 @@ fn test() {
 			interface Base {
 			  props: string;
 			}
-			
+
 			interface Derived extends Base {}
-			
+
 			class Other {}
 			      ",
             None,
@@ -362,9 +362,9 @@ fn test() {
 			interface Base {
 			  props: string;
 			}
-			
+
 			interface Derived extends Base {}
-			
+
 			class Derived {}
 			      ",
             None,
@@ -376,9 +376,9 @@ fn test() {
 			interface Base {
 			  props: string;
 			}
-			
+
 			interface Derived extends Base {}
-			
+
 			const derived = class Derived {};
 			      ",
             None,
@@ -390,7 +390,7 @@ fn test() {
 			interface Base {
 			  name: string;
 			}
-			
+
 			interface Derived extends Base {}
 			      ",
             None,

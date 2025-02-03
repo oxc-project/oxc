@@ -33,6 +33,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAsyncClientComponent {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let Some(root) = ctx.nodes().root_node() else {
             return;
@@ -120,7 +124,7 @@ fn test() {
 			    ",
         r#"
 			    "use client"
-			
+
 			    export default async function myFunction() {
 			      return ''
 			    }
@@ -129,25 +133,25 @@ fn test() {
 			    async function MyComponent() {
 			      return <></>
 			    }
-			
+
 			    export default MyComponent
 			    ",
         r#"
 			    "use client"
-			
+
 			    async function myFunction() {
 			      return ''
 			    }
-			
+
 			    export default myFunction
 			    "#,
         r#"
 			    "use client"
-			
+
 			    const myFunction = () => {
 			      return ''
 			    }
-			
+
 			    export default myFunction
 			    "#,
     ];
@@ -155,43 +159,43 @@ fn test() {
     let fail = vec![
         r#"
 			      "use client"
-			
+
 			      export default async function MyComponent() {
 			        return <></>
 			      }
 			      "#,
         r#"
 			      "use client"
-			
+
 			      export default async function MyFunction() {
 			        return ''
 			      }
 			      "#,
         r#"
 			      "use client"
-			
+
 			      async function MyComponent() {
 			        return <></>
 			      }
-			
+
 			      export default MyComponent
 			      "#,
         r#"
 			      "use client"
-			
+
 			      async function MyFunction() {
 			        return ''
 			      }
-			
+
 			      export default MyFunction
 			      "#,
         r#"
 			      "use client"
-			
+
 			      const MyFunction = async () => {
 			        return '123'
 			      }
-			
+
 			      export default MyFunction
 			      "#,
     ];

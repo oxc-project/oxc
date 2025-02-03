@@ -48,6 +48,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnescapedEntities {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXText(jsx_text) = node.kind() {
             let source = jsx_text.span.source_text(ctx.source_text());
@@ -68,10 +72,6 @@ impl Rule for NoUnescapedEntities {
                 }
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

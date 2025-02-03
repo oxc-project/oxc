@@ -103,6 +103,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateHooks {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let Some(root_node) = ctx.nodes().root_node() else {
             return;
@@ -583,7 +587,7 @@ fn test() {
                     beforeEach(() => {})
                     afterEach(() => {})
                     afterAll(() => {})
-                
+
                     test("bar", () => {
                         someFn();
                     })
@@ -708,7 +712,7 @@ fn test() {
                 describe.each(['hello'])('%s', () => {
                     beforeEach(() => {});
                     beforeEach(() => {});
-                    
+
                     it('is not fine', () => {});
                 });
             ",
@@ -719,14 +723,14 @@ fn test() {
                 describe('something', () => {
                     describe.each(['hello'])('%s', () => {
                         beforeEach(() => {});
-                    
+
                         it('is fine', () => {});
                     });
-			    
+
                     describe.each(['world'])('%s', () => {
                         beforeEach(() => {});
                         beforeEach(() => {});
-                    
+
                         it('is not fine', () => {});
                     });
                 });

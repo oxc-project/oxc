@@ -13,7 +13,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::outermost_paren_parent,
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::Rule,
     rules::eslint::array_callback_return::return_checker::{
         check_statement, StatementReturnStatus,
@@ -158,6 +158,10 @@ impl Rule for ExplicitFunctionReturnType {
         }))
     }
 
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(func) => {
@@ -295,10 +299,6 @@ impl Rule for ExplicitFunctionReturnType {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

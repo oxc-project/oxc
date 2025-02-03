@@ -6,11 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_non_null_asserted_optional_chain_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("non-null assertions after an optional chain expression")
@@ -43,6 +39,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNonNullAssertedOptionalChain {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSNonNullExpression(non_null_expr) = node.kind() else {
             return;
@@ -94,10 +94,6 @@ impl Rule for NoNonNullAssertedOptionalChain {
                 Span::new(non_null_end, non_null_end),
             ));
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

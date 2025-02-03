@@ -4,11 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn type_diagnostic(banned_type: &str, suggested_type: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -59,6 +55,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for BanTypes {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSTypeReference(typ) => {
@@ -91,10 +91,6 @@ impl Rule for BanTypes {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

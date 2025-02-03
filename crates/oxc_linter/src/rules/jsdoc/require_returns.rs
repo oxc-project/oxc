@@ -104,6 +104,10 @@ impl Rule for RequireReturns {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         // Step 1. Collect functions to check
         // In this rule, existence of `return` statement differs the behavior.

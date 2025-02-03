@@ -52,17 +52,15 @@ const NEXTJS_DATA_FETCHING_FUNCTIONS: phf::Set<&'static str> = phf_set! {
 const THRESHOLD: i32 = 1;
 
 impl Rule for NoTypos {
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        let Some(path) = ctx.file_path().to_str() else {
-            return false;
-        };
-        let Some(path_after_pages) = path.split("pages").nth(1) else {
-            return false;
-        };
-        if path_after_pages.starts_with("/api") {
-            return false;
-        }
-        true
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        let enable = ctx
+            .file_path()
+            .to_str()
+            .and_then(|path| path.split("pages").nth(1))
+            .filter(|path_after_pages| !path_after_pages.starts_with("/api"))
+            .is_some();
+
+        crate::rule::ShouldRunState::new(enable).with_run(true)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

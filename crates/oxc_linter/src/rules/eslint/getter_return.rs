@@ -104,9 +104,9 @@ impl Rule for GetterReturn {
         Self { allow_implicit }
     }
 
-    fn should_run(&self, ctx: &ContextHost) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
         // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
-        !ctx.source_type().is_typescript()
+        crate::rule::ShouldRunState::new(!ctx.source_type().is_typescript()).with_run(true)
     }
 }
 

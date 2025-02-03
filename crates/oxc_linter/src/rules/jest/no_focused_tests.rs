@@ -74,6 +74,10 @@ impl Rule for NoFocusedTests {
     ) {
         run(jest_node, ctx);
     }
+
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_on_jest_node(true)
+    }
 }
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
@@ -172,7 +176,7 @@ fn test() {
     let fail_vitest = vec![
         (
             r#"
-            import { it } from 'vitest'; 
+            import { it } from 'vitest';
             it.only("test", () => {});
             "#,
             None,

@@ -89,16 +89,17 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUntypedMockFactory {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript())
+            .with_run_on_jest_node(true)
+    }
+
     fn run_on_jest_node<'a, 'c>(
         &self,
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
         Self::run(jest_node, ctx);
-    }
-
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

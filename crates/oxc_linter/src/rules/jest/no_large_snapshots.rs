@@ -161,6 +161,10 @@ impl Rule for NoLargeSnapshots {
         Self(Box::new(NoLargeSnapshotsConfig { max_size, inline_max_size, allowed_snapshots }))
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let is_snap = ctx.file_path().to_str().is_some_and(|p| {
             Path::new(p).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("snap"))

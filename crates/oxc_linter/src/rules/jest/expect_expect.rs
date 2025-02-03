@@ -132,6 +132,10 @@ impl Rule for ExpectExpect {
     ) {
         run(self, jest_node, ctx);
     }
+
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_on_jest_node(true)
+    }
 }
 
 fn run<'a>(

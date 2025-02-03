@@ -410,6 +410,10 @@ impl Rule for NoRestrictedImports {
         Self(Box::new(NoRestrictedImportsConfig { paths, patterns }))
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 

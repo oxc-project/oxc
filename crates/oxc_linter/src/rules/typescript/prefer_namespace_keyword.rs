@@ -45,6 +45,10 @@ fn is_valid_module(module: &TSModuleDeclaration) -> bool {
 }
 
 impl Rule for PreferNamespaceKeyword {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(module) = node.kind() else { return };
 
@@ -61,10 +65,6 @@ impl Rule for PreferNamespaceKeyword {
             let span_start = module.span.start + u32::try_from(offset).unwrap();
             fixer.replace(Span::sized(span_start, 6), "namespace")
         });
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

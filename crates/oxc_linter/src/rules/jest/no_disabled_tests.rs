@@ -98,6 +98,10 @@ impl Rule for NoDisabledTests {
     ) {
         run(jest_node, ctx);
     }
+
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_on_jest_node(true)
+    }
 }
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
@@ -268,7 +272,7 @@ fn test() {
         r#"it("contains a call to pending", function () { pending() })"#,
         "pending();",
         r#"
-            import { describe } from 'vitest'; 
+            import { describe } from 'vitest';
             describe.skip("foo", function () {})
         "#,
     ];

@@ -61,6 +61,10 @@ fn get_member_ident<'a>(
 }
 
 impl Rule for JsxNoUndef {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(elem) = &node.kind() {
             if let Some(ident) = get_resolvable_ident(&elem.name) {
@@ -75,10 +79,6 @@ impl Rule for JsxNoUndef {
                 ctx.diagnostic(jsx_no_undef_diagnostic(name, ident.span));
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

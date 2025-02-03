@@ -6,11 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("ES2015 module syntax is preferred over namespaces.")
@@ -61,6 +57,13 @@ impl Rule for NoNamespace {
         }
     }
 
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        if self.allow_definition_files && ctx.source_type().is_typescript_definition() {
+            return false.into();
+        }
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     #[allow(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
@@ -98,13 +101,6 @@ impl Rule for NoNamespace {
         if let Some(span) = span {
             ctx.diagnostic(no_namespace_diagnostic(span));
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        if self.allow_definition_files && ctx.source_type().is_typescript_definition() {
-            return false;
-        }
-        ctx.source_type().is_typescript()
     }
 }
 

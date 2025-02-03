@@ -46,6 +46,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateHead {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_on_symbol(true)
+    }
+
     fn run_on_symbol(&self, symbol_id: oxc_semantic::SymbolId, ctx: &LintContext<'_>) {
         let symbols = ctx.symbols();
         let name = symbols.get_name(symbol_id);

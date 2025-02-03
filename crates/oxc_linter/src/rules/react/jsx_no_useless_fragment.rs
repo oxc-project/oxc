@@ -68,6 +68,10 @@ impl Rule for JsxNoUselessFragment {
         }
     }
 
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
@@ -81,10 +85,6 @@ impl Rule for JsxNoUselessFragment {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

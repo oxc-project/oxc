@@ -4,11 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_interface_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("an empty interface is equivalent to `{}`").with_label(span)
@@ -55,6 +51,10 @@ impl Rule for NoEmptyInterface {
         Self { allow_single_extends }
     }
 
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSInterfaceDeclaration(interface) = node.kind() {
             if interface.body.body.is_empty() {
@@ -72,10 +72,6 @@ impl Rule for NoEmptyInterface {
                 }
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

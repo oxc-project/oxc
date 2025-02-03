@@ -48,6 +48,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferTsExpectError {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().comments();
 
@@ -76,10 +80,6 @@ impl Rule for PreferTsExpectError {
                 });
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

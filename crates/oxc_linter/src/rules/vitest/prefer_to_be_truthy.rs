@@ -108,6 +108,10 @@ impl Rule for PreferToBeTruthy {
     ) {
         prefer_to_be_simply_bool(jest_node, ctx, true);
     }
+
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_on_jest_node(true)
+    }
 }
 
 #[test]

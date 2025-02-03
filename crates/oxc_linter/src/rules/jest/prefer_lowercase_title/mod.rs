@@ -242,6 +242,10 @@ impl Rule for PreferLowercaseTitle {
             self.lint_string(ctx, template_string.as_str(), template_expr.span);
         }
     }
+
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_on_jest_node(true)
+    }
 }
 
 impl PreferLowercaseTitle {

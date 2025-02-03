@@ -72,6 +72,10 @@ impl Rule for NoStandaloneExpect {
         Self(Box::new(NoStandaloneExpectConfig { additional_test_block_functions }))
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext<'_>) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
         let id_nodes_mapping =

@@ -77,6 +77,10 @@ impl Rule for MaxExpects {
         Self { max }
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let mut count_map: FxHashMap<usize, usize> = FxHashMap::default();
 
@@ -498,7 +502,7 @@ fn test() {
         (
             " test('should pass', async () => {
 			     expect.hasAssertions();
-			   
+
 			     expect(true).toBeDefined();
 			     expect(true).toBeDefined();
 			     expect(true).toBeDefined();

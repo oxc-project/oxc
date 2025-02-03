@@ -40,6 +40,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNamedDefault {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         ctx.module_record().import_entries.iter().for_each(|entry| {
             let ImportImportName::Name(import_name) = &entry.import_name else {

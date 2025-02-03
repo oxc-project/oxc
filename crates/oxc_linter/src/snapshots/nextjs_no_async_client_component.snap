@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.
    ╭─[no_async_client_component.tsx:4:40]
- 3 │             
+ 3 │ 
  4 │                   export default async function MyComponent() {
    ·                                                 ───────────
  5 │                     return <></>
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.
    ╭─[no_async_client_component.tsx:4:40]
- 3 │             
+ 3 │ 
  4 │                   export default async function MyFunction() {
    ·                                                 ──────────
  5 │                     return ''
@@ -21,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.
    ╭─[no_async_client_component.tsx:4:25]
- 3 │             
+ 3 │ 
  4 │                   async function MyComponent() {
    ·                                  ───────────
  5 │                     return <></>
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.
    ╭─[no_async_client_component.tsx:4:25]
- 3 │             
+ 3 │ 
  4 │                   async function MyFunction() {
    ·                                  ──────────
  5 │                     return ''
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.
    ╭─[no_async_client_component.tsx:4:16]
- 3 │             
+ 3 │ 
  4 │                   const MyFunction = async () => {
    ·                         ──────────
  5 │                     return '123'

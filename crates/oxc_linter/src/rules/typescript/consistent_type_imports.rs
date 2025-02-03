@@ -14,7 +14,7 @@ use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::{ContextHost, LintContext},
+    context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
@@ -136,6 +136,10 @@ impl Rule for ConsistentTypeImports {
             },
         );
         Self(Box::new(config))
+    }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -265,10 +269,6 @@ impl Rule for ConsistentTypeImports {
                 fixer_fn,
             );
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

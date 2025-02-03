@@ -39,6 +39,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnusedLabels {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(
+            ctx.file_path().extension().is_some_and(|ext| ext != "svelte"),
+        )
+        .with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         for id in ctx.semantic().unused_labels() {
             let node = ctx.semantic().nodes().get_node(*id);
@@ -50,10 +57,6 @@ impl Rule for NoUnusedLabels {
                 |fixer| fixer.replace_with(stmt, &stmt.body),
             );
         }
-    }
-
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_path().extension().is_some_and(|ext| ext != "svelte")
     }
 }
 

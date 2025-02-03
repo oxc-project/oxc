@@ -58,6 +58,10 @@ impl Rule for PreferEs6Class {
         }
     }
 
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always) {
             if is_es5_component(node) {
@@ -74,10 +78,6 @@ impl Rule for PreferEs6Class {
                 class_expr.id.as_ref().map_or(class_expr.span, |id| id.span),
             ));
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

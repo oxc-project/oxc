@@ -116,6 +116,10 @@ impl Rule for NoStringRefs {
         Self { no_template_literals }
     }
 
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
@@ -133,10 +137,6 @@ impl Rule for NoStringRefs {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

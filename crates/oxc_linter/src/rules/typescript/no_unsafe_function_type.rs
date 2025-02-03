@@ -57,6 +57,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafeFunctionType {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSTypeReference(reference) => {
@@ -76,10 +80,6 @@ impl Rule for NoUnsafeFunctionType {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

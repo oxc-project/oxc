@@ -51,6 +51,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstAssign {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_on_symbol(true)
+    }
+
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
         if symbol_table.get_flags(symbol_id).is_const_variable() {

@@ -3,11 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNonNullAssertion;
@@ -42,8 +38,8 @@ impl Rule for NoNonNullAssertion {
         ctx.diagnostic(no_non_null_assertion_diagnostic(expr.span));
     }
 
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
     }
 }
 

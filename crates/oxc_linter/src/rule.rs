@@ -15,6 +15,47 @@ use crate::{
     AllowWarnDeny, AstNode, FixKind, RuleEnum,
 };
 
+#[derive(Debug, Clone, Copy)]
+pub struct ShouldRunState {
+    pub enable: bool,
+    pub run: bool,
+    pub run_once: bool,
+    pub run_on_symbol: bool,
+    pub run_on_jest_node: bool,
+}
+
+impl From<bool> for ShouldRunState {
+    fn from(value: bool) -> Self {
+        Self::new(value)
+    }
+}
+
+impl ShouldRunState {
+    pub fn new(enable: bool) -> Self {
+        Self { enable, run: false, run_once: false, run_on_symbol: false, run_on_jest_node: false }
+    }
+
+    pub fn with_run(mut self, yes: bool) -> Self {
+        self.run = yes;
+        self
+    }
+
+    pub fn with_run_once(mut self, yes: bool) -> Self {
+        self.run_once = yes;
+        self
+    }
+
+    pub fn with_run_on_symbol(mut self, yes: bool) -> Self {
+        self.run_on_symbol = yes;
+        self
+    }
+
+    pub fn with_run_on_jest_node(mut self, yes: bool) -> Self {
+        self.run_on_jest_node = yes;
+        self
+    }
+}
+
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
     fn from_configuration(_value: serde_json::Value) -> Self {
@@ -57,8 +98,8 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// [`linter`]: crate::Linter
     #[expect(unused_variables)]
     #[inline]
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        true
+    fn should_run(&self, ctx: &ContextHost) -> ShouldRunState {
+        ShouldRunState::new(true).with_run(true)
     }
 }
 

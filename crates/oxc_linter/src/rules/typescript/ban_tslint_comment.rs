@@ -33,6 +33,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for BanTslintComment {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().comments();
         for comment in comments {

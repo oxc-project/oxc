@@ -44,6 +44,10 @@ const COMMON_ERROR_TEXT: &str = "Illegal usage of jasmine global";
 const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 
 impl Rule for NoJasmineGlobals {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let symbol_table = ctx.symbols();
         let jasmine_references = ctx

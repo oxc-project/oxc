@@ -59,6 +59,10 @@ impl Rule for PreferLiteralEnumMember {
         }
     }
 
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSEnumMember(decl) = node.kind() else {
             return;
@@ -112,10 +116,6 @@ impl Rule for PreferLiteralEnumMember {
         }
 
         ctx.diagnostic(prefer_literal_enum_member_diagnostic(decl.span));
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

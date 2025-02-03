@@ -55,6 +55,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWrapperObjectTypes {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (ident_name, ident_span, reference_id) = match node.kind() {
             AstKind::TSTypeReference(type_ref) => {
@@ -99,10 +103,6 @@ impl Rule for NoWrapperObjectTypes {
                 ctx.diagnostic(no_wrapper_object_types(ident_span));
             }
         }
-    }
-
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

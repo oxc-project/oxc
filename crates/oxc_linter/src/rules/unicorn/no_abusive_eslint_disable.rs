@@ -53,6 +53,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAbusiveEslintDisable {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         for span in ctx.disable_directives().disable_all_comments() {
             ctx.diagnostic(no_abusive_eslint_disable_diagnostic(*span));

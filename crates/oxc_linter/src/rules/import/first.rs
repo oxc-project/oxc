@@ -110,6 +110,10 @@ impl Rule for First {
         }
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext<'_>) {
         let mut non_import_count = 0;
         let mut any_relative = false;
@@ -184,7 +188,7 @@ fn test() {
         ),
         // covers TSImportEqualsDeclaration (original rule support it, but with no test cases)
         (
-            r"import { x } from './foo'; 
+            r"import { x } from './foo';
             import F3 = require('mod');
             export { x, y }",
             None,

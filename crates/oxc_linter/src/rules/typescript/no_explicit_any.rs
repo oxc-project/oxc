@@ -4,11 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_explicit_any_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected any. Specify a different type.")
@@ -92,6 +88,20 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExplicitAny {
+    fn from_configuration(value: Value) -> Self {
+        let Some(cfg) = value.get(0) else {
+            return Self::default();
+        };
+        let fix_to_unknown = cfg.get("fixToUnknown").and_then(Value::as_bool).unwrap_or(false);
+        let ignore_rest_args = cfg.get("ignoreRestArgs").and_then(Value::as_bool).unwrap_or(false);
+
+        Self { fix_to_unknown, ignore_rest_args }
+    }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSAnyKeyword(any) = node.kind() else {
             return;
@@ -107,20 +117,6 @@ impl Rule for NoExplicitAny {
         } else {
             ctx.diagnostic(no_explicit_any_diagnostic(any.span));
         }
-    }
-
-    fn from_configuration(value: Value) -> Self {
-        let Some(cfg) = value.get(0) else {
-            return Self::default();
-        };
-        let fix_to_unknown = cfg.get("fixToUnknown").and_then(Value::as_bool).unwrap_or(false);
-        let ignore_rest_args = cfg.get("ignoreRestArgs").and_then(Value::as_bool).unwrap_or(false);
-
-        Self { fix_to_unknown, ignore_rest_args }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

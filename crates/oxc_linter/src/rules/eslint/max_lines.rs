@@ -79,6 +79,10 @@ impl Rule for MaxLines {
         }
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     #[allow(clippy::cast_possible_truncation)]
     fn run_once(&self, ctx: &LintContext) {
         let comment_lines = if self.skip_comments {

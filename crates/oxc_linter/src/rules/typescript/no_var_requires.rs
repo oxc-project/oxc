@@ -39,6 +39,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoVarRequires {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(expr) = node.kind() else {
             return;
@@ -70,10 +74,6 @@ impl Rule for NoVarRequires {
                 ctx.diagnostic(no_var_requires_diagnostic(node.kind().span()));
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

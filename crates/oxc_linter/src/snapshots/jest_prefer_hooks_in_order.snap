@@ -540,7 +540,7 @@ source: crates/oxc_linter/src/tester.rs
  23 │                         afterEach(() => {});
     ·                         ─────────┬─────────
     ·                                  ╰── this should be moved to before the "afterAll" hook
- 24 │                 
+ 24 │ 
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
@@ -591,7 +591,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:34:21]
- 33 │                     
+ 33 │     
  34 │ ╭─▶                     afterEach(() => {
  35 │ │                           clearLogger();
  36 │ ├─▶                     });
@@ -601,6 +601,6 @@ source: crates/oxc_linter/src/tester.rs
  39 │ │                           mockLogger();
  40 │ ├─▶                     });
     · ╰──── this should be moved to before the "afterEach" hook
- 41 │                     
+ 41 │     
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks

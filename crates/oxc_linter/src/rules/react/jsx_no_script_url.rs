@@ -93,6 +93,40 @@ impl JsxNoScriptUrl {
 }
 
 impl Rule for JsxNoScriptUrl {
+    fn from_configuration(value: Value) -> Self {
+        let mut components: FxHashMap<String, Vec<String>> = FxHashMap::default();
+        if let Some(arr) = value.get(0).and_then(Value::as_array) {
+            for component in arr {
+                let name = component.get("name").and_then(Value::as_str).unwrap_or("").to_string();
+                let props =
+                    component.get("props").and_then(Value::as_array).map_or(vec![], |array| {
+                        array
+                            .iter()
+                            .map(|prop| prop.as_str().map_or(String::new(), String::from))
+                            .collect::<Vec<String>>()
+                    });
+                components.insert(name, props);
+            }
+            Self(Box::new(JsxNoScriptUrlConfig {
+                include_from_settings: value.get(1).is_some_and(|conf| {
+                    conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
+                }),
+                components,
+            }))
+        } else {
+            Self(Box::new(JsxNoScriptUrlConfig {
+                include_from_settings: value.get(0).is_some_and(|conf| {
+                    conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
+                }),
+                components: FxHashMap::default(),
+            }))
+        }
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(element) = node.kind() {
             let Some(component_name) = element.name.get_identifier_name() else {
@@ -131,40 +165,6 @@ impl Rule for JsxNoScriptUrl {
                 }
             }
         }
-    }
-
-    fn from_configuration(value: Value) -> Self {
-        let mut components: FxHashMap<String, Vec<String>> = FxHashMap::default();
-        if let Some(arr) = value.get(0).and_then(Value::as_array) {
-            for component in arr {
-                let name = component.get("name").and_then(Value::as_str).unwrap_or("").to_string();
-                let props =
-                    component.get("props").and_then(Value::as_array).map_or(vec![], |array| {
-                        array
-                            .iter()
-                            .map(|prop| prop.as_str().map_or(String::new(), String::from))
-                            .collect::<Vec<String>>()
-                    });
-                components.insert(name, props);
-            }
-            Self(Box::new(JsxNoScriptUrlConfig {
-                include_from_settings: value.get(1).is_some_and(|conf| {
-                    conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
-                }),
-                components,
-            }))
-        } else {
-            Self(Box::new(JsxNoScriptUrlConfig {
-                include_from_settings: value.get(0).is_some_and(|conf| {
-                    conf.get("includeFromSettings").and_then(Value::as_bool).is_some_and(|v| v)
-                }),
-                components: FxHashMap::default(),
-            }))
-        }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

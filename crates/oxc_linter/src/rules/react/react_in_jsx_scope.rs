@@ -47,6 +47,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for ReactInJsxScope {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let node_span = match node.kind() {
             AstKind::JSXOpeningElement(v) => v.name.span(),
@@ -62,10 +66,6 @@ impl Rule for ReactInJsxScope {
         if scope.find_binding(node.scope_id(), react_name).is_none() {
             ctx.diagnostic(react_in_jsx_scope_diagnostic(node_span));
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

@@ -116,6 +116,10 @@ impl Rule for JsxBooleanValue {
         }))
     }
 
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_elem) = node.kind() else { return };
 
@@ -161,10 +165,6 @@ impl Rule for JsxBooleanValue {
                 _ => {}
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

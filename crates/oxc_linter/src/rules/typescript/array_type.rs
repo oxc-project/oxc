@@ -7,10 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct ArrayType(Box<ArrayTypeConfig>);
@@ -119,6 +116,10 @@ impl Rule for ArrayType {
         }))
     }
 
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let default_config = &self.default;
         let readonly_config: &ArrayOption =
@@ -138,10 +139,6 @@ impl Rule for ArrayType {
             }
             _ => {}
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

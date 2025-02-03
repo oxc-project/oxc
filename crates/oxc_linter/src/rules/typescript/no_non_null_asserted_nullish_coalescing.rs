@@ -4,11 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNonNullAssertedNullishCoalescing;
@@ -39,6 +35,10 @@ fn no_non_null_asserted_nullish_coalescing_diagnostic(span: Span) -> OxcDiagnost
 }
 
 impl Rule for NoNonNullAssertedNullishCoalescing {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::LogicalExpression(expr) = node.kind() else { return };
         let Expression::TSNonNullExpression(ts_non_null_expr) = &expr.left else { return };
@@ -51,10 +51,6 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
         }
 
         ctx.diagnostic(no_non_null_asserted_nullish_coalescing_diagnostic(ts_non_null_expr.span));
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 fn has_assignment_before_node(

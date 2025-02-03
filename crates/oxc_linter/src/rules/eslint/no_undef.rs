@@ -45,6 +45,10 @@ impl Rule for NoUndef {
         Self { type_of }
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let symbol_table = ctx.symbols();
 

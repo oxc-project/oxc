@@ -54,6 +54,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxNoCommentTextnodes {
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXText(jsx_text) = node.kind() else {
             return;
@@ -62,10 +66,6 @@ impl Rule for JsxNoCommentTextnodes {
         if has_comment_pattern(&jsx_text.value) {
             ctx.diagnostic(jsx_no_comment_textnodes_diagnostic(jsx_text.span));
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

@@ -45,6 +45,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDefaultExport {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
         if let Some(span) = module_record.export_default {

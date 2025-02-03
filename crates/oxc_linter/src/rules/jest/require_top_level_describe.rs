@@ -122,6 +122,10 @@ impl Rule for RequireTopLevelDescribe {
         Self { max_number_of_top_level_describes }
     }
 
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let mut describe_contexts: FxHashMap<ScopeId, usize> = FxHashMap::default();
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);

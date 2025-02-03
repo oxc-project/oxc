@@ -71,6 +71,26 @@ declare_oxc_lint!(
 );
 
 impl Rule for ButtonHasType {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
+
+        Self {
+            button: value
+                .and_then(|val| val.get("button").and_then(serde_json::Value::as_bool))
+                .unwrap_or(true),
+            submit: value
+                .and_then(|val| val.get("submit").and_then(serde_json::Value::as_bool))
+                .unwrap_or(true),
+            reset: value
+                .and_then(|val| val.get("reset").and_then(serde_json::Value::as_bool))
+                .unwrap_or(true),
+        }
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_jsx()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXOpeningElement(jsx_el) => {
@@ -135,26 +155,6 @@ impl Rule for ButtonHasType {
             }
             _ => {}
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            button: value
-                .and_then(|val| val.get("button").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            submit: value
-                .and_then(|val| val.get("submit").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            reset: value
-                .and_then(|val| val.get("reset").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-        }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
     }
 }
 

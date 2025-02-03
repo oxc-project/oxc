@@ -39,6 +39,10 @@ impl Rule for NoIrregularWhitespace {
             ctx.diagnostic(no_irregular_whitespace_diagnostic(*irregular_whitespace));
         }
     }
+
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
 }
 
 #[allow(clippy::unicode_not_nfc, clippy::invisible_characters)]

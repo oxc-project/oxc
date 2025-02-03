@@ -81,6 +81,20 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConsistentGenericConstructors {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self(Box::new(ConsistentGenericConstructorsConfig {
+            option: value
+                .get(0)
+                .and_then(|v| v.as_str())
+                .and_then(|s| PreferGenericType::try_from(s).ok())
+                .unwrap_or_default(),
+        }))
+    }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(ctx.source_type().is_typescript()).with_run(true)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_declarator) => {
@@ -108,20 +122,6 @@ impl Rule for ConsistentGenericConstructors {
             }
             _ => {}
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self(Box::new(ConsistentGenericConstructorsConfig {
-            option: value
-                .get(0)
-                .and_then(|v| v.as_str())
-                .and_then(|s| PreferGenericType::try_from(s).ok())
-                .unwrap_or_default(),
-        }))
-    }
-
-    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 

@@ -143,6 +143,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferHooksInOrder {
+    fn should_run(&self, _: &crate::ContextHost) -> crate::rule::ShouldRunState {
+        crate::rule::ShouldRunState::new(true).with_run_once(true)
+    }
+
     fn run_once(&self, ctx: &LintContext) {
         let mut previous_hook_orders: FxHashMap<ScopeId, (u8, Span)> = FxHashMap::default();
 
@@ -1167,13 +1171,13 @@ fn test() {
                     it('foo nested', () => {
                         // this is a test
                     });
-                    
-                    describe('deeply nested', () => { 
+
+                    describe('deeply nested', () => {
                         afterAll(() => {});
                         afterAll(() => {});
                         // This comment does nothing
                         afterEach(() => {});
-                
+
                         it('foo nested', () => {
                             // this is a test
                         });
@@ -1198,7 +1202,7 @@ fn test() {
                 it('foo', () => {
                     // this is a test
                 });
-            
+
                 describe('my nested test', () => {
                     afterAll(() => {});
                     afterEach(() => {});
@@ -1222,26 +1226,26 @@ fn test() {
                 it('accepts this input', () => {
                     // ...
                 });
-                
+
                 it('returns that value', () => {
                     // ...
                 });
 
                 describe('when the database has specific values', () => {
                     const specificValue = '...';
-                
+
                     beforeEach(() => {
                         seedMyDatabase(specificValue);
                     });
-                
+
                     it('accepts that input', () => {
                         // ...
                     });
-                
+
                     it('throws an error', () => {
                         // ...
                     });
-                
+
                     afterEach(() => {
                         clearLogger();
                     });
@@ -1249,12 +1253,12 @@ fn test() {
                     beforeEach(() => {
                         mockLogger();
                     });
-                
+
                     it('logs a message', () => {
                         // ...
                     });
                 });
-                
+
                 afterAll(() => {
                     removeMyDatabase();
                 });
