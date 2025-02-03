@@ -1,6 +1,7 @@
 use cow_utils::CowUtils;
 use std::borrow::Cow;
 
+use oxc_allocator::IntoIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
@@ -56,7 +57,7 @@ impl<'a> PeepholeOptimizations {
             }
             "charAt" => Self::try_fold_string_char_at(*span, arguments, object, ctx),
             "charCodeAt" => Self::try_fold_string_char_code_at(*span, arguments, object, ctx),
-            "concat" => Self::try_fold_concat(*span, arguments, callee, ctx),
+            "concat" => self.try_fold_concat(*span, arguments, callee, ctx),
             "replace" | "replaceAll" => {
                 Self::try_fold_string_replace(*span, arguments, name, object, ctx)
             }
@@ -613,7 +614,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`
+    /// `"".concat(a, "b")` -> "`${a}b`"
     fn try_fold_concat(
+        &self,
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
@@ -631,51 +634,134 @@ impl<'a> PeepholeOptimizations {
             Expression::ComputedMemberExpression(member) => &mut member.object,
             _ => unreachable!(),
         };
-        let Expression::ArrayExpression(array_expr) = object else { return None };
+        match object {
+            Expression::ArrayExpression(array_expr) => {
+                let can_merge_until = args
+                    .iter()
+                    .enumerate()
+                    .take_while(|(_, argument)| match argument {
+                        Argument::SpreadElement(_) => false,
+                        match_expression!(Argument) => {
+                            let argument = argument.to_expression();
+                            if argument.is_literal() {
+                                true
+                            } else {
+                                matches!(argument, Expression::ArrayExpression(_))
+                            }
+                        }
+                    })
+                    .map(|(i, _)| i)
+                    .last();
 
-        let can_merge_until = args
-            .iter()
-            .enumerate()
-            .take_while(|(_, argument)| match argument {
-                Argument::SpreadElement(_) => false,
-                match_expression!(Argument) => {
-                    let argument = argument.to_expression();
-                    if argument.is_literal() {
-                        true
-                    } else {
-                        matches!(argument, Expression::ArrayExpression(_))
+                if let Some(can_merge_until) = can_merge_until {
+                    for argument in args.drain(..=can_merge_until) {
+                        let argument = argument.into_expression();
+                        if argument.is_literal() {
+                            array_expr.elements.push(ArrayExpressionElement::from(argument));
+                        } else {
+                            let Expression::ArrayExpression(mut argument_array) = argument else {
+                                unreachable!()
+                            };
+                            array_expr.elements.append(&mut argument_array.elements);
+                        }
                     }
                 }
-            })
-            .map(|(i, _)| i)
-            .last();
 
-        if let Some(can_merge_until) = can_merge_until {
-            for argument in args.drain(..=can_merge_until) {
-                let argument = argument.into_expression();
-                if argument.is_literal() {
-                    array_expr.elements.push(ArrayExpressionElement::from(argument));
+                if args.is_empty() {
+                    Some(ctx.ast.move_expression(object))
+                } else if can_merge_until.is_some() {
+                    Some(ctx.ast.expression_call(
+                        span,
+                        ctx.ast.move_expression(callee),
+                        Option::<TSTypeParameterInstantiation>::None,
+                        ctx.ast.move_vec(args),
+                        false,
+                    ))
                 } else {
-                    let Expression::ArrayExpression(mut argument_array) = argument else {
-                        unreachable!()
-                    };
-                    array_expr.elements.append(&mut argument_array.elements);
+                    None
                 }
             }
-        }
+            Expression::StringLiteral(base_str) => {
+                if self.target < ESTarget::ES2015
+                    || args.is_empty()
+                    || !args.iter().all(Argument::is_expression)
+                {
+                    return None;
+                }
 
-        if args.is_empty() {
-            Some(ctx.ast.move_expression(object))
-        } else if can_merge_until.is_some() {
-            Some(ctx.ast.expression_call(
-                span,
-                ctx.ast.move_expression(callee),
-                Option::<TSTypeParameterInstantiation>::None,
-                ctx.ast.move_vec(args),
-                false,
-            ))
-        } else {
-            None
+                let expression_count =
+                    args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
+                let string_count = args.len() - expression_count;
+
+                // whether it is shorter to use `String::concat`
+                if ".concat()".len() + args.len() + "''".len() * string_count
+                    < "${}".len() * expression_count
+                {
+                    return None;
+                }
+
+                let mut quasi_strs: Vec<Cow<'a, str>> =
+                    vec![Cow::Borrowed(base_str.value.as_str())];
+                let mut expressions = ctx.ast.vec();
+                let mut pushed_quasi = true;
+                for argument in args.drain(..) {
+                    if let Argument::StringLiteral(str_lit) = argument {
+                        if pushed_quasi {
+                            let last_quasi = quasi_strs
+                                .last_mut()
+                                .expect("last element should exist because pushed_quasi is true");
+                            last_quasi.to_mut().push_str(&str_lit.value);
+                        } else {
+                            quasi_strs.push(Cow::Borrowed(str_lit.value.as_str()));
+                        }
+                        pushed_quasi = true;
+                    } else {
+                        if !pushed_quasi {
+                            // need a pair
+                            quasi_strs.push(Cow::Borrowed(""));
+                        }
+                        // checked that all the arguments are expression above
+                        expressions.push(argument.into_expression());
+                        pushed_quasi = false;
+                    }
+                }
+                if !pushed_quasi {
+                    quasi_strs.push(Cow::Borrowed(""));
+                }
+
+                if expressions.is_empty() {
+                    debug_assert_eq!(quasi_strs.len(), 1);
+                    return Some(ctx.ast.expression_string_literal(
+                        span,
+                        quasi_strs.pop().unwrap(),
+                        None,
+                    ));
+                }
+
+                let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
+                    let cooked = s.clone().into_in(ctx.ast.allocator);
+                    ctx.ast.template_element(
+                        SPAN,
+                        false,
+                        TemplateElementValue {
+                            raw: s
+                                .cow_replace("\\", "\\\\")
+                                .cow_replace("`", "\\`")
+                                .cow_replace("${", "\\${")
+                                .cow_replace("\r\n", "\\r\n")
+                                .into_in(ctx.ast.allocator),
+                            cooked: Some(cooked),
+                        },
+                    )
+                }));
+                if let Some(last_quasi) = quasis.last_mut() {
+                    last_quasi.tail = true;
+                }
+
+                debug_assert_eq!(quasis.len(), expressions.len() + 1);
+                Some(ctx.ast.expression_template_literal(span, quasis, expressions))
+            }
+            _ => None,
         }
     }
 
@@ -1560,17 +1646,18 @@ mod test {
         test("var x; [1].concat(x.a).concat(x)", "var x; [1].concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
 
         // string
-        test("'1'.concat(1).concat(2,['abc']).concat('abc')", "'1'.concat(1,2,['abc'],'abc')");
-        test("''.concat(['abc']).concat(1).concat([2,3])", "''.concat(['abc'],1,[2,3])");
-        test_same("''.concat(1)");
+        test("x = '1'.concat(1).concat(2,['abc']).concat('abc')", "x = '112abcabc'");
+        test("x = ''.concat(['abc']).concat(1).concat([2,3])", "x = 'abc12,3'");
+        test("x = ''.concat(1)", "x = '1'");
 
-        test("var x, y; ''.concat(x).concat(y)", "var x, y; ''.concat(x, y)");
-        test("var y; ''.concat(x).concat(y)", "var y; ''.concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
-        test("var x; ''.concat(x.a).concat(x)", "var x; ''.concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
+        test("var x, y; v = ''.concat(x).concat(y)", "var x, y; v = `${x}${y}`");
+        test("var y; v = ''.concat(x).concat(y)", "var y; v = `${x}${y}`"); // x might have a getter that updates y, but that side effect is preserved correctly
+        test("var x; v = ''.concat(x.a).concat(x)", "var x; v = `${x.a}${x}`"); // x.a might have a getter that updates x, but that side effect is preserved correctly
 
         // other
         test("x = []['concat'](1)", "x = [1]");
-        test_same("obj.concat([1,2]).concat(1)");
+        test("x = ''['concat'](1)", "x = '1'");
+        test_same("x = obj.concat([1,2]).concat(1)");
     }
 
     #[test]
@@ -1659,6 +1746,30 @@ mod test {
         test("x = String.fromCharCode('0.5')", "x = '\\0'");
 
         test_same("x = Unknown.fromCharCode('0.5')");
+    }
+
+    #[test]
+    fn test_fold_string_concat() {
+        test_same("x = ''.concat()");
+        test("x = ''.concat(a, b)", "x = `${a}${b}`");
+        test("x = ''.concat(a, b, c)", "x = `${a}${b}${c}`");
+        test("x = ''.concat(a, b, c, d)", "x = `${a}${b}${c}${d}`");
+        test_same("x = ''.concat(a, b, c, d, e)");
+        test("x = ''.concat('a')", "x = 'a'");
+        test("x = ''.concat('a', 'b')", "x = 'ab'");
+        test("x = ''.concat('a', 'b', 'c')", "x = 'abc'");
+        test("x = ''.concat('a', 'b', 'c', 'd')", "x = 'abcd'");
+        test("x = ''.concat('a', 'b', 'c', 'd', 'e')", "x = 'abcde'");
+        test("x = ''.concat(a, 'b')", "x = `${a}b`");
+        test("x = ''.concat('a', b)", "x = `a${b}`");
+        test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
+        test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
+        test("x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)", "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`");
+        test("x = ''.concat(a, 1)", "x = `${a}${1}`"); // inlining 1 is not implemented yet
+
+        test("x = '\\\\s'.concat(a)", "x = `\\\\s${a}`");
+        test("x = '`'.concat(a)", "x = `\\`${a}`");
+        test("x = '${'.concat(a)", "x = `\\${${a}`");
     }
 
     #[test]
