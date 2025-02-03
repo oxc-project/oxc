@@ -20,17 +20,17 @@ pub struct Capabilities {
 impl From<ClientCapabilities> for Capabilities {
     fn from(value: ClientCapabilities) -> Self {
         // check if the client support some code action literal support
-        let code_action_provider = value.text_document.is_some_and(|capability| {
-            capability.code_action.is_some_and(|code_action| {
-                code_action.code_action_literal_support.is_some_and(|literal_support| {
+        let code_action_provider = value.text_document.as_ref().is_some_and(|capability| {
+            capability.code_action.as_ref().is_some_and(|code_action| {
+                code_action.code_action_literal_support.as_ref().is_some_and(|literal_support| {
                     !literal_support.code_action_kind.value_set.is_empty()
                 })
             })
         });
         let workspace_apply_edit =
-            value.workspace.clone().is_some_and(|workspace| workspace.apply_edit.is_some());
+            value.workspace.as_ref().is_some_and(|workspace| workspace.apply_edit.is_some());
         let workspace_execute_command =
-            value.workspace.is_some_and(|workspace| workspace.execute_command.is_some());
+            value.workspace.as_ref().is_some_and(|workspace| workspace.execute_command.is_some());
 
         Self { code_action_provider, workspace_apply_edit, workspace_execute_command }
     }
@@ -40,10 +40,7 @@ impl From<Capabilities> for ServerCapabilities {
     fn from(value: Capabilities) -> Self {
         let commands = LSP_COMMANDS
             .iter()
-            .filter_map(|c| match c.available(value.clone()) {
-                true => Some(c.command_id()),
-                false => None,
-            })
+            .filter_map(|c| if c.available(value.clone()) { Some(c.command_id()) } else { None })
             .collect();
 
         Self {
@@ -69,9 +66,10 @@ impl From<Capabilities> for ServerCapabilities {
             } else {
                 None
             },
-            execute_command_provider: match value.workspace_execute_command {
-                true => Some(ExecuteCommandOptions { commands, ..Default::default() }),
-                false => None,
+            execute_command_provider: if value.workspace_execute_command {
+                Some(ExecuteCommandOptions { commands, ..Default::default() })
+            } else {
+                None
             },
             ..ServerCapabilities::default()
         }
@@ -162,6 +160,7 @@ mod test {
                         code_action_kind: CodeActionKindLiteralSupport {
                             // nvim 0.10.3
                             value_set: vec![
+                                #[allow(clippy::manual_string_new)]
                                 "".into(),
                                 "quickfix".into(),
                                 "refactor".into(),

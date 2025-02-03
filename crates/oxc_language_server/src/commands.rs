@@ -15,10 +15,10 @@ pub trait WorkspaceCommand {
     fn command_id(&self) -> String;
     fn available(&self, cap: Capabilities) -> bool;
     type CommandArgs<'a>: serde::Deserialize<'a>;
-    async fn execute<'a>(
+    async fn execute(
         &self,
         backend: &Backend,
-        args: Self::CommandArgs<'a>,
+        args: Self::CommandArgs<'_>,
     ) -> jsonrpc::Result<Option<serde_json::Value>>;
 }
 
@@ -29,7 +29,7 @@ pub enum WorkspaceCommands {
 impl WorkspaceCommands {
     pub fn command_id(&self) -> String {
         match self {
-            WorkspaceCommands::FixAll(c) => c.command_id().into(),
+            WorkspaceCommands::FixAll(c) => c.command_id(),
         }
     }
     pub fn available(&self, cap: Capabilities) -> bool {
@@ -76,10 +76,10 @@ impl WorkspaceCommand for FixAllCommand {
     }
     type CommandArgs<'a> = (FixAllCommandArg,);
 
-    async fn execute<'a>(
+    async fn execute(
         &self,
         backend: &Backend,
-        args: Self::CommandArgs<'a>,
+        args: Self::CommandArgs<'_>,
     ) -> jsonrpc::Result<Option<serde_json::Value>> {
         let url = Url::parse(&args.0.uri);
         if let Err(e) = url {
@@ -92,7 +92,7 @@ impl WorkspaceCommand for FixAllCommand {
         if let Some(value) = backend.diagnostics_report_map.get(&url.to_string()) {
             for report in value.iter() {
                 if let Some(fixed) = &report.fixed_content {
-                    edits.push(TextEdit { range: fixed.range, new_text: fixed.code.clone() })
+                    edits.push(TextEdit { range: fixed.range, new_text: fixed.code.clone() });
                 }
             }
             let _ = backend
@@ -100,9 +100,10 @@ impl WorkspaceCommand for FixAllCommand {
                 .send_request::<ApplyWorkspaceEdit>(ApplyWorkspaceEditParams {
                     label: Some(match edits.len() {
                         1 => "Oxlint: 1 fix applied".into(),
-                        n => format!("Oxlint: {} fixes applied", n),
+                        n => format!("Oxlint: {n} fixes applied"),
                     }),
                     edit: WorkspaceEdit {
+                        #[expect(clippy::disallowed_types)]
                         changes: Some(std::collections::HashMap::from([(
                             url.clone(),
                             edits.clone(),
