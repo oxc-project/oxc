@@ -2106,8 +2106,8 @@ pub mod walk {
         let kind = AstKind::ArrayPattern(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        for elements in it.elements.iter().flatten() {
-            visitor.visit_binding_pattern(elements);
+        for el in it.elements.iter().flatten() {
+            visitor.visit_binding_pattern(el);
         }
         if let Some(rest) = &it.rest {
             visitor.visit_binding_rest_element(rest);
@@ -2866,8 +2866,8 @@ pub mod walk {
         let kind = AstKind::ArrayAssignmentTarget(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        for elements in it.elements.iter().flatten() {
-            visitor.visit_assignment_target_maybe_default(elements);
+        for el in it.elements.iter().flatten() {
+            visitor.visit_assignment_target_maybe_default(el);
         }
         if let Some(rest) = &it.rest {
             visitor.visit_assignment_target_rest(rest);

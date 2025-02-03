@@ -1,0 +1,9 @@
+{
+  "plugins": [
+    "unicorn"
+  ],
+  "rules": {
+    "eslint/no-nested-ternary": "off",
+    "unicorn/no-nested-ternary": "off"
+  }
+}

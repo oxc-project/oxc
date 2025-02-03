@@ -14,7 +14,7 @@ use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
-impl<'a, 'b> PeepholeOptimizations {
+impl<'a> PeepholeOptimizations {
     /// Constant Folding
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
@@ -37,7 +37,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     #[expect(clippy::float_cmp)]
-    fn try_fold_unary_expr(e: &UnaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
+    fn try_fold_unary_expr(e: &UnaryExpression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
         match e.operator {
             // Do not fold `void 0` back to `undefined`.
             UnaryOperator::Void if e.argument.is_number_0() => None,
@@ -53,7 +53,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     fn try_fold_static_member_expr(
         e: &mut StaticMemberExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
         ctx.eval_static_member_expression(e).map(|value| ctx.value_to_expr(e.span, value))
@@ -61,7 +61,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     fn try_fold_computed_member_expr(
         e: &mut ComputedMemberExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
         ctx.eval_computed_member_expression(e).map(|value| ctx.value_to_expr(e.span, value))
@@ -69,7 +69,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     fn try_fold_logical_expr(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         match logical_expr.operator {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(logical_expr, ctx),
@@ -79,7 +79,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     fn try_fold_optional_chain(
         chain_expr: &mut ChainExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let member_expr = chain_expr.expression.as_member_expression()?;
         if !member_expr.optional() {
@@ -96,7 +96,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_and_or(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = logical_expr.operator;
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
@@ -171,7 +171,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// Try to fold a nullish coalesce `foo ?? bar`.
     pub fn try_fold_coalesce(
         logical_expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
@@ -214,7 +214,7 @@ impl<'a, 'b> PeepholeOptimizations {
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn try_fold_binary_expr(
         e: &mut BinaryExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryReduceOperandsForOp
 
@@ -311,7 +311,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     // Simplified version of `tryFoldAdd` from closure compiler.
-    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
+    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
         if let Some(v) = ctx.eval_binary_expression(e) {
             return Some(ctx.value_to_expr(e.span, v));
         }
@@ -377,7 +377,7 @@ impl<'a, 'b> PeepholeOptimizations {
         ))
     }
 
-    fn try_fold_comparison(e: &BinaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
+    fn try_fold_comparison(e: &BinaryExpression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
         let left = &e.left;
         let right = &e.right;
         let op = e.operator;
@@ -414,9 +414,9 @@ impl<'a, 'b> PeepholeOptimizations {
 
     /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
     fn try_abstract_equality_comparison(
-        left_expr: &'b Expression<'a>,
-        right_expr: &'b Expression<'a>,
-        ctx: Ctx<'a, 'b>,
+        left_expr: &Expression<'a>,
+        right_expr: &Expression<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<bool> {
         let left = ValueType::from(left_expr);
         let right = ValueType::from(right_expr);
@@ -506,9 +506,9 @@ impl<'a, 'b> PeepholeOptimizations {
     /// <https://tc39.es/ecma262/#sec-strict-equality-comparison>
     #[expect(clippy::float_cmp)]
     fn try_strict_equality_comparison(
-        left_expr: &'b Expression<'a>,
-        right_expr: &'b Expression<'a>,
-        ctx: Ctx<'a, 'b>,
+        left_expr: &Expression<'a>,
+        right_expr: &Expression<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<bool> {
         let left = ValueType::from(left_expr);
         let right = ValueType::from(right_expr);
@@ -557,7 +557,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     fn try_fold_number_constructor(
         e: &CallExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = &e.callee else { return None };
         if ident.name != "Number" {
@@ -601,7 +601,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     fn try_fold_binary_typeof_comparison(
         bin_expr: &mut BinaryExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // `typeof a === typeof b` -> `typeof a == typeof b`, `typeof a != typeof b` -> `typeof a != typeof b`,
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
@@ -687,7 +687,7 @@ impl<'a, 'b> PeepholeOptimizations {
     fn fold_object_spread(
         &mut self,
         e: &mut ObjectExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let len = e.properties.len();
         e.properties.retain(|p| {

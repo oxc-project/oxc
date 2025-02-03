@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.2] - 2025-02-02
+
+### Bug Fixes
+
+- 8a6ae8a minifier: Do not change `const` to `let` if assignment to constant variable. (#8761) (Boshen)
+
+### Refactor
+
+- 0568210 ast: Remove excess line breaks from generated code (#8830) (overlookmotel)
+
 ## [0.48.0] - 2025-01-24
 
 ### Refactor

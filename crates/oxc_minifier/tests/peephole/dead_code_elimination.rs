@@ -60,7 +60,7 @@ fn dce_if_statement() {
     );
     test(
         "if (xxx) { foo } else if (false) { var a; var b; } else if (false) { var c; var d; }",
-        "if (xxx) foo; else if (false) var a, b; else if (false) var c, d;",
+        "if (xxx) foo; else if (0) var a, b; else if (0) var c, d;",
     );
 
     test("if (!false) { foo }", "foo");

@@ -6,13 +6,9 @@
 use oxc_span::cmp::ContentEq;
 
 use crate::ast::comment::*;
-
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::literal::*;
-
 use crate::ast::ts::*;
 
 impl ContentEq for BooleanLiteral {

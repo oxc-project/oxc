@@ -117,6 +117,9 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::TSImportEqualsDeclaration(decl) => {
             ts::check_ts_import_equals_declaration(decl, ctx);
         }
+        AstKind::JSXExpressionContainer(container) => {
+            ts::check_jsx_expression_container(container, ctx);
+        }
         _ => {}
     }
 }

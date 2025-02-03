@@ -18,8 +18,7 @@ mod test {
     #[test]
     fn fold_block_into_if() {
         test("a;b;c;if(x){}", "a,b,c,x");
-        // FIXME: remove last `!`
-        test("a;b;c;if(x,y){}else{}", "a, b, c, x, !y");
+        test("a;b;c;if(x,y){}else{}", "a, b, c, x, y");
         test("a;b;c;if(x,y){}", "a, b, c, x, y");
         test("a;b;c;if(x,y,z){}", "a, b, c, x, y, z");
         test("a();if(a()){}a()", "a(), a(), a()");
@@ -45,14 +44,18 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn fuse_into_for_in1() {
         test("a;b;c;for(x in y){}", "for(x in a,b,c,y);");
     }
 
     #[test]
     fn fuse_into_for_in2() {
+        // this should not be compressed into `for (var x = a() in b(), [0])`
+        // as the side effect order of `a()` and `b()` changes
         test_same("a();for(var x = b() in y);");
+        test("a = 1; for(var x = 2 in y);", "for(var x = 2 in a = 1, y);");
+        // this can be compressed because b() runs after a()
+        test("a(); for (var { x = b() } in y);", "for (var { x = b() } in a(), y);");
     }
 
     #[test]

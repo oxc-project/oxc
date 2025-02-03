@@ -177,19 +177,17 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => {}
         }
 
-        // `if (test) {}` -> `test`
-        if if_stmt.alternate.is_none()
-            && match &if_stmt.consequent {
-                Statement::EmptyStatement(_) => true,
-                Statement::BlockStatement(s) => s.body.is_empty(),
-                _ => false,
-            }
-        {
-            let expr = ctx.ast.move_expression(&mut if_stmt.test);
-            return Some(ctx.ast.statement_expression(if_stmt.span, expr));
-        }
-
         if let Some(boolean) = ctx.get_side_free_boolean_value(&if_stmt.test) {
+            // Use "1" and "0" instead of "true" and "false" to be shorter.
+            // And also prevent swapping consequent and alternate when `!0` is encourtnered.
+            if let Expression::BooleanLiteral(b) = &if_stmt.test {
+                if_stmt.test = ctx.ast.expression_numeric_literal(
+                    b.span,
+                    if b.value { 1.0 } else { 0.0 },
+                    None,
+                    NumberBase::Decimal,
+                );
+            }
             let mut keep_var = KeepVar::new(ctx.ast);
             if boolean {
                 if let Some(alternate) = &if_stmt.alternate {

@@ -6,7 +6,6 @@
 use oxc_span::cmp::ContentEq;
 
 use crate::number::*;
-
 use crate::operator::*;
 
 impl ContentEq for NumberBase {

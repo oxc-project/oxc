@@ -193,7 +193,8 @@ pub struct ParseOptions {
     /// Allow [`return`] statements outside of functions.
     ///
     /// By default, a return statement at the top level raises an error (`false`).
-    /// Set this to `true` to accept such code.
+    ///
+    /// Default: `false`
     ///
     /// [`return`]: oxc_ast::ast::ReturnStatement
     pub allow_return_outside_function: bool,

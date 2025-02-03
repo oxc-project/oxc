@@ -1,4 +1,3 @@
-// FIXME: lots of methods are missing docs. If you have time, it would be a huge help to add some :)
 #![warn(missing_docs)]
 use std::{borrow::Cow, fmt};
 
@@ -265,7 +264,8 @@ impl<'a> Expression<'a> {
         expr
     }
 
-    #[allow(missing_docs)]
+    /// Turns any chainable expression such as `a.b` or `b()` into the chained equivalent
+    /// such as `a?.b` or `b?.()`.
     pub fn into_chain_element(self) -> Option<ChainElement<'a>> {
         match self {
             Expression::StaticMemberExpression(e) => Some(ChainElement::StaticMemberExpression(e)),
@@ -751,25 +751,52 @@ impl Argument<'_> {
 }
 
 impl<'a> AssignmentTarget<'a> {
-    #[allow(missing_docs)]
-    pub fn get_identifier(&self) -> Option<&'a str> {
-        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_identifier)
+    /// Returns the identifier name of this assignment target when it is simple like `a = b`.
+    ///
+    /// ## Example
+    ///
+    /// - returns `a` when called on the left-hand side of `a = b`
+    /// - returns `b` when called on the left-hand side of `a.b = b`
+    /// - returns `None` when called on the left-hand side of `a[b] = b`
+    pub fn get_identifier_name(&self) -> Option<&'a str> {
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_identifier_name)
     }
 
-    #[allow(missing_docs)]
+    /// Returns the expression inside of this assignment target, if applicable, and returns a reference to it.
+    ///
+    /// For getting a mutable reference of the expression inside, use [`AssignmentTarget::get_expression_mut`].
+    ///
+    /// ## Example
+    ///
+    /// - returns `a` when called on `a!` in `a! = b`
+    /// - returns `None` when called on `a` in `a = b` because there is no inner expression to get
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
     }
 
-    #[allow(missing_docs)]
+    /// Returns the expression inside of this assignment target, if applicable, and returns a mutable reference to it.
+    ///
+    /// For getting an immutable reference of the expression inside, use [`AssignmentTarget::get_expression`].
+    ///
+    /// ## Example
+    ///
+    /// - returns `a` when called on `a!` in `a! = b`
+    /// - returns `None` when called on `a` in `a = b` because there is no inner expression to get
     pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
         self.as_simple_assignment_target_mut().and_then(SimpleAssignmentTarget::get_expression_mut)
     }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
-    #[allow(missing_docs)]
-    pub fn get_identifier(&self) -> Option<&'a str> {
+    /// Returns the identifier name of this assignment target if the target is an identifier or
+    /// a member expression, or `None` otherwise.
+    ///
+    /// ## Example
+    ///
+    /// - returns identifier `a` when called on the left-hand side of `a = b`
+    /// - returns identifier `b` when called on the left-hand side of `a.b = b`
+    /// - returns `None` when called on the left-hand side of `a[b] = b` because it is not an identifier
+    pub fn get_identifier_name(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
             match_member_expression!(Self) => self.to_member_expression().static_property_name(),
@@ -777,7 +804,12 @@ impl<'a> SimpleAssignmentTarget<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the expression inside of this assignment target, if applicable, and returns a reference to it.
+    ///
+    /// ## Example
+    ///
+    /// - returns `a` when called on `a!` in `a! = b`
+    /// - returns `None` when called on `a` in `a = b` because there is no inner expression to get
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         match self {
             Self::TSAsExpression(expr) => Some(&expr.expression),
@@ -788,7 +820,14 @@ impl<'a> SimpleAssignmentTarget<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the expression inside of this assignment target, if applicable, and returns a mutable reference to it.
+    ///
+    /// For getting an immutable reference of the expression inside, use [`SimpleAssignmentTarget::get_expression`].
+    ///
+    /// ## Example
+    ///
+    /// - returns `a` when called on `a!` in `a! = b`
+    /// - returns `None` when called on `a` in `a = b` because there is no inner expression to get
     pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
         match self {
             Self::TSAsExpression(expr) => Some(&mut expr.expression),
@@ -802,7 +841,8 @@ impl<'a> SimpleAssignmentTarget<'a> {
 }
 
 impl<'a> ArrayAssignmentTarget<'a> {
-    #[allow(missing_docs)]
+    /// Creates a new array assignment target (like `[a, b]` in the code `[a, b] = [1, 2]`)
+    /// using the given elements.
     pub fn new_with_elements(
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
@@ -812,7 +852,8 @@ impl<'a> ArrayAssignmentTarget<'a> {
 }
 
 impl<'a> ObjectAssignmentTarget<'a> {
-    #[allow(missing_docs)]
+    /// Creates a new object assignment target (like `{a, b}` in the code `({a, b} = obj)`) using
+    /// the given properties.
     pub fn new_with_properties(
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
@@ -820,19 +861,38 @@ impl<'a> ObjectAssignmentTarget<'a> {
         Self { span, properties, rest: None }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this object assignment target is empty.
+    ///
+    /// ## Example
+    ///
+    /// - `{}` => `true`
+    /// - `{a}` => `false`
+    /// - `{...a}` => `false`
     pub fn is_empty(&self) -> bool {
         self.properties.is_empty() && self.rest.is_none()
     }
 
-    #[allow(missing_docs)]
+    /// Returns the number of identifiers in this object assignment target.
+    ///
+    /// ## Example
+    ///
+    /// - `{}` => `0`
+    /// - `{a}` => `1`
+    /// - `{...a}` => `1`
+    /// - `{a, b}` => `2`
+    /// - `{a, b, ...c}` => `3`
     pub fn len(&self) -> usize {
         self.properties.len() + usize::from(self.rest.is_some())
     }
 }
 
 impl AssignmentTargetMaybeDefault<'_> {
-    #[allow(missing_docs)]
+    /// Returns the identifier bound by this assignment target.
+    ///
+    /// ## Example
+    ///
+    /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)
+    /// - returns `b` when called on `a: b` in `({a: b} = obj)
     pub fn identifier(&self) -> Option<&IdentifierReference<'_>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
@@ -883,15 +943,25 @@ impl Statement<'_> {
         )
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this statement affects control flow, such as `return`, `throw`, `break`, or `continue`.
+    ///
+    /// ## Example
+    ///
+    /// - `return true` => `true`
+    /// - `throw new Error()` => `true`
+    /// - `break` => `true`
+    /// - `continue` => `true`
+    /// - `if (true) { }` => `false`
     pub fn is_jump_statement(&self) -> bool {
-        matches!(
-            self,
-            Self::ReturnStatement(_)
-                | Self::ThrowStatement(_)
-                | Self::BreakStatement(_)
-                | Self::ContinueStatement(_)
-        )
+        self.get_one_child().is_some_and(|stmt| {
+            matches!(
+                stmt,
+                Self::ReturnStatement(_)
+                    | Self::ThrowStatement(_)
+                    | Self::BreakStatement(_)
+                    | Self::ContinueStatement(_)
+            )
+        })
     }
 
     /// Returns the single statement from block statement, or self
@@ -1049,33 +1119,67 @@ impl SwitchCase<'_> {
 }
 
 impl<'a> BindingPattern<'a> {
-    #[allow(missing_docs)]
-    pub fn get_identifier(&self) -> Option<Atom<'a>> {
-        self.kind.get_identifier()
+    /// Returns the name of the bound identifier in this binding pattern, if it has one, or `None` otherwise.
+    ///
+    /// ## Example
+    ///
+    /// - calling on `a = 1` in `let a = 1` would return `Some("a")`
+    /// - calling on `a = 1` in `let {a = 1} = c` would return `Some("a")`
+    /// - calling on `a: b` in `let {a: b} = c` would return `None`
+    pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
+        self.kind.get_identifier_name()
     }
 
-    #[allow(missing_docs)]
+    /// Returns the bound identifier in this binding pattern, if it has one, or `None` otherwise.
+    ///
+    /// To just get the name of the bound identifier, use [`BindingPattern::get_identifier_name`].
+    ///
+    /// ## Example
+    ///
+    /// - calling on `a = 1` in `let a = 1` would return `Some(BindingIdentifier { name: "a", .. })`
+    /// - calling on `a = 1` in `let {a = 1} = c` would return `Some(BindingIdentifier { name: "a", .. })`
+    /// - calling on `a: b` in `let {a: b} = c` would return `None`
     pub fn get_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
         self.kind.get_binding_identifier()
     }
 
-    #[allow(missing_docs)]
+    /// Returns the bound identifiers in this binding pattern.
+    ///
+    /// ## Example
+    ///
+    /// - `let {} = obj` would return `[]`
+    /// - `let {a, b} = obj` would return `[a, b]`
+    /// - `let {a = 1, b: c} = obj` would return `[a, c]`
     pub fn get_binding_identifiers(&self) -> std::vec::Vec<&BindingIdentifier<'a>> {
         self.kind.get_binding_identifiers()
     }
 }
 
 impl<'a> BindingPatternKind<'a> {
-    #[allow(missing_docs)]
-    pub fn get_identifier(&self) -> Option<Atom<'a>> {
+    /// Returns the name of the bound identifier in this binding pattern, if it has one, or `None` otherwise.
+    ///
+    /// ## Example
+    ///
+    /// - calling on `a = 1` in `let a = 1` would return `Some("a")`
+    /// - calling on `a = 1` in `let {a = 1} = c` would return `Some("a")`
+    /// - calling on `a: b` in `let {a: b} = c` would return `None`
+    pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name),
-            Self::AssignmentPattern(assign) => assign.left.get_identifier(),
+            Self::AssignmentPattern(assign) => assign.left.get_identifier_name(),
             _ => None,
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the bound identifier in this binding pattern, if it has one, or `None` otherwise.
+    ///
+    /// To just get the name of the bound identifier, use [`BindingPatternKind::get_identifier_name`].
+    ///
+    /// ## Example
+    ///
+    /// - calling on `a = 1` in `let a = 1` would return `Some(BindingIdentifier { name: "a", .. })`
+    /// - calling on `a = 1` in `let {a = 1} = c` would return `Some(BindingIdentifier { name: "a", .. })`
+    /// - calling on `a: b` in `let {a: b} = c` would return `None`
     pub fn get_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident),
@@ -1102,14 +1206,27 @@ impl<'a> BindingPatternKind<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the bound identifiers in this binding pattern.
+    ///
+    /// ## Example
+    ///
+    /// - `let {} = obj` would return `[]`
+    /// - `let {a, b} = obj` would return `[a, b]`
+    /// - `let {a = 1, b: c} = obj` would return `[a, c]`
     pub fn get_binding_identifiers(&self) -> std::vec::Vec<&BindingIdentifier<'a>> {
         let mut idents = vec![];
         self.append_binding_identifiers(&mut idents);
         idents
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this binding pattern is destructuring.
+    ///
+    /// ## Example
+    ///
+    /// - `{a, b}` in `let {a, b} = obj` would return `true`
+    /// - `[a, b]` in `let [a, b] = arr` would return `true`
+    /// - `a = 1` in `let {a = 1} = obj` would return `true`
+    /// - `a` in `let {a = 1} = obj` would return `false`
     pub fn is_destructuring_pattern(&self) -> bool {
         match self {
             Self::ObjectPattern(_) | Self::ArrayPattern(_) => true,
@@ -1118,22 +1235,22 @@ impl<'a> BindingPatternKind<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this binding pattern is a binding identifier like `a` in `let a = 1`.
     pub fn is_binding_identifier(&self) -> bool {
         matches!(self, Self::BindingIdentifier(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this binding pattern is an object pattern like `{a}` in `let {a} = obj`.
     pub fn is_object_pattern(&self) -> bool {
         matches!(self, Self::ObjectPattern(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this binding pattern is an array pattern like `[a]` in `let [a] = arr`.
     pub fn is_array_pattern(&self) -> bool {
         matches!(self, Self::ArrayPattern(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this binding pattern is an assignment pattern like `a = 1` in `let {a = 1} = obj`.
     pub fn is_assignment_pattern(&self) -> bool {
         matches!(self, Self::AssignmentPattern(_))
     }
@@ -1379,7 +1496,16 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`ClassElement`] is computed.
+    ///
+    /// The following all return `true`:
+    /// ```ts
+    /// class C {
+    ///   [a] = 1;
+    ///   [b]() {}
+    ///   accessor [c] = 2;
+    /// }
+    /// ```
     pub fn computed(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
@@ -1389,7 +1515,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the [accessibility][`TSAccessibility`] of this [`ClassElement`], if any is indicated.
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         match self {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
@@ -1398,7 +1524,8 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns whether this [`ClassElement`] method is a constructor, method, getter, or setter,
+    /// or `None` otherwise if it is not a method definition.
     pub fn method_definition_kind(&self) -> Option<MethodDefinitionKind> {
         match self {
             Self::TSIndexSignature(_)
@@ -1409,7 +1536,9 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns the [`PropertyKey`] of this [`ClassElement`], if any.
+    ///
+    /// This is either the name of the method, property name, or accessor name.
     pub fn property_key(&self) -> Option<&PropertyKey<'a>> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,

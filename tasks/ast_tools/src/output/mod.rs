@@ -23,7 +23,6 @@ pub fn output_path(krate: &str, path: &str) -> String {
 
 /// Add a generated file warning to top of file.
 fn add_header(code: &str, generator_path: &str, comment_start: &str) -> String {
-    // TODO: Add generation date, AST source hash, etc here.
     format!(
         "{comment_start} Auto-generated code, DO NOT EDIT DIRECTLY!\n\
         {comment_start} To edit this generated file you have to edit `{generator_path}`\n\n\
@@ -34,6 +33,7 @@ fn add_header(code: &str, generator_path: &str, comment_start: &str) -> String {
 /// An output from codegen.
 ///
 /// Can be Rust, Javascript, or other formats.
+#[expect(dead_code)]
 pub enum Output {
     Rust { path: String, tokens: TokenStream },
     Javascript { path: String, code: String },
@@ -42,6 +42,9 @@ pub enum Output {
 }
 
 impl Output {
+    /// Convert [`Output`] to [`RawOutput`].
+    ///
+    /// This involves printing and formatting the output.
     pub fn into_raw(self, generator_path: &str) -> RawOutput {
         let generator_path = generator_path.cow_replace('\\', "/");
 
@@ -66,7 +69,7 @@ impl Output {
 
 /// A raw output from codegen.
 ///
-/// Content is formatted, and converted to bytes.
+/// Content is formatted, and in byte array form, ready to write to file.
 #[derive(Debug)]
 pub struct RawOutput {
     pub path: String,
@@ -74,7 +77,7 @@ pub struct RawOutput {
 }
 
 impl RawOutput {
-    /// Write output to file
+    /// Write [`RawOutput`] to file
     pub fn write_to_file(&self) -> io::Result<()> {
         log!("Write {}... ", &self.path);
         let result = write_to_file_impl(&self.content, &self.path);

@@ -12,7 +12,7 @@ mod tester;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
-use oxc_semantic::{SemanticBuilder, Stats};
+use oxc_semantic::{SemanticBuilder, Stats, SymbolTable};
 
 pub use oxc_mangler::MangleOptions;
 
@@ -31,7 +31,7 @@ impl Default for MinifierOptions {
 }
 
 pub struct MinifierReturn {
-    pub mangler: Option<Mangler>,
+    pub symbol_table: Option<SymbolTable>,
 }
 
 pub struct Minifier {
@@ -54,7 +54,7 @@ impl Minifier {
         } else {
             Stats::default()
         };
-        let mangler = self.options.mangle.map(|options| {
+        let symbol_table = self.options.mangle.map(|options| {
             let semantic = SemanticBuilder::new()
                 .with_stats(stats)
                 .with_scope_tree_child_ids(true)
@@ -62,6 +62,6 @@ impl Minifier {
                 .semantic;
             Mangler::default().with_options(options).build_with_semantic(semantic, program)
         });
-        MinifierReturn { mangler }
+        MinifierReturn { symbol_table }
     }
 }

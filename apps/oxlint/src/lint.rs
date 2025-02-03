@@ -825,6 +825,24 @@ mod test {
     }
 
     #[test]
+    fn test_disable_eslint_and_unicorn_alias_rules() {
+        let args_1 = &["-c", ".oxlintrc-eslint.json", "test.js"];
+        let args_2 = &["-c", ".oxlintrc-unicorn.json", "test.js"];
+        Tester::new()
+            .with_cwd("fixtures/disable_eslint_and_unicorn_alias_rules".into())
+            .test_and_snapshot_multiple(&[args_1, args_2]);
+    }
+
+    #[test]
+    fn test_two_rules_with_same_rule_name_from_different_plugins() {
+        // Issue: <https://github.com/oxc-project/oxc/issues/8485>
+        let args = &["-c", ".oxlintrc.json", "test.js"];
+        Tester::new()
+            .with_cwd("fixtures/two_rules_with_same_rule_name".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_adjust_ignore_patterns() {
         let base = PathBuf::from("/project/root");
         let path = PathBuf::from("/project/root/src");

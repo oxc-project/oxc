@@ -10,20 +10,23 @@ workspace = true
 
 [[bin]]
 name = "oxc_ast_tools"
-test = false
+test = true
 doctest = false
 
 [dependencies]
+bitflags = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
+indexmap = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
+oxc_index = { workspace = true }
 prettyplease = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
+rayon = { workspace = true }
 regex = { workspace = true }
 rustc-hash = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
+serde = { workspace = true }
 syn = { workspace = true, features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro"] }

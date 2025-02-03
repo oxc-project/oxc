@@ -202,7 +202,6 @@ mod test {
         }
 
         #[test]
-        #[ignore]
         fn test_for_in() {
             test("var a; for(a in b) foo()", "for (var a in b) foo()");
             test("a = 0; for(a in b) foo()", "for (a in a = 0, b) foo();");
@@ -226,7 +225,6 @@ mod test {
         }
 
         #[test]
-        #[ignore]
         fn test_for_of() {
             test("var a; for (a of b) foo()", "for (var a of b) foo()");
             test_same("a = 0; for (a of b) foo()");

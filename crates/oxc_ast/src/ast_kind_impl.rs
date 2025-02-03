@@ -222,7 +222,7 @@ impl AstKind<'_> {
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(v) => format!(
                 "VariableDeclarator({})",
-                v.id.get_identifier().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
+                v.id.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
             )
             .into(),
 
@@ -290,7 +290,8 @@ impl AstKind<'_> {
             Self::ArrayExpressionElement(_) => "ArrayExpressionElement".into(),
             Self::AssignmentTarget(_) => "AssignmentTarget".into(),
             Self::SimpleAssignmentTarget(a) => {
-                format!("SimpleAssignmentTarget({})", a.get_identifier().unwrap_or(&UNKNOWN)).into()
+                format!("SimpleAssignmentTarget({})", a.get_identifier_name().unwrap_or(&UNKNOWN))
+                    .into()
             }
             Self::AssignmentTargetPattern(_) => "AssignmentTargetPattern".into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
@@ -305,7 +306,7 @@ impl AstKind<'_> {
             Self::FormalParameters(_) => "FormalParameters".into(),
             Self::FormalParameter(p) => format!(
                 "FormalParameter({})",
-                p.pattern.get_identifier().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
+                p.pattern.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
             )
             .into(),
             Self::CatchParameter(_) => "CatchParameter".into(),

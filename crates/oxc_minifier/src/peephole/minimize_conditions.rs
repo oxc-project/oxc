@@ -1,11 +1,7 @@
-use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ValueType},
-    ToInt32,
-};
+use oxc_ast::ast::*;
+use oxc_ecmascript::{constant_evaluation::ValueType, ToInt32};
 use oxc_span::{cmp::ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
-use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -13,47 +9,8 @@ use super::PeepholeOptimizations;
 
 /// Minimize Conditions
 ///
-/// A peephole optimization that minimizes conditional expressions according to De Morgan's laws.
-/// Also rewrites conditional statements as expressions by replacing them
-/// with `? :` and short-circuit binary operators.
-///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_conditions_exit_statement(
-        &mut self,
-        stmt: &mut Statement<'a>,
-        ctx: Ctx<'a, '_>,
-    ) {
-        let expr = match stmt {
-            Statement::IfStatement(s) => Some(&mut s.test),
-            Statement::WhileStatement(s) => Some(&mut s.test),
-            Statement::ForStatement(s) => s.test.as_mut(),
-            Statement::DoWhileStatement(s) => Some(&mut s.test),
-            Statement::ExpressionStatement(s)
-                if !matches!(
-                    ctx.ancestry.ancestor(1),
-                    Ancestor::ArrowFunctionExpressionBody(_)
-                ) =>
-            {
-                Some(&mut s.expression)
-            }
-            _ => None,
-        };
-
-        if let Some(expr) = expr {
-            Self::try_fold_expr_in_boolean_context(expr, ctx);
-        }
-
-        if let Some(folded_stmt) = match stmt {
-            // If the condition is a literal, we'll let other optimizations try to remove useless code.
-            Statement::IfStatement(_) => self.try_minimize_if(stmt, ctx),
-            _ => None,
-        } {
-            *stmt = folded_stmt;
-            self.mark_current_function_as_changed();
-        };
-    }
-
     pub fn minimize_conditions_exit_expression(
         &mut self,
         expr: &mut Expression<'a>,
@@ -100,558 +57,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn minimize_not(span: Span, expr: Expression<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
-        let mut unary = ctx.ast.unary_expression(span, UnaryOperator::LogicalNot, expr);
-        Self::try_minimize_not(&mut unary, ctx)
-            .unwrap_or_else(|| Expression::UnaryExpression(ctx.ast.alloc(unary)))
-    }
-
-    /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
-    fn try_minimize_not(
-        expr: &mut UnaryExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if !expr.operator.is_not() {
-            return None;
-        }
-        match &mut expr.argument {
-            // `!!true` -> `true`
-            // `!!false` -> `false`
-            Expression::UnaryExpression(e)
-                if e.operator.is_not() && ValueType::from(&e.argument).is_boolean() =>
-            {
-                Some(ctx.ast.move_expression(&mut e.argument))
-            }
-            // `!(a == b)` => `a != b`
-            // `!(a != b)` => `a == b`
-            // `!(a === b)` => `a !== b`
-            // `!(a !== b)` => `a === b`
-            Expression::BinaryExpression(e) if e.operator.is_equality() => {
-                e.operator = e.operator.equality_inverse_operator().unwrap();
-                Some(ctx.ast.move_expression(&mut expr.argument))
-            }
-            // "!(a, b)" => "a, !b"
-            Expression::SequenceExpression(sequence_expr) => {
-                if let Some(e) = sequence_expr.expressions.pop() {
-                    let e = ctx.ast.expression_unary(e.span(), UnaryOperator::LogicalNot, e);
-                    let expressions = ctx.ast.vec_from_iter(
-                        sequence_expr.expressions.drain(..).chain(std::iter::once(e)),
-                    );
-                    return Some(ctx.ast.expression_sequence(sequence_expr.span, expressions));
-                }
-                None
-            }
-            _ => None,
-        }
-    }
-
-    /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9190>
-    fn try_minimize_if(&self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Option<Statement<'a>> {
-        let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
-
-        // `if (x) foo()` -> `x && foo()`
-        if !if_stmt.test.is_literal() {
-            let then_branch = &if_stmt.consequent;
-            let else_branch = &if_stmt.alternate;
-            match else_branch {
-                None => {
-                    if Self::is_foldable_express_block(&if_stmt.consequent) {
-                        let right = Self::get_block_expression(&mut if_stmt.consequent, ctx);
-                        let test = ctx.ast.move_expression(&mut if_stmt.test);
-                        // `if(!x) foo()` -> `x || foo()`
-                        if let Expression::UnaryExpression(unary_expr) = test {
-                            if unary_expr.operator.is_not() {
-                                let left = unary_expr.unbox().argument;
-                                let logical_expr = ctx.ast.expression_logical(
-                                    if_stmt.span,
-                                    left,
-                                    LogicalOperator::Or,
-                                    right,
-                                );
-                                return Some(
-                                    ctx.ast.statement_expression(if_stmt.span, logical_expr),
-                                );
-                            }
-                        } else {
-                            // `if(x) foo()` -> `x && foo()`
-                            let logical_expr = ctx.ast.expression_logical(
-                                if_stmt.span,
-                                test,
-                                LogicalOperator::And,
-                                right,
-                            );
-                            return Some(ctx.ast.statement_expression(if_stmt.span, logical_expr));
-                        }
-                    } else {
-                        // `if (x) if (y) z` -> `if (x && y) z`
-                        if let Some(Statement::IfStatement(then_if_stmt)) =
-                            then_branch.get_one_child()
-                        {
-                            if then_if_stmt.alternate.is_none() {
-                                let and_left = ctx.ast.move_expression(&mut if_stmt.test);
-                                let Some(then_if_stmt) = if_stmt.consequent.get_one_child_mut()
-                                else {
-                                    unreachable!()
-                                };
-                                let Statement::IfStatement(mut then_if_stmt) =
-                                    ctx.ast.move_statement(then_if_stmt)
-                                else {
-                                    unreachable!()
-                                };
-                                let and_right = ctx.ast.move_expression(&mut then_if_stmt.test);
-                                then_if_stmt.test = ctx.ast.expression_logical(
-                                    and_left.span(),
-                                    and_left,
-                                    LogicalOperator::And,
-                                    and_right,
-                                );
-                                return Some(Statement::IfStatement(then_if_stmt));
-                            }
-                        }
-                    }
-                }
-                Some(else_branch) => {
-                    let then_branch_is_expression_block =
-                        Self::is_foldable_express_block(then_branch);
-                    let else_branch_is_expression_block =
-                        Self::is_foldable_express_block(else_branch);
-                    // `if(foo) bar else baz` -> `foo ? bar : baz`
-                    if then_branch_is_expression_block && else_branch_is_expression_block {
-                        let test = ctx.ast.move_expression(&mut if_stmt.test);
-                        let consequent = Self::get_block_expression(&mut if_stmt.consequent, ctx);
-                        let else_branch = if_stmt.alternate.as_mut().unwrap();
-                        let alternate = Self::get_block_expression(else_branch, ctx);
-                        let expr = self.minimize_conditional(
-                            if_stmt.span,
-                            test,
-                            consequent,
-                            alternate,
-                            ctx,
-                        );
-                        return Some(ctx.ast.statement_expression(if_stmt.span, expr));
-                    }
-                }
-            }
-        }
-
-        // `if (x) {} else foo` -> `if (!x) foo`
-        if match &if_stmt.consequent {
-            Statement::EmptyStatement(_) => true,
-            Statement::BlockStatement(block_stmt) => block_stmt.body.is_empty(),
-            _ => false,
-        } && if_stmt.alternate.is_some()
-        {
-            return Some(ctx.ast.statement_if(
-                if_stmt.span,
-                ctx.ast.expression_unary(
-                    if_stmt.test.span(),
-                    UnaryOperator::LogicalNot,
-                    ctx.ast.move_expression(&mut if_stmt.test),
-                ),
-                ctx.ast.move_statement(if_stmt.alternate.as_mut().unwrap()),
-                None,
-            ));
-        }
-
-        None
-    }
-
-    fn is_foldable_express_block(stmt: &Statement<'a>) -> bool {
-        matches!(stmt.get_one_child(), Some(Statement::ExpressionStatement(_)))
-    }
-
-    fn get_block_expression(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
-        let Some(Statement::ExpressionStatement(s)) = stmt.get_one_child_mut() else {
-            unreachable!()
-        };
-        ctx.ast.move_expression(&mut s.expression)
-    }
-
-    pub fn minimize_conditional(
-        &self,
-        span: Span,
-        test: Expression<'a>,
-        consequent: Expression<'a>,
-        alternate: Expression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Expression<'a> {
-        let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
-        self.try_minimize_conditional(&mut cond_expr, ctx)
-            .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
-    }
-
-    // `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
-    fn try_minimize_conditional(
-        &self,
-        expr: &mut ConditionalExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        match &mut expr.test {
-            // "(a, b) ? c : d" => "a, b ? c : d"
-            Expression::SequenceExpression(sequence_expr) => {
-                if sequence_expr.expressions.len() > 1 {
-                    let span = expr.span();
-                    let mut sequence = ctx.ast.move_expression(&mut expr.test);
-                    let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
-                        unreachable!()
-                    };
-                    let expr = self.minimize_conditional(
-                        span,
-                        sequence_expr.expressions.pop().unwrap(),
-                        ctx.ast.move_expression(&mut expr.consequent),
-                        ctx.ast.move_expression(&mut expr.alternate),
-                        ctx,
-                    );
-                    sequence_expr.expressions.push(expr);
-                    return Some(sequence);
-                }
-            }
-            // "!a ? b : c" => "a ? c : b"
-            Expression::UnaryExpression(test_expr) => {
-                if test_expr.operator.is_not() {
-                    let test = ctx.ast.move_expression(&mut test_expr.argument);
-                    let consequent = ctx.ast.move_expression(&mut expr.alternate);
-                    let alternate = ctx.ast.move_expression(&mut expr.consequent);
-                    return Some(
-                        self.minimize_conditional(expr.span, test, consequent, alternate, ctx),
-                    );
-                }
-            }
-            Expression::Identifier(id) => {
-                // "a ? a : b" => "a || b"
-                if let Expression::Identifier(id2) = &expr.consequent {
-                    if id.name == id2.name {
-                        return Some(Self::join_with_left_associative_op(
-                            expr.span,
-                            LogicalOperator::Or,
-                            ctx.ast.move_expression(&mut expr.test),
-                            ctx.ast.move_expression(&mut expr.alternate),
-                            ctx,
-                        ));
-                    }
-                }
-                // "a ? b : a" => "a && b"
-                if let Expression::Identifier(id2) = &expr.alternate {
-                    if id.name == id2.name {
-                        return Some(Self::join_with_left_associative_op(
-                            expr.span,
-                            LogicalOperator::And,
-                            ctx.ast.move_expression(&mut expr.test),
-                            ctx.ast.move_expression(&mut expr.consequent),
-                            ctx,
-                        ));
-                    }
-                }
-            }
-            // `x != y ? b : c` -> `x == y ? c : b`
-            Expression::BinaryExpression(test_expr) => {
-                if matches!(
-                    test_expr.operator,
-                    BinaryOperator::Inequality | BinaryOperator::StrictInequality
-                ) {
-                    test_expr.operator = test_expr.operator.equality_inverse_operator().unwrap();
-                    let test = ctx.ast.move_expression(&mut expr.test);
-                    let consequent = ctx.ast.move_expression(&mut expr.consequent);
-                    let alternate = ctx.ast.move_expression(&mut expr.alternate);
-                    return Some(
-                        self.minimize_conditional(expr.span, test, alternate, consequent, ctx),
-                    );
-                }
-            }
-            _ => {}
-        }
-
-        // "a ? true : false" => "!!a"
-        // "a ? false : true" => "!a"
-        if let (Expression::BooleanLiteral(left), Expression::BooleanLiteral(right)) =
-            (&expr.consequent, &expr.alternate)
-        {
-            match (left.value, right.value) {
-                (true, false) => {
-                    let test = ctx.ast.move_expression(&mut expr.test);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    return Some(test);
-                }
-                (false, true) => {
-                    let test = ctx.ast.move_expression(&mut expr.test);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    return Some(test);
-                }
-                _ => {}
-            }
-        }
-
-        // "a ? b ? c : d : d" => "a && b ? c : d"
-        if let Expression::ConditionalExpression(consequent) = &mut expr.consequent {
-            if ctx.expr_eq(&consequent.alternate, &expr.alternate) {
-                return Some(ctx.ast.expression_conditional(
-                    expr.span,
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        ctx.ast.move_expression(&mut expr.test),
-                        ctx.ast.move_expression(&mut consequent.test),
-                        ctx,
-                    ),
-                    ctx.ast.move_expression(&mut consequent.consequent),
-                    ctx.ast.move_expression(&mut consequent.alternate),
-                ));
-            }
-        }
-
-        // "a ? b : c ? b : d" => "a || c ? b : d"
-        if let Expression::ConditionalExpression(alternate) = &mut expr.alternate {
-            if ctx.expr_eq(&alternate.consequent, &expr.consequent) {
-                return Some(ctx.ast.expression_conditional(
-                    expr.span,
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        ctx.ast.move_expression(&mut expr.test),
-                        ctx.ast.move_expression(&mut alternate.test),
-                        ctx,
-                    ),
-                    ctx.ast.move_expression(&mut expr.consequent),
-                    ctx.ast.move_expression(&mut alternate.alternate),
-                ));
-            }
-        }
-
-        // "a ? c : (b, c)" => "(a || b), c"
-        if let Expression::SequenceExpression(alternate) = &mut expr.alternate {
-            if alternate.expressions.len() == 2
-                && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
-            {
-                return Some(ctx.ast.expression_sequence(
-                    expr.span,
-                    ctx.ast.vec_from_array([
-                        Self::join_with_left_associative_op(
-                            expr.test.span(),
-                            LogicalOperator::Or,
-                            ctx.ast.move_expression(&mut expr.test),
-                            ctx.ast.move_expression(&mut alternate.expressions[0]),
-                            ctx,
-                        ),
-                        ctx.ast.move_expression(&mut expr.consequent),
-                    ]),
-                ));
-            }
-        }
-
-        // "a ? (b, c) : c" => "(a && b), c"
-        if let Expression::SequenceExpression(consequent) = &mut expr.consequent {
-            if consequent.expressions.len() == 2
-                && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
-            {
-                return Some(ctx.ast.expression_sequence(
-                    expr.span,
-                    ctx.ast.vec_from_array([
-                        Self::join_with_left_associative_op(
-                            expr.test.span(),
-                            LogicalOperator::And,
-                            ctx.ast.move_expression(&mut expr.test),
-                            ctx.ast.move_expression(&mut consequent.expressions[0]),
-                            ctx,
-                        ),
-                        ctx.ast.move_expression(&mut expr.alternate),
-                    ]),
-                ));
-            }
-        }
-
-        // "a ? b || c : c" => "(a && b) || c"
-        if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent {
-            if logical_expr.operator == LogicalOperator::Or
-                && ctx.expr_eq(&logical_expr.right, &expr.alternate)
-            {
-                return Some(ctx.ast.expression_logical(
-                    expr.span,
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        ctx.ast.move_expression(&mut expr.test),
-                        ctx.ast.move_expression(&mut logical_expr.left),
-                        ctx,
-                    ),
-                    LogicalOperator::Or,
-                    ctx.ast.move_expression(&mut expr.alternate),
-                ));
-            }
-        }
-
-        // "a ? c : b && c" => "(a || b) && c"
-        if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate {
-            if logical_expr.operator == LogicalOperator::And
-                && ctx.expr_eq(&logical_expr.right, &expr.consequent)
-            {
-                return Some(ctx.ast.expression_logical(
-                    expr.span,
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        ctx.ast.move_expression(&mut expr.test),
-                        ctx.ast.move_expression(&mut logical_expr.left),
-                        ctx,
-                    ),
-                    LogicalOperator::And,
-                    ctx.ast.move_expression(&mut expr.consequent),
-                ));
-            }
-        }
-
-        // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)`
-        if let (
-            Expression::Identifier(test),
-            Expression::CallExpression(consequent),
-            Expression::CallExpression(alternate),
-        ) = (&expr.test, &mut expr.consequent, &mut expr.alternate)
-        {
-            if consequent.arguments.len() == alternate.arguments.len()
-                && !ctx.is_global_reference(test)
-                && ctx.expr_eq(&consequent.callee, &alternate.callee)
-                && consequent
-                    .arguments
-                    .iter()
-                    .zip(&alternate.arguments)
-                    .skip(1)
-                    .all(|(a, b)| a.content_eq(b))
-            {
-                // `a ? b(...c) : b(...e)` -> `b(...a ? c : e)``
-                if matches!(consequent.arguments[0], Argument::SpreadElement(_))
-                    && matches!(alternate.arguments[0], Argument::SpreadElement(_))
-                {
-                    let callee = ctx.ast.move_expression(&mut consequent.callee);
-                    let consequent_first_arg = {
-                        let Argument::SpreadElement(el) = &mut consequent.arguments[0] else {
-                            unreachable!()
-                        };
-                        ctx.ast.move_expression(&mut el.argument)
-                    };
-                    let alternate_first_arg = {
-                        let Argument::SpreadElement(el) = &mut alternate.arguments[0] else {
-                            unreachable!()
-                        };
-                        ctx.ast.move_expression(&mut el.argument)
-                    };
-                    let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
-                    args[0] = ctx.ast.argument_spread_element(
-                        expr.span,
-                        ctx.ast.expression_conditional(
-                            expr.test.span(),
-                            ctx.ast.move_expression(&mut expr.test),
-                            consequent_first_arg,
-                            alternate_first_arg,
-                        ),
-                    );
-                    return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
-                }
-                // `a ? b(c) : b(e)` -> `b(a ? c : e)`
-                if !matches!(consequent.arguments[0], Argument::SpreadElement(_))
-                    && !matches!(alternate.arguments[0], Argument::SpreadElement(_))
-                {
-                    let callee = ctx.ast.move_expression(&mut consequent.callee);
-
-                    let consequent_first_arg =
-                        ctx.ast.move_expression(consequent.arguments[0].to_expression_mut());
-                    let alternate_first_arg =
-                        ctx.ast.move_expression(alternate.arguments[0].to_expression_mut());
-                    let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
-                    let cond_expr = self.minimize_conditional(
-                        expr.test.span(),
-                        ctx.ast.move_expression(&mut expr.test),
-                        consequent_first_arg,
-                        alternate_first_arg,
-                        ctx,
-                    );
-                    args[0] = Argument::from(cond_expr);
-                    return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
-                }
-            }
-        }
-
-        // Not part of esbuild
-        if let Some(e) = self.try_merge_conditional_expression_inside(expr, ctx) {
-            return Some(e);
-        }
-
-        // Try using the "??" or "?." operators
-        if self.target >= ESTarget::ES2020 {
-            if let Expression::BinaryExpression(test_binary) = &expr.test {
-                if let Some(is_negate) = match test_binary.operator {
-                    BinaryOperator::Inequality => Some(true),
-                    BinaryOperator::Equality => Some(false),
-                    _ => None,
-                } {
-                    // a == null / a != null
-                    if let Some((id_expr, ())) = Self::commutative_pair(
-                        (&test_binary.left, &test_binary.right),
-                        |a| {
-                            if let Expression::Identifier(id) = a {
-                                (!ctx.is_global_reference(id)).then_some(a)
-                            } else {
-                                None
-                            }
-                        },
-                        |b| b.is_null().then_some(()),
-                    ) {
-                        // `a == null ? b : a` -> `a ?? b`
-                        // `a != null ? a : b` -> `a ?? b`
-                        let target_expr =
-                            if is_negate { &mut expr.consequent } else { &mut expr.alternate };
-                        if id_expr.content_eq(target_expr) {
-                            return Some(ctx.ast.expression_logical(
-                                expr.span,
-                                ctx.ast.move_expression(target_expr),
-                                LogicalOperator::Coalesce,
-                                ctx.ast.move_expression(if is_negate {
-                                    &mut expr.alternate
-                                } else {
-                                    &mut expr.consequent
-                                }),
-                            ));
-                        }
-
-                        // "a == null ? undefined : a.b.c[d](e)" => "a?.b.c[d](e)"
-                        // "a != null ? a.b.c[d](e) : undefined" => "a?.b.c[d](e)"
-                        let target_expr =
-                            if is_negate { &expr.alternate } else { &expr.consequent };
-                        if ctx.is_expression_undefined(target_expr) {
-                            let expr_to_inject_optional_chaining =
-                                if is_negate { &mut expr.consequent } else { &mut expr.alternate };
-                            if Self::inject_optional_chaining_if_matched(
-                                id_expr,
-                                expr_to_inject_optional_chaining,
-                                ctx,
-                            ) {
-                                return Some(
-                                    ctx.ast.move_expression(expr_to_inject_optional_chaining),
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if ctx.expr_eq(&expr.alternate, &expr.consequent) {
-            // TODO:
-            // "/* @__PURE__ */ a() ? b : b" => "b"
-            // if ctx.ExprCanBeRemovedIfUnused(test) {
-            // return yes
-            // }
-
-            // "a ? b : b" => "a, b"
-            let expressions = ctx.ast.vec_from_array([
-                ctx.ast.move_expression(&mut expr.test),
-                ctx.ast.move_expression(&mut expr.consequent),
-            ]);
-            return Some(ctx.ast.expression_sequence(expr.span, expressions));
-        }
-
-        None
-    }
-
     // The goal of this function is to "rotate" the AST if it's possible to use the
     // left-associative property of the operator to avoid unnecessary parentheses.
     //
@@ -692,225 +97,6 @@ impl<'a> PeepholeOptimizations {
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
         ctx.ast.expression_logical(span, a, op, b)
-    }
-
-    /// Modify `expr` if that has `target_expr` as a parent, and returns true if modified.
-    ///
-    /// For `target_expr` = `a`, `expr` = `a.b`, this function changes `expr` to `a?.b` and returns true.
-    fn inject_optional_chaining_if_matched(
-        target_expr: &Expression<'a>,
-        expr: &mut Expression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> bool {
-        fn inject(target_expr: &Expression<'_>, expr: &mut Expression<'_>) -> bool {
-            match expr {
-                Expression::StaticMemberExpression(e) => {
-                    if e.object.content_eq(target_expr) {
-                        e.optional = true;
-                        return true;
-                    }
-                    if inject(target_expr, &mut e.object) {
-                        return true;
-                    }
-                }
-                Expression::ComputedMemberExpression(e) => {
-                    if e.object.content_eq(target_expr) {
-                        e.optional = true;
-                        return true;
-                    }
-                    if inject(target_expr, &mut e.object) {
-                        return true;
-                    }
-                }
-                Expression::CallExpression(e) => {
-                    if e.callee.content_eq(target_expr) {
-                        e.optional = true;
-                        return true;
-                    }
-                    if inject(target_expr, &mut e.callee) {
-                        return true;
-                    }
-                }
-                Expression::ChainExpression(e) => match &mut e.expression {
-                    ChainElement::StaticMemberExpression(e) => {
-                        if e.object.content_eq(target_expr) {
-                            e.optional = true;
-                            return true;
-                        }
-                        if inject(target_expr, &mut e.object) {
-                            return true;
-                        }
-                    }
-                    ChainElement::ComputedMemberExpression(e) => {
-                        if e.object.content_eq(target_expr) {
-                            e.optional = true;
-                            return true;
-                        }
-                        if inject(target_expr, &mut e.object) {
-                            return true;
-                        }
-                    }
-                    ChainElement::CallExpression(e) => {
-                        if e.callee.content_eq(target_expr) {
-                            e.optional = true;
-                            return true;
-                        }
-                        if inject(target_expr, &mut e.callee) {
-                            return true;
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {}
-            }
-            false
-        }
-
-        if inject(target_expr, expr) {
-            if !matches!(expr, Expression::ChainExpression(_)) {
-                *expr = ctx.ast.expression_chain(
-                    expr.span(),
-                    ctx.ast.move_expression(expr).into_chain_element().unwrap(),
-                );
-            }
-            true
-        } else {
-            false
-        }
-    }
-
-    /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
-    ///
-    /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
-    fn try_merge_conditional_expression_inside(
-        &self,
-        expr: &mut ConditionalExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let (
-            Expression::AssignmentExpression(consequent),
-            Expression::AssignmentExpression(alternate),
-        ) = (&mut expr.consequent, &mut expr.alternate)
-        else {
-            return None;
-        };
-        if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
-            return None;
-        }
-        if consequent.right.is_anonymous_function_definition() {
-            return None;
-        }
-        if consequent.operator != AssignmentOperator::Assign
-            || consequent.operator != alternate.operator
-            || consequent.left.content_ne(&alternate.left)
-        {
-            return None;
-        }
-        let cond_expr = self.minimize_conditional(
-            expr.span,
-            ctx.ast.move_expression(&mut expr.test),
-            ctx.ast.move_expression(&mut consequent.right),
-            ctx.ast.move_expression(&mut alternate.right),
-            ctx,
-        );
-        Some(ctx.ast.expression_assignment(
-            expr.span,
-            consequent.operator,
-            ctx.ast.move_assignment_target(&mut alternate.left),
-            cond_expr,
-        ))
-    }
-
-    /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
-    ///
-    /// <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
-    fn try_fold_expr_in_boolean_context(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
-        match expr {
-            // "!!a" => "a"
-            Expression::UnaryExpression(u1) if u1.operator.is_not() => {
-                if let Expression::UnaryExpression(u2) = &mut u1.argument {
-                    if u2.operator.is_not() {
-                        let mut e = ctx.ast.move_expression(&mut u2.argument);
-                        Self::try_fold_expr_in_boolean_context(&mut e, ctx);
-                        *expr = e;
-                        return true;
-                    }
-                }
-            }
-            Expression::BinaryExpression(e)
-                if e.operator.is_equality()
-                    && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
-                    && ValueType::from(&e.left).is_number() =>
-            {
-                let argument = ctx.ast.move_expression(&mut e.left);
-                *expr = if matches!(
-                    e.operator,
-                    BinaryOperator::StrictInequality | BinaryOperator::Inequality
-                ) {
-                    // `if ((a | b) !== 0)` -> `if (a | b);`
-                    argument
-                } else {
-                    // `if ((a | b) === 0);", "if (!(a | b));")`
-                    ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
-                };
-                return true;
-            }
-            // "if (!!a && !!b)" => "if (a && b)"
-            Expression::LogicalExpression(e) if e.operator == LogicalOperator::And => {
-                Self::try_fold_expr_in_boolean_context(&mut e.left, ctx);
-                Self::try_fold_expr_in_boolean_context(&mut e.right, ctx);
-                // "if (anything && truthyNoSideEffects)" => "if (anything)"
-                if ctx.get_side_free_boolean_value(&e.right) == Some(true) {
-                    *expr = ctx.ast.move_expression(&mut e.left);
-                    return true;
-                }
-            }
-            // "if (!!a ||!!b)" => "if (a || b)"
-            Expression::LogicalExpression(e) if e.operator == LogicalOperator::Or => {
-                Self::try_fold_expr_in_boolean_context(&mut e.left, ctx);
-                Self::try_fold_expr_in_boolean_context(&mut e.right, ctx);
-                // "if (anything || falsyNoSideEffects)" => "if (anything)"
-                if ctx.get_side_free_boolean_value(&e.right) == Some(false) {
-                    *expr = ctx.ast.move_expression(&mut e.left);
-                    return true;
-                }
-            }
-            Expression::ConditionalExpression(e) => {
-                // "if (a ? !!b : !!c)" => "if (a ? b : c)"
-                Self::try_fold_expr_in_boolean_context(&mut e.consequent, ctx);
-                Self::try_fold_expr_in_boolean_context(&mut e.alternate, ctx);
-                if let Some(boolean) = ctx.get_side_free_boolean_value(&e.consequent) {
-                    let right = ctx.ast.move_expression(&mut e.alternate);
-                    let left = ctx.ast.move_expression(&mut e.test);
-                    let span = e.span;
-                    let (op, left) = if boolean {
-                        // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
-                        (LogicalOperator::Or, left)
-                    } else {
-                        // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
-                        (LogicalOperator::And, Self::minimize_not(left.span(), left, ctx))
-                    };
-                    *expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
-                    return true;
-                }
-                if let Some(boolean) = ctx.get_side_free_boolean_value(&e.alternate) {
-                    let left = ctx.ast.move_expression(&mut e.test);
-                    let right = ctx.ast.move_expression(&mut e.consequent);
-                    let span = e.span;
-                    let (op, left) = if boolean {
-                        // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
-                        (LogicalOperator::Or, Self::minimize_not(left.span(), left, ctx))
-                    } else {
-                        // "if (anything1 ? anything2 : falsyNoSideEffects)" => "if (anything1 && anything2)"
-                        (LogicalOperator::And, left)
-                    };
-                    *expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
-                    return true;
-                }
-            }
-            _ => {}
-        }
-        false
     }
 
     // `typeof foo === 'number'` -> `typeof foo == 'number'`
@@ -1054,28 +240,18 @@ impl<'a> PeepholeOptimizations {
                 None
             }
         };
-        let is_id_or_assign_to_id = |b: &Expression<'a>| match b {
-            Expression::Identifier(id) => Some(id.name),
-            Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::Assign {
-                    if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left {
-                        return Some(id.name);
-                    }
-                }
-                None
-            }
-            _ => None,
-        };
         let (left_value, (left_non_value_expr, left_id_name)) = {
             let left_value;
             let left_non_value;
             if let Some(v) = is_null_or_undefined(&left_binary_expr.left) {
                 left_value = v;
-                let left_non_value_id = is_id_or_assign_to_id(&left_binary_expr.right)?;
+                let left_non_value_id =
+                    Self::extract_id_or_assign_to_id(&left_binary_expr.right)?.name;
                 left_non_value = (&mut left_binary_expr.right, left_non_value_id);
             } else {
                 left_value = is_null_or_undefined(&left_binary_expr.right)?;
-                let left_non_value_id = is_id_or_assign_to_id(&left_binary_expr.left)?;
+                let left_non_value_id =
+                    Self::extract_id_or_assign_to_id(&left_binary_expr.left)?.name;
                 left_non_value = (&mut left_binary_expr.left, left_non_value_id);
             }
             (left_value, left_non_value)
@@ -1110,6 +286,24 @@ impl<'a> PeepholeOptimizations {
             replace_op,
             ctx.ast.expression_null_literal(null_expr_span),
         ))
+    }
+
+    /// Returns the identifier or the assignment target's identifier of the given expression.
+    pub fn extract_id_or_assign_to_id<'b>(
+        expr: &'b Expression<'a>,
+    ) -> Option<&'b IdentifierReference<'a>> {
+        match expr {
+            Expression::Identifier(id) => Some(id),
+            Expression::AssignmentExpression(assign_expr) => {
+                if assign_expr.operator == AssignmentOperator::Assign {
+                    if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left {
+                        return Some(id);
+                    }
+                }
+                None
+            }
+            _ => None,
+        }
     }
 
     /// Compress `a = a || b` to `a ||= b`
@@ -1295,14 +489,6 @@ mod test {
         CompressOptions,
     };
     use oxc_syntax::es_target::ESTarget;
-
-    fn test_es2019(source_text: &str, expected: &str) {
-        let target = ESTarget::ES2019;
-        assert_eq!(
-            run(source_text, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(expected, None)
-        );
-    }
 
     /** Check that removing blocks with 1 child works */
     #[test]
@@ -1584,38 +770,6 @@ mod test {
     }
 
     #[test]
-    fn test_minimize_expr_condition() {
-        test("(x ? true : false) && y()", "x && y()");
-        test("(x ? false : true) && y()", "!x && y()");
-        test("(x ? true : y) && y()", "(x || y) && y();");
-        test("(x ? y : false) && y()", "(x && y) && y()");
-        test("var x; (x && true) && y()", "var x; x && y()");
-        test("var x; (x && false) && y()", "var x; x && !1");
-        test("(x && true) && y()", "x && y()");
-        test("(x && false) && y()", "x && !1");
-        test("var x; (x || true) && y()", "var x; x || !0, y()");
-        test("var x; (x || false) && y()", "var x; x && y()");
-
-        test("(x || true) && y()", "x || !0, y()");
-        test("(x || false) && y()", "x && y()");
-
-        test("let x = foo ? true : false", "let x = !!foo");
-        test("let x = foo ? true : bar", "let x = foo ? !0 : bar");
-        test("let x = foo ? bar : false", "let x = foo ? bar : !1");
-        test("function x () { return a ? true : false }", "function x() { return !!a }");
-        test("function x () { return a ? false : true }", "function x() { return !a }");
-        test("function x () { return a ? true : b }", "function x() { return a ? !0 : b }");
-        // can't be minified e.g. `a = ''` would return `''`
-        test("function x() { return a && true }", "function x() { return a && !0 }");
-
-        test("foo ? bar : bar", "foo, bar");
-        test_same("foo ? bar : baz");
-        test("foo() ? bar : bar", "foo(), bar");
-
-        test_same("var k = () => !!x;");
-    }
-
-    #[test]
     fn test_minimize_while_condition() {
         // This test uses constant folding logic, so is only here for completeness.
         test("while(!!true) foo()", "for(;;) foo()");
@@ -1708,8 +862,20 @@ mod test {
     }
 
     #[test]
-    fn test_no_swap_with_dangling_else() {
-        test_same("if(!x) {for(;;)foo(); for(;;)bar()} else if(y) for(;;) f()");
+    fn test_dangling_else() {
+        test(
+            "
+        if (!x) {
+          for (;;) foo();
+          for (;;) bar();
+        } else if (y) for (;;) f();",
+            "
+        if (x) {
+          if (y) for (; ; ) f();
+        } else {
+          for (; ; ) foo();
+          for (; ; ) bar();}",
+        );
         test_same("if(!a&&!b) {for(;;)foo(); for(;;)bar()} else if(y) for(;;) f()");
     }
 
@@ -2325,14 +1491,6 @@ mod test {
     }
 
     #[test]
-    fn compress_conditional() {
-        test("foo ? foo : bar", "foo || bar");
-        test("foo ? bar : foo", "foo && bar");
-        test_same("x.y ? x.y : bar");
-        test_same("x.y ? bar : x.y");
-    }
-
-    #[test]
     fn compress_binary_boolean() {
         test("a instanceof b === true", "a instanceof b");
         test("a instanceof b == true", "a instanceof b");
@@ -2367,95 +1525,6 @@ mod test {
         test("(x = 1) === 1", "(x = 1) == 1");
         test("(x = 1) !== 1", "(x = 1) != 1");
         test("!0 + null !== 1", "!0 + null != 1");
-    }
-
-    #[test]
-    fn minimize_duplicate_nots() {
-        // test("!x", "x"); // TODO: in ExpressionStatement
-        test("!!x", "x");
-        test("!!!x", "!x");
-        test("!!!!x", "x");
-        test("!!!(x && y)", "!(x && y)");
-        test_same("var k = () => { !!x; }");
-
-        test_same("var k = !!x;");
-        test_same("function k () { return !!x; }");
-        test("var k = () => { return !!x; }", "var k = () => !!x");
-        test_same("var k = () => !!x;");
-    }
-
-    #[test]
-    fn minimize_nots_with_binary_expressions() {
-        test("!(x === undefined)", "x !== void 0");
-        test("!(typeof(x) === 'undefined')", "!(typeof x > 'u')");
-        test("!(x === void 0)", "x !== void 0");
-        test("!!delete x.y", "delete x.y");
-        test("!!!delete x.y", "!delete x.y");
-        test("!!!!delete x.y", "delete x.y");
-        test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
-        test_same("!(a === 1 ? void 0 : a.b)"); // FIXME: can be compressed to `a === 1 || !a.b`
-        test("!(a, b)", "a, !b");
-    }
-
-    #[test]
-    fn minimize_conditional_exprs() {
-        test("(a, b) ? c : d", "a, b ? c : d");
-        test("!a ? b : c", "a ? c : b");
-        // test("/* @__PURE__ */ a() ? b : b", "b");
-        test("a ? b : b", "a, b");
-        test("a ? true : false", "a");
-        test("a ? false : true", "!a");
-        test("a ? a : b", "a || b");
-        test("a ? b : a", "a && b");
-        test("a ? b ? c : d : d", "a && b ? c : d");
-        test("a ? b : c ? b : d", "a || c ? b : d");
-        test("a ? c : (b, c)", "(a || b), c");
-        test("a ? (b, c) : c", "(a && b), c");
-        test("a ? b || c : c", "(a && b) || c");
-        test("a ? c : b && c", "(a || b) && c");
-        test("var a; a ? b(c, d) : b(e, d)", "var a; b(a ? c : e, d)");
-        test("var a; a ? b(...c) : b(...e)", "var a; b(...a ? c : e)");
-        test("var a; a ? b(c) : b(e)", "var a; b(a ? c : e)");
-        test("a() != null ? a() : b", "a() == null ? b : a()");
-        test("var a; a != null ? a : b", "var a; a ?? b");
-        test("a != null ? a : b", "a == null ? b : a"); // accessing global `a` may have a getter with side effects
-        test_es2019("var a; a != null ? a : b", "var a; a == null ? b : a");
-        test("var a; a != null ? a.b.c[d](e) : undefined", "var a; a?.b.c[d](e)");
-        test("a != null ? a.b.c[d](e) : undefined", "a != null && a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
-        test(
-            "var a, undefined = 1; a != null ? a.b.c[d](e) : undefined",
-            "var a, undefined = 1; a == null ? undefined : a.b.c[d](e)",
-        );
-        test_es2019(
-            "var a; a != null ? a.b.c[d](e) : undefined",
-            "var a; a != null && a.b.c[d](e)",
-        );
-        test("cmp !== 0 ? cmp : (bar, cmp);", "cmp === 0 && bar, cmp;");
-        test("cmp === 0 ? cmp : (bar, cmp);", "cmp === 0 || bar, cmp;");
-        test("cmp !== 0 ? (bar, cmp) : cmp;", "cmp === 0 || bar, cmp;");
-        test("cmp === 0 ? (bar, cmp) : cmp;", "cmp === 0 && bar, cmp;");
-    }
-
-    #[test]
-    fn test_try_fold_in_boolean_context() {
-        test("if (!!a);", "a");
-        test("while (!!a);", "for (;a;);");
-        test("do; while (!!a);", "do; while (a);");
-        test("for (;!!a;);", "for (;a;);");
-        test("!!a ? b : c", "a ? b : c");
-        test("if (!!!a);", "!a");
-        // test("Boolean(!!a)", "Boolean()");
-        test("if ((a | b) !== 0);", "a | b");
-        test("if ((a | b) === 0);", "!(a | b)");
-        test("if (!!a && !!b);", "a && b");
-        test("if (!!a || !!b);", "a || b");
-        test("if (anything || (0, false));", "anything");
-        test("if (a ? !!b : !!c);", "a ? b : c");
-        test("if (anything1 ? (0, true) : anything2);", "anything1 || anything2");
-        test("if (anything1 ? (0, false) : anything2);", "!anything1 && anything2");
-        test("if (anything1 ? anything2 : (0, true));", "!anything1 || anything2");
-        test("if (anything1 ? anything2 : (0, false));", "anything1 && anything2");
-        test("if(!![]);", "");
     }
 
     #[test]
