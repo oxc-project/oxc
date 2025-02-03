@@ -31,6 +31,7 @@ use super::{macros::inherit_variants, *};
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Program<'a> {
     pub span: Span,
+    #[estree(via = crate::serialize::SourceTypeWrapper, type = "SourceType")]
     pub source_type: SourceType,
     #[estree(skip)]
     pub source_text: &'a str,

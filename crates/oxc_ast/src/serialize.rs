@@ -7,7 +7,7 @@ use serde::{
 };
 
 use oxc_allocator::Box;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::number::BigintBase;
 
 use crate::ast::{
@@ -250,6 +250,14 @@ impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
         } else {
             [false; 0].serialize(serializer)
         }
+    }
+}
+
+pub struct SourceTypeWrapper<'a>(pub &'a SourceType);
+
+impl Serialize for SourceTypeWrapper<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.module_kind().serialize(serializer)
     }
 }
 
