@@ -156,41 +156,68 @@ abstract class A {
 }
 
 ########## 24
+interface A { a: string, 'b': number, 'c'(): void }
+----------
+interface A {
+	a: string;
+	'b': number;
+	'c'(): void;
+}
+
+########## 25
+enum A { a, 'b' }
+----------
+enum A {
+	a,
+	'b',
+}
+
+########## 26
+module 'a'
+----------
+module 'a'
+
+########## 27
+declare module 'a'
+----------
+declare module 'a'
+
+########## 28
 a = x!;
 ----------
 a = x!;
 
-########## 25
+########## 29
 b = (x as y);
 ----------
 b = x as y;
 
-########## 26
+########## 30
 c = foo<string>;
 ----------
 c = foo<string>;
 
-########## 27
+########## 31
 d = x satisfies y;
 ----------
 d = ((x) satisfies y);
 
-########## 28
+########## 32
 export @x declare abstract class C {}
 ----------
 export @x declare abstract class C {}
 
-########## 29
+########## 33
 div<T>``
 ----------
 div<T>``;
 
-########## 30
+########## 34
 export type Component<Props = any> = Foo;
 ----------
 export type Component<Props = any> = Foo;
 
-########## 31
+########## 35
 
 export type Component<
   Props = any,
@@ -215,22 +242,22 @@ export type Component<
 	S extends Record<string, any> = any
 > = ConcreteComponent<Props, RawBindings, D, C, M, E, S> | ComponentPublicInstanceConstructor<Props>;
 
-########## 32
+########## 36
 (a || b) as any
 ----------
 (a || b) as any;
 
-########## 33
+########## 37
 (a ** b) as any
 ----------
 (a ** b) as any;
 
-########## 34
+########## 38
 (function g() {}) as any
 ----------
 (function g() {}) as any;
 
-########## 35
+########## 39
 
 import defaultExport from "module-name";
 import * as name from "module-name";
@@ -295,3 +322,12 @@ export { name12, nameN } from 'module-name';
 export { import1 as name13, import2 as name14, name15 } from 'module-name';
 export { default } from 'module-name';
 export { default as name16 } from 'module-name';
+
+########## 40
+
+import a = require("a");
+export import b = require("b");
+
+----------
+import a = require('a');
+export import b = require('b');

@@ -952,7 +952,7 @@ impl Gen for ImportDeclaration<'_> {
             p.print_str("from");
         }
         p.print_soft_space();
-        self.source.print(p, ctx);
+        p.print_quoted_utf16(&self.source.value, false);
         if let Some(with_clause) = &self.with_clause {
             p.print_soft_space();
             with_clause.print(p, ctx);
@@ -980,16 +980,18 @@ impl Gen for WithClause<'_> {
 }
 
 impl Gen for ImportAttribute<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         match &self.key {
             ImportAttributeKey::Identifier(identifier) => {
                 p.print_str(identifier.name.as_str());
             }
-            ImportAttributeKey::StringLiteral(literal) => literal.print(p, ctx),
+            ImportAttributeKey::StringLiteral(literal) => {
+                p.print_quoted_utf16(&literal.value, false);
+            }
         };
         p.print_colon();
         p.print_soft_space();
-        self.value.print(p, ctx);
+        p.print_quoted_utf16(&self.value.value, false);
     }
 }
 
@@ -1055,7 +1057,7 @@ impl Gen for ExportNamedDeclaration<'_> {
                 p.print_soft_space();
                 p.print_str("from");
                 p.print_soft_space();
-                source.print(p, ctx);
+                p.print_quoted_utf16(&source.value, false);
             }
             p.print_semicolon_after_statement();
         }
@@ -1111,7 +1113,7 @@ impl Gen for ModuleExportName<'_> {
         match self {
             Self::IdentifierName(ident) => ident.print(p, ctx),
             Self::IdentifierReference(ident) => ident.print(p, ctx),
-            Self::StringLiteral(literal) => literal.print(p, ctx),
+            Self::StringLiteral(literal) => p.print_quoted_utf16(&literal.value, false),
         };
     }
 }
@@ -1139,7 +1141,7 @@ impl Gen for ExportAllDeclaration<'_> {
 
         p.print_str("from");
         p.print_soft_space();
-        self.source.print(p, ctx);
+        p.print_quoted_utf16(&self.source.value, false);
         if let Some(with_clause) = &self.with_clause {
             p.print_hard_space();
             with_clause.print(p, ctx);
@@ -3451,6 +3453,9 @@ impl Gen for TSSignature<'_> {
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_str());
                         }
+                        PropertyKey::StringLiteral(key) => {
+                            p.print_quoted_utf16(&key.value, false);
+                        }
                         key => {
                             key.to_expression().print_expr(p, Precedence::Comma, ctx);
                         }
@@ -3498,6 +3503,9 @@ impl Gen for TSPropertySignature<'_> {
                 }
                 PropertyKey::PrivateIdentifier(key) => {
                     p.print_str(key.name.as_str());
+                }
+                PropertyKey::StringLiteral(key) => {
+                    p.print_quoted_utf16(&key.value, false);
                 }
                 key => {
                     key.to_expression().print_expr(p, Precedence::Comma, ctx);
@@ -3585,7 +3593,9 @@ impl Gen for TSImportAttributeName<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             TSImportAttributeName::Identifier(ident) => ident.print(p, ctx),
-            TSImportAttributeName::StringLiteral(literal) => literal.print(p, ctx),
+            TSImportAttributeName::StringLiteral(literal) => {
+                p.print_quoted_utf16(&literal.value, false);
+            }
         }
     }
 }
@@ -3689,7 +3699,7 @@ impl Gen for TSModuleDeclarationName<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => s.print(p, ctx),
+            Self::StringLiteral(s) => p.print_quoted_utf16(&s.value, false),
         }
     }
 }
@@ -3793,7 +3803,7 @@ impl Gen for TSEnumMember<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.id {
             TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
-            TSEnumMemberName::String(decl) => decl.print(p, ctx),
+            TSEnumMemberName::String(decl) => p.print_quoted_utf16(&decl.value, false),
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();
@@ -3837,7 +3847,7 @@ impl Gen for TSModuleReference<'_> {
         match self {
             Self::ExternalModuleReference(decl) => {
                 p.print_str("require(");
-                decl.expression.print(p, ctx);
+                p.print_quoted_utf16(&decl.expression.value, false);
                 p.print_str(")");
             }
             match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),

@@ -612,13 +612,13 @@ impl<'a> Codegen<'a> {
                 }
             }
             let mut quote = b'"';
-            if double_cost > single_cost {
-                quote = b'\'';
-                if single_cost > backtick_cost && allow_backtick {
-                    quote = b'`';
-                }
-            } else if double_cost > backtick_cost && allow_backtick {
+            if allow_backtick && double_cost >= backtick_cost {
                 quote = b'`';
+                if backtick_cost > single_cost {
+                    quote = b'\'';
+                }
+            } else if double_cost > single_cost {
+                quote = b'\'';
             }
             quote
         } else {
