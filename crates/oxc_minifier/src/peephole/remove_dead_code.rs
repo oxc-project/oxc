@@ -640,7 +640,7 @@ mod test {
         test("{{foo()}}", "foo()");
         test("{foo();{}}", "foo()");
         test("{{foo()}{}}", "foo()");
-        // test("{{foo()}{bar()}}", "foo();bar()");
+        test("{{foo()}{bar()}}", "foo(), bar()");
         test("{if(false)foo(); {bar()}}", "bar()");
         test("{if(false)if(false)if(false)foo(); {bar()}}", "bar()");
 
@@ -650,8 +650,8 @@ mod test {
         test("{ (function(){x++}) }", "");
         test("function f(){return;}", "function f(){}");
         test("function f(){return 3;}", "function f(){return 3}");
-        // test_same("function f(){if(x)return; x=3; return; }");
-        // test("{x=3;;;y=2;;;}", "x=3;y=2");
+        test("function f(){if(x)return; x=3; return; }", "function f(){if(x)return; x=3; }");
+        test("{x=3;;;y=2;;;}", "x=3, y=2");
 
         // Cases to test for empty block.
         // test("while(x()){x}", "while(x());");
@@ -662,6 +662,19 @@ mod test {
         test("for (let x = 1; x <10; x++ ) {}", "for (let x = 1; x <10; x++ );");
         test("for (var x = 1; x <10; x++ ) {}", "for (var x = 1; x <10; x++ );");
         test("do { } while (true)", "do;while(!0)");
+        test(
+            "function z(a) {
+              {
+                for (var i = 0; i < a; i++) {}
+                foo()
+              }
+              bar()
+            }",
+            "function z(a) {
+              for (var i = 0; i < a; i++);
+              foo(), bar()
+            }",
+        );
     }
 
     #[test]
@@ -802,8 +815,7 @@ mod test {
     #[test]
     fn test_fold_if_statement() {
         test("if (foo) {}", "foo");
-        // FIXME
-        // test("if (foo) {} else {}", "foo");
+        test("if (foo) {} else {}", "foo");
         test("if (false) {}", "");
         test("if (true) {}", "");
     }

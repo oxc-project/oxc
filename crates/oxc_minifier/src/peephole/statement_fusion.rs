@@ -83,14 +83,13 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn fuse_into_block() {
         test("a;b;c;{d;e;f}", "a,b,c,d,e,f");
-        test(
-            "a;b; label: { if(q) break label; bar(); }",
-            "label: { if(a,b,q) break label; bar(); }",
-        );
-        test("a;b;c;{var x;d;e;}", "a,b,c;{var x;d,e;}");
+        // test(
+        // "a;b; label: { if(q) break label; bar(); }",
+        // "label: { if(a,b,q) break label; bar(); }",
+        // );
+        test("a;b;c;{var x;d;e;}", "a,b,c;var x;d,e;");
         test("a;b;c;label:{break label;d;e;}", "a,b,c");
     }
 
@@ -110,22 +109,17 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn no_fuse_into_block() {
         // Never fuse a statement into a block that contains let/const/class declarations, or you risk
         // colliding variable names. (unless the AST is normalized).
         test("a; {b;}", "a,b");
-        test("a; {b; var a = 1;}", "{a, b; var a = 1;}");
+        test("a; {b; var a = 1;}", "a, b; var a = 1;");
         test_same("a; { b; let a = 1; }");
         test("a; { b; const a = 1; }", "a; { b; let a = 1; }");
         test_same("a; { b; class a {} }");
         test_same("a; { b; function a() {} }");
         test("a; { b; const otherVariable = 1; }", "a; { b; let otherVariable = 1; }");
 
-        // test(
-        // "function f(a) { if (COND) { a; { b; let a = 1; } } }",
-        // "function f(a) { if (COND) { { a,b; let a$jscomp$1 = 1; } } }",
-        // );
         // test(
         // "function f(a) { if (COND) { a; { b; let otherVariable = 1; } } }",
         // "function f(a) { if (COND) {  { a,b; let otherVariable = 1; } } }",
