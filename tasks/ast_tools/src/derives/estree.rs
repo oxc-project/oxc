@@ -230,10 +230,9 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     } else {
         let match_branches = enum_def.all_variants(schema).map(|variant| {
             let variant_ident = variant.ident();
-            // TODO: Rename `x` to `it` to match other generated code
             quote! {
-                #enum_ident::#variant_ident(x) => {
-                    Serialize::serialize(x, serializer)
+                #enum_ident::#variant_ident(it) => {
+                    Serialize::serialize(it, serializer)
                 }
             }
         });
