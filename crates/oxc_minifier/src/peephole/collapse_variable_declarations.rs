@@ -47,7 +47,10 @@ mod test {
         #[test]
         fn test_aggressive_redeclaration_in_for() {
             test_same("for(var x = 1; x = 2; x = 3) x = 4");
-            test_same("for(var x = 1; y = 2; z = 3) {var a = 4}");
+            test(
+                "for(var x = 1; y = 2; z = 3) {var a = 4}",
+                "for(var x = 1; y = 2; z = 3) var a = 4",
+            );
             test_same("var x; for(x = 1; x = 2; z = 3) x = 4");
         }
 

@@ -1418,7 +1418,7 @@ mod test {
             "typeof x !== 'undefined'; function foo() { var x }",
             "typeof x < 'u'; function foo() { var x }",
         );
-        test("typeof x !== 'undefined'; { var x }", "x !== void 0; { var x }");
+        test("typeof x !== 'undefined'; { var x }", "x !== void 0; var x;");
         test("typeof x !== 'undefined'; { let x }", "typeof x < 'u'; { let x }");
         test("typeof x !== 'undefined'; var x", "x !== void 0; var x");
         // input and output both errors with same TDZ error

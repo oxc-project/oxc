@@ -256,7 +256,7 @@ fn js_parser_test() {
     test("x?.['y']()", "x?.y();");
     test("x?.['y z']()", "x?.['y z']();");
     test("x['y' + 'z']", "x.yz;");
-    // test("x?.['y' + 'z']", "x?.['yz'];");
+    test("x?.['y' + 'z']", "x?.yz;");
     test("x['0']", "x[0];");
     test("x['123']", "x[123];");
     test("x['-123']", "x[-123];");
@@ -267,12 +267,12 @@ fn js_parser_test() {
     test("x['-0x1']", "x['-0x1'];");
     test("x['2147483647']", "x[2147483647];");
     test("x['2147483648']", "x['2147483648'];");
-    // test("x['-2147483648']", "x[-2147483648];");
+    test("x['-2147483648']", "x[-2147483648];");
     test("x['-2147483649']", "x['-2147483649'];");
     test("while(1) { while (1) {} }", "for (;;) for (;;) ;");
     test("while(1) { const x = y; }", "for (;;) { let x = y;}");
     test("while(1) { let x; }", "for (;;) { let x;}");
-    // test("while(1) { var x; }", "for (;;) var x;");
+    test("while(1) { var x; }", "for (;;) var x;");
     test("while(1) { class X {} }", "for (;;) { class X { }}");
     // test("while(1) { function x() {} }", "for (;;) var x = function() { };");
     test("while(1) { function* x() {} }", "for (;;) { function* x() { }}");

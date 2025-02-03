@@ -127,26 +127,34 @@ impl<'a, 'b> PeepholeOptimizations {
         stmt: &mut BlockStatement<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
-        // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
-        // semantics according to AnnexB, which lead to different semantics.
-        if stmt.body.len() == 1 && !stmt.body[0].is_declaration() {
-            return Some(stmt.body.remove(0));
-        }
-        if stmt.body.len() == 0 {
-            let parent = ctx.parent();
-            if parent.is_while_statement()
-                || parent.is_do_while_statement()
-                || parent.is_for_statement()
-                || parent.is_for_in_statement()
-                || parent.is_for_of_statement()
-                || parent.is_block_statement()
-                || parent.is_program()
-            {
-                // Remove the block if it is empty and the parent is a block statement.
-                return Some(ctx.ast.statement_empty(stmt.span));
+        match stmt.body.len() {
+            0 => {
+                let parent = ctx.parent();
+                if parent.is_while_statement()
+                    || parent.is_do_while_statement()
+                    || parent.is_for_statement()
+                    || parent.is_for_in_statement()
+                    || parent.is_for_of_statement()
+                    || parent.is_block_statement()
+                    || parent.is_program()
+                {
+                    // Remove the block if it is empty and the parent is a block statement.
+                    return Some(ctx.ast.statement_empty(stmt.span));
+                }
+                None
             }
+            1 => {
+                let s = &stmt.body[0];
+                if matches!(s, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
+                    || matches!(s, Statement::ClassDeclaration(_))
+                    || matches!(s, Statement::FunctionDeclaration(_))
+                {
+                    return None;
+                }
+                Some(stmt.body.remove(0))
+            }
+            _ => None,
         }
-        None
     }
 
     fn try_fold_if(
@@ -664,8 +672,8 @@ mod test {
         test("a: { break a; console.log('unreachable'); }", "");
         test("a: { break a; var x = 1; } x = 2;", "var x; x = 2;");
 
-        test_same("b: { var x = 1; } x = 2;");
-        test_same("a: b: { var x = 1; } x = 2;");
+        test("b: { var x = 1; } x = 2;", "b: var x = 1; x = 2;");
+        test("a: b: { var x = 1; } x = 2;", "a: b: var x = 1; x = 2;");
         test("foo:;", "");
     }
 
@@ -784,8 +792,8 @@ mod test {
         test("try {} catch (e) { foo() } finally {}", "");
         test("try {} finally { foo() }", "foo()");
         test("try {} catch (e) { foo() } finally { bar() }", "bar()");
-        test("try {} finally { var x = foo() }", "{ var x = foo() }");
-        test("try {} catch (e) { foo() } finally { var x = bar() }", "{ var x = bar() }");
+        test("try {} finally { var x = foo() }", "var x = foo()");
+        test("try {} catch (e) { foo() } finally { var x = bar() }", "var x = bar()");
         test("try {} finally { let x = foo() }", "{ let x = foo() }");
         test("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
         test("try {} catch (e) { } finally {}", "");

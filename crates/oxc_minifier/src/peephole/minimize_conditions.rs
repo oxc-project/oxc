@@ -1545,8 +1545,8 @@ mod test {
         test("if (x) ;else { foo }", "x || foo");
         test("if (x) {;} else { foo }", "x || foo");
 
-        test("if (x) { var foo } else { bar }", "if (x) { var foo } else bar");
-        test_same("if (x) foo; else { var bar }");
+        test("if (x) { var foo } else { bar }", "if (x) var foo; else bar");
+        test("if (x) foo; else { var bar }", "if (x) foo; else var bar");
     }
 
     #[test]
