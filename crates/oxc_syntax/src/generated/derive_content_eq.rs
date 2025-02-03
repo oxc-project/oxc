@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`
 
-#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::match_same_arms)]
 
 use oxc_span::cmp::ContentEq;
 

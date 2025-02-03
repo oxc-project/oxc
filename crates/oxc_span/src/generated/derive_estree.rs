@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`
 
-#![allow(unused_imports, unused_mut, clippy::match_same_arms)]
+#![allow(unused_imports, clippy::match_same_arms)]
 
 use serde::{ser::SerializeMap, Serialize, Serializer};
 

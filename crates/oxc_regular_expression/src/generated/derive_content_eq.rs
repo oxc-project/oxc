@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`
 
-#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::match_same_arms)]
 
 use oxc_span::cmp::ContentEq;
 
@@ -27,7 +27,6 @@ impl ContentEq for Alternative<'_> {
 
 impl ContentEq for Term<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        #[allow(clippy::match_same_arms)]
         match (self, other) {
             (Self::BoundaryAssertion(a), Self::BoundaryAssertion(b)) => a.content_eq(b),
             (Self::LookAroundAssertion(a), Self::LookAroundAssertion(b)) => a.content_eq(b),
@@ -137,7 +136,6 @@ impl ContentEq for CharacterClassContentsKind {
 
 impl ContentEq for CharacterClassContents<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        #[allow(clippy::match_same_arms)]
         match (self, other) {
             (Self::CharacterClassRange(a), Self::CharacterClassRange(b)) => a.content_eq(b),
             (Self::CharacterClassEscape(a), Self::CharacterClassEscape(b)) => a.content_eq(b),

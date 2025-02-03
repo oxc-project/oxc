@@ -42,7 +42,7 @@ impl Derive for DeriveESTree {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(unused_imports, unused_mut, clippy::match_same_arms)]
+            #![allow(unused_imports, clippy::match_same_arms)]
 
             ///@@line_break
             use serde::{Serialize, Serializer, ser::SerializeMap};

@@ -7,14 +7,7 @@
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
-#![allow(
-    unused_variables,
-    clippy::extra_unused_type_parameters,
-    clippy::explicit_iter_loop,
-    clippy::self_named_module_files,
-    clippy::semicolon_if_nothing_returned,
-    clippy::match_wildcard_for_single_variants
-)]
+#![allow(unused_variables, clippy::semicolon_if_nothing_returned)]
 
 use std::cell::Cell;
 

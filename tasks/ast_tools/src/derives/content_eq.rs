@@ -21,8 +21,7 @@ impl Derive for DeriveContentEq {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            // NOTE: writing long match expressions formats better than using `matches` macro.
-            #![allow(clippy::match_like_matches_macro)]
+            #![allow(clippy::match_same_arms)]
 
             ///@@line_break
             use oxc_span::cmp::ContentEq;
@@ -74,7 +73,6 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
             }
         });
         quote! {
-            #[allow(clippy::match_same_arms)]
             match (self, other) {
                 #(#matches,)*
                 _ => false,
