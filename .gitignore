@@ -26,8 +26,9 @@ target/
 tasks/coverage/babel/
 tasks/coverage/test262/
 tasks/coverage/typescript/
+tasks/coverage/acorn-test262/
+tasks/coverage/acorn-test262-diff/
 tasks/prettier_conformance/prettier/
-tasks/coverage/estree-diff/
 
 # Ignore accidental files from the root
 /*.js

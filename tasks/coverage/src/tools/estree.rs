@@ -34,7 +34,7 @@ impl Case for EstreeTest262Case {
     }
 
     fn run(&mut self) {
-        let acorn_path = Path::new("../acorn-test262")
+        let acorn_path = Path::new("./tasks/coverage/acorn-test262")
             .join(self.path().strip_prefix("test262").unwrap())
             .with_extension("json");
         let Ok(acorn_file) = std::fs::read_to_string(acorn_path) else {
@@ -71,7 +71,7 @@ impl Case for EstreeTest262Case {
         if acorn_json == oxc_json {
             self.base.set_result(TestResult::Passed);
         } else {
-            let diff_path = Path::new("tasks/coverage/estree-diff")
+            let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
                 .join(self.path().strip_prefix("test262").unwrap())
                 .with_extension("diff");
             std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
