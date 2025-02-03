@@ -1,5 +1,4 @@
 use oxc_allocator::Allocator;
-use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
@@ -40,7 +39,7 @@ fn bench_estree(criterion: &mut Criterion) {
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
-                let mut program = Parser::new(&allocator, source_text, source_type)
+                let program = Parser::new(&allocator, source_text, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
                         ..ParseOptions::default()
@@ -48,7 +47,7 @@ fn bench_estree(criterion: &mut Criterion) {
                     .parse()
                     .program;
                 runner.run(|| {
-                    Utf8ToUtf16::new().convert(&mut program);
+                    // Utf8ToUtf16::new().convert(&mut program);
                     program.to_json();
                     program
                 });
