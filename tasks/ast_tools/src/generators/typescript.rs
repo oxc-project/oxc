@@ -7,7 +7,7 @@ use itertools::Itertools;
 use crate::{
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_add_type_field_to_struct,
-        should_flatten_field,
+        should_flatten_field, should_skip_field,
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
@@ -93,7 +93,7 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> S
 
     let mut output_as_type = false;
     for field in &struct_def.fields {
-        if field.estree.skip {
+        if should_skip_field(field, schema) {
             continue;
         }
 

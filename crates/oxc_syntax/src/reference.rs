@@ -15,6 +15,7 @@ use oxc_ast_macros::ast;
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[clone_in(default)]
 #[content_eq(skip)]
+#[estree(skip)]
 pub struct ReferenceId(NonMaxU32);
 
 impl Idx for ReferenceId {

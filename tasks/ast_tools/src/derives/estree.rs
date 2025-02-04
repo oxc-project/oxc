@@ -35,8 +35,12 @@ impl Derive for DeriveESTree {
     }
 
     /// Register that accept `#[estree]` attr on structs, enums, struct fields, or enum variants.
+    /// Allow attr on structs and enums which don't derive this trait.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[("estree", attr_positions!(Struct | Enum | StructField | EnumVariant))]
+        &[(
+            "estree",
+            attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
+        )]
     }
 
     /// Parse `#[estree]` attr.
@@ -84,6 +88,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
     match location {
         // `#[estree]` attr on struct
         AttrLocation::Struct(struct_def) => match part {
+            AttrPart::Tag("skip") => struct_def.estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
             AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
@@ -94,6 +99,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         },
         // `#[estree]` attr on enum
         AttrLocation::Enum(enum_def) => match part {
+            AttrPart::Tag("skip") => enum_def.estree.skip = true,
             AttrPart::Tag("no_rename_variants") => enum_def.estree.no_rename_variants = true,
             AttrPart::Tag("custom_ts_def") => enum_def.estree.custom_ts_def = true,
             _ => return Err(()),
@@ -164,7 +170,7 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
     }
 
     for field in &struct_def.fields {
-        if !field.estree.skip {
+        if !should_skip_field(field, schema) {
             stmts.extend(generate_stmt_for_struct_field(field, struct_def, schema));
         }
     }
@@ -260,6 +266,25 @@ pub fn should_add_type_field_to_struct(struct_def: &StructDef) -> bool {
         false
     } else {
         !struct_def.fields.iter().any(|field| matches!(field.name(), "type"))
+    }
+}
+
+/// Get if a struct field should be skipped when serializing.
+///
+/// Returns `true` if either the field has an `#[estree(skip)]` attr on it,
+/// or the type that the field contains has an `#[estree(skip)]` attr.
+///
+/// This function also used by Typescript generator.
+pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
+    if field.estree.skip {
+        true
+    } else {
+        let innermost_type = field.type_def(schema).innermost_type(schema);
+        match innermost_type {
+            TypeDef::Struct(struct_def) => struct_def.estree.skip,
+            TypeDef::Enum(enum_def) => enum_def.estree.skip,
+            _ => false,
+        }
     }
 }
 

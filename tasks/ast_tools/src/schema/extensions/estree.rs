@@ -4,6 +4,7 @@ pub struct ESTreeStruct {
     pub rename: Option<String>,
     pub via: Option<String>,
     pub add_ts: Option<String>,
+    pub skip: bool,
     pub flatten: bool,
     pub no_type: bool,
     pub custom_serialize: bool,
@@ -12,6 +13,7 @@ pub struct ESTreeStruct {
 /// Configuration for ESTree generator on an enum.
 #[derive(Default, Debug)]
 pub struct ESTreeEnum {
+    pub skip: bool,
     pub no_rename_variants: bool,
     pub custom_ts_def: bool,
 }

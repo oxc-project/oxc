@@ -71,7 +71,6 @@ pub struct TSEnumDeclaration<'a> {
     /// `true` for const enums
     pub r#const: bool,
     pub declare: bool,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -302,7 +301,6 @@ pub struct TSConditionalType<'a> {
     /// The type evaluated to if the test is false.
     #[scope(exit_before)]
     pub false_type: TSType<'a>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -834,7 +832,6 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub type_annotation: TSType<'a>,
     pub declare: bool,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -897,7 +894,6 @@ pub struct TSInterfaceDeclaration<'a> {
     pub body: Box<'a, TSInterfaceBody<'a>>,
     /// `true` for `declare interface Foo {}`
     pub declare: bool,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1015,7 +1011,6 @@ pub struct TSMethodSignature<'a> {
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1029,7 +1024,6 @@ pub struct TSConstructSignatureDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1153,7 +1147,6 @@ pub struct TSModuleDeclaration<'a> {
     /// ```
     pub kind: TSModuleDeclarationKind,
     pub declare: bool,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1423,7 +1416,6 @@ pub struct TSMappedType<'a> {
     /// type Qux = { [P in keyof T]: T[P] }           // None
     /// ```
     pub readonly: TSMappedTypeModifierOperator,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

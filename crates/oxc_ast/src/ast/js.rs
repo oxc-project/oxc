@@ -40,7 +40,6 @@ pub struct Program<'a> {
     pub hashbang: Option<Hashbang<'a>>,
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -225,7 +224,6 @@ pub struct IdentifierReference<'a> {
     /// Identifies what identifier this refers to, and how it is used. This is
     /// set in the bind step of semantic analysis, and will always be [`None`]
     /// immediately after parsing.
-    #[estree(skip)]
     pub reference_id: Cell<Option<ReferenceId>>,
 }
 
@@ -248,7 +246,6 @@ pub struct BindingIdentifier<'a> {
     /// you choose to skip semantic analysis, this will always be [`None`].
     ///
     /// [`semantic analysis`]: <https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html>
-    #[estree(skip)]
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
@@ -1039,7 +1036,6 @@ pub struct Hashbang<'a> {
 pub struct BlockStatement<'a> {
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1182,7 +1178,6 @@ pub struct ForStatement<'a> {
     pub test: Option<Expression<'a>>,
     pub update: Option<Expression<'a>>,
     pub body: Statement<'a>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1212,7 +1207,6 @@ pub struct ForInStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1242,7 +1236,6 @@ pub struct ForOfStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1293,7 +1286,6 @@ pub struct SwitchStatement<'a> {
     pub discriminant: Expression<'a>,
     #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1382,7 +1374,6 @@ pub struct CatchClause<'a> {
     pub param: Option<CatchParameter<'a>>,
     /// The statements run when an error is caught
     pub body: Box<'a, BlockStatement<'a>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1615,7 +1606,6 @@ pub struct Function<'a> {
     /// }
     /// ```
     pub body: Option<Box<'a, FunctionBody<'a>>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1706,7 +1696,6 @@ pub struct ArrowFunctionExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
     pub body: Box<'a, FunctionBody<'a>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1792,7 +1781,6 @@ pub struct Class<'a> {
     pub declare: bool,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -2043,7 +2031,6 @@ pub struct PrivateIdentifier<'a> {
 pub struct StaticBlock<'a> {
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
-    #[estree(skip)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
