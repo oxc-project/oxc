@@ -1,8 +1,10 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Span};
 
-use crate::{format::print::call_arguments, group, ir::Doc, text, Format, Prettier};
+use crate::{
+    array, dynamic_text, format::print::call_arguments, group, indent, ir::Doc, line, softline,
+    text, Format, Prettier,
+};
 
 pub enum CallExpressionLike<'a, 'b> {
     CallExpression(&'b CallExpression<'a>),
@@ -43,38 +45,86 @@ impl<'a> CallExpressionLike<'a, '_> {
     }
 }
 
-impl GetSpan for CallExpressionLike<'_, '_> {
-    fn span(&self) -> Span {
-        match self {
-            CallExpressionLike::CallExpression(call) => call.span,
-            CallExpressionLike::NewExpression(new) => new.span,
-        }
-    }
-}
-
 pub fn print_call_expression<'a>(
     p: &mut Prettier<'a>,
-    expression: &CallExpressionLike<'a, '_>,
+    expr: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
+    // TODO:
+    // if (
+    //   isTemplateLiteralSingleArg ||
+    //   // Dangling comments are not handled, all these special cases should have arguments #9668
+    //   // We want to keep CommonJS- and AMD-style require calls, and AMD-style
+    //   // define calls, as a unit.
+    //   // e.g. `define(["some/lib"], (lib) => {`
+    //   isCommonsJsOrAmdModuleDefinition(path) ||
+    //   // Keep test declarations on a single line
+    //   // e.g. `it('long name', () => {`
+    //   isTestCall(node, path.parent)
+    // ) {
+    //   const printed = [];
+    //   iterateCallArgumentsPath(path, () => printed.push(print()));
+    //   if (!printed[0].label?.embed) {
+    //     return [
+    //       isNew ? "new " : "",
+    //       printCallee(path, print),
+    //       optional,
+    //       printFunctionTypeParameters(path, options, print),
+    //       "(",
+    //       join(", ", printed),
+    //       ")",
+    //     ];
+    //   }
+    // }
+
+    // TODO:
+    // if (
+    //   !isNew &&
+    //   isMemberish(node.callee) &&
+    //   !path.call(
+    //     (path) => pathNeedsParens(path, options),
+    //     "callee",
+    //     ...(node.callee.type === "ChainExpression" ? ["expression"] : []),
+    //   )
+    // )
+    //   return printMemberChain(path, options, print);
+
     let mut parts = Vec::new_in(p.allocator);
 
-    if expression.is_new() {
+    if expr.is_new() {
         parts.push(text!("new "));
     };
-
-    parts.push(expression.callee().format(p));
-
-    if let Some(type_parameters) = expression.type_parameters() {
-        parts.push(type_parameters.format(p));
-    }
-
-    if expression.optional() {
+    parts.push(expr.callee().format(p));
+    if expr.optional() {
         parts.push(text!("?."));
     }
+    if let Some(type_parameters) = expr.type_parameters() {
+        parts.push(type_parameters.format(p));
+    }
+    parts.push(call_arguments::print_call_arguments(p, expr));
 
-    parts.push(call_arguments::print_call_arguments(p, expression));
+    if expr.callee().is_call_expression() {
+        return group!(p, parts);
+    }
 
-    group!(p, parts)
+    array!(p, parts)
+}
+
+// In Prettier, `printCallExpression()` has 4 branches.
+// But for `ImportExpression`, it only passes the 1st and 3rd branches.
+// - if (isTemplateLiteralSingleArg) return [callee, "(", source, ")"];
+// - return group([callee, callArguments([source, arguments])]);
+pub fn print_import_expression<'a>(p: &mut Prettier<'a>, expr: &ImportExpression<'a>) -> Doc<'a> {
+    let callee_doc = {
+        if let Some(phase) = &expr.phase {
+            array!(p, [text!("import."), dynamic_text!(p, phase.as_str())]);
+        }
+        text!("import")
+    };
+
+    // TODO: isTemplateLiteralSingleArg branch
+    // return [callee, "(", source, ")"];
+
+    group!(p, [callee_doc, call_arguments::print_import_source_and_arguments(p, expr)])
 }
 
 /// <https://github.com/prettier/prettier/blob/7aecca5d6473d73f562ca3af874831315f8f2581/src/language-js/print/call-expression.js#L93-L116>

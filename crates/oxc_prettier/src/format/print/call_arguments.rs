@@ -210,6 +210,52 @@ pub fn print_call_arguments<'a>(
     group!(p, parts, should_break, None)
 }
 
+// In Prettier, `callArguments()` is also used for `ImportExpression`.
+// But it only passes 2/10 branches! so let's inline it here.
+pub fn print_import_source_and_arguments<'a>(
+    p: &mut Prettier<'a>,
+    expr: &ImportExpression<'a>,
+) -> Doc<'a> {
+    let mut parts = Vec::new_in(p.allocator);
+
+    // TODO:
+    // if (shouldExpandLastArg(args, printedArguments, options)) {
+    //   return conditionalGroup([
+    //     ["(", ...headArgs, lastArg, ")"],
+    //     ["(", ...headArgs, group(lastArg, { shouldBreak: true }), ")"],
+    //     allArgsBrokenOut(),
+    //   ]);
+    // }
+
+    // TODO:
+    // return group([
+    //   "(",
+    //   indent([softline, ...printedArguments]),
+    //   ifBreak(maybeTrailingComma),
+    //   softline,
+    //   ")",
+    // ])
+
+    parts.push(text!("("));
+
+    let mut indent_parts = Vec::new_in(p.allocator);
+    indent_parts.push(softline!());
+    indent_parts.push(expr.source.format(p));
+    if !expr.arguments.is_empty() {
+        for arg in &expr.arguments {
+            indent_parts.push(text!(","));
+            indent_parts.push(line!());
+            indent_parts.push(arg.format(p));
+        }
+    }
+    parts.push(group!(p, [indent!(p, indent_parts)]));
+    parts.push(softline!());
+
+    parts.push(text!(")"));
+
+    group!(p, parts)
+}
+
 /// * Reference <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/print/call-arguments.js#L247-L272>
 fn should_expand_first_arg<'a>(arguments: &Vec<'a, Argument<'a>>) -> bool {
     if arguments.len() != 2 {

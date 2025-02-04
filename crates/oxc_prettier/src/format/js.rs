@@ -1259,27 +1259,7 @@ impl<'a> Format<'a> for ParenthesizedExpression<'a> {
 
 impl<'a> Format<'a> for ImportExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ImportExpression, {
-            // TODO: Use `print_call_expression`?
-            let mut parts = Vec::new_in(p.allocator);
-            parts.push(text!("import"));
-            parts.push(text!("("));
-            let mut indent_parts = Vec::new_in(p.allocator);
-            indent_parts.push(softline!());
-            indent_parts.push(self.source.format(p));
-            if !self.arguments.is_empty() {
-                for arg in &self.arguments {
-                    indent_parts.push(text!(","));
-                    indent_parts.push(line!());
-                    indent_parts.push(arg.format(p));
-                }
-            }
-            parts.push(group!(p, [indent!(p, indent_parts)]));
-            parts.push(softline!());
-            parts.push(text!(")"));
-
-            group!(p, parts)
-        })
+        wrap!(p, self, ImportExpression, { call_expression::print_import_expression(p, self) })
     }
 }
 
