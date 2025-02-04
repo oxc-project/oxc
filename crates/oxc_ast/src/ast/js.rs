@@ -41,7 +41,6 @@ pub struct Program<'a> {
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -227,7 +226,6 @@ pub struct IdentifierReference<'a> {
     /// set in the bind step of semantic analysis, and will always be [`None`]
     /// immediately after parsing.
     #[estree(skip)]
-    #[clone_in(default)]
     pub reference_id: Cell<Option<ReferenceId>>,
 }
 
@@ -251,7 +249,6 @@ pub struct BindingIdentifier<'a> {
     ///
     /// [`semantic analysis`]: <https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html>
     #[estree(skip)]
-    #[clone_in(default)]
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
@@ -1043,7 +1040,6 @@ pub struct BlockStatement<'a> {
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1187,7 +1183,6 @@ pub struct ForStatement<'a> {
     pub update: Option<Expression<'a>>,
     pub body: Statement<'a>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1218,7 +1213,6 @@ pub struct ForInStatement<'a> {
     pub right: Expression<'a>,
     pub body: Statement<'a>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1249,7 +1243,6 @@ pub struct ForOfStatement<'a> {
     pub right: Expression<'a>,
     pub body: Statement<'a>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1301,7 +1294,6 @@ pub struct SwitchStatement<'a> {
     #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1391,7 +1383,6 @@ pub struct CatchClause<'a> {
     /// The statements run when an error is caught
     pub body: Box<'a, BlockStatement<'a>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1625,7 +1616,6 @@ pub struct Function<'a> {
     /// ```
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1717,7 +1707,6 @@ pub struct ArrowFunctionExpression<'a> {
     /// See `expression` for whether this arrow expression returns an expression.
     pub body: Box<'a, FunctionBody<'a>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1804,7 +1793,6 @@ pub struct Class<'a> {
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -2056,7 +2044,6 @@ pub struct StaticBlock<'a> {
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

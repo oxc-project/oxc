@@ -8,7 +8,7 @@ use crate::utils::create_ident_tokens;
 
 use super::{
     extensions::{
-        clone_in::CloneInStructField,
+        clone_in::{CloneInStructField, CloneInType},
         content_eq::{ContentEqStructField, ContentEqType},
         estree::{ESTreeStruct, ESTreeStructField},
         kind::Kind,
@@ -32,6 +32,7 @@ pub struct StructDef {
     pub kind: Kind,
     pub layout: Layout,
     pub span: SpanStruct,
+    pub clone_in: CloneInType,
     pub content_eq: ContentEqType,
     pub estree: ESTreeStruct,
 }
@@ -57,6 +58,7 @@ impl StructDef {
             kind: Kind::default(),
             layout: Layout::default(),
             span: SpanStruct::default(),
+            clone_in: CloneInType::default(),
             content_eq: ContentEqType::default(),
             estree: ESTreeStruct::default(),
         }

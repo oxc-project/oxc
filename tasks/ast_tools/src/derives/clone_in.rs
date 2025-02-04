@@ -5,11 +5,13 @@ use quote::{format_ident, quote};
 use syn::Ident;
 
 use crate::{
-    schema::{Def, EnumDef, Schema, StructDef},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
     Result,
 };
 
-use super::{define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum};
+use super::{
+    attr_positions, define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum,
+};
 
 /// Derive for `CloneIn` trait.
 pub struct DeriveCloneIn;
@@ -29,23 +31,29 @@ impl Derive for DeriveCloneIn {
         "oxc_allocator"
     }
 
-    /// Register that accept `#[clone_in]` attr on struct fields.
+    /// Register that accept `#[clone_in]` attr on structs, enums, or struct fields.
+    /// Allow attr on structs and enums which don't derive this trait.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[("clone_in", AttrPositions::StructField)]
+        &[("clone_in", attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField))]
     }
 
     /// Parse `#[clone_in(default)]` on struct field.
     fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
         // No need to check attr name is `clone_in`, because that's the only attribute this derive handles.
-        // Ditto location can only be `StructField`.
-        let AttrLocation::StructField(struct_def, field_index) = location else { unreachable!() };
-
-        if matches!(part, AttrPart::Tag("default")) {
-            struct_def.fields[field_index].clone_in.is_default = true;
-            Ok(())
-        } else {
-            Err(())
+        if !matches!(part, AttrPart::Tag("default")) {
+            return Err(());
         }
+
+        match location {
+            AttrLocation::Struct(struct_def) => struct_def.clone_in.is_default = true,
+            AttrLocation::Enum(enum_def) => enum_def.clone_in.is_default = true,
+            AttrLocation::StructField(struct_def, field_index) => {
+                struct_def.fields[field_index].clone_in.is_default = true;
+            }
+            _ => return Err(()),
+        }
+
+        Ok(())
     }
 
     fn prelude(&self) -> TokenStream {
@@ -59,20 +67,25 @@ impl Derive for DeriveCloneIn {
 
     fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
         match type_def {
-            StructOrEnum::Struct(struct_def) => derive_struct(struct_def),
+            StructOrEnum::Struct(struct_def) => derive_struct(struct_def, schema),
             StructOrEnum::Enum(enum_def) => derive_enum(enum_def, schema),
         }
     }
 }
 
-fn derive_struct(struct_def: &StructDef) -> TokenStream {
-    let type_ident = struct_def.ident();
+fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+    assert!(
+        !struct_def.clone_in.is_default,
+        "Cannot derive `CloneIn` on a type which has a `#[clone_in(default)]` attribute: `{}`",
+        struct_def.name()
+    );
 
+    let type_ident = struct_def.ident();
     let has_fields = !struct_def.fields.is_empty();
     let body = if has_fields {
         let fields = struct_def.fields.iter().map(|field| {
             let field_ident = field.ident();
-            if field.clone_in.is_default {
+            if struct_field_is_default(field, schema) {
                 quote!( #field_ident: Default::default() )
             } else {
                 quote!( #field_ident: CloneIn::clone_in(&self.#field_ident, allocator) )
@@ -86,9 +99,32 @@ fn derive_struct(struct_def: &StructDef) -> TokenStream {
     generate_impl(&type_ident, &body, struct_def.has_lifetime, has_fields)
 }
 
-fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    let type_ident = enum_def.ident();
+/// Get if a struct field should be filled with default value when cloning.
+///
+/// This is that case if either:
+/// 1. Struct field has `#[clone_in(default)]` attr. or
+/// 2. The field's type has `#[clone_in(default)]` attr.
+fn struct_field_is_default(field: &FieldDef, schema: &Schema) -> bool {
+    if field.clone_in.is_default {
+        true
+    } else {
+        let innermost_type = field.type_def(schema).innermost_type(schema);
+        match innermost_type {
+            TypeDef::Struct(struct_def) => struct_def.clone_in.is_default,
+            TypeDef::Enum(enum_def) => enum_def.clone_in.is_default,
+            _ => false,
+        }
+    }
+}
 
+fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    assert!(
+        !enum_def.clone_in.is_default,
+        "Cannot derive `CloneIn` on a type which has a `#[clone_in(default)]` attribute: `{}`",
+        enum_def.name()
+    );
+
+    let type_ident = enum_def.ident();
     let mut uses_allocator = false;
     let match_arms = enum_def.all_variants(schema).map(|variant| {
         let ident = variant.ident();

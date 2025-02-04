@@ -72,7 +72,6 @@ pub struct TSEnumDeclaration<'a> {
     pub r#const: bool,
     pub declare: bool,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -304,7 +303,6 @@ pub struct TSConditionalType<'a> {
     #[scope(exit_before)]
     pub false_type: TSType<'a>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -837,7 +835,6 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub type_annotation: TSType<'a>,
     pub declare: bool,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -901,7 +898,6 @@ pub struct TSInterfaceDeclaration<'a> {
     /// `true` for `declare interface Foo {}`
     pub declare: bool,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1020,7 +1016,6 @@ pub struct TSMethodSignature<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1035,7 +1030,6 @@ pub struct TSConstructSignatureDeclaration<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1160,7 +1154,6 @@ pub struct TSModuleDeclaration<'a> {
     pub kind: TSModuleDeclarationKind,
     pub declare: bool,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1431,7 +1424,6 @@ pub struct TSMappedType<'a> {
     /// ```
     pub readonly: TSMappedTypeModifierOperator,
     #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
