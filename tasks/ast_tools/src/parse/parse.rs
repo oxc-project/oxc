@@ -138,22 +138,6 @@ impl<'c> Parser<'c> {
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
-            // Cannot be parsed normally as is defined inside `bitflags!` macro.
-            // TODO: Find a way to encode this in the actual file.
-            // e.g. `#[ast(alias_for(RegExpFlags))] struct RegExpFlagsAlias(u8);`
-            "RegExpFlags" => TypeDef::Struct(StructDef::new(
-                TypeId::DUMMY,
-                "RegExpFlags".to_string(),
-                false,
-                self.get_file_id("oxc_ast", "::ast::literal"),
-                Derives::none(),
-                vec![FieldDef::new(
-                    "inner".to_string(),
-                    self.type_id("u8"),
-                    Visibility::Private,
-                    None,
-                )],
-            )),
             _ => panic!("Unknown type: {name}"),
         };
         self.create_new_type(type_def)
@@ -184,18 +168,6 @@ impl<'c> Parser<'c> {
         self.extra_types.push(type_def);
 
         type_id
-    }
-
-    /// Get [`FileId`] for file with provided crate and import path.
-    fn get_file_id(&self, krate: &str, import_path: &str) -> FileId {
-        let file_and_id = self
-            .files
-            .iter_enumerated()
-            .find(|(_, file)| file.krate() == krate && file.import_path() == import_path);
-        match file_and_id {
-            Some((file_id, _)) => file_id,
-            None => panic!("Could not find file with import path: {import_path}"),
-        }
     }
 
     /// Parse [`Skeleton`] to yield a [`TypeDef`].

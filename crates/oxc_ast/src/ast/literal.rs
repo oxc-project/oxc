@@ -195,3 +195,8 @@ bitflags! {
         const V = 1 << 7;
     }
 }
+
+/// Dummy type to communicate the content of `RegExpFlags` to `oxc_ast_tools`.
+#[ast(foreign = RegExpFlags)]
+#[expect(dead_code)]
+struct RegExpFlagsAlias(u8);

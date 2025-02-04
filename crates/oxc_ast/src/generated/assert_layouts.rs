@@ -791,6 +791,9 @@ const _: () = {
     assert!(size_of::<RegExpPattern>() == 24);
     assert!(align_of::<RegExpPattern>() == 8);
 
+    assert!(size_of::<RegExpFlags>() == 1);
+    assert!(align_of::<RegExpFlags>() == 1);
+
     assert!(size_of::<JSXElement>() == 56);
     assert!(align_of::<JSXElement>() == 8);
     assert!(offset_of!(JSXElement, span) == 0);
@@ -1583,9 +1586,6 @@ const _: () = {
     assert!(align_of::<NamedReference>() == 8);
     assert!(offset_of!(NamedReference, span) == 0);
     assert!(offset_of!(NamedReference, name) == 8);
-
-    assert!(size_of::<RegExpFlags>() == 1);
-    assert!(align_of::<RegExpFlags>() == 1);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -2368,6 +2368,9 @@ const _: () = {
 
     assert!(size_of::<RegExpPattern>() == 12);
     assert!(align_of::<RegExpPattern>() == 4);
+
+    assert!(size_of::<RegExpFlags>() == 1);
+    assert!(align_of::<RegExpFlags>() == 1);
 
     assert!(size_of::<JSXElement>() == 32);
     assert!(align_of::<JSXElement>() == 4);
@@ -3161,9 +3164,6 @@ const _: () = {
     assert!(align_of::<NamedReference>() == 4);
     assert!(offset_of!(NamedReference, span) == 0);
     assert!(offset_of!(NamedReference, name) == 8);
-
-    assert!(size_of::<RegExpFlags>() == 1);
-    assert!(align_of::<RegExpFlags>() == 1);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
