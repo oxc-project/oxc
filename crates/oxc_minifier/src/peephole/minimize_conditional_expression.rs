@@ -609,7 +609,7 @@ mod test {
         test("var x; (x && false) && y()", "var x; x && !1");
         test("(x && true) && y()", "x && y()");
         test("(x && false) && y()", "x && !1");
-        test("var x; (x || true) && y()", "var x; x || !0, y()");
+        test("var x; (x || true) && y()", "var x; y()");
         test("var x; (x || false) && y()", "var x; x && y()");
 
         test("(x || true) && y()", "x || !0, y()");

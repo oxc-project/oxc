@@ -113,7 +113,7 @@ mod test {
         // Never fuse a statement into a block that contains let/const/class declarations, or you risk
         // colliding variable names. (unless the AST is normalized).
         test("a; {b;}", "a,b");
-        test("a; {b; var a = 1;}", "a, b; var a = 1;");
+        test("a; {b; var a = 1;}", "b; var a = 1;");
         test_same("a; { b; let a = 1; }");
         test("a; { b; const a = 1; }", "a; { b; let a = 1; }");
         test_same("a; { b; class a {} }");

@@ -1385,7 +1385,7 @@ mod test {
     #[test]
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
-        test("const foo = () => { foo; return 'baz' }", "const foo = () => (foo, 'baz')");
+        test("const foo = () => { foo.foo; return 'baz' }", "const foo = () => (foo.foo, 'baz')");
     }
 
     #[test]

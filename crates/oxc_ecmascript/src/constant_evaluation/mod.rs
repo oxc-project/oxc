@@ -327,6 +327,10 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                     if matches!(name, "Object" | "Number" | "Boolean" | "String")
                         && self.is_global_reference(right_ident)
                     {
+                        let left_ty = ValueType::from(left);
+                        if left_ty.is_undetermined() {
+                            return None;
+                        }
                         return Some(ConstantValue::Boolean(
                             name == "Object" && ValueType::from(left).is_object(),
                         ));
