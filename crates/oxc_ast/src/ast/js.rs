@@ -24,8 +24,8 @@ use super::{macros::inherit_variants, *};
 /// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source, directives, top-level statements, and scope information.
 #[ast(visit)]
 #[scope(
-    flags(ScopeFlags::Top),
-    strict_if(self.source_type.is_strict() || self.has_use_strict_directive()),
+    flags = ScopeFlags::Top,
+    strict_if = self.source_type.is_strict() || self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1365,7 +1365,7 @@ pub struct TryStatement<'a> {
 /// }
 /// ```
 #[ast(visit)]
-#[scope(flags(ScopeFlags::CatchClause))]
+#[scope(flags = ScopeFlags::CatchClause)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct CatchClause<'a> {
@@ -1546,8 +1546,8 @@ pub struct BindingRestElement<'a> {
 #[ast(visit)]
 #[scope(
     // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
-    flags(flags),
-    strict_if(self.has_use_strict_directive()),
+    flags = flags,
+    strict_if = self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1679,8 +1679,8 @@ pub struct FunctionBody<'a> {
 /// Arrow Function Definitions
 #[ast(visit)]
 #[scope(
-    flags(ScopeFlags::Function | ScopeFlags::Arrow),
-    strict_if(self.has_use_strict_directive()),
+    flags = ScopeFlags::Function | ScopeFlags::Arrow,
+    strict_if = self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1711,7 +1711,7 @@ pub struct YieldExpression<'a> {
 
 /// Class Definitions
 #[ast(visit)]
-#[scope(flags(ScopeFlags::StrictMode))]
+#[scope(flags = ScopeFlags::StrictMode)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Class<'a> {
@@ -2025,7 +2025,7 @@ pub struct PrivateIdentifier<'a> {
 /// }
 /// ```
 #[ast(visit)]
-#[scope(flags(ScopeFlags::ClassStaticBlock))]
+#[scope(flags = ScopeFlags::ClassStaticBlock)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct StaticBlock<'a> {

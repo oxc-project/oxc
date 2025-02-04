@@ -1119,8 +1119,8 @@ pub enum TSTypePredicateName<'a> {
 /// * [TypeScript Handbook - Global Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#global-augmentation)
 #[ast(visit)]
 #[scope(
-    flags(ScopeFlags::TsModuleBlock),
-    strict_if(self.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive)),
+    flags = ScopeFlags::TsModuleBlock,
+    strict_if = self.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
