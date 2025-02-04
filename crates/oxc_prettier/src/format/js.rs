@@ -1249,9 +1249,27 @@ impl<'a> Format<'a> for AssignmentTargetRest<'a> {
 impl<'a> Format<'a> for SequenceExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, SequenceExpression, {
-            let docs =
-                self.expressions.iter().map(|expr| expr.format(p)).collect::<std::vec::Vec<_>>();
-            group!(p, [join!(p, JoinSeparator::CommaLine, docs)])
+            // For ExpressionStatements and for-loop heads,
+            // which are among the few places a SequenceExpression appears unparenthesized,
+            // we want to indent expressions after the first.
+            let parent_kind = p.parent_kind();
+            if matches!(parent_kind, AstKind::ExpressionStatement(_) | AstKind::ForStatement(_)) {
+                let mut parts = Vec::new_in(p.allocator);
+                for (idx, expr) in self.expressions.iter().enumerate() {
+                    if idx == 0 {
+                        parts.push(expr.format(p));
+                    } else {
+                        parts.push(array!(p, [text!(","), indent!(p, [line!(), expr.format(p)])]));
+                    }
+                }
+                return group!(p, parts);
+            }
+
+            let mut parts = Vec::new_in(p.allocator);
+            for expr in &self.expressions {
+                parts.push(expr.format(p));
+            }
+            group!(p, [join!(p, JoinSeparator::CommaLine, parts)])
         })
     }
 }
