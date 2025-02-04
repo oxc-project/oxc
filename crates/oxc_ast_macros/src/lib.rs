@@ -2,6 +2,7 @@ use proc_macro::TokenStream;
 use syn::{parse_macro_input, Item};
 
 mod ast;
+mod generated;
 
 /// This attribute serves two purposes:
 ///

@@ -30,6 +30,16 @@ pub trait Derive: Runner {
     /// Get trait name.
     fn trait_name(&self) -> &'static str;
 
+    /// Get if trait has lifetime.
+    ///
+    /// Default to `false`, but can be overridden.
+    fn trait_has_lifetime(&self) -> bool {
+        false
+    }
+
+    /// Get crate trait is defined in.
+    fn crate_name(&self) -> &'static str;
+
     /// Get snake case trait name.
     ///
     /// Defaults to `trait_name()` converted to snake case.

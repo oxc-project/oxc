@@ -17,6 +17,10 @@ impl Derive for DeriveGetAddress {
         "GetAddress"
     }
 
+    fn crate_name(&self) -> &'static str {
+        "oxc_allocator"
+    }
+
     fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]

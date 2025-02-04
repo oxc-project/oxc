@@ -21,6 +21,14 @@ impl Derive for DeriveCloneIn {
         "CloneIn"
     }
 
+    fn trait_has_lifetime(&self) -> bool {
+        true
+    }
+
+    fn crate_name(&self) -> &'static str {
+        "oxc_allocator"
+    }
+
     /// Register that accept `#[clone_in]` attr on struct fields.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
         &[("clone_in", AttrPositions::StructField)]

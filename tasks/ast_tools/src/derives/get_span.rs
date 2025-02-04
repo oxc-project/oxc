@@ -21,6 +21,10 @@ impl Derive for DeriveGetSpan {
         "GetSpan"
     }
 
+    fn crate_name(&self) -> &'static str {
+        "oxc_span"
+    }
+
     /// Register that accept `#[span]` attr on struct fields.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
         &[("span", AttrPositions::StructField)]
@@ -77,6 +81,11 @@ define_derive!(DeriveGetSpanMut);
 impl Derive for DeriveGetSpanMut {
     fn trait_name(&self) -> &'static str {
         "GetSpanMut"
+    }
+
+    /// Get crate trait is defined in.
+    fn crate_name(&self) -> &'static str {
+        "oxc_span"
     }
 
     fn prelude(&self) -> TokenStream {

@@ -19,6 +19,10 @@ impl Derive for DeriveContentEq {
         "ContentEq"
     }
 
+    fn crate_name(&self) -> &'static str {
+        "oxc_span"
+    }
+
     fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]

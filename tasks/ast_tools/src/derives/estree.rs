@@ -26,6 +26,10 @@ impl Derive for DeriveESTree {
         "ESTree"
     }
 
+    fn crate_name(&self) -> &'static str {
+        "oxc_estree"
+    }
+
     fn snake_name(&self) -> String {
         "estree".to_string()
     }
