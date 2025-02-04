@@ -1,7 +1,6 @@
 //! Generator for `Visit` and `VisitMut` traits.
 
 use cow_utils::CowUtils;
-use oxc_index::IndexVec;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_str, Expr, Ident};
@@ -10,7 +9,7 @@ use crate::{
     output::{output_path, Output},
     schema::{
         extensions::visit::{Scope, VisitorNames},
-        Def, EnumDef, FieldDef, OptionDef, Schema, StructDef, TypeDef, TypeId, VecDef,
+        Def, EnumDef, FieldDef, OptionDef, Schema, StructDef, TypeDef, VecDef,
     },
     utils::{create_ident, create_ident_tokens},
     Codegen, Generator, Result, AST_CRATE_PATH,
@@ -288,14 +287,6 @@ fn generate_output(
 }
 
 /// Generator of `visit_*` methods and `walk_*` functions for `Visit` and `VisitMut`.
-///
-/// Generates these functions for all AST types recursively, starting with `Program`,
-/// and recursively walking dependent types (e.g. types of struct fields for a struct)
-/// until all types which are visited have had functions generated for them.
-//
-// TODO: `Vec`s have their own `TypeDef`s, so could simplify this by just looping through all `TypeDef`s.
-// The only purpose of using recursion is to produce a certain order of visit methods in output,
-// but the order isn't important.
 struct VisitBuilder<'s> {
     schema: &'s Schema,
     /// `visit_*` methods for `Visit`
@@ -306,23 +297,17 @@ struct VisitBuilder<'s> {
     walk_fns: TokenStream,
     /// `walk_*` functions for `VisitMut`
     walk_mut_fns: TokenStream,
-    /// List tracking which visitors are generated already.
-    /// `true` = generated already, `false` = not generated yet.
-    generated_list: IndexVec<TypeId, bool>,
 }
 
 impl<'s> VisitBuilder<'s> {
     /// Create new [`VisitBuilder`].
     fn new(schema: &'s Schema) -> Self {
-        let generated_list = schema.types.iter().map(|_| false).collect();
-
         Self {
             schema,
             visit_methods: quote!(),
             walk_fns: quote!(),
             visit_mut_methods: quote!(),
             walk_mut_fns: quote!(),
-            generated_list,
         }
     }
 
@@ -331,31 +316,12 @@ impl<'s> VisitBuilder<'s> {
     /// After calling this method, [`VisitBuilder`] contains all `visit_*` methods and `walk_*` functions
     /// in `visit_methods` etc fields.
     fn generate(&mut self) {
-        let program_type = self.schema.type_by_name("Program");
-        self.generate_visitor(program_type);
-    }
-
-    /// Generate `visit_*` methods and `walk_*` functions for a type.
-    ///
-    /// Also generates methods/functions for child types.
-    fn generate_visitor(&mut self, type_def: &TypeDef) {
-        // Exit if visitor already generated
-        let type_id = type_def.id();
-        if self.generated_list[type_id] {
-            return;
-        }
-        self.generated_list[type_id] = true;
-
-        match type_def {
-            TypeDef::Struct(struct_def) => self.generate_struct_visitor(struct_def),
-            TypeDef::Enum(enum_def) => self.generate_enum_visitor(enum_def),
-            TypeDef::Vec(vec_def) => self.generate_vec_visitor(vec_def),
-            TypeDef::Option(option_def) => {
-                self.generate_visitor(option_def.inner_type(self.schema));
-            }
-            TypeDef::Box(box_def) => self.generate_visitor(box_def.inner_type(self.schema)),
-            TypeDef::Primitive(_) | TypeDef::Cell(_) => {
-                // No-op. Primitives and `Cell`s are not visited.
+        for type_def in &self.schema.types {
+            match type_def {
+                TypeDef::Struct(struct_def) => self.generate_struct_visitor(struct_def),
+                TypeDef::Enum(enum_def) => self.generate_enum_visitor(enum_def),
+                TypeDef::Vec(vec_def) => self.generate_vec_visitor(vec_def),
+                _ => {}
             }
         }
     }
@@ -486,11 +452,6 @@ impl<'s> VisitBuilder<'s> {
                 #leave_node_mut
             }
         });
-
-        // Generate visitors for field types
-        for field in &struct_def.fields {
-            self.generate_visitor(field.type_def(self.schema));
-        }
     }
 
     /// Generate visitor calls for a struct field.
@@ -931,72 +892,55 @@ impl<'s> VisitBuilder<'s> {
                 #leave_node_mut
             }
         });
-
-        // Generate visitors for variant types and inherited types
-        for variant in &enum_def.variants {
-            if let Some(variant_type) = variant.field_type(self.schema) {
-                self.generate_visitor(variant_type);
-            }
-        }
-
-        for inherits_type in enum_def.inherits_types(self.schema) {
-            self.generate_visitor(inherits_type);
-        }
     }
 
     /// Generate `visit_*` methods and `walk_*` functions for a `Vec`.
     ///
     /// Also generates functions for inner type (`T` in `Vec<T>`).
     fn generate_vec_visitor(&mut self, vec_def: &VecDef) {
+        // Exit if this `Vec` does not have its own visitor
+        let Some(visitor_names) = &vec_def.visit.visitor_names else { return };
+
+        // Generate visit methods
+        let vec_ty = vec_def.ty(self.schema);
+        let visit_fn_ident = create_ident(&visitor_names.visit);
+        let walk_fn_ident = create_ident(&visitor_names.walk);
+
+        let gen_visit = |reference| {
+            quote! {
+                ///@@line_break
+                #[inline]
+                fn #visit_fn_ident(&mut self, it: #reference #vec_ty) {
+                    #walk_fn_ident(self, it);
+                }
+            }
+        };
+        self.visit_methods.extend(gen_visit(quote!( & )));
+        self.visit_mut_methods.extend(gen_visit(quote!( &mut )));
+
+        // Generate walk functions
         let inner_type = vec_def.inner_type(self.schema);
+        let inner_visit_fn_name = match inner_type {
+            TypeDef::Struct(struct_def) => struct_def.visit.visitor_name().unwrap(),
+            TypeDef::Enum(enum_def) => enum_def.visit.visitor_name().unwrap(),
+            _ => unreachable!(),
+        };
+        let inner_visit_fn_ident = create_ident(inner_visit_fn_name);
 
-        if let Some(visitor_names) = &vec_def.visit.visitor_names {
-            // `Vec` has its own visitor.
-            // Generate visit methods.
-            let vec_ty = vec_def.ty(self.schema);
-            let visit_fn_ident = create_ident(&visitor_names.visit);
-            let walk_fn_ident = create_ident(&visitor_names.walk);
-
-            let gen_visit = |reference| {
-                quote! {
-                    ///@@line_break
-                    #[inline]
-                    fn #visit_fn_ident(&mut self, it: #reference #vec_ty) {
-                        #walk_fn_ident(self, it);
+        let gen_walk = |visit_trait_name, reference| {
+            let visit_trait_ident = format_ident!("{visit_trait_name}");
+            quote! {
+                ///@@line_break
+                #[inline]
+                pub fn #walk_fn_ident<'a, V: #visit_trait_ident<'a>>(visitor: &mut V, it: #reference #vec_ty) {
+                    for el in it {
+                        visitor.#inner_visit_fn_ident(el);
                     }
                 }
-            };
-            self.visit_methods.extend(gen_visit(quote!( & )));
-            self.visit_mut_methods.extend(gen_visit(quote!( &mut )));
-
-            // Generate walk functions.
-            // `Vec` only has a visitor names defined if inner type has visitor names,
-            // so these `unwrap()`s cannot panic.
-            let inner_visit_fn_name = match inner_type {
-                TypeDef::Struct(struct_def) => struct_def.visit.visitor_name().unwrap(),
-                TypeDef::Enum(enum_def) => enum_def.visit.visitor_name().unwrap(),
-                _ => unreachable!(),
-            };
-            let inner_visit_fn_ident = create_ident(inner_visit_fn_name);
-
-            let gen_walk = |visit_trait_name, reference| {
-                let visit_trait_ident = format_ident!("{visit_trait_name}");
-                quote! {
-                    ///@@line_break
-                    #[inline]
-                    pub fn #walk_fn_ident<'a, V: #visit_trait_ident<'a>>(visitor: &mut V, it: #reference #vec_ty) {
-                        for el in it {
-                            visitor.#inner_visit_fn_ident(el);
-                        }
-                    }
-                }
-            };
-            self.walk_fns.extend(gen_walk("Visit", quote!( & )));
-            self.walk_mut_fns.extend(gen_walk("VisitMut", quote!( &mut )));
-        }
-
-        // Generate visitor for inner type
-        self.generate_visitor(inner_type);
+            }
+        };
+        self.walk_fns.extend(gen_walk("Visit", quote!( & )));
+        self.walk_mut_fns.extend(gen_walk("VisitMut", quote!( &mut )));
     }
 }
 
