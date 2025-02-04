@@ -6,14 +6,15 @@ use syn::{
     parse::{Parse, ParseBuffer},
     parse_file,
     punctuated::Punctuated,
-    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Token, Variant, Visibility,
-    WhereClause,
+    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Variant,
+    Visibility, WhereClause,
 };
 
 use crate::schema::FileId;
 
 use super::{
     ident_name,
+    parse::convert_expr_to_string,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
     FxIndexMap,
 };
@@ -59,20 +60,12 @@ pub fn load_file(file_id: FileId, file_path: &str, skeletons: &mut FxIndexMap<St
 }
 
 fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<StructSkeleton> {
-    if !has_ast_attr(&item.attrs) {
-        return None;
-    }
-
-    let name = ident_name(&item.ident);
+    let name = get_type_name(&item.attrs, &item.ident)?;
     Some(StructSkeleton { name, file_id, item })
 }
 
 fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<EnumSkeleton> {
-    if !has_ast_attr(&item.attrs) {
-        return None;
-    }
-
-    let name = ident_name(&item.ident);
+    let name = get_type_name(&item.attrs, &item.ident)?;
     Some(EnumSkeleton { name, file_id, item, inherits: vec![] })
 }
 
@@ -96,15 +89,13 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
             let ident = input.parse::<Ident>()?;
             let generics = input.parse::<Generics>()?;
 
-            let name = ident_name(&ident);
-
             let where_clause = input.parse::<Option<WhereClause>>()?;
             assert!(where_clause.is_none(), "Types with `where` clauses are not supported");
 
-            assert!(
-                has_ast_attr(&attrs),
-                "Enum in `inherit_variants!` macro must have `#[ast]` attr: {name}",
-            );
+            let name = get_type_name(&attrs, &ident);
+            let Some(name) = name else {
+                panic!("Enum in `inherit_variants!` macro must have `#[ast]` attr: {ident}");
+            };
 
             let content;
             let brace_token = braced!(content in input);
@@ -133,7 +124,61 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
     Some(skeleton)
 }
 
-/// Returns `true` if type has an `#[ast]` attribute on it.
-fn has_ast_attr(attrs: &[Attribute]) -> bool {
-    attrs.iter().any(|attr| attr.path().is_ident("ast"))
+/// Get name of type.
+///
+/// Parse attributes and find `#[ast]` attr, or `#[ast(foreign = ForeignType)]`.
+///
+/// If no `#[ast]` attr is present, returns `None`.
+///
+/// Otherwise, returns foreign name if provided with `#[ast(foreign = ForeignType)]`,
+/// or otherwise name of the `ident`.
+///
+/// # Panics
+/// Panics if cannot parse `#[ast]` attribute.
+fn get_type_name(attrs: &[Attribute], ident: &Ident) -> Option<String> {
+    let mut has_ast_attr = false;
+    let mut foreign_name = None;
+    for attr in attrs {
+        if attr.path().is_ident("ast") {
+            has_ast_attr = true;
+            if let Some(this_foreign_name) = parse_ast_attr_foreign_name(attr, ident) {
+                assert!(
+                    foreign_name.is_none(),
+                    "Multiple `#[ast(foreign)]` attributes on type: `{ident}`"
+                );
+                foreign_name = Some(this_foreign_name);
+            }
+        }
+    }
+
+    if has_ast_attr {
+        Some(foreign_name.unwrap_or_else(|| ident_name(ident)))
+    } else {
+        None
+    }
+}
+
+fn parse_ast_attr_foreign_name(attr: &Attribute, ident: &Ident) -> Option<String> {
+    let meta_list = match &attr.meta {
+        Meta::Path(_) => return None,
+        Meta::List(meta_list) => meta_list,
+        Meta::NameValue(_) => panic!("Failed to parse `#[ast]` attribute"),
+    };
+    let metas = meta_list
+        .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+        .expect("Unable to parse `#[ast]` attribute");
+
+    let mut foreign_name = None;
+    for meta in &metas {
+        if let Meta::NameValue(name_value) = meta {
+            if name_value.path.is_ident("foreign") {
+                assert!(
+                    foreign_name.is_none(),
+                    "Multiple `#[ast(foreign)]` attributes on type: `{ident}`"
+                );
+                foreign_name = Some(convert_expr_to_string(&name_value.value));
+            }
+        }
+    }
+    foreign_name
 }

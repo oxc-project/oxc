@@ -601,6 +601,10 @@ impl<'c> Parser<'c> {
 
         for meta in &parts {
             let attr_name = meta.path().get_ident().unwrap().to_string();
+            if attr_name == "foreign" {
+                continue;
+            }
+
             if let Some((processor, positions)) = self.codegen.attr_processor(&attr_name) {
                 // Check attribute is legal in this position
                 // and has the relevant trait `#[generate_derive]`-ed on it
