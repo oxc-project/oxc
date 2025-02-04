@@ -47,7 +47,11 @@ impl Generator for AssertLayouts {
             use std::mem::{align_of, offset_of, size_of};
 
             ///@@line_break
+            use nonmax::NonMaxU32;
+
+            ///@@line_break
             use oxc_regular_expression::ast::*;
+            use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
             ///@@line_break
             use crate::ast::*;
@@ -337,8 +341,6 @@ fn calculate_layout_for_cell(type_id: TypeId, schema: &mut Schema) -> Layout {
 ///
 /// Primitives have varying layouts. Some have niches, most don't.
 fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
-    // `ScopeId`, `SymbolId` and `ReferenceId` are a `NonZeroU32`, with a niche for 0
-    let semantic_id_layout = Layout::from_size_align_niche(4, 4, Niche::new(0, 4, true, 1));
     // `&str` and `Atom` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
     let str_layout = Layout {
         layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, true, 1)),
@@ -394,9 +396,6 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
             panic!("Cannot calculate alignment for `NonZeroI128`. It differs depending on Rust version.")
         }
         "NonZeroIsize" => non_zero_usize_layout,
-        "ScopeId" => semantic_id_layout.clone(),
-        "SymbolId" => semantic_id_layout.clone(),
-        "ReferenceId" => semantic_id_layout,
         "PointerAlign" => Layout {
             layout_64: PlatformLayout::from_size_align(0, 8),
             layout_32: PlatformLayout::from_size_align(0, 4),

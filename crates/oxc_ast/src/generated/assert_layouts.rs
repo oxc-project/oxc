@@ -3,7 +3,10 @@
 
 use std::mem::{align_of, offset_of, size_of};
 
+use nonmax::NonMaxU32;
+
 use oxc_regular_expression::ast::*;
+use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::ast::*;
 
@@ -1393,6 +1396,9 @@ const _: () = {
     assert!(offset_of!(Comment, preceded_by_newline) == 14);
     assert!(offset_of!(Comment, followed_by_newline) == 15);
 
+    assert!(size_of::<NonMaxU32>() == 4);
+    assert!(align_of::<NonMaxU32>() == 4);
+
     assert!(size_of::<NumberBase>() == 1);
     assert!(align_of::<NumberBase>() == 1);
 
@@ -1413,6 +1419,15 @@ const _: () = {
 
     assert!(size_of::<UpdateOperator>() == 1);
     assert!(align_of::<UpdateOperator>() == 1);
+
+    assert!(size_of::<ScopeId>() == 4);
+    assert!(align_of::<ScopeId>() == 4);
+
+    assert!(size_of::<SymbolId>() == 4);
+    assert!(align_of::<SymbolId>() == 4);
+
+    assert!(size_of::<ReferenceId>() == 4);
+    assert!(align_of::<ReferenceId>() == 4);
 
     assert!(size_of::<Span>() == 8);
     assert!(align_of::<Span>() == 8);
@@ -2959,6 +2974,9 @@ const _: () = {
     assert!(offset_of!(Comment, preceded_by_newline) == 14);
     assert!(offset_of!(Comment, followed_by_newline) == 15);
 
+    assert!(size_of::<NonMaxU32>() == 4);
+    assert!(align_of::<NonMaxU32>() == 4);
+
     assert!(size_of::<NumberBase>() == 1);
     assert!(align_of::<NumberBase>() == 1);
 
@@ -2979,6 +2997,15 @@ const _: () = {
 
     assert!(size_of::<UpdateOperator>() == 1);
     assert!(align_of::<UpdateOperator>() == 1);
+
+    assert!(size_of::<ScopeId>() == 4);
+    assert!(align_of::<ScopeId>() == 4);
+
+    assert!(size_of::<SymbolId>() == 4);
+    assert!(align_of::<SymbolId>() == 4);
+
+    assert!(size_of::<ReferenceId>() == 4);
+    assert!(align_of::<ReferenceId>() == 4);
 
     assert!(size_of::<Span>() == 8);
     assert!(align_of::<Span>() == 4);

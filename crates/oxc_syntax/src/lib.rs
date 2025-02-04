@@ -1,5 +1,10 @@
 //! Common code for JavaScript Syntax
 #![warn(missing_docs)]
+
+use std::num::NonZeroU32;
+
+use oxc_ast_macros::ast;
+
 pub mod class;
 pub mod es_target;
 pub mod identifier;
@@ -19,3 +24,8 @@ mod generated {
     #[cfg(feature = "serialize")]
     mod derive_estree;
 }
+
+/// Dummy type to communicate the content of `nonmax::NonMaxU32` to `oxc_ast_tools`.
+#[ast(foreign = NonMaxU32)]
+#[expect(dead_code)]
+struct NonMaxU32Alias(NonZeroU32);

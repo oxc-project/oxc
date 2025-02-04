@@ -135,9 +135,6 @@ impl<'c> Parser<'c> {
             "NonZeroIsize" => primitive("NonZeroIsize"),
             "&str" => primitive("&str"),
             "Atom" => primitive("Atom"),
-            "ScopeId" => primitive("ScopeId"),
-            "SymbolId" => primitive("SymbolId"),
-            "ReferenceId" => primitive("ReferenceId"),
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
