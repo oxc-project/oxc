@@ -4,7 +4,7 @@ use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::utils::create_ident_tokens;
+use crate::utils::{create_ident_tokens, pluralize};
 
 use super::{
     extensions::{
@@ -24,6 +24,7 @@ use super::{
 pub struct StructDef {
     pub id: TypeId,
     pub name: String,
+    pub plural_name: Option<String>,
     pub has_lifetime: bool,
     pub file_id: FileId,
     pub generated_derives: Derives,
@@ -42,6 +43,7 @@ impl StructDef {
     pub fn new(
         id: TypeId,
         name: String,
+        plural_name: Option<String>,
         has_lifetime: bool,
         file_id: FileId,
         generated_derives: Derives,
@@ -50,6 +52,7 @@ impl StructDef {
         Self {
             id,
             name,
+            plural_name,
             has_lifetime,
             file_id,
             generated_derives,
@@ -62,6 +65,16 @@ impl StructDef {
             content_eq: ContentEqType::default(),
             estree: ESTreeStruct::default(),
         }
+    }
+
+    /// Get plural type name.
+    pub fn plural_name(&self) -> String {
+        self.plural_name.clone().unwrap_or_else(|| pluralize(self.name()))
+    }
+
+    /// Get plural type name in snake case.
+    pub fn plural_snake_name(&self) -> String {
+        self.plural_name().to_case(Case::Snake)
     }
 
     /// Get iterator over field indexes.

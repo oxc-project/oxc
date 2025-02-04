@@ -183,10 +183,12 @@ impl<'c> Parser<'c> {
         let StructSkeleton { name, item, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
-        let generated_derives = self.get_generated_derives(&item.attrs, &name);
+        let (generated_derives, plural_name) =
+            self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Struct(StructDef::new(
             type_id,
             name,
+            plural_name,
             has_lifetime,
             file_id,
             generated_derives,
@@ -255,10 +257,12 @@ impl<'c> Parser<'c> {
         let has_lifetime = check_generics(&item.generics, &name);
         let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
         let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();
-        let generated_derives = self.get_generated_derives(&item.attrs, &name);
+        let (generated_derives, plural_name) =
+            self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Enum(EnumDef::new(
             type_id,
             name,
+            plural_name,
             has_lifetime,
             file_id,
             generated_derives,
@@ -626,8 +630,13 @@ impl<'c> Parser<'c> {
     }
 
     /// Get derives which are generated with `#[generate_derive(...)]` attrs.
-    fn get_generated_derives(&self, attrs: &[Attribute], type_name: &str) -> Derives {
+    fn get_generated_derives_and_plural_name(
+        &self,
+        attrs: &[Attribute],
+        type_name: &str,
+    ) -> (Derives, Option<String>) {
         let mut derives = Derives::none();
+        let mut plural_name = None;
         for attr in attrs {
             if attr.path().is_ident("generate_derive") {
                 let args = attr.parse_args_with(Punctuated::<Ident, Comma>::parse_terminated);
@@ -638,10 +647,20 @@ impl<'c> Parser<'c> {
                     let derive_id = self.codegen.get_derive_id_by_name(&ident_name(&arg));
                     derives.add(derive_id);
                 }
+            } else if attr.path().is_ident("plural") {
+                let ident = attr.parse_args::<Ident>();
+                let Ok(ident) = ident else {
+                    panic!("Unable to parse `#[plural]` on `{type_name}` type");
+                };
+                assert!(
+                    plural_name.is_none(),
+                    "Multiple `#[plural]` attributes on `{type_name}` type"
+                );
+                plural_name = Some(ident.to_string());
             }
         }
 
-        derives
+        (derives, plural_name)
     }
 }
 

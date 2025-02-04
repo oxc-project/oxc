@@ -59,3 +59,16 @@ pub fn create_ident_tokens(name: &str) -> TokenStream {
 pub fn number_lit<N: Into<u64>>(n: N) -> LitInt {
     LitInt::new(&n.into().to_string(), Span::call_site())
 }
+
+/// Pluralize name.
+pub fn pluralize(name: &str) -> String {
+    if name.ends_with("child") || name.ends_with("Child") {
+        format!("{name}ren")
+    } else {
+        match name.as_bytes().last() {
+            Some(b's') => format!("{name}es"),
+            Some(b'y') => format!("{}ies", &name[..name.len() - 1]),
+            _ => format!("{name}s"),
+        }
+    }
+}

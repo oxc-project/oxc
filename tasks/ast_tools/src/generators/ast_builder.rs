@@ -34,8 +34,8 @@ impl Generator for AstBuilderGenerator {
             .iter()
             .filter(|&type_def| {
                 let is_visited = match type_def {
-                    TypeDef::Struct(struct_def) => struct_def.visit.is_visited,
-                    TypeDef::Enum(enum_def) => enum_def.visit.is_visited,
+                    TypeDef::Struct(struct_def) => struct_def.visit.is_visited(),
+                    TypeDef::Enum(enum_def) => enum_def.visit.is_visited(),
                     _ => false,
                 };
                 let is_blacklisted = BLACK_LIST.contains(&type_def.name());
