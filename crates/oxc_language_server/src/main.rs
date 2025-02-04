@@ -1,5 +1,6 @@
 use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
+use commands::LSP_COMMANDS;
 use dashmap::DashMap;
 use futures::future::join_all;
 use globset::Glob;
@@ -14,8 +15,9 @@ use tower_lsp::{
         CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
         ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, InitializeParams, InitializeResult, InitializedParams,
-        NumberOrString, Position, Range, ServerInfo, TextEdit, Url, WorkspaceEdit,
+        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, Url,
+        WorkspaceEdit,
     },
     Client, LanguageServer, LspService, Server,
 };
@@ -27,6 +29,7 @@ use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::server_linter::ServerLinter;
 
 mod capabilities;
+mod commands;
 mod linter;
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
@@ -385,6 +388,18 @@ impl LanguageServer for Backend {
         }
 
         Ok(Some(code_actions_vec))
+    }
+
+    async fn execute_command(
+        &self,
+        params: ExecuteCommandParams,
+    ) -> Result<Option<serde_json::Value>> {
+        let command = LSP_COMMANDS.iter().find(|c| c.command_id() == params.command);
+
+        return match command {
+            Some(c) => c.execute(self, params.arguments).await,
+            None => Err(Error::invalid_request()),
+        };
     }
 }
 

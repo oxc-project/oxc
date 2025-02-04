@@ -8,6 +8,8 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 - Workspace
   - [Workspace Folders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersServerCapabilities): `true`
   - File Operations: `false`
+  - [Workspace commands](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
+    - `oxc.fixAll`, requires `{ uri: URL }` as command argument. Does safe fixes in `uri` file.
 - [Code Actions Provider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind):
   - `quickfix`
   - `source.fixAll.oxc`, behaves the same as `quickfix` only used when the `CodeActionContext#only` contains
@@ -31,6 +33,10 @@ The server will revalidate or reset the diagnostics for all open files and send 
 
 The server expects this request when the oxlint configuration is changed.
 The server will revalidate the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
+
+#### [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
+
+Executes a [Command](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand) if it exists. See [Server Capabilities](#server-capabilities)
 
 ### TextDocument
 
