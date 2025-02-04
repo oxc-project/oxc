@@ -331,7 +331,7 @@ impl<'c> Parser<'c> {
 
     /// Parse struct field to [`FieldDef`].
     fn parse_field(&mut self, field: &Field, index: usize) -> FieldDef {
-        let name = match field.ident.as_ref() {
+        let name = match &field.ident {
             Some(ident) => ident_name(ident),
             None => index.to_string(),
         };
