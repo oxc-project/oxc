@@ -58,7 +58,6 @@ impl Derive for DeriveGetSpan {
         let result_ty = quote!(Span);
         let result_expr = quote!(self.span);
         let reference = quote!( & );
-        let unboxed_ref = quote!(it.as_ref());
 
         derive_type(
             type_def,
@@ -68,7 +67,6 @@ impl Derive for DeriveGetSpan {
             &result_ty,
             &result_expr,
             &reference,
-            &unboxed_ref,
             schema,
         )
     }
@@ -102,7 +100,6 @@ impl Derive for DeriveGetSpanMut {
         let result_ty = quote!(&mut Span);
         let result_expr = quote!(&mut self.span);
         let reference = quote!( &mut );
-        let unboxed_ref = quote!(&mut **it);
 
         derive_type(
             type_def,
@@ -112,7 +109,6 @@ impl Derive for DeriveGetSpanMut {
             &result_ty,
             &result_expr,
             &reference,
-            &unboxed_ref,
             schema,
         )
     }
@@ -128,7 +124,6 @@ fn derive_type(
     result_ty: &TokenStream,
     result_expr: &TokenStream,
     reference: &TokenStream,
-    unboxed_ref: &TokenStream,
     schema: &Schema,
 ) -> TokenStream {
     let trait_ident = format_ident!("{trait_name}");
@@ -150,7 +145,7 @@ fn derive_type(
             &method_ident,
             self_ty,
             result_ty,
-            unboxed_ref,
+            reference,
             schema,
         ),
     }
@@ -194,7 +189,7 @@ fn derive_enum(
     method_ident: &Ident,
     self_ty: &TokenStream,
     result_ty: &TokenStream,
-    unboxed_ref: &TokenStream,
+    reference: &TokenStream,
     schema: &Schema,
 ) -> TokenStream {
     let ty = enum_def.ty_anon(schema);
@@ -202,10 +197,8 @@ fn derive_enum(
     let matches = enum_def.all_variants(schema).map(|variant| {
         let variant_ident = variant.ident();
         let variant_type = variant.field_type(schema).unwrap();
-        // TODO: Just generate `it.span()` or `it.span_mut()`.
-        // Then output is the same whether variant is boxed or not, and `unboxed_ref` is not needed.
         if variant_type.is_box() {
-            quote!( Self::#variant_ident(it) => #trait_ident::#method_ident(#unboxed_ref) )
+            quote!( Self::#variant_ident(it) => #trait_ident::#method_ident(#reference **it) )
         } else {
             quote!( Self::#variant_ident(it) => #trait_ident::#method_ident(it) )
         }
