@@ -71,14 +71,6 @@ impl NumericLiteral<'_> {
     }
 }
 
-impl ContentEq for NumericLiteral<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        // Note: `f64::content_eq` uses `==` equality.
-        // `f64::NAN != f64::NAN` and `0.0 == -0.0`, so we follow the same here.
-        ContentEq::content_eq(&self.value, &other.value)
-    }
-}
-
 impl fmt::Display for NumericLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // We have 2 choices here:
@@ -111,12 +103,6 @@ impl StringLiteral<'_> {
     }
 }
 
-impl ContentEq for StringLiteral<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.value, &other.value)
-    }
-}
-
 impl AsRef<str> for StringLiteral<'_> {
     #[inline]
     fn as_ref(&self) -> &str {
@@ -138,21 +124,9 @@ impl BigIntLiteral<'_> {
     }
 }
 
-impl ContentEq for BigIntLiteral<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.raw, &other.raw)
-    }
-}
-
 impl fmt::Display for BigIntLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.raw.fmt(f)
-    }
-}
-
-impl ContentEq for RegExpLiteral<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.regex, &other.regex)
     }
 }
 
