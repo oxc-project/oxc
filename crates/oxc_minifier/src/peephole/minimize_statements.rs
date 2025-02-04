@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
-use oxc_span::{cmp::ContentEq, GetSpan};
+use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};

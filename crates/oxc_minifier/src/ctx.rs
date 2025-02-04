@@ -82,7 +82,7 @@ impl<'a> Ctx<'a, '_> {
     /// If two expressions are equal.
     /// Special case `undefined` == `void 0`
     pub fn expr_eq(self, a: &Expression<'a>, b: &Expression<'a>) -> bool {
-        use oxc_span::cmp::ContentEq;
+        use oxc_span::ContentEq;
         a.content_eq(b) || (self.is_expression_undefined(a) && self.is_expression_undefined(b))
     }
 

@@ -24,7 +24,7 @@ impl Derive for DeriveContentEq {
             #![allow(clippy::match_same_arms)]
 
             ///@@line_break
-            use oxc_span::cmp::ContentEq;
+            use oxc_span::ContentEq;
         }
     }
 

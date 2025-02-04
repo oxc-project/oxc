@@ -11,7 +11,7 @@ use oxc_allocator::{Box, CloneIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, Atom, GetSpan, GetSpanMut, Span};
+use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 
 /// Boolean literal

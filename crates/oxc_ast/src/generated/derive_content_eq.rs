@@ -3,7 +3,7 @@
 
 #![allow(clippy::match_same_arms)]
 
-use oxc_span::cmp::ContentEq;
+use oxc_span::ContentEq;
 
 use crate::ast::comment::*;
 use crate::ast::js::*;

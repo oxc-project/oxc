@@ -50,7 +50,7 @@ use super::PointerAlign;
 /// ## Comparison
 /// [`Span`] has a normal implementation of [`PartialEq`]. If you want to compare two
 /// AST nodes without considering their locations (e.g. to see if they have the
-/// same content), use [`ContentEq`](crate::cmp::ContentEq) instead.
+/// same content), use [`ContentEq`](crate::ContentEq) instead.
 ///
 /// ## Implementation Notes
 /// See the [`text-size`](https://docs.rs/text-size) crate for details.

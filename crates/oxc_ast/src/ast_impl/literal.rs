@@ -4,7 +4,7 @@ use std::{borrow::Cow, fmt};
 
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::cmp::ContentEq;
+use oxc_span::ContentEq;
 
 use crate::ast::*;
 
