@@ -84,7 +84,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
     match location {
         // `#[estree]` attr on struct
         AttrLocation::Struct(struct_def) => match part {
-            AttrPart::Tag("always_flatten") => struct_def.estree.always_flatten = true,
+            AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
             AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
             AttrPart::String("rename", value) => struct_def.estree.rename = Some(value),
@@ -266,7 +266,7 @@ pub fn should_add_type_field_to_struct(struct_def: &StructDef) -> bool {
 /// Get if should flatten a struct field.
 ///
 /// Returns `true` if either the field has an `#[estree(flatten)]` attr on it,
-/// or the type that the field contains has an `#[estree(always_flatten)]` attr.
+/// or the type that the field contains has an `#[estree(flatten)]` attr.
 ///
 /// This function also used by Typescript generator.
 pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
@@ -274,7 +274,7 @@ pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
         true
     } else {
         let field_type = field.type_def(schema);
-        matches!(field_type, TypeDef::Struct(field_struct_def) if field_struct_def.estree.always_flatten)
+        matches!(field_type, TypeDef::Struct(field_struct_def) if field_struct_def.estree.flatten)
     }
 }
 

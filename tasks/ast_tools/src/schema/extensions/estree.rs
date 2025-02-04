@@ -4,7 +4,7 @@ pub struct ESTreeStruct {
     pub rename: Option<String>,
     pub via: Option<String>,
     pub add_ts: Option<String>,
-    pub always_flatten: bool,
+    pub flatten: bool,
     pub no_type: bool,
     pub custom_serialize: bool,
 }
