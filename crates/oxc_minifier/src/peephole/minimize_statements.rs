@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{cmp::ContentEq, GetSpan};
@@ -440,6 +440,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 result.push(Statement::ForOfStatement(for_of_stmt));
             }
+            Statement::BlockStatement(block_stmt) => self.handle_block(result, block_stmt),
             stmt => result.push(stmt),
         }
     }
@@ -472,5 +473,46 @@ impl<'a> PeepholeOptimizations {
             return left.content_eq(right);
         }
         false
+    }
+
+    /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
+    fn handle_block(
+        &mut self,
+        result: &mut Vec<'a, Statement<'a>>,
+        block_stmt: Box<'a, BlockStatement<'a>>,
+    ) {
+        let keep_block = block_stmt.body.iter().any(Self::statement_cares_about_scope);
+        if keep_block {
+            result.push(Statement::BlockStatement(block_stmt));
+        } else {
+            result.append(&mut block_stmt.unbox().body);
+            self.mark_current_function_as_changed();
+        }
+    }
+
+    /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9767>
+    fn statement_cares_about_scope(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::BlockStatement(_)
+            | Statement::EmptyStatement(_)
+            | Statement::DebuggerStatement(_)
+            | Statement::ExpressionStatement(_)
+            | Statement::IfStatement(_)
+            | Statement::ForStatement(_)
+            | Statement::ForInStatement(_)
+            | Statement::ForOfStatement(_)
+            | Statement::DoWhileStatement(_)
+            | Statement::WhileStatement(_)
+            | Statement::WithStatement(_)
+            | Statement::TryStatement(_)
+            | Statement::SwitchStatement(_)
+            | Statement::ReturnStatement(_)
+            | Statement::ThrowStatement(_)
+            | Statement::BreakStatement(_)
+            | Statement::ContinueStatement(_)
+            | Statement::LabeledStatement(_) => false,
+            Statement::VariableDeclaration(decl) => !decl.kind.is_var(),
+            _ => true,
+        }
     }
 }

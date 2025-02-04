@@ -330,8 +330,8 @@ fn js_parser_test() {
     test("a = '' + true", "a = 'true';");
     test("a = false + ''", "a = 'false';");
     test("a = true + ''", "a = 'true';");
-    // test("a = 1 + false + ''", "a = 1 + false + '';");
-    // test("a = 0 + true + ''", "a = 0 + true + '';");
+    test("a = 1 + false + ''", "a = '1';");
+    test("a = 0 + true + ''", "a = '1';");
     test("a = '' + null", "a = 'null';");
     test("a = null + ''", "a = 'null';");
     test("a = '' + undefined", "a = 'undefined';");
@@ -539,12 +539,12 @@ fn js_parser_test() {
     test("a(); if (b) throw c", "if (a(), b) throw c;");
     test("if (a) if (b) throw c", "if (a && b) throw c;");
     test("if (true) { let a = b; if (c) throw d }", "{ let a = b; if (c) throw d;}");
-    // test("if (true) { if (a) throw b; if (c) throw d }", "if (a) throw b;if (c) throw d;");
-    // test("if (false) throw a; else { let b = c; if (d) throw e }", "{ let b = c; if (d) throw e;}");
-    // test(
-    // "if (false) throw a; else { if (b) throw c; if (d) throw e }",
-    // "if (b) throw c;if (d) throw e;",
-    // );
+    test("if (true) { if (a) throw b; if (c) throw d }", "if (a) throw b;if (c) throw d;");
+    test("if (false) throw a; else { let b = c; if (d) throw e }", "{ let b = c; if (d) throw e;}");
+    test(
+        "if (false) throw a; else { if (b) throw c; if (d) throw e }",
+        "if (b) throw c;if (d) throw e;",
+    );
     test(
         "if (a) { if (b) throw c; else { let d = e; if (f) throw g } }",
         "if (a) { if (b) throw c; { let d = e; if (f) throw g; }}",

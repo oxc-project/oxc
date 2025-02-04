@@ -574,10 +574,10 @@ mod test {
             "if (foo) { let bar = 1 } else { let baz = 1 }",
         );
         test_same("if (foo) { let bar = 1 } else { let baz = 1 }");
-        // test(
-        // "if (foo) { var bar = 1 } else { var baz = 1 }",
-        // "if (foo) var bar = 1; else var baz = 1;",
-        // );
+        test(
+            "if (foo) { var bar = 1 } else { var baz = 1 }",
+            "if (foo) var bar = 1; else var baz = 1;",
+        );
     }
 
     #[test]
