@@ -8,13 +8,12 @@
 //!
 //! Variants of `AstKind` and `AstType` are not created for types listed in `BLACK_LIST` below.
 
-use proc_macro2::Span;
 use quote::{format_ident, quote};
-use syn::LitInt;
 
 use crate::{
     output::{output_path, Output},
     schema::{Def, Schema, TypeDef},
+    utils::number_lit,
     Codegen, Generator, AST_CRATE_PATH,
 };
 
@@ -130,7 +129,7 @@ impl Generator for AstKindGenerator {
         let mut span_match_arms = quote!();
         let mut as_methods = quote!();
 
-        let mut next_index = 0usize;
+        let mut next_index = 0u16;
         for type_def in &schema.types {
             let has_kind = match type_def {
                 TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
@@ -144,8 +143,8 @@ impl Generator for AstKindGenerator {
             let type_ident = type_def.ident();
             let type_ty = type_def.ty(schema);
 
-            let index = u8::try_from(next_index).unwrap();
-            let index = LitInt::new(&index.to_string(), Span::call_site());
+            assert!(u8::try_from(next_index).is_ok());
+            let index = number_lit(next_index);
             type_variants.extend(quote!( #type_ident = #index, ));
             kind_variants.extend(quote!( #type_ident(&'a #type_ty) = AstType::#type_ident as u8, ));
 

@@ -290,9 +290,9 @@ impl Serialize for PropertyKey<'_> {
 impl Serialize for PropertyKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
-            PropertyKind::Init => serializer.serialize_unit_variant("PropertyKind", 0u32, "init"),
-            PropertyKind::Get => serializer.serialize_unit_variant("PropertyKind", 1u32, "get"),
-            PropertyKind::Set => serializer.serialize_unit_variant("PropertyKind", 2u32, "set"),
+            PropertyKind::Init => serializer.serialize_unit_variant("PropertyKind", 0, "init"),
+            PropertyKind::Get => serializer.serialize_unit_variant("PropertyKind", 1, "get"),
+            PropertyKind::Set => serializer.serialize_unit_variant("PropertyKind", 2, "set"),
         }
     }
 }
@@ -914,19 +914,19 @@ impl Serialize for VariableDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             VariableDeclarationKind::Var => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 0u32, "var")
+                serializer.serialize_unit_variant("VariableDeclarationKind", 0, "var")
             }
             VariableDeclarationKind::Const => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 1u32, "const")
+                serializer.serialize_unit_variant("VariableDeclarationKind", 1, "const")
             }
             VariableDeclarationKind::Let => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 2u32, "let")
+                serializer.serialize_unit_variant("VariableDeclarationKind", 2, "let")
             }
             VariableDeclarationKind::Using => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 3u32, "using")
+                serializer.serialize_unit_variant("VariableDeclarationKind", 3, "using")
             }
             VariableDeclarationKind::AwaitUsing => {
-                serializer.serialize_unit_variant("VariableDeclarationKind", 4u32, "await using")
+                serializer.serialize_unit_variant("VariableDeclarationKind", 4, "await using")
             }
         }
     }
@@ -1335,17 +1335,17 @@ impl Serialize for FunctionType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             FunctionType::FunctionDeclaration => {
-                serializer.serialize_unit_variant("FunctionType", 0u32, "FunctionDeclaration")
+                serializer.serialize_unit_variant("FunctionType", 0, "FunctionDeclaration")
             }
             FunctionType::FunctionExpression => {
-                serializer.serialize_unit_variant("FunctionType", 1u32, "FunctionExpression")
+                serializer.serialize_unit_variant("FunctionType", 1, "FunctionExpression")
             }
             FunctionType::TSDeclareFunction => {
-                serializer.serialize_unit_variant("FunctionType", 2u32, "TSDeclareFunction")
+                serializer.serialize_unit_variant("FunctionType", 2, "TSDeclareFunction")
             }
             FunctionType::TSEmptyBodyFunctionExpression => serializer.serialize_unit_variant(
                 "FunctionType",
-                3u32,
+                3,
                 "TSEmptyBodyFunctionExpression",
             ),
         }
@@ -1370,20 +1370,18 @@ impl Serialize for FormalParameterKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             FormalParameterKind::FormalParameter => {
-                serializer.serialize_unit_variant("FormalParameterKind", 0u32, "FormalParameter")
+                serializer.serialize_unit_variant("FormalParameterKind", 0, "FormalParameter")
             }
             FormalParameterKind::UniqueFormalParameters => serializer.serialize_unit_variant(
                 "FormalParameterKind",
-                1u32,
+                1,
                 "UniqueFormalParameters",
             ),
-            FormalParameterKind::ArrowFormalParameters => serializer.serialize_unit_variant(
-                "FormalParameterKind",
-                2u32,
-                "ArrowFormalParameters",
-            ),
+            FormalParameterKind::ArrowFormalParameters => {
+                serializer.serialize_unit_variant("FormalParameterKind", 2, "ArrowFormalParameters")
+            }
             FormalParameterKind::Signature => {
-                serializer.serialize_unit_variant("FormalParameterKind", 3u32, "Signature")
+                serializer.serialize_unit_variant("FormalParameterKind", 3, "Signature")
             }
         }
     }
@@ -1448,10 +1446,10 @@ impl Serialize for ClassType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             ClassType::ClassDeclaration => {
-                serializer.serialize_unit_variant("ClassType", 0u32, "ClassDeclaration")
+                serializer.serialize_unit_variant("ClassType", 0, "ClassDeclaration")
             }
             ClassType::ClassExpression => {
-                serializer.serialize_unit_variant("ClassType", 1u32, "ClassExpression")
+                serializer.serialize_unit_variant("ClassType", 1, "ClassExpression")
             }
         }
     }
@@ -1501,11 +1499,11 @@ impl Serialize for MethodDefinitionType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             MethodDefinitionType::MethodDefinition => {
-                serializer.serialize_unit_variant("MethodDefinitionType", 0u32, "MethodDefinition")
+                serializer.serialize_unit_variant("MethodDefinitionType", 0, "MethodDefinition")
             }
             MethodDefinitionType::TSAbstractMethodDefinition => serializer.serialize_unit_variant(
                 "MethodDefinitionType",
-                1u32,
+                1,
                 "TSAbstractMethodDefinition",
             ),
         }
@@ -1536,15 +1534,13 @@ impl Serialize for PropertyDefinition<'_> {
 impl Serialize for PropertyDefinitionType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
-            PropertyDefinitionType::PropertyDefinition => serializer.serialize_unit_variant(
-                "PropertyDefinitionType",
-                0u32,
-                "PropertyDefinition",
-            ),
+            PropertyDefinitionType::PropertyDefinition => {
+                serializer.serialize_unit_variant("PropertyDefinitionType", 0, "PropertyDefinition")
+            }
             PropertyDefinitionType::TSAbstractPropertyDefinition => serializer
                 .serialize_unit_variant(
                     "PropertyDefinitionType",
-                    1u32,
+                    1,
                     "TSAbstractPropertyDefinition",
                 ),
         }
@@ -1555,16 +1551,16 @@ impl Serialize for MethodDefinitionKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             MethodDefinitionKind::Constructor => {
-                serializer.serialize_unit_variant("MethodDefinitionKind", 0u32, "constructor")
+                serializer.serialize_unit_variant("MethodDefinitionKind", 0, "constructor")
             }
             MethodDefinitionKind::Method => {
-                serializer.serialize_unit_variant("MethodDefinitionKind", 1u32, "method")
+                serializer.serialize_unit_variant("MethodDefinitionKind", 1, "method")
             }
             MethodDefinitionKind::Get => {
-                serializer.serialize_unit_variant("MethodDefinitionKind", 2u32, "get")
+                serializer.serialize_unit_variant("MethodDefinitionKind", 2, "get")
             }
             MethodDefinitionKind::Set => {
-                serializer.serialize_unit_variant("MethodDefinitionKind", 3u32, "set")
+                serializer.serialize_unit_variant("MethodDefinitionKind", 3, "set")
             }
         }
     }
@@ -1609,11 +1605,11 @@ impl Serialize for AccessorPropertyType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             AccessorPropertyType::AccessorProperty => {
-                serializer.serialize_unit_variant("AccessorPropertyType", 0u32, "AccessorProperty")
+                serializer.serialize_unit_variant("AccessorPropertyType", 0, "AccessorProperty")
             }
             AccessorPropertyType::TSAbstractAccessorProperty => serializer.serialize_unit_variant(
                 "AccessorPropertyType",
-                1u32,
+                1,
                 "TSAbstractAccessorProperty",
             ),
         }
@@ -1666,8 +1662,8 @@ impl Serialize for ImportDeclaration<'_> {
 impl Serialize for ImportPhase {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
-            ImportPhase::Source => serializer.serialize_unit_variant("ImportPhase", 0u32, "source"),
-            ImportPhase::Defer => serializer.serialize_unit_variant("ImportPhase", 1u32, "defer"),
+            ImportPhase::Source => serializer.serialize_unit_variant("ImportPhase", 0, "source"),
+            ImportPhase::Defer => serializer.serialize_unit_variant("ImportPhase", 1, "defer"),
         }
     }
 }
@@ -2415,13 +2411,13 @@ impl Serialize for TSTypeOperatorOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSTypeOperatorOperator::Keyof => {
-                serializer.serialize_unit_variant("TSTypeOperatorOperator", 0u32, "keyof")
+                serializer.serialize_unit_variant("TSTypeOperatorOperator", 0, "keyof")
             }
             TSTypeOperatorOperator::Unique => {
-                serializer.serialize_unit_variant("TSTypeOperatorOperator", 1u32, "unique")
+                serializer.serialize_unit_variant("TSTypeOperatorOperator", 1, "unique")
             }
             TSTypeOperatorOperator::Readonly => {
-                serializer.serialize_unit_variant("TSTypeOperatorOperator", 2u32, "readonly")
+                serializer.serialize_unit_variant("TSTypeOperatorOperator", 2, "readonly")
             }
         }
     }
@@ -2746,13 +2742,13 @@ impl Serialize for TSAccessibility {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSAccessibility::Private => {
-                serializer.serialize_unit_variant("TSAccessibility", 0u32, "private")
+                serializer.serialize_unit_variant("TSAccessibility", 0, "private")
             }
             TSAccessibility::Protected => {
-                serializer.serialize_unit_variant("TSAccessibility", 1u32, "protected")
+                serializer.serialize_unit_variant("TSAccessibility", 1, "protected")
             }
             TSAccessibility::Public => {
-                serializer.serialize_unit_variant("TSAccessibility", 2u32, "public")
+                serializer.serialize_unit_variant("TSAccessibility", 2, "public")
             }
         }
     }
@@ -2851,13 +2847,13 @@ impl Serialize for TSMethodSignatureKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSMethodSignatureKind::Method => {
-                serializer.serialize_unit_variant("TSMethodSignatureKind", 0u32, "method")
+                serializer.serialize_unit_variant("TSMethodSignatureKind", 0, "method")
             }
             TSMethodSignatureKind::Get => {
-                serializer.serialize_unit_variant("TSMethodSignatureKind", 1u32, "get")
+                serializer.serialize_unit_variant("TSMethodSignatureKind", 1, "get")
             }
             TSMethodSignatureKind::Set => {
-                serializer.serialize_unit_variant("TSMethodSignatureKind", 2u32, "set")
+                serializer.serialize_unit_variant("TSMethodSignatureKind", 2, "set")
             }
         }
     }
@@ -2952,13 +2948,13 @@ impl Serialize for TSModuleDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSModuleDeclarationKind::Global => {
-                serializer.serialize_unit_variant("TSModuleDeclarationKind", 0u32, "global")
+                serializer.serialize_unit_variant("TSModuleDeclarationKind", 0, "global")
             }
             TSModuleDeclarationKind::Module => {
-                serializer.serialize_unit_variant("TSModuleDeclarationKind", 1u32, "module")
+                serializer.serialize_unit_variant("TSModuleDeclarationKind", 1, "module")
             }
             TSModuleDeclarationKind::Namespace => {
-                serializer.serialize_unit_variant("TSModuleDeclarationKind", 2u32, "namespace")
+                serializer.serialize_unit_variant("TSModuleDeclarationKind", 2, "namespace")
             }
         }
     }
@@ -3114,16 +3110,16 @@ impl Serialize for TSMappedTypeModifierOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             TSMappedTypeModifierOperator::True => {
-                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 0u32, "true")
+                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 0, "true")
             }
             TSMappedTypeModifierOperator::Plus => {
-                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 1u32, "+")
+                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 1, "+")
             }
             TSMappedTypeModifierOperator::Minus => {
-                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 2u32, "-")
+                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 2, "-")
             }
             TSMappedTypeModifierOperator::None => {
-                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 3u32, "none")
+                serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 3, "none")
             }
         }
     }
@@ -3260,10 +3256,10 @@ impl Serialize for ImportOrExportKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             ImportOrExportKind::Value => {
-                serializer.serialize_unit_variant("ImportOrExportKind", 0u32, "value")
+                serializer.serialize_unit_variant("ImportOrExportKind", 0, "value")
             }
             ImportOrExportKind::Type => {
-                serializer.serialize_unit_variant("ImportOrExportKind", 1u32, "type")
+                serializer.serialize_unit_variant("ImportOrExportKind", 1, "type")
             }
         }
     }

@@ -8,6 +8,7 @@ use syn::{parse_str, Type};
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
+    utils::number_lit,
     Result,
 };
 
@@ -211,8 +212,7 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         let enum_name = enum_def.name();
         let match_branches = enum_def.all_variants(schema).map(|variant| {
             let variant_ident = variant.ident();
-            // TODO: Don't print numbers as `0u32` - just `0` is fine
-            let discriminant = u32::from(variant.discriminant);
+            let discriminant = number_lit(variant.discriminant);
             let value = get_fieldless_variant_value(enum_def, variant);
 
             quote! {

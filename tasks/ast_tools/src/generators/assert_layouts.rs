@@ -16,6 +16,7 @@ use crate::{
         extensions::layout::{Layout, Niche, Offset, PlatformLayout},
         Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
     },
+    utils::number_lit,
     Codegen, Generator, AST_CRATE_PATH,
 };
 
@@ -409,8 +410,7 @@ fn generate_layout_assertions_for_struct(struct_def: &StructDef) -> (TokenStream
 
             let field_ident = field.ident();
             let offset =
-                if is_64 { field.offset.offset_64 } else { field.offset.offset_32 } as usize;
-            // TODO: Don't print numbers as `4usize` - just `4` would be fine
+                number_lit(if is_64 { field.offset.offset_64 } else { field.offset.offset_32 });
             Some(quote! {
                 assert!(offset_of!(#struct_ident, #field_ident) == #offset);
             })
@@ -438,9 +438,8 @@ fn generate_layout_assertions_for_enum(enum_def: &EnumDef) -> (TokenStream, Toke
 
 /// Generate size and alignment assertions for a type.
 fn generate_size_align_assertions(layout: &PlatformLayout, ident: &Ident) -> TokenStream {
-    let size = layout.size as usize;
-    let align = layout.align as usize;
-    // TODO: Don't print numbers as `4usize` - just `4` would be fine
+    let size = number_lit(layout.size);
+    let align = number_lit(layout.align);
     quote! {
         ///@@line_break
         assert!(size_of::<#ident>() == #size);

@@ -30,14 +30,10 @@ impl Serialize for SourceType {
 impl Serialize for Language {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
-            Language::JavaScript => {
-                serializer.serialize_unit_variant("Language", 0u32, "javascript")
-            }
-            Language::TypeScript => {
-                serializer.serialize_unit_variant("Language", 1u32, "typescript")
-            }
+            Language::JavaScript => serializer.serialize_unit_variant("Language", 0, "javascript"),
+            Language::TypeScript => serializer.serialize_unit_variant("Language", 1, "typescript"),
             Language::TypeScriptDefinition => {
-                serializer.serialize_unit_variant("Language", 2u32, "typescriptDefinition")
+                serializer.serialize_unit_variant("Language", 2, "typescriptDefinition")
             }
         }
     }
@@ -46,10 +42,10 @@ impl Serialize for Language {
 impl Serialize for ModuleKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
-            ModuleKind::Script => serializer.serialize_unit_variant("ModuleKind", 0u32, "script"),
-            ModuleKind::Module => serializer.serialize_unit_variant("ModuleKind", 1u32, "module"),
+            ModuleKind::Script => serializer.serialize_unit_variant("ModuleKind", 0, "script"),
+            ModuleKind::Module => serializer.serialize_unit_variant("ModuleKind", 1, "module"),
             ModuleKind::Unambiguous => {
-                serializer.serialize_unit_variant("ModuleKind", 2u32, "unambiguous")
+                serializer.serialize_unit_variant("ModuleKind", 2, "unambiguous")
             }
         }
     }
@@ -59,11 +55,9 @@ impl Serialize for LanguageVariant {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             LanguageVariant::Standard => {
-                serializer.serialize_unit_variant("LanguageVariant", 0u32, "standard")
+                serializer.serialize_unit_variant("LanguageVariant", 0, "standard")
             }
-            LanguageVariant::Jsx => {
-                serializer.serialize_unit_variant("LanguageVariant", 1u32, "jsx")
-            }
+            LanguageVariant::Jsx => serializer.serialize_unit_variant("LanguageVariant", 1, "jsx"),
         }
     }
 }

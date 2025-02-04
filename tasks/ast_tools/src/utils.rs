@@ -50,3 +50,12 @@ pub fn create_ident_tokens(name: &str) -> TokenStream {
         quote!(#ident)
     }
 }
+
+/// Convert integer to [`LitInt`].
+///
+/// This prints without a `usize` postfix. i.e. `123` not `123usize`.
+///
+/// [`LitInt`]: struct@LitInt
+pub fn number_lit<N: Into<u64>>(n: N) -> LitInt {
+    LitInt::new(&n.into().to_string(), Span::call_site())
+}

@@ -70,16 +70,16 @@ impl Serialize for BoundaryAssertionKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             BoundaryAssertionKind::Start => {
-                serializer.serialize_unit_variant("BoundaryAssertionKind", 0u32, "start")
+                serializer.serialize_unit_variant("BoundaryAssertionKind", 0, "start")
             }
             BoundaryAssertionKind::End => {
-                serializer.serialize_unit_variant("BoundaryAssertionKind", 1u32, "end")
+                serializer.serialize_unit_variant("BoundaryAssertionKind", 1, "end")
             }
             BoundaryAssertionKind::Boundary => {
-                serializer.serialize_unit_variant("BoundaryAssertionKind", 2u32, "boundary")
+                serializer.serialize_unit_variant("BoundaryAssertionKind", 2, "boundary")
             }
             BoundaryAssertionKind::NegativeBoundary => {
-                serializer.serialize_unit_variant("BoundaryAssertionKind", 3u32, "negativeBoundary")
+                serializer.serialize_unit_variant("BoundaryAssertionKind", 3, "negativeBoundary")
             }
         }
     }
@@ -100,19 +100,17 @@ impl Serialize for LookAroundAssertionKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             LookAroundAssertionKind::Lookahead => {
-                serializer.serialize_unit_variant("LookAroundAssertionKind", 0u32, "lookahead")
+                serializer.serialize_unit_variant("LookAroundAssertionKind", 0, "lookahead")
             }
-            LookAroundAssertionKind::NegativeLookahead => serializer.serialize_unit_variant(
-                "LookAroundAssertionKind",
-                1u32,
-                "negativeLookahead",
-            ),
+            LookAroundAssertionKind::NegativeLookahead => {
+                serializer.serialize_unit_variant("LookAroundAssertionKind", 1, "negativeLookahead")
+            }
             LookAroundAssertionKind::Lookbehind => {
-                serializer.serialize_unit_variant("LookAroundAssertionKind", 2u32, "lookbehind")
+                serializer.serialize_unit_variant("LookAroundAssertionKind", 2, "lookbehind")
             }
             LookAroundAssertionKind::NegativeLookbehind => serializer.serialize_unit_variant(
                 "LookAroundAssertionKind",
-                3u32,
+                3,
                 "negativeLookbehind",
             ),
         }
@@ -147,32 +145,32 @@ impl Serialize for CharacterKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             CharacterKind::ControlLetter => {
-                serializer.serialize_unit_variant("CharacterKind", 0u32, "controlLetter")
+                serializer.serialize_unit_variant("CharacterKind", 0, "controlLetter")
             }
             CharacterKind::HexadecimalEscape => {
-                serializer.serialize_unit_variant("CharacterKind", 1u32, "hexadecimalEscape")
+                serializer.serialize_unit_variant("CharacterKind", 1, "hexadecimalEscape")
             }
             CharacterKind::Identifier => {
-                serializer.serialize_unit_variant("CharacterKind", 2u32, "identifier")
+                serializer.serialize_unit_variant("CharacterKind", 2, "identifier")
             }
-            CharacterKind::Null => serializer.serialize_unit_variant("CharacterKind", 3u32, "null"),
+            CharacterKind::Null => serializer.serialize_unit_variant("CharacterKind", 3, "null"),
             CharacterKind::Octal1 => {
-                serializer.serialize_unit_variant("CharacterKind", 4u32, "octal1")
+                serializer.serialize_unit_variant("CharacterKind", 4, "octal1")
             }
             CharacterKind::Octal2 => {
-                serializer.serialize_unit_variant("CharacterKind", 5u32, "octal2")
+                serializer.serialize_unit_variant("CharacterKind", 5, "octal2")
             }
             CharacterKind::Octal3 => {
-                serializer.serialize_unit_variant("CharacterKind", 6u32, "octal3")
+                serializer.serialize_unit_variant("CharacterKind", 6, "octal3")
             }
             CharacterKind::SingleEscape => {
-                serializer.serialize_unit_variant("CharacterKind", 7u32, "singleEscape")
+                serializer.serialize_unit_variant("CharacterKind", 7, "singleEscape")
             }
             CharacterKind::Symbol => {
-                serializer.serialize_unit_variant("CharacterKind", 8u32, "symbol")
+                serializer.serialize_unit_variant("CharacterKind", 8, "symbol")
             }
             CharacterKind::UnicodeEscape => {
-                serializer.serialize_unit_variant("CharacterKind", 9u32, "unicodeEscape")
+                serializer.serialize_unit_variant("CharacterKind", 9, "unicodeEscape")
             }
         }
     }
@@ -192,22 +190,22 @@ impl Serialize for CharacterClassEscapeKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             CharacterClassEscapeKind::D => {
-                serializer.serialize_unit_variant("CharacterClassEscapeKind", 0u32, "d")
+                serializer.serialize_unit_variant("CharacterClassEscapeKind", 0, "d")
             }
             CharacterClassEscapeKind::NegativeD => {
-                serializer.serialize_unit_variant("CharacterClassEscapeKind", 1u32, "negativeD")
+                serializer.serialize_unit_variant("CharacterClassEscapeKind", 1, "negativeD")
             }
             CharacterClassEscapeKind::S => {
-                serializer.serialize_unit_variant("CharacterClassEscapeKind", 2u32, "s")
+                serializer.serialize_unit_variant("CharacterClassEscapeKind", 2, "s")
             }
             CharacterClassEscapeKind::NegativeS => {
-                serializer.serialize_unit_variant("CharacterClassEscapeKind", 3u32, "negativeS")
+                serializer.serialize_unit_variant("CharacterClassEscapeKind", 3, "negativeS")
             }
             CharacterClassEscapeKind::W => {
-                serializer.serialize_unit_variant("CharacterClassEscapeKind", 4u32, "w")
+                serializer.serialize_unit_variant("CharacterClassEscapeKind", 4, "w")
             }
             CharacterClassEscapeKind::NegativeW => {
-                serializer.serialize_unit_variant("CharacterClassEscapeKind", 5u32, "negativeW")
+                serializer.serialize_unit_variant("CharacterClassEscapeKind", 5, "negativeW")
             }
         }
     }
@@ -252,15 +250,13 @@ impl Serialize for CharacterClassContentsKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match *self {
             CharacterClassContentsKind::Union => {
-                serializer.serialize_unit_variant("CharacterClassContentsKind", 0u32, "union")
+                serializer.serialize_unit_variant("CharacterClassContentsKind", 0, "union")
             }
-            CharacterClassContentsKind::Intersection => serializer.serialize_unit_variant(
-                "CharacterClassContentsKind",
-                1u32,
-                "intersection",
-            ),
+            CharacterClassContentsKind::Intersection => {
+                serializer.serialize_unit_variant("CharacterClassContentsKind", 1, "intersection")
+            }
             CharacterClassContentsKind::Subtraction => {
-                serializer.serialize_unit_variant("CharacterClassContentsKind", 2u32, "subtraction")
+                serializer.serialize_unit_variant("CharacterClassContentsKind", 2, "subtraction")
             }
         }
     }
