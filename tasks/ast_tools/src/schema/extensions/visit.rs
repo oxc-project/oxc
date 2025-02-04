@@ -1,6 +1,7 @@
 /// Details of visiting on a struct.
 #[derive(Default, Debug)]
 pub struct VisitStruct {
+    pub visit_args: Option<Vec<(String, String)>>,
     pub is_visited: bool,
     pub scope: Option<Scope>,
 }

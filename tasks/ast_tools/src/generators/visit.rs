@@ -12,7 +12,7 @@ use crate::{
         extensions::visit::Scope, Def, EnumDef, FieldDef, OptionDef, Schema, StructDef, TypeDef,
         TypeId, VecDef,
     },
-    utils::create_ident_tokens,
+    utils::{create_ident, create_ident_tokens},
     Codegen, Generator, Result, AST_CRATE_PATH,
 };
 
@@ -27,12 +27,12 @@ define_generator!(VisitGenerator);
 
 impl Generator for VisitGenerator {
     /// Register that accept:
-    /// * `#[visit]` attr on struct fields or enum variants.
+    /// * `#[visit]` attr on structs, struct fields, or enum variants.
     /// * `#[ast(visit)]` on structs or enums.
     /// * `#[scope]` on structs or struct fields.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
         &[
-            ("visit", attr_positions!(AstAttr | StructField | EnumVariant)),
+            ("visit", attr_positions!(AstAttr | Struct | StructField | EnumVariant)),
             ("scope", attr_positions!(Struct | StructField)),
         ]
     }
@@ -86,6 +86,9 @@ fn parse_visit_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             }
 
             match location {
+                AttrLocation::Struct(struct_def) => {
+                    struct_def.visit.visit_args = Some(args);
+                }
                 AttrLocation::StructField(struct_def, field_index) => {
                     struct_def.fields[field_index].visit.visit_args = Some(args);
                 }
@@ -349,9 +352,16 @@ impl<'s> VisitBuilder<'s> {
         let visit_fn_ident = format_ident!("visit_{type_snake_name}");
         let walk_fn_ident = format_ident!("walk_{type_snake_name}");
 
-        // TODO: Don't hard-code this. Represent it in an attr in AST type definition instead.
-        let (extra_params, extra_args) = if struct_def.name() == "Function" {
-            (quote!( , flags: ScopeFlags ), quote!( , flags ))
+        // Get additional params
+        let (extra_params, extra_args) = if let Some(visit_args) = &struct_def.visit.visit_args {
+            visit_args
+                .iter()
+                .map(|(arg_name, arg_type_name)| {
+                    let param_ident = create_ident(arg_name);
+                    let arg_type_ident = create_ident(arg_type_name);
+                    (quote!( , #param_ident: #arg_type_ident ), quote!( , #param_ident ))
+                })
+                .unzip()
         } else {
             (quote!(), quote!())
         };

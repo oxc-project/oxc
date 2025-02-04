@@ -1544,6 +1544,7 @@ pub struct BindingRestElement<'a> {
 /// }
 /// ```
 #[ast(visit)]
+#[visit(args(flags = ScopeFlags))]
 #[scope(
     // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
     flags = flags,
