@@ -535,44 +535,49 @@ impl<'a> Format<'a> for Declaration<'a> {
 impl<'a> Format<'a> for VariableDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, VariableDeclaration, {
-            // We generally want to terminate all variable declarations with a
-            // semicolon, except when they in the () part of for loops.
-            let parent_for_loop = match p.parent_kind() {
-                AstKind::ForStatement(stmt) => Some(stmt.body.span()),
-                AstKind::ForInStatement(stmt) => Some(stmt.body.span()),
-                AstKind::ForOfStatement(stmt) => Some(stmt.body.span()),
-                _ => None,
-            };
-
-            let kind = self.kind.as_str();
-
             let mut parts = Vec::new_in(p.allocator);
 
             if self.declare {
                 parts.push(text!("declare "));
             }
-
-            parts.push(text!(kind));
+            parts.push(text!(self.kind.as_str()));
             parts.push(text!(" "));
 
-            let is_hardline = !p.parent_kind().is_iteration_statement()
-                && self.declarations.iter().all(|decl| decl.init.is_some());
+            // We generally want to terminate all variable declarations with a semicolon,
+            // except when they in the `()` part of for loops.
+            let parent_for_loop_span = match p.parent_kind() {
+                AstKind::ForStatement(stmt) => Some(stmt.body.span()),
+                AstKind::ForInStatement(stmt) => Some(stmt.body.span()),
+                AstKind::ForOfStatement(stmt) => Some(stmt.body.span()),
+                _ => None,
+            };
             let decls_len = self.declarations.len();
-            parts.extend(self.declarations.iter().enumerate().map(|(i, decl)| {
-                if decls_len > 1 {
-                    let mut d_parts = Vec::new_in(p.allocator);
-                    if i != 0 {
-                        d_parts.push(text!(","));
-                        d_parts.push(if is_hardline { hardline!(p) } else { line!() });
-                    }
-                    d_parts.push(decl.format(p));
-                    indent!(p, d_parts)
-                } else {
-                    decl.format(p)
-                }
-            }));
+            let is_hardline = parent_for_loop_span.is_none()
+                && self.declarations.iter().any(|decl| decl.init.is_some());
 
-            if !parent_for_loop.is_some_and(|span| span != self.span) {
+            for (idx, decl) in self.declarations.iter().enumerate() {
+                if idx == 0 {
+                    let first_decl_doc = decl.format(p);
+                    let first_decl_has_comment = false; // TODO
+                    parts.push(if decls_len > 1 || (decls_len == 1 && first_decl_has_comment) {
+                        // Indent first var to comply with eslint one-var rule
+                        indent!(p, [first_decl_doc])
+                    } else {
+                        first_decl_doc
+                    });
+                } else {
+                    parts.push(indent!(
+                        p,
+                        [
+                            text!(","),
+                            if is_hardline { hardline!(p) } else { line!() },
+                            decl.format(p)
+                        ]
+                    ));
+                }
+            }
+
+            if !parent_for_loop_span.is_some_and(|span| span != self.span) {
                 if let Some(semi) = p.semi() {
                     parts.push(semi);
                 }
