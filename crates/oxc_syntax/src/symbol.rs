@@ -9,6 +9,7 @@ use oxc_ast_macros::ast;
 
 #[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[content_eq(skip)]
 pub struct SymbolId(NonMaxU32);
 
 impl SymbolId {

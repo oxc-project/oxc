@@ -61,6 +61,7 @@ use super::PointerAlign;
 #[ast(visit)]
 #[derive(Default, Clone, Copy, Eq, PartialOrd, Ord)]
 #[generate_derive(ESTree)]
+#[content_eq(skip)]
 #[estree(no_type, flatten)]
 pub struct Span {
     /// The zero-based start offset of the span
