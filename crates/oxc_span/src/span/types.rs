@@ -50,7 +50,7 @@ use super::PointerAlign;
 /// ## Comparison
 /// [`Span`] has a normal implementation of [`PartialEq`]. If you want to compare two
 /// AST nodes without considering their locations (e.g. to see if they have the
-/// same content), use [`ContentEq`](crate::cmp::ContentEq) instead.
+/// same content), use [`ContentEq`](crate::ContentEq) instead.
 ///
 /// ## Implementation Notes
 /// See the [`text-size`](https://docs.rs/text-size) crate for details.
@@ -61,7 +61,8 @@ use super::PointerAlign;
 #[ast(visit)]
 #[derive(Default, Clone, Copy, Eq, PartialOrd, Ord)]
 #[generate_derive(ESTree)]
-#[estree(no_type, always_flatten)]
+#[content_eq(skip)]
+#[estree(no_type, flatten)]
 pub struct Span {
     /// The zero-based start offset of the span
     pub start: u32,

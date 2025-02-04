@@ -14,6 +14,7 @@ pub use file::File;
 /// Extensions to schema for specific derives / generators
 pub mod extensions {
     pub mod clone_in;
+    pub mod content_eq;
     pub mod estree;
     pub mod kind;
     pub mod layout;

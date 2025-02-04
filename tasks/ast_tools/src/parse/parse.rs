@@ -135,28 +135,9 @@ impl<'c> Parser<'c> {
             "NonZeroIsize" => primitive("NonZeroIsize"),
             "&str" => primitive("&str"),
             "Atom" => primitive("Atom"),
-            "ScopeId" => primitive("ScopeId"),
-            "SymbolId" => primitive("SymbolId"),
-            "ReferenceId" => primitive("ReferenceId"),
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
-            // Cannot be parsed normally as is defined inside `bitflags!` macro.
-            // TODO: Find a way to encode this in the actual file.
-            // e.g. `#[ast(alias_for(RegExpFlags))] struct RegExpFlagsAlias(u8);`
-            "RegExpFlags" => TypeDef::Struct(StructDef::new(
-                TypeId::DUMMY,
-                "RegExpFlags".to_string(),
-                false,
-                self.get_file_id("oxc_ast", "::ast::literal"),
-                Derives::none(),
-                vec![FieldDef::new(
-                    "inner".to_string(),
-                    self.type_id("u8"),
-                    Visibility::Private,
-                    None,
-                )],
-            )),
             _ => panic!("Unknown type: {name}"),
         };
         self.create_new_type(type_def)
@@ -187,18 +168,6 @@ impl<'c> Parser<'c> {
         self.extra_types.push(type_def);
 
         type_id
-    }
-
-    /// Get [`FileId`] for file with provided crate and import path.
-    fn get_file_id(&self, krate: &str, import_path: &str) -> FileId {
-        let file_and_id = self
-            .files
-            .iter_enumerated()
-            .find(|(_, file)| file.krate() == krate && file.import_path() == import_path);
-        match file_and_id {
-            Some((file_id, _)) => file_id,
-            None => panic!("Could not find file with import path: {import_path}"),
-        }
     }
 
     /// Parse [`Skeleton`] to yield a [`TypeDef`].
@@ -534,42 +503,59 @@ impl<'c> Parser<'c> {
             }
 
             if let Some((processor, positions)) = self.codegen.attr_processor(&attr_name) {
-                // Check attribute is legal in this position
-                match type_def {
+                // Check attribute is legal in this position and this type has the relevant trait
+                // `#[generate_derive]`-ed on it (unless the derive stated legal positions as
+                // `AttrPositions::StructNotDerived` or `AttrPositions::EnumNotDerived`)
+                let location = match type_def {
                     TypeDef::Struct(struct_def) => {
+                        let found_in_positions = match processor {
+                            AttrProcessor::Derive(derive_id) => {
+                                let is_derived = struct_def.generates_derive(derive_id);
+                                if is_derived {
+                                    AttrPositions::Struct
+                                } else {
+                                    AttrPositions::StructNotDerived
+                                }
+                            }
+                            AttrProcessor::Generator(_) => AttrPositions::StructMaybeDerived,
+                        };
+
                         check_attr_position(
                             positions,
-                            AttrPositions::Struct,
+                            found_in_positions,
                             struct_def.name(),
                             &attr_name,
                             "struct",
                         );
+
+                        AttrLocation::Struct(struct_def)
                     }
                     TypeDef::Enum(enum_def) => {
+                        let found_in_positions = match processor {
+                            AttrProcessor::Derive(derive_id) => {
+                                let is_derived = enum_def.generates_derive(derive_id);
+                                if is_derived {
+                                    AttrPositions::Enum
+                                } else {
+                                    AttrPositions::EnumNotDerived
+                                }
+                            }
+                            AttrProcessor::Generator(_) => AttrPositions::EnumMaybeDerived,
+                        };
+
                         check_attr_position(
                             positions,
-                            AttrPositions::Enum,
+                            found_in_positions,
                             enum_def.name(),
                             &attr_name,
                             "enum",
                         );
+
+                        AttrLocation::Enum(enum_def)
                     }
                     _ => unreachable!(),
-                }
-
-                // Check this type has the relevant trait `#[generate_derive]`-ed on it
-                check_attr_is_derived(
-                    processor,
-                    type_def.generated_derives(),
-                    type_def.name(),
-                    &attr_name,
-                );
-
-                let location = match type_def {
-                    TypeDef::Struct(struct_def) => AttrLocation::Struct(struct_def),
-                    TypeDef::Enum(enum_def) => AttrLocation::Enum(enum_def),
-                    _ => unreachable!(),
                 };
+
                 let result = process_attr(processor, &attr_name, location, &attr.meta);
                 assert!(
                     result.is_ok(),
@@ -601,6 +587,10 @@ impl<'c> Parser<'c> {
 
         for meta in &parts {
             let attr_name = meta.path().get_ident().unwrap().to_string();
+            if attr_name == "foreign" {
+                continue;
+            }
+
             if let Some((processor, positions)) = self.codegen.attr_processor(&attr_name) {
                 // Check attribute is legal in this position
                 // and has the relevant trait `#[generate_derive]`-ed on it
@@ -797,13 +787,13 @@ fn check_attr_is_derived(
 /// Check attribute is in a legal position.
 fn check_attr_position(
     expected_positions: AttrPositions,
-    found_in_position: AttrPositions,
+    found_in_positions: AttrPositions,
     type_name: &str,
     attr_name: &str,
     position_debug_str: &str,
 ) {
     assert!(
-        expected_positions.contains(found_in_position),
+        expected_positions.intersects(found_in_positions),
         "`{type_name}` type has `#[{attr_name}]` attribute on a {position_debug_str}, \
         but `#[{attr_name}]` is not legal in this position."
     );

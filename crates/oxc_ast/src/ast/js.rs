@@ -9,7 +9,7 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{cmp::ContentEq, Atom, GetSpan, GetSpanMut, SourceType, Span};
+use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, SourceType, Span};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -24,8 +24,8 @@ use super::{macros::inherit_variants, *};
 /// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source, directives, top-level statements, and scope information.
 #[ast(visit)]
 #[scope(
-    flags(ScopeFlags::Top),
-    strict_if(self.source_type.is_strict() || self.has_use_strict_directive()),
+    flags = ScopeFlags::Top,
+    strict_if = self.source_type.is_strict() || self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -40,8 +40,6 @@ pub struct Program<'a> {
     pub hashbang: Option<Hashbang<'a>>,
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -226,8 +224,6 @@ pub struct IdentifierReference<'a> {
     /// Identifies what identifier this refers to, and how it is used. This is
     /// set in the bind step of semantic analysis, and will always be [`None`]
     /// immediately after parsing.
-    #[estree(skip)]
-    #[clone_in(default)]
     pub reference_id: Cell<Option<ReferenceId>>,
 }
 
@@ -250,8 +246,6 @@ pub struct BindingIdentifier<'a> {
     /// you choose to skip semantic analysis, this will always be [`None`].
     ///
     /// [`semantic analysis`]: <https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html>
-    #[estree(skip)]
-    #[clone_in(default)]
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
@@ -1042,8 +1036,6 @@ pub struct Hashbang<'a> {
 pub struct BlockStatement<'a> {
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1186,8 +1178,6 @@ pub struct ForStatement<'a> {
     pub test: Option<Expression<'a>>,
     pub update: Option<Expression<'a>>,
     pub body: Statement<'a>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1217,8 +1207,6 @@ pub struct ForInStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1248,8 +1236,6 @@ pub struct ForOfStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1300,8 +1286,6 @@ pub struct SwitchStatement<'a> {
     pub discriminant: Expression<'a>,
     #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1381,7 +1365,7 @@ pub struct TryStatement<'a> {
 /// }
 /// ```
 #[ast(visit)]
-#[scope(flags(ScopeFlags::CatchClause))]
+#[scope(flags = ScopeFlags::CatchClause)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct CatchClause<'a> {
@@ -1390,8 +1374,6 @@ pub struct CatchClause<'a> {
     pub param: Option<CatchParameter<'a>>,
     /// The statements run when an error is caught
     pub body: Box<'a, BlockStatement<'a>>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1564,8 +1546,8 @@ pub struct BindingRestElement<'a> {
 #[ast(visit)]
 #[scope(
     // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
-    flags(flags),
-    strict_if(self.has_use_strict_directive()),
+    flags = flags,
+    strict_if = self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1624,8 +1606,6 @@ pub struct Function<'a> {
     /// }
     /// ```
     pub body: Option<Box<'a, FunctionBody<'a>>>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1699,8 +1679,8 @@ pub struct FunctionBody<'a> {
 /// Arrow Function Definitions
 #[ast(visit)]
 #[scope(
-    flags(ScopeFlags::Function | ScopeFlags::Arrow),
-    strict_if(self.has_use_strict_directive()),
+    flags = ScopeFlags::Function | ScopeFlags::Arrow,
+    strict_if = self.has_use_strict_directive(),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1716,8 +1696,6 @@ pub struct ArrowFunctionExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
     pub body: Box<'a, FunctionBody<'a>>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1733,7 +1711,7 @@ pub struct YieldExpression<'a> {
 
 /// Class Definitions
 #[ast(visit)]
-#[scope(flags(ScopeFlags::StrictMode))]
+#[scope(flags = ScopeFlags::StrictMode)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Class<'a> {
@@ -1803,8 +1781,6 @@ pub struct Class<'a> {
     pub declare: bool,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -2049,14 +2025,12 @@ pub struct PrivateIdentifier<'a> {
 /// }
 /// ```
 #[ast(visit)]
-#[scope(flags(ScopeFlags::ClassStaticBlock))]
+#[scope(flags = ScopeFlags::ClassStaticBlock)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct StaticBlock<'a> {
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
-    #[estree(skip)]
-    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

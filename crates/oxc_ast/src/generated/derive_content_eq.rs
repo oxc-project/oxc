@@ -3,7 +3,7 @@
 
 #![allow(clippy::match_same_arms)]
 
-use oxc_span::cmp::ContentEq;
+use oxc_span::ContentEq;
 
 use crate::ast::comment::*;
 use crate::ast::js::*;
@@ -1455,6 +1455,30 @@ impl ContentEq for BooleanLiteral {
 impl ContentEq for NullLiteral {
     fn content_eq(&self, _: &Self) -> bool {
         true
+    }
+}
+
+impl ContentEq for NumericLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for StringLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for BigIntLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.raw, &other.raw)
+    }
+}
+
+impl ContentEq for RegExpLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.regex, &other.regex)
     }
 }
 

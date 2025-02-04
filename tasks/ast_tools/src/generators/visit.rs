@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use oxc_index::IndexVec;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use syn::{parse_str, punctuated::Punctuated, token::Comma, Expr, Ident, Meta, MetaList};
+use syn::{parse_str, punctuated::Punctuated, token::Comma, Expr, Ident, Meta};
 
 use crate::{
     output::{output_path, Output},
@@ -122,33 +122,20 @@ fn parse_scope_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         }))
     }
 
-    fn parse_list(meta_list: &MetaList) -> Result<String> {
-        let exprs = meta_list
-            .parse_args_with(Punctuated::<Expr, Comma>::parse_terminated)
-            .map_err(|_| ())?;
-        if exprs.len() == 1 {
-            Ok(exprs.first().unwrap().to_token_stream().to_string())
-        } else {
-            Err(())
-        }
-    }
-
     match (part, location) {
         // `#[scope]` on struct
         (AttrPart::None, AttrLocation::Struct(struct_def)) => {
             get_or_create_scope(struct_def)?;
         }
-        // `#[scope(flags(...))` on struct
-        (AttrPart::List("flags", meta_list), AttrLocation::Struct(struct_def)) => {
-            // TODO: Make syntax `#[scope(flags = ...)]`, so can use `AttrPart::String` instead of parsing here
+        // `#[scope(flags = ...)` on struct
+        (AttrPart::String("flags", value), AttrLocation::Struct(struct_def)) => {
             let scope = get_or_create_scope(struct_def)?;
-            scope.flags = parse_list(meta_list)?;
+            scope.flags = value;
         }
-        // `#[scope(strict_if(...))` on struct
-        (AttrPart::List("strict_if", meta_list), AttrLocation::Struct(struct_def)) => {
-            // TODO: Make syntax `#[scope(strict_if = ...)]`, so can use `AttrPart::String` instead of parsing here
+        // `#[scope(strict_if = ...)` on struct
+        (AttrPart::String("strict_if", value), AttrLocation::Struct(struct_def)) => {
             let scope = get_or_create_scope(struct_def)?;
-            scope.strict_if = Some(parse_list(meta_list)?);
+            scope.strict_if = Some(value);
         }
         // `#[scope(enter_before)]` on struct field
         (AttrPart::Tag("enter_before"), AttrLocation::StructField(struct_def, field_index)) => {

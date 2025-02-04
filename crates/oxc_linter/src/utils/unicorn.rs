@@ -7,7 +7,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::AstNode;
-use oxc_span::cmp::ContentEq;
+use oxc_span::ContentEq;
 use oxc_syntax::operator::LogicalOperator;
 
 pub use self::boolean::*;

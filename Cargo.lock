@@ -1580,6 +1580,7 @@ version = "0.48.2"
 dependencies = [
  "bitflags 2.7.0",
  "cow-utils",
+ "nonmax",
  "num-bigint",
  "num-traits",
  "oxc_allocator",

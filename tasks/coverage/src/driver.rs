@@ -11,7 +11,7 @@ use oxc::{
     parser::{ParseOptions, ParserReturn},
     regular_expression::{LiteralParser, Options},
     semantic::{Semantic, SemanticBuilderReturn},
-    span::{cmp::ContentEq, SourceType, Span},
+    span::{ContentEq, SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };

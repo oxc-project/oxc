@@ -8,7 +8,7 @@ use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use crate::{cmp::ContentEq, CompactStr};
+use crate::{CompactStr, ContentEq};
 
 /// An inlinable string for oxc_allocator.
 ///

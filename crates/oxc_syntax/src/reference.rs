@@ -1,14 +1,21 @@
 #![allow(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
-use oxc_allocator::CloneIn;
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
+use oxc_allocator::CloneIn;
+
 use crate::{node::NodeId, symbol::SymbolId};
 
+use oxc_ast_macros::ast;
+
+#[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[clone_in(default)]
+#[content_eq(skip)]
+#[estree(skip)]
 pub struct ReferenceId(NonMaxU32);
 
 impl Idx for ReferenceId {

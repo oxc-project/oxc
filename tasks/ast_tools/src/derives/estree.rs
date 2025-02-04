@@ -26,13 +26,21 @@ impl Derive for DeriveESTree {
         "ESTree"
     }
 
+    fn crate_name(&self) -> &'static str {
+        "oxc_estree"
+    }
+
     fn snake_name(&self) -> String {
         "estree".to_string()
     }
 
     /// Register that accept `#[estree]` attr on structs, enums, struct fields, or enum variants.
+    /// Allow attr on structs and enums which don't derive this trait.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[("estree", attr_positions!(Struct | Enum | StructField | EnumVariant))]
+        &[(
+            "estree",
+            attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
+        )]
     }
 
     /// Parse `#[estree]` attr.
@@ -80,7 +88,8 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
     match location {
         // `#[estree]` attr on struct
         AttrLocation::Struct(struct_def) => match part {
-            AttrPart::Tag("always_flatten") => struct_def.estree.always_flatten = true,
+            AttrPart::Tag("skip") => struct_def.estree.skip = true,
+            AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
             AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
             AttrPart::String("rename", value) => struct_def.estree.rename = Some(value),
@@ -90,6 +99,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         },
         // `#[estree]` attr on enum
         AttrLocation::Enum(enum_def) => match part {
+            AttrPart::Tag("skip") => enum_def.estree.skip = true,
             AttrPart::Tag("no_rename_variants") => enum_def.estree.no_rename_variants = true,
             AttrPart::Tag("custom_ts_def") => enum_def.estree.custom_ts_def = true,
             _ => return Err(()),
@@ -160,7 +170,7 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
     }
 
     for field in &struct_def.fields {
-        if !field.estree.skip {
+        if !should_skip_field(field, schema) {
             stmts.extend(generate_stmt_for_struct_field(field, struct_def, schema));
         }
     }
@@ -259,10 +269,29 @@ pub fn should_add_type_field_to_struct(struct_def: &StructDef) -> bool {
     }
 }
 
+/// Get if a struct field should be skipped when serializing.
+///
+/// Returns `true` if either the field has an `#[estree(skip)]` attr on it,
+/// or the type that the field contains has an `#[estree(skip)]` attr.
+///
+/// This function also used by Typescript generator.
+pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
+    if field.estree.skip {
+        true
+    } else {
+        let innermost_type = field.type_def(schema).innermost_type(schema);
+        match innermost_type {
+            TypeDef::Struct(struct_def) => struct_def.estree.skip,
+            TypeDef::Enum(enum_def) => enum_def.estree.skip,
+            _ => false,
+        }
+    }
+}
+
 /// Get if should flatten a struct field.
 ///
 /// Returns `true` if either the field has an `#[estree(flatten)]` attr on it,
-/// or the type that the field contains has an `#[estree(always_flatten)]` attr.
+/// or the type that the field contains has an `#[estree(flatten)]` attr.
 ///
 /// This function also used by Typescript generator.
 pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
@@ -270,7 +299,7 @@ pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
         true
     } else {
         let field_type = field.type_def(schema);
-        matches!(field_type, TypeDef::Struct(field_struct_def) if field_struct_def.estree.always_flatten)
+        matches!(field_type, TypeDef::Struct(field_struct_def) if field_struct_def.estree.flatten)
     }
 }
 

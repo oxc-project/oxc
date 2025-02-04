@@ -7,7 +7,7 @@
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{cmp::ContentEq, Atom, GetSpan, GetSpanMut, Span};
+use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
 
 use super::{inherit_variants, js::*, literal::*, ts::*};
 

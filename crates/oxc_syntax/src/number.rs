@@ -1,7 +1,7 @@
 #![allow(missing_docs)] // fixme
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
-use oxc_span::cmp::ContentEq;
+use oxc_span::ContentEq;
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

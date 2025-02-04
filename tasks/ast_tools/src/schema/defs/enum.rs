@@ -9,6 +9,8 @@ use crate::utils::create_ident;
 
 use super::{
     extensions::{
+        clone_in::CloneInType,
+        content_eq::ContentEqType,
         estree::{ESTreeEnum, ESTreeEnumVariant},
         kind::Kind,
         layout::Layout,
@@ -33,6 +35,8 @@ pub struct EnumDef {
     pub visit: VisitEnum,
     pub kind: Kind,
     pub layout: Layout,
+    pub clone_in: CloneInType,
+    pub content_eq: ContentEqType,
     pub estree: ESTreeEnum,
 }
 
@@ -58,6 +62,8 @@ impl EnumDef {
             visit: VisitEnum::default(),
             kind: Kind::default(),
             layout: Layout::default(),
+            clone_in: CloneInType::default(),
+            content_eq: ContentEqType::default(),
             estree: ESTreeEnum::default(),
         }
     }

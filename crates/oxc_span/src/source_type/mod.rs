@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
-use crate::cmp::ContentEq;
+use crate::ContentEq;
 
 mod error;
 pub use error::UnknownExtension;

@@ -325,11 +325,11 @@ function parseScopeArgsStr(argsStr, args, position) {
 
   try {
     while (true) {
-      const [keyRaw] = matchAndConsume(/^([a-z_]+)\(/);
+      const [keyRaw] = matchAndConsume(/^([a-z_]+) *= */);
       const key = SCOPE_ARGS_KEYS[keyRaw];
       position.assert(key, `Unexpected scope macro arg: ${key}`);
 
-      let bracketCount = 1,
+      let bracketCount = 0,
         index = 0;
       for (; index < argsStr.length; index++) {
         const char = argsStr[index];
@@ -337,20 +337,23 @@ function parseScopeArgsStr(argsStr, args, position) {
           bracketCount++;
         } else if (char === ')') {
           bracketCount--;
-          if (bracketCount === 0) break;
+        } else if (char === ',' && bracketCount === 0) {
+          break;
         }
       }
       position.assert(bracketCount === 0);
 
       args[key] = argsStr.slice(0, index).trim();
-      argsStr = argsStr.slice(index + 1);
+      argsStr = argsStr.slice(index);
       if (argsStr === '') break;
 
-      matchAndConsume(/^ ?, ?/);
+      matchAndConsume(/^\s*,\s*/);
     }
   } catch (err) {
     position.throw(`Cannot parse scope args: '${argsStr}': ${err?.message || 'Unknown error'}`);
   }
+
+  console.log(args);
 
   return args;
 }

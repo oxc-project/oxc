@@ -172,6 +172,7 @@
 use std::{fmt::Write, fs};
 
 use bpaf::{Bpaf, Parser};
+use quote::quote;
 use rayon::prelude::*;
 
 mod codegen;
@@ -187,9 +188,10 @@ use codegen::{get_runners, Codegen, Runner};
 use derives::Derive;
 use generators::Generator;
 use logger::{log, log_failed, log_result, log_success, logln};
-use output::{Output, RawOutput};
+use output::{output_path, Output, RawOutput};
 use parse::parse_files;
 use schema::Schema;
+use utils::create_ident;
 
 /// Paths to source files containing AST types
 static SOURCE_PATHS: &[&str] = &[
@@ -198,8 +200,12 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/ast/jsx.rs",
     "crates/oxc_ast/src/ast/ts.rs",
     "crates/oxc_ast/src/ast/comment.rs",
+    "crates/oxc_syntax/src/lib.rs",
     "crates/oxc_syntax/src/number.rs",
     "crates/oxc_syntax/src/operator.rs",
+    "crates/oxc_syntax/src/scope.rs",
+    "crates/oxc_syntax/src/symbol.rs",
+    "crates/oxc_syntax/src/reference.rs",
     "crates/oxc_span/src/span/types.rs",
     "crates/oxc_span/src/source_type/mod.rs",
     "crates/oxc_regular_expression/src/ast.rs",
@@ -291,6 +297,7 @@ fn main() {
     logln!("All Derives and Generators... Done!");
 
     // Edit `lib.rs` in `oxc_ast_macros` crate
+    outputs.push(generate_proc_macro());
     outputs.push(generate_updated_proc_macro(&codegen));
 
     // Add CI filter file to outputs
@@ -330,6 +337,38 @@ fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
     log_success!();
 
     Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
+}
+
+/// Generate function for proc macro in `oxc_ast_macros` crate.
+///
+/// This function translates trait name to path to the trait and any generic params.
+fn generate_proc_macro() -> RawOutput {
+    let match_arms = DERIVES.iter().map(|derive| {
+        let trait_name = derive.trait_name();
+        let trait_ident = create_ident(trait_name);
+        let crate_ident = create_ident(derive.crate_name());
+        if derive.trait_has_lifetime() {
+            quote!( #trait_name => (quote!(::#crate_ident::#trait_ident), quote!( <'static> )) )
+        } else {
+            quote!( #trait_name => (quote!(::#crate_ident::#trait_ident), TokenStream::new()) )
+        }
+    });
+
+    let output = quote! {
+        use proc_macro2::TokenStream;
+        use quote::quote;
+
+        ///@@line_break
+        pub fn get_trait_crate_and_generics(trait_name: &str) -> (TokenStream, TokenStream) {
+            match trait_name {
+                #(#match_arms,)*
+                _ => panic!("Invalid derive trait(generate_derive): {trait_name}"),
+            }
+        }
+    };
+
+    Output::Rust { path: output_path(AST_MACROS_CRATE_PATH, "mod.rs"), tokens: output }
+        .into_raw(file!())
 }
 
 /// Update the list of helper attributes for `Ast` derive proc macro in `oxc_ast_macros` crate

@@ -5,7 +5,13 @@ use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
+use oxc_ast_macros::ast;
+
+#[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[clone_in(default)]
+#[content_eq(skip)]
+#[estree(skip)]
 pub struct ScopeId(NonMaxU32);
 
 impl ScopeId {
