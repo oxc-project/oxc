@@ -115,13 +115,23 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> S
                     field.name()
                 ),
             };
-            let inner_type_name = ts_type_name(vec_def.inner_type(schema), schema);
 
-            // TODO: Reverse these two
-            let mut field_type_name = format!("Array<{appended_type_name} | {inner_type_name}>");
+            let mut inner_type = vec_def.inner_type(schema);
+            let mut inner_is_option = false;
+            if let TypeDef::Option(option_def) = inner_type {
+                inner_is_option = true;
+                inner_type = option_def.inner_type(schema);
+            }
+            let inner_type_name = ts_type_name(inner_type, schema);
+            let mut field_type_name = format!("Array<{inner_type_name} | {appended_type_name}");
+            if inner_is_option {
+                field_type_name.push_str(" | null");
+            }
+            field_type_name.push('>');
             if is_option {
                 field_type_name.push_str(" | null");
             }
+
             Cow::Owned(field_type_name)
         } else {
             get_field_type_name(field, schema)
