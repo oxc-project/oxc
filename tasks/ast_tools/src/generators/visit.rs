@@ -325,7 +325,10 @@ impl<'s> VisitBuilder<'s> {
             }
         }
     }
+}
 
+/// Generate visitors.
+impl VisitBuilder<'_> {
     /// Generate `visit_*` methods and `walk_*` functions for a struct.
     ///
     /// Also generates functions for types of struct fields.
@@ -501,6 +504,188 @@ impl<'s> VisitBuilder<'s> {
         Some((visit, visit_mut))
     }
 
+    /// Generate `visit_*` methods and `walk_*` functions for an enum.
+    ///
+    /// Also generates functions for types of enum variants.
+    fn generate_enum_visitor(&mut self, enum_def: &EnumDef) {
+        // Exit if this enum is not visited
+        let Some(visitor_names) = &enum_def.visit.visitor_names else { return };
+
+        // Generate visit methods
+        let enum_ty = enum_def.ty(self.schema);
+        let visit_fn_ident = create_ident(&visitor_names.visit);
+        let walk_fn_ident = create_ident(&visitor_names.walk);
+
+        let gen_visit = |reference| {
+            quote! {
+                ///@@line_break
+                #[inline]
+                fn #visit_fn_ident(&mut self, it: #reference #enum_ty) {
+                    #walk_fn_ident(self, it);
+                }
+            }
+        };
+        self.visit_methods.extend(gen_visit(quote!( & )));
+        self.visit_mut_methods.extend(gen_visit(quote!( &mut )));
+
+        // Generate walk functions
+        let enum_ident = enum_def.ident();
+        let has_kind = enum_def.kind.has_kind;
+        let (enter_node, leave_node) = generate_enter_and_leave_node(&enum_ident, has_kind, false);
+        let (enter_node_mut, leave_node_mut) =
+            generate_enter_and_leave_node(&enum_ident, has_kind, true);
+
+        let mut match_arm_count = 0usize;
+        let (variant_match_arms, variant_match_arms_mut): (TokenStream, TokenStream) = enum_def
+            .variants
+            .iter()
+            .filter_map(|variant| {
+                let variant_type = variant.field_type(self.schema)?;
+                let (visit, visit_mut) = self.generate_visit_type(
+                    variant_type,
+                    Target::Reference(create_ident_tokens("it")),
+                    variant.visit.visit_args.as_ref(),
+                    &create_ident_tokens("it"),
+                    false,
+                )?;
+
+                match_arm_count += 1;
+
+                let variant_ident = variant.ident();
+                let match_pattern = quote!( #enum_ident::#variant_ident(it) );
+                let match_arm = quote!( #match_pattern => #visit, );
+                let match_arm_mut = quote!( #match_pattern => #visit_mut, );
+                Some((match_arm, match_arm_mut))
+            })
+            .unzip();
+
+        let (inherits_match_arms, inherits_match_arms_mut): (TokenStream, TokenStream) = enum_def
+            .inherits_types(self.schema)
+            .map(|inherits_type| {
+                let inherits_type = inherits_type.as_enum().unwrap();
+                let inner_visit_fn_name = inherits_type.visit.visitor_name();
+                let Some(inner_visit_fn_name) = inner_visit_fn_name else {
+                    panic!(
+                        "When an enum inherits variants from another enum and the inheritor is visited, \
+                        the inherited enum must also be visited: `{}` inheriting from `{}`",
+                        enum_def.name(),
+                        inherits_type.name(),
+                    );
+                };
+
+                match_arm_count += 1;
+
+                let inner_visit_fn_ident = create_ident(inner_visit_fn_name);
+
+                let inherits_snake_name = inherits_type.snake_name();
+                let match_ident = format_ident!("match_{inherits_snake_name}");
+
+                let to_fn_ident = format_ident!("to_{inherits_snake_name}");
+                let match_arm = quote! {
+                    #match_ident!(#enum_ident) => visitor.#inner_visit_fn_ident(it.#to_fn_ident()),
+                };
+
+                let to_fn_ident_mut = format_ident!("to_{inherits_snake_name}_mut");
+                let match_arm_mut = quote! {
+                    #match_ident!(#enum_ident) => visitor.#inner_visit_fn_ident(it.#to_fn_ident_mut()),
+                };
+
+                (match_arm, match_arm_mut)
+            })
+            .unzip();
+
+        // Add catch-all match arm if not all variants are visited
+        let catch_all_match_arm =
+            if match_arm_count < enum_def.variants.len() + enum_def.inherits.len() {
+                quote!( _ => {} )
+            } else {
+                quote!()
+            };
+
+        // `#[inline]` if there are 5 or less match cases
+        // TODO: Is this ideal?
+        let maybe_inline_attr = if match_arm_count <= 5 { quote!( #[inline] ) } else { quote!() };
+
+        self.walk_fns.extend(quote! {
+            ///@@line_break
+            #maybe_inline_attr
+            pub fn #walk_fn_ident<'a, V: Visit<'a>>(visitor: &mut V, it: & #enum_ty) {
+                #enter_node
+                match it {
+                    #variant_match_arms
+                    #inherits_match_arms
+                    #catch_all_match_arm
+                }
+                #leave_node
+            }
+        });
+        self.walk_mut_fns.extend(quote! {
+            ///@@line_break
+            #maybe_inline_attr
+            pub fn #walk_fn_ident<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut #enum_ty) {
+                #enter_node_mut
+                match it {
+                    #variant_match_arms_mut
+                    #inherits_match_arms_mut
+                    #catch_all_match_arm
+                }
+                #leave_node_mut
+            }
+        });
+    }
+
+    /// Generate `visit_*` methods and `walk_*` functions for a `Vec`.
+    ///
+    /// Also generates functions for inner type (`T` in `Vec<T>`).
+    fn generate_vec_visitor(&mut self, vec_def: &VecDef) {
+        // Exit if this `Vec` does not have its own visitor
+        let Some(visitor_names) = &vec_def.visit.visitor_names else { return };
+
+        // Generate visit methods
+        let vec_ty = vec_def.ty(self.schema);
+        let visit_fn_ident = create_ident(&visitor_names.visit);
+        let walk_fn_ident = create_ident(&visitor_names.walk);
+
+        let gen_visit = |reference| {
+            quote! {
+                ///@@line_break
+                #[inline]
+                fn #visit_fn_ident(&mut self, it: #reference #vec_ty) {
+                    #walk_fn_ident(self, it);
+                }
+            }
+        };
+        self.visit_methods.extend(gen_visit(quote!( & )));
+        self.visit_mut_methods.extend(gen_visit(quote!( &mut )));
+
+        // Generate walk functions
+        let inner_type = vec_def.inner_type(self.schema);
+        let inner_visit_fn_name = match inner_type {
+            TypeDef::Struct(struct_def) => struct_def.visit.visitor_name().unwrap(),
+            TypeDef::Enum(enum_def) => enum_def.visit.visitor_name().unwrap(),
+            _ => unreachable!(),
+        };
+        let inner_visit_fn_ident = create_ident(inner_visit_fn_name);
+
+        let gen_walk = |visit_trait_name, reference| {
+            let visit_trait_ident = format_ident!("{visit_trait_name}");
+            quote! {
+                ///@@line_break
+                #[inline]
+                pub fn #walk_fn_ident<'a, V: #visit_trait_ident<'a>>(visitor: &mut V, it: #reference #vec_ty) {
+                    for el in it {
+                        visitor.#inner_visit_fn_ident(el);
+                    }
+                }
+            }
+        };
+        self.walk_fns.extend(gen_walk("Visit", quote!( & )));
+        self.walk_mut_fns.extend(gen_walk("VisitMut", quote!( &mut )));
+    }
+}
+
+/// Generate visitor calls.
+impl VisitBuilder<'_> {
     /// Generate visitor calls for a type.
     ///
     /// e.g.:
@@ -763,185 +948,6 @@ impl<'s> VisitBuilder<'s> {
         let visit_mut = gen_visit(inner_visit_mut, "iter_mut");
         Some((visit, visit_mut))
     }
-
-    /// Generate `visit_*` methods and `walk_*` functions for an enum.
-    ///
-    /// Also generates functions for types of enum variants.
-    fn generate_enum_visitor(&mut self, enum_def: &EnumDef) {
-        // Exit if this enum is not visited
-        let Some(visitor_names) = &enum_def.visit.visitor_names else { return };
-
-        // Generate visit methods
-        let enum_ty = enum_def.ty(self.schema);
-        let visit_fn_ident = create_ident(&visitor_names.visit);
-        let walk_fn_ident = create_ident(&visitor_names.walk);
-
-        let gen_visit = |reference| {
-            quote! {
-                ///@@line_break
-                #[inline]
-                fn #visit_fn_ident(&mut self, it: #reference #enum_ty) {
-                    #walk_fn_ident(self, it);
-                }
-            }
-        };
-        self.visit_methods.extend(gen_visit(quote!( & )));
-        self.visit_mut_methods.extend(gen_visit(quote!( &mut )));
-
-        // Generate walk functions
-        let enum_ident = enum_def.ident();
-        let has_kind = enum_def.kind.has_kind;
-        let (enter_node, leave_node) = generate_enter_and_leave_node(&enum_ident, has_kind, false);
-        let (enter_node_mut, leave_node_mut) =
-            generate_enter_and_leave_node(&enum_ident, has_kind, true);
-
-        let mut match_arm_count = 0usize;
-        let (variant_match_arms, variant_match_arms_mut): (TokenStream, TokenStream) = enum_def
-            .variants
-            .iter()
-            .filter_map(|variant| {
-                let variant_type = variant.field_type(self.schema)?;
-                let (visit, visit_mut) = self.generate_visit_type(
-                    variant_type,
-                    Target::Reference(create_ident_tokens("it")),
-                    variant.visit.visit_args.as_ref(),
-                    &create_ident_tokens("it"),
-                    false,
-                )?;
-
-                match_arm_count += 1;
-
-                let variant_ident = variant.ident();
-                let match_pattern = quote!( #enum_ident::#variant_ident(it) );
-                let match_arm = quote!( #match_pattern => #visit, );
-                let match_arm_mut = quote!( #match_pattern => #visit_mut, );
-                Some((match_arm, match_arm_mut))
-            })
-            .unzip();
-
-        let (inherits_match_arms, inherits_match_arms_mut): (TokenStream, TokenStream) = enum_def
-            .inherits_types(self.schema)
-            .map(|inherits_type| {
-                let inherits_type = inherits_type.as_enum().unwrap();
-                let inner_visit_fn_name = inherits_type.visit.visitor_name();
-                let Some(inner_visit_fn_name) = inner_visit_fn_name else {
-                    panic!(
-                        "When an enum inherits variants from another enum and the inheritor is visited, \
-                        the inherited enum must also be visited: `{}` inheriting from `{}`",
-                        enum_def.name(),
-                        inherits_type.name(),
-                    );
-                };
-
-                match_arm_count += 1;
-
-                let inner_visit_fn_ident = create_ident(inner_visit_fn_name);
-
-                let inherits_snake_name = inherits_type.snake_name();
-                let match_ident = format_ident!("match_{inherits_snake_name}");
-
-                let to_fn_ident = format_ident!("to_{inherits_snake_name}");
-                let match_arm = quote! {
-                    #match_ident!(#enum_ident) => visitor.#inner_visit_fn_ident(it.#to_fn_ident()),
-                };
-
-                let to_fn_ident_mut = format_ident!("to_{inherits_snake_name}_mut");
-                let match_arm_mut = quote! {
-                    #match_ident!(#enum_ident) => visitor.#inner_visit_fn_ident(it.#to_fn_ident_mut()),
-                };
-
-                (match_arm, match_arm_mut)
-            })
-            .unzip();
-
-        // Add catch-all match arm if not all variants are visited
-        let catch_all_match_arm =
-            if match_arm_count < enum_def.variants.len() + enum_def.inherits.len() {
-                quote!( _ => {} )
-            } else {
-                quote!()
-            };
-
-        // `#[inline]` if there are 5 or less match cases
-        // TODO: Is this ideal?
-        let maybe_inline_attr = if match_arm_count <= 5 { quote!( #[inline] ) } else { quote!() };
-
-        self.walk_fns.extend(quote! {
-            ///@@line_break
-            #maybe_inline_attr
-            pub fn #walk_fn_ident<'a, V: Visit<'a>>(visitor: &mut V, it: & #enum_ty) {
-                #enter_node
-                match it {
-                    #variant_match_arms
-                    #inherits_match_arms
-                    #catch_all_match_arm
-                }
-                #leave_node
-            }
-        });
-        self.walk_mut_fns.extend(quote! {
-            ///@@line_break
-            #maybe_inline_attr
-            pub fn #walk_fn_ident<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut #enum_ty) {
-                #enter_node_mut
-                match it {
-                    #variant_match_arms_mut
-                    #inherits_match_arms_mut
-                    #catch_all_match_arm
-                }
-                #leave_node_mut
-            }
-        });
-    }
-
-    /// Generate `visit_*` methods and `walk_*` functions for a `Vec`.
-    ///
-    /// Also generates functions for inner type (`T` in `Vec<T>`).
-    fn generate_vec_visitor(&mut self, vec_def: &VecDef) {
-        // Exit if this `Vec` does not have its own visitor
-        let Some(visitor_names) = &vec_def.visit.visitor_names else { return };
-
-        // Generate visit methods
-        let vec_ty = vec_def.ty(self.schema);
-        let visit_fn_ident = create_ident(&visitor_names.visit);
-        let walk_fn_ident = create_ident(&visitor_names.walk);
-
-        let gen_visit = |reference| {
-            quote! {
-                ///@@line_break
-                #[inline]
-                fn #visit_fn_ident(&mut self, it: #reference #vec_ty) {
-                    #walk_fn_ident(self, it);
-                }
-            }
-        };
-        self.visit_methods.extend(gen_visit(quote!( & )));
-        self.visit_mut_methods.extend(gen_visit(quote!( &mut )));
-
-        // Generate walk functions
-        let inner_type = vec_def.inner_type(self.schema);
-        let inner_visit_fn_name = match inner_type {
-            TypeDef::Struct(struct_def) => struct_def.visit.visitor_name().unwrap(),
-            TypeDef::Enum(enum_def) => enum_def.visit.visitor_name().unwrap(),
-            _ => unreachable!(),
-        };
-        let inner_visit_fn_ident = create_ident(inner_visit_fn_name);
-
-        let gen_walk = |visit_trait_name, reference| {
-            let visit_trait_ident = format_ident!("{visit_trait_name}");
-            quote! {
-                ///@@line_break
-                #[inline]
-                pub fn #walk_fn_ident<'a, V: #visit_trait_ident<'a>>(visitor: &mut V, it: #reference #vec_ty) {
-                    for el in it {
-                        visitor.#inner_visit_fn_ident(el);
-                    }
-                }
-            }
-        };
-        self.walk_fns.extend(gen_walk("Visit", quote!( & )));
-        self.walk_mut_fns.extend(gen_walk("VisitMut", quote!( &mut )));
-    }
 }
 
 /// Target for a visit function call.
@@ -949,6 +955,7 @@ impl<'s> VisitBuilder<'s> {
 /// * `Target::Reference` represents a variable which is already a reference.
 ///   e.g. `span` in `if let Some(span) = &it.span {}`
 ///   Does not need `&` / `&mut` prepended to it when using it.
+///
 /// * `Target::Property` represents an object property e.g. `it.span`.
 ///   Needs `&` / `&mut` prepended to it when using it in most circumstances.
 enum Target {
@@ -968,7 +975,7 @@ impl Target {
         }
     }
 
-    /// Get this [`Target`] as token stream, without prepending `&` / `&mut`.
+    /// Get this [`Target`] without prepending `&` / `&mut`.
     fn into_tokens(self) -> TokenStream {
         match self {
             Self::Reference(ident) => ident,
