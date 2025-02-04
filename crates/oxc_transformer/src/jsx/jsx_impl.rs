@@ -608,7 +608,7 @@ impl<'a> JsxImpl<'a, '_> {
                                 let argument = unsafe { ctx.ast.copy(expr) };
                                 let object_property = ctx
                                     .ast
-                                    .object_property_kind_spread_element(spread.span, argument);
+                                    .object_property_kind_spread_property(spread.span, argument);
                                 properties.push(object_property);
                             }
                         }
@@ -641,7 +641,7 @@ impl<'a> JsxImpl<'a, '_> {
                 properties.push(ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_identifier_name(SPAN, "children"),
+                    ctx.ast.property_key_static_identifier(SPAN, "children"),
                     value,
                     false,
                     false,
@@ -945,7 +945,7 @@ impl<'a> JsxImpl<'a, '_> {
                 if ident.name.contains('-') {
                     PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name, None))
                 } else {
-                    ctx.ast.property_key_identifier_name(ident.span, name)
+                    ctx.ast.property_key_static_identifier(ident.span, name)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {

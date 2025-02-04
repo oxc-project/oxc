@@ -139,7 +139,7 @@ impl<'a> ParserImpl<'a> {
         // <namespace:property />
         if self.eat(Kind::Colon) {
             let property = self.parse_jsx_identifier()?;
-            return Ok(self.ast.jsx_element_name_jsx_namespaced_name(
+            return Ok(self.ast.jsx_element_name_namespaced_name(
                 self.end_span(span),
                 identifier,
                 property,
@@ -199,7 +199,7 @@ impl<'a> ParserImpl<'a> {
             // <foo.bar.baz>
             if let Some(prop) = property {
                 object =
-                    self.ast.jsx_member_expression_object_jsx_member_expression(span, object, prop);
+                    self.ast.jsx_member_expression_object_member_expression(span, object, prop);
             }
 
             // <foo.bar>
@@ -370,7 +370,7 @@ impl<'a> ParserImpl<'a> {
 
         if self.eat(Kind::Colon) {
             let property = self.parse_jsx_identifier()?;
-            return Ok(self.ast.jsx_attribute_name_jsx_namespaced_name(
+            return Ok(self.ast.jsx_attribute_name_namespaced_name(
                 self.end_span(span),
                 identifier,
                 property,

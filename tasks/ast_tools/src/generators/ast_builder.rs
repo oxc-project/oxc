@@ -410,7 +410,7 @@ fn generate_builder_method_for_enum_variant(
 
     let enum_ident = enum_def.ident();
     let enum_ty = enum_def.ty(schema);
-    let fn_name = enum_variant_builder_name(enum_def, variant, schema);
+    let fn_name = enum_variant_builder_name(enum_def, variant);
     let variant_ident = variant.ident();
     let inner_builder_name = struct_builder_name(&variant_type.snake_name(), is_boxed);
 
@@ -455,16 +455,10 @@ fn struct_builder_name(snake_name: &str, does_alloc: bool) -> Ident {
 }
 
 /// Get name of enum variant builder method.
-fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef, schema: &Schema) -> Ident {
+fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef) -> Ident {
     let enum_name = enum_def.snake_name();
 
-    // TODO: `let variant_name = variant.snake_name();` would be better
-    let mut variant_type = variant.field_type(schema).unwrap();
-    if let TypeDef::Box(box_def) = variant_type {
-        variant_type = box_def.inner_type(schema);
-    }
-    let variant_name = variant_type.snake_name();
-
+    let variant_name = variant.snake_name();
     let variant_name = if variant_name.len() > enum_name.len()
         && variant_name.ends_with(&enum_name)
         && variant_name.as_bytes()[variant_name.len() - enum_name.len() - 1] == b'_'

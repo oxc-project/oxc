@@ -306,7 +306,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn expression_identifier_reference<A>(self, span: Span, name: A) -> Expression<'a>
+    pub fn expression_identifier<A>(self, span: Span, name: A) -> Expression<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
@@ -1411,7 +1411,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `argument`: The expression being spread.
     #[inline]
-    pub fn object_property_kind_spread_element(
+    pub fn object_property_kind_spread_property(
         self,
         span: Span,
         argument: Expression<'a>,
@@ -1482,7 +1482,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn property_key_identifier_name<A>(self, span: Span, name: A) -> PropertyKey<'a>
+    pub fn property_key_static_identifier<A>(self, span: Span, name: A) -> PropertyKey<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
@@ -2289,7 +2289,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The name of the identifier being referenced.
     #[inline]
-    pub fn simple_assignment_target_identifier_reference<A>(
+    pub fn simple_assignment_target_assignment_target_identifier<A>(
         self,
         span: Span,
         name: A,
@@ -6965,11 +6965,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn import_attribute_key_identifier_name<A>(
-        self,
-        span: Span,
-        name: A,
-    ) -> ImportAttributeKey<'a>
+    pub fn import_attribute_key_identifier<A>(self, span: Span, name: A) -> ImportAttributeKey<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
@@ -7218,7 +7214,7 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn export_default_declaration_kind_function<T1, T2, T3, T4, T5>(
+    pub fn export_default_declaration_kind_function_declaration<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -7271,7 +7267,7 @@ impl<'a> AstBuilder<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn export_default_declaration_kind_class<T1, T2, T3>(
+    pub fn export_default_declaration_kind_class_declaration<T1, T2, T3>(
         self,
         span: Span,
         r#type: ClassType,
@@ -7783,7 +7779,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn jsx_element_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXElementName<'a>
+    pub fn jsx_element_name_identifier<A>(self, span: Span, name: A) -> JSXElementName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
@@ -7814,7 +7810,7 @@ impl<'a> AstBuilder<'a> {
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
-    pub fn jsx_element_name_jsx_namespaced_name(
+    pub fn jsx_element_name_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
@@ -7832,7 +7828,7 @@ impl<'a> AstBuilder<'a> {
     /// * `object`: The object being accessed. This is everything before the last `.`.
     /// * `property`: The property being accessed. This is everything after the last `.`.
     #[inline]
-    pub fn jsx_element_name_jsx_member_expression(
+    pub fn jsx_element_name_member_expression(
         self,
         span: Span,
         object: JSXMemberExpressionObject<'a>,
@@ -7952,7 +7948,7 @@ impl<'a> AstBuilder<'a> {
     /// * `object`: The object being accessed. This is everything before the last `.`.
     /// * `property`: The property being accessed. This is everything after the last `.`.
     #[inline]
-    pub fn jsx_member_expression_object_jsx_member_expression(
+    pub fn jsx_member_expression_object_member_expression(
         self,
         span: Span,
         object: JSXMemberExpressionObject<'a>,
@@ -8014,7 +8010,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     #[inline]
-    pub fn jsx_expression_jsx_empty_expression(self, span: Span) -> JSXExpression<'a> {
+    pub fn jsx_expression_empty_expression(self, span: Span) -> JSXExpression<'a> {
         JSXExpression::EmptyExpression(self.jsx_empty_expression(span))
     }
 
@@ -8049,7 +8045,7 @@ impl<'a> AstBuilder<'a> {
     /// * `name`: The name of the attribute. This is a prop in React-like applications.
     /// * `value`: The value of the attribute. This can be a string literal, an expression,
     #[inline]
-    pub fn jsx_attribute_item_jsx_attribute(
+    pub fn jsx_attribute_item_attribute(
         self,
         span: Span,
         name: JSXAttributeName<'a>,
@@ -8066,7 +8062,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `argument`: The expression being spread.
     #[inline]
-    pub fn jsx_attribute_item_jsx_spread_attribute(
+    pub fn jsx_attribute_item_spread_attribute(
         self,
         span: Span,
         argument: Expression<'a>,
@@ -8150,7 +8146,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `name`: The name of the identifier.
     #[inline]
-    pub fn jsx_attribute_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXAttributeName<'a>
+    pub fn jsx_attribute_name_identifier<A>(self, span: Span, name: A) -> JSXAttributeName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
@@ -8166,7 +8162,7 @@ impl<'a> AstBuilder<'a> {
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
-    pub fn jsx_attribute_name_jsx_namespaced_name(
+    pub fn jsx_attribute_name_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
@@ -8204,7 +8200,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `expression`: The expression inside the container.
     #[inline]
-    pub fn jsx_attribute_value_jsx_expression_container(
+    pub fn jsx_attribute_value_expression_container(
         self,
         span: Span,
         expression: JSXExpression<'a>,
@@ -8224,7 +8220,7 @@ impl<'a> AstBuilder<'a> {
     /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
     /// * `children`: Children of the element. This can be text, other elements, or expressions.
     #[inline]
-    pub fn jsx_attribute_value_jsx_element<T1, T2>(
+    pub fn jsx_attribute_value_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
@@ -8253,7 +8249,7 @@ impl<'a> AstBuilder<'a> {
     /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
     #[inline]
-    pub fn jsx_attribute_value_jsx_fragment(
+    pub fn jsx_attribute_value_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
@@ -8306,7 +8302,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The text content.
     #[inline]
-    pub fn jsx_child_jsx_text<A>(self, span: Span, value: A) -> JSXChild<'a>
+    pub fn jsx_child_text<A>(self, span: Span, value: A) -> JSXChild<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
@@ -8323,7 +8319,7 @@ impl<'a> AstBuilder<'a> {
     /// * `closing_element`: Closing tag of the element. Will be [`None`] for self-closing tags.
     /// * `children`: Children of the element. This can be text, other elements, or expressions.
     #[inline]
-    pub fn jsx_child_jsx_element<T1, T2>(
+    pub fn jsx_child_element<T1, T2>(
         self,
         span: Span,
         opening_element: T1,
@@ -8347,7 +8343,7 @@ impl<'a> AstBuilder<'a> {
     /// * `closing_fragment`: `</>`
     /// * `children`: Elements inside the fragment.
     #[inline]
-    pub fn jsx_child_jsx_fragment(
+    pub fn jsx_child_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
@@ -8370,7 +8366,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `expression`: The expression inside the container.
     #[inline]
-    pub fn jsx_child_jsx_expression_container(
+    pub fn jsx_child_expression_container(
         self,
         span: Span,
         expression: JSXExpression<'a>,
@@ -8386,11 +8382,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `expression`: The expression being spread.
     #[inline]
-    pub fn jsx_child_jsx_spread_child(
-        self,
-        span: Span,
-        expression: Expression<'a>,
-    ) -> JSXChild<'a> {
+    pub fn jsx_child_spread(self, span: Span, expression: Expression<'a>) -> JSXChild<'a> {
         JSXChild::Spread(self.alloc_jsx_spread_child(span, expression))
     }
 
@@ -8644,7 +8636,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn ts_enum_member_name_identifier_name<A>(self, span: Span, name: A) -> TSEnumMemberName<'a>
+    pub fn ts_enum_member_name_identifier<A>(self, span: Span, name: A) -> TSEnumMemberName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
@@ -8660,7 +8652,7 @@ impl<'a> AstBuilder<'a> {
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn ts_enum_member_name_string_literal<A>(
+    pub fn ts_enum_member_name_string<A>(
         self,
         span: Span,
         value: A,
@@ -9360,7 +9352,7 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `type_annotation`: The type being operated on
     #[inline]
-    pub fn ts_type_type_operator(
+    pub fn ts_type_type_operator_type(
         self,
         span: Span,
         operator: TSTypeOperatorOperator,
@@ -11729,7 +11721,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn ts_type_predicate_name_identifier_name<A>(
+    pub fn ts_type_predicate_name_identifier<A>(
         self,
         span: Span,
         name: A,
@@ -11745,7 +11737,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     #[inline]
-    pub fn ts_type_predicate_name_this_type(self, span: Span) -> TSTypePredicateName<'a> {
+    pub fn ts_type_predicate_name_this(self, span: Span) -> TSTypePredicateName<'a> {
         TSTypePredicateName::This(self.ts_this_type(span))
     }
 
@@ -11850,7 +11842,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`: The identifier name being bound.
     #[inline]
-    pub fn ts_module_declaration_name_binding_identifier<A>(
+    pub fn ts_module_declaration_name_identifier<A>(
         self,
         span: Span,
         name: A,
@@ -12248,7 +12240,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     #[inline]
-    pub fn ts_import_attribute_name_identifier_name<A>(
+    pub fn ts_import_attribute_name_identifier<A>(
         self,
         span: Span,
         name: A,

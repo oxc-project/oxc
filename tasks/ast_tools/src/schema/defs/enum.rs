@@ -183,6 +183,11 @@ impl VariantDef {
         &self.name
     }
 
+    /// Get variant name in snake case.
+    pub fn snake_name(&self) -> String {
+        self.name().to_case(Case::Snake)
+    }
+
     /// Get variant name in camel case.
     pub fn camel_name(&self) -> String {
         self.name().to_case(Case::Camel)

@@ -459,7 +459,8 @@ impl<'a> PeepholeOptimizations {
                 // The `_` will not be placed to the target code.
                 let target = std::mem::replace(
                     target,
-                    ctx.ast.simple_assignment_target_identifier_reference(target.span(), "_"),
+                    ctx.ast
+                        .simple_assignment_target_assignment_target_identifier(target.span(), "_"),
                 );
                 Some(ctx.ast.expression_update(expr.span, UpdateOperator::Decrement, true, target))
             }
@@ -471,7 +472,10 @@ impl<'a> PeepholeOptimizations {
                     // The `_` will not be placed to the target code.
                     let target = std::mem::replace(
                         target,
-                        ctx.ast.simple_assignment_target_identifier_reference(target.span(), "_"),
+                        ctx.ast.simple_assignment_target_assignment_target_identifier(
+                            target.span(),
+                            "_",
+                        ),
                     );
                     ctx.ast.expression_update(expr.span, UpdateOperator::Increment, true, target)
                 })

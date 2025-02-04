@@ -87,7 +87,7 @@ impl<'a> JsxSelf<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = ctx.ast.property_key_identifier_name(SPAN, SELF);
+        let key = ctx.ast.property_key_static_identifier(SPAN, SELF);
         let value = ctx.ast.expression_this(SPAN);
         ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }
@@ -111,12 +111,12 @@ impl<'a> JsxSelf<'a, '_> {
             }
         }
 
-        let name = ctx.ast.jsx_attribute_name_jsx_identifier(SPAN, SELF);
+        let name = ctx.ast.jsx_attribute_name_identifier(SPAN, SELF);
         let value = {
             let jsx_expr = JSXExpression::from(ctx.ast.expression_this(SPAN));
-            ctx.ast.jsx_attribute_value_jsx_expression_container(SPAN, jsx_expr)
+            ctx.ast.jsx_attribute_value_expression_container(SPAN, jsx_expr)
         };
-        let attribute = ctx.ast.jsx_attribute_item_jsx_attribute(SPAN, name, Some(value));
+        let attribute = ctx.ast.jsx_attribute_item_attribute(SPAN, name, Some(value));
         elem.attributes.push(attribute);
     }
 }
