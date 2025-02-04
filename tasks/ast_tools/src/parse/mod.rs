@@ -65,7 +65,6 @@ mod load;
 mod parse;
 mod skeleton;
 use load::load_file;
-pub use parse::convert_expr_to_string;
 use parse::parse;
 use skeleton::Skeleton;
 

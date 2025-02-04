@@ -4,11 +4,10 @@ use cow_utils::CowUtils;
 use oxc_index::IndexVec;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use syn::{parse_str, punctuated::Punctuated, token::Comma, Expr, Ident, Meta};
+use syn::{parse_str, Expr, Ident};
 
 use crate::{
     output::{output_path, Output},
-    parse::convert_expr_to_string,
     schema::{
         extensions::visit::Scope, Def, EnumDef, FieldDef, OptionDef, Schema, StructDef, TypeDef,
         TypeId, VecDef,
@@ -17,7 +16,9 @@ use crate::{
     Codegen, Generator, Result, AST_CRATE_PATH,
 };
 
-use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
+use super::{
+    attr_positions, define_generator, AttrLocation, AttrPart, AttrPartListElement, AttrPositions,
+};
 
 /// Generator for `Visit` and `VisitMut` traits.
 pub struct VisitGenerator;
@@ -72,21 +73,14 @@ fn parse_visit_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             enum_def.visit.is_visited = true;
         }
         // `#[visit(args(flags = ...))]` on struct field or enum variant
-        (AttrPart::List("args", meta_list), location) => {
-            // Parse args as a list of `x = expr` parts
-            let metas = meta_list
-                .parse_args_with(Punctuated::<Meta, Comma>::parse_terminated)
-                .map_err(|_| ())?;
-            let mut args = vec![];
-            for meta in metas {
-                if let Meta::NameValue(name_value) = meta {
-                    let arg_name = name_value.path.get_ident().ok_or(())?.to_string();
-                    let arg_value = convert_expr_to_string(&name_value.value);
-                    args.push((arg_name, arg_value));
-                } else {
-                    return Err(());
-                }
-            }
+        (AttrPart::List("args", args), location) => {
+            let args = args
+                .into_iter()
+                .map(|list_element| match list_element {
+                    AttrPartListElement::String(name, value) => Ok((name, value)),
+                    _ => Err(()),
+                })
+                .collect::<Result<Vec<(String, String)>>>()?;
             if args.is_empty() {
                 return Err(());
             }

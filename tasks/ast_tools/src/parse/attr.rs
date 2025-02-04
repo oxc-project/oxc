@@ -1,7 +1,6 @@
 use std::fmt::{self, Display};
 
 use bitflags::bitflags;
-use syn::MetaList;
 
 use crate::{
     codegen::{DeriveId, GeneratorId},
@@ -146,5 +145,21 @@ pub enum AttrPart<'p> {
     String(&'p str, String),
     /// List part.
     /// e.g. `#[visit(args(flags = ScopeFlags::Function))]`.
-    List(&'p str, &'p MetaList),
+    List(&'p str, Vec<AttrPartListElement>),
+}
+
+/// An element of an [`AttrPart::List`].
+#[derive(Debug)]
+pub enum AttrPartListElement {
+    /// Named part.
+    /// e.g. `qux` in `#[foo(bar(qux))]`.
+    #[expect(dead_code)]
+    Tag(String),
+    /// String part.
+    /// e.g. `flags = ScopeFlags::Function` in `#[visit(args(flags = ScopeFlags::Function))]`.
+    String(String, String),
+    /// List part.
+    /// e.g. `qux(doof, bing = donk)` in `#[foo(bar(qux(doof, bing = donk)))]`.
+    #[expect(dead_code)]
+    List(String, Vec<AttrPartListElement>),
 }

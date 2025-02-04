@@ -3,8 +3,8 @@ use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::{
     punctuated::Punctuated, token::Comma, AttrStyle, Attribute, Expr, ExprLit, Field, Fields,
-    GenericArgument, Generics, Ident, ItemEnum, ItemStruct, Lit, Meta, PathArguments, PathSegment,
-    Type, TypePath, TypeReference, Variant, Visibility as SynVisibility,
+    GenericArgument, Generics, Ident, ItemEnum, ItemStruct, Lit, Meta, MetaList, PathArguments,
+    PathSegment, Type, TypePath, TypeReference, Variant, Visibility as SynVisibility,
 };
 
 use crate::{
@@ -17,7 +17,7 @@ use crate::{
 };
 
 use super::{
-    attr::{AttrLocation, AttrPart, AttrPositions, AttrProcessor},
+    attr::{AttrLocation, AttrPart, AttrPartListElement, AttrPositions, AttrProcessor},
     ident_name,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
     Derives, FxIndexMap, FxIndexSet,
@@ -707,15 +707,6 @@ fn process_attr(
                             AttrPart::Tag(&part_name),
                         )?;
                     }
-                    Meta::List(meta_list) => {
-                        let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
-                        process_attr_part(
-                            processor,
-                            attr_name,
-                            location.unpack(),
-                            AttrPart::List(&part_name, meta_list),
-                        )?;
-                    }
                     Meta::NameValue(name_value) => {
                         let part_name = name_value.path.get_ident().ok_or(())?.to_string();
                         let str = convert_expr_to_string(&name_value.value);
@@ -726,6 +717,16 @@ fn process_attr(
                             AttrPart::String(&part_name, str),
                         )?;
                     }
+                    Meta::List(meta_list) => {
+                        let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                        let list = parse_attr_part_list(meta_list)?;
+                        process_attr_part(
+                            processor,
+                            attr_name,
+                            location.unpack(),
+                            AttrPart::List(&part_name, list),
+                        )?;
+                    }
                 };
             }
             Ok(())
@@ -734,12 +735,34 @@ fn process_attr(
     }
 }
 
+fn parse_attr_part_list(meta_list: &MetaList) -> Result<Vec<AttrPartListElement>> {
+    let metas =
+        meta_list.parse_args_with(Punctuated::<Meta, Comma>::parse_terminated).map_err(|_| ())?;
+    metas
+        .into_iter()
+        .map(|meta| match meta {
+            Meta::Path(path) => {
+                let part_name = path.get_ident().ok_or(())?.to_string();
+                Ok(AttrPartListElement::Tag(part_name))
+            }
+            Meta::NameValue(name_value) => {
+                let part_name = name_value.path.get_ident().ok_or(())?.to_string();
+                let str = convert_expr_to_string(&name_value.value);
+                Ok(AttrPartListElement::String(part_name, str))
+            }
+            Meta::List(meta_list) => {
+                let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                let list = parse_attr_part_list(&meta_list)?;
+                Ok(AttrPartListElement::List(part_name, list))
+            }
+        })
+        .collect()
+}
+
 /// Convert an [`Expr`] to a string.
 ///
 /// If the `Expr` is a string literal, get the value of the string.
 /// Otherwise print the `Expr` as a string.
-///
-/// This function is also used in `Visit` generator.
 pub fn convert_expr_to_string(expr: &Expr) -> String {
     if let Expr::Lit(ExprLit { lit: Lit::Str(s), .. }) = expr {
         s.value()
