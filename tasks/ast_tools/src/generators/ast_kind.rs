@@ -99,10 +99,10 @@ impl Generator for AstKindGenerator {
         for type_def in &mut schema.types {
             match type_def {
                 TypeDef::Struct(struct_def) => {
-                    struct_def.kind.has_kind = struct_def.visit.is_visited();
+                    struct_def.kind.has_kind = struct_def.visit.has_visitor();
                 }
                 TypeDef::Enum(enum_def) => {
-                    enum_def.kind.has_kind = enum_def.visit.is_visited();
+                    enum_def.kind.has_kind = enum_def.visit.has_visitor();
                 }
                 _ => {}
             }

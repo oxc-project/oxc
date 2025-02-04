@@ -9,12 +9,12 @@ pub struct VisitStruct {
 }
 
 impl VisitStruct {
-    /// Returns `true` if this struct is visited.
-    pub fn is_visited(&self) -> bool {
+    /// Returns `true` if this struct has a visitor.
+    pub fn has_visitor(&self) -> bool {
         self.visitor_names.is_some()
     }
 
-    /// Get name of visitor method for this struct, if it is visited.
+    /// Get name of visitor method for this struct, if it has a visitor.
     pub fn visitor_name(&self) -> Option<&str> {
         self.visitor_names.as_ref().map(|names| names.visit.as_str())
     }
@@ -29,12 +29,12 @@ pub struct VisitEnum {
 }
 
 impl VisitEnum {
-    /// Returns `true` if this enum is visited.
-    pub fn is_visited(&self) -> bool {
+    /// Returns `true` if this enum has a visitor.
+    pub fn has_visitor(&self) -> bool {
         self.visitor_names.is_some()
     }
 
-    /// Get name of visitor method for this enum, if it is visited.
+    /// Get name of visitor method for this enum, if it has a visitor.
     pub fn visitor_name(&self) -> Option<&str> {
         self.visitor_names.as_ref().map(|names| names.visit.as_str())
     }
@@ -49,13 +49,13 @@ pub struct VisitVec {
 }
 
 impl VisitVec {
-    /// Returns `true` if this `Vec` is visited.
+    /// Returns `true` if this `Vec` has a visitor.
     #[expect(dead_code)]
-    pub fn is_visited(&self) -> bool {
+    pub fn has_visitor(&self) -> bool {
         self.visitor_names.is_some()
     }
 
-    /// Get name of visitor method for this `Vec`, if it is visited.
+    /// Get name of visitor method for this `Vec`, if it has a visitor.
     pub fn visitor_name(&self) -> Option<&str> {
         self.visitor_names.as_ref().map(|names| names.visit.as_str())
     }

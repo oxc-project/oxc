@@ -33,13 +33,13 @@ impl Generator for AstBuilderGenerator {
             .types
             .iter()
             .filter(|&type_def| {
-                let is_visited = match type_def {
-                    TypeDef::Struct(struct_def) => struct_def.visit.is_visited(),
-                    TypeDef::Enum(enum_def) => enum_def.visit.is_visited(),
+                let has_visitor = match type_def {
+                    TypeDef::Struct(struct_def) => struct_def.visit.has_visitor(),
+                    TypeDef::Enum(enum_def) => enum_def.visit.has_visitor(),
                     _ => false,
                 };
                 let is_blacklisted = BLACK_LIST.contains(&type_def.name());
-                is_visited && !is_blacklisted
+                has_visitor && !is_blacklisted
             })
             .map(|type_def| generate_builder_methods(type_def, schema))
             .collect::<TokenStream>();

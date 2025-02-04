@@ -46,7 +46,7 @@ impl Generator for VisitGenerator {
     }
 
     /// Create names for `visit_*` methods and `walk_*` functions for all `Vec`s
-    /// whose inner type is visited.
+    /// whose inner type has a visitor.
     fn prepare(&self, schema: &mut Schema) {
         for type_id in schema.types.indices() {
             let Some(vec_def) = schema.types[type_id].as_vec() else { continue };
@@ -54,13 +54,13 @@ impl Generator for VisitGenerator {
             let inner_type = vec_def.inner_type(schema);
             let plural_snake_name = match inner_type {
                 TypeDef::Struct(struct_def) => {
-                    if !struct_def.visit.is_visited() {
+                    if !struct_def.visit.has_visitor() {
                         continue;
                     }
                     struct_def.plural_snake_name()
                 }
                 TypeDef::Enum(enum_def) => {
-                    if !enum_def.visit.is_visited() {
+                    if !enum_def.visit.has_visitor() {
                         continue;
                     }
                     enum_def.plural_snake_name()
@@ -136,7 +136,7 @@ fn parse_visit_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
 /// Parse `#[scope]` attr.
 fn parse_scope_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
     fn get_or_create_scope(struct_def: &mut StructDef) -> Result<&mut Scope> {
-        if !struct_def.visit.is_visited() {
+        if !struct_def.visit.has_visitor() {
             return Err(());
         }
 
@@ -566,8 +566,8 @@ impl VisitBuilder<'_> {
                 let inner_visit_fn_name = inherits_type.visit.visitor_name();
                 let Some(inner_visit_fn_name) = inner_visit_fn_name else {
                     panic!(
-                        "When an enum inherits variants from another enum and the inheritor is visited, \
-                        the inherited enum must also be visited: `{}` inheriting from `{}`",
+                        "When an enum inherits variants from another enum and the inheritor has a visitor, \
+                        the inherited enum must also have a visitor: `{}` inheriting from `{}`",
                         enum_def.name(),
                         inherits_type.name(),
                     );
@@ -867,7 +867,7 @@ impl VisitBuilder<'_> {
 
     /// Generate visitor calls for a `Vec`.
     ///
-    /// If `Vec` has its own visitor (it does when inner type is a struct or enum which is visited),
+    /// If `Vec` has its own visitor (it does when inner type is a struct or enum which has a visitor),
     /// generates a call to that visitor e.g. `visitor.visit_statements(&it.statements)`.
     ///
     /// Otherwise, generates code to loop through the `Vec`'s elements and call the inner type's visitor:
@@ -897,7 +897,7 @@ impl VisitBuilder<'_> {
         trailing_semicolon: bool,
     ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
         if let Some(visit_fn_name) = vec_def.visit.visitor_name() {
-            // Inner type is a struct or enum which is visited. This `Vec` has own visitor.
+            // Inner type is a struct or enum which has a visitor. This `Vec` has its own visitor.
             let visit_fn_ident = create_ident(visit_fn_name);
             return Some(Self::generate_visit_with_visit_args(
                 &visit_fn_ident,
