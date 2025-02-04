@@ -1,6 +1,6 @@
 //! Generator for TypeScript type definitions for all AST types.
 
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Write};
 
 use itertools::Itertools;
 
@@ -15,8 +15,6 @@ use crate::{
 };
 
 use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
-
-const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/custom_types.d.ts");
 
 /// Generator for TypeScript type definitions.
 pub struct TypescriptGenerator;
@@ -56,27 +54,49 @@ impl Generator for TypescriptGenerator {
 
         let mut code = String::new();
         for type_def in &schema.types {
-            if !type_def.generates_derive(estree_derive_id) {
-                continue;
+            if type_def.generates_derive(estree_derive_id) {
+                generate_ts_type_def(type_def, &mut code, schema);
             }
-
-            let ts_type_def = match type_def {
-                TypeDef::Struct(struct_def) => generate_ts_type_def_for_struct(struct_def, schema),
-                TypeDef::Enum(enum_def) => {
-                    let ts_type_def = generate_ts_type_def_for_enum(enum_def, schema);
-                    let Some(ts_type_def) = ts_type_def else { continue };
-                    ts_type_def
-                }
-                _ => unreachable!(),
-            };
-
-            code.push_str(&ts_type_def);
-            code.push_str("\n\n");
         }
 
-        code.push_str(CUSTOM_TYPESCRIPT);
-
         Output::Javascript { path: TYPESCRIPT_DEFINITIONS_PATH.to_string(), code }
+    }
+}
+
+/// Generate Typescript type definition for a struct or enum.
+///
+/// Push type defs to `code`.
+fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) {
+    // Use custom TS def if provided via `#[estree(custom_ts_def = "...")]` attribute
+    let custom_ts_def = match type_def {
+        TypeDef::Struct(struct_def) => &struct_def.estree.custom_ts_def,
+        TypeDef::Enum(enum_def) => &enum_def.estree.custom_ts_def,
+        _ => unreachable!(),
+    };
+
+    if let Some(custom_ts_def) = custom_ts_def {
+        // Empty string means don't output any TS def at all for this type
+        if !custom_ts_def.is_empty() {
+            write!(code, "export {custom_ts_def};\n\n").unwrap();
+        }
+    } else {
+        // No custom definition. Generate one.
+        let ts_def = match type_def {
+            TypeDef::Struct(struct_def) => generate_ts_type_def_for_struct(struct_def, schema),
+            TypeDef::Enum(enum_def) => generate_ts_type_def_for_enum(enum_def, schema),
+            _ => unreachable!(),
+        };
+        write!(code, "{ts_def};\n\n").unwrap();
+    };
+
+    // Add additional custom TS def if provided via `#[estree(add_ts_def = "...")]` attribute
+    let add_ts_def = match type_def {
+        TypeDef::Struct(struct_def) => &struct_def.estree.add_ts_def,
+        TypeDef::Enum(enum_def) => &enum_def.estree.add_ts_def,
+        _ => unreachable!(),
+    };
+    if let Some(add_ts_def) = add_ts_def {
+        write!(code, "export {add_ts_def};\n\n").unwrap();
     }
 }
 
@@ -163,11 +183,7 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> S
 }
 
 /// Generate Typescript type definition for an enum.
-fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<String> {
-    if enum_def.estree.custom_ts_def {
-        return None;
-    }
-
+fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> String {
     let union = if enum_def.is_fieldless() {
         enum_def
             .all_variants(schema)
@@ -181,7 +197,7 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<
     };
 
     let enum_name = enum_def.name();
-    Some(format!("export type {enum_name} = {union};"))
+    format!("export type {enum_name} = {union};")
 }
 
 /// Get TS type name for a type.

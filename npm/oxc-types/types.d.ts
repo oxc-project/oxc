@@ -735,6 +735,13 @@ export interface FormalParameters extends Span {
   items: Array<FormalParameter | FormalParameterRest>;
 }
 
+export interface FormalParameterRest extends Span {
+  type: 'RestElement';
+  argument: BindingPatternKind;
+  typeAnnotation: TSTypeAnnotation | null;
+  optional: boolean;
+}
+
 export interface FormalParameter extends Span {
   type: 'FormalParameter';
   decorators: Array<Decorator>;
@@ -1032,6 +1039,25 @@ export interface RegExp {
 
 export type RegExpPattern = string | string | Pattern;
 
+export type RegExpFlags = {
+  /** Global flag */
+  G: 1;
+  /** Ignore case flag */
+  I: 2;
+  /** Multiline flag */
+  M: 4;
+  /** DotAll flag */
+  S: 8;
+  /** Unicode flag */
+  U: 16;
+  /** Sticky flag */
+  Y: 32;
+  /** Indices flag */
+  D: 64;
+  /** Unicode sets flag */
+  V: 128;
+};
+
 export interface JSXElement extends Span {
   type: 'JSXElement';
   openingElement: JSXOpeningElement;
@@ -1067,6 +1093,8 @@ export interface JSXClosingFragment extends Span {
   type: 'JSXClosingFragment';
 }
 
+export type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpression;
+
 export interface JSXNamespacedName extends Span {
   type: 'JSXNamespacedName';
   namespace: JSXIdentifier;
@@ -1078,6 +1106,8 @@ export interface JSXMemberExpression extends Span {
   object: JSXMemberExpressionObject;
   property: JSXIdentifier;
 }
+
+export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;
 
 export interface JSXExpressionContainer extends Span {
   type: 'JSXExpressionContainer';
@@ -1941,36 +1971,3 @@ export interface NamedReference extends Span {
   type: 'NamedReference';
   name: string;
 }
-
-export interface FormalParameterRest extends Span {
-  type: 'RestElement';
-  argument: BindingPatternKind;
-  typeAnnotation: TSTypeAnnotation | null;
-  optional: boolean;
-}
-
-export type RegExpFlags = {
-  /** Global flag */
-  G: 1;
-  /** Ignore case flag */
-  I: 2;
-  /** Multiline flag */
-  M: 4;
-  /** DotAll flag */
-  S: 8;
-  /** Unicode flag */
-  U: 16;
-  /** Sticky flag */
-  Y: 32;
-  /** Indices flag */
-  D: 64;
-  /** Unicode sets flag */
-  V: 128;
-};
-
-export type JSXElementName =
-  | JSXIdentifier
-  | JSXNamespacedName
-  | JSXMemberExpression;
-
-export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;

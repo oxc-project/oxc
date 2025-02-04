@@ -146,7 +146,11 @@ pub struct JSXClosingFragment {
 /// JSX Element Name
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
+#[estree(
+    custom_serialize,
+    custom_ts_def = "type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpression"
+)]
 pub enum JSXElementName<'a> {
     /// `<div />`
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
@@ -224,7 +228,11 @@ pub struct JSXMemberExpression<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
+#[estree(
+    custom_serialize,
+    custom_ts_def = "type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression"
+)]
 pub enum JSXMemberExpressionObject<'a> {
     /// `<Apple.Orange />`
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,

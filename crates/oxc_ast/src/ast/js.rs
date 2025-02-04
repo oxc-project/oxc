@@ -298,7 +298,7 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_ts_def)]
+#[estree(no_ts_def)]
 pub enum ArrayExpressionElement<'a> {
     /// `...[3, 4]` in `const array = [1, 2, ...[3, 4], null];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
@@ -1626,7 +1626,17 @@ pub enum FunctionType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize)]
+#[estree(
+    custom_serialize,
+    add_ts_def = "
+        interface FormalParameterRest extends Span {
+            type: 'RestElement';
+            argument: BindingPatternKind;
+            typeAnnotation: TSTypeAnnotation | null;
+            optional: boolean;
+        }
+    "
+)]
 pub struct FormalParameters<'a> {
     pub span: Span,
     pub kind: FormalParameterKind,

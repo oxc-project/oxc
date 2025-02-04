@@ -67,7 +67,12 @@ impl Derive for DeriveESTree {
                 }
                 generate_body_for_struct(struct_def, schema)
             }
-            StructOrEnum::Enum(enum_def) => generate_body_for_enum(enum_def, schema),
+            StructOrEnum::Enum(enum_def) => {
+                if enum_def.estree.custom_serialize {
+                    return quote!();
+                }
+                generate_body_for_enum(enum_def, schema)
+            }
         };
 
         let ty = type_def.ty_anon(schema);
@@ -92,16 +97,28 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
             AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
+            AttrPart::Tag("no_ts_def") => struct_def.estree.custom_ts_def = Some(String::new()),
+            AttrPart::String("add_ts", value) => struct_def.estree.add_ts = Some(value),
+            AttrPart::String("custom_ts_def", value) => {
+                struct_def.estree.custom_ts_def = Some(value);
+            }
+            AttrPart::String("add_ts_def", value) => {
+                struct_def.estree.add_ts_def = Some(value);
+            }
             AttrPart::String("rename", value) => struct_def.estree.rename = Some(value),
             AttrPart::String("via", value) => struct_def.estree.via = Some(value),
-            AttrPart::String("add_ts", value) => struct_def.estree.add_ts = Some(value),
             _ => return Err(()),
         },
         // `#[estree]` attr on enum
         AttrLocation::Enum(enum_def) => match part {
             AttrPart::Tag("skip") => enum_def.estree.skip = true,
             AttrPart::Tag("no_rename_variants") => enum_def.estree.no_rename_variants = true,
-            AttrPart::Tag("custom_ts_def") => enum_def.estree.custom_ts_def = true,
+            AttrPart::Tag("custom_serialize") => enum_def.estree.custom_serialize = true,
+            AttrPart::Tag("no_ts_def") => enum_def.estree.custom_ts_def = Some(String::new()),
+            AttrPart::String("custom_ts_def", value) => enum_def.estree.custom_ts_def = Some(value),
+            AttrPart::String("add_ts_def", value) => {
+                enum_def.estree.add_ts_def = Some(value);
+            }
             _ => return Err(()),
         },
         // `#[estree]` attr on struct field
