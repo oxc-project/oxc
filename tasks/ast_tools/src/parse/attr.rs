@@ -30,16 +30,25 @@ bitflags! {
     /// Positions in which an attribute is legal.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct AttrPositions: u8 {
-        /// Attribute on a struct
+        /// Attribute on a struct which derives the trait
         const Struct = 1 << 0;
-        /// Attribute on an enum
-        const Enum = 1 << 1;
+        /// Attribute on a struct which doesn't derive the trait
+        const StructNotDerived = 1 << 1;
+        /// Attribute on an enum which derives the trait
+        const Enum = 1 << 2;
+        /// Attribute on an enum which doesn't derive the trait
+        const EnumNotDerived = 1 << 3;
         /// Attribute on a struct field
-        const StructField = 1 << 2;
+        const StructField = 1 << 4;
         /// Attribute on an enum variant
-        const EnumVariant = 1 << 3;
+        const EnumVariant = 1 << 5;
         /// Part of `#[ast]` attr e.g. `visit` in `#[ast(visit)]`
-        const AstAttr = 1 << 4;
+        const AstAttr = 1 << 6;
+
+        /// Attribute on a struct which may or may not derive the trait
+        const StructMaybeDerived = Self::Struct.bits() | Self::StructNotDerived.bits();
+        /// Attribute on an enum which may or may not derive the trait
+        const EnumMaybeDerived = Self::Enum.bits() | Self::EnumNotDerived.bits();
     }
 }
 
