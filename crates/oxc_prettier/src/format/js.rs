@@ -1304,10 +1304,42 @@ impl<'a> Format<'a> for Super {
 impl<'a> Format<'a> for AwaitExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, AwaitExpression, {
-            let mut parts = Vec::new_in(p.allocator);
-            parts.push(text!("await "));
-            parts.push(self.argument.format(p));
-            array!(p, parts)
+            let parent_kind = p.parent_kind();
+            if parent_kind
+                .as_call_expression()
+                .is_some_and(|call_expr| call_expr.callee.span() == self.span)
+                || parent_kind
+                    .as_member_expression()
+                    .is_some_and(|member_expr| member_expr.object().span() == self.span)
+            {
+                // avoid printing `await (await` on one line
+                if let Some(ancestor) = p.find_ancestor(|kind| {
+                    matches!(kind, AstKind::BlockStatement(_) | AstKind::AwaitExpression(_))
+                }) {
+                    if (match ancestor {
+                        AstKind::BlockStatement(_) => true,
+                        AstKind::AwaitExpression(await_expr) => {
+                            // TODO:
+                            // && !startsWithNoLookaheadToken(
+                            //   await_expr.argument,
+                            //   (leftmostNode) => leftmostNode === node,
+                            // )
+                            false
+                        }
+                        _ => unreachable!(),
+                    }) {
+                        return group!(
+                            p,
+                            [
+                                indent!(p, [softline!(), text!("await "), self.argument.format(p)]),
+                                softline!()
+                            ]
+                        );
+                    }
+                }
+            }
+
+            array!(p, [text!("await "), self.argument.format(p)])
         })
     }
 }
