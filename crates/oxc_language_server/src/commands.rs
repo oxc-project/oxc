@@ -104,10 +104,7 @@ impl WorkspaceCommand for FixAllCommand {
                     }),
                     edit: WorkspaceEdit {
                         #[expect(clippy::disallowed_types)]
-                        changes: Some(std::collections::HashMap::from([(
-                            url.clone(),
-                            edits.clone(),
-                        )])),
+                        changes: Some(std::collections::HashMap::from([(url, edits)])),
                         ..WorkspaceEdit::default()
                     },
                 })
