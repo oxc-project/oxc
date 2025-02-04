@@ -198,7 +198,7 @@ js compatibility: 251/641 (39.16%)
 | js/functional-composition/rxjs_pipe.js | 💥 | 45.45% |
 | js/generator/async.js | 💥 | 92.86% |
 | js/generator/function-name-starts-with-get.js | 💥 | 83.33% |
-| js/identifier/parentheses/let.js | 💥✨ | 40.00% |
+| js/identifier/parentheses/let.js | 💥💥 | 89.09% |
 | js/if/comment_before_else.js | 💥 | 66.67% |
 | js/if/else.js | 💥 | 94.44% |
 | js/if/expr_and_same_line_comments.js | 💥 | 41.98% |
@@ -294,7 +294,7 @@ js compatibility: 251/641 (39.16%)
 | js/require-amd/require.js | 💥 | 2.17% |
 | js/return/binaryish.js | 💥 | 44.44% |
 | js/return/comment.js | 💥 | 58.82% |
-| js/sequence-break/break.js | 💥 | 35.09% |
+| js/sequence-break/break.js | 💥 | 64.91% |
 | js/sequence-expression/ignore.js | 💥 | 0.00% |
 | js/sequence-expression/parenthesized.js | 💥 | 23.53% |
 | js/strings/escaped.js | 💥💥 | 45.00% |
