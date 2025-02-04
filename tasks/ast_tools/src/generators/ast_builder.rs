@@ -8,7 +8,7 @@ use syn::Ident;
 use crate::{
     output::{output_path, Output},
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
-    utils::is_reserved_name,
+    utils::{create_safe_ident, is_reserved_name},
     Codegen, Generator, AST_CRATE_PATH,
 };
 
@@ -276,11 +276,11 @@ fn get_struct_params<'s>(
                 TypeDef::Primitive(primitive_def) => match primitive_def.name() {
                     "Atom" if !has_atom_generic => {
                         has_atom_generic = true;
-                        Some(format_ident!("A"))
+                        Some(create_safe_ident("A"))
                     }
                     "&str" if !has_str_generic => {
                         has_str_generic = true;
-                        Some(format_ident!("S"))
+                        Some(create_safe_ident("S"))
                     }
                     _ => None,
                 },
@@ -450,7 +450,8 @@ fn struct_builder_name(snake_name: &str, does_alloc: bool) -> Ident {
     } else if is_reserved_name(snake_name) {
         format_ident!("{snake_name}_")
     } else {
-        format_ident!("{snake_name}")
+        // We just checked name is not a reserved word
+        create_safe_ident(snake_name)
     }
 }
 

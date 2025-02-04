@@ -1,11 +1,12 @@
 //! Derive for `GetSpan` trait.
 
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::Ident;
 
 use crate::{
     schema::{Def, EnumDef, Schema, StructDef},
+    utils::create_safe_ident,
     Result,
 };
 
@@ -54,6 +55,8 @@ impl Derive for DeriveGetSpan {
     }
 
     fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
+        let trait_ident = create_safe_ident("GetSpan");
+        let method_ident = create_safe_ident("span");
         let self_ty = quote!(&self);
         let result_ty = quote!(Span);
         let result_expr = quote!(self.span);
@@ -61,8 +64,8 @@ impl Derive for DeriveGetSpan {
 
         derive_type(
             type_def,
-            "GetSpan",
-            "span",
+            &trait_ident,
+            &method_ident,
             &self_ty,
             &result_ty,
             &result_expr,
@@ -96,6 +99,8 @@ impl Derive for DeriveGetSpanMut {
     }
 
     fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
+        let trait_ident = create_safe_ident("GetSpanMut");
+        let method_ident = create_safe_ident("span_mut");
         let self_ty = quote!(&mut self);
         let result_ty = quote!(&mut Span);
         let result_expr = quote!(&mut self.span);
@@ -103,8 +108,8 @@ impl Derive for DeriveGetSpanMut {
 
         derive_type(
             type_def,
-            "GetSpanMut",
-            "span_mut",
+            &trait_ident,
+            &method_ident,
             &self_ty,
             &result_ty,
             &result_expr,
@@ -118,36 +123,28 @@ impl Derive for DeriveGetSpanMut {
 #[expect(clippy::too_many_arguments)]
 fn derive_type(
     type_def: StructOrEnum,
-    trait_name: &str,
-    method_name: &str,
+    trait_ident: &Ident,
+    method_ident: &Ident,
     self_ty: &TokenStream,
     result_ty: &TokenStream,
     result_expr: &TokenStream,
     reference: &TokenStream,
     schema: &Schema,
 ) -> TokenStream {
-    let trait_ident = format_ident!("{trait_name}");
-    let method_ident = format_ident!("{method_name}");
     match type_def {
         StructOrEnum::Struct(struct_def) => derive_struct(
             struct_def,
-            &trait_ident,
-            &method_ident,
+            trait_ident,
+            method_ident,
             self_ty,
             result_ty,
             result_expr,
             reference,
             schema,
         ),
-        StructOrEnum::Enum(enum_def) => derive_enum(
-            enum_def,
-            &trait_ident,
-            &method_ident,
-            self_ty,
-            result_ty,
-            reference,
-            schema,
-        ),
+        StructOrEnum::Enum(enum_def) => {
+            derive_enum(enum_def, trait_ident, method_ident, self_ty, result_ty, reference, schema)
+        }
     }
 }
 

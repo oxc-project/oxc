@@ -1,11 +1,12 @@
 //! Derive for `CloneIn` trait.
 
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::Ident;
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    utils::create_safe_ident,
     Result,
 };
 
@@ -151,7 +152,7 @@ fn generate_impl(
     has_lifetime: bool,
     uses_allocator: bool,
 ) -> TokenStream {
-    let alloc_ident = format_ident!("{}", if uses_allocator { "allocator" } else { "_" });
+    let alloc_ident = create_safe_ident(if uses_allocator { "allocator" } else { "_" });
 
     if has_lifetime {
         quote! {

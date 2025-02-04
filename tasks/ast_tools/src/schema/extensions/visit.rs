@@ -1,3 +1,7 @@
+use syn::Ident;
+
+use crate::utils::create_safe_ident;
+
 /// Details of visiting on a struct.
 #[derive(Default, Debug)]
 pub struct VisitStruct {
@@ -14,9 +18,11 @@ impl VisitStruct {
         self.visitor_names.is_some()
     }
 
-    /// Get name of visitor method for this struct, if it has a visitor.
-    pub fn visitor_name(&self) -> Option<&str> {
-        self.visitor_names.as_ref().map(|names| names.visit.as_str())
+    /// Get visitor method name for this struct as an [`Ident`], if it has a visitor.
+    ///
+    /// [`Ident`]: struct@Ident
+    pub fn visitor_ident(&self) -> Option<Ident> {
+        self.visitor_names.as_ref().map(VisitorNames::visitor_ident)
     }
 }
 
@@ -34,9 +40,11 @@ impl VisitEnum {
         self.visitor_names.is_some()
     }
 
-    /// Get name of visitor method for this enum, if it has a visitor.
-    pub fn visitor_name(&self) -> Option<&str> {
-        self.visitor_names.as_ref().map(|names| names.visit.as_str())
+    /// Get visitor method name for this enum as an [`Ident`], if it has a visitor.
+    ///
+    /// [`Ident`]: struct@Ident
+    pub fn visitor_ident(&self) -> Option<Ident> {
+        self.visitor_names.as_ref().map(VisitorNames::visitor_ident)
     }
 }
 
@@ -55,9 +63,11 @@ impl VisitVec {
         self.visitor_names.is_some()
     }
 
-    /// Get name of visitor method for this `Vec`, if it has a visitor.
-    pub fn visitor_name(&self) -> Option<&str> {
-        self.visitor_names.as_ref().map(|names| names.visit.as_str())
+    /// Get visitor method name for this `Vec` as an [`Ident`], if it has a visitor.
+    ///
+    /// [`Ident`]: struct@Ident
+    pub fn visitor_ident(&self) -> Option<Ident> {
+        self.visitor_names.as_ref().map(VisitorNames::visitor_ident)
     }
 }
 
@@ -77,6 +87,22 @@ pub struct VisitorNames {
 impl VisitorNames {
     pub fn from_snake_name(snake_name: &str) -> Self {
         Self { visit: format!("visit_{snake_name}"), walk: format!("walk_{snake_name}") }
+    }
+
+    /// Get name of visitor method as an [`Ident`].
+    ///
+    /// [`Ident`]: struct@Ident
+    pub fn visitor_ident(&self) -> Ident {
+        // Visitor method names cannot be reserved words, as they begin with `visit_`
+        create_safe_ident(&self.visit)
+    }
+
+    /// Get name of walk function as an [`Ident`].
+    ///
+    /// [`Ident`]: struct@Ident
+    pub fn walk_ident(&self) -> Ident {
+        // Walk function names cannot be reserved words, as they begin with `walk_`
+        create_safe_ident(&self.walk)
     }
 }
 

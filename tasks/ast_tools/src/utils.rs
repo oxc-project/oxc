@@ -1,11 +1,11 @@
+use phf::{phf_set, Set as PhfSet};
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{Ident, LitInt};
 
 /// Reserved word in Rust.
 /// From <https://doc.rust-lang.org/reference/keywords.html>.
-#[rustfmt::skip]
-static RESERVED_NAMES: &[&str] = &[
+static RESERVED_NAMES: PhfSet<&'static str> = phf_set! {
     // Strict keywords
     "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn", "for", "if",
     "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self",
@@ -16,11 +16,11 @@ static RESERVED_NAMES: &[&str] = &[
     "virtual", "yield", "try",
     // Weak keywords
     "macro_rules", "union", // "dyn" also listed as a weak keyword, but is already on strict list
-];
+};
 
 /// Returns `true` if `name` is a reserved word in Rust.
 pub fn is_reserved_name(name: &str) -> bool {
-    RESERVED_NAMES.contains(&name)
+    RESERVED_NAMES.contains(name)
 }
 
 /// Create an [`Ident`] from a string.
@@ -33,8 +33,17 @@ pub fn create_ident(name: &str) -> Ident {
     if is_reserved_name(name) {
         format_ident!("r#{name}")
     } else {
-        format_ident!("{name}")
+        create_safe_ident(name)
     }
+}
+
+/// Create an [`Ident`] from a string, without checking it's not a reserved word.
+///
+/// The provided `name` for the ident must not be a reserved word.
+///
+/// [`Ident`]: struct@Ident
+pub fn create_safe_ident(name: &str) -> Ident {
+    Ident::new(name, Span::call_site())
 }
 
 /// Create an identifier from a string.

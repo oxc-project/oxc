@@ -1,10 +1,11 @@
 //! Derive for `ContentEq` trait.
 
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 
 use crate::{
     schema::{Def, EnumDef, Schema, StructDef, TypeDef},
+    utils::create_safe_ident,
     Result,
 };
 
@@ -69,11 +70,11 @@ impl Derive for DeriveContentEq {
 }
 
 fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
-    let mut other_name = "other";
+    let mut uses_other = true;
 
     let body = if struct_def.content_eq.skip {
         // Struct has `#[content_eq(skip)]` attr. So `content_eq` always returns true.
-        other_name = "_";
+        uses_other = false;
         quote!(true)
     } else {
         let fields = struct_def
@@ -96,20 +97,20 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         let mut body = quote!( #(#fields)&&* );
         if body.is_empty() {
             body = quote!(true);
-            other_name = "_";
+            uses_other = false;
         };
         body
     };
 
-    generate_impl(&struct_def.ty_anon(schema), other_name, &body)
+    generate_impl(&struct_def.ty_anon(schema), &body, uses_other)
 }
 
 fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    let mut other_name = "other";
+    let mut uses_other = true;
 
     let body = if enum_def.content_eq.skip {
         // Enum has `#[content_eq(skip)]` attr. So `content_eq` always returns true.
-        other_name = "_";
+        uses_other = false;
         quote!(true)
     } else if enum_def.is_fieldless() {
         // We assume fieldless enums implement `PartialEq`
@@ -132,11 +133,11 @@ fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         }
     };
 
-    generate_impl(&enum_def.ty_anon(schema), other_name, &body)
+    generate_impl(&enum_def.ty_anon(schema), &body, uses_other)
 }
 
-fn generate_impl(ty: &TokenStream, other_name: &str, body: &TokenStream) -> TokenStream {
-    let other_ident = format_ident!("{other_name}");
+fn generate_impl(ty: &TokenStream, body: &TokenStream, uses_other: bool) -> TokenStream {
+    let other_ident = create_safe_ident(if uses_other { "other" } else { "_" });
     quote! {
         impl ContentEq for #ty {
             fn content_eq(&self, #other_ident: &Self) -> bool {

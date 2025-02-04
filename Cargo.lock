@@ -1614,6 +1614,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "oxc_index",
+ "phf",
  "prettyplease",
  "proc-macro2",
  "quote",
