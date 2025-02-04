@@ -18,6 +18,16 @@ impl Layout {
         )
     }
 
+    /// Create [`Layout`] from a Rust type.
+    pub fn from_type_with_niche_for_zero<T>() -> Self {
+        let size = u32::try_from(size_of::<T>()).unwrap();
+        Self::from_size_align_niche(
+            size,
+            u32::try_from(align_of::<T>()).unwrap(),
+            Niche::new(0, size, true, 1),
+        )
+    }
+
     /// Create [`Layout`] from `size` and `align` pair, with no niche.
     ///
     /// Layout is same for both 64-bit and 32-bit platforms.

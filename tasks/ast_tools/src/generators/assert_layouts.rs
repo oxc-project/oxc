@@ -4,7 +4,10 @@
 //! Memory layouts are different on 64-bit and 32-bit platforms.
 //! Calculate each separately, and generate assertions for each.
 
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    num,
+};
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -346,6 +349,11 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         layout_64: PlatformLayout::from_size_align(8, 8),
         layout_32: PlatformLayout::from_size_align(4, 4),
     };
+    // `NonZeroUsize` and `NonZeroIsize` are pointer-sized, with a single niche
+    let non_zero_usize_layout = Layout {
+        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, true, 1)),
+        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, true, 1)),
+    };
 
     #[expect(clippy::match_same_arms)]
     match primitive_def.name() {
@@ -370,6 +378,22 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "f64" => Layout::from_type::<f64>(),
         "&str" => str_layout.clone(),
         "Atom" => str_layout,
+        "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
+        "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
+        "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),
+        "NonZeroU64" => Layout::from_type_with_niche_for_zero::<num::NonZeroU64>(),
+        "NonZeroU128" => {
+            panic!("Cannot calculate alignment for `NonZeroU128`. It differs depending on Rust version.")
+        }
+        "NonZeroUsize" => non_zero_usize_layout.clone(),
+        "NonZeroI8" => Layout::from_type_with_niche_for_zero::<num::NonZeroI8>(),
+        "NonZeroI16" => Layout::from_type_with_niche_for_zero::<num::NonZeroI16>(),
+        "NonZeroI32" => Layout::from_type_with_niche_for_zero::<num::NonZeroI32>(),
+        "NonZeroI64" => Layout::from_type_with_niche_for_zero::<num::NonZeroI64>(),
+        "NonZeroI128" => {
+            panic!("Cannot calculate alignment for `NonZeroI128`. It differs depending on Rust version.")
+        }
+        "NonZeroIsize" => non_zero_usize_layout,
         "ScopeId" => semantic_id_layout.clone(),
         "SymbolId" => semantic_id_layout.clone(),
         "ReferenceId" => semantic_id_layout,
