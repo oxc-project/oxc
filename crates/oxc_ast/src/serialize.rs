@@ -49,8 +49,8 @@ impl From<&NullLiteral> for ESTreeLiteral<'_, ()> {
     }
 }
 
-impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
-    fn from(lit: &'a NumericLiteral) -> Self {
+impl<'a> From<&NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
+    fn from(lit: &NumericLiteral<'a>) -> Self {
         Self {
             span: lit.span,
             value: lit.value,
@@ -61,11 +61,11 @@ impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
     }
 }
 
-impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
-    fn from(lit: &'a StringLiteral) -> Self {
+impl<'a> From<&StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
+    fn from(lit: &StringLiteral<'a>) -> Self {
         Self {
             span: lit.span,
-            value: &lit.value,
+            value: lit.value.as_str(),
             raw: lit.raw.as_ref().map(Atom::as_str),
             bigint: None,
             regex: None,
@@ -73,8 +73,8 @@ impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
     }
 }
 
-impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
-    fn from(lit: &'a BigIntLiteral) -> Self {
+impl<'a> From<&BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
+    fn from(lit: &BigIntLiteral<'a>) -> Self {
         let src = &lit.raw.strip_suffix('n').unwrap().cow_replace('_', "");
 
         let src = match lit.base {
@@ -111,8 +111,8 @@ pub struct SerRegExpValue {
 #[allow(clippy::empty_structs_with_brackets)]
 pub struct EmptyObject {}
 
-impl<'a> From<&'a RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> {
-    fn from(lit: &'a RegExpLiteral) -> Self {
+impl<'a> From<&RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> {
+    fn from(lit: &RegExpLiteral<'a>) -> Self {
         Self {
             span: lit.span,
             raw: lit.raw.as_ref().map(Atom::as_str),
