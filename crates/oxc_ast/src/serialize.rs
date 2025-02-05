@@ -11,10 +11,10 @@ use oxc_span::{Atom, Span};
 use oxc_syntax::number::BigintBase;
 
 use crate::ast::{
-    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameter,
-    FormalParameterKind, FormalParameters, JSXElementName, JSXIdentifier,
-    JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral,
-    RegExpPattern, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
+    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameters,
+    JSXElementName, JSXIdentifier, JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program,
+    RegExpFlags, RegExpLiteral, RegExpPattern, Statement, StringLiteral, TSModuleBlock,
+    TSTypeAnnotation,
 };
 
 #[derive(Serialize)]
@@ -187,22 +187,8 @@ impl Serialize for FormalParameters<'_> {
             type_annotation: &rest.argument.type_annotation,
             optional: rest.argument.optional,
         });
-        let converted = SerFormalParameters {
-            span: self.span,
-            kind: self.kind,
-            items: ElementsAndRest::new(&self.items, converted_rest.as_ref()),
-        };
-        converted.items.serialize(serializer)
+        ElementsAndRest::new(&self.items, converted_rest.as_ref()).serialize(serializer)
     }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "FormalParameters")]
-struct SerFormalParameters<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    kind: FormalParameterKind,
-    items: ElementsAndRest<'b, FormalParameter<'a>, SerFormalParameterRest<'a, 'b>>,
 }
 
 #[derive(Serialize)]
