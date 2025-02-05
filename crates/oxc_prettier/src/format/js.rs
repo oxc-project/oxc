@@ -1275,8 +1275,28 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
 }
 
 impl<'a> Format<'a> for ParenthesizedExpression<'a> {
+    // TODO: For now, this never be called since `preserve_panres: false` is used
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        unreachable!("Parser preserve_parens option need to be set to false.");
+        wrap!(p, self, ParenthesizedExpression, {
+            let should_hug = matches!(
+                &self.expression,
+                Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
+            );
+            // TODO: && !has_comment(self.expression)
+
+            if should_hug {
+                return array!(p, [text!("("), self.expression.format(p), text!(")")]);
+            }
+            group!(
+                p,
+                [
+                    text!("("),
+                    indent!(p, [softline!(), self.expression.format(p),]),
+                    softline!(),
+                    text!(")"),
+                ]
+            )
+        })
     }
 }
 
