@@ -18,7 +18,7 @@ js compatibility: 251/641 (39.16%)
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 6.67% |
 | js/arrows/arrow_function_expression.js | 💥💥 | 97.14% |
 | js/arrows/assignment-chain-with-arrow-chain.js | 💥💥 | 60.25% |
-| js/arrows/call.js | 💥💥 | 35.29% |
+| js/arrows/call.js | 💥💥 | 35.38% |
 | js/arrows/chain-as-arg.js | 💥💥 | 75.76% |
 | js/arrows/chain-in-logical-expression.js | 💥💥 | 28.57% |
 | js/arrows/comment.js | 💥💥 | 32.79% |
