@@ -124,7 +124,7 @@ impl<T> SparseStack<T> {
         }
     }
 
-    /// Get value of last entry on the stack.
+    /// Get reference to value of last entry on the stack.
     #[inline]
     pub fn last(&self) -> Option<&T> {
         let has_value = *self.has_values.last();
@@ -139,7 +139,7 @@ impl<T> SparseStack<T> {
         }
     }
 
-    /// Get value of last entry on the stack.
+    /// Get mutable reference to value of last entry on the stack.
     #[inline]
     pub fn last_mut(&mut self) -> Option<&mut T> {
         let has_value = *self.has_values.last();
