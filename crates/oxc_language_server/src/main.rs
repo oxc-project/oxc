@@ -263,7 +263,7 @@ impl LanguageServer for Backend {
                 .iter()
                 .filter(|r| {
                     r.diagnostic.range == params.range
-                        || range_includes(params.range, r.diagnostic.range)
+                        || range_overlaps(params.range, r.diagnostic.range)
                 })
                 .collect::<Vec<_>>();
             for report in reports {
@@ -579,12 +579,6 @@ async fn main() {
     Server::new(stdin, stdout, socket).serve(service).await;
 }
 
-fn range_includes(range: Range, to_include: Range) -> bool {
-    if range.start >= to_include.start {
-        return false;
-    }
-    if range.end <= to_include.end {
-        return false;
-    }
-    true
+fn range_overlaps(a: Range, b: Range) -> bool {
+    a.start <= b.end && a.end >= b.start
 }
