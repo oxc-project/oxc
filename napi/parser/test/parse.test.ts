@@ -26,6 +26,14 @@ describe('parse', () => {
     });
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
   });
+
+  it('estree function params', async () => {
+    const ret = await parseAsync(
+      'test.js',
+      `async function test(x, { y }, [ z ], ...rest) {}`,
+    );
+    expect(ret.program.body[0]).matchSnapshot();
+  });
 });
 
 describe('error', () => {

@@ -6,15 +6,15 @@ use serde::{
     Serialize,
 };
 
-use oxc_allocator::Box;
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_span::{Atom, Span};
 use oxc_syntax::number::BigintBase;
 
 use crate::ast::{
-    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameter,
-    FormalParameterKind, FormalParameters, JSXElementName, JSXIdentifier,
-    JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral,
-    RegExpPattern, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
+    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameters,
+    JSXElementName, JSXIdentifier, JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program,
+    RegExpFlags, RegExpLiteral, RegExpPattern, Statement, StringLiteral, TSModuleBlock,
+    TSTypeAnnotation,
 };
 
 #[derive(Serialize)]
@@ -187,22 +187,8 @@ impl Serialize for FormalParameters<'_> {
             type_annotation: &rest.argument.type_annotation,
             optional: rest.argument.optional,
         });
-        let converted = SerFormalParameters {
-            span: self.span,
-            kind: self.kind,
-            items: ElementsAndRest::new(&self.items, converted_rest.as_ref()),
-        };
-        converted.serialize(serializer)
+        ElementsAndRest::new(&self.items, converted_rest.as_ref()).serialize(serializer)
     }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "FormalParameters")]
-struct SerFormalParameters<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    kind: FormalParameterKind,
-    items: ElementsAndRest<'b, FormalParameter<'a>, SerFormalParameterRest<'a, 'b>>,
 }
 
 #[derive(Serialize)]
@@ -211,7 +197,7 @@ struct SerFormalParameterRest<'a, 'b> {
     #[serde(flatten)]
     span: Span,
     argument: &'b BindingPatternKind<'a>,
-    type_annotation: &'b Option<Box<'a, TSTypeAnnotation<'a>>>,
+    type_annotation: &'b Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     optional: bool,
 }
 
@@ -241,7 +227,13 @@ impl<E: Serialize, R: Serialize> Serialize for ElementsAndRest<'_, E, R> {
     }
 }
 
-pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'a Option<oxc_allocator::Vec<'b, T>>);
+pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'b Option<ArenaVec<'a, T>>);
+
+impl<'a, 'b, T: Serialize> From<&'b Option<ArenaVec<'a, T>>> for OptionVecDefault<'a, 'b, T> {
+    fn from(opt_vec: &'b Option<ArenaVec<'a, T>>) -> Self {
+        Self(opt_vec)
+    }
+}
 
 impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
