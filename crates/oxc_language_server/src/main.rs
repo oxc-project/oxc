@@ -259,13 +259,10 @@ impl LanguageServer for Backend {
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
         if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
-            let reports = value
-                .iter()
-                .filter(|r| {
-                    r.diagnostic.range == params.range
-                        || range_overlaps(params.range, r.diagnostic.range)
-                })
-                .collect::<Vec<_>>();
+            let reports = value.iter().filter(|r| {
+                r.diagnostic.range == params.range
+                    || range_overlaps(params.range, r.diagnostic.range)
+            });
             for report in reports {
                 // TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
                 let mut rule_name: Option<String> = None;
