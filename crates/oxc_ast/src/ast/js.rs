@@ -1552,6 +1552,9 @@ pub struct BindingRestElement<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+// https://github.com/estree/estree/blob/master/es5.md#patterns
+// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/cd61c555bfc93e985b313263a42ed78074570d08/types/estree/index.d.ts#L411
+#[estree(add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest")]
 pub struct Function<'a> {
     pub span: Span,
     pub r#type: FunctionType,
@@ -1590,6 +1593,7 @@ pub struct Function<'a> {
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
+    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     /// The TypeScript return type annotation.
     #[ts]
@@ -1651,10 +1655,15 @@ pub struct FormalParameters<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // Pluralize as `FormalParameterList` to avoid naming clash with `FormalParameters`.
 #[plural(FormalParameterList)]
+#[estree(no_type)]
 pub struct FormalParameter<'a> {
     pub span: Span,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
+    #[estree(
+        flatten,
+        ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
+    )]
     pub pattern: BindingPattern<'a>,
     #[ts]
     pub accessibility: Option<TSAccessibility>,
@@ -1704,6 +1713,7 @@ pub struct ArrowFunctionExpression<'a> {
     pub r#async: bool,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
