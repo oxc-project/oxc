@@ -1650,7 +1650,10 @@ impl Serialize for ImportDeclaration<'_> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportDeclaration")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("specifiers", &crate::serialize::OptionVecDefault(&self.specifiers))?;
+        map.serialize_entry(
+            "specifiers",
+            &crate::serialize::OptionVecDefault::from(&self.specifiers),
+        )?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("phase", &self.phase)?;
         map.serialize_entry("withClause", &self.with_clause)?;

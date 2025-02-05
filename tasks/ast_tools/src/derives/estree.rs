@@ -218,7 +218,7 @@ fn generate_stmt_for_struct_field(
     let mut value = quote!( &self.#field_name_ident );
     if let Some(via_str) = field.estree.via.as_deref() {
         let via_ty = parse_str::<Type>(via_str).unwrap();
-        value = quote!( &#via_ty(#value) );
+        value = quote!( &#via_ty::from(#value) );
     } else if let Some(append_field_index) = field.estree.append_field_index {
         let append_from_ident = struct_def.fields[append_field_index].ident();
         value = quote! {

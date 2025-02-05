@@ -6,7 +6,7 @@ use serde::{
     Serialize,
 };
 
-use oxc_allocator::Box;
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_span::{Atom, Span};
 use oxc_syntax::number::BigintBase;
 
@@ -211,7 +211,7 @@ struct SerFormalParameterRest<'a, 'b> {
     #[serde(flatten)]
     span: Span,
     argument: &'b BindingPatternKind<'a>,
-    type_annotation: &'b Option<Box<'a, TSTypeAnnotation<'a>>>,
+    type_annotation: &'b Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     optional: bool,
 }
 
@@ -241,7 +241,13 @@ impl<E: Serialize, R: Serialize> Serialize for ElementsAndRest<'_, E, R> {
     }
 }
 
-pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'a Option<oxc_allocator::Vec<'b, T>>);
+pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'b Option<ArenaVec<'a, T>>);
+
+impl<'a, 'b, T: Serialize> From<&'b Option<ArenaVec<'a, T>>> for OptionVecDefault<'a, 'b, T> {
+    fn from(opt_vec: &'b Option<ArenaVec<'a, T>>) -> Self {
+        Self(opt_vec)
+    }
+}
 
 impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
