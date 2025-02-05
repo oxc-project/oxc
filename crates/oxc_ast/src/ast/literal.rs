@@ -203,5 +203,29 @@ bitflags! {
 
 /// Dummy type to communicate the content of `RegExpFlags` to `oxc_ast_tools`.
 #[ast(foreign = RegExpFlags)]
+#[generate_derive(ESTree)]
+#[estree(
+    custom_serialize,
+    custom_ts_def = "
+        type RegExpFlags = {
+            /** Global flag */
+            G: 1;
+            /** Ignore case flag */
+            I: 2;
+            /** Multiline flag */
+            M: 4;
+            /** DotAll flag */
+            S: 8;
+            /** Unicode flag */
+            U: 16;
+            /** Sticky flag */
+            Y: 32;
+            /** Indices flag */
+            D: 64;
+            /** Unicode sets flag */
+            V: 128;
+        }
+    "
+)]
 #[expect(dead_code)]
 struct RegExpFlagsAlias(u8);

@@ -243,6 +243,9 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::TypescriptGenerator,
 ];
 
+/// Attributes on structs and enums (not including those defined by derives/generators)
+const ATTRIBUTES: [&str; 2] = ["generate_derive", "plural"];
+
 type Result<R> = std::result::Result<R, ()>;
 
 /// CLI options.
@@ -379,7 +382,7 @@ fn generate_proc_macro() -> RawOutput {
 fn generate_updated_proc_macro(codegen: &Codegen) -> RawOutput {
     // Get all attrs which derives/generators use
     let mut attrs = codegen.attrs();
-    attrs.push("generate_derive");
+    attrs.extend(ATTRIBUTES);
     attrs.sort_unstable();
     let attrs = attrs.join(", ");
 

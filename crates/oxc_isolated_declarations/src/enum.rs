@@ -60,7 +60,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                         // Infinity
                         let expr = if v.is_infinite() {
-                            self.ast.expression_identifier_reference(SPAN, "Infinity")
+                            self.ast.expression_identifier(SPAN, "Infinity")
                         } else {
                             let value = if is_negative { -v } else { v };
                             self.ast.expression_numeric_literal(

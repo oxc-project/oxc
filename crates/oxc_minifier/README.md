@@ -29,6 +29,8 @@ The compressor is responsible for rewriting statements and expressions for minim
   - Examples that breaks this assumption: `(() => { console.log(v); let v; })()`
 - `with` statement is not used
   - Examples that breaks this assumption: `with (Math) { console.log(PI); }`
+- `.toString()`, `.valueOf()`, `[Symbol.toPrimitive]()` are side-effect free
+  - Examples that breaks this assumption: `{ toString() { console.log('sideeffect') } }`
 - Errors thrown when creating a String or an Array that exceeds the maximum length can disappear or moved
   - Examples that breaks this assumption: `try { new Array(Number(2n**53n)) } catch { console.log('log') }`
 

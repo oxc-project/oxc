@@ -8,7 +8,7 @@ use syn::Ident;
 use crate::{
     output::{output_path, Output},
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
-    utils::is_reserved_name,
+    utils::{create_safe_ident, is_reserved_name},
     Codegen, Generator, AST_CRATE_PATH,
 };
 
@@ -33,13 +33,13 @@ impl Generator for AstBuilderGenerator {
             .types
             .iter()
             .filter(|&type_def| {
-                let is_visited = match type_def {
-                    TypeDef::Struct(struct_def) => struct_def.visit.is_visited,
-                    TypeDef::Enum(enum_def) => enum_def.visit.is_visited,
+                let has_visitor = match type_def {
+                    TypeDef::Struct(struct_def) => struct_def.visit.has_visitor(),
+                    TypeDef::Enum(enum_def) => enum_def.visit.has_visitor(),
                     _ => false,
                 };
                 let is_blacklisted = BLACK_LIST.contains(&type_def.name());
-                is_visited && !is_blacklisted
+                has_visitor && !is_blacklisted
             })
             .map(|type_def| generate_builder_methods(type_def, schema))
             .collect::<TokenStream>();
@@ -276,11 +276,11 @@ fn get_struct_params<'s>(
                 TypeDef::Primitive(primitive_def) => match primitive_def.name() {
                     "Atom" if !has_atom_generic => {
                         has_atom_generic = true;
-                        Some(format_ident!("A"))
+                        Some(create_safe_ident("A"))
                     }
                     "&str" if !has_str_generic => {
                         has_str_generic = true;
-                        Some(format_ident!("S"))
+                        Some(create_safe_ident("S"))
                     }
                     _ => None,
                 },
@@ -410,7 +410,7 @@ fn generate_builder_method_for_enum_variant(
 
     let enum_ident = enum_def.ident();
     let enum_ty = enum_def.ty(schema);
-    let fn_name = enum_variant_builder_name(enum_def, variant, schema);
+    let fn_name = enum_variant_builder_name(enum_def, variant);
     let variant_ident = variant.ident();
     let inner_builder_name = struct_builder_name(&variant_type.snake_name(), is_boxed);
 
@@ -450,21 +450,16 @@ fn struct_builder_name(snake_name: &str, does_alloc: bool) -> Ident {
     } else if is_reserved_name(snake_name) {
         format_ident!("{snake_name}_")
     } else {
-        format_ident!("{snake_name}")
+        // We just checked name is not a reserved word
+        create_safe_ident(snake_name)
     }
 }
 
 /// Get name of enum variant builder method.
-fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef, schema: &Schema) -> Ident {
+fn enum_variant_builder_name(enum_def: &EnumDef, variant: &VariantDef) -> Ident {
     let enum_name = enum_def.snake_name();
 
-    // TODO: `let variant_name = variant.snake_name();` would be better
-    let mut variant_type = variant.field_type(schema).unwrap();
-    if let TypeDef::Box(box_def) = variant_type {
-        variant_type = box_def.inner_type(schema);
-    }
-    let variant_name = variant_type.snake_name();
-
+    let variant_name = variant.snake_name();
     let variant_name = if variant_name.len() > enum_name.len()
         && variant_name.ends_with(&enum_name)
         && variant_name.as_bytes()[variant_name.len() - enum_name.len() - 1] == b'_'

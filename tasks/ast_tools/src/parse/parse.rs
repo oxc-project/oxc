@@ -3,8 +3,8 @@ use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::{
     punctuated::Punctuated, token::Comma, AttrStyle, Attribute, Expr, ExprLit, Field, Fields,
-    GenericArgument, Generics, Ident, ItemEnum, ItemStruct, Lit, Meta, PathArguments, PathSegment,
-    Type, TypePath, TypeReference, Variant, Visibility as SynVisibility,
+    GenericArgument, Generics, Ident, ItemEnum, ItemStruct, Lit, Meta, MetaList, PathArguments,
+    PathSegment, Type, TypePath, TypeReference, Variant, Visibility as SynVisibility,
 };
 
 use crate::{
@@ -17,7 +17,7 @@ use crate::{
 };
 
 use super::{
-    attr::{AttrLocation, AttrPart, AttrPositions, AttrProcessor},
+    attr::{AttrLocation, AttrPart, AttrPartListElement, AttrPositions, AttrProcessor},
     ident_name,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
     Derives, FxIndexMap, FxIndexSet,
@@ -183,10 +183,12 @@ impl<'c> Parser<'c> {
         let StructSkeleton { name, item, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
-        let generated_derives = self.get_generated_derives(&item.attrs, &name);
+        let (generated_derives, plural_name) =
+            self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Struct(StructDef::new(
             type_id,
             name,
+            plural_name,
             has_lifetime,
             file_id,
             generated_derives,
@@ -255,10 +257,12 @@ impl<'c> Parser<'c> {
         let has_lifetime = check_generics(&item.generics, &name);
         let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
         let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();
-        let generated_derives = self.get_generated_derives(&item.attrs, &name);
+        let (generated_derives, plural_name) =
+            self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Enum(EnumDef::new(
             type_id,
             name,
+            plural_name,
             has_lifetime,
             file_id,
             generated_derives,
@@ -331,7 +335,7 @@ impl<'c> Parser<'c> {
 
     /// Parse struct field to [`FieldDef`].
     fn parse_field(&mut self, field: &Field, index: usize) -> FieldDef {
-        let name = match field.ident.as_ref() {
+        let name = match &field.ident {
             Some(ident) => ident_name(ident),
             None => index.to_string(),
         };
@@ -626,8 +630,13 @@ impl<'c> Parser<'c> {
     }
 
     /// Get derives which are generated with `#[generate_derive(...)]` attrs.
-    fn get_generated_derives(&self, attrs: &[Attribute], type_name: &str) -> Derives {
+    fn get_generated_derives_and_plural_name(
+        &self,
+        attrs: &[Attribute],
+        type_name: &str,
+    ) -> (Derives, Option<String>) {
         let mut derives = Derives::none();
+        let mut plural_name = None;
         for attr in attrs {
             if attr.path().is_ident("generate_derive") {
                 let args = attr.parse_args_with(Punctuated::<Ident, Comma>::parse_terminated);
@@ -638,10 +647,20 @@ impl<'c> Parser<'c> {
                     let derive_id = self.codegen.get_derive_id_by_name(&ident_name(&arg));
                     derives.add(derive_id);
                 }
+            } else if attr.path().is_ident("plural") {
+                let ident = attr.parse_args::<Ident>();
+                let Ok(ident) = ident else {
+                    panic!("Unable to parse `#[plural]` on `{type_name}` type");
+                };
+                assert!(
+                    plural_name.is_none(),
+                    "Multiple `#[plural]` attributes on `{type_name}` type"
+                );
+                plural_name = Some(ident.to_string());
             }
         }
 
-        derives
+        (derives, plural_name)
     }
 }
 
@@ -707,15 +726,6 @@ fn process_attr(
                             AttrPart::Tag(&part_name),
                         )?;
                     }
-                    Meta::List(meta_list) => {
-                        let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
-                        process_attr_part(
-                            processor,
-                            attr_name,
-                            location.unpack(),
-                            AttrPart::List(&part_name, meta_list),
-                        )?;
-                    }
                     Meta::NameValue(name_value) => {
                         let part_name = name_value.path.get_ident().ok_or(())?.to_string();
                         let str = convert_expr_to_string(&name_value.value);
@@ -726,6 +736,16 @@ fn process_attr(
                             AttrPart::String(&part_name, str),
                         )?;
                     }
+                    Meta::List(meta_list) => {
+                        let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                        let list = parse_attr_part_list(meta_list)?;
+                        process_attr_part(
+                            processor,
+                            attr_name,
+                            location.unpack(),
+                            AttrPart::List(&part_name, list),
+                        )?;
+                    }
                 };
             }
             Ok(())
@@ -734,12 +754,34 @@ fn process_attr(
     }
 }
 
+fn parse_attr_part_list(meta_list: &MetaList) -> Result<Vec<AttrPartListElement>> {
+    let metas =
+        meta_list.parse_args_with(Punctuated::<Meta, Comma>::parse_terminated).map_err(|_| ())?;
+    metas
+        .into_iter()
+        .map(|meta| match meta {
+            Meta::Path(path) => {
+                let part_name = path.get_ident().ok_or(())?.to_string();
+                Ok(AttrPartListElement::Tag(part_name))
+            }
+            Meta::NameValue(name_value) => {
+                let part_name = name_value.path.get_ident().ok_or(())?.to_string();
+                let str = convert_expr_to_string(&name_value.value);
+                Ok(AttrPartListElement::String(part_name, str))
+            }
+            Meta::List(meta_list) => {
+                let part_name = meta_list.path.get_ident().ok_or(())?.to_string();
+                let list = parse_attr_part_list(&meta_list)?;
+                Ok(AttrPartListElement::List(part_name, list))
+            }
+        })
+        .collect()
+}
+
 /// Convert an [`Expr`] to a string.
 ///
 /// If the `Expr` is a string literal, get the value of the string.
 /// Otherwise print the `Expr` as a string.
-///
-/// This function is also used in `Visit` generator.
 pub fn convert_expr_to_string(expr: &Expr) -> String {
     if let Expr::Lit(ExprLit { lit: Lit::Str(s), .. }) = expr {
         s.value()

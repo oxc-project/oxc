@@ -1,7 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{extensions::layout::Layout, Def, Derives, FileId, Schema, TypeDef, TypeId};
+use super::{
+    extensions::{layout::Layout, visit::VisitVec},
+    Def, Derives, FileId, Schema, TypeDef, TypeId,
+};
 
 /// Type definition for a `Vec`.
 #[derive(Debug)]
@@ -9,13 +12,20 @@ pub struct VecDef {
     pub id: TypeId,
     pub name: String,
     pub inner_type_id: TypeId,
+    pub visit: VisitVec,
     pub layout: Layout,
 }
 
 impl VecDef {
     /// Create new [`VecDef`].
     pub fn new(name: String, inner_type_id: TypeId) -> Self {
-        Self { id: TypeId::DUMMY, name, inner_type_id, layout: Layout::default() }
+        Self {
+            id: TypeId::DUMMY,
+            name,
+            inner_type_id,
+            visit: VisitVec::default(),
+            layout: Layout::default(),
+        }
     }
 
     /// Get inner type.

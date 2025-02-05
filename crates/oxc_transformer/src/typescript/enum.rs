@@ -602,7 +602,7 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
-                let object = self.ctx.ast.expression_identifier_reference(SPAN, self.enum_name);
+                let object = self.ctx.ast.expression_identifier(SPAN, self.enum_name);
                 let property = self.ctx.ast.identifier_name(SPAN, ident.name);
                 *expr = self.ctx.ast.member_expression_static(SPAN, object, property, false).into();
             }

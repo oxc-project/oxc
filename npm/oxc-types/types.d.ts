@@ -341,12 +341,12 @@ export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTa
 
 export interface ArrayAssignmentTarget extends Span {
   type: 'ArrayAssignmentTarget';
-  elements: Array<AssignmentTargetRest | AssignmentTargetMaybeDefault | null>;
+  elements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;
 }
 
 export interface ObjectAssignmentTarget extends Span {
   type: 'ObjectAssignmentTarget';
-  properties: Array<AssignmentTargetRest | AssignmentTargetProperty>;
+  properties: Array<AssignmentTargetProperty | AssignmentTargetRest>;
 }
 
 export interface AssignmentTargetRest extends Span {
@@ -689,7 +689,7 @@ export interface AssignmentPattern extends Span {
 
 export interface ObjectPattern extends Span {
   type: 'ObjectPattern';
-  properties: Array<BindingRestElement | BindingProperty>;
+  properties: Array<BindingProperty | BindingRestElement>;
 }
 
 export interface BindingProperty extends Span {
@@ -702,7 +702,7 @@ export interface BindingProperty extends Span {
 
 export interface ArrayPattern extends Span {
   type: 'ArrayPattern';
-  elements: Array<BindingRestElement | BindingPattern | null>;
+  elements: Array<BindingPattern | BindingRestElement | null>;
 }
 
 export interface BindingRestElement extends Span {
@@ -733,6 +733,13 @@ export interface FormalParameters extends Span {
   type: 'FormalParameters';
   kind: FormalParameterKind;
   items: Array<FormalParameter | FormalParameterRest>;
+}
+
+export interface FormalParameterRest extends Span {
+  type: 'RestElement';
+  argument: BindingPatternKind;
+  typeAnnotation: TSTypeAnnotation | null;
+  optional: boolean;
 }
 
 export interface FormalParameter extends Span {
@@ -1032,6 +1039,25 @@ export interface RegExp {
 
 export type RegExpPattern = string | string | Pattern;
 
+export type RegExpFlags = {
+  /** Global flag */
+  G: 1;
+  /** Ignore case flag */
+  I: 2;
+  /** Multiline flag */
+  M: 4;
+  /** DotAll flag */
+  S: 8;
+  /** Unicode flag */
+  U: 16;
+  /** Sticky flag */
+  Y: 32;
+  /** Indices flag */
+  D: 64;
+  /** Unicode sets flag */
+  V: 128;
+};
+
 export interface JSXElement extends Span {
   type: 'JSXElement';
   openingElement: JSXOpeningElement;
@@ -1067,6 +1093,8 @@ export interface JSXClosingFragment extends Span {
   type: 'JSXClosingFragment';
 }
 
+export type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpression;
+
 export interface JSXNamespacedName extends Span {
   type: 'JSXNamespacedName';
   namespace: JSXIdentifier;
@@ -1078,6 +1106,8 @@ export interface JSXMemberExpression extends Span {
   object: JSXMemberExpressionObject;
   property: JSXIdentifier;
 }
+
+export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;
 
 export interface JSXExpressionContainer extends Span {
   type: 'JSXExpressionContainer';
@@ -1941,36 +1971,3 @@ export interface NamedReference extends Span {
   type: 'NamedReference';
   name: string;
 }
-
-export interface FormalParameterRest extends Span {
-  type: 'RestElement';
-  argument: BindingPatternKind;
-  typeAnnotation: TSTypeAnnotation | null;
-  optional: boolean;
-}
-
-export type RegExpFlags = {
-  /** Global flag */
-  G: 1;
-  /** Ignore case flag */
-  I: 2;
-  /** Multiline flag */
-  M: 4;
-  /** DotAll flag */
-  S: 8;
-  /** Unicode flag */
-  U: 16;
-  /** Sticky flag */
-  Y: 32;
-  /** Indices flag */
-  D: 64;
-  /** Unicode sets flag */
-  V: 128;
-};
-
-export type JSXElementName =
-  | JSXIdentifier
-  | JSXNamespacedName
-  | JSXMemberExpression;
-
-export type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression;

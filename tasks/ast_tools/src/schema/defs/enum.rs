@@ -5,7 +5,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-use crate::utils::create_ident;
+use crate::utils::{create_ident, pluralize};
 
 use super::{
     extensions::{
@@ -26,6 +26,7 @@ pub type Discriminant = u8;
 pub struct EnumDef {
     pub id: TypeId,
     pub name: String,
+    pub plural_name: Option<String>,
     pub has_lifetime: bool,
     pub file_id: FileId,
     pub generated_derives: Derives,
@@ -42,9 +43,11 @@ pub struct EnumDef {
 
 impl EnumDef {
     /// Create new [`EnumDef`].
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         id: TypeId,
         name: String,
+        plural_name: Option<String>,
         has_lifetime: bool,
         file_id: FileId,
         generated_derives: Derives,
@@ -54,6 +57,7 @@ impl EnumDef {
         Self {
             id,
             name,
+            plural_name,
             has_lifetime,
             file_id,
             generated_derives,
@@ -66,6 +70,16 @@ impl EnumDef {
             content_eq: ContentEqType::default(),
             estree: ESTreeEnum::default(),
         }
+    }
+
+    /// Get plural type name.
+    pub fn plural_name(&self) -> String {
+        self.plural_name.clone().unwrap_or_else(|| pluralize(self.name()))
+    }
+
+    /// Get plural type name in snake case.
+    pub fn plural_snake_name(&self) -> String {
+        self.plural_name().to_case(Case::Snake)
     }
 
     /// Get iterator over all enum's variants (including inherited)
@@ -167,6 +181,11 @@ impl VariantDef {
     /// Get variant name.
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Get variant name in snake case.
+    pub fn snake_name(&self) -> String {
+        self.name().to_case(Case::Snake)
     }
 
     /// Get variant name in camel case.

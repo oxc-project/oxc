@@ -1299,6 +1299,8 @@ pub struct TSImportAttributes<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+// Pluralize as `TSImportAttributeList` to avoid naming clash with `TSImportAttributes`.
+#[plural(TSImportAttributeList)]
 pub struct TSImportAttribute<'a> {
     pub span: Span,
     pub name: TSImportAttributeName<'a>,

@@ -1,6 +1,6 @@
 use crate::{
     output::Output,
-    parse::attr::{attr_positions, AttrLocation, AttrPart, AttrPositions},
+    parse::attr::{attr_positions, AttrLocation, AttrPart, AttrPartListElement, AttrPositions},
     Codegen, Result, Runner, Schema,
 };
 

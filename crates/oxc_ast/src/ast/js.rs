@@ -298,7 +298,7 @@ inherit_variants! {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_ts_def)]
+#[estree(no_ts_def)]
 pub enum ArrayExpressionElement<'a> {
     /// `...[3, 4]` in `const array = [1, 2, ...[3, 4], null];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
@@ -1544,6 +1544,7 @@ pub struct BindingRestElement<'a> {
 /// }
 /// ```
 #[ast(visit)]
+#[visit(args(flags = ScopeFlags))]
 #[scope(
     // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
     flags = flags,
@@ -1625,7 +1626,17 @@ pub enum FunctionType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize)]
+#[estree(
+    custom_serialize,
+    add_ts_def = "
+        interface FormalParameterRest extends Span {
+            type: 'RestElement';
+            argument: BindingPatternKind;
+            typeAnnotation: TSTypeAnnotation | null;
+            optional: boolean;
+        }
+    "
+)]
 pub struct FormalParameters<'a> {
     pub span: Span,
     pub kind: FormalParameterKind,
@@ -1638,6 +1649,8 @@ pub struct FormalParameters<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+// Pluralize as `FormalParameterList` to avoid naming clash with `FormalParameters`.
+#[plural(FormalParameterList)]
 pub struct FormalParameter<'a> {
     pub span: Span,
     #[ts]

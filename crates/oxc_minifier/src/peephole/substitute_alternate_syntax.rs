@@ -375,7 +375,7 @@ impl<'a> PeepholeOptimizations {
             ctx.ast.expression_unary(
                 SPAN,
                 UnaryOperator::LogicalNot,
-                ctx.ast.expression_identifier_reference(is_null_id_ref.span, is_null_id_ref.name),
+                ctx.ast.expression_identifier(is_null_id_ref.span, is_null_id_ref.name),
             )
         } else {
             ctx.ast.expression_unary(
@@ -384,8 +384,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.ast.expression_unary(
                     SPAN,
                     UnaryOperator::LogicalNot,
-                    ctx.ast
-                        .expression_identifier_reference(is_null_id_ref.span, is_null_id_ref.name),
+                    ctx.ast.expression_identifier(is_null_id_ref.span, is_null_id_ref.name),
                 ),
             )
         };
@@ -611,7 +610,7 @@ impl<'a> PeepholeOptimizations {
                                 ));
                             }
                         }
-                        let callee = ctx.ast.expression_identifier_reference(n.span, "Array");
+                        let callee = ctx.ast.expression_identifier(n.span, "Array");
                         let args = ctx.ast.move_vec(args);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
@@ -624,7 +623,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     // `new Array(x)` -> `Array(x)`
                     else {
-                        let callee = ctx.ast.expression_identifier_reference(span, "Array");
+                        let callee = ctx.ast.expression_identifier(span, "Array");
                         let args = ctx.ast.move_vec(args);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
@@ -714,8 +713,7 @@ impl<'a> PeepholeOptimizations {
                     .as_member_expression()
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
-                call_expr.callee =
-                    ctx.ast.expression_identifier_reference(call_expr.callee.span(), "Object");
+                call_expr.callee = ctx.ast.expression_identifier(call_expr.callee.span(), "Object");
                 self.mark_current_function_as_changed();
             }
         }
@@ -1385,7 +1383,7 @@ mod test {
     #[test]
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
-        test("const foo = () => { foo; return 'baz' }", "const foo = () => (foo, 'baz')");
+        test("const foo = () => { foo.foo; return 'baz' }", "const foo = () => (foo.foo, 'baz')");
     }
 
     #[test]
