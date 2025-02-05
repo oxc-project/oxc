@@ -638,6 +638,84 @@ mod tests {
     }
 
     #[test]
+    fn as_slice() {
+        let mut stack = NonEmptyStack::new(10u64);
+        assert_len_cap_last!(stack, 1, 4, &10);
+        assert_eq!(stack.as_slice(), &[10]);
+
+        stack.push(20);
+        stack.push(30);
+        stack.push(40);
+        assert_len_cap_last!(stack, 4, 4, &40);
+        assert_eq!(stack.as_slice(), &[10, 20, 30, 40]);
+
+        stack.push(50);
+        assert_len_cap_last!(stack, 5, 8, &50);
+        assert_eq!(stack.as_slice(), &[10, 20, 30, 40, 50]);
+
+        stack.pop();
+        assert_len_cap_last!(stack, 4, 8, &40);
+        assert_eq!(stack.as_slice(), &[10, 20, 30, 40]);
+
+        stack.pop();
+        assert_len_cap_last!(stack, 3, 8, &30);
+        assert_eq!(stack.as_slice(), &[10, 20, 30]);
+
+        stack.pop();
+        stack.pop();
+        assert_len_cap_last!(stack, 1, 8, &10);
+        assert_eq!(stack.as_slice(), &[10]);
+    }
+
+    #[test]
+    fn as_mut_slice() {
+        let mut stack = NonEmptyStack::new(10u64);
+        assert_len_cap_last!(stack, 1, 4, &10);
+        assert_eq!(stack.as_mut_slice(), &mut [10]);
+
+        stack.as_mut_slice()[0] = 11;
+        assert_len_cap_last!(stack, 1, 4, &11);
+        assert_eq!(&stack[..], &[11]);
+        assert_eq!(stack.as_mut_slice(), &mut [11]);
+
+        stack.push(20);
+        stack.push(30);
+        stack.push(40);
+        assert_len_cap_last!(stack, 4, 4, &40);
+        assert_eq!(&stack[..], &[11, 20, 30, 40]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 30, 40]);
+
+        stack.as_mut_slice()[2] = 31;
+        assert_len_cap_last!(stack, 4, 4, &40);
+        assert_eq!(&stack[..], &[11, 20, 31, 40]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 31, 40]);
+
+        stack.push(50);
+        assert_len_cap_last!(stack, 5, 8, &50);
+        assert_eq!(&stack[..], &[11, 20, 31, 40, 50]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 31, 40, 50]);
+
+        stack.pop();
+        assert_len_cap_last!(stack, 4, 8, &40);
+        assert_eq!(&stack[..], &[11, 20, 31, 40]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 31, 40]);
+
+        stack.pop();
+        assert_len_cap_last!(stack, 3, 8, &31);
+        assert_eq!(&stack[..], &[11, 20, 31]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 31]);
+
+        stack.pop();
+        stack.pop();
+        assert_len_cap_last!(stack, 1, 8, &11);
+        assert_eq!(stack.as_mut_slice(), &mut [11]);
+
+        stack.as_mut_slice()[0] = 12;
+        assert_len_cap_last!(stack, 1, 8, &12);
+        assert_eq!(stack.as_mut_slice(), &mut [12]);
+    }
+
+    #[test]
     #[expect(clippy::items_after_statements)]
     fn drop() {
         use std::sync::{Mutex, OnceLock};
