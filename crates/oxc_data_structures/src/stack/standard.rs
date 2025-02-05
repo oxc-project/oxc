@@ -224,7 +224,7 @@ impl<T> Stack<T> {
         #[expect(clippy::if_not_else)]
         if !self.is_empty() {
             // SAFETY: Stack is not empty
-            Some(unsafe { self.last_mut_unchecked() })
+            Some(unsafe { self.last_unchecked_mut() })
         } else {
             None
         }
@@ -236,7 +236,7 @@ impl<T> Stack<T> {
     ///
     /// * Stack must not be empty.
     #[inline]
-    pub unsafe fn last_mut_unchecked(&mut self) -> &mut T {
+    pub unsafe fn last_unchecked_mut(&mut self) -> &mut T {
         debug_assert!(self.end > self.start);
         debug_assert!(self.cursor > self.start);
         debug_assert!(self.cursor <= self.end);
