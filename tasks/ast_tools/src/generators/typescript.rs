@@ -6,8 +6,7 @@ use itertools::Itertools;
 
 use crate::{
     derives::estree::{
-        get_fieldless_variant_value, get_struct_field_name, should_add_type_field_to_struct,
-        should_flatten_field, should_skip_field,
+        get_fieldless_variant_value, get_struct_field_name, should_flatten_field, should_skip_field,
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
@@ -232,5 +231,17 @@ fn get_field_type_name<'s>(field: &'s FieldDef, schema: &'s Schema) -> Cow<'s, s
     } else {
         let field_type = field.type_def(schema);
         ts_type_name(field_type, schema)
+    }
+}
+
+/// Get if should generate a `type` field.
+///
+/// Type field should be added unless struct has an `#[estree(no_type)]` attr
+/// or struct has an existing field called `type`.
+fn should_add_type_field_to_struct(struct_def: &StructDef) -> bool {
+    if struct_def.estree.no_type {
+        false
+    } else {
+        !struct_def.fields.iter().any(|field| matches!(field.name(), "type"))
     }
 }

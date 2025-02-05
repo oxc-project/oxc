@@ -3,7 +3,9 @@
 
 #![allow(unused_imports, clippy::match_same_arms)]
 
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use serde::{__private::ser::FlatMapSerializer, ser::SerializeMap, Serialize, Serializer};
+
+use oxc_estree::ser::AppendTo;
 
 use crate::source_type::*;
 use crate::span::*;
@@ -29,7 +31,7 @@ impl Serialize for SourceType {
 
 impl Serialize for Language {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             Language::JavaScript => serializer.serialize_unit_variant("Language", 0, "javascript"),
             Language::TypeScript => serializer.serialize_unit_variant("Language", 1, "typescript"),
             Language::TypeScriptDefinition => {
@@ -41,7 +43,7 @@ impl Serialize for Language {
 
 impl Serialize for ModuleKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             ModuleKind::Script => serializer.serialize_unit_variant("ModuleKind", 0, "script"),
             ModuleKind::Module => serializer.serialize_unit_variant("ModuleKind", 1, "module"),
             ModuleKind::Unambiguous => {
@@ -53,7 +55,7 @@ impl Serialize for ModuleKind {
 
 impl Serialize for LanguageVariant {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             LanguageVariant::Standard => {
                 serializer.serialize_unit_variant("LanguageVariant", 0, "standard")
             }

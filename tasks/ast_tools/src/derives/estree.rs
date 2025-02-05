@@ -54,7 +54,14 @@ impl Derive for DeriveESTree {
             #![allow(unused_imports, clippy::match_same_arms)]
 
             ///@@line_break
-            use serde::{Serialize, Serializer, ser::SerializeMap};
+            use serde::{
+                __private::ser::FlatMapSerializer,
+                ser::SerializeMap,
+                Serialize, Serializer
+            };
+
+            ///@@line_break
+            use oxc_estree::ser::AppendTo;
         }
     }
 
@@ -179,55 +186,107 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
         };
     }
 
-    let mut stmts = quote!();
+    let mut gen = StructSerializerGenerator::new(!struct_def.estree.no_type, schema);
+    gen.generate_stmts_for_struct(struct_def, &quote!(self));
 
-    if should_add_type_field_to_struct(struct_def) {
+    let type_field = if gen.add_type_field {
         let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
-        stmts.extend(quote!( map.serialize_entry("type", #type_name)?; ));
-    }
-
-    for field in &struct_def.fields {
-        if !should_skip_field(field, schema) {
-            stmts.extend(generate_stmt_for_struct_field(field, struct_def, schema));
+        quote! {
+            map.serialize_entry("type", #type_name)?;
         }
-    }
+    } else {
+        quote!()
+    };
 
+    let stmts = gen.stmts;
     quote! {
         let mut map = serializer.serialize_map(None)?;
+        #type_field
         #stmts
         map.end()
     }
 }
 
-/// Generate code to serialize a struct field.
-fn generate_stmt_for_struct_field(
-    field: &FieldDef,
-    struct_def: &StructDef,
-    schema: &Schema,
-) -> TokenStream {
-    let field_name_ident = field.ident();
+/// Generator for stmts to serialize fields of a struct.
+///
+/// Recursively enters any flattened fields which contain a struct,
+/// and generates statements for each of the flattened struct's fields too.
+///
+/// If a field called `type` is found, `add_type_field` is set to `false`.
+struct StructSerializerGenerator<'s> {
+    /// `serialize` statements
+    stmts: TokenStream,
+    /// `true` if a `type` field should be added.
+    /// `false` one already exists (or if `#[estree(no_type)]` attr on struct).
+    add_type_field: bool,
+    /// Schema
+    schema: &'s Schema,
+}
 
-    if should_flatten_field(field, schema) {
-        return quote! {
-            self.#field_name_ident.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        };
+impl<'s> StructSerializerGenerator<'s> {
+    /// Create new [`StructSerializerGenerator`].
+    fn new(add_type_field: bool, schema: &'s Schema) -> Self {
+        Self { stmts: quote!(), add_type_field, schema }
     }
 
-    let field_camel_name = get_struct_field_name(field);
-
-    let mut value = quote!( &self.#field_name_ident );
-    if let Some(via_str) = field.estree.via.as_deref() {
-        let via_ty = parse_str::<Type>(via_str).unwrap();
-        value = quote!( &#via_ty::from(#value) );
-    } else if let Some(append_field_index) = field.estree.append_field_index {
-        let append_from_ident = struct_def.fields[append_field_index].ident();
-        value = quote! {
-            &oxc_estree::ser::AppendTo { array: #value, after: &self.#append_from_ident }
-        };
+    /// Generate code to serialize all fields in a struct.
+    fn generate_stmts_for_struct(&mut self, struct_def: &StructDef, self_path: &TokenStream) {
+        for field in &struct_def.fields {
+            self.generate_stmts_for_field(field, struct_def, self_path);
+        }
     }
 
-    quote! {
-        map.serialize_entry(#field_camel_name, #value)?;
+    /// Generate code to serialize a struct field.
+    fn generate_stmts_for_field(
+        &mut self,
+        field: &FieldDef,
+        struct_def: &StructDef,
+        self_path: &TokenStream,
+    ) {
+        if should_skip_field(field, self.schema) {
+            return;
+        }
+
+        let field_name_ident = field.ident();
+
+        if should_flatten_field(field, self.schema) {
+            match field.type_def(self.schema) {
+                TypeDef::Struct(inner_struct_def) => {
+                    self.generate_stmts_for_struct(
+                        inner_struct_def,
+                        &quote!(#self_path.#field_name_ident),
+                    );
+                }
+                TypeDef::Enum(_) => {
+                    self.stmts.extend(quote! {
+                        #self_path.#field_name_ident.serialize(FlatMapSerializer(&mut map))?;
+                    });
+                }
+                _ => panic!("Cannot flatten a field which is not a struct or enum"),
+            }
+            return;
+        }
+
+        let field_camel_name = get_struct_field_name(field);
+
+        if field_camel_name == "type" {
+            self.add_type_field = false;
+        }
+
+        let mut value = quote!( #self_path.#field_name_ident );
+        if let Some(via_str) = field.estree.via.as_deref() {
+            let via_ty = parse_str::<Type>(via_str).unwrap();
+            value = quote!( #via_ty::from(&#value) );
+        } else if let Some(append_field_index) = field.estree.append_field_index {
+            let append_from_ident = struct_def.fields[append_field_index].ident();
+            value = quote! {
+                AppendTo { array: &#value, after: &#self_path.#append_from_ident }
+            };
+        }
+
+        self.stmts.extend(quote! {
+            map.serialize_entry(#field_camel_name, &#value)?;
+        });
     }
 }
 
@@ -235,54 +294,26 @@ fn generate_stmt_for_struct_field(
 fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     let enum_ident = enum_def.ident();
 
-    if enum_def.is_fieldless() {
-        let enum_name = enum_def.name();
-        let match_branches = enum_def.all_variants(schema).map(|variant| {
-            let variant_ident = variant.ident();
+    let match_branches = enum_def.all_variants(schema).map(|variant| {
+        let variant_ident = variant.ident();
+        if variant.is_fieldless() {
+            let enum_name = enum_def.name();
             let discriminant = number_lit(variant.discriminant);
             let value = get_fieldless_variant_value(enum_def, variant);
-
             quote! {
-                #enum_ident::#variant_ident => {
-                    serializer.serialize_unit_variant(#enum_name, #discriminant, #value)
-                }
+                #enum_ident::#variant_ident => serializer.serialize_unit_variant(#enum_name, #discriminant, #value),
             }
-        });
-
-        quote! {
-            match *self {
-                #(#match_branches)*
+        } else {
+            quote! {
+                #enum_ident::#variant_ident(it) => it.serialize(serializer),
             }
         }
-    } else {
-        let match_branches = enum_def.all_variants(schema).map(|variant| {
-            let variant_ident = variant.ident();
-            quote! {
-                #enum_ident::#variant_ident(it) => {
-                    Serialize::serialize(it, serializer)
-                }
-            }
-        });
+    });
 
-        quote! {
-            match self {
-                #(#match_branches)*
-            }
+    quote! {
+        match self {
+            #(#match_branches)*
         }
-    }
-}
-
-/// Get if should generate a `type` field.
-///
-/// Type field should be added unless struct has an `#[estree(no_type)]` attr
-/// or struct has an existing field called `type`.
-///
-/// This function also used by Typescript generator.
-pub fn should_add_type_field_to_struct(struct_def: &StructDef) -> bool {
-    if struct_def.estree.no_type {
-        false
-    } else {
-        !struct_def.fields.iter().any(|field| matches!(field.name(), "type"))
     }
 }
 

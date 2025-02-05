@@ -3,7 +3,9 @@
 
 #![allow(unused_imports, clippy::match_same_arms)]
 
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use serde::{__private::ser::FlatMapSerializer, ser::SerializeMap, Serialize, Serializer};
+
+use oxc_estree::ser::AppendTo;
 
 use crate::ast::js::*;
 use crate::ast::jsx::*;
@@ -14,7 +16,8 @@ impl Serialize for Program<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Program")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("sourceType", &self.source_type)?;
         map.serialize_entry("hashbang", &self.hashbang)?;
         map.serialize_entry("directives", &self.directives)?;
@@ -26,48 +29,48 @@ impl Serialize for Program<'_> {
 impl Serialize for Expression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            Expression::BooleanLiteral(it) => Serialize::serialize(it, serializer),
-            Expression::NullLiteral(it) => Serialize::serialize(it, serializer),
-            Expression::NumericLiteral(it) => Serialize::serialize(it, serializer),
-            Expression::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            Expression::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            Expression::StringLiteral(it) => Serialize::serialize(it, serializer),
-            Expression::TemplateLiteral(it) => Serialize::serialize(it, serializer),
-            Expression::Identifier(it) => Serialize::serialize(it, serializer),
-            Expression::MetaProperty(it) => Serialize::serialize(it, serializer),
-            Expression::Super(it) => Serialize::serialize(it, serializer),
-            Expression::ArrayExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ArrowFunctionExpression(it) => Serialize::serialize(it, serializer),
-            Expression::AssignmentExpression(it) => Serialize::serialize(it, serializer),
-            Expression::AwaitExpression(it) => Serialize::serialize(it, serializer),
-            Expression::BinaryExpression(it) => Serialize::serialize(it, serializer),
-            Expression::CallExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ChainExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ClassExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ConditionalExpression(it) => Serialize::serialize(it, serializer),
-            Expression::FunctionExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ImportExpression(it) => Serialize::serialize(it, serializer),
-            Expression::LogicalExpression(it) => Serialize::serialize(it, serializer),
-            Expression::NewExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ObjectExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ParenthesizedExpression(it) => Serialize::serialize(it, serializer),
-            Expression::SequenceExpression(it) => Serialize::serialize(it, serializer),
-            Expression::TaggedTemplateExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ThisExpression(it) => Serialize::serialize(it, serializer),
-            Expression::UnaryExpression(it) => Serialize::serialize(it, serializer),
-            Expression::UpdateExpression(it) => Serialize::serialize(it, serializer),
-            Expression::YieldExpression(it) => Serialize::serialize(it, serializer),
-            Expression::PrivateInExpression(it) => Serialize::serialize(it, serializer),
-            Expression::JSXElement(it) => Serialize::serialize(it, serializer),
-            Expression::JSXFragment(it) => Serialize::serialize(it, serializer),
-            Expression::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            Expression::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
-            Expression::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            Expression::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            Expression::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
-            Expression::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            Expression::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            Expression::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
+            Expression::BooleanLiteral(it) => it.serialize(serializer),
+            Expression::NullLiteral(it) => it.serialize(serializer),
+            Expression::NumericLiteral(it) => it.serialize(serializer),
+            Expression::BigIntLiteral(it) => it.serialize(serializer),
+            Expression::RegExpLiteral(it) => it.serialize(serializer),
+            Expression::StringLiteral(it) => it.serialize(serializer),
+            Expression::TemplateLiteral(it) => it.serialize(serializer),
+            Expression::Identifier(it) => it.serialize(serializer),
+            Expression::MetaProperty(it) => it.serialize(serializer),
+            Expression::Super(it) => it.serialize(serializer),
+            Expression::ArrayExpression(it) => it.serialize(serializer),
+            Expression::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Expression::AssignmentExpression(it) => it.serialize(serializer),
+            Expression::AwaitExpression(it) => it.serialize(serializer),
+            Expression::BinaryExpression(it) => it.serialize(serializer),
+            Expression::CallExpression(it) => it.serialize(serializer),
+            Expression::ChainExpression(it) => it.serialize(serializer),
+            Expression::ClassExpression(it) => it.serialize(serializer),
+            Expression::ConditionalExpression(it) => it.serialize(serializer),
+            Expression::FunctionExpression(it) => it.serialize(serializer),
+            Expression::ImportExpression(it) => it.serialize(serializer),
+            Expression::LogicalExpression(it) => it.serialize(serializer),
+            Expression::NewExpression(it) => it.serialize(serializer),
+            Expression::ObjectExpression(it) => it.serialize(serializer),
+            Expression::ParenthesizedExpression(it) => it.serialize(serializer),
+            Expression::SequenceExpression(it) => it.serialize(serializer),
+            Expression::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Expression::ThisExpression(it) => it.serialize(serializer),
+            Expression::UnaryExpression(it) => it.serialize(serializer),
+            Expression::UpdateExpression(it) => it.serialize(serializer),
+            Expression::YieldExpression(it) => it.serialize(serializer),
+            Expression::PrivateInExpression(it) => it.serialize(serializer),
+            Expression::JSXElement(it) => it.serialize(serializer),
+            Expression::JSXFragment(it) => it.serialize(serializer),
+            Expression::TSAsExpression(it) => it.serialize(serializer),
+            Expression::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Expression::TSTypeAssertion(it) => it.serialize(serializer),
+            Expression::TSNonNullExpression(it) => it.serialize(serializer),
+            Expression::TSInstantiationExpression(it) => it.serialize(serializer),
+            Expression::ComputedMemberExpression(it) => it.serialize(serializer),
+            Expression::StaticMemberExpression(it) => it.serialize(serializer),
+            Expression::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -76,7 +79,8 @@ impl Serialize for IdentifierName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.end()
     }
@@ -86,7 +90,8 @@ impl Serialize for IdentifierReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.end()
     }
@@ -96,7 +101,8 @@ impl Serialize for BindingIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.end()
     }
@@ -106,7 +112,8 @@ impl Serialize for LabelIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.end()
     }
@@ -116,7 +123,8 @@ impl Serialize for ThisExpression {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ThisExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -125,7 +133,8 @@ impl Serialize for ArrayExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ArrayExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("elements", &self.elements)?;
         map.end()
     }
@@ -134,70 +143,50 @@ impl Serialize for ArrayExpression<'_> {
 impl Serialize for ArrayExpressionElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ArrayExpressionElement::SpreadElement(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::Elision(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::BooleanLiteral(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::NullLiteral(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::NumericLiteral(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::StringLiteral(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::TemplateLiteral(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::Identifier(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::MetaProperty(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::Super(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::ArrayExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::ArrowFunctionExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::AssignmentExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::AwaitExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::BinaryExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::CallExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::ChainExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::ClassExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::ConditionalExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::FunctionExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::ImportExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::LogicalExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::NewExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::ObjectExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::ParenthesizedExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::SequenceExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::TaggedTemplateExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::ThisExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::UnaryExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::UpdateExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::YieldExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::PrivateInExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::JSXElement(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::JSXFragment(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::TSSatisfiesExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            ArrayExpressionElement::TSInstantiationExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::ComputedMemberExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::StaticMemberExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ArrayExpressionElement::PrivateFieldExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
+            ArrayExpressionElement::SpreadElement(it) => it.serialize(serializer),
+            ArrayExpressionElement::Elision(it) => it.serialize(serializer),
+            ArrayExpressionElement::BooleanLiteral(it) => it.serialize(serializer),
+            ArrayExpressionElement::NullLiteral(it) => it.serialize(serializer),
+            ArrayExpressionElement::NumericLiteral(it) => it.serialize(serializer),
+            ArrayExpressionElement::BigIntLiteral(it) => it.serialize(serializer),
+            ArrayExpressionElement::RegExpLiteral(it) => it.serialize(serializer),
+            ArrayExpressionElement::StringLiteral(it) => it.serialize(serializer),
+            ArrayExpressionElement::TemplateLiteral(it) => it.serialize(serializer),
+            ArrayExpressionElement::Identifier(it) => it.serialize(serializer),
+            ArrayExpressionElement::MetaProperty(it) => it.serialize(serializer),
+            ArrayExpressionElement::Super(it) => it.serialize(serializer),
+            ArrayExpressionElement::ArrayExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ArrowFunctionExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::AssignmentExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::AwaitExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::BinaryExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::CallExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ChainExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ClassExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ConditionalExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::FunctionExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ImportExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::LogicalExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::NewExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ObjectExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ParenthesizedExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::SequenceExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::TaggedTemplateExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ThisExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::UnaryExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::UpdateExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::YieldExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::PrivateInExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::JSXElement(it) => it.serialize(serializer),
+            ArrayExpressionElement::JSXFragment(it) => it.serialize(serializer),
+            ArrayExpressionElement::TSAsExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::TSSatisfiesExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::TSTypeAssertion(it) => it.serialize(serializer),
+            ArrayExpressionElement::TSNonNullExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::TSInstantiationExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::ComputedMemberExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::StaticMemberExpression(it) => it.serialize(serializer),
+            ArrayExpressionElement::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -206,7 +195,8 @@ impl Serialize for ObjectExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ObjectExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("properties", &self.properties)?;
         map.end()
     }
@@ -215,8 +205,8 @@ impl Serialize for ObjectExpression<'_> {
 impl Serialize for ObjectPropertyKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ObjectPropertyKind::ObjectProperty(it) => Serialize::serialize(it, serializer),
-            ObjectPropertyKind::SpreadProperty(it) => Serialize::serialize(it, serializer),
+            ObjectPropertyKind::ObjectProperty(it) => it.serialize(serializer),
+            ObjectPropertyKind::SpreadProperty(it) => it.serialize(serializer),
         }
     }
 }
@@ -225,7 +215,8 @@ impl Serialize for ObjectProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ObjectProperty")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("kind", &self.kind)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
@@ -239,57 +230,57 @@ impl Serialize for ObjectProperty<'_> {
 impl Serialize for PropertyKey<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            PropertyKey::StaticIdentifier(it) => Serialize::serialize(it, serializer),
-            PropertyKey::PrivateIdentifier(it) => Serialize::serialize(it, serializer),
-            PropertyKey::BooleanLiteral(it) => Serialize::serialize(it, serializer),
-            PropertyKey::NullLiteral(it) => Serialize::serialize(it, serializer),
-            PropertyKey::NumericLiteral(it) => Serialize::serialize(it, serializer),
-            PropertyKey::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            PropertyKey::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            PropertyKey::StringLiteral(it) => Serialize::serialize(it, serializer),
-            PropertyKey::TemplateLiteral(it) => Serialize::serialize(it, serializer),
-            PropertyKey::Identifier(it) => Serialize::serialize(it, serializer),
-            PropertyKey::MetaProperty(it) => Serialize::serialize(it, serializer),
-            PropertyKey::Super(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ArrayExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ArrowFunctionExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::AssignmentExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::AwaitExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::BinaryExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::CallExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ChainExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ClassExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ConditionalExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::FunctionExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ImportExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::LogicalExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::NewExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ObjectExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ParenthesizedExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::SequenceExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::TaggedTemplateExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ThisExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::UnaryExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::UpdateExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::YieldExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::PrivateInExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::JSXElement(it) => Serialize::serialize(it, serializer),
-            PropertyKey::JSXFragment(it) => Serialize::serialize(it, serializer),
-            PropertyKey::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            PropertyKey::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            PropertyKey::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
+            PropertyKey::StaticIdentifier(it) => it.serialize(serializer),
+            PropertyKey::PrivateIdentifier(it) => it.serialize(serializer),
+            PropertyKey::BooleanLiteral(it) => it.serialize(serializer),
+            PropertyKey::NullLiteral(it) => it.serialize(serializer),
+            PropertyKey::NumericLiteral(it) => it.serialize(serializer),
+            PropertyKey::BigIntLiteral(it) => it.serialize(serializer),
+            PropertyKey::RegExpLiteral(it) => it.serialize(serializer),
+            PropertyKey::StringLiteral(it) => it.serialize(serializer),
+            PropertyKey::TemplateLiteral(it) => it.serialize(serializer),
+            PropertyKey::Identifier(it) => it.serialize(serializer),
+            PropertyKey::MetaProperty(it) => it.serialize(serializer),
+            PropertyKey::Super(it) => it.serialize(serializer),
+            PropertyKey::ArrayExpression(it) => it.serialize(serializer),
+            PropertyKey::ArrowFunctionExpression(it) => it.serialize(serializer),
+            PropertyKey::AssignmentExpression(it) => it.serialize(serializer),
+            PropertyKey::AwaitExpression(it) => it.serialize(serializer),
+            PropertyKey::BinaryExpression(it) => it.serialize(serializer),
+            PropertyKey::CallExpression(it) => it.serialize(serializer),
+            PropertyKey::ChainExpression(it) => it.serialize(serializer),
+            PropertyKey::ClassExpression(it) => it.serialize(serializer),
+            PropertyKey::ConditionalExpression(it) => it.serialize(serializer),
+            PropertyKey::FunctionExpression(it) => it.serialize(serializer),
+            PropertyKey::ImportExpression(it) => it.serialize(serializer),
+            PropertyKey::LogicalExpression(it) => it.serialize(serializer),
+            PropertyKey::NewExpression(it) => it.serialize(serializer),
+            PropertyKey::ObjectExpression(it) => it.serialize(serializer),
+            PropertyKey::ParenthesizedExpression(it) => it.serialize(serializer),
+            PropertyKey::SequenceExpression(it) => it.serialize(serializer),
+            PropertyKey::TaggedTemplateExpression(it) => it.serialize(serializer),
+            PropertyKey::ThisExpression(it) => it.serialize(serializer),
+            PropertyKey::UnaryExpression(it) => it.serialize(serializer),
+            PropertyKey::UpdateExpression(it) => it.serialize(serializer),
+            PropertyKey::YieldExpression(it) => it.serialize(serializer),
+            PropertyKey::PrivateInExpression(it) => it.serialize(serializer),
+            PropertyKey::JSXElement(it) => it.serialize(serializer),
+            PropertyKey::JSXFragment(it) => it.serialize(serializer),
+            PropertyKey::TSAsExpression(it) => it.serialize(serializer),
+            PropertyKey::TSSatisfiesExpression(it) => it.serialize(serializer),
+            PropertyKey::TSTypeAssertion(it) => it.serialize(serializer),
+            PropertyKey::TSNonNullExpression(it) => it.serialize(serializer),
+            PropertyKey::TSInstantiationExpression(it) => it.serialize(serializer),
+            PropertyKey::ComputedMemberExpression(it) => it.serialize(serializer),
+            PropertyKey::StaticMemberExpression(it) => it.serialize(serializer),
+            PropertyKey::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
 
 impl Serialize for PropertyKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             PropertyKind::Init => serializer.serialize_unit_variant("PropertyKind", 0, "init"),
             PropertyKind::Get => serializer.serialize_unit_variant("PropertyKind", 1, "get"),
             PropertyKind::Set => serializer.serialize_unit_variant("PropertyKind", 2, "set"),
@@ -301,7 +292,8 @@ impl Serialize for TemplateLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TemplateLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("quasis", &self.quasis)?;
         map.serialize_entry("expressions", &self.expressions)?;
         map.end()
@@ -312,7 +304,8 @@ impl Serialize for TaggedTemplateExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TaggedTemplateExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("tag", &self.tag)?;
         map.serialize_entry("quasi", &self.quasi)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
@@ -324,7 +317,8 @@ impl Serialize for TemplateElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TemplateElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("tail", &self.tail)?;
         map.serialize_entry("value", &self.value)?;
         map.end()
@@ -343,9 +337,9 @@ impl Serialize for TemplateElementValue<'_> {
 impl Serialize for MemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            MemberExpression::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            MemberExpression::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            MemberExpression::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
+            MemberExpression::ComputedMemberExpression(it) => it.serialize(serializer),
+            MemberExpression::StaticMemberExpression(it) => it.serialize(serializer),
+            MemberExpression::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -354,7 +348,8 @@ impl Serialize for ComputedMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ComputedMemberExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("optional", &self.optional)?;
@@ -366,7 +361,8 @@ impl Serialize for StaticMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "StaticMemberExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("property", &self.property)?;
         map.serialize_entry("optional", &self.optional)?;
@@ -378,7 +374,8 @@ impl Serialize for PrivateFieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "PrivateFieldExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("field", &self.field)?;
         map.serialize_entry("optional", &self.optional)?;
@@ -390,7 +387,8 @@ impl Serialize for CallExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "CallExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("callee", &self.callee)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("arguments", &self.arguments)?;
@@ -403,7 +401,8 @@ impl Serialize for NewExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "NewExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("callee", &self.callee)?;
         map.serialize_entry("arguments", &self.arguments)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
@@ -415,7 +414,8 @@ impl Serialize for MetaProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "MetaProperty")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("meta", &self.meta)?;
         map.serialize_entry("property", &self.property)?;
         map.end()
@@ -426,7 +426,8 @@ impl Serialize for SpreadElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "SpreadElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("argument", &self.argument)?;
         map.end()
     }
@@ -435,49 +436,49 @@ impl Serialize for SpreadElement<'_> {
 impl Serialize for Argument<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            Argument::SpreadElement(it) => Serialize::serialize(it, serializer),
-            Argument::BooleanLiteral(it) => Serialize::serialize(it, serializer),
-            Argument::NullLiteral(it) => Serialize::serialize(it, serializer),
-            Argument::NumericLiteral(it) => Serialize::serialize(it, serializer),
-            Argument::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            Argument::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            Argument::StringLiteral(it) => Serialize::serialize(it, serializer),
-            Argument::TemplateLiteral(it) => Serialize::serialize(it, serializer),
-            Argument::Identifier(it) => Serialize::serialize(it, serializer),
-            Argument::MetaProperty(it) => Serialize::serialize(it, serializer),
-            Argument::Super(it) => Serialize::serialize(it, serializer),
-            Argument::ArrayExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ArrowFunctionExpression(it) => Serialize::serialize(it, serializer),
-            Argument::AssignmentExpression(it) => Serialize::serialize(it, serializer),
-            Argument::AwaitExpression(it) => Serialize::serialize(it, serializer),
-            Argument::BinaryExpression(it) => Serialize::serialize(it, serializer),
-            Argument::CallExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ChainExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ClassExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ConditionalExpression(it) => Serialize::serialize(it, serializer),
-            Argument::FunctionExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ImportExpression(it) => Serialize::serialize(it, serializer),
-            Argument::LogicalExpression(it) => Serialize::serialize(it, serializer),
-            Argument::NewExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ObjectExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ParenthesizedExpression(it) => Serialize::serialize(it, serializer),
-            Argument::SequenceExpression(it) => Serialize::serialize(it, serializer),
-            Argument::TaggedTemplateExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ThisExpression(it) => Serialize::serialize(it, serializer),
-            Argument::UnaryExpression(it) => Serialize::serialize(it, serializer),
-            Argument::UpdateExpression(it) => Serialize::serialize(it, serializer),
-            Argument::YieldExpression(it) => Serialize::serialize(it, serializer),
-            Argument::PrivateInExpression(it) => Serialize::serialize(it, serializer),
-            Argument::JSXElement(it) => Serialize::serialize(it, serializer),
-            Argument::JSXFragment(it) => Serialize::serialize(it, serializer),
-            Argument::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            Argument::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
-            Argument::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            Argument::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            Argument::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
-            Argument::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            Argument::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            Argument::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
+            Argument::SpreadElement(it) => it.serialize(serializer),
+            Argument::BooleanLiteral(it) => it.serialize(serializer),
+            Argument::NullLiteral(it) => it.serialize(serializer),
+            Argument::NumericLiteral(it) => it.serialize(serializer),
+            Argument::BigIntLiteral(it) => it.serialize(serializer),
+            Argument::RegExpLiteral(it) => it.serialize(serializer),
+            Argument::StringLiteral(it) => it.serialize(serializer),
+            Argument::TemplateLiteral(it) => it.serialize(serializer),
+            Argument::Identifier(it) => it.serialize(serializer),
+            Argument::MetaProperty(it) => it.serialize(serializer),
+            Argument::Super(it) => it.serialize(serializer),
+            Argument::ArrayExpression(it) => it.serialize(serializer),
+            Argument::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Argument::AssignmentExpression(it) => it.serialize(serializer),
+            Argument::AwaitExpression(it) => it.serialize(serializer),
+            Argument::BinaryExpression(it) => it.serialize(serializer),
+            Argument::CallExpression(it) => it.serialize(serializer),
+            Argument::ChainExpression(it) => it.serialize(serializer),
+            Argument::ClassExpression(it) => it.serialize(serializer),
+            Argument::ConditionalExpression(it) => it.serialize(serializer),
+            Argument::FunctionExpression(it) => it.serialize(serializer),
+            Argument::ImportExpression(it) => it.serialize(serializer),
+            Argument::LogicalExpression(it) => it.serialize(serializer),
+            Argument::NewExpression(it) => it.serialize(serializer),
+            Argument::ObjectExpression(it) => it.serialize(serializer),
+            Argument::ParenthesizedExpression(it) => it.serialize(serializer),
+            Argument::SequenceExpression(it) => it.serialize(serializer),
+            Argument::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Argument::ThisExpression(it) => it.serialize(serializer),
+            Argument::UnaryExpression(it) => it.serialize(serializer),
+            Argument::UpdateExpression(it) => it.serialize(serializer),
+            Argument::YieldExpression(it) => it.serialize(serializer),
+            Argument::PrivateInExpression(it) => it.serialize(serializer),
+            Argument::JSXElement(it) => it.serialize(serializer),
+            Argument::JSXFragment(it) => it.serialize(serializer),
+            Argument::TSAsExpression(it) => it.serialize(serializer),
+            Argument::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Argument::TSTypeAssertion(it) => it.serialize(serializer),
+            Argument::TSNonNullExpression(it) => it.serialize(serializer),
+            Argument::TSInstantiationExpression(it) => it.serialize(serializer),
+            Argument::ComputedMemberExpression(it) => it.serialize(serializer),
+            Argument::StaticMemberExpression(it) => it.serialize(serializer),
+            Argument::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -486,7 +487,8 @@ impl Serialize for UpdateExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "UpdateExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("prefix", &self.prefix)?;
         map.serialize_entry("argument", &self.argument)?;
@@ -498,7 +500,8 @@ impl Serialize for UnaryExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "UnaryExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("argument", &self.argument)?;
         map.end()
@@ -509,7 +512,8 @@ impl Serialize for BinaryExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BinaryExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("right", &self.right)?;
@@ -521,7 +525,8 @@ impl Serialize for PrivateInExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "PrivateInExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("right", &self.right)?;
@@ -533,7 +538,8 @@ impl Serialize for LogicalExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "LogicalExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("right", &self.right)?;
@@ -545,7 +551,8 @@ impl Serialize for ConditionalExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ConditionalExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("test", &self.test)?;
         map.serialize_entry("consequent", &self.consequent)?;
         map.serialize_entry("alternate", &self.alternate)?;
@@ -557,7 +564,8 @@ impl Serialize for AssignmentExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("right", &self.right)?;
@@ -568,19 +576,17 @@ impl Serialize for AssignmentExpression<'_> {
 impl Serialize for AssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            AssignmentTarget::AssignmentTargetIdentifier(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTarget::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::ArrayAssignmentTarget(it) => Serialize::serialize(it, serializer),
-            AssignmentTarget::ObjectAssignmentTarget(it) => Serialize::serialize(it, serializer),
+            AssignmentTarget::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            AssignmentTarget::TSAsExpression(it) => it.serialize(serializer),
+            AssignmentTarget::TSSatisfiesExpression(it) => it.serialize(serializer),
+            AssignmentTarget::TSNonNullExpression(it) => it.serialize(serializer),
+            AssignmentTarget::TSTypeAssertion(it) => it.serialize(serializer),
+            AssignmentTarget::TSInstantiationExpression(it) => it.serialize(serializer),
+            AssignmentTarget::ComputedMemberExpression(it) => it.serialize(serializer),
+            AssignmentTarget::StaticMemberExpression(it) => it.serialize(serializer),
+            AssignmentTarget::PrivateFieldExpression(it) => it.serialize(serializer),
+            AssignmentTarget::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            AssignmentTarget::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
@@ -588,27 +594,15 @@ impl Serialize for AssignmentTarget<'_> {
 impl Serialize for SimpleAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            SimpleAssignmentTarget::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            SimpleAssignmentTarget::TSSatisfiesExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            SimpleAssignmentTarget::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            SimpleAssignmentTarget::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            SimpleAssignmentTarget::TSInstantiationExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            SimpleAssignmentTarget::ComputedMemberExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            SimpleAssignmentTarget::StaticMemberExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            SimpleAssignmentTarget::PrivateFieldExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            SimpleAssignmentTarget::TSAsExpression(it) => it.serialize(serializer),
+            SimpleAssignmentTarget::TSSatisfiesExpression(it) => it.serialize(serializer),
+            SimpleAssignmentTarget::TSNonNullExpression(it) => it.serialize(serializer),
+            SimpleAssignmentTarget::TSTypeAssertion(it) => it.serialize(serializer),
+            SimpleAssignmentTarget::TSInstantiationExpression(it) => it.serialize(serializer),
+            SimpleAssignmentTarget::ComputedMemberExpression(it) => it.serialize(serializer),
+            SimpleAssignmentTarget::StaticMemberExpression(it) => it.serialize(serializer),
+            SimpleAssignmentTarget::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -616,12 +610,8 @@ impl Serialize for SimpleAssignmentTarget<'_> {
 impl Serialize for AssignmentTargetPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            AssignmentTargetPattern::ArrayAssignmentTarget(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetPattern::ObjectAssignmentTarget(it) => {
-                Serialize::serialize(it, serializer)
-            }
+            AssignmentTargetPattern::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            AssignmentTargetPattern::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
@@ -630,11 +620,9 @@ impl Serialize for ArrayAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ArrayAssignmentTarget")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry(
-            "elements",
-            &oxc_estree::ser::AppendTo { array: &self.elements, after: &self.rest },
-        )?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("elements", &AppendTo { array: &self.elements, after: &self.rest })?;
         map.end()
     }
 }
@@ -643,10 +631,11 @@ impl Serialize for ObjectAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ObjectAssignmentTarget")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry(
             "properties",
-            &oxc_estree::ser::AppendTo { array: &self.properties, after: &self.rest },
+            &AppendTo { array: &self.properties, after: &self.rest },
         )?;
         map.end()
     }
@@ -656,7 +645,8 @@ impl Serialize for AssignmentTargetRest<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "RestElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("argument", &self.target)?;
         map.end()
     }
@@ -666,41 +656,21 @@ impl Serialize for AssignmentTargetMaybeDefault<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(it) => {
-                Serialize::serialize(it, serializer)
+                it.serialize(serializer)
             }
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(it) => {
-                Serialize::serialize(it, serializer)
+                it.serialize(serializer)
             }
-            AssignmentTargetMaybeDefault::TSAsExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::TSSatisfiesExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::TSNonNullExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::TSTypeAssertion(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::TSInstantiationExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::ComputedMemberExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::StaticMemberExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::PrivateFieldExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(it) => {
-                Serialize::serialize(it, serializer)
-            }
+            AssignmentTargetMaybeDefault::TSAsExpression(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::TSSatisfiesExpression(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::TSNonNullExpression(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::TSTypeAssertion(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::TSInstantiationExpression(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::ComputedMemberExpression(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::StaticMemberExpression(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::PrivateFieldExpression(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
@@ -709,7 +679,8 @@ impl Serialize for AssignmentTargetWithDefault<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentTargetWithDefault")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("binding", &self.binding)?;
         map.serialize_entry("init", &self.init)?;
         map.end()
@@ -720,10 +691,10 @@ impl Serialize for AssignmentTargetProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(it) => {
-                Serialize::serialize(it, serializer)
+                it.serialize(serializer)
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(it) => {
-                Serialize::serialize(it, serializer)
+                it.serialize(serializer)
             }
         }
     }
@@ -733,7 +704,8 @@ impl Serialize for AssignmentTargetPropertyIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentTargetPropertyIdentifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("binding", &self.binding)?;
         map.serialize_entry("init", &self.init)?;
         map.end()
@@ -744,7 +716,8 @@ impl Serialize for AssignmentTargetPropertyProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentTargetPropertyProperty")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("binding", &self.binding)?;
         map.serialize_entry("computed", &self.computed)?;
@@ -756,7 +729,8 @@ impl Serialize for SequenceExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "SequenceExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expressions", &self.expressions)?;
         map.end()
     }
@@ -766,7 +740,8 @@ impl Serialize for Super {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Super")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -775,7 +750,8 @@ impl Serialize for AwaitExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AwaitExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("argument", &self.argument)?;
         map.end()
     }
@@ -785,7 +761,8 @@ impl Serialize for ChainExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ChainExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -794,11 +771,11 @@ impl Serialize for ChainExpression<'_> {
 impl Serialize for ChainElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ChainElement::CallExpression(it) => Serialize::serialize(it, serializer),
-            ChainElement::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            ChainElement::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            ChainElement::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            ChainElement::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
+            ChainElement::CallExpression(it) => it.serialize(serializer),
+            ChainElement::TSNonNullExpression(it) => it.serialize(serializer),
+            ChainElement::ComputedMemberExpression(it) => it.serialize(serializer),
+            ChainElement::StaticMemberExpression(it) => it.serialize(serializer),
+            ChainElement::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -807,7 +784,8 @@ impl Serialize for ParenthesizedExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ParenthesizedExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -816,38 +794,38 @@ impl Serialize for ParenthesizedExpression<'_> {
 impl Serialize for Statement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            Statement::BlockStatement(it) => Serialize::serialize(it, serializer),
-            Statement::BreakStatement(it) => Serialize::serialize(it, serializer),
-            Statement::ContinueStatement(it) => Serialize::serialize(it, serializer),
-            Statement::DebuggerStatement(it) => Serialize::serialize(it, serializer),
-            Statement::DoWhileStatement(it) => Serialize::serialize(it, serializer),
-            Statement::EmptyStatement(it) => Serialize::serialize(it, serializer),
-            Statement::ExpressionStatement(it) => Serialize::serialize(it, serializer),
-            Statement::ForInStatement(it) => Serialize::serialize(it, serializer),
-            Statement::ForOfStatement(it) => Serialize::serialize(it, serializer),
-            Statement::ForStatement(it) => Serialize::serialize(it, serializer),
-            Statement::IfStatement(it) => Serialize::serialize(it, serializer),
-            Statement::LabeledStatement(it) => Serialize::serialize(it, serializer),
-            Statement::ReturnStatement(it) => Serialize::serialize(it, serializer),
-            Statement::SwitchStatement(it) => Serialize::serialize(it, serializer),
-            Statement::ThrowStatement(it) => Serialize::serialize(it, serializer),
-            Statement::TryStatement(it) => Serialize::serialize(it, serializer),
-            Statement::WhileStatement(it) => Serialize::serialize(it, serializer),
-            Statement::WithStatement(it) => Serialize::serialize(it, serializer),
-            Statement::VariableDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::FunctionDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::ClassDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::TSTypeAliasDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::TSInterfaceDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::TSEnumDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::TSModuleDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::TSImportEqualsDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::ImportDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::ExportAllDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::ExportDefaultDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::ExportNamedDeclaration(it) => Serialize::serialize(it, serializer),
-            Statement::TSExportAssignment(it) => Serialize::serialize(it, serializer),
-            Statement::TSNamespaceExportDeclaration(it) => Serialize::serialize(it, serializer),
+            Statement::BlockStatement(it) => it.serialize(serializer),
+            Statement::BreakStatement(it) => it.serialize(serializer),
+            Statement::ContinueStatement(it) => it.serialize(serializer),
+            Statement::DebuggerStatement(it) => it.serialize(serializer),
+            Statement::DoWhileStatement(it) => it.serialize(serializer),
+            Statement::EmptyStatement(it) => it.serialize(serializer),
+            Statement::ExpressionStatement(it) => it.serialize(serializer),
+            Statement::ForInStatement(it) => it.serialize(serializer),
+            Statement::ForOfStatement(it) => it.serialize(serializer),
+            Statement::ForStatement(it) => it.serialize(serializer),
+            Statement::IfStatement(it) => it.serialize(serializer),
+            Statement::LabeledStatement(it) => it.serialize(serializer),
+            Statement::ReturnStatement(it) => it.serialize(serializer),
+            Statement::SwitchStatement(it) => it.serialize(serializer),
+            Statement::ThrowStatement(it) => it.serialize(serializer),
+            Statement::TryStatement(it) => it.serialize(serializer),
+            Statement::WhileStatement(it) => it.serialize(serializer),
+            Statement::WithStatement(it) => it.serialize(serializer),
+            Statement::VariableDeclaration(it) => it.serialize(serializer),
+            Statement::FunctionDeclaration(it) => it.serialize(serializer),
+            Statement::ClassDeclaration(it) => it.serialize(serializer),
+            Statement::TSTypeAliasDeclaration(it) => it.serialize(serializer),
+            Statement::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            Statement::TSEnumDeclaration(it) => it.serialize(serializer),
+            Statement::TSModuleDeclaration(it) => it.serialize(serializer),
+            Statement::TSImportEqualsDeclaration(it) => it.serialize(serializer),
+            Statement::ImportDeclaration(it) => it.serialize(serializer),
+            Statement::ExportAllDeclaration(it) => it.serialize(serializer),
+            Statement::ExportDefaultDeclaration(it) => it.serialize(serializer),
+            Statement::ExportNamedDeclaration(it) => it.serialize(serializer),
+            Statement::TSExportAssignment(it) => it.serialize(serializer),
+            Statement::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -856,7 +834,8 @@ impl Serialize for Directive<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Directive")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("directive", &self.directive)?;
         map.end()
@@ -867,7 +846,8 @@ impl Serialize for Hashbang<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Hashbang")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("value", &self.value)?;
         map.end()
     }
@@ -877,7 +857,8 @@ impl Serialize for BlockStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BlockStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
     }
@@ -886,14 +867,14 @@ impl Serialize for BlockStatement<'_> {
 impl Serialize for Declaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            Declaration::VariableDeclaration(it) => Serialize::serialize(it, serializer),
-            Declaration::FunctionDeclaration(it) => Serialize::serialize(it, serializer),
-            Declaration::ClassDeclaration(it) => Serialize::serialize(it, serializer),
-            Declaration::TSTypeAliasDeclaration(it) => Serialize::serialize(it, serializer),
-            Declaration::TSInterfaceDeclaration(it) => Serialize::serialize(it, serializer),
-            Declaration::TSEnumDeclaration(it) => Serialize::serialize(it, serializer),
-            Declaration::TSModuleDeclaration(it) => Serialize::serialize(it, serializer),
-            Declaration::TSImportEqualsDeclaration(it) => Serialize::serialize(it, serializer),
+            Declaration::VariableDeclaration(it) => it.serialize(serializer),
+            Declaration::FunctionDeclaration(it) => it.serialize(serializer),
+            Declaration::ClassDeclaration(it) => it.serialize(serializer),
+            Declaration::TSTypeAliasDeclaration(it) => it.serialize(serializer),
+            Declaration::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            Declaration::TSEnumDeclaration(it) => it.serialize(serializer),
+            Declaration::TSModuleDeclaration(it) => it.serialize(serializer),
+            Declaration::TSImportEqualsDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -902,7 +883,8 @@ impl Serialize for VariableDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "VariableDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("kind", &self.kind)?;
         map.serialize_entry("declarations", &self.declarations)?;
         map.serialize_entry("declare", &self.declare)?;
@@ -912,7 +894,7 @@ impl Serialize for VariableDeclaration<'_> {
 
 impl Serialize for VariableDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             VariableDeclarationKind::Var => {
                 serializer.serialize_unit_variant("VariableDeclarationKind", 0, "var")
             }
@@ -936,7 +918,8 @@ impl Serialize for VariableDeclarator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "VariableDeclarator")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("init", &self.init)?;
         map.serialize_entry("definite", &self.definite)?;
@@ -948,7 +931,8 @@ impl Serialize for EmptyStatement {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "EmptyStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -957,7 +941,8 @@ impl Serialize for ExpressionStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExpressionStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -967,7 +952,8 @@ impl Serialize for IfStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "IfStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("test", &self.test)?;
         map.serialize_entry("consequent", &self.consequent)?;
         map.serialize_entry("alternate", &self.alternate)?;
@@ -979,7 +965,8 @@ impl Serialize for DoWhileStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "DoWhileStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("body", &self.body)?;
         map.serialize_entry("test", &self.test)?;
         map.end()
@@ -990,7 +977,8 @@ impl Serialize for WhileStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "WhileStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("test", &self.test)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
@@ -1001,7 +989,8 @@ impl Serialize for ForStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ForStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("init", &self.init)?;
         map.serialize_entry("test", &self.test)?;
         map.serialize_entry("update", &self.update)?;
@@ -1013,49 +1002,49 @@ impl Serialize for ForStatement<'_> {
 impl Serialize for ForStatementInit<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ForStatementInit::VariableDeclaration(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::BooleanLiteral(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::NullLiteral(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::NumericLiteral(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::StringLiteral(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::TemplateLiteral(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::Identifier(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::MetaProperty(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::Super(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ArrayExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ArrowFunctionExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::AssignmentExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::AwaitExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::BinaryExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::CallExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ChainExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ClassExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ConditionalExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::FunctionExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ImportExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::LogicalExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::NewExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ObjectExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ParenthesizedExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::SequenceExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::TaggedTemplateExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ThisExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::UnaryExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::UpdateExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::YieldExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::PrivateInExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::JSXElement(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::JSXFragment(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementInit::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
+            ForStatementInit::VariableDeclaration(it) => it.serialize(serializer),
+            ForStatementInit::BooleanLiteral(it) => it.serialize(serializer),
+            ForStatementInit::NullLiteral(it) => it.serialize(serializer),
+            ForStatementInit::NumericLiteral(it) => it.serialize(serializer),
+            ForStatementInit::BigIntLiteral(it) => it.serialize(serializer),
+            ForStatementInit::RegExpLiteral(it) => it.serialize(serializer),
+            ForStatementInit::StringLiteral(it) => it.serialize(serializer),
+            ForStatementInit::TemplateLiteral(it) => it.serialize(serializer),
+            ForStatementInit::Identifier(it) => it.serialize(serializer),
+            ForStatementInit::MetaProperty(it) => it.serialize(serializer),
+            ForStatementInit::Super(it) => it.serialize(serializer),
+            ForStatementInit::ArrayExpression(it) => it.serialize(serializer),
+            ForStatementInit::ArrowFunctionExpression(it) => it.serialize(serializer),
+            ForStatementInit::AssignmentExpression(it) => it.serialize(serializer),
+            ForStatementInit::AwaitExpression(it) => it.serialize(serializer),
+            ForStatementInit::BinaryExpression(it) => it.serialize(serializer),
+            ForStatementInit::CallExpression(it) => it.serialize(serializer),
+            ForStatementInit::ChainExpression(it) => it.serialize(serializer),
+            ForStatementInit::ClassExpression(it) => it.serialize(serializer),
+            ForStatementInit::ConditionalExpression(it) => it.serialize(serializer),
+            ForStatementInit::FunctionExpression(it) => it.serialize(serializer),
+            ForStatementInit::ImportExpression(it) => it.serialize(serializer),
+            ForStatementInit::LogicalExpression(it) => it.serialize(serializer),
+            ForStatementInit::NewExpression(it) => it.serialize(serializer),
+            ForStatementInit::ObjectExpression(it) => it.serialize(serializer),
+            ForStatementInit::ParenthesizedExpression(it) => it.serialize(serializer),
+            ForStatementInit::SequenceExpression(it) => it.serialize(serializer),
+            ForStatementInit::TaggedTemplateExpression(it) => it.serialize(serializer),
+            ForStatementInit::ThisExpression(it) => it.serialize(serializer),
+            ForStatementInit::UnaryExpression(it) => it.serialize(serializer),
+            ForStatementInit::UpdateExpression(it) => it.serialize(serializer),
+            ForStatementInit::YieldExpression(it) => it.serialize(serializer),
+            ForStatementInit::PrivateInExpression(it) => it.serialize(serializer),
+            ForStatementInit::JSXElement(it) => it.serialize(serializer),
+            ForStatementInit::JSXFragment(it) => it.serialize(serializer),
+            ForStatementInit::TSAsExpression(it) => it.serialize(serializer),
+            ForStatementInit::TSSatisfiesExpression(it) => it.serialize(serializer),
+            ForStatementInit::TSTypeAssertion(it) => it.serialize(serializer),
+            ForStatementInit::TSNonNullExpression(it) => it.serialize(serializer),
+            ForStatementInit::TSInstantiationExpression(it) => it.serialize(serializer),
+            ForStatementInit::ComputedMemberExpression(it) => it.serialize(serializer),
+            ForStatementInit::StaticMemberExpression(it) => it.serialize(serializer),
+            ForStatementInit::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -1064,7 +1053,8 @@ impl Serialize for ForInStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ForInStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("right", &self.right)?;
         map.serialize_entry("body", &self.body)?;
@@ -1075,20 +1065,18 @@ impl Serialize for ForInStatement<'_> {
 impl Serialize for ForStatementLeft<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ForStatementLeft::VariableDeclaration(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::AssignmentTargetIdentifier(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ForStatementLeft::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::ArrayAssignmentTarget(it) => Serialize::serialize(it, serializer),
-            ForStatementLeft::ObjectAssignmentTarget(it) => Serialize::serialize(it, serializer),
+            ForStatementLeft::VariableDeclaration(it) => it.serialize(serializer),
+            ForStatementLeft::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            ForStatementLeft::TSAsExpression(it) => it.serialize(serializer),
+            ForStatementLeft::TSSatisfiesExpression(it) => it.serialize(serializer),
+            ForStatementLeft::TSNonNullExpression(it) => it.serialize(serializer),
+            ForStatementLeft::TSTypeAssertion(it) => it.serialize(serializer),
+            ForStatementLeft::TSInstantiationExpression(it) => it.serialize(serializer),
+            ForStatementLeft::ComputedMemberExpression(it) => it.serialize(serializer),
+            ForStatementLeft::StaticMemberExpression(it) => it.serialize(serializer),
+            ForStatementLeft::PrivateFieldExpression(it) => it.serialize(serializer),
+            ForStatementLeft::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            ForStatementLeft::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
@@ -1097,7 +1085,8 @@ impl Serialize for ForOfStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ForOfStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("await", &self.r#await)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("right", &self.right)?;
@@ -1110,7 +1099,8 @@ impl Serialize for ContinueStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ContinueStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("label", &self.label)?;
         map.end()
     }
@@ -1120,7 +1110,8 @@ impl Serialize for BreakStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BreakStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("label", &self.label)?;
         map.end()
     }
@@ -1130,7 +1121,8 @@ impl Serialize for ReturnStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ReturnStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("argument", &self.argument)?;
         map.end()
     }
@@ -1140,7 +1132,8 @@ impl Serialize for WithStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "WithStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
@@ -1151,7 +1144,8 @@ impl Serialize for SwitchStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "SwitchStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("discriminant", &self.discriminant)?;
         map.serialize_entry("cases", &self.cases)?;
         map.end()
@@ -1162,7 +1156,8 @@ impl Serialize for SwitchCase<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "SwitchCase")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("test", &self.test)?;
         map.serialize_entry("consequent", &self.consequent)?;
         map.end()
@@ -1173,7 +1168,8 @@ impl Serialize for LabeledStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "LabeledStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("label", &self.label)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
@@ -1184,7 +1180,8 @@ impl Serialize for ThrowStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ThrowStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("argument", &self.argument)?;
         map.end()
     }
@@ -1194,7 +1191,8 @@ impl Serialize for TryStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TryStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("block", &self.block)?;
         map.serialize_entry("handler", &self.handler)?;
         map.serialize_entry("finalizer", &self.finalizer)?;
@@ -1206,7 +1204,8 @@ impl Serialize for CatchClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "CatchClause")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("param", &self.param)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
@@ -1217,7 +1216,8 @@ impl Serialize for CatchParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "CatchParameter")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("pattern", &self.pattern)?;
         map.end()
     }
@@ -1227,7 +1227,8 @@ impl Serialize for DebuggerStatement {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "DebuggerStatement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -1235,7 +1236,7 @@ impl Serialize for DebuggerStatement {
 impl Serialize for BindingPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        self.kind.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        self.kind.serialize(FlatMapSerializer(&mut map))?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("optional", &self.optional)?;
         map.end()
@@ -1245,10 +1246,10 @@ impl Serialize for BindingPattern<'_> {
 impl Serialize for BindingPatternKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            BindingPatternKind::BindingIdentifier(it) => Serialize::serialize(it, serializer),
-            BindingPatternKind::ObjectPattern(it) => Serialize::serialize(it, serializer),
-            BindingPatternKind::ArrayPattern(it) => Serialize::serialize(it, serializer),
-            BindingPatternKind::AssignmentPattern(it) => Serialize::serialize(it, serializer),
+            BindingPatternKind::BindingIdentifier(it) => it.serialize(serializer),
+            BindingPatternKind::ObjectPattern(it) => it.serialize(serializer),
+            BindingPatternKind::ArrayPattern(it) => it.serialize(serializer),
+            BindingPatternKind::AssignmentPattern(it) => it.serialize(serializer),
         }
     }
 }
@@ -1257,7 +1258,8 @@ impl Serialize for AssignmentPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "AssignmentPattern")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("right", &self.right)?;
         map.end()
@@ -1268,10 +1270,11 @@ impl Serialize for ObjectPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ObjectPattern")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry(
             "properties",
-            &oxc_estree::ser::AppendTo { array: &self.properties, after: &self.rest },
+            &AppendTo { array: &self.properties, after: &self.rest },
         )?;
         map.end()
     }
@@ -1281,7 +1284,8 @@ impl Serialize for BindingProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "BindingProperty")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
@@ -1294,11 +1298,9 @@ impl Serialize for ArrayPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ArrayPattern")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry(
-            "elements",
-            &oxc_estree::ser::AppendTo { array: &self.elements, after: &self.rest },
-        )?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("elements", &AppendTo { array: &self.elements, after: &self.rest })?;
         map.end()
     }
 }
@@ -1307,7 +1309,8 @@ impl Serialize for BindingRestElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "RestElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("argument", &self.argument)?;
         map.end()
     }
@@ -1316,7 +1319,8 @@ impl Serialize for BindingRestElement<'_> {
 impl Serialize for Function<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("generator", &self.generator)?;
@@ -1333,7 +1337,7 @@ impl Serialize for Function<'_> {
 
 impl Serialize for FunctionType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             FunctionType::FunctionDeclaration => {
                 serializer.serialize_unit_variant("FunctionType", 0, "FunctionDeclaration")
             }
@@ -1355,9 +1359,12 @@ impl Serialize for FunctionType {
 impl Serialize for FormalParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("decorators", &self.decorators)?;
-        self.pattern.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        self.pattern.kind.serialize(FlatMapSerializer(&mut map))?;
+        map.serialize_entry("typeAnnotation", &self.pattern.type_annotation)?;
+        map.serialize_entry("optional", &self.pattern.optional)?;
         map.serialize_entry("accessibility", &self.accessibility)?;
         map.serialize_entry("readonly", &self.readonly)?;
         map.serialize_entry("override", &self.r#override)?;
@@ -1367,7 +1374,7 @@ impl Serialize for FormalParameter<'_> {
 
 impl Serialize for FormalParameterKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             FormalParameterKind::FormalParameter => {
                 serializer.serialize_unit_variant("FormalParameterKind", 0, "FormalParameter")
             }
@@ -1390,7 +1397,8 @@ impl Serialize for FunctionBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "FunctionBody")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("directives", &self.directives)?;
         map.serialize_entry("statements", &self.statements)?;
         map.end()
@@ -1401,7 +1409,8 @@ impl Serialize for ArrowFunctionExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ArrowFunctionExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("async", &self.r#async)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
@@ -1416,7 +1425,8 @@ impl Serialize for YieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "YieldExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("delegate", &self.delegate)?;
         map.serialize_entry("argument", &self.argument)?;
         map.end()
@@ -1426,7 +1436,8 @@ impl Serialize for YieldExpression<'_> {
 impl Serialize for Class<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("id", &self.id)?;
@@ -1443,7 +1454,7 @@ impl Serialize for Class<'_> {
 
 impl Serialize for ClassType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             ClassType::ClassDeclaration => {
                 serializer.serialize_unit_variant("ClassType", 0, "ClassDeclaration")
             }
@@ -1458,7 +1469,8 @@ impl Serialize for ClassBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ClassBody")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
     }
@@ -1467,11 +1479,11 @@ impl Serialize for ClassBody<'_> {
 impl Serialize for ClassElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ClassElement::StaticBlock(it) => Serialize::serialize(it, serializer),
-            ClassElement::MethodDefinition(it) => Serialize::serialize(it, serializer),
-            ClassElement::PropertyDefinition(it) => Serialize::serialize(it, serializer),
-            ClassElement::AccessorProperty(it) => Serialize::serialize(it, serializer),
-            ClassElement::TSIndexSignature(it) => Serialize::serialize(it, serializer),
+            ClassElement::StaticBlock(it) => it.serialize(serializer),
+            ClassElement::MethodDefinition(it) => it.serialize(serializer),
+            ClassElement::PropertyDefinition(it) => it.serialize(serializer),
+            ClassElement::AccessorProperty(it) => it.serialize(serializer),
+            ClassElement::TSIndexSignature(it) => it.serialize(serializer),
         }
     }
 }
@@ -1479,7 +1491,8 @@ impl Serialize for ClassElement<'_> {
 impl Serialize for MethodDefinition<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("key", &self.key)?;
@@ -1496,7 +1509,7 @@ impl Serialize for MethodDefinition<'_> {
 
 impl Serialize for MethodDefinitionType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             MethodDefinitionType::MethodDefinition => {
                 serializer.serialize_unit_variant("MethodDefinitionType", 0, "MethodDefinition")
             }
@@ -1512,7 +1525,8 @@ impl Serialize for MethodDefinitionType {
 impl Serialize for PropertyDefinition<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("key", &self.key)?;
@@ -1532,7 +1546,7 @@ impl Serialize for PropertyDefinition<'_> {
 
 impl Serialize for PropertyDefinitionType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             PropertyDefinitionType::PropertyDefinition => {
                 serializer.serialize_unit_variant("PropertyDefinitionType", 0, "PropertyDefinition")
             }
@@ -1548,7 +1562,7 @@ impl Serialize for PropertyDefinitionType {
 
 impl Serialize for MethodDefinitionKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             MethodDefinitionKind::Constructor => {
                 serializer.serialize_unit_variant("MethodDefinitionKind", 0, "constructor")
             }
@@ -1569,7 +1583,8 @@ impl Serialize for PrivateIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "PrivateIdentifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.end()
     }
@@ -1579,7 +1594,8 @@ impl Serialize for StaticBlock<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "StaticBlock")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
     }
@@ -1588,21 +1604,19 @@ impl Serialize for StaticBlock<'_> {
 impl Serialize for ModuleDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ModuleDeclaration::ImportDeclaration(it) => Serialize::serialize(it, serializer),
-            ModuleDeclaration::ExportAllDeclaration(it) => Serialize::serialize(it, serializer),
-            ModuleDeclaration::ExportDefaultDeclaration(it) => Serialize::serialize(it, serializer),
-            ModuleDeclaration::ExportNamedDeclaration(it) => Serialize::serialize(it, serializer),
-            ModuleDeclaration::TSExportAssignment(it) => Serialize::serialize(it, serializer),
-            ModuleDeclaration::TSNamespaceExportDeclaration(it) => {
-                Serialize::serialize(it, serializer)
-            }
+            ModuleDeclaration::ImportDeclaration(it) => it.serialize(serializer),
+            ModuleDeclaration::ExportAllDeclaration(it) => it.serialize(serializer),
+            ModuleDeclaration::ExportDefaultDeclaration(it) => it.serialize(serializer),
+            ModuleDeclaration::ExportNamedDeclaration(it) => it.serialize(serializer),
+            ModuleDeclaration::TSExportAssignment(it) => it.serialize(serializer),
+            ModuleDeclaration::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
         }
     }
 }
 
 impl Serialize for AccessorPropertyType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             AccessorPropertyType::AccessorProperty => {
                 serializer.serialize_unit_variant("AccessorPropertyType", 0, "AccessorProperty")
             }
@@ -1618,7 +1632,8 @@ impl Serialize for AccessorPropertyType {
 impl Serialize for AccessorProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("key", &self.key)?;
@@ -1636,7 +1651,8 @@ impl Serialize for ImportExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("arguments", &self.arguments)?;
         map.serialize_entry("phase", &self.phase)?;
@@ -1648,7 +1664,8 @@ impl Serialize for ImportDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry(
             "specifiers",
             &crate::serialize::OptionVecDefault::from(&self.specifiers),
@@ -1663,7 +1680,7 @@ impl Serialize for ImportDeclaration<'_> {
 
 impl Serialize for ImportPhase {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             ImportPhase::Source => serializer.serialize_unit_variant("ImportPhase", 0, "source"),
             ImportPhase::Defer => serializer.serialize_unit_variant("ImportPhase", 1, "defer"),
         }
@@ -1673,13 +1690,9 @@ impl Serialize for ImportPhase {
 impl Serialize for ImportDeclarationSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ImportDeclarationSpecifier::ImportSpecifier(it) => Serialize::serialize(it, serializer),
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(it) => {
-                Serialize::serialize(it, serializer)
-            }
+            ImportDeclarationSpecifier::ImportSpecifier(it) => it.serialize(serializer),
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(it) => it.serialize(serializer),
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(it) => it.serialize(serializer),
         }
     }
 }
@@ -1688,7 +1701,8 @@ impl Serialize for ImportSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportSpecifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("imported", &self.imported)?;
         map.serialize_entry("local", &self.local)?;
         map.serialize_entry("importKind", &self.import_kind)?;
@@ -1700,7 +1714,8 @@ impl Serialize for ImportDefaultSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportDefaultSpecifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("local", &self.local)?;
         map.end()
     }
@@ -1710,7 +1725,8 @@ impl Serialize for ImportNamespaceSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportNamespaceSpecifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("local", &self.local)?;
         map.end()
     }
@@ -1720,7 +1736,8 @@ impl Serialize for WithClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "WithClause")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("attributesKeyword", &self.attributes_keyword)?;
         map.serialize_entry("withEntries", &self.with_entries)?;
         map.end()
@@ -1731,7 +1748,8 @@ impl Serialize for ImportAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ImportAttribute")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
         map.end()
@@ -1741,8 +1759,8 @@ impl Serialize for ImportAttribute<'_> {
 impl Serialize for ImportAttributeKey<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ImportAttributeKey::Identifier(it) => Serialize::serialize(it, serializer),
-            ImportAttributeKey::StringLiteral(it) => Serialize::serialize(it, serializer),
+            ImportAttributeKey::Identifier(it) => it.serialize(serializer),
+            ImportAttributeKey::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -1751,7 +1769,8 @@ impl Serialize for ExportNamedDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExportNamedDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("declaration", &self.declaration)?;
         map.serialize_entry("specifiers", &self.specifiers)?;
         map.serialize_entry("source", &self.source)?;
@@ -1765,7 +1784,8 @@ impl Serialize for ExportDefaultDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExportDefaultDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("declaration", &self.declaration)?;
         map.serialize_entry("exported", &self.exported)?;
         map.end()
@@ -1776,7 +1796,8 @@ impl Serialize for ExportAllDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExportAllDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("exported", &self.exported)?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("withClause", &self.with_clause)?;
@@ -1789,7 +1810,8 @@ impl Serialize for ExportSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ExportSpecifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("local", &self.local)?;
         map.serialize_entry("exported", &self.exported)?;
         map.serialize_entry("exportKind", &self.export_kind)?;
@@ -1800,121 +1822,51 @@ impl Serialize for ExportSpecifier<'_> {
 impl Serialize for ExportDefaultDeclarationKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ExportDefaultDeclarationKind::FunctionDeclaration(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ClassDeclaration(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::BooleanLiteral(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::NullLiteral(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::NumericLiteral(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::StringLiteral(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::TemplateLiteral(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::Identifier(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::MetaProperty(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::Super(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::ArrayExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ArrowFunctionExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::AssignmentExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::AwaitExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::BinaryExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::CallExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ChainExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ClassExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ConditionalExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::FunctionExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ImportExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::LogicalExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::NewExpression(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::ObjectExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ParenthesizedExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::SequenceExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::TaggedTemplateExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ThisExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::UnaryExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::UpdateExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::YieldExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::PrivateInExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::JSXElement(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::JSXFragment(it) => Serialize::serialize(it, serializer),
-            ExportDefaultDeclarationKind::TSAsExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::TSSatisfiesExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::TSTypeAssertion(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::TSNonNullExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::TSInstantiationExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::ComputedMemberExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::StaticMemberExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            ExportDefaultDeclarationKind::PrivateFieldExpression(it) => {
-                Serialize::serialize(it, serializer)
-            }
+            ExportDefaultDeclarationKind::FunctionDeclaration(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ClassDeclaration(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::BooleanLiteral(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::NullLiteral(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::NumericLiteral(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::BigIntLiteral(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::RegExpLiteral(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::StringLiteral(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::TemplateLiteral(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::Identifier(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::MetaProperty(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::Super(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ArrayExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ArrowFunctionExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::AssignmentExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::AwaitExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::BinaryExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::CallExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ChainExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ClassExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ConditionalExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::FunctionExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ImportExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::LogicalExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::NewExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ObjectExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ParenthesizedExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::SequenceExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::TaggedTemplateExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ThisExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::UnaryExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::UpdateExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::YieldExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::PrivateInExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::JSXElement(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::JSXFragment(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::TSAsExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::TSSatisfiesExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::TSTypeAssertion(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::TSNonNullExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::TSInstantiationExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::ComputedMemberExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::StaticMemberExpression(it) => it.serialize(serializer),
+            ExportDefaultDeclarationKind::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -1922,9 +1874,9 @@ impl Serialize for ExportDefaultDeclarationKind<'_> {
 impl Serialize for ModuleExportName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ModuleExportName::IdentifierName(it) => Serialize::serialize(it, serializer),
-            ModuleExportName::IdentifierReference(it) => Serialize::serialize(it, serializer),
-            ModuleExportName::StringLiteral(it) => Serialize::serialize(it, serializer),
+            ModuleExportName::IdentifierName(it) => it.serialize(serializer),
+            ModuleExportName::IdentifierReference(it) => it.serialize(serializer),
+            ModuleExportName::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -1977,9 +1929,9 @@ impl Serialize for RegExp<'_> {
 impl Serialize for RegExpPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            RegExpPattern::Raw(it) => Serialize::serialize(it, serializer),
-            RegExpPattern::Invalid(it) => Serialize::serialize(it, serializer),
-            RegExpPattern::Pattern(it) => Serialize::serialize(it, serializer),
+            RegExpPattern::Raw(it) => it.serialize(serializer),
+            RegExpPattern::Invalid(it) => it.serialize(serializer),
+            RegExpPattern::Pattern(it) => it.serialize(serializer),
         }
     }
 }
@@ -1988,7 +1940,8 @@ impl Serialize for JSXElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("openingElement", &self.opening_element)?;
         map.serialize_entry("closingElement", &self.closing_element)?;
         map.serialize_entry("children", &self.children)?;
@@ -2000,7 +1953,8 @@ impl Serialize for JSXOpeningElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXOpeningElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("selfClosing", &self.self_closing)?;
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("attributes", &self.attributes)?;
@@ -2013,7 +1967,8 @@ impl Serialize for JSXClosingElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXClosingElement")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.end()
     }
@@ -2023,7 +1978,8 @@ impl Serialize for JSXFragment<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXFragment")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("openingFragment", &self.opening_fragment)?;
         map.serialize_entry("closingFragment", &self.closing_fragment)?;
         map.serialize_entry("children", &self.children)?;
@@ -2035,7 +1991,8 @@ impl Serialize for JSXOpeningFragment {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXOpeningFragment")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2044,7 +2001,8 @@ impl Serialize for JSXClosingFragment {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXClosingFragment")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2053,7 +2011,8 @@ impl Serialize for JSXNamespacedName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXNamespacedName")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("namespace", &self.namespace)?;
         map.serialize_entry("property", &self.property)?;
         map.end()
@@ -2064,7 +2023,8 @@ impl Serialize for JSXMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXMemberExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("property", &self.property)?;
         map.end()
@@ -2075,7 +2035,8 @@ impl Serialize for JSXExpressionContainer<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXExpressionContainer")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -2084,49 +2045,49 @@ impl Serialize for JSXExpressionContainer<'_> {
 impl Serialize for JSXExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            JSXExpression::EmptyExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::BooleanLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::NullLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::NumericLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::StringLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TemplateLiteral(it) => Serialize::serialize(it, serializer),
-            JSXExpression::Identifier(it) => Serialize::serialize(it, serializer),
-            JSXExpression::MetaProperty(it) => Serialize::serialize(it, serializer),
-            JSXExpression::Super(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ArrayExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ArrowFunctionExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::AssignmentExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::AwaitExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::BinaryExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::CallExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ChainExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ClassExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ConditionalExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::FunctionExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ImportExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::LogicalExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::NewExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ObjectExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ParenthesizedExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::SequenceExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TaggedTemplateExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ThisExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::UnaryExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::UpdateExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::YieldExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::PrivateInExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::JSXElement(it) => Serialize::serialize(it, serializer),
-            JSXExpression::JSXFragment(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSAsExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSSatisfiesExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSTypeAssertion(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSNonNullExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::TSInstantiationExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::ComputedMemberExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::StaticMemberExpression(it) => Serialize::serialize(it, serializer),
-            JSXExpression::PrivateFieldExpression(it) => Serialize::serialize(it, serializer),
+            JSXExpression::EmptyExpression(it) => it.serialize(serializer),
+            JSXExpression::BooleanLiteral(it) => it.serialize(serializer),
+            JSXExpression::NullLiteral(it) => it.serialize(serializer),
+            JSXExpression::NumericLiteral(it) => it.serialize(serializer),
+            JSXExpression::BigIntLiteral(it) => it.serialize(serializer),
+            JSXExpression::RegExpLiteral(it) => it.serialize(serializer),
+            JSXExpression::StringLiteral(it) => it.serialize(serializer),
+            JSXExpression::TemplateLiteral(it) => it.serialize(serializer),
+            JSXExpression::Identifier(it) => it.serialize(serializer),
+            JSXExpression::MetaProperty(it) => it.serialize(serializer),
+            JSXExpression::Super(it) => it.serialize(serializer),
+            JSXExpression::ArrayExpression(it) => it.serialize(serializer),
+            JSXExpression::ArrowFunctionExpression(it) => it.serialize(serializer),
+            JSXExpression::AssignmentExpression(it) => it.serialize(serializer),
+            JSXExpression::AwaitExpression(it) => it.serialize(serializer),
+            JSXExpression::BinaryExpression(it) => it.serialize(serializer),
+            JSXExpression::CallExpression(it) => it.serialize(serializer),
+            JSXExpression::ChainExpression(it) => it.serialize(serializer),
+            JSXExpression::ClassExpression(it) => it.serialize(serializer),
+            JSXExpression::ConditionalExpression(it) => it.serialize(serializer),
+            JSXExpression::FunctionExpression(it) => it.serialize(serializer),
+            JSXExpression::ImportExpression(it) => it.serialize(serializer),
+            JSXExpression::LogicalExpression(it) => it.serialize(serializer),
+            JSXExpression::NewExpression(it) => it.serialize(serializer),
+            JSXExpression::ObjectExpression(it) => it.serialize(serializer),
+            JSXExpression::ParenthesizedExpression(it) => it.serialize(serializer),
+            JSXExpression::SequenceExpression(it) => it.serialize(serializer),
+            JSXExpression::TaggedTemplateExpression(it) => it.serialize(serializer),
+            JSXExpression::ThisExpression(it) => it.serialize(serializer),
+            JSXExpression::UnaryExpression(it) => it.serialize(serializer),
+            JSXExpression::UpdateExpression(it) => it.serialize(serializer),
+            JSXExpression::YieldExpression(it) => it.serialize(serializer),
+            JSXExpression::PrivateInExpression(it) => it.serialize(serializer),
+            JSXExpression::JSXElement(it) => it.serialize(serializer),
+            JSXExpression::JSXFragment(it) => it.serialize(serializer),
+            JSXExpression::TSAsExpression(it) => it.serialize(serializer),
+            JSXExpression::TSSatisfiesExpression(it) => it.serialize(serializer),
+            JSXExpression::TSTypeAssertion(it) => it.serialize(serializer),
+            JSXExpression::TSNonNullExpression(it) => it.serialize(serializer),
+            JSXExpression::TSInstantiationExpression(it) => it.serialize(serializer),
+            JSXExpression::ComputedMemberExpression(it) => it.serialize(serializer),
+            JSXExpression::StaticMemberExpression(it) => it.serialize(serializer),
+            JSXExpression::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -2135,7 +2096,8 @@ impl Serialize for JSXEmptyExpression {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXEmptyExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2143,8 +2105,8 @@ impl Serialize for JSXEmptyExpression {
 impl Serialize for JSXAttributeItem<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            JSXAttributeItem::Attribute(it) => Serialize::serialize(it, serializer),
-            JSXAttributeItem::SpreadAttribute(it) => Serialize::serialize(it, serializer),
+            JSXAttributeItem::Attribute(it) => it.serialize(serializer),
+            JSXAttributeItem::SpreadAttribute(it) => it.serialize(serializer),
         }
     }
 }
@@ -2153,7 +2115,8 @@ impl Serialize for JSXAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXAttribute")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("value", &self.value)?;
         map.end()
@@ -2164,7 +2127,8 @@ impl Serialize for JSXSpreadAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXSpreadAttribute")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("argument", &self.argument)?;
         map.end()
     }
@@ -2173,8 +2137,8 @@ impl Serialize for JSXSpreadAttribute<'_> {
 impl Serialize for JSXAttributeName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            JSXAttributeName::Identifier(it) => Serialize::serialize(it, serializer),
-            JSXAttributeName::NamespacedName(it) => Serialize::serialize(it, serializer),
+            JSXAttributeName::Identifier(it) => it.serialize(serializer),
+            JSXAttributeName::NamespacedName(it) => it.serialize(serializer),
         }
     }
 }
@@ -2182,10 +2146,10 @@ impl Serialize for JSXAttributeName<'_> {
 impl Serialize for JSXAttributeValue<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            JSXAttributeValue::StringLiteral(it) => Serialize::serialize(it, serializer),
-            JSXAttributeValue::ExpressionContainer(it) => Serialize::serialize(it, serializer),
-            JSXAttributeValue::Element(it) => Serialize::serialize(it, serializer),
-            JSXAttributeValue::Fragment(it) => Serialize::serialize(it, serializer),
+            JSXAttributeValue::StringLiteral(it) => it.serialize(serializer),
+            JSXAttributeValue::ExpressionContainer(it) => it.serialize(serializer),
+            JSXAttributeValue::Element(it) => it.serialize(serializer),
+            JSXAttributeValue::Fragment(it) => it.serialize(serializer),
         }
     }
 }
@@ -2194,7 +2158,8 @@ impl Serialize for JSXIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXIdentifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.end()
     }
@@ -2203,11 +2168,11 @@ impl Serialize for JSXIdentifier<'_> {
 impl Serialize for JSXChild<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            JSXChild::Text(it) => Serialize::serialize(it, serializer),
-            JSXChild::Element(it) => Serialize::serialize(it, serializer),
-            JSXChild::Fragment(it) => Serialize::serialize(it, serializer),
-            JSXChild::ExpressionContainer(it) => Serialize::serialize(it, serializer),
-            JSXChild::Spread(it) => Serialize::serialize(it, serializer),
+            JSXChild::Text(it) => it.serialize(serializer),
+            JSXChild::Element(it) => it.serialize(serializer),
+            JSXChild::Fragment(it) => it.serialize(serializer),
+            JSXChild::ExpressionContainer(it) => it.serialize(serializer),
+            JSXChild::Spread(it) => it.serialize(serializer),
         }
     }
 }
@@ -2216,7 +2181,8 @@ impl Serialize for JSXSpreadChild<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXSpreadChild")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -2226,7 +2192,8 @@ impl Serialize for JSXText<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSXText")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("value", &self.value)?;
         map.end()
     }
@@ -2236,7 +2203,8 @@ impl Serialize for TSThisParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSThisParameter")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
@@ -2246,7 +2214,8 @@ impl Serialize for TSEnumDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSEnumDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("members", &self.members)?;
         map.serialize_entry("const", &self.r#const)?;
@@ -2259,7 +2228,8 @@ impl Serialize for TSEnumMember<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSEnumMember")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("initializer", &self.initializer)?;
         map.end()
@@ -2269,8 +2239,8 @@ impl Serialize for TSEnumMember<'_> {
 impl Serialize for TSEnumMemberName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSEnumMemberName::Identifier(it) => Serialize::serialize(it, serializer),
-            TSEnumMemberName::String(it) => Serialize::serialize(it, serializer),
+            TSEnumMemberName::Identifier(it) => it.serialize(serializer),
+            TSEnumMemberName::String(it) => it.serialize(serializer),
         }
     }
 }
@@ -2279,7 +2249,8 @@ impl Serialize for TSTypeAnnotation<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeAnnotation")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
@@ -2289,7 +2260,8 @@ impl Serialize for TSLiteralType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSLiteralType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("literal", &self.literal)?;
         map.end()
     }
@@ -2298,14 +2270,14 @@ impl Serialize for TSLiteralType<'_> {
 impl Serialize for TSLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSLiteral::BooleanLiteral(it) => Serialize::serialize(it, serializer),
-            TSLiteral::NullLiteral(it) => Serialize::serialize(it, serializer),
-            TSLiteral::NumericLiteral(it) => Serialize::serialize(it, serializer),
-            TSLiteral::BigIntLiteral(it) => Serialize::serialize(it, serializer),
-            TSLiteral::RegExpLiteral(it) => Serialize::serialize(it, serializer),
-            TSLiteral::StringLiteral(it) => Serialize::serialize(it, serializer),
-            TSLiteral::TemplateLiteral(it) => Serialize::serialize(it, serializer),
-            TSLiteral::UnaryExpression(it) => Serialize::serialize(it, serializer),
+            TSLiteral::BooleanLiteral(it) => it.serialize(serializer),
+            TSLiteral::NullLiteral(it) => it.serialize(serializer),
+            TSLiteral::NumericLiteral(it) => it.serialize(serializer),
+            TSLiteral::BigIntLiteral(it) => it.serialize(serializer),
+            TSLiteral::RegExpLiteral(it) => it.serialize(serializer),
+            TSLiteral::StringLiteral(it) => it.serialize(serializer),
+            TSLiteral::TemplateLiteral(it) => it.serialize(serializer),
+            TSLiteral::UnaryExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -2313,44 +2285,44 @@ impl Serialize for TSLiteral<'_> {
 impl Serialize for TSType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSType::TSAnyKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSBigIntKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSBooleanKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSIntrinsicKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSNeverKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSNullKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSNumberKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSObjectKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSStringKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSSymbolKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSUndefinedKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSUnknownKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSVoidKeyword(it) => Serialize::serialize(it, serializer),
-            TSType::TSArrayType(it) => Serialize::serialize(it, serializer),
-            TSType::TSConditionalType(it) => Serialize::serialize(it, serializer),
-            TSType::TSConstructorType(it) => Serialize::serialize(it, serializer),
-            TSType::TSFunctionType(it) => Serialize::serialize(it, serializer),
-            TSType::TSImportType(it) => Serialize::serialize(it, serializer),
-            TSType::TSIndexedAccessType(it) => Serialize::serialize(it, serializer),
-            TSType::TSInferType(it) => Serialize::serialize(it, serializer),
-            TSType::TSIntersectionType(it) => Serialize::serialize(it, serializer),
-            TSType::TSLiteralType(it) => Serialize::serialize(it, serializer),
-            TSType::TSMappedType(it) => Serialize::serialize(it, serializer),
-            TSType::TSNamedTupleMember(it) => Serialize::serialize(it, serializer),
-            TSType::TSQualifiedName(it) => Serialize::serialize(it, serializer),
-            TSType::TSTemplateLiteralType(it) => Serialize::serialize(it, serializer),
-            TSType::TSThisType(it) => Serialize::serialize(it, serializer),
-            TSType::TSTupleType(it) => Serialize::serialize(it, serializer),
-            TSType::TSTypeLiteral(it) => Serialize::serialize(it, serializer),
-            TSType::TSTypeOperatorType(it) => Serialize::serialize(it, serializer),
-            TSType::TSTypePredicate(it) => Serialize::serialize(it, serializer),
-            TSType::TSTypeQuery(it) => Serialize::serialize(it, serializer),
-            TSType::TSTypeReference(it) => Serialize::serialize(it, serializer),
-            TSType::TSUnionType(it) => Serialize::serialize(it, serializer),
-            TSType::TSParenthesizedType(it) => Serialize::serialize(it, serializer),
-            TSType::JSDocNullableType(it) => Serialize::serialize(it, serializer),
-            TSType::JSDocNonNullableType(it) => Serialize::serialize(it, serializer),
-            TSType::JSDocUnknownType(it) => Serialize::serialize(it, serializer),
+            TSType::TSAnyKeyword(it) => it.serialize(serializer),
+            TSType::TSBigIntKeyword(it) => it.serialize(serializer),
+            TSType::TSBooleanKeyword(it) => it.serialize(serializer),
+            TSType::TSIntrinsicKeyword(it) => it.serialize(serializer),
+            TSType::TSNeverKeyword(it) => it.serialize(serializer),
+            TSType::TSNullKeyword(it) => it.serialize(serializer),
+            TSType::TSNumberKeyword(it) => it.serialize(serializer),
+            TSType::TSObjectKeyword(it) => it.serialize(serializer),
+            TSType::TSStringKeyword(it) => it.serialize(serializer),
+            TSType::TSSymbolKeyword(it) => it.serialize(serializer),
+            TSType::TSUndefinedKeyword(it) => it.serialize(serializer),
+            TSType::TSUnknownKeyword(it) => it.serialize(serializer),
+            TSType::TSVoidKeyword(it) => it.serialize(serializer),
+            TSType::TSArrayType(it) => it.serialize(serializer),
+            TSType::TSConditionalType(it) => it.serialize(serializer),
+            TSType::TSConstructorType(it) => it.serialize(serializer),
+            TSType::TSFunctionType(it) => it.serialize(serializer),
+            TSType::TSImportType(it) => it.serialize(serializer),
+            TSType::TSIndexedAccessType(it) => it.serialize(serializer),
+            TSType::TSInferType(it) => it.serialize(serializer),
+            TSType::TSIntersectionType(it) => it.serialize(serializer),
+            TSType::TSLiteralType(it) => it.serialize(serializer),
+            TSType::TSMappedType(it) => it.serialize(serializer),
+            TSType::TSNamedTupleMember(it) => it.serialize(serializer),
+            TSType::TSQualifiedName(it) => it.serialize(serializer),
+            TSType::TSTemplateLiteralType(it) => it.serialize(serializer),
+            TSType::TSThisType(it) => it.serialize(serializer),
+            TSType::TSTupleType(it) => it.serialize(serializer),
+            TSType::TSTypeLiteral(it) => it.serialize(serializer),
+            TSType::TSTypeOperatorType(it) => it.serialize(serializer),
+            TSType::TSTypePredicate(it) => it.serialize(serializer),
+            TSType::TSTypeQuery(it) => it.serialize(serializer),
+            TSType::TSTypeReference(it) => it.serialize(serializer),
+            TSType::TSUnionType(it) => it.serialize(serializer),
+            TSType::TSParenthesizedType(it) => it.serialize(serializer),
+            TSType::JSDocNullableType(it) => it.serialize(serializer),
+            TSType::JSDocNonNullableType(it) => it.serialize(serializer),
+            TSType::JSDocUnknownType(it) => it.serialize(serializer),
         }
     }
 }
@@ -2359,7 +2331,8 @@ impl Serialize for TSConditionalType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSConditionalType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("checkType", &self.check_type)?;
         map.serialize_entry("extendsType", &self.extends_type)?;
         map.serialize_entry("trueType", &self.true_type)?;
@@ -2372,7 +2345,8 @@ impl Serialize for TSUnionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSUnionType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("types", &self.types)?;
         map.end()
     }
@@ -2382,7 +2356,8 @@ impl Serialize for TSIntersectionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIntersectionType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("types", &self.types)?;
         map.end()
     }
@@ -2392,7 +2367,8 @@ impl Serialize for TSParenthesizedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSParenthesizedType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
@@ -2402,7 +2378,8 @@ impl Serialize for TSTypeOperator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeOperator")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
@@ -2411,7 +2388,7 @@ impl Serialize for TSTypeOperator<'_> {
 
 impl Serialize for TSTypeOperatorOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             TSTypeOperatorOperator::Keyof => {
                 serializer.serialize_unit_variant("TSTypeOperatorOperator", 0, "keyof")
             }
@@ -2429,7 +2406,8 @@ impl Serialize for TSArrayType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSArrayType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("elementType", &self.element_type)?;
         map.end()
     }
@@ -2439,7 +2417,8 @@ impl Serialize for TSIndexedAccessType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIndexedAccessType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("objectType", &self.object_type)?;
         map.serialize_entry("indexType", &self.index_type)?;
         map.end()
@@ -2450,7 +2429,8 @@ impl Serialize for TSTupleType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTupleType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("elementTypes", &self.element_types)?;
         map.end()
     }
@@ -2460,7 +2440,8 @@ impl Serialize for TSNamedTupleMember<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNamedTupleMember")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("elementType", &self.element_type)?;
         map.serialize_entry("label", &self.label)?;
         map.serialize_entry("optional", &self.optional)?;
@@ -2472,7 +2453,8 @@ impl Serialize for TSOptionalType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSOptionalType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
@@ -2482,7 +2464,8 @@ impl Serialize for TSRestType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSRestType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
     }
@@ -2491,46 +2474,46 @@ impl Serialize for TSRestType<'_> {
 impl Serialize for TSTupleElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSTupleElement::TSOptionalType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSRestType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSAnyKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSBigIntKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSBooleanKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSIntrinsicKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSNeverKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSNullKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSNumberKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSObjectKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSStringKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSSymbolKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSUndefinedKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSUnknownKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSVoidKeyword(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSArrayType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSConditionalType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSConstructorType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSFunctionType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSImportType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSIndexedAccessType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSInferType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSIntersectionType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSLiteralType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSMappedType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSNamedTupleMember(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSQualifiedName(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSTemplateLiteralType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSThisType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSTupleType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSTypeLiteral(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSTypeOperatorType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSTypePredicate(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSTypeQuery(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSTypeReference(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSUnionType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::TSParenthesizedType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::JSDocNullableType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::JSDocNonNullableType(it) => Serialize::serialize(it, serializer),
-            TSTupleElement::JSDocUnknownType(it) => Serialize::serialize(it, serializer),
+            TSTupleElement::TSOptionalType(it) => it.serialize(serializer),
+            TSTupleElement::TSRestType(it) => it.serialize(serializer),
+            TSTupleElement::TSAnyKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSBigIntKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSBooleanKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSIntrinsicKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSNeverKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSNullKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSNumberKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSObjectKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSStringKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSSymbolKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSUndefinedKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSUnknownKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSVoidKeyword(it) => it.serialize(serializer),
+            TSTupleElement::TSArrayType(it) => it.serialize(serializer),
+            TSTupleElement::TSConditionalType(it) => it.serialize(serializer),
+            TSTupleElement::TSConstructorType(it) => it.serialize(serializer),
+            TSTupleElement::TSFunctionType(it) => it.serialize(serializer),
+            TSTupleElement::TSImportType(it) => it.serialize(serializer),
+            TSTupleElement::TSIndexedAccessType(it) => it.serialize(serializer),
+            TSTupleElement::TSInferType(it) => it.serialize(serializer),
+            TSTupleElement::TSIntersectionType(it) => it.serialize(serializer),
+            TSTupleElement::TSLiteralType(it) => it.serialize(serializer),
+            TSTupleElement::TSMappedType(it) => it.serialize(serializer),
+            TSTupleElement::TSNamedTupleMember(it) => it.serialize(serializer),
+            TSTupleElement::TSQualifiedName(it) => it.serialize(serializer),
+            TSTupleElement::TSTemplateLiteralType(it) => it.serialize(serializer),
+            TSTupleElement::TSThisType(it) => it.serialize(serializer),
+            TSTupleElement::TSTupleType(it) => it.serialize(serializer),
+            TSTupleElement::TSTypeLiteral(it) => it.serialize(serializer),
+            TSTupleElement::TSTypeOperatorType(it) => it.serialize(serializer),
+            TSTupleElement::TSTypePredicate(it) => it.serialize(serializer),
+            TSTupleElement::TSTypeQuery(it) => it.serialize(serializer),
+            TSTupleElement::TSTypeReference(it) => it.serialize(serializer),
+            TSTupleElement::TSUnionType(it) => it.serialize(serializer),
+            TSTupleElement::TSParenthesizedType(it) => it.serialize(serializer),
+            TSTupleElement::JSDocNullableType(it) => it.serialize(serializer),
+            TSTupleElement::JSDocNonNullableType(it) => it.serialize(serializer),
+            TSTupleElement::JSDocUnknownType(it) => it.serialize(serializer),
         }
     }
 }
@@ -2539,7 +2522,8 @@ impl Serialize for TSAnyKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSAnyKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2548,7 +2532,8 @@ impl Serialize for TSStringKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSStringKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2557,7 +2542,8 @@ impl Serialize for TSBooleanKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSBooleanKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2566,7 +2552,8 @@ impl Serialize for TSNumberKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNumberKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2575,7 +2562,8 @@ impl Serialize for TSNeverKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNeverKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2584,7 +2572,8 @@ impl Serialize for TSIntrinsicKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIntrinsicKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2593,7 +2582,8 @@ impl Serialize for TSUnknownKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSUnknownKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2602,7 +2592,8 @@ impl Serialize for TSNullKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNullKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2611,7 +2602,8 @@ impl Serialize for TSUndefinedKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSUndefinedKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2620,7 +2612,8 @@ impl Serialize for TSVoidKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSVoidKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2629,7 +2622,8 @@ impl Serialize for TSSymbolKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSSymbolKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2638,7 +2632,8 @@ impl Serialize for TSThisType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSThisType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2647,7 +2642,8 @@ impl Serialize for TSObjectKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSObjectKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2656,7 +2652,8 @@ impl Serialize for TSBigIntKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSBigIntKeyword")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }
@@ -2665,7 +2662,8 @@ impl Serialize for TSTypeReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeReference")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeName", &self.type_name)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
@@ -2675,8 +2673,8 @@ impl Serialize for TSTypeReference<'_> {
 impl Serialize for TSTypeName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSTypeName::IdentifierReference(it) => Serialize::serialize(it, serializer),
-            TSTypeName::QualifiedName(it) => Serialize::serialize(it, serializer),
+            TSTypeName::IdentifierReference(it) => it.serialize(serializer),
+            TSTypeName::QualifiedName(it) => it.serialize(serializer),
         }
     }
 }
@@ -2685,7 +2683,8 @@ impl Serialize for TSQualifiedName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSQualifiedName")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("right", &self.right)?;
         map.end()
@@ -2696,7 +2695,8 @@ impl Serialize for TSTypeParameterInstantiation<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeParameterInstantiation")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("params", &self.params)?;
         map.end()
     }
@@ -2706,7 +2706,8 @@ impl Serialize for TSTypeParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeParameter")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("constraint", &self.constraint)?;
         map.serialize_entry("default", &self.default)?;
@@ -2721,7 +2722,8 @@ impl Serialize for TSTypeParameterDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeParameterDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("params", &self.params)?;
         map.end()
     }
@@ -2731,7 +2733,8 @@ impl Serialize for TSTypeAliasDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeAliasDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
@@ -2742,7 +2745,7 @@ impl Serialize for TSTypeAliasDeclaration<'_> {
 
 impl Serialize for TSAccessibility {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             TSAccessibility::Private => {
                 serializer.serialize_unit_variant("TSAccessibility", 0, "private")
             }
@@ -2760,7 +2763,8 @@ impl Serialize for TSClassImplements<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSClassImplements")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
@@ -2771,7 +2775,8 @@ impl Serialize for TSInterfaceDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInterfaceDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("extends", &self.extends)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
@@ -2785,7 +2790,8 @@ impl Serialize for TSInterfaceBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInterfaceBody")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("body", &self.body)?;
         map.end()
     }
@@ -2795,7 +2801,8 @@ impl Serialize for TSPropertySignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSPropertySignature")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("computed", &self.computed)?;
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("readonly", &self.readonly)?;
@@ -2808,13 +2815,11 @@ impl Serialize for TSPropertySignature<'_> {
 impl Serialize for TSSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSSignature::TSIndexSignature(it) => Serialize::serialize(it, serializer),
-            TSSignature::TSPropertySignature(it) => Serialize::serialize(it, serializer),
-            TSSignature::TSCallSignatureDeclaration(it) => Serialize::serialize(it, serializer),
-            TSSignature::TSConstructSignatureDeclaration(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            TSSignature::TSMethodSignature(it) => Serialize::serialize(it, serializer),
+            TSSignature::TSIndexSignature(it) => it.serialize(serializer),
+            TSSignature::TSPropertySignature(it) => it.serialize(serializer),
+            TSSignature::TSCallSignatureDeclaration(it) => it.serialize(serializer),
+            TSSignature::TSConstructSignatureDeclaration(it) => it.serialize(serializer),
+            TSSignature::TSMethodSignature(it) => it.serialize(serializer),
         }
     }
 }
@@ -2823,7 +2828,8 @@ impl Serialize for TSIndexSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSIndexSignature")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("parameters", &self.parameters)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("readonly", &self.readonly)?;
@@ -2836,7 +2842,8 @@ impl Serialize for TSCallSignatureDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSCallSignatureDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
@@ -2847,7 +2854,7 @@ impl Serialize for TSCallSignatureDeclaration<'_> {
 
 impl Serialize for TSMethodSignatureKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             TSMethodSignatureKind::Method => {
                 serializer.serialize_unit_variant("TSMethodSignatureKind", 0, "method")
             }
@@ -2865,7 +2872,8 @@ impl Serialize for TSMethodSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSMethodSignature")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("computed", &self.computed)?;
         map.serialize_entry("optional", &self.optional)?;
@@ -2882,7 +2890,8 @@ impl Serialize for TSConstructSignatureDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSConstructSignatureDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
@@ -2894,7 +2903,8 @@ impl Serialize for TSIndexSignatureName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Identifier")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
@@ -2905,7 +2915,8 @@ impl Serialize for TSInterfaceHeritage<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInterfaceHeritage")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
@@ -2916,7 +2927,8 @@ impl Serialize for TSTypePredicate<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypePredicate")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("parameterName", &self.parameter_name)?;
         map.serialize_entry("asserts", &self.asserts)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
@@ -2927,8 +2939,8 @@ impl Serialize for TSTypePredicate<'_> {
 impl Serialize for TSTypePredicateName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSTypePredicateName::Identifier(it) => Serialize::serialize(it, serializer),
-            TSTypePredicateName::This(it) => Serialize::serialize(it, serializer),
+            TSTypePredicateName::Identifier(it) => it.serialize(serializer),
+            TSTypePredicateName::This(it) => it.serialize(serializer),
         }
     }
 }
@@ -2937,7 +2949,8 @@ impl Serialize for TSModuleDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSModuleDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("body", &self.body)?;
         map.serialize_entry("kind", &self.kind)?;
@@ -2948,7 +2961,7 @@ impl Serialize for TSModuleDeclaration<'_> {
 
 impl Serialize for TSModuleDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             TSModuleDeclarationKind::Global => {
                 serializer.serialize_unit_variant("TSModuleDeclarationKind", 0, "global")
             }
@@ -2965,8 +2978,8 @@ impl Serialize for TSModuleDeclarationKind {
 impl Serialize for TSModuleDeclarationName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSModuleDeclarationName::Identifier(it) => Serialize::serialize(it, serializer),
-            TSModuleDeclarationName::StringLiteral(it) => Serialize::serialize(it, serializer),
+            TSModuleDeclarationName::Identifier(it) => it.serialize(serializer),
+            TSModuleDeclarationName::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -2974,10 +2987,8 @@ impl Serialize for TSModuleDeclarationName<'_> {
 impl Serialize for TSModuleDeclarationBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSModuleDeclarationBody::TSModuleDeclaration(it) => {
-                Serialize::serialize(it, serializer)
-            }
-            TSModuleDeclarationBody::TSModuleBlock(it) => Serialize::serialize(it, serializer),
+            TSModuleDeclarationBody::TSModuleDeclaration(it) => it.serialize(serializer),
+            TSModuleDeclarationBody::TSModuleBlock(it) => it.serialize(serializer),
         }
     }
 }
@@ -2986,7 +2997,8 @@ impl Serialize for TSTypeLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("members", &self.members)?;
         map.end()
     }
@@ -2996,7 +3008,8 @@ impl Serialize for TSInferType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInferType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeParameter", &self.type_parameter)?;
         map.end()
     }
@@ -3006,7 +3019,8 @@ impl Serialize for TSTypeQuery<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeQuery")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("exprName", &self.expr_name)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
@@ -3016,9 +3030,9 @@ impl Serialize for TSTypeQuery<'_> {
 impl Serialize for TSTypeQueryExprName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSTypeQueryExprName::TSImportType(it) => Serialize::serialize(it, serializer),
-            TSTypeQueryExprName::IdentifierReference(it) => Serialize::serialize(it, serializer),
-            TSTypeQueryExprName::QualifiedName(it) => Serialize::serialize(it, serializer),
+            TSTypeQueryExprName::TSImportType(it) => it.serialize(serializer),
+            TSTypeQueryExprName::IdentifierReference(it) => it.serialize(serializer),
+            TSTypeQueryExprName::QualifiedName(it) => it.serialize(serializer),
         }
     }
 }
@@ -3027,7 +3041,8 @@ impl Serialize for TSImportType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("isTypeOf", &self.is_type_of)?;
         map.serialize_entry("parameter", &self.parameter)?;
         map.serialize_entry("qualifier", &self.qualifier)?;
@@ -3041,7 +3056,8 @@ impl Serialize for TSImportAttributes<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportAttributes")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("attributesKeyword", &self.attributes_keyword)?;
         map.serialize_entry("elements", &self.elements)?;
         map.end()
@@ -3052,7 +3068,8 @@ impl Serialize for TSImportAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportAttribute")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("value", &self.value)?;
         map.end()
@@ -3062,8 +3079,8 @@ impl Serialize for TSImportAttribute<'_> {
 impl Serialize for TSImportAttributeName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSImportAttributeName::Identifier(it) => Serialize::serialize(it, serializer),
-            TSImportAttributeName::StringLiteral(it) => Serialize::serialize(it, serializer),
+            TSImportAttributeName::Identifier(it) => it.serialize(serializer),
+            TSImportAttributeName::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -3072,7 +3089,8 @@ impl Serialize for TSFunctionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSFunctionType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("thisParam", &self.this_param)?;
         map.serialize_entry("params", &self.params)?;
@@ -3085,7 +3103,8 @@ impl Serialize for TSConstructorType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSConstructorType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("abstract", &self.r#abstract)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("params", &self.params)?;
@@ -3098,7 +3117,8 @@ impl Serialize for TSMappedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSMappedType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeParameter", &self.type_parameter)?;
         map.serialize_entry("nameType", &self.name_type)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
@@ -3110,7 +3130,7 @@ impl Serialize for TSMappedType<'_> {
 
 impl Serialize for TSMappedTypeModifierOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             TSMappedTypeModifierOperator::True => {
                 serializer.serialize_unit_variant("TSMappedTypeModifierOperator", 0, "true")
             }
@@ -3131,7 +3151,8 @@ impl Serialize for TSTemplateLiteralType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTemplateLiteralType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("quasis", &self.quasis)?;
         map.serialize_entry("types", &self.types)?;
         map.end()
@@ -3142,7 +3163,8 @@ impl Serialize for TSAsExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSAsExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
@@ -3153,7 +3175,8 @@ impl Serialize for TSSatisfiesExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSSatisfiesExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
@@ -3164,7 +3187,8 @@ impl Serialize for TSTypeAssertion<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSTypeAssertion")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.end()
@@ -3175,7 +3199,8 @@ impl Serialize for TSImportEqualsDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSImportEqualsDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("moduleReference", &self.module_reference)?;
         map.serialize_entry("importKind", &self.import_kind)?;
@@ -3186,9 +3211,9 @@ impl Serialize for TSImportEqualsDeclaration<'_> {
 impl Serialize for TSModuleReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            TSModuleReference::ExternalModuleReference(it) => Serialize::serialize(it, serializer),
-            TSModuleReference::IdentifierReference(it) => Serialize::serialize(it, serializer),
-            TSModuleReference::QualifiedName(it) => Serialize::serialize(it, serializer),
+            TSModuleReference::ExternalModuleReference(it) => it.serialize(serializer),
+            TSModuleReference::IdentifierReference(it) => it.serialize(serializer),
+            TSModuleReference::QualifiedName(it) => it.serialize(serializer),
         }
     }
 }
@@ -3197,7 +3222,8 @@ impl Serialize for TSExternalModuleReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSExternalModuleReference")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -3207,7 +3233,8 @@ impl Serialize for TSNonNullExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNonNullExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -3217,7 +3244,8 @@ impl Serialize for Decorator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Decorator")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -3227,7 +3255,8 @@ impl Serialize for TSExportAssignment<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSExportAssignment")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.end()
     }
@@ -3237,7 +3266,8 @@ impl Serialize for TSNamespaceExportDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSNamespaceExportDeclaration")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("id", &self.id)?;
         map.end()
     }
@@ -3247,7 +3277,8 @@ impl Serialize for TSInstantiationExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSInstantiationExpression")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.end()
@@ -3256,7 +3287,7 @@ impl Serialize for TSInstantiationExpression<'_> {
 
 impl Serialize for ImportOrExportKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             ImportOrExportKind::Value => {
                 serializer.serialize_unit_variant("ImportOrExportKind", 0, "value")
             }
@@ -3271,7 +3302,8 @@ impl Serialize for JSDocNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocNullableType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("postfix", &self.postfix)?;
         map.end()
@@ -3282,7 +3314,8 @@ impl Serialize for JSDocNonNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocNonNullableType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("typeAnnotation", &self.type_annotation)?;
         map.serialize_entry("postfix", &self.postfix)?;
         map.end()
@@ -3293,7 +3326,8 @@ impl Serialize for JSDocUnknownType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "JSDocUnknownType")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
         map.end()
     }
 }

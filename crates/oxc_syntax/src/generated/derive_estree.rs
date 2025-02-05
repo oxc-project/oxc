@@ -3,13 +3,15 @@
 
 #![allow(unused_imports, clippy::match_same_arms)]
 
-use serde::{ser::SerializeMap, Serialize, Serializer};
+use serde::{__private::ser::FlatMapSerializer, ser::SerializeMap, Serialize, Serializer};
+
+use oxc_estree::ser::AppendTo;
 
 use crate::operator::*;
 
 impl Serialize for AssignmentOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             AssignmentOperator::Assign => {
                 serializer.serialize_unit_variant("AssignmentOperator", 0, "=")
             }
@@ -64,7 +66,7 @@ impl Serialize for AssignmentOperator {
 
 impl Serialize for BinaryOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             BinaryOperator::Equality => {
                 serializer.serialize_unit_variant("BinaryOperator", 0, "==")
             }
@@ -131,7 +133,7 @@ impl Serialize for BinaryOperator {
 
 impl Serialize for LogicalOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             LogicalOperator::Or => serializer.serialize_unit_variant("LogicalOperator", 0, "||"),
             LogicalOperator::And => serializer.serialize_unit_variant("LogicalOperator", 1, "&&"),
             LogicalOperator::Coalesce => {
@@ -143,7 +145,7 @@ impl Serialize for LogicalOperator {
 
 impl Serialize for UnaryOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             UnaryOperator::UnaryPlus => serializer.serialize_unit_variant("UnaryOperator", 0, "+"),
             UnaryOperator::UnaryNegation => {
                 serializer.serialize_unit_variant("UnaryOperator", 1, "-")
@@ -163,7 +165,7 @@ impl Serialize for UnaryOperator {
 
 impl Serialize for UpdateOperator {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match *self {
+        match self {
             UpdateOperator::Increment => {
                 serializer.serialize_unit_variant("UpdateOperator", 0, "++")
             }
