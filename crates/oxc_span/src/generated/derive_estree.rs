@@ -6,7 +6,7 @@
 use serde::{ser::SerializeMap, Serialize, Serializer};
 
 use crate::source_type::*;
-use crate::span::types::*;
+use crate::span::*;
 
 impl Serialize for Span {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
