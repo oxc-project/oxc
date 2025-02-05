@@ -5,21 +5,15 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     array, break_parent, conditional_group,
-    format::print::{
-        array::{is_concisely_printed_array, ArrayLike},
-        call_expression::{is_commons_js_or_amd_call, CallExpressionLike},
-        misc,
-    },
+    format::print::{array, call_expression, misc},
     group, hardline, if_break, indent,
     ir::Doc,
-    line, softline, text,
-    utils::will_break,
-    Format, Prettier,
+    line, softline, text, utils, Format, Prettier,
 };
 
 pub fn print_call_arguments<'a>(
     p: &mut Prettier<'a>,
-    expression: &CallExpressionLike<'a, '_>,
+    expression: &call_expression::CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
     let arguments = expression.arguments();
 
@@ -89,7 +83,7 @@ pub fn print_call_arguments<'a>(
         let mut first_doc = arguments[0].format(p);
         p.args.expand_first_arg = false;
 
-        if will_break(&mut first_doc) {
+        if utils::will_break(&mut first_doc) {
             let last_doc = get_printed_arguments(p, 1).pop().unwrap();
             let all_args_broken_out_doc = all_args_broken_out(p);
 
@@ -120,7 +114,7 @@ pub fn print_call_arguments<'a>(
 
     if should_expand_last_arg(arguments) {
         let mut printed_arguments = get_printed_arguments(p, -1);
-        if printed_arguments.iter_mut().any(will_break) {
+        if printed_arguments.iter_mut().any(utils::will_break) {
             return all_args_broken_out(p);
         }
 
@@ -138,7 +132,7 @@ pub fn print_call_arguments<'a>(
 
         let mut last_doc = get_last_doc(p);
 
-        if will_break(&mut last_doc) {
+        if utils::will_break(&mut last_doc) {
             let all_args_broken_out_doc = all_args_broken_out(p);
             return array!(
                 p,
@@ -186,11 +180,12 @@ pub fn print_call_arguments<'a>(
 
     let mut printed_arguments = get_printed_arguments(p, 0);
 
-    let should_break = if matches!(expression, CallExpressionLike::CallExpression(_)) {
-        !is_commons_js_or_amd_call(expression.callee(), arguments)
-    } else {
-        true
-    };
+    let should_break =
+        if matches!(expression, call_expression::CallExpressionLike::CallExpression(_)) {
+            !call_expression::is_commons_js_or_amd_call(expression.callee(), arguments)
+        } else {
+            true
+        };
 
     if should_break {
         printed_arguments.insert(0, softline!());
@@ -291,7 +286,7 @@ fn should_expand_last_arg(args: &Vec<'_, Argument<'_>>) -> bool {
         && (args.len() != 2
             || !matches!(penultimate_arg, Some(Argument::ArrowFunctionExpression(_)))
             || !matches!(last_arg, Expression::ArrayExpression(_)))
-        && !(args.len() > 1 && is_concisely_printed_array(last_arg))
+        && !(args.len() > 1 && array::is_concisely_printed_array(last_arg))
 }
 
 fn is_hopefully_short_call_argument(mut node: &Expression) -> bool {
