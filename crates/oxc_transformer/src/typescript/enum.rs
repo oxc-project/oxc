@@ -574,9 +574,7 @@ impl IdentifierReferenceRename<'_, '_> {
         //   }
         // }
         // ```
-        //
-        // `NonEmptyStack` guarantees that the stack is not empty.
-        *self.scope_stack.first().unwrap() == symbol_scope_id
+        *self.scope_stack.first() == symbol_scope_id
             // The resolved symbol is declared outside the enum,
             // and we have checked that the name exists in previous_enum_members:
             //
@@ -586,7 +584,7 @@ impl IdentifierReferenceRename<'_, '_> {
             // enum Foo { B = A }
             //                ^ This should be renamed to Foo.A
             // ```
-        || !self.scope_stack.contains(&symbol_scope_id)
+            || !self.scope_stack.contains(&symbol_scope_id)
     }
 }
 

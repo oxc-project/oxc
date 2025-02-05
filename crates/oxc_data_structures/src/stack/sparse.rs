@@ -124,6 +124,36 @@ impl<T> SparseStack<T> {
         }
     }
 
+    /// Get reference to value of first entry on the stack.
+    #[inline]
+    pub fn first(&self) -> Option<&T> {
+        let has_value = *self.has_values.first();
+        if has_value {
+            debug_assert!(!self.values.is_empty());
+            // SAFETY: First `self.has_values` is only `true` if there's a corresponding value in `self.values`.
+            // This invariant is maintained in `push`, `pop`, `take_last`, `last_or_init`, and `last_mut_or_init`.
+            let value = unsafe { self.values.get_unchecked(0) };
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    /// Get mutable reference to value of first entry on the stack.
+    #[inline]
+    pub fn first_mut(&mut self) -> Option<&mut T> {
+        let has_value = *self.has_values.first();
+        if has_value {
+            debug_assert!(!self.values.is_empty());
+            // SAFETY: First `self.has_values` is only `true` if there's a corresponding value in `self.values`.
+            // This invariant is maintained in `push`, `pop`, `take_last`, `last_or_init`, and `last_mut_or_init`.
+            let value = unsafe { self.values.get_unchecked_mut(0) };
+            Some(value)
+        } else {
+            None
+        }
+    }
+
     /// Get reference to value of last entry on the stack.
     #[inline]
     pub fn last(&self) -> Option<&T> {

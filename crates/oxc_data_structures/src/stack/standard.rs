@@ -184,6 +184,12 @@ impl<T> Stack<T> {
         Self { cursor: start, start, end }
     }
 
+    // Note: There is no need to implement `first` and `first_mut` methods.
+    // `NonEmptyStack` can make those methods infallible, but `Stack` can't because `Stack` can be empty.
+    // `std`'s `first` and `first_mut` methods available via `Deref` / `DerefMut` to a `&[T]` / `&mut[T]`
+    // are just as efficient as a hand-written version.
+    // https://godbolt.org/z/rjb1dzob1
+
     /// Get reference to last value on stack.
     #[inline]
     pub fn last(&self) -> Option<&T> {
