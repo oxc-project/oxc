@@ -1337,9 +1337,9 @@ impl<'a> Format<'a> for AwaitExpression<'a> {
                     if (match ancestor {
                         AstKind::BlockStatement(_) => true,
                         AstKind::AwaitExpression(await_expr) => {
-                            // TODO: Check `oxc_linter` for similar logic
-                            // This seems to relate to the parentheses,
-                            // but we do not yet determined how to handle them for now
+                            // TODO: https://github.com/prettier/prettier/blob/cca946176c3ec04ae46bf7bcb08c5bba8c041682/src/language-js/utils/index.js#L709
+                            // Acutually this is not related to token thing.
+                            // And it seems to pass only limited branches for here, can be inlined?
                             // && !startsWithNoLookaheadToken(
                             //   await_expr.argument,
                             //   (leftmostNode) => leftmostNode === node,
