@@ -1337,7 +1337,9 @@ impl<'a> Format<'a> for AwaitExpression<'a> {
                     if (match ancestor {
                         AstKind::BlockStatement(_) => true,
                         AstKind::AwaitExpression(await_expr) => {
-                            // TODO:
+                            // TODO: Check `oxc_linter` for similar logic
+                            // This seems to relate to the parentheses,
+                            // but we do not yet determined how to handle them for now
                             // && !startsWithNoLookaheadToken(
                             //   await_expr.argument,
                             //   (leftmostNode) => leftmostNode === node,

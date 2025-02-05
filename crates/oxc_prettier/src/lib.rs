@@ -106,7 +106,8 @@ impl<'a> Prettier<'a> {
     }
 
     fn find_ancestor(&self, predicate: impl Fn(AstKind<'a>) -> bool) -> Option<AstKind<'a>> {
-        self.stack.iter().rev().skip(2).find(|&&kind| predicate(kind)).copied()
+        // Skip the current node
+        self.stack.iter().rev().skip(1).find(|&&kind| predicate(kind)).copied()
     }
 
     /// A hack for erasing the lifetime requirement.
