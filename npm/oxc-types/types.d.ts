@@ -3,7 +3,7 @@
 
 export interface Program extends Span {
   type: 'Program';
-  sourceType: SourceType;
+  sourceType: ModuleKind;
   hashbang: Hashbang | null;
   directives: Array<Directive>;
   body: Array<Statement>;
