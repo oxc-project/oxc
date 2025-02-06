@@ -34,6 +34,17 @@ describe('parse', () => {
     );
     expect(ret.program.body[0]).matchSnapshot();
   });
+
+  it('estree MemberExpression', async () => {
+    const ret = await parseAsync(
+      'test.js',
+      `\
+obj.staticProp;
+obj["computedProp"];
+`,
+    );
+    expect(ret.program.body).matchSnapshot();
+  });
 });
 
 describe('error', () => {

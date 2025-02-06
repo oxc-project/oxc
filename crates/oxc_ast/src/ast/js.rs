@@ -483,9 +483,11 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "MemberExpression", add_ts = "computed: true", add_entry(computed = true))]
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
+    #[estree(rename = "property")]
     pub expression: Expression<'a>,
     pub optional: bool, // for optional chaining
 }
@@ -496,6 +498,7 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "MemberExpression", add_ts = "computed: false", add_entry(computed = false))]
 pub struct StaticMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -509,6 +512,7 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "MemberExpression", add_ts = "computed: false", add_entry(computed = false))]
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
