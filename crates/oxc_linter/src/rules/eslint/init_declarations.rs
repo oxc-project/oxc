@@ -1,5 +1,8 @@
 use oxc_ast::{
-    ast::{BindingPatternKind, ForInStatement, ForOfStatement, ForStatementLeft, VariableDeclarationKind},
+    ast::{
+        BindingPatternKind, ForInStatement, ForOfStatement, ForStatementLeft,
+        VariableDeclarationKind,
+    },
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -29,7 +32,11 @@ enum Mode {
 
 impl Mode {
     pub fn from(raw: &str) -> Self {
-        if raw == "never" { Self::Never } else { Self::Always }
+        if raw == "never" {
+            Self::Never
+        } else {
+            Self::Always
+        }
     }
 }
 
@@ -44,7 +51,7 @@ declare_oxc_lint!(
     /// Require or disallow initialization in variable declarations
     ///
     /// ### Why is this bad?
-    /// In JavaScript, variables can be assigned during declaration, or at any point afterwards using an assignment statement. 
+    /// In JavaScript, variables can be assigned during declaration, or at any point afterwards using an assignment statement.
     /// For example, in the following code, foo is initialized during declaration, while bar is initialized later.
     ///
     /// ### Examples
@@ -55,7 +62,7 @@ declare_oxc_lint!(
     /// } else {
     ///     bar = 2;
     /// }
-    /// 
+    ///
     /// Examples of incorrect code for the default "always" option:
     /// ```js
     /// /*eslint init-declarations: ["error", "always"]*/
@@ -64,7 +71,7 @@ declare_oxc_lint!(
     ///     let baz;
     /// }
     /// ```
-    /// 
+    ///
     /// Examples of incorrect code for the "never" option:
     /// ```js
     /// /*eslint init-declarations: ["error", "never"]*/
@@ -78,25 +85,25 @@ declare_oxc_lint!(
     /// Examples of correct code for the default "always" option:
     /// ```js
     /// /*eslint init-declarations: ["error", "always"]*/
-    /// 
+    ///
     /// function foo() {
     ///     var bar = 1;
     ///     let baz = 2;
     ///     const qux = 3;
     /// }
     /// ```
-    /// 
+    ///
     /// Examples of correct code for the "never" option:
     /// ```js
     /// /*eslint init-declarations: ["error", "never"]*/
-    /// 
+    ///
     /// function foo() {
     ///     var bar;
     ///     let baz;
     ///     const buzz = 1;
     /// }
     /// ```
-    /// 
+    ///
     /// Examples of correct code for the "never", { "ignoreForLoopInit": true } options:
     /// ```js
     /// /*eslint init-declarations: ["error", "never", { "ignoreForLoopInit": true }]*/
@@ -113,10 +120,7 @@ impl Rule for InitDeclarations {
         let obj2 = value.get(1);
 
         Self {
-            mode: obj1
-                .and_then(Value::as_str)
-                .map(Mode::from)
-                .unwrap_or_default(),
+            mode: obj1.and_then(Value::as_str).map(Mode::from).unwrap_or_default(),
             ignore_for_loop_init: obj2
                 .and_then(|v| v.get("ignoreForLoopInit"))
                 .and_then(Value::as_bool)
@@ -147,10 +151,10 @@ impl Rule for InitDeclarations {
                     continue;
                 };
                 let is_initialized = match parent.kind() {
-                    AstKind::ForInStatement(ForInStatement{ left, .. })
-                    | AstKind::ForOfStatement(ForOfStatement{ left, .. }) => {
+                    AstKind::ForInStatement(ForInStatement { left, .. })
+                    | AstKind::ForOfStatement(ForOfStatement { left, .. }) => {
                         matches!(left, ForStatementLeft::VariableDeclaration(left_node) if left_node.span == decl.span)
-                    },
+                    }
                     // When eslint processes ForStatementInit statements
                     // the default variable is initialized
                     // eg: "for (var a; a < 2; a++)" a is initialized
@@ -160,14 +164,22 @@ impl Rule for InitDeclarations {
 
                 match self.mode {
                     Mode::Always if !is_initialized => {
-                        ctx.diagnostic(init_declarations_diagnostic(identifier.span, &self.mode, identifier.name.as_str()));
-                    },
+                        ctx.diagnostic(init_declarations_diagnostic(
+                            identifier.span,
+                            &self.mode,
+                            identifier.name.as_str(),
+                        ));
+                    }
                     Mode::Never if is_initialized && !self.ignore_for_loop_init => {
                         if let VariableDeclarationKind::Const = &v.kind {
                             continue;
                         }
-                        ctx.diagnostic(init_declarations_diagnostic(identifier.span, &self.mode, identifier.name.as_str()));
-                    },
+                        ctx.diagnostic(init_declarations_diagnostic(
+                            identifier.span,
+                            &self.mode,
+                            identifier.name.as_str(),
+                        ));
+                    }
                     _ => {}
                 }
             }
@@ -254,7 +266,10 @@ fn test() {
             Some(serde_json::json!(["never"])),
         ),
         ("type GreetingLike = string | (() => string) | Greeter;", None),
-        ("type GreetingLike = string | (() => string) | Greeter;", Some(serde_json::json!(["never"]))),
+        (
+            "type GreetingLike = string | (() => string) | Greeter;",
+            Some(serde_json::json!(["never"])),
+        ),
         (
             "function foo() {
                 var bar: string;
@@ -365,7 +380,6 @@ fn test() {
             }",
             Some(serde_json::json!(["never"])),
         ),
-
         (
             "namespace myLib1 {
                 let foo: number;
@@ -377,7 +391,7 @@ fn test() {
                 }
             }",
             Some(serde_json::json!(["always"])),
-        )
+        ),
     ];
 
     Tester::new(InitDeclarations::NAME, InitDeclarations::PLUGIN, pass, fail).test_and_snapshot();
