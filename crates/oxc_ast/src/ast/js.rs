@@ -484,7 +484,6 @@ pub use match_member_expression;
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "MemberExpression", add_ts = "computed: true", add_entry(computed = true))]
-
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
