@@ -488,6 +488,7 @@ pub use match_member_expression;
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
+    #[estree(rename = "property")]
     pub expression: Expression<'a>,
     pub optional: bool, // for optional chaining
 }

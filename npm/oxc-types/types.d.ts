@@ -176,7 +176,7 @@ export type MemberExpression = ComputedMemberExpression | StaticMemberExpression
 export interface ComputedMemberExpression extends Span {
   type: 'MemberExpression';
   object: Expression;
-  expression: Expression;
+  property: Expression;
   optional: boolean;
   computed: true;
 }

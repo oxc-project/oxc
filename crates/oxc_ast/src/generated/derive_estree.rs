@@ -351,7 +351,7 @@ impl Serialize for ComputedMemberExpression<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("expression", &self.expression)?;
+        map.serialize_entry("property", &self.expression)?;
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("computed", &true)?;
         map.end()
