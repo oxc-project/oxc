@@ -7,14 +7,14 @@ use quote::quote;
 use syn::{parse_str, Type};
 
 use crate::{
-    parse::attr::AttrPartListElement,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
     utils::number_lit,
     Result,
 };
 
 use super::{
-    attr_positions, define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum,
+    attr_positions, define_derive, AttrLocation, AttrPart, AttrPartListElement, AttrPositions,
+    Derive, StructOrEnum,
 };
 
 /// Derive for `Serialize` impls, which serialize AST to ESTree format in JSON.
@@ -109,10 +109,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::List("add_entry", args) => {
                 let args = args
                     .into_iter()
-                    .map(|list_element| match list_element {
-                        AttrPartListElement::String(name, value) => Ok((name, value)),
-                        _ => Err(()),
-                    })
+                    .map(AttrPartListElement::try_into_string)
                     .collect::<Result<Vec<_>>>()?;
                 struct_def.estree.add_entry = Some(args);
             }

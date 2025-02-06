@@ -105,10 +105,7 @@ fn parse_visit_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         (AttrPart::List("args", args), location) => {
             let args = args
                 .into_iter()
-                .map(|list_element| match list_element {
-                    AttrPartListElement::String(name, value) => Ok((name, value)),
-                    _ => Err(()),
-                })
+                .map(AttrPartListElement::try_into_string)
                 .collect::<Result<Vec<(String, String)>>>()?;
 
             match location {

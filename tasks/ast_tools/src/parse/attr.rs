@@ -5,7 +5,7 @@ use bitflags::bitflags;
 use crate::{
     codegen::{DeriveId, GeneratorId},
     schema::{Def, EnumDef, StructDef},
-    DERIVES, GENERATORS,
+    Result, DERIVES, GENERATORS,
 };
 
 /// Processor of an attribute - either a derive or a generator.
@@ -154,13 +154,42 @@ pub enum AttrPart<'p> {
 pub enum AttrPartListElement {
     /// Named part.
     /// e.g. `qux` in `#[foo(bar(qux))]`.
-    #[expect(dead_code)]
     Tag(String),
     /// String part.
     /// e.g. `flags = ScopeFlags::Function` in `#[visit(args(flags = ScopeFlags::Function))]`.
     String(String, String),
     /// List part.
     /// e.g. `qux(doof, bing = donk)` in `#[foo(bar(qux(doof, bing = donk)))]`.
-    #[expect(dead_code)]
     List(String, Vec<AttrPartListElement>),
+}
+
+impl AttrPartListElement {
+    /// Unwrap this [`AttrPartListElement`] if it is an [`AttrPartListElement::Tag`].
+    #[expect(dead_code)]
+    pub fn try_into_tag(self) -> Result<String> {
+        if let Self::Tag(name) = self {
+            Ok(name)
+        } else {
+            Err(())
+        }
+    }
+
+    /// Unwrap this [`AttrPartListElement`] if it is an [`AttrPartListElement::String`].
+    pub fn try_into_string(self) -> Result<(String, String)> {
+        if let Self::String(name, value) = self {
+            Ok((name, value))
+        } else {
+            Err(())
+        }
+    }
+
+    /// Unwrap this [`AttrPartListElement`] if it is an [`AttrPartListElement::List`].
+    #[expect(dead_code)]
+    pub fn try_into_list(self) -> Result<(String, Vec<AttrPartListElement>)> {
+        if let Self::List(name, elements) = self {
+            Ok((name, elements))
+        } else {
+            Err(())
+        }
+    }
 }
