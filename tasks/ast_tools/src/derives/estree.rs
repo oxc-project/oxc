@@ -107,19 +107,17 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
             AttrPart::Tag("no_ts_def") => struct_def.estree.custom_ts_def = Some(String::new()),
             AttrPart::List("add_entry", args) => {
-                struct_def.estree.add_entry = {
-                    let args = args
-                        .into_iter()
-                        .map(|list_element| match list_element {
-                            AttrPartListElement::String(name, value) => Ok((name, value)),
-                            _ => Err(()),
-                        })
-                        .collect::<Result<Vec<(String, String)>>>()?;
-                    if args.is_empty() {
-                        return Err(());
-                    }
-                    Some(args)
+                let args = args
+                    .into_iter()
+                    .map(|list_element| match list_element {
+                        AttrPartListElement::String(name, value) => Ok((name, value)),
+                        _ => Err(()),
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                if args.is_empty() {
+                    return Err(());
                 }
+                struct_def.estree.add_entry = Some(args);
             }
             AttrPart::String("add_ts", value) => struct_def.estree.add_ts = Some(value),
             AttrPart::String("custom_ts_def", value) => {
