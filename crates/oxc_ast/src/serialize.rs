@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
 use serde::{
-    ser::{SerializeSeq, Serializer},
+    ser::{SerializeMap, SerializeSeq, Serializer},
     Serialize,
 };
 
@@ -11,10 +11,7 @@ use oxc_span::{Atom, Span};
 use oxc_syntax::number::BigintBase;
 
 use crate::ast::{
-    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameters,
-    JSXElementName, JSXIdentifier, JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program,
-    RegExpFlags, RegExpLiteral, RegExpPattern, Statement, StringLiteral, TSModuleBlock,
-    TSTypeAnnotation,
+    BigIntLiteral, BindingPatternKind, BooleanLiteral, ComputedMemberExpression, Directive, Elision, FormalParameters, JSXElementName, JSXIdentifier, JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral, RegExpPattern, Statement, StaticMemberExpression, StringLiteral, TSModuleBlock, TSTypeAnnotation
 };
 
 #[derive(Serialize)]
@@ -321,5 +318,46 @@ impl Serialize for JSXMemberExpressionObject<'_> {
                 JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
             }
         }
+    }
+}
+
+// TODO: come up with a macro to add `computed: true/false` constant?
+pub struct ESTreeStaticMemberExpression<'a, 'b>(&'a StaticMemberExpression<'b>);
+
+pub struct ESTreeComputedMemberExpression<'a, 'b>(&'a ComputedMemberExpression<'b>);
+
+impl<'a, 'b> From<&'a StaticMemberExpression<'b>> for ESTreeStaticMemberExpression<'a, 'b> {
+    fn from(inner: &'a StaticMemberExpression<'b>) -> Self {
+        Self(inner)
+    }
+}
+
+impl<'a, 'b> From<&'a ComputedMemberExpression<'b>> for ESTreeComputedMemberExpression<'a, 'b> {
+    fn from(inner: &'a ComputedMemberExpression<'b>) -> Self {
+        Self(inner)
+    }
+}
+impl Serialize for ESTreeStaticMemberExpression<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "MemberExpression")?;
+        self.0.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("object", &self.0.object)?;
+        map.serialize_entry("property", &self.0.property)?;
+        map.serialize_entry("optional", &self.0.optional)?;
+        map.serialize_entry("computed", &false)?;
+        map.end()
+    }
+}
+impl Serialize for ESTreeComputedMemberExpression<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "MemberExpression")?;
+        self.0.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("object", &self.0.object)?;
+        map.serialize_entry("property", &self.0.expression)?;
+        map.serialize_entry("optional", &self.0.optional)?;
+        map.serialize_entry("computed", &true)?;
+        map.end()
     }
 }
