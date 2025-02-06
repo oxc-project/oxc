@@ -144,6 +144,7 @@ pub enum AttrPart<'p> {
     /// e.g. `#[estree(rename = "Foo")]` or `#[estree(via = crate::serialize::OptionVecDefault)]`.
     String(&'p str, String),
     /// List part.
+    /// This `Vec` is never empty.
     /// e.g. `#[visit(args(flags = ScopeFlags::Function))]`.
     List(&'p str, Vec<AttrPartListElement>),
 }

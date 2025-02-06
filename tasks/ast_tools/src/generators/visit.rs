@@ -110,9 +110,6 @@ fn parse_visit_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                     _ => Err(()),
                 })
                 .collect::<Result<Vec<(String, String)>>>()?;
-            if args.is_empty() {
-                return Err(());
-            }
 
             match location {
                 AttrLocation::Struct(struct_def) => {

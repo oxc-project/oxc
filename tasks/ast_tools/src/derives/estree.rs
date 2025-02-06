@@ -114,9 +114,6 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                         _ => Err(()),
                     })
                     .collect::<Result<Vec<_>>>()?;
-                if args.is_empty() {
-                    return Err(());
-                }
                 struct_def.estree.add_entry = Some(args);
             }
             AttrPart::String("add_ts", value) => struct_def.estree.add_ts = Some(value),
