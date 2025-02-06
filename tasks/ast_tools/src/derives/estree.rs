@@ -216,8 +216,8 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
 
     let add_entry = match &struct_def.estree.add_entry {
         Some(add_entry) => {
-            let key = &add_entry[0].0;
-            let value = parse_str::<syn::Expr>(&add_entry[0].1).unwrap();
+            let (key, value) = &add_entry[0];
+            let value = parse_str::<syn::Expr>(value).unwrap();
             quote! {
                 map.serialize_entry(#key, &#value)?;
             }
