@@ -19,10 +19,10 @@ impl<'a> TemplateLiteralLike<'a, '_> {
         }
     }
 
-    fn get_nth_expr_doc(&self, p: &mut Prettier<'a>, idx: usize) -> Option<Doc<'a>> {
+    fn format_nth_expr(&self, p: &mut Prettier<'a>, idx: usize) -> Option<Doc<'a>> {
         match self {
             Self::TemplateLiteral(template_literal) => {
-                template_literal.expressions.get(idx).map(|expression| expression.format(p))
+                template_literal.expressions.get(idx).map(|expr| expr.format(p))
             }
             Self::TSTemplateLiteralType(template_literal) => {
                 template_literal.types.get(idx).map(|type_| type_.format(p))
@@ -44,7 +44,7 @@ pub fn print_template_literal<'a>(
     for (idx, quasi) in template_literal.quasis().iter().enumerate() {
         parts.push(quasi.format(p));
 
-        let Some(expr_doc) = template_literal.get_nth_expr_doc(p, idx) else {
+        let Some(expr_doc) = template_literal.format_nth_expr(p, idx) else {
             break;
         };
 

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{Box, FromIn, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
@@ -109,10 +109,12 @@ impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ExpressionStatement, {
             let mut parts = Vec::new_in(p.allocator);
+
             parts.push(self.expression.format(p));
             if let Some(semi) = p.semi() {
                 parts.push(semi);
             }
+
             array!(p, parts)
         })
     }

@@ -256,6 +256,8 @@ pub fn print_import_source_and_arguments<'a>(
     group!(p, parts)
 }
 
+// ---
+
 /// * Reference <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/print/call-arguments.js#L247-L272>
 fn should_expand_first_arg<'a>(arguments: &Vec<'a, Argument<'a>>) -> bool {
     if arguments.len() != 2 {
