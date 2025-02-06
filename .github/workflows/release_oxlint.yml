@@ -194,6 +194,9 @@ jobs:
           cat npm/oxlint/package.json
           for package in npm/oxlint*; do cat $package/package.json ; echo ; done
 
+      - name: wait 3 minutes for packages to sync on npm
+        run: sleep 180s
+
       - name: Publish npm packages as latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
