@@ -14,9 +14,9 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) -> OxcDiagnostic {
     let msg = if Mode::Always == *mode {
-        format!("Variable '{}' should be initialized on declaration.", identifier_name)
+        format!("Variable '{identifier_name}' should be initialized on declaration.")
     } else {
-        format!("Variable '{}' should not be initialized on declaration.", identifier_name)
+        format!("Variable '{identifier_name}' should not be initialized on declaration.")
     };
     OxcDiagnostic::warn(msg)
         .with_help("Require or disallow initialization in variable declarations")
@@ -146,7 +146,7 @@ impl Rule for InitDeclarations {
                     return;
                 }
             }
-            for v in decl.declarations.iter() {
+            for v in &decl.declarations {
                 let BindingPatternKind::BindingIdentifier(identifier) = &v.id.kind else {
                     continue;
                 };
