@@ -1,4 +1,5 @@
 use oxc_ast::{ast::*, NONE};
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
 
@@ -241,14 +242,15 @@ impl<'a> PeepholeOptimizations {
         }
 
         // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)`
-        if let (
-            Expression::Identifier(test),
-            Expression::CallExpression(consequent),
-            Expression::CallExpression(alternate),
-        ) = (&expr.test, &mut expr.consequent, &mut expr.alternate)
+        if let (Expression::CallExpression(consequent), Expression::CallExpression(alternate)) =
+            (&mut expr.consequent, &mut expr.alternate)
         {
             if consequent.arguments.len() == alternate.arguments.len()
-                && !ctx.is_global_reference(test)
+                // we can improve compression by allowing side effects on one side if the other side is
+                // an identifier that is not modified after it is declared.
+                // but for now, we only perform compression if neither side has side effects.
+                && !(ctx.expression_may_have_side_effects(&expr.test)
+                    || ctx.expression_may_have_side_effects(&consequent.callee))
                 && ctx.expr_eq(&consequent.callee, &alternate.callee)
                 && consequent
                     .arguments
@@ -647,9 +649,13 @@ mod test {
         test("a ? (b, c) : c", "(a && b), c");
         test("a ? b || c : c", "(a && b) || c");
         test("a ? c : b && c", "(a || b) && c");
-        test("var a; a ? b(c, d) : b(e, d)", "var a; b(a ? c : e, d)");
-        test("var a; a ? b(...c) : b(...e)", "var a; b(...a ? c : e)");
-        test("var a; a ? b(c) : b(e)", "var a; b(a ? c : e)");
+        test("var a, b; a ? b(c, d) : b(e, d)", "var a, b; b(a ? c : e, d)");
+        test("var a, b; a ? b(...c) : b(...e)", "var a, b; b(...a ? c : e)");
+        test("var a, b; a ? b(c) : b(e)", "var a, b; b(a ? c : e)");
+        test("var a, b; a === 0 ? b(c) : b(e)", "var a, b; b(a === 0 ? c : e)");
+        test_same("var a; a === 0 ? b(c) : b(e)"); // accessing global `b` may assign a different value to `a`
+        test_same("var b; a === 0 ? b(c) : b(e)"); // accessing global `a` may assign a different value to `b`
+        test_same("a === 0 ? b(c) : b(e)"); // accessing global `a`, `b` may have a side effect
         test("a() != null ? a() : b", "a() == null ? b : a()");
         test("var a; a != null ? a : b", "var a; a ?? b");
         test("var a; (a = _a) != null ? a : b", "var a; (a = _a) ?? b");
