@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.10] - 2025-02-06
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Features
+
+- d6d80f7 linter: Add suggestion fixer for `eslint/no-iterator` (#8894) (dalaoshu)
+
+### Bug Fixes
+
+- baf3e4e linter: Correctly replace rule severity with duplicate rule name configurations (#8840) (dalaoshu)
+
+### Performance
+
+- 8a4988d linter: Use parallel iterator directly instead of iter and parallel bridge (#8831) (Cam McHenry)
+
+### Refactor
+
+- bb9d763 linter: Remove usage of `url` crate (#8833) (camchenry)
+- 4fcf719 linter: Replace MIME guessing with extension check (#8832) (camchenry)
+
 ## [0.15.9] - 2025-02-01
 
 ### Features

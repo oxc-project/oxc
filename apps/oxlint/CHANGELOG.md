@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.10] - 2025-02-06
+
+### Features
+
+- 7e8568b linter: Junit reporter (#8756) (Tapan Prakash)
+
+### Bug Fixes
+
+- baf3e4e linter: Correctly replace rule severity with duplicate rule name configurations (#8840) (dalaoshu)
+
 ## [0.15.9] - 2025-02-01
 
 ### Bug Fixes
