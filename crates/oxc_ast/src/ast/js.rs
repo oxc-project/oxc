@@ -484,7 +484,7 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_ts = "computed: true", add_entry(computed = true))]
+#[estree(rename = "MemberExpression", add_fields(computed = true), add_ts = "computed: true")]
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -499,7 +499,7 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_ts = "computed: false", add_entry(computed = false))]
+#[estree(rename = "MemberExpression", add_fields(computed = false), add_ts = "computed: false")]
 pub struct StaticMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -513,7 +513,7 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_ts = "computed: false", add_entry(computed = false))]
+#[estree(rename = "MemberExpression", add_fields(computed = false), add_ts = "computed: false")]
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
