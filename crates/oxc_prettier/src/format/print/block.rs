@@ -15,26 +15,23 @@ pub fn print_block<'a>(
         parts.push(indent!(p, [hardline!(p), doc]));
         parts.push(hardline!(p));
     } else {
-        let parent = p.parent_kind();
-        let parent_parent = p.parent_parent_kind();
+        let current_kind = p.current_kind();
+        let parent_kind = p.parent_kind();
+        let parent_parent_kind = p.parent_parent_kind();
 
-        if (parent_parent.is_none()
-            || parent_parent.is_some_and(|p| !matches!(p, AstKind::ObjectProperty(_))))
-            && !(matches!(
-                parent,
-                AstKind::FunctionBody(_)
-                    | AstKind::ArrowFunctionExpression(_)
-                    | AstKind::ObjectExpression(_)
-                    | AstKind::Function(_)
-                    | AstKind::ForStatement(_)
-                    | AstKind::WhileStatement(_)
-                    | AstKind::DoWhileStatement(_)
-                    | AstKind::MethodDefinition(_)
-                    | AstKind::PropertyDefinition(_)
-                    | AstKind::ObjectProperty(_) // For object method
-            ) || (matches!(parent, AstKind::CatchClause(_))
-                && !matches!(parent_parent, Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
-                || matches!(p.current_kind(), AstKind::StaticBlock(_)))
+        if !(matches!(
+            parent_kind,
+            AstKind::ArrowFunctionExpression(_)
+                | AstKind::Function(_)
+                | AstKind::MethodDefinition(_)
+                | AstKind::ObjectProperty(_) // For object method
+                | AstKind::ForStatement(_)
+                | AstKind::WhileStatement(_)
+                | AstKind::DoWhileStatement(_)
+                | AstKind::TSModuleDeclaration(_)
+        ) || (matches!(parent_kind, AstKind::CatchClause(_))
+            && !matches!(parent_parent_kind, Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
+            || matches!(current_kind, AstKind::StaticBlock(_)))
         {
             parts.push(hardline!(p));
         }
@@ -50,10 +47,11 @@ pub fn print_block_body<'a>(
     stmts: &[Statement<'a>],
     directives: Option<&[Directive<'a>]>,
 ) -> Option<Doc<'a>> {
-    let has_directives = directives.is_some_and(|directives| !directives.is_empty());
+    let has_directives = directives.is_some_and(|d| !d.is_empty());
     let has_body = stmts.iter().any(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+    let has_dangling_comments = false; // TODO: Dangling comments
 
-    if !has_body && !has_directives {
+    if !has_body && !has_directives && !has_dangling_comments {
         return None;
     }
 
@@ -61,31 +59,20 @@ pub fn print_block_body<'a>(
 
     if has_directives {
         if let Some(directives) = directives {
-            // `statement::print_statement_sequence()` equivalent for directives
-            let mut last_directive = &directives[0];
-            for (idx, directive) in directives.iter().enumerate() {
-                parts.push(directive.format(p));
-                if idx != directives.len() - 1 {
-                    parts.push(hardline!(p));
-                    if p.is_next_line_empty(directive.span) {
-                        parts.push(hardline!(p));
-                    }
-                }
-
-                last_directive = directive;
-            }
-
-            if has_body {
-                parts.push(hardline!(p));
-                if p.is_next_line_empty(last_directive.span) {
-                    parts.push(hardline!(p));
-                }
-            }
+            parts.extend(statement::print_directives(
+                p,
+                directives,
+                has_body || has_dangling_comments,
+            ));
         }
     }
 
     if has_body {
         parts.extend(statement::print_statement_sequence(p, stmts));
+    }
+
+    if has_dangling_comments {
+        // TODO: Dangling comments
     }
 
     Some(array!(p, parts))
