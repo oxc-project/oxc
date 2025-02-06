@@ -11,7 +11,10 @@ use oxc_span::{Atom, Span};
 use oxc_syntax::number::BigintBase;
 
 use crate::ast::{
-    BigIntLiteral, BindingPatternKind, BooleanLiteral, ComputedMemberExpression, Directive, Elision, FormalParameters, JSXElementName, JSXIdentifier, JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral, RegExpPattern, Statement, StaticMemberExpression, StringLiteral, TSModuleBlock, TSTypeAnnotation
+    BigIntLiteral, BindingPatternKind, BooleanLiteral, ComputedMemberExpression, Directive,
+    Elision, FormalParameters, JSXElementName, JSXIdentifier, JSXMemberExpressionObject,
+    NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral, RegExpPattern, Statement,
+    StaticMemberExpression, StringLiteral, TSModuleBlock, TSTypeAnnotation,
 };
 
 #[derive(Serialize)]
