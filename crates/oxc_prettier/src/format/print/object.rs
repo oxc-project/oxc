@@ -15,7 +15,7 @@ pub enum ObjectLike<'a, 'b> {
     ObjectAssignmentTarget(&'b ObjectAssignmentTarget<'a>),
     ObjectPattern(&'b ObjectPattern<'a>),
     TSTypeLiteral(&'b TSTypeLiteral<'a>),
-    // TODO: TSInterfaceBody
+    TSInterfaceBody(&'b TSInterfaceBody<'a>),
 }
 
 impl<'a, 'b> ObjectLike<'a, 'b> {
@@ -25,15 +25,15 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::ObjectAssignmentTarget(target) => target.properties.len(),
             Self::ObjectPattern(object) => object.properties.len(),
             Self::TSTypeLiteral(literal) => literal.members.len(),
+            Self::TSInterfaceBody(body) => body.body.len(),
         }
     }
 
     fn has_rest(&self) -> bool {
         match self {
-            Self::ObjectExpression(expr) => false,
             Self::ObjectAssignmentTarget(target) => target.rest.is_some(),
             Self::ObjectPattern(object) => object.rest.is_some(),
-            Self::TSTypeLiteral(_) => false,
+            _ => false,
         }
     }
 
@@ -43,6 +43,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::ObjectAssignmentTarget(object) => object.is_empty(),
             Self::ObjectPattern(object) => object.is_empty(),
             Self::TSTypeLiteral(literal) => literal.members.is_empty(),
+            Self::TSInterfaceBody(body) => body.body.is_empty(),
         }
     }
 
@@ -56,6 +57,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::ObjectAssignmentTarget(object) => object.span,
             Self::ObjectPattern(object) => object.span,
             Self::TSTypeLiteral(literal) => literal.span,
+            Self::TSInterfaceBody(body) => body.span,
         }
     }
 
@@ -73,12 +75,15 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::TSTypeLiteral(literal) => {
                 Box::new(literal.members.iter().map(|member| member.format(p)))
             }
+            Self::TSInterfaceBody(body) => {
+                Box::new(body.body.iter().map(|member| member.format(p)))
+            }
         }
     }
 
     fn member_separator(&self, p: &'b Prettier<'a>) -> &'static str {
         match self {
-            Self::TSTypeLiteral(_) => {
+            Self::TSTypeLiteral(_) | Self::TSInterfaceBody(_) => {
                 if p.semi().is_some() {
                     ";"
                 } else {
@@ -91,7 +96,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
 }
 
 pub fn print_object<'a>(p: &mut Prettier<'a>, object: &ObjectLike<'a, '_>) -> Doc<'a> {
-    let should_break = false;
+    let should_break = matches!(object, ObjectLike::TSInterfaceBody(_));
     let member_separator = object.member_separator(p);
 
     let content = if object.is_empty() {
@@ -119,7 +124,6 @@ pub fn print_object<'a>(p: &mut Prettier<'a>, object: &ObjectLike<'a, '_>) -> Do
             }
 
             match object {
-                ObjectLike::ObjectExpression(_) | ObjectLike::TSTypeLiteral(_) => {}
                 ObjectLike::ObjectAssignmentTarget(target) => {
                     if let Some(rest) = &target.rest {
                         indent_parts.push(rest.format(p));
@@ -130,6 +134,7 @@ pub fn print_object<'a>(p: &mut Prettier<'a>, object: &ObjectLike<'a, '_>) -> Do
                         indent_parts.push(rest.format(p));
                     }
                 }
+                _ => {}
             }
             indent_parts
         };
@@ -144,12 +149,6 @@ pub fn print_object<'a>(p: &mut Prettier<'a>, object: &ObjectLike<'a, '_>) -> Do
         }
         parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
         parts.push(text!("}"));
-
-        if matches!(p.current_kind(), AstKind::Program(_)) {
-            let should_break =
-                misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            return group!(p, parts, should_break, None);
-        }
 
         let parent_kind = p.parent_kind();
         if (object.is_object_pattern() && should_hug_the_only_parameter(p, parent_kind))

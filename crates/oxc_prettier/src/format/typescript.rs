@@ -581,21 +581,8 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
                 }
             }
 
-            parts.push(text!("{"));
-            if self.body.body.len() > 0 {
-                let mut indent_parts = Vec::new_in(p.allocator);
-                for sig in &self.body.body {
-                    indent_parts.push(hardline!(p));
-                    indent_parts.push(sig.format(p));
+            parts.push(object::print_object(p, &object::ObjectLike::TSInterfaceBody(&self.body)));
 
-                    if let Some(semi) = p.semi() {
-                        indent_parts.push(semi);
-                    }
-                }
-                parts.push(indent!(p, indent_parts));
-                parts.push(hardline!(p));
-            }
-            parts.push(text!("}"));
             array!(p, parts)
         })
     }
