@@ -98,6 +98,20 @@ jobs:
           # cargo ck # no need to check because it's already checked in linux
           cargo test --all-features
 
+  check-msrv:
+    name: Check MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - run: sed -i -E 's/channel = ".+"/channel = "1.81.0"/g' rust-toolchain.toml
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          # warm cache factory for all other CI jobs
+          # cache `target` directory to avoid download crates
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: check-msrv
+      - run: cargo ck
+
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
     if: ${{ github.ref_name == 'main' }}
