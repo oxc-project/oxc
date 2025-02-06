@@ -13,8 +13,7 @@ use crate::{
 };
 
 use super::{
-    attr_positions, define_derive, AttrLocation, AttrPart, AttrPartListElement, AttrPositions,
-    Derive, StructOrEnum,
+    attr_positions, define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum,
 };
 
 /// Derive for `Serialize` impls, which serialize AST to ESTree format in JSON.
@@ -106,12 +105,11 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
             AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
             AttrPart::Tag("no_ts_def") => struct_def.estree.custom_ts_def = Some(String::new()),
-            AttrPart::List("add_entry", args) => {
-                let args = args
-                    .into_iter()
-                    .map(AttrPartListElement::try_into_string)
-                    .collect::<Result<Vec<_>>>()?;
-                struct_def.estree.add_entry = Some(args);
+            AttrPart::List("add_entry", list) => {
+                for list_element in list {
+                    let (name, value) = list_element.try_into_string()?;
+                    struct_def.estree.add_entry.push((name, value));
+                }
             }
             AttrPart::String("add_ts", value) => struct_def.estree.add_ts = Some(value),
             AttrPart::String("custom_ts_def", value) => {
@@ -206,20 +204,17 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
         quote!()
     };
 
-    let add_entry = if let Some(add_entry) = &struct_def.estree.add_entry {
-        let (name, value) = &add_entry[0];
+    let add_entry = struct_def.estree.add_entry.iter().map(|(name, value)| {
         let value = parse_str::<syn::Expr>(value).unwrap();
         quote!( map.serialize_entry(#name, &#value)?; )
-    } else {
-        quote!()
-    };
+    });
 
     let stmts = gen.stmts;
     quote! {
         let mut map = serializer.serialize_map(None)?;
         #type_field
         #stmts
-        #add_entry
+        #(#add_entry)*
         map.end()
     }
 }

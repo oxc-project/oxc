@@ -15,9 +15,7 @@ use crate::{
     Codegen, Generator, Result, AST_CRATE_PATH,
 };
 
-use super::{
-    attr_positions, define_generator, AttrLocation, AttrPart, AttrPartListElement, AttrPositions,
-};
+use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
 
 /// Generator for `Visit` and `VisitMut` traits.
 pub struct VisitGenerator;
@@ -102,23 +100,21 @@ fn parse_visit_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                 Some(VisitorNames::from_snake_name(&enum_def.snake_name()));
         }
         // `#[visit(args(flags = ...))]` on struct field or enum variant
-        (AttrPart::List("args", args), location) => {
-            let args = args
-                .into_iter()
-                .map(AttrPartListElement::try_into_string)
-                .collect::<Result<Vec<(String, String)>>>()?;
-
-            match location {
-                AttrLocation::Struct(struct_def) => {
-                    struct_def.visit.visit_args = Some(args);
-                }
+        (AttrPart::List("args", list), location) => {
+            let existing_args = match location {
+                AttrLocation::Struct(struct_def) => &mut struct_def.visit.visit_args,
                 AttrLocation::StructField(struct_def, field_index) => {
-                    struct_def.fields[field_index].visit.visit_args = Some(args);
+                    &mut struct_def.fields[field_index].visit.visit_args
                 }
                 AttrLocation::EnumVariant(enum_def, variant_index) => {
-                    enum_def.variants[variant_index].visit.visit_args = Some(args);
+                    &mut enum_def.variants[variant_index].visit.visit_args
                 }
                 _ => return Err(()),
+            };
+
+            for list_element in list {
+                let (name, value) = list_element.try_into_string()?;
+                existing_args.push((name, value));
             }
         }
         _ => return Err(()),
@@ -336,18 +332,16 @@ impl VisitBuilder<'_> {
         let walk_fn_ident = visitor_names.walk_ident();
 
         // Get additional params
-        let (extra_params, extra_args) = if let Some(visit_args) = &struct_def.visit.visit_args {
-            visit_args
-                .iter()
-                .map(|(arg_name, arg_type_name)| {
-                    let param_ident = create_ident(arg_name);
-                    let arg_type_ident = create_ident(arg_type_name);
-                    (quote!( , #param_ident: #arg_type_ident ), quote!( , #param_ident ))
-                })
-                .unzip()
-        } else {
-            (quote!(), quote!())
-        };
+        let (extra_params, extra_args): (TokenStream, TokenStream) = struct_def
+            .visit
+            .visit_args
+            .iter()
+            .map(|(arg_name, arg_type_name)| {
+                let param_ident = create_ident(arg_name);
+                let arg_type_ident = create_ident(arg_type_name);
+                (quote!( , #param_ident: #arg_type_ident ), quote!( , #param_ident ))
+            })
+            .unzip();
 
         let gen_visit_fn = |reference| {
             quote! {
@@ -469,7 +463,7 @@ impl VisitBuilder<'_> {
         let (mut visit, mut visit_mut) = self.generate_visit_type(
             field_type,
             Target::Property(quote!( it.#field_ident )),
-            field.visit.visit_args.as_ref(),
+            &field.visit.visit_args,
             &field_ident,
             true,
         )?;
@@ -538,7 +532,7 @@ impl VisitBuilder<'_> {
                 let (visit, visit_mut) = self.generate_visit_type(
                     variant_type,
                     Target::Reference(create_ident_tokens("it")),
-                    variant.visit.visit_args.as_ref(),
+                    &variant.visit.visit_args,
                     &create_ident_tokens("it"),
                     false,
                 )?;
@@ -703,7 +697,7 @@ impl VisitBuilder<'_> {
         &self,
         type_def: &TypeDef,
         target: Target,
-        visit_args: Option<&Vec<(String, String)>>,
+        visit_args: &[(String, String)],
         field_ident: &TokenStream,
         trailing_semicolon: bool,
     ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
@@ -745,7 +739,7 @@ impl VisitBuilder<'_> {
     fn generate_visit_struct_or_enum(
         type_def: &TypeDef,
         target: Target,
-        visit_args: Option<&Vec<(String, String)>>,
+        visit_args: &[(String, String)],
         trailing_semicolon: bool,
     ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
         let visit_fn_ident = match type_def {
@@ -778,7 +772,7 @@ impl VisitBuilder<'_> {
     fn generate_visit_with_visit_args(
         visit_fn_ident: &Ident,
         target: Target,
-        visit_args: Option<&Vec<(String, String)>>,
+        visit_args: &[(String, String)],
         trailing_semicolon: bool,
     ) -> (/* visit */ TokenStream, /* visit_mut */ TokenStream) {
         let (target_ref, target_mut) = target.generate_refs();
@@ -786,12 +780,8 @@ impl VisitBuilder<'_> {
         // Get extra function params for visit args.
         // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
         // `extra_params` is `, x, y`.
-        let extra_params = if let Some(args) = visit_args {
-            let arg_params = args.iter().map(|(arg_name, _)| create_ident(arg_name));
-            quote!( , #(#arg_params),* )
-        } else {
-            quote!()
-        };
+        let arg_params = visit_args.iter().map(|(arg_name, _)| create_ident(arg_name));
+        let extra_params = quote!( #(, #arg_params)* );
 
         let gen_visit = |target| {
             let mut visit = quote!( visitor.#visit_fn_ident(#target #extra_params) );
@@ -799,7 +789,9 @@ impl VisitBuilder<'_> {
                 visit.extend(quote!(;));
             }
 
-            let Some(visit_args) = visit_args else { return visit };
+            if extra_params.is_empty() {
+                return visit;
+            };
 
             // Wrap a visit call with `let` statements for visit args.
             // e.g. if attr on struct field/enum variant is `#[visit(args(x = something, y = something_else))]`,
@@ -833,7 +825,7 @@ impl VisitBuilder<'_> {
         &self,
         option_def: &OptionDef,
         target: Target,
-        visit_args: Option<&Vec<(String, String)>>,
+        visit_args: &[(String, String)],
         field_ident: &TokenStream,
     ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
         let inner_type = option_def.inner_type(self.schema);
@@ -884,7 +876,7 @@ impl VisitBuilder<'_> {
         &self,
         vec_def: &VecDef,
         target: Target,
-        visit_args: Option<&Vec<(String, String)>>,
+        visit_args: &[(String, String)],
         trailing_semicolon: bool,
     ) -> Option<(/* visit */ TokenStream, /* visit_mut */ TokenStream)> {
         if let Some(visit_fn_ident) = vec_def.visit.visitor_ident() {

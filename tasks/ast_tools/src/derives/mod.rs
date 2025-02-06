@@ -6,7 +6,7 @@ use syn::{parse_str, Path};
 
 use crate::{
     output::{output_path, Output},
-    parse::attr::{attr_positions, AttrLocation, AttrPart, AttrPartListElement, AttrPositions},
+    parse::attr::{attr_positions, AttrLocation, AttrPart, AttrPositions},
     schema::{Def, Derives, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
     Codegen, Result, Runner,
 };

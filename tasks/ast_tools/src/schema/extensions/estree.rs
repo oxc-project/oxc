@@ -8,7 +8,7 @@ pub struct ESTreeStruct {
     pub no_type: bool,
     /// `true` if serializer is implemented manually and should not be generated
     pub custom_serialize: bool,
-    pub add_entry: Option<Vec<(String, String)>>,
+    pub add_entry: Vec<(String, String)>,
     /// Additional fields to add to TS type definition
     pub add_ts: Option<String>,
     /// Custom TS type definition. Does not include `export`.
