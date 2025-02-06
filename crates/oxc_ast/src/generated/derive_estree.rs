@@ -359,7 +359,7 @@ impl Serialize for StaticMemberExpression<'_> {
 impl Serialize for PrivateFieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "PrivateFieldExpression")?;
+        map.serialize_entry("type", "MemberExpression")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;

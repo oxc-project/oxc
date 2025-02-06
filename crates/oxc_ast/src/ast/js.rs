@@ -483,7 +483,7 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(via = crate::serialize::ESTreeComputedMemberExpression)]
+#[estree(via = crate::serialize::ESTreeComputedMemberExpression, rename = "MemberExpression", add_ts = "computed: true")]
 
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
@@ -498,7 +498,7 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(via = crate::serialize::ESTreeStaticMemberExpression)]
+#[estree(via = crate::serialize::ESTreeStaticMemberExpression, rename = "MemberExpression", add_ts = "computed: false")]
 pub struct StaticMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -512,6 +512,7 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "MemberExpression", add_ts = "computed: false")]
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
