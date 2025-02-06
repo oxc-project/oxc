@@ -161,3 +161,71 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─
    ╰────
   help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'arr' should not be initialized on declaration.
+   ╭─[init_declarations.tsx:1:5]
+ 1 │ let arr: string[] = ['arr', 'ar'];
+   ·     ─────────────
+   ╰────
+  help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'name1' should not be initialized on declaration.
+   ╭─[init_declarations.tsx:3:25]
+ 2 │                 constructor() {
+ 3 │                     var name1: string = 'hello';
+   ·                         ─────────────
+ 4 │                 }
+   ╰────
+  help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'arr' should be initialized on declaration.
+   ╭─[init_declarations.tsx:1:5]
+ 1 │ let arr: string;
+   ·     ───────────
+   ╰────
+  help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'numberOfGreetings' should be initialized on declaration.
+   ╭─[init_declarations.tsx:2:21]
+ 1 │ namespace myLib {
+ 2 │                 let numberOfGreetings: number;
+   ·                     ─────────────────────────
+ 3 │             }
+   ╰────
+  help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'numberOfGreetings' should not be initialized on declaration.
+   ╭─[init_declarations.tsx:2:21]
+ 1 │ namespace myLib {
+ 2 │                 let numberOfGreetings: number = 2;
+   ·                     ─────────────────────────
+ 3 │             }
+   ╰────
+  help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'foo' should be initialized on declaration.
+   ╭─[init_declarations.tsx:2:21]
+ 1 │ namespace myLib1 {
+ 2 │                 let foo: number;
+   ·                     ───────────
+ 3 │                 namespace myLib2 {
+   ╰────
+  help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'bar' should be initialized on declaration.
+   ╭─[init_declarations.tsx:4:25]
+ 3 │                 namespace myLib2 {
+ 4 │                     let bar: string;
+   ·                         ───────────
+ 5 │                     namespace myLib3 {
+   ╰────
+  help: Require or disallow initialization in variable declarations
+
+  ⚠ eslint(init-declarations): Variable 'baz' should be initialized on declaration.
+   ╭─[init_declarations.tsx:6:29]
+ 5 │                     namespace myLib3 {
+ 6 │                         let baz: object;
+   ·                             ───────────
+ 7 │                     }
+   ╰────
+  help: Require or disallow initialization in variable declarations

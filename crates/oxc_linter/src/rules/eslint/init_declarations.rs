@@ -126,9 +126,22 @@ impl Rule for InitDeclarations {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::VariableDeclaration(decl) = node.kind() {
-            let Some(parent) = ctx.semantic().nodes().parent_node(node.id()) else {
+            let Some(parent) = ctx.nodes().parent_node(node.id()) else {
                 return;
             };
+            // support for TypeScript's declare variables
+            if self.mode == Mode::Always {
+                if decl.declare {
+                    return;
+                }
+                let decl_ancestor =
+                    ctx.nodes().ancestor_kinds(node.id()).skip(1).find(|el| {
+                        matches!(el, AstKind::TSModuleDeclaration(ts_module_decl) if ts_module_decl.declare)
+                    });
+                if decl_ancestor.is_some() {
+                    return;
+                }
+            }
             for v in decl.declarations.iter() {
                 let BindingPatternKind::BindingIdentifier(identifier) = &v.id.kind else {
                     continue;
@@ -154,7 +167,7 @@ impl Rule for InitDeclarations {
                             continue;
                         }
                         ctx.diagnostic(init_declarations_diagnostic(identifier.span, &self.mode, identifier.name.as_str()));
-                    }
+                    },
                     _ => {}
                 }
             }
@@ -217,6 +230,87 @@ fn test() {
             "for (var a, b = 2; a < 100; a++) {}",
             Some(serde_json::json!(["never", { "ignoreForLoopInit": true }])),
         ),
+        // typescript-eslint
+        ("declare const foo: number;", Some(serde_json::json!(["always"]))),
+        ("declare const foo: number;", Some(serde_json::json!(["never"]))),
+        (
+            "declare namespace myLib {
+                let numberOfGreetings: number;
+            }",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "declare namespace myLib {
+                let numberOfGreetings: number;
+            }",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "interface GreetingSettings {
+                greeting: string;
+                duration?: number;
+                color?: string;
+            }",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("type GreetingLike = string | (() => string) | Greeter;", None),
+        ("type GreetingLike = string | (() => string) | Greeter;", Some(serde_json::json!(["never"]))),
+        (
+            "function foo() {
+                var bar: string;
+            }",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "const class1 = class NAME {
+                constructor() {
+                    var name1: string = 'hello';
+                }
+            };",
+            None,
+        ),
+        (
+            "const class1 = class NAME {
+                static pi: number = 3.14;
+            };",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "namespace myLib {
+                let numberOfGreetings: number;
+            }",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "namespace myLib {
+                let numberOfGreetings: number = 2;
+            }",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "declare namespace myLib1 {
+                const foo: number;
+                namespace myLib2 {
+                    let bar: string;
+                    namespace myLib3 {
+                        let baz: object;
+                    }
+                }
+            }",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "declare namespace myLib1 {
+                const foo: number;
+                namespace myLib2 {
+                    let bar: string;
+                    namespace myLib3 {
+                        let baz: object;
+                    }
+                }
+            }",
+            Some(serde_json::json!(["never"])),
+        ),
     ];
 
     let fail = vec![
@@ -248,6 +342,42 @@ fn test() {
         ("for (var foo in []) {}", Some(serde_json::json!(["never"]))),
         ("for (var foo of []) {}", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 6 }
         ("for (var a, b = 2; a < 100; a++) {}", Some(serde_json::json!(["never"]))),
+        // typescript-eslint
+        ("let arr: string[] = ['arr', 'ar'];", Some(serde_json::json!(["never"]))),
+        (
+            "const class1 = class NAME {
+                constructor() {
+                    var name1: string = 'hello';
+                }
+            };",
+            Some(serde_json::json!(["never"])),
+        ),
+        ("let arr: string;", None),
+        (
+            "namespace myLib {
+                let numberOfGreetings: number;
+            }",
+            None,
+        ),
+        (
+            "namespace myLib {
+                let numberOfGreetings: number = 2;
+            }",
+            Some(serde_json::json!(["never"])),
+        ),
+
+        (
+            "namespace myLib1 {
+                let foo: number;
+                namespace myLib2 {
+                    let bar: string;
+                    namespace myLib3 {
+                        let baz: object;
+                    }
+                }
+            }",
+            Some(serde_json::json!(["always"])),
+        )
     ];
 
     Tester::new(InitDeclarations::NAME, InitDeclarations::PLUGIN, pass, fail).test_and_snapshot();
