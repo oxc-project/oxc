@@ -165,7 +165,7 @@ impl Rule for InitDeclarations {
                 match self.mode {
                     Mode::Always if !is_initialized => {
                         ctx.diagnostic(init_declarations_diagnostic(
-                            identifier.span,
+                            v.span,
                             &self.mode,
                             identifier.name.as_str(),
                         ));
@@ -175,7 +175,7 @@ impl Rule for InitDeclarations {
                             continue;
                         }
                         ctx.diagnostic(init_declarations_diagnostic(
-                            identifier.span,
+                            v.span,
                             &self.mode,
                             identifier.name.as_str(),
                         ));
