@@ -1204,6 +1204,16 @@ mod test {
         fold("a=~0xffffffff", "a=0");
         fold("a=~~0xffffffff", "a=-1");
         fold("a=~.5", "a=-1");
+
+        fold("a=+[]", "a=0");
+        fold_same("a=+[...foo]");
+        fold("a=+[,]", "a=0");
+        fold("a=+[0]", "a=0");
+        fold("a=+['0x10']", "a=16");
+        fold("a=+[[]]", "a=0");
+        fold("a=+[0, 1]", "a=NaN");
+        test_same("var foo; NOOP(a=+[0, ...foo])"); // can be either `a=0` or `a=NaN` (also `...foo` may have a side effect)
+        test("var foo; NOOP(a=+[0, ...[foo ? 'foo': ''], 1])", "var foo; NOOP(a=NaN)");
     }
 
     #[test]

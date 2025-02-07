@@ -894,7 +894,7 @@ fn constant_evaluation_test() {
     test("x = +[]", "x = 0;");
     test("x = +{}", "x = NaN;");
     test("x = +/1/", "x = NaN;");
-    test("x = +[1]", "x = +[1];");
+    test("x = +[1]", "x = 1;");
     test("x = +'123'", "x = 123;");
     test("x = +'-123'", "x = -123;");
     test("x = +'0x10'", "x = 16;");

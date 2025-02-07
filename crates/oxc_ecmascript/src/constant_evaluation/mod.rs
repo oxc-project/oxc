@@ -154,7 +154,30 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
             Expression::ArrayExpression(arr) => {
                 // If the array is empty, `ToPrimitive` returns `""`
                 if arr.elements.is_empty() {
-                    Some(0.0)
+                    return Some(0.0);
+                }
+                if arr.elements.len() == 1 {
+                    let first_element = arr.elements.first().unwrap();
+                    return match first_element {
+                        ArrayExpressionElement::SpreadElement(_) => None,
+                        // `ToPrimitive` returns `""` for `[,]`
+                        ArrayExpressionElement::Elision(_) => Some(0.0),
+                        match_expression!(ArrayExpressionElement) => {
+                            self.eval_to_number(first_element.to_expression())
+                        }
+                    };
+                }
+
+                let non_spread_element_count = arr
+                    .elements
+                    .iter()
+                    .filter(|e| !matches!(e, ArrayExpressionElement::SpreadElement(_)))
+                    .count();
+                // If the array has at least 2 elements, `ToPrimitive` returns a string containing
+                // `,` which is not included in `StringNumericLiteral`
+                // So `ToNumber` returns `NaN`
+                if non_spread_element_count >= 2 {
+                    Some(f64::NAN)
                 } else {
                     None
                 }
