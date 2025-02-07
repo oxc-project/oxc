@@ -50,14 +50,13 @@ impl ValueType {
     }
 }
 
-/// `get_known_value_type`
-///
-/// Evaluate  and attempt to determine which primitive value type it could resolve to.
-/// Without proper type information some assumptions had to be made for operations that could
-/// result in a BigInt or a Number. If there is not enough information available to determine one
-/// or the other then we assume Number in order to maintain historical behavior of the compiler and
-/// avoid breaking projects that relied on this behavior.
 impl<'a> From<&Expression<'a>> for ValueType {
+    /// Based on `get_known_value_type` in closure compiler
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/NodeUtil.java#L1517>
+    ///
+    /// Evaluate the expression and attempt to determine which ValueType it could resolve to.
+    /// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
+    /// To detect those cases, use [`crate::side_effects::MayHaveSideEffects::expression_may_have_side_effects`].
     fn from(expr: &Expression<'a>) -> Self {
         // TODO: complete this
         match expr {
