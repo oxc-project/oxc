@@ -99,7 +99,7 @@ impl Rule for NoInvalidRegexp {
 
             let mut unique_flags = FxHashSet::default();
             for (idx, ch) in flags_text.char_indices() {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 let start = flags_span.start + 1 + idx as u32;
 
                 // Invalid combination: u+v

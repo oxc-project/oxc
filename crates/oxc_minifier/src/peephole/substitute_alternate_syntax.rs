@@ -797,7 +797,6 @@ impl<'a> PeepholeOptimizations {
     }
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>
-    #[allow(clippy::cast_lossless)]
     fn try_compress_property_key(
         &mut self,
         key: &mut PropertyKey<'a>,

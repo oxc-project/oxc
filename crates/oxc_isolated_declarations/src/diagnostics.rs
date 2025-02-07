@@ -132,7 +132,6 @@ pub fn computed_property_name(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[allow(clippy::needless_pass_by_value)]
 pub fn type_containing_private_name(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "TS9039: Type containing private name '{name}' can't be used with --isolatedDeclarations."

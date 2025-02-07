@@ -578,7 +578,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - 217d433 transformer/arrow-functions: Remove unused `&mut self` function param (#7165) (overlookmotel)
 - 426df71 transformer/arrow-functions: Use `scope_id` method (#7164) (overlookmotel)
 - 11c5e12 transformer/arrow-functions: Correct comments (#7163) (overlookmotel)
-- 1238506 transformer/async-generator-function: Remove inactive `#[allow(clippy::unused_self)]` attrs (#7167) (overlookmotel)
+- 1238506 transformer/async-generator-function: Remove inactive `#[expect(clippy::unused_self)]` attrs (#7167) (overlookmotel)
 - 84ee581 transformer/async-generator-functions: Simplify identifying whether within an async generator function (#7170) (overlookmotel)
 - 1b12328 transformer/async-generator-functions: Use `clone` not `clone_in` on `LabelIdentifier` (#7172) (overlookmotel)
 - cd1006f transformer/async-generator-functions: Do not transform yield expression where inside generator function (#7134) (Dunqing)
@@ -588,8 +588,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - b57d5a5 transformer/async-to-generator: Remove unused `&self` function param (#7166) (overlookmotel)
 - f80085c transformer/async-to-generator: Move handling of `MethodDefinition`'s value to `exit_function` (#7105) (Dunqing)
 - e2241e6 transformer/jsx-self: Remove unused `&self` function params (#7159) (overlookmotel)
-- 1dfd241 transformer/optional-catch-binding: Remove inactive `#[allow(clippy::unused_self)]` attr (#7158) (overlookmotel)
-- fd9b44c transformer/typescript: Remove inactive `#[allow(clippy::unused_self)]` attr (#7160) (overlookmotel)
+- 1dfd241 transformer/optional-catch-binding: Remove inactive `#[expect(clippy::unused_self)]` attr (#7158) (overlookmotel)
+- fd9b44c transformer/typescript: Remove inactive `#[expect(clippy::unused_self)]` attr (#7160) (overlookmotel)
 
 ### Styling
 
@@ -997,7 +997,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-- 4bdc202 rust: Remove some #[allow(unused)] (#5716) (Boshen)
+- 4bdc202 rust: Remove some #[expect(unused)] (#5716) (Boshen)
 - cc0408b semantic: S/AstNodeId/NodeId (#5740) (Boshen)
 
 ## [0.28.0] - 2024-09-11

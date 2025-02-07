@@ -8,7 +8,6 @@ mod options;
 pub use async_to_generator::{AsyncGeneratorExecutor, AsyncToGenerator};
 pub use options::ES2017Options;
 
-#[allow(dead_code)]
 pub struct ES2017<'a, 'ctx> {
     options: ES2017Options,
 

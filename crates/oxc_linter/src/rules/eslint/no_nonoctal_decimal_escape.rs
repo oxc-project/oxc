@@ -83,7 +83,7 @@ fn quick_test(s: &str) -> bool {
     false
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn check_string(ctx: &LintContext<'_>, string: &str) {
     lazy_static! {
         static ref NONOCTAL_REGEX: Regex =

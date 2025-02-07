@@ -370,7 +370,6 @@ impl Rule for ExhaustiveDeps {
             }
         });
 
-        #[allow(clippy::mutable_key_type)]
         let (found_dependencies, refs_inside_cleanups) = {
             let mut found_dependencies = ExhaustiveDepsVisitor::new(ctx.semantic());
 
@@ -464,7 +463,6 @@ impl Rule for ExhaustiveDeps {
                 }
             });
 
-        #[allow(clippy::mutable_key_type)]
         let declared_dependencies = {
             let mut declared_dependencies = FxHashSet::default();
             for item in declared_dependencies_iter {
@@ -700,7 +698,7 @@ impl PartialEq for Dependency<'_> {
 impl Eq for Dependency<'_> {}
 
 impl Dependency<'_> {
-    #[allow(clippy::inherent_to_string)]
+    #[expect(clippy::inherent_to_string)]
     fn to_string(&self) -> String {
         std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Atom::as_str).join(".")
     }
@@ -936,7 +934,6 @@ fn is_function_stable<'a, 'b>(
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
 ) -> bool {
-    #[allow(clippy::mutable_key_type)]
     let deps = {
         let mut collector = ExhaustiveDepsVisitor::new(ctx.semantic());
         collector.visit_function_body(function_body);

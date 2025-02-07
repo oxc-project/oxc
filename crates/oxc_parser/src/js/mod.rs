@@ -1,7 +1,5 @@
 //! JavaScript Parsing Functions
 
-#![allow(clippy::missing_errors_doc)]
-
 mod grammar;
 
 mod arrow;

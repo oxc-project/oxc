@@ -147,8 +147,8 @@ impl From<BabelEnvOptions> for EnvOptions {
 }
 
 impl From<EngineTargets> for EnvOptions {
-    #[allow(clippy::enum_glob_use)]
     fn from(o: EngineTargets) -> Self {
+        #[allow(clippy::enum_glob_use, clippy::allow_attributes)]
         use ESFeature::*;
         Self {
             module: Module::default(),

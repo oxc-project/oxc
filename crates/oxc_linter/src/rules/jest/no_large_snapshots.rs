@@ -284,7 +284,6 @@ impl NoLargeSnapshots {
         ctx.source_text()[start..=end].lines().count() - 1
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     pub fn compile_allowed_snapshots(
         matchers: &serde_json::Map<String, serde_json::Value>,
     ) -> Option<FxHashMap<CompactStr, Vec<CompactStr>>> {

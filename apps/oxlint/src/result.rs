@@ -19,7 +19,6 @@ pub enum CliRunResult {
 }
 
 impl Termination for CliRunResult {
-    #[allow(clippy::print_stdout, clippy::print_stderr)]
     fn report(self) -> ExitCode {
         match self {
             Self::None

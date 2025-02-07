@@ -101,7 +101,7 @@ impl Rule for Eqeqeq {
         let (preferred_operator, preferred_operator_with_padding) =
             to_strict_eq_operator_str(binary_expr.operator);
 
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         let operator_span = {
             let left_end = binary_expr.left.span().end;
             let right_start = binary_expr.right.span().start;

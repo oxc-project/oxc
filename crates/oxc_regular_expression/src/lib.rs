@@ -1,4 +1,4 @@
-#![allow(clippy::missing_errors_doc)]
+#![expect(clippy::missing_errors_doc)]
 
 mod ast_impl;
 mod diagnostics;

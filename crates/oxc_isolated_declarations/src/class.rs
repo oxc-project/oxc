@@ -14,7 +14,7 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     pub(crate) fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
         match key {
             PropertyKey::StringLiteral(_)
@@ -63,7 +63,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     pub(crate) fn transform_accessibility(
         &self,
         accessibility: Option<TSAccessibility>,

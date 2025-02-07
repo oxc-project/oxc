@@ -322,7 +322,7 @@ fn fixer_error<S: Into<String>, T>(message: S) -> FixerResult<T> {
 }
 
 // import { Foo, Bar } from 'foo' => import type { Foo, Bar } from 'foo'
-#[allow(clippy::unnecessary_cast, clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, type_names, fix_style, ctx } = options;
     let fixer = fixer.for_multifix();

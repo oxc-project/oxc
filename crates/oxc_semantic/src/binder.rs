@@ -13,7 +13,7 @@ use oxc_syntax::{
 use crate::SemanticBuilder;
 
 pub(crate) trait Binder<'a> {
-    #[allow(unused_variables)]
+    #[expect(unused_variables)]
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {}
 }
 

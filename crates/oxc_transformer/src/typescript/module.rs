@@ -164,7 +164,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         Some(ctx.ast.declaration_variable(SPAN, kind, decls, false))
     }
 
-    #[allow(clippy::only_used_in_recursion)]
+    #[expect(clippy::only_used_in_recursion)]
     fn transform_ts_type_name(
         &self,
         type_name: &mut TSTypeName<'a>,

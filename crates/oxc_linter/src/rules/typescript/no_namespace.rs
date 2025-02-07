@@ -61,7 +61,7 @@ impl Rule for NoNamespace {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return;

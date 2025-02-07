@@ -1,5 +1,5 @@
 // NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/b5dc32740d9b45d11cff9b025896dd333c795b39/types/babel__core/index.d.ts).
-#![allow(rustdoc::bare_urls)]
+#![expect(rustdoc::bare_urls)]
 
 use std::{
     ops::ControlFlow,
@@ -597,7 +597,7 @@ impl CompilerInterface for Compiler {
         self.declaration_map = ret.map.map(SourceMap::from);
     }
 
-    #[allow(deprecated)]
+    #[expect(deprecated)]
     fn after_transform(
         &mut self,
         _program: &mut oxc::ast::ast::Program<'_>,
@@ -622,7 +622,7 @@ impl CompilerInterface for Compiler {
 ///
 /// @returns an object containing the transformed code, source maps, and any
 /// errors that occurred during parsing or transformation.
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 #[napi]
 pub fn transform(
     filename: String,

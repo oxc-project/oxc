@@ -1,4 +1,4 @@
-#![allow(missing_docs)] // fixme
+#![expect(missing_docs)] // fixme
 use assert_unchecked::assert_unchecked;
 use unicode_id_start::{is_id_continue_unicode, is_id_start_unicode};
 
@@ -168,7 +168,7 @@ pub fn is_identifier_part_unicode(c: char) -> bool {
 }
 
 /// Determine if a string is a valid JS identifier.
-#[allow(clippy::missing_panics_doc)]
+#[expect(clippy::missing_panics_doc)]
 pub fn is_identifier_name(name: &str) -> bool {
     // This function contains a fast path for ASCII (common case), iterating over bytes and using
     // the cheap `is_identifier_start_ascii` and `is_identifier_part_ascii` to test bytes.
@@ -194,7 +194,7 @@ pub fn is_identifier_name(name: &str) -> bool {
                 // Process block of 8 bytes.
                 // Check that next 8 bytes are all ASCII.
                 // SAFETY: We checked above that there are at least 8 bytes to read starting at `index`
-                #[allow(clippy::cast_ptr_alignment)]
+                #[expect(clippy::cast_ptr_alignment)]
                 let next8_as_u64 = unsafe {
                     let ptr = bytes.as_ptr().add(index).cast::<u64>();
                     ptr.read_unaligned()
@@ -219,7 +219,7 @@ pub fn is_identifier_name(name: &str) -> bool {
                 // Process block of 4 bytes.
                 // Check that next 4 bytes are all ASCII.
                 // SAFETY: We checked above that there are at least 4 bytes to read starting at `index`
-                #[allow(clippy::cast_ptr_alignment)]
+                #[expect(clippy::cast_ptr_alignment)]
                 let next4_as_u32 = unsafe {
                     let ptr = bytes.as_ptr().add(index).cast::<u32>();
                     ptr.read_unaligned()

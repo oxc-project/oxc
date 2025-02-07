@@ -259,7 +259,7 @@ fn no_else_return_diagnostic_fix(
     });
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn left_offset_for_whitespace(ctx: &LintContext, position: u32) -> u32 {
     if position == 0 {
         return position;

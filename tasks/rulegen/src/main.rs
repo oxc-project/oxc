@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
+#![expect(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
 use std::{
     borrow::Cow,
     fmt::{self, Display, Formatter},

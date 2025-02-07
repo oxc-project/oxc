@@ -137,7 +137,7 @@ mod test {
         };
     }
 
-    #[allow(clippy::default_trait_access)]
+    #[expect(clippy::default_trait_access)]
     fn no_explicit_any() -> RuleWithSeverity {
         RuleWithSeverity::new(
             RuleEnum::TypescriptNoExplicitAny(Default::default()),

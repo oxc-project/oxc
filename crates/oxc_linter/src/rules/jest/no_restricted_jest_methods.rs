@@ -136,7 +136,6 @@ impl NoRestrictedJestMethods {
         }
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     pub fn compile_restricted_jest_methods(
         matchers: &serde_json::Map<String, serde_json::Value>,
     ) -> Option<FxHashMap<String, String>> {

@@ -1,4 +1,4 @@
-#![allow(clippy::cast_possible_truncation)]
+#![expect(clippy::cast_possible_truncation)]
 use std::sync::Arc;
 
 use napi::Either;
@@ -117,7 +117,7 @@ impl MagicString {
     }
 
     #[napi]
-    #[allow(clippy::inherent_to_string)]
+    #[allow(clippy::inherent_to_string, clippy::allow_attributes)]
     pub fn to_string(&self) -> String {
         self.cell.borrow_dependent().to_string()
     }

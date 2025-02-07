@@ -12,7 +12,6 @@ fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUndef {
-    #[allow(dead_code)]
     type_of: bool,
 }
 

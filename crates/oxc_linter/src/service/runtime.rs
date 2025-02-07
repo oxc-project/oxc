@@ -104,7 +104,7 @@ impl Runtime {
 
     // clippy: the source field is checked and assumed to be less than 4GB, and
     // we assume that the fix offset will not exceed 2GB in either direction
-    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+    #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(super) fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
@@ -192,7 +192,6 @@ impl Runtime {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(super) fn process_source<'a>(
         &self,
         path: &Path,

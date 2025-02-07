@@ -137,7 +137,7 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
     }
 }
 
-#[allow(clippy::float_cmp, clippy::cast_precision_loss)]
+#[expect(clippy::float_cmp, clippy::cast_precision_loss)]
 fn check_reject_in_function(
     params: &Box<'_, FormalParameters<'_>>,
     ctx: &LintContext,

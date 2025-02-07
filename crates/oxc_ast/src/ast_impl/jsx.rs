@@ -34,7 +34,7 @@ impl<'a> JSXElementName<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    #[expect(missing_docs)]
     pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::Identifier(id) => Some(id.as_ref().name),

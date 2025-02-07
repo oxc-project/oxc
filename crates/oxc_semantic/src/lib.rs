@@ -186,7 +186,7 @@ impl<'a> Semantic<'a> {
 
     /// Get statistics about data held in `Semantic`.
     pub fn stats(&self) -> Stats {
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         Stats::new(
             self.nodes.len() as u32,
             self.scopes.len() as u32,

@@ -134,7 +134,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - 98d7946 semantic: Import flags and ID types from `oxc_syntax` (#7887) (overlookmotel)
 - 1cf8f8f semantic: `SymbolTable::set_name` return old name (#7869) (overlookmotel)
 - 5d42df8 semantic: Use `Expression::is_super` (#7851) (overlookmotel)
-- 8cf9766 semantic, syntax, wasm: Remove `#![allow(non_snake_case)]` (#7863) (overlookmotel)
+- 8cf9766 semantic, syntax, wasm: Remove `#![expect(non_snake_case)]` (#7863) (overlookmotel)
 
 ### Styling
 
@@ -415,7 +415,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-- 4bdc202 rust: Remove some #[allow(unused)] (#5716) (Boshen)
+- 4bdc202 rust: Remove some #[expect(unused)] (#5716) (Boshen)
 - a35fb14 semantic: `Stats::assert_accurate` take `self` (#5758) (overlookmotel)
 - 4b896f1 semantic: Make `Stats` `Copy` (#5756) (overlookmotel)
 - b4b460f semantic: `Stats` store counts as `u32` (#5754) (overlookmotel)

@@ -112,7 +112,7 @@ fn find_finally_start(ctx: &LintContext, finally_clause: &BlockStatement) -> Opt
                         src_chars.get(start) == Some(&c)
                     })
                 {
-                    #[allow(clippy::cast_possible_truncation)]
+                    #[expect(clippy::cast_possible_truncation)]
                     return Some(start as u32);
                 }
                 return None;

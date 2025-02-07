@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 
 /// ECMAScript Target
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
-#[allow(missing_docs)]
+#[expect(missing_docs)]
 pub enum ESTarget {
     ES5,
     ES2015,

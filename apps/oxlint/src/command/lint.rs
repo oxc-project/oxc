@@ -191,7 +191,7 @@ pub struct OutputOptions {
 }
 
 /// Enable Plugins
-#[allow(clippy::struct_field_names)]
+#[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone, Bpaf)]
 pub struct EnablePlugins {
     /// Disable react plugin, which is turned on by default
@@ -270,7 +270,6 @@ pub struct EnablePlugins {
 /// changing default behavior if they're not explicitly passed by the user. This scheme is a bit
 /// convoluted, but needed due to architectural constraints imposed by `bpaf`.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(clippy::enum_variant_names)]
 pub enum OverrideToggle {
     /// Override the option to enabled
     Enable,
@@ -439,7 +438,7 @@ mod lint_options {
     }
 
     #[test]
-    #[allow(clippy::similar_names)]
+    #[expect(clippy::similar_names)]
     fn multiple_paths() {
         let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
         let file_foo = temp_dir.path().join("foo.js");

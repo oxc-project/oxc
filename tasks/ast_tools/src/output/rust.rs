@@ -49,7 +49,7 @@ pub fn rust_fmt(source_text: &str) -> String {
 /// in generated code.
 ///
 /// `//!@` form can be used to insert a line break in a position where `///@ ...`
-/// is not valid syntax e.g. before an `#![allow(...)]`.
+/// is not valid syntax e.g. before an `#![expect(...)]`.
 ///
 /// To dynamically generate a comment:
 /// ```

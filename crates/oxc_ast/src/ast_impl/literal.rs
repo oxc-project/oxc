@@ -37,7 +37,7 @@ impl NumericLiteral<'_> {
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
     ///
     /// <https://262.ecma-international.org/5.1/#sec-9.5>
-    #[allow(clippy::cast_possible_truncation)] // for `as i32`
+    #[expect(clippy::cast_possible_truncation)] // for `as i32`
     pub fn ecmascript_to_int32(num: f64) -> i32 {
         // Fast path for most common case. Also covers -0.0
         let int32_value = num as i32;

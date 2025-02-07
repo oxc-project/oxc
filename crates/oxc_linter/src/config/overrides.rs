@@ -12,7 +12,7 @@ use crate::{config::OxlintRules, LintPlugins};
 pub struct OverrideId(NonMaxU32);
 
 impl Idx for OverrideId {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
         // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`

@@ -1,9 +1,3 @@
-#![allow(
-    clippy::fn_params_excessive_bools,
-    clippy::must_use_candidate, // must_use_candidate is too annoying for this file
-    clippy::too_many_arguments,
-    clippy::unused_self,
-)]
 #![warn(missing_docs)]
 
 use std::{borrow::Cow, mem};
@@ -16,7 +10,6 @@ use crate::{ast::*, AstBuilder};
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
-#[allow(clippy::upper_case_acronyms)]
 pub struct NONE;
 
 impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
@@ -105,7 +98,7 @@ impl<'a> AstBuilder<'a> {
     /// This method is completely unsound and should not be used.
     /// We need to remove all uses of it. Please don't add any more!
     /// <https://github.com/oxc-project/oxc/issues/3483>
-    #[allow(clippy::missing_safety_doc)]
+    #[expect(clippy::missing_safety_doc)]
     #[inline]
     pub unsafe fn copy<T>(self, src: &T) -> T {
         // SAFETY: Not safe (see above)

@@ -44,7 +44,6 @@ fn filename_case_diagnostic(filename: &str, valid_cases: &[(&str, Case)]) -> Oxc
 }
 
 #[derive(Debug, Clone)]
-#[allow(clippy::struct_field_names)]
 pub struct FilenameCase {
     /// Whether kebab case is allowed.
     kebab_case: bool,

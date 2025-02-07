@@ -202,7 +202,7 @@ pub fn check_simple_assignment_target<'a>(
     ctx: &SemanticBuilder<'a>,
 ) {
     if let Some(expression) = target.get_expression() {
-        #[allow(clippy::match_same_arms)]
+        #[expect(clippy::match_same_arms)]
         match expression.get_inner_expression() {
             Expression::Identifier(_) => {}
             match_member_expression!(Expression) => {}
@@ -286,7 +286,7 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
     let mut need_initializer = false;
 
     decl.members.iter().for_each(|member| {
-        #[allow(clippy::unnested_or_patterns)]
+        #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
             need_initializer = !matches!(
                 initializer,

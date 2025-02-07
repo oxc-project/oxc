@@ -81,7 +81,7 @@ fn remove_empty_braces_spaces(ctx: &LintContext, is_empty_body: bool, span: Span
     }
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn get_static_leading_count(span: Span, ctx: &LintContext) -> u32 {
     let src = span.source_text(ctx.source_text());
 

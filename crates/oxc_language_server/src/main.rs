@@ -463,7 +463,7 @@ impl Backend {
         }
     }
 
-    #[allow(clippy::ptr_arg)]
+    #[expect(clippy::ptr_arg)]
     async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
         join_all(result.iter().map(|(path, diagnostics)| {
             self.client.publish_diagnostics(

@@ -354,7 +354,7 @@ pub struct ParsedGeneralJestFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: Cow<'a, str>,
-    #[allow(unused)]
+    #[expect(unused)]
     pub local: Cow<'a, str>,
 }
 
@@ -362,7 +362,7 @@ pub struct ParsedGeneralJestFnCall<'a> {
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
-    #[allow(unused)]
+    #[expect(unused)]
     pub name: Cow<'a, str>,
     pub local: Cow<'a, str>,
     pub head: KnownMemberExpressionProperty<'a>,

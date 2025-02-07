@@ -5,7 +5,6 @@ use crate::{
     array, format::Format, group, ir::Doc, line_suffix_boundary, softline, text, Prettier,
 };
 
-#[allow(clippy::enum_variant_names)]
 pub enum TemplateLiteralLike<'a, 'b> {
     TemplateLiteral(&'b TemplateLiteral<'a>),
     TSTemplateLiteralType(&'b TSTemplateLiteralType<'a>),

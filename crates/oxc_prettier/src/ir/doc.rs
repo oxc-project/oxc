@@ -24,7 +24,7 @@ pub struct Group<'a> {
     pub contents: Vec<'a, Doc<'a>>,
     pub should_break: bool,
     pub expanded_states: Option<Vec<'a, Doc<'a>>>,
-    #[allow(clippy::struct_field_names)]
+    #[expect(clippy::struct_field_names)]
     pub group_id: Option<GroupId>,
 }
 

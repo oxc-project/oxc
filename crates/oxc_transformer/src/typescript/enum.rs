@@ -409,7 +409,7 @@ impl<'a> TypeScriptEnum<'a> {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss, clippy::cast_sign_loss)]
+    #[expect(clippy::cast_sign_loss)]
     fn eval_binary_expression(
         &self,
         expr: &BinaryExpression<'a>,
@@ -474,7 +474,6 @@ impl<'a> TypeScriptEnum<'a> {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn eval_unary_expression(
         &self,
         expr: &UnaryExpression<'a>,

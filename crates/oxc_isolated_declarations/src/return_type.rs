@@ -36,7 +36,7 @@ use crate::{diagnostics::type_containing_private_name, IsolatedDeclarations};
 /// }
 /// // We can't infer return type if there are multiple return statements with different types
 /// ```
-#[allow(clippy::option_option)]
+#[expect(clippy::option_option)]
 pub struct FunctionReturnType<'a> {
     ast: AstBuilder<'a>,
     return_expression: Option<Option<Expression<'a>>>,

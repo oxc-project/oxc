@@ -77,7 +77,7 @@ impl Rule for RequireArrayJoinSeparator {
                         .position(|c| c == '(');
 
                     if let Some(open_bracket) = open_bracket {
-                        #[allow(clippy::cast_possible_truncation)]
+                        #[expect(clippy::cast_possible_truncation)]
                         fixer.insert_text_after_range(
                             Span::new(
                                 0,

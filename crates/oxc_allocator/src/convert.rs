@@ -1,4 +1,4 @@
-#![allow(clippy::inline_always)]
+#![expect(clippy::inline_always)]
 
 use crate::{Allocator, Box};
 

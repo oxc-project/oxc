@@ -40,7 +40,7 @@ pub struct ErrorLabel {
 }
 
 impl From<&LabeledSpan> for ErrorLabel {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from(label: &LabeledSpan) -> Self {
         Self {
             message: label.label().map(ToString::to_string),

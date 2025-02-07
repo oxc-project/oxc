@@ -80,7 +80,7 @@ impl Rule for NoAsyncAwait {
 /// "async".len()
 const ASYNC_LEN: u32 = 5;
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn report_on_async_span(async_span: Span, ctx: &LintContext<'_>) {
     // find the `async` keyword within the span and report on it
     let Some(async_keyword_offset) = ctx.source_range(async_span).find("async") else {

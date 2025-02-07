@@ -127,7 +127,7 @@ impl<'a> SemanticTester<'a> {
     /// # Panics
     /// - if parsing fails
     /// - if semantic analysis does/does not produce errors as expected
-    #[allow(unstable_name_collisions)]
+    #[expect(unstable_name_collisions)]
     pub fn build(&self) -> Semantic<'_> {
         let semantic_ret = self.build_with_errors();
         match (self.expect_errors, semantic_ret.errors.is_empty()) {
@@ -150,7 +150,7 @@ impl<'a> SemanticTester<'a> {
     /// semantic analysis
     /// # Panics
     ///
-    #[allow(unstable_name_collisions)]
+    #[expect(unstable_name_collisions)]
     pub fn build_with_errors(&self) -> SemanticBuilderReturn<'_> {
         let parse =
             oxc_parser::Parser::new(&self.allocator, self.source_text, self.source_type).parse();

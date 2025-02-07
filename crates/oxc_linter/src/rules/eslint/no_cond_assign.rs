@@ -121,7 +121,7 @@ impl Rule for NoCondAssign {
 }
 
 impl NoCondAssign {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn emit_diagnostic(ctx: &LintContext<'_>, expr: &AssignmentExpression<'_>) {
         let mut operator_span = Span::new(expr.left.span().end, expr.right.span().start);
         let start =

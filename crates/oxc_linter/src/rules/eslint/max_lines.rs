@@ -79,7 +79,7 @@ impl Rule for MaxLines {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn run_once(&self, ctx: &LintContext) {
         let comment_lines = if self.skip_comments {
             let mut comment_lines: usize = 0;

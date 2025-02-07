@@ -263,7 +263,6 @@ pub trait CompilerInterface {
         self.after_isolated_declarations(ret);
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn transform<'a>(
         &self,
         options: &TransformOptions,

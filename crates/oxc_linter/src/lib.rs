@@ -1,4 +1,4 @@
-#![allow(clippy::self_named_module_files)] // for rules.rs
+#![expect(clippy::self_named_module_files)] // for rules.rs
 
 #[cfg(test)]
 mod tester;

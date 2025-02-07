@@ -251,7 +251,7 @@ impl Rule for RulesOfHooks {
         }
 
         if has_conditional_path_accept_throw(cfg, parent_func, node) {
-            #[allow(clippy::needless_return)]
+            #[expect(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
         }
     }

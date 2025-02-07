@@ -1,4 +1,4 @@
-#![allow(unused, clippy::unused_self)]
+#![expect(unused, clippy::unused_self)]
 //! Prettier
 //!
 //! A port of <https://github.com/prettier/prettier>
@@ -56,7 +56,6 @@ pub struct Prettier<'a> {
 }
 
 impl<'a> Prettier<'a> {
-    #[allow(clippy::needless_pass_by_value)]
     pub fn new(allocator: &'a Allocator, options: PrettierOptions) -> Self {
         Self {
             allocator,
@@ -99,7 +98,7 @@ impl<'a> Prettier<'a> {
         (len >= 3).then(|| self.stack[len - 3])
     }
 
-    #[allow(unused)]
+    #[expect(unused)]
     fn nth_parent_kind(&self, n: usize) -> Option<AstKind<'a>> {
         let len = self.stack.len();
         (len > n).then(|| self.stack[len - n - 1])
@@ -111,7 +110,7 @@ impl<'a> Prettier<'a> {
     }
 
     /// A hack for erasing the lifetime requirement.
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     fn alloc<T>(&self, t: &T) -> &'a T {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
@@ -169,7 +168,7 @@ impl<'a> Prettier<'a> {
         self.skip_everything_but_new_line(Some(start_index), /* backwards */ false)
     }
 
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     fn skip_inline_comment(&self, start_index: Option<u32>) -> Option<u32> {
         let start_index = start_index?;
         Some(start_index)
@@ -215,7 +214,7 @@ impl<'a> Prettier<'a> {
         None
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn skip_newline(&self, start_index: Option<u32>, backwards: bool) -> Option<u32> {
         let start_index = start_index?;
         let c = if backwards {

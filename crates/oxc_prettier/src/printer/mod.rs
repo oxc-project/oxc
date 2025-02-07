@@ -93,7 +93,7 @@ impl<'a> Printer<'a> {
         }
     }
 
-    #[allow(clippy::cast_possible_wrap)]
+    #[expect(clippy::cast_possible_wrap)]
     fn remaining_width(&self) -> isize {
         (self.options.print_width as isize) - (self.pos as isize)
     }
@@ -128,7 +128,6 @@ impl<'a> Printer<'a> {
                 self.set_group_mode_from_last_cmd(group.group_id);
             }
             Mode::Break => {
-                #[allow(clippy::cast_possible_wrap)]
                 let remaining_width = self.remaining_width();
                 let Doc::Group(group) = &doc else {
                     unreachable!();
@@ -362,7 +361,7 @@ impl<'a> Printer<'a> {
         self.group_mode_map.insert(id, mode);
     }
 
-    #[allow(clippy::cast_possible_wrap)]
+    #[expect(clippy::cast_possible_wrap)]
     fn fits(&self, next: &Command<'a>, width: isize) -> bool {
         let mut remaining_width = width;
         let mut queue: VecDeque<(Mode, &Doc)> = VecDeque::new();

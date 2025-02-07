@@ -97,7 +97,7 @@ mod test {
                             // Version: 1.95.3 (user setup)
                             // Commit: f1a4fb101478ce6ec82fe9627c43efbf9e98c813
                             value_set: vec![
-                                #[allow(clippy::manual_string_new)]
+                                #[expect(clippy::manual_string_new)]
                                 "".into(),
                                 "quickfix".into(),
                                 "refactor".into(),
@@ -132,7 +132,7 @@ mod test {
                             // Build #IU-243.22562.145, built on December 8, 2024
                             value_set: vec![
                                 "quickfix".into(),
-                                #[allow(clippy::manual_string_new)]
+                                #[expect(clippy::manual_string_new)]
                                 "".into(),
                                 "source".into(),
                                 "refactor".into(),
@@ -160,7 +160,7 @@ mod test {
                         code_action_kind: CodeActionKindLiteralSupport {
                             // nvim 0.10.3
                             value_set: vec![
-                                #[allow(clippy::manual_string_new)]
+                                #[expect(clippy::manual_string_new)]
                                 "".into(),
                                 "quickfix".into(),
                                 "refactor".into(),

@@ -151,7 +151,6 @@ impl NoRestrictedMatchers {
         chain_call == restriction
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     pub fn compile_restricted_matchers(
         matchers: &serde_json::Map<String, serde_json::Value>,
     ) -> Option<FxHashMap<String, String>> {

@@ -24,7 +24,7 @@ pub fn print_call_arguments<'a>(
     let mut parts = Vec::new_in(p.allocator);
     parts.push(text!("("));
 
-    #[allow(clippy::cast_sign_loss)]
+    #[expect(clippy::cast_sign_loss)]
     let get_printed_arguments = |p: &mut Prettier<'a>, skip_index: isize| {
         let mut printed_arguments = Vec::new_in(p.allocator);
         let mut len = arguments.len();

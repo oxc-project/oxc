@@ -41,7 +41,7 @@ impl<T: ContentEq> ContentEq for Option<T> {
         // NOTE: based on the standard library
         // Spelling out the cases explicitly optimizes better than
         // `_ => false`
-        #[allow(clippy::match_same_arms)]
+        #[expect(clippy::match_same_arms)]
         match (self, other) {
             (Some(lhs), Some(rhs)) => lhs.content_eq(rhs),
             (Some(_), None) => false,

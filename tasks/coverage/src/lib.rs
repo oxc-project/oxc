@@ -1,4 +1,5 @@
-#![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
+#![expect(clippy::print_stdout, clippy::disallowed_methods)]
+
 // Core
 mod runtime;
 mod suite;

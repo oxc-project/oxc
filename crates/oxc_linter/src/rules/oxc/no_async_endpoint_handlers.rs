@@ -31,7 +31,7 @@ pub fn no_async_handlers(
     registered_span: Option<Span>,
     name: Option<&str>,
 ) -> OxcDiagnostic {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     const ASYNC_LEN: u32 = "async".len() as u32;
 
     // Only cover "async" in "async function (req, res) {}" or "async (req, res) => {}"

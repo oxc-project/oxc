@@ -1,4 +1,4 @@
-#![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
+#![expect(rustdoc::private_intra_doc_links)] // useful for intellisense
 
 use std::{ops::Deref, path::Path, rc::Rc};
 
@@ -293,7 +293,7 @@ impl<'a> LintContext<'a> {
     /// returns something that can turn into a [`RuleFix`].
     ///
     /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
-    #[allow(clippy::missing_panics_doc)] // only panics in debug mode
+    #[cfg_attr(debug_assertions, expect(clippy::missing_panics_doc))] // Only panics in debug mode
     pub fn diagnostic_with_fix_of_kind<C, F>(
         &self,
         diagnostic: OxcDiagnostic,

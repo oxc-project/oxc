@@ -128,7 +128,6 @@ fn resolve_global_binding<'a, 'b: 'a>(
 
 impl Rule for NoObjCalls {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        #[allow(clippy::needless_return)]
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),
             AstKind::CallExpression(expr) => (&expr.callee, expr.span),

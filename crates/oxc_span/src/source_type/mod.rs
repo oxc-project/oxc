@@ -478,7 +478,7 @@ impl SourceType {
             }
             "js" | "cjs" | "mjs" | "jsx" => Language::JavaScript,
             "tsx" => Language::TypeScript,
-            #[allow(clippy::case_sensitive_file_extension_comparisons)]
+            #[expect(clippy::case_sensitive_file_extension_comparisons)]
             "mts" | "cts" => {
                 if file_name[..file_name.len() - 4].ends_with(".d") {
                     Language::TypeScriptDefinition
@@ -505,7 +505,6 @@ mod tests {
     use super::SourceType;
 
     #[test]
-    #[allow(clippy::similar_names)]
     fn test_ts_from_path() {
         let ts = SourceType::from_path("foo.ts")
             .expect("foo.ts should be a valid TypeScript file path.");
@@ -546,7 +545,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::similar_names)]
+    #[expect(clippy::similar_names)]
     fn test_d_ts_from_path() {
         let dts = SourceType::from_path("foo.d.ts").unwrap();
         let dmts = SourceType::from_path("foo.d.mts").unwrap();
@@ -579,7 +578,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::similar_names)]
     fn test_js_from_path() {
         let js = SourceType::from_path("foo.js")
             .expect("foo.js should be a valid JavaScript file path.");

@@ -134,7 +134,7 @@ impl<'a> Transformer<'a> {
 
         let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
         let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
-        #[allow(deprecated)]
+        #[expect(deprecated)]
         TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes, helpers_used }
     }
 }
