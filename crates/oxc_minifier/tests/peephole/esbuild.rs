@@ -884,6 +884,77 @@ fn js_parser_test() {
 }
 
 #[test]
+fn constant_evaluation_test() {
+    test("x = +5", "x = 5;");
+    test("x = -5", "x = -5;");
+    test("x = ~5", "x = -6;");
+    test("x = !5", "x = !1;");
+    test("x = typeof 5", "x = 'number';");
+    test("x = +''", "x = 0;");
+    // test("x = +[]", "x = 0;");
+    test("x = +{}", "x = NaN;");
+    // test("x = +/1/", "x = NaN;");
+    test("x = +[1]", "x = +[1];");
+    test("x = +'123'", "x = 123;");
+    test("x = +'-123'", "x = -123;");
+    test("x = +'0x10'", "x = 16;");
+    test("x = +{toString:()=>1}", "x = +{ toString: () => 1 };");
+    test("x = +{valueOf:()=>1}", "x = +{ valueOf: () => 1 };");
+    test("x = 3 + 6", "x = 9;");
+    test("x = 3 - 6", "x = -3;");
+    test("x = 3 * 6", "x = 3 * 6;");
+    test("x = 3 / 6", "x = 3 / 6;");
+    test("x = 3 % 6", "x = 3 % 6;");
+    test("x = 3 ** 6", "x = 3 ** 6;");
+    test("x = 0 / 0", "x = NaN;");
+    test("x = 123 / 0", "x = Infinity;");
+    test("x = 123 / -0", "x = -Infinity;");
+    test("x = -123 / 0", "x = -Infinity;");
+    test("x = -123 / -0", "x = Infinity;");
+    test("x = 3 < 6", "x = !0;");
+    test("x = 3 > 6", "x = !1;");
+    test("x = 3 <= 6", "x = !0;");
+    test("x = 3 >= 6", "x = !1;");
+    test("x = 3 == 6", "x = !1;");
+    test("x = 3 != 6", "x = !0;");
+    test("x = 3 === 6", "x = !1;");
+    test("x = 3 !== 6", "x = !0;");
+    test("x = 'a' < 'b'", "x = !0;");
+    test("x = 'a' > 'b'", "x = !1;");
+    test("x = 'a' <= 'b'", "x = !0;");
+    test("x = 'a' >= 'b'", "x = !1;");
+    test("x = 'ab' < 'abc'", "x = !0;");
+    test("x = 'ab' > 'abc'", "x = !1;");
+    test("x = 'ab' <= 'abc'", "x = !0;");
+    test("x = 'ab' >= 'abc'", "x = !1;");
+    // test("x = '𐙩' < 'ﬡ'", "x = !0;"); // FIXME
+    // test("x = '𐙩' > 'ﬡ'", "x = !1;"); // FIXME
+    // test("x = '𐙩' <= 'ﬡ'", "x = !0;"); // FIXME
+    // test("x = '𐙩' >= 'ﬡ'", "x = !1;"); // FIXME
+    test("x = 3 in 6", "x = 3 in 6;");
+    test("x = 3 instanceof 6", "x = 3 instanceof 6;");
+    test("x = (3, 6)", "x = 6;");
+    test("x = 10 << 0", "x = 10;");
+    test("x = 10 << 1", "x = 20;");
+    test("x = 10 << 16", "x = 655360;");
+    test("x = 10 << 17", "x = 10 << 17;");
+    test("x = 10 >> 0", "x = 10;");
+    test("x = 10 >> 1", "x = 5;");
+    test("x = 10 >>> 0", "x = 10;");
+    test("x = 10 >>> 1", "x = 5;");
+    test("x = -10 >>> 1", "x = -10 >>> 1;");
+    test("x = -1 >>> 0", "x = -1 >>> 0;");
+    test("x = -123 >>> 5", "x = -123 >>> 5;");
+    test("x = -123 >>> 6", "x = 67108862;");
+    test("x = 3 & 6", "x = 2;");
+    test("x = 3 | 6", "x = 7;");
+    test("x = 3 ^ 6", "x = 5;");
+    test("x = 3 && 6", "x = 6;");
+    test("x = 3 || 6", "x = 3;");
+    test("x = 3 ?? 6", "x = 3;");
+}
+
+#[test]
 #[ignore]
 fn test_ignored1() {
     test("a != null && a.b()", "a?.b();");
@@ -1470,73 +1541,6 @@ fn test_ignored4() {
     test("a && (b, c)", "a && (b, c);");
     test("a == (b, c)", "a == (b, c);");
     test("a + (b, c)", "a + (b, c);");
-    test("x = +5", "x = 5;");
-    test("x = -5", "x = -5;");
-    test("x = ~5", "x = -6;");
-    test("x = !5", "x = false;");
-    test("x = typeof 5", "x = 'number';");
-    test("x = +''", "x = 0;");
-    test("x = +[]", "x = 0;");
-    test("x = +{}", "x = NaN;");
-    test("x = +/1/", "x = NaN;");
-    test("x = +[1]", "x = +[1];");
-    test("x = +'123'", "x = 123;");
-    test("x = +'-123'", "x = -123;");
-    test("x = +'0x10'", "x = +'0x10';");
-    test("x = +{toString:()=>1}", "x = +{ toString: () => 1 };");
-    test("x = +{valueOf:()=>1}", "x = +{ valueOf: () => 1 };");
-    test("x = 3 + 6", "x = 9;");
-    test("x = 3 - 6", "x = -3;");
-    test("x = 3 * 6", "x = 3 * 6;");
-    test("x = 3 / 6", "x = 3 / 6;");
-    test("x = 3 % 6", "x = 3 % 6;");
-    test("x = 3 ** 6", "x = 3 ** 6;");
-    test("x = 0 / 0", "x = NaN;");
-    test("x = 123 / 0", "x = Infinity;");
-    test("x = 123 / -0", "x = -Infinity;");
-    test("x = -123 / 0", "x = -Infinity;");
-    test("x = -123 / -0", "x = Infinity;");
-    test("x = 3 < 6", "x = true;");
-    test("x = 3 > 6", "x = false;");
-    test("x = 3 <= 6", "x = true;");
-    test("x = 3 >= 6", "x = false;");
-    test("x = 3 == 6", "x = false;");
-    test("x = 3 != 6", "x = true;");
-    test("x = 3 === 6", "x = false;");
-    test("x = 3 !== 6", "x = true;");
-    test("x = 'a' < 'b'", "x = true;");
-    test("x = 'a' > 'b'", "x = false;");
-    test("x = 'a' <= 'b'", "x = true;");
-    test("x = 'a' >= 'b'", "x = false;");
-    test("x = 'ab' < 'abc'", "x = true;");
-    test("x = 'ab' > 'abc'", "x = false;");
-    test("x = 'ab' <= 'abc'", "x = true;");
-    test("x = 'ab' >= 'abc'", "x = false;");
-    test("x = '𐙩' < 'ﬡ'", "x = true;");
-    test("x = '𐙩' > 'ﬡ'", "x = false;");
-    test("x = '𐙩' <= 'ﬡ'", "x = true;");
-    test("x = '𐙩' >= 'ﬡ'", "x = false;");
-    test("x = 3 in 6", "x = 3 in 6;");
-    test("x = 3 instanceof 6", "x = 3 instanceof 6;");
-    test("x = (3, 6)", "x = 6;");
-    test("x = 10 << 0", "x = 10;");
-    test("x = 10 << 1", "x = 20;");
-    test("x = 10 << 16", "x = 655360;");
-    test("x = 10 << 17", "x = 10 << 17;");
-    test("x = 10 >> 0", "x = 10;");
-    test("x = 10 >> 1", "x = 5;");
-    test("x = 10 >>> 0", "x = 10;");
-    test("x = 10 >>> 1", "x = 5;");
-    test("x = -10 >>> 1", "x = -10 >>> 1;");
-    test("x = -1 >>> 0", "x = -1 >>> 0;");
-    test("x = -123 >>> 5", "x = -123 >>> 5;");
-    test("x = -123 >>> 6", "x = 67108862;");
-    test("x = 3 & 6", "x = 2;");
-    test("x = 3 | 6", "x = 7;");
-    test("x = 3 ^ 6", "x = 5;");
-    test("x = 3 && 6", "x = 6;");
-    test("x = 3 || 6", "x = 3;");
-    test("x = 3 ?? 6", "x = 3;");
     test("(a && b) && c", "a && b && c;");
     test("a && (b && c)", "a && b && c;");
     test("(a || b) && c", "(a || b) && c;");
