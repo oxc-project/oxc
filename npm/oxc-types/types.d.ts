@@ -483,9 +483,8 @@ export interface CatchClause extends Span {
   body: BlockStatement;
 }
 
-export interface CatchParameter extends Span {
+export interface CatchParameter extends Span, BindingPattern {
   type: 'CatchParameter';
-  pattern: BindingPattern;
 }
 
 export interface DebuggerStatement extends Span {
