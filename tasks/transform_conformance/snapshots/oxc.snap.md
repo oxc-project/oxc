@@ -1,6 +1,6 @@
 commit: acbc09a8
 
-Passed: 135/157
+Passed: 135/219
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -316,6 +316,269 @@ x Output mismatch
 x Output mismatch
 
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
+x Output mismatch
+
+
+# legacy-decorators (0/62)
+* typescript/accessor/decoratorOnClassAccessor1/input.ts
+x Output mismatch
+
+* typescript/accessor/decoratorOnClassAccessor2/input.ts
+x Output mismatch
+
+* typescript/accessor/decoratorOnClassAccessor3/input.ts
+
+  x Expected a semicolon or an implicit semicolon after a statement, but found
+  | none
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor3/input.ts:6:11]
+ 5 | class C {
+ 6 |     public @dec get accessor() { return 1; }
+   :           ^
+ 7 | }
+   `----
+  help: Try insert a semicolon here
+
+
+* typescript/accessor/decoratorOnClassAccessor4/input.ts
+x Output mismatch
+
+* typescript/accessor/decoratorOnClassAccessor5/input.ts
+x Output mismatch
+
+* typescript/accessor/decoratorOnClassAccessor6/input.ts
+
+  x Expected a semicolon or an implicit semicolon after a statement, but found
+  | none
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor6/input.ts:6:11]
+ 5 | class C {
+ 6 |     public @dec set accessor(value: number) { }
+   :           ^
+ 7 | }
+   `----
+  help: Try insert a semicolon here
+
+
+* typescript/accessor/decoratorOnClassAccessor7/input.ts
+x Output mismatch
+
+* typescript/accessor/decoratorOnClassAccessor8/input.ts
+x Output mismatch
+
+* typescript/constructableDecoratorOnClass01/input.ts
+x Output mismatch
+
+* typescript/constructor/decoratorOnClassConstructor1/input.ts
+x Output mismatch
+
+* typescript/constructor/decoratorOnClassConstructor4/input.ts
+x Output mismatch
+
+* typescript/constructor/parameter/decoratorOnClassConstructorParameter1/input.ts
+x Output mismatch
+
+* typescript/constructor/parameter/decoratorOnClassConstructorParameter4/input.ts
+
+  x Expected `,` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/constructor/parameter/decoratorOnClassConstructorParameter4/input.ts:6:24]
+ 5 | class C {
+ 6 |     constructor(public @dec p: number) {}
+   :                        |
+   :                        `-- `,` expected
+ 7 | }
+   `----
+
+
+* typescript/constructor/parameter/decoratorOnClassConstructorParameter5/input.ts
+x Output mismatch
+
+* typescript/decoratedBlockScopedClass1/input.ts
+x Output mismatch
+
+* typescript/decoratedBlockScopedClass2/input.ts
+x Output mismatch
+
+* typescript/decoratedBlockScopedClass3/input.ts
+x Output mismatch
+
+* typescript/decoratedClassExportsCommonJS1/input.ts
+x Output mismatch
+
+* typescript/decoratedClassExportsCommonJS2/input.ts
+x Output mismatch
+
+* typescript/decoratedClassExportsSystem1/input.ts
+x Output mismatch
+
+* typescript/decoratedClassExportsSystem2/input.ts
+x Output mismatch
+
+* typescript/decoratorChecksFunctionBodies/input.ts
+x Output mismatch
+
+* typescript/decoratorOnClass1/input.ts
+x Output mismatch
+
+* typescript/decoratorOnClass2/input.ts
+x Output mismatch
+
+* typescript/decoratorOnClass3/input.ts
+x Output mismatch
+
+* typescript/decoratorOnClass4/input.ts
+x Output mismatch
+
+* typescript/decoratorOnClass5/input.ts
+x Output mismatch
+
+* typescript/decoratorOnClass8/input.ts
+x Output mismatch
+
+* typescript/decoratorOnClass9/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod1/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod10/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod11/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod12/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod13/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod14/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod15/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod16/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod17/input.ts
+
+  x Expected a semicolon or an implicit semicolon after a statement, but found
+  | none
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod17/input.ts:7:17]
+ 6 | class Foo {
+ 7 |     private prop @decorator
+   :                 ^
+ 8 |     foo() {
+   `----
+  help: Try insert a semicolon here
+
+
+* typescript/method/decoratorOnClassMethod18/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod19/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod2/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod3/input.ts
+
+  x Expected a semicolon or an implicit semicolon after a statement, but found
+  | none
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod3/input.ts:6:11]
+ 5 | class C {
+ 6 |     public @dec method() {}
+   :           ^
+ 7 | }
+   `----
+  help: Try insert a semicolon here
+
+
+* typescript/method/decoratorOnClassMethod4/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod5/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod6/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod7/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethod8/input.ts
+x Output mismatch
+
+* typescript/method/decoratorOnClassMethodOverload1/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+Unresolved references mismatch:
+after transform: ["TypedPropertyDescriptor", "dec"]
+rebuilt        : []
+
+* typescript/method/decoratorOnClassMethodOverload2/input.ts
+x Output mismatch
+
+* typescript/method/parameter/decoratorOnClassMethodParameter1/input.ts
+x Output mismatch
+
+* typescript/method/parameter/decoratorOnClassMethodParameter2/input.ts
+x Output mismatch
+
+* typescript/method/parameter/decoratorOnClassMethodParameter3/input.ts
+x Output mismatch
+
+* typescript/method/parameter/decoratorOnClassMethodThisParameter/input.ts
+
+  x Identifier expected. 'this' is a reserved word that cannot be used here.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/parameter/decoratorOnClassMethodThisParameter/input.ts:6:17]
+ 5 | class C {
+ 6 |     method(@dec this: C) {}
+   :                 ^^^^
+ 7 | }
+   `----
+
+
+* typescript/property/decoratorOnClassProperty1/input.ts
+x Output mismatch
+
+* typescript/property/decoratorOnClassProperty10/input.ts
+x Output mismatch
+
+* typescript/property/decoratorOnClassProperty11/input.ts
+x Output mismatch
+
+* typescript/property/decoratorOnClassProperty12/input.ts
+x Output mismatch
+
+* typescript/property/decoratorOnClassProperty13/input.ts
+x Output mismatch
+
+* typescript/property/decoratorOnClassProperty2/input.ts
+x Output mismatch
+
+* typescript/property/decoratorOnClassProperty3/input.ts
+
+  x Expected a semicolon or an implicit semicolon after a statement, but found
+  | none
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/property/decoratorOnClassProperty3/input.ts:6:11]
+ 5 | class C {
+ 6 |     public @dec prop;
+   :           ^
+ 7 | }
+   `----
+  help: Try insert a semicolon here
+
+
+* typescript/property/decoratorOnClassProperty6/input.ts
+x Output mismatch
+
+* typescript/property/decoratorOnClassProperty7/input.ts
 x Output mismatch
 
 

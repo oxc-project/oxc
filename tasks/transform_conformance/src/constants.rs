@@ -59,6 +59,8 @@ pub const PLUGINS: &[&str] = &[
 
     // RegExp tests ported from esbuild + a few additions
     "regexp",
+    // Legacy decorators, tests almost ported from TypeScript
+    "legacy-decorators",
 ];
 
 pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
