@@ -1,6 +1,6 @@
 use super::{ESTree, Serializer};
 
-/// Serializer for structs.
+/// Serializer for sequences.
 ///
 /// This is returned by [`Serializer::serialize_sequence`].
 pub struct SequenceSerializer<'s, S: Serializer> {
