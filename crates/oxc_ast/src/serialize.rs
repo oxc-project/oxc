@@ -105,12 +105,9 @@ impl Program<'_> {
     }
 }
 
-/// Serialize `ArrayExpressionElement::Elision` variant as `null` in JSON
+/// Serialize `ArrayExpressionElement::Elision` variant as `null`.
 impl Serialize for Elision {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_none()
     }
 }
