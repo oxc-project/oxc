@@ -1158,7 +1158,9 @@ mod test {
         fold("x = typeof [1]", "x = \"object\"");
         fold("x = typeof [1,[]]", "x = \"object\"");
         fold("x = typeof {}", "x = \"object\"");
+        test("var foo; NOOP(x = typeof { foo })", "var foo; NOOP(x = \"object\")");
         fold("x = typeof function() {}", "x = 'function'");
+        fold_same("x = typeof foo"); // no sideeffect, but we don't know the result
 
         fold_same("x = typeof[1,[foo()]]");
         fold_same("x = typeof{bathwater:baby()}");

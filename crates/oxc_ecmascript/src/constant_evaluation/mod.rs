@@ -395,9 +395,10 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
         match expr.operator {
             UnaryOperator::Typeof => {
                 let s = match &expr.argument {
-                    Expression::ObjectExpression(_) | Expression::ArrayExpression(_)
-                        if expr.argument.is_literal_value(true) =>
-                    {
+                    Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
+                        if self.expression_may_have_side_effects(&expr.argument) {
+                            return None;
+                        }
                         "object"
                     }
                     Expression::FunctionExpression(_) => "function",
