@@ -76,7 +76,7 @@ impl<'a> From<&Expression<'a>> for ValueType {
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Void => Self::Undefined,
-                UnaryOperator::UnaryNegation => {
+                UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
                     let argument_ty = Self::from(&unary_expr.argument);
                     match argument_ty {
                         Self::BigInt => Self::BigInt,
@@ -92,7 +92,6 @@ impl<'a> From<&Expression<'a>> for ValueType {
                 UnaryOperator::UnaryPlus => Self::Number,
                 UnaryOperator::LogicalNot | UnaryOperator::Delete => Self::Boolean,
                 UnaryOperator::Typeof => Self::String,
-                UnaryOperator::BitwiseNot => Self::Undetermined,
             },
             Expression::BinaryExpression(e) => Self::from(&**e),
             Expression::SequenceExpression(e) => {

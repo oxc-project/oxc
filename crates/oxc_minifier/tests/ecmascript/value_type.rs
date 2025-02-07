@@ -57,6 +57,9 @@ fn unary_tests() {
     test("-undefined", ValueType::Number); // NaN
     test("-{ valueOf() { return 0n } }", ValueType::Undetermined);
     test("-foo", ValueType::Undetermined); // can be number or bigint
+    test("~0", ValueType::Number);
+    test("~0n", ValueType::BigInt);
+    test("~foo", ValueType::Undetermined); // can be number or bigint
 
     test("+0", ValueType::Number);
     test("+true", ValueType::Number);
@@ -71,10 +74,6 @@ fn unary_tests() {
 
     test("typeof 0", ValueType::String);
     test("typeof foo", ValueType::String);
-
-    // test("~0", ValueType::Number);
-    // test("~0n", ValueType::BigInt);
-    test("~foo", ValueType::Undetermined); // can be number or bigint
 }
 
 #[test]
