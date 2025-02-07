@@ -18,7 +18,10 @@ impl Serialize for Program<'_> {
         map.serialize_entry("type", "Program")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("sourceType", &self.source_type)?;
+        map.serialize_entry(
+            "sourceType",
+            &crate::serialize::ESTreeSourceType::from(&self.source_type),
+        )?;
         map.serialize_entry("hashbang", &self.hashbang)?;
         map.serialize_entry("directives", &self.directives)?;
         map.serialize_entry("body", &self.body)?;
@@ -347,12 +350,13 @@ impl Serialize for MemberExpression<'_> {
 impl Serialize for ComputedMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ComputedMemberExpression")?;
+        map.serialize_entry("type", "MemberExpression")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("expression", &self.expression)?;
+        map.serialize_entry("property", &self.expression)?;
         map.serialize_entry("optional", &self.optional)?;
+        map.serialize_entry("computed", &true)?;
         map.end()
     }
 }
@@ -360,12 +364,13 @@ impl Serialize for ComputedMemberExpression<'_> {
 impl Serialize for StaticMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "StaticMemberExpression")?;
+        map.serialize_entry("type", "MemberExpression")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("property", &self.property)?;
         map.serialize_entry("optional", &self.optional)?;
+        map.serialize_entry("computed", &false)?;
         map.end()
     }
 }
@@ -373,12 +378,13 @@ impl Serialize for StaticMemberExpression<'_> {
 impl Serialize for PrivateFieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "PrivateFieldExpression")?;
+        map.serialize_entry("type", "MemberExpression")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("field", &self.field)?;
         map.serialize_entry("optional", &self.optional)?;
+        map.serialize_entry("computed", &false)?;
         map.end()
     }
 }

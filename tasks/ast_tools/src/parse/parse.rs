@@ -757,7 +757,7 @@ fn process_attr(
 fn parse_attr_part_list(meta_list: &MetaList) -> Result<Vec<AttrPartListElement>> {
     let metas =
         meta_list.parse_args_with(Punctuated::<Meta, Comma>::parse_terminated).map_err(|_| ())?;
-    metas
+    let list_elements = metas
         .into_iter()
         .map(|meta| match meta {
             Meta::Path(path) => {
@@ -775,7 +775,13 @@ fn parse_attr_part_list(meta_list: &MetaList) -> Result<Vec<AttrPartListElement>
                 Ok(AttrPartListElement::List(part_name, list))
             }
         })
-        .collect()
+        .collect::<Result<Vec<_>>>()?;
+
+    if list_elements.is_empty() {
+        return Err(());
+    }
+
+    Ok(list_elements)
 }
 
 /// Convert an [`Expr`] to a string.

@@ -33,6 +33,18 @@ describe('parse', () => {
       `async function test(x, { y }, [ z ], ...rest) {}`,
     );
     expect(ret.program.body[0]).matchSnapshot();
+    expect(ret.program.sourceType).toMatchInlineSnapshot(`"module"`);
+  });
+
+  it('estree MemberExpression', async () => {
+    const ret = await parseAsync(
+      'test.js',
+      `\
+obj.staticProp;
+obj["computedProp"];
+`,
+    );
+    expect(ret.program.body).matchSnapshot();
   });
 });
 

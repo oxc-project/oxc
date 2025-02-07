@@ -106,6 +106,8 @@ importers:
         specifier: workspace:^
         version: link:../oxc-types
 
+  npm/runtime: {}
+
   tasks/benchmark/codspeed:
     devDependencies:
       axios:

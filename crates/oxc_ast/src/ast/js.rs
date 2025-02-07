@@ -31,6 +31,7 @@ use super::{macros::inherit_variants, *};
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Program<'a> {
     pub span: Span,
+    #[estree(via = crate::serialize::ESTreeSourceType, ts_type = "ModuleKind")]
     pub source_type: SourceType,
     #[estree(skip)]
     pub source_text: &'a str,
@@ -483,9 +484,11 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "MemberExpression", add_fields(computed = true), add_ts = "computed: true")]
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
+    #[estree(rename = "property")]
     pub expression: Expression<'a>,
     pub optional: bool, // for optional chaining
 }
@@ -496,6 +499,7 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "MemberExpression", add_fields(computed = false), add_ts = "computed: false")]
 pub struct StaticMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -509,6 +513,7 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "MemberExpression", add_fields(computed = false), add_ts = "computed: false")]
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,

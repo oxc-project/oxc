@@ -22,7 +22,7 @@ fn integration() {
     return console.log(JSON.stringify(os))
     })",
         r#"require("./index.js")(function(e, os) {
-    return console.log(e || JSON.stringify(os));
+    return e ? console.log(e) : console.log(JSON.stringify(os));
     });"#,
     );
 

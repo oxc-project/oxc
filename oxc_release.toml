@@ -9,6 +9,7 @@ versioned_files = [
   "npm/oxc-transform/package.json",
   "npm/oxc-minify/package.json",
   "npm/oxc-types/package.json",
+  "npm/runtime/package.json",
   "wasm/parser/package.json",
 ]
 

@@ -3,7 +3,7 @@
 
 export interface Program extends Span {
   type: 'Program';
-  sourceType: SourceType;
+  sourceType: ModuleKind;
   hashbang: Hashbang | null;
   directives: Array<Directive>;
   body: Array<Statement>;
@@ -174,24 +174,27 @@ export interface TemplateElementValue {
 export type MemberExpression = ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;
 
 export interface ComputedMemberExpression extends Span {
-  type: 'ComputedMemberExpression';
+  type: 'MemberExpression';
   object: Expression;
-  expression: Expression;
+  property: Expression;
   optional: boolean;
+  computed: true;
 }
 
 export interface StaticMemberExpression extends Span {
-  type: 'StaticMemberExpression';
+  type: 'MemberExpression';
   object: Expression;
   property: IdentifierName;
   optional: boolean;
+  computed: false;
 }
 
 export interface PrivateFieldExpression extends Span {
-  type: 'PrivateFieldExpression';
+  type: 'MemberExpression';
   object: Expression;
   field: PrivateIdentifier;
   optional: boolean;
+  computed: false;
 }
 
 export interface CallExpression extends Span {

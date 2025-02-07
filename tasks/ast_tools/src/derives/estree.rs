@@ -105,6 +105,12 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
             AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
             AttrPart::Tag("no_ts_def") => struct_def.estree.custom_ts_def = Some(String::new()),
+            AttrPart::List("add_fields", list) => {
+                for list_element in list {
+                    let (name, value) = list_element.try_into_string()?;
+                    struct_def.estree.add_fields.push((name, value));
+                }
+            }
             AttrPart::String("add_ts", value) => struct_def.estree.add_ts = Some(value),
             AttrPart::String("custom_ts_def", value) => {
                 struct_def.estree.custom_ts_def = Some(value);
@@ -198,11 +204,18 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
         quote!()
     };
 
+    // Add any additional manually-defined fields
+    let add_fields = struct_def.estree.add_fields.iter().map(|(name, value)| {
+        let value = parse_str::<syn::Expr>(value).unwrap();
+        quote!( map.serialize_entry(#name, &#value)?; )
+    });
+
     let stmts = gen.stmts;
     quote! {
         let mut map = serializer.serialize_map(None)?;
         #type_field
         #stmts
+        #(#add_fields)*
         map.end()
     }
 }

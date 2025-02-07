@@ -540,7 +540,13 @@ impl<'a> ReactRefresh<'a, '_> {
             // We also need it for www that has transforms like cx()
             // that don't understand if something is part of a string.
             const SHA1_HASH_LEN: usize = 20;
-            const ENCODED_LEN: usize = base64_encoded_len(SHA1_HASH_LEN, true).unwrap();
+            const ENCODED_LEN: usize = {
+                let len = base64_encoded_len(SHA1_HASH_LEN, true);
+                match len {
+                    Some(l) => l,
+                    None => panic!("Invalid base64 length"),
+                }
+            };
 
             let mut hasher = Sha1::new();
             hasher.update(&key);

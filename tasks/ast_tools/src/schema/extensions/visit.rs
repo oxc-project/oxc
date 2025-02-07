@@ -8,7 +8,7 @@ pub struct VisitStruct {
     /// Name of `visit_*` method and `walk_*` function.
     /// `None` if this struct is not visited.
     pub visitor_names: Option<VisitorNames>,
-    pub visit_args: Option<Vec<(String, String)>>,
+    pub visit_args: Vec<(String, String)>,
     pub scope: Option<Scope>,
 }
 
@@ -74,7 +74,7 @@ impl VisitVec {
 /// Details of visiting on a struct field or enum variant.
 #[derive(Default, Debug)]
 pub struct VisitFieldOrVariant {
-    pub visit_args: Option<Vec<(String, String)>>,
+    pub visit_args: Vec<(String, String)>,
 }
 
 /// Names for visitor method and walk function.
