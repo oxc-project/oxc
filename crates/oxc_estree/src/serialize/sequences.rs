@@ -12,7 +12,7 @@ pub struct SequenceSerializer<'s, S: Serializer> {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum SequenceState {
     First,
-    Tail,
+    Rest,
 }
 
 impl<'s, S: Serializer> SequenceSerializer<'s, S> {
@@ -24,12 +24,12 @@ impl<'s, S: Serializer> SequenceSerializer<'s, S> {
 
     /// Serialize sequence entry.
     pub fn serialize_element<T: ESTree>(&mut self, value: &T) {
-        if self.state == SequenceState::Tail {
+        if self.state == SequenceState::Rest {
             self.serializer.buffer_mut().push_ascii_byte(b',');
             self.serializer.enter_element();
         } else {
             self.serializer.enter_sequence();
-            self.state = SequenceState::Tail;
+            self.state = SequenceState::Rest;
         }
 
         value.serialize(self.serializer);
@@ -37,7 +37,7 @@ impl<'s, S: Serializer> SequenceSerializer<'s, S> {
 
     /// Finish serializing sequence.
     pub fn end(self) {
-        if self.state == SequenceState::Tail {
+        if self.state == SequenceState::Rest {
             self.serializer.exit_sequence();
         }
         self.serializer.buffer_mut().push_ascii_byte(b']');

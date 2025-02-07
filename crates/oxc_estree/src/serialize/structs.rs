@@ -12,7 +12,7 @@ pub struct StructSerializer<'s, S: Serializer> {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum StructState {
     First,
-    Tail,
+    Rest,
 }
 
 impl<'s, S: Serializer> StructSerializer<'s, S> {
@@ -26,12 +26,12 @@ impl<'s, S: Serializer> StructSerializer<'s, S> {
     ///
     /// `key` must not contain any characters which require escaping in JSON.
     pub fn serialize_field<T: ESTree>(&mut self, key: &str, value: &T) {
-        if self.state == StructState::Tail {
+        if self.state == StructState::Rest {
             self.serializer.buffer_mut().push_ascii_byte(b',');
             self.serializer.enter_element();
         } else {
             self.serializer.enter_sequence();
-            self.state = StructState::Tail;
+            self.state = StructState::Rest;
         }
 
         self.serializer.buffer_mut().push_ascii_byte(b'"');
@@ -43,7 +43,7 @@ impl<'s, S: Serializer> StructSerializer<'s, S> {
 
     /// Finish serializing struct.
     pub fn end(self) {
-        if self.state == StructState::Tail {
+        if self.state == StructState::Rest {
             self.serializer.exit_sequence();
         }
         self.serializer.buffer_mut().push_ascii_byte(b'}');
