@@ -1033,36 +1033,15 @@ export interface BigIntLiteral extends Span {
 
 export interface RegExpLiteral extends Span {
   type: 'Literal';
+  regex: RegExp;
   raw: string | null;
   value: {} | null;
-  regex: { pattern: string; flags: string };
 }
 
 export interface RegExp {
-  pattern: RegExpPattern;
-  flags: RegExpFlags;
+  pattern: string;
+  flags: string;
 }
-
-export type RegExpPattern = string | string | Pattern;
-
-export type RegExpFlags = {
-  /** Global flag */
-  G: 1;
-  /** Ignore case flag */
-  I: 2;
-  /** Multiline flag */
-  M: 4;
-  /** DotAll flag */
-  S: 8;
-  /** Unicode flag */
-  U: 16;
-  /** Sticky flag */
-  Y: 32;
-  /** Indices flag */
-  D: 64;
-  /** Unicode sets flag */
-  V: 128;
-};
 
 export interface JSXElement extends Span {
   type: 'JSXElement';

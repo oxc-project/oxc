@@ -1886,37 +1886,75 @@ impl Serialize for ModuleExportName<'_> {
 
 impl Serialize for BooleanLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Literal")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("value", &self.value)?;
+        map.serialize_entry("raw", &crate::serialize::boolean_literal_raw(self))?;
+        map.end()
     }
 }
 
 impl Serialize for NullLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Literal")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("value", &())?;
+        map.serialize_entry("raw", &crate::serialize::null_literal_raw(self))?;
+        map.end()
     }
 }
 
 impl Serialize for NumericLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Literal")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("value", &self.value)?;
+        map.serialize_entry("raw", &self.raw)?;
+        map.end()
     }
 }
 
 impl Serialize for StringLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Literal")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("value", &self.value)?;
+        map.serialize_entry("raw", &self.raw)?;
+        map.end()
     }
 }
 
 impl Serialize for BigIntLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Literal")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("raw", &self.raw)?;
+        map.serialize_entry("value", &())?;
+        map.serialize_entry("bigint", &crate::serialize::bigint_literal_bigint(self))?;
+        map.end()
     }
 }
 
 impl Serialize for RegExpLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Literal")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("regex", &self.regex)?;
+        map.serialize_entry("raw", &self.raw)?;
+        map.serialize_entry("value", &crate::serialize::EmptyObject)?;
+        map.end()
     }
 }
 
@@ -1926,16 +1964,6 @@ impl Serialize for RegExp<'_> {
         map.serialize_entry("pattern", &self.pattern)?;
         map.serialize_entry("flags", &self.flags)?;
         map.end()
-    }
-}
-
-impl Serialize for RegExpPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            RegExpPattern::Raw(it) => it.serialize(serializer),
-            RegExpPattern::Invalid(it) => it.serialize(serializer),
-            RegExpPattern::Pattern(it) => it.serialize(serializer),
-        }
     }
 }
 
