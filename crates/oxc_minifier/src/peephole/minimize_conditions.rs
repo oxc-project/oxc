@@ -104,8 +104,8 @@ impl<'a> PeepholeOptimizations {
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
     //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
-    // `x >> y !== 0` -> `x >> y`
-    //  ^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
+    // `x >> +y !== 0` -> `x >> +y`
+    //  ^^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
     fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -1519,10 +1519,10 @@ mod test {
 
     #[test]
     fn compress_binary_number() {
-        test("if(x >> y == 0){}", "!(x >> y)");
-        test("if(x >> y === 0){}", "!(x >> y)");
-        test("if(x >> y != 0){}", "x >> y");
-        test("if(x >> y !== 0){}", "x >> y");
+        test("if(x >> +y == 0){}", "!(x >> +y)");
+        test("if(x >> +y === 0){}", "!(x >> +y)");
+        test("if(x >> +y != 0){}", "x >> +y");
+        test("if(x >> +y !== 0){}", "x >> +y");
         test("if((-0 != +0) !== false){}", "");
         test_same("foo(x >> y == 0)");
 

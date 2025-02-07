@@ -136,8 +136,23 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
             | BinaryOperator::ShiftRight
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd
-            | BinaryOperator::Exponential
-            | BinaryOperator::ShiftRightZeroFill => Self::Number,
+            | BinaryOperator::Exponential => {
+                let left = Self::from(&e.left);
+                let right = Self::from(&e.right);
+                if left.is_bigint() || right.is_bigint() {
+                    Self::BigInt
+                } else if !(left.is_object() || left.is_undetermined())
+                    || !(right.is_object() || right.is_undetermined())
+                {
+                    // non-object values other than BigInt are converted to number by `ToNumber`
+                    // if either operand is a number, the result is always a number
+                    // because if the other operand is a bigint, an error is thrown
+                    Self::Number
+                } else {
+                    Self::Undetermined
+                }
+            }
+            BinaryOperator::ShiftRightZeroFill => Self::Number,
             BinaryOperator::Instanceof
             | BinaryOperator::In
             | BinaryOperator::Equality

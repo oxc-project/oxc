@@ -97,8 +97,16 @@ fn binary_tests() {
     test("[] + {}", ValueType::Undetermined);
 
     test("1 - 0", ValueType::Number);
+    test("1n - 0n", ValueType::BigInt);
+    test("1 - 0n", ValueType::BigInt); // throws an error
+    test("foo - 1", ValueType::Number);
+    test("foo - 1n", ValueType::BigInt);
+    test("foo - undefined", ValueType::Number);
+    test("foo - null", ValueType::Number);
+    test("foo - ''", ValueType::Number);
+    test("foo - true", ValueType::Number);
+    test("foo - bar", ValueType::Undetermined); // number or bigint
     test("1 * 0", ValueType::Number);
-    // test("foo * bar", ValueType::Undetermined); // number or bigint
     test("1 / 0", ValueType::Number);
     test("1 % 0", ValueType::Number);
     test("1 << 0", ValueType::Number);
@@ -107,10 +115,12 @@ fn binary_tests() {
     test("1 ^ 0", ValueType::Number);
     test("1 & 0", ValueType::Number);
     test("1 ** 0", ValueType::Number);
+
     test("1 >>> 0", ValueType::Number);
+    test("1n >>> 0n", ValueType::Number); // throws an error
 
     // foo * bar can be number, but the result is always a bigint (if no error happened)
-    // test("foo * bar * 1n", ValueType::BigInt);
+    test("foo * bar * 1n", ValueType::BigInt);
     test("foo * bar * 1", ValueType::Number);
     // unsigned right shift always returns a number
     test("foo >>> (1n + 0n)", ValueType::Number);
