@@ -192,6 +192,7 @@ export interface UnaryExpression extends Span {
   type: 'UnaryExpression';
   operator: UnaryOperator;
   argument: Expression;
+  prefix: true;
 }
 
 export interface BinaryExpression extends Span {
@@ -540,6 +541,7 @@ export interface Function extends Span {
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
   body: FunctionBody | null;
+  expression: false;
 }
 
 export type ParamPattern = FormalParameter | FormalParameterRest;
