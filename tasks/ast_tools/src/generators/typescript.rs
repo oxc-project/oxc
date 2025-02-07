@@ -232,17 +232,18 @@ fn generate_ts_type_def_for_struct_field<'s>(
 
 /// Generate Typescript type definition for an enum.
 fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> String {
-    let union = if enum_def.is_fieldless() {
-        enum_def
-            .all_variants(schema)
-            .map(|variant| format!("'{}'", get_fieldless_variant_value(enum_def, variant)))
-            .join(" | ")
-    } else {
-        enum_def
-            .all_variants(schema)
-            .map(|variant| ts_type_name(variant.field_type(schema).unwrap(), schema))
-            .join(" | ")
-    };
+    let own_variants_type_names = enum_def.variants.iter().map(|variant| {
+        if let Some(variant_type) = variant.field_type(schema) {
+            ts_type_name(variant_type, schema)
+        } else {
+            Cow::Owned(format!("'{}'", get_fieldless_variant_value(enum_def, variant)))
+        }
+    });
+
+    let inherits_type_names =
+        enum_def.inherits_types(schema).map(|inherited_type| ts_type_name(inherited_type, schema));
+
+    let union = own_variants_type_names.chain(inherits_type_names).join(" | ");
 
     let enum_name = enum_def.name();
     format!("export type {enum_name} = {union};")
