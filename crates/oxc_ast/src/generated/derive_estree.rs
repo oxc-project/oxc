@@ -18,10 +18,7 @@ impl Serialize for Program<'_> {
         map.serialize_entry("type", "Program")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry(
-            "sourceType",
-            &crate::serialize::ESTreeSourceType::from(&self.source_type),
-        )?;
+        self.source_type.serialize(FlatMapSerializer(&mut map))?;
         map.serialize_entry("hashbang", &self.hashbang)?;
         map.serialize_entry("directives", &self.directives)?;
         map.serialize_entry("body", &self.body)?;

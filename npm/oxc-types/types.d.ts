@@ -1806,17 +1806,7 @@ export interface Span {
   end: number;
 }
 
-export interface SourceType {
-  language: Language;
-  moduleKind: ModuleKind;
-  variant: LanguageVariant;
-}
-
-export type Language = 'javascript' | 'typescript' | 'typescriptDefinition';
-
 export type ModuleKind = 'script' | 'module' | 'unambiguous';
-
-export type LanguageVariant = 'standard' | 'jsx';
 
 export interface Pattern extends Span {
   type: 'Pattern';

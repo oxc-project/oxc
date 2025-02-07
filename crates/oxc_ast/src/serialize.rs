@@ -7,7 +7,7 @@ use serde::{
 };
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, Span};
 use oxc_syntax::number::BigintBase;
 
 use crate::ast::{
@@ -321,19 +321,5 @@ impl Serialize for JSXMemberExpressionObject<'_> {
                 JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
             }
         }
-    }
-}
-
-pub struct ESTreeSourceType<'a>(pub &'a SourceType);
-
-impl<'a> From<&'a SourceType> for ESTreeSourceType<'a> {
-    fn from(inner: &'a SourceType) -> Self {
-        Self(inner)
-    }
-}
-
-impl Serialize for ESTreeSourceType<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.0.module_kind().serialize(serializer)
     }
 }
