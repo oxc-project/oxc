@@ -927,10 +927,10 @@ fn constant_evaluation_test() {
     test("x = 'ab' > 'abc'", "x = !1;");
     test("x = 'ab' <= 'abc'", "x = !0;");
     test("x = 'ab' >= 'abc'", "x = !1;");
-    // test("x = '𐙩' < 'ﬡ'", "x = !0;"); // FIXME
-    // test("x = '𐙩' > 'ﬡ'", "x = !1;"); // FIXME
-    // test("x = '𐙩' <= 'ﬡ'", "x = !0;"); // FIXME
-    // test("x = '𐙩' >= 'ﬡ'", "x = !1;"); // FIXME
+    test("x = '𐙩' < 'ﬡ'", "x = !0;");
+    test("x = '𐙩' > 'ﬡ'", "x = !1;");
+    test("x = '𐙩' <= 'ﬡ'", "x = !0;");
+    test("x = '𐙩' >= 'ﬡ'", "x = !1;");
     test("x = 3 in 6", "x = 3 in 6;");
     test("x = 3 instanceof 6", "x = 3 instanceof 6;");
     test("x = (3, 6)", "x = 6;");

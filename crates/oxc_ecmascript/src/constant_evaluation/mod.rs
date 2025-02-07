@@ -487,7 +487,9 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
         if px.is_string() && py.is_string() {
             let left_string = self.get_side_free_string_value(x)?;
             let right_string = self.get_side_free_string_value(y)?;
-            return Some(ConstantValue::Boolean(left_string.cmp(&right_string) == Ordering::Less));
+            return Some(ConstantValue::Boolean(
+                left_string.encode_utf16().cmp(right_string.encode_utf16()) == Ordering::Less,
+            ));
         }
 
         let left_num = self.get_side_free_number_value(x)?;
