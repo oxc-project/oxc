@@ -111,6 +111,7 @@ impl<'a> From<&Expression<'a>> for ValueType {
             Expression::AssignmentExpression(e) => Self::from(&**e),
             Expression::ConditionalExpression(e) => Self::from(&**e),
             Expression::LogicalExpression(e) => Self::from(&**e),
+            Expression::ParenthesizedExpression(e) => Self::from(&e.expression),
             _ => Self::Undetermined,
         }
     }

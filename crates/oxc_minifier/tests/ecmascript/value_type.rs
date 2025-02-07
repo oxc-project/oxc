@@ -13,7 +13,7 @@ fn test(source_text: &str, expected: ValueType) {
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
-    let result = ValueType::from(stmt.expression.without_parentheses());
+    let result = ValueType::from(&stmt.expression);
     assert_eq!(result, expected, "{source_text}");
 }
 
