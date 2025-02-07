@@ -214,7 +214,7 @@ impl Serialize for ObjectPropertyKind<'_> {
 impl Serialize for ObjectProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectProperty")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("kind", &self.kind)?;

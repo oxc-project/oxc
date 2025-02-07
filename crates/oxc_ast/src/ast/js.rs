@@ -353,6 +353,7 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "Property")]
 pub struct ObjectProperty<'a> {
     pub span: Span,
     pub kind: PropertyKind,
