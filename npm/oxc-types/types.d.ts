@@ -219,21 +219,21 @@ export interface TemplateElementValue {
 export type MemberExpression = ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;
 
 export interface ComputedMemberExpression extends Span {
-  type: 'MemberExpression';
+  type: 'ComputedMemberExpression';
   object: Expression;
   expression: Expression;
   optional: boolean;
 }
 
 export interface StaticMemberExpression extends Span {
-  type: 'MemberExpression';
+  type: 'StaticMemberExpression';
   object: Expression;
   property: IdentifierName;
   optional: boolean;
 }
 
 export interface PrivateFieldExpression extends Span {
-  type: 'MemberExpression';
+  type: 'PrivateFieldExpression';
   object: Expression;
   field: PrivateIdentifier;
   optional: boolean;

@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
 use serde::{
-    ser::{SerializeMap, SerializeSeq, Serializer},
+    ser::{SerializeSeq, Serializer},
     Serialize,
 };
 
@@ -11,7 +11,10 @@ use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::number::BigintBase;
 
 use crate::ast::{
-    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameter, FormalParameterKind, FormalParameters, JSXElementName, JSXIdentifier, JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral, RegExpPattern, Statement, StaticMemberExpression, StringLiteral, TSModuleBlock, TSTypeAnnotation
+    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameter,
+    FormalParameterKind, FormalParameters, JSXElementName, JSXIdentifier,
+    JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral,
+    RegExpPattern, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
 };
 
 #[derive(Serialize)]
@@ -334,26 +337,5 @@ impl Serialize for JSXMemberExpressionObject<'_> {
                 JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
             }
         }
-    }
-}
-
-pub struct ESTreeStaticMemberExpression<'a, 'b>(&'a StaticMemberExpression<'b>);
-
-impl<'a, 'b> From<&'a StaticMemberExpression<'b>> for ESTreeStaticMemberExpression<'a, 'b> {
-    fn from(inner: &'a StaticMemberExpression<'b>) -> Self {
-        Self(inner)
-    }
-}
-
-impl Serialize for ESTreeStaticMemberExpression<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "MemberExpression")?;
-        self.0.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("object", &self.0.object)?;
-        map.serialize_entry("property", &self.0.property)?;
-        map.serialize_entry("optional", &self.0.optional)?;
-        map.serialize_entry("computed", &false)?; // TODO: macro to add this
-        map.end()
     }
 }

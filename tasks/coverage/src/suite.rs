@@ -400,6 +400,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 ChangeTag::Delete => ("-", Style::new().red()),
                 ChangeTag::Insert => ("+", Style::new().green()),
                 ChangeTag::Equal => continue, // (" ", Style::new()),
+                                              // ChangeTag::Equal => (" ", Style::new()),
             };
             writer.write_all(
                 format!("{}{}", style.apply_to(sign).bold(), style.apply_to(change)).as_bytes(),

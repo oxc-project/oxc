@@ -405,7 +405,7 @@ impl Serialize for MemberExpression<'_> {
 impl Serialize for ComputedMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "MemberExpression")?;
+        map.serialize_entry("type", "ComputedMemberExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("expression", &self.expression)?;
@@ -416,14 +416,20 @@ impl Serialize for ComputedMemberExpression<'_> {
 
 impl Serialize for StaticMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::serialize::ESTreeStaticMemberExpression::from(self).serialize(serializer)
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "StaticMemberExpression")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("object", &self.object)?;
+        map.serialize_entry("property", &self.property)?;
+        map.serialize_entry("optional", &self.optional)?;
+        map.end()
     }
 }
 
 impl Serialize for PrivateFieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "MemberExpression")?;
+        map.serialize_entry("type", "PrivateFieldExpression")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("field", &self.field)?;
