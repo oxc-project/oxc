@@ -1399,11 +1399,11 @@ impl Serialize for FormalParameterKind {
 impl Serialize for FunctionBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "FunctionBody")?;
+        map.serialize_entry("type", "BlockStatement")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("directives", &self.directives)?;
-        map.serialize_entry("statements", &self.statements)?;
+        map.serialize_entry("body", &self.statements)?;
         map.end()
     }
 }

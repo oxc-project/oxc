@@ -576,9 +576,9 @@ export type FormalParameter =
 export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
 
 export interface FunctionBody extends Span {
-  type: 'FunctionBody';
+  type: 'BlockStatement';
   directives: Array<Directive>;
-  statements: Array<Statement>;
+  body: Array<Statement>;
 }
 
 export interface ArrowFunctionExpression extends Span {

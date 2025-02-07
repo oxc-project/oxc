@@ -1695,9 +1695,12 @@ pub enum FormalParameterKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
     pub span: Span,
+    // TODO: rename and append_to?
     pub directives: Vec<'a, Directive<'a>>,
+    #[estree(rename = "body")]
     pub statements: Vec<'a, Statement<'a>>,
 }
 
