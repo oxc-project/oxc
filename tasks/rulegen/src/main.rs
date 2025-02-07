@@ -749,8 +749,9 @@ fn main() {
                 .with_filename(has_filename)
                 .with_fix_cases(fix_cases)
         }
-        Err(_err) => {
+        Err(err) => {
             println!("Rule {rule_name} cannot be found in {rule_kind}, use empty template.");
+            println!("Error: {err}");
             Context::new(rule_kind, &rule_name, String::new(), String::new())
         }
         Ok(Err(err)) => {
