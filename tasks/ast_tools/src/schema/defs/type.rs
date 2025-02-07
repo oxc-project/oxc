@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
 
 use super::{
-    BoxDef, CellDef, Def, Derives, EnumDef, FileId, OptionDef, PrimitiveDef, Schema, StructDef,
-    TypeId, VecDef,
+    BoxDef, CellDef, Def, Derives, EnumDef, OptionDef, PrimitiveDef, Schema, StructDef, TypeId,
+    VecDef,
 };
 
 /// Type definition for a type.
@@ -41,21 +41,6 @@ impl Def for TypeDef {
             TypeDef::Box(def) => def.name(),
             TypeDef::Vec(def) => def.name(),
             TypeDef::Cell(def) => def.name(),
-        }
-    }
-
-    /// Get [`FileId`] of file containing definition of this type.
-    ///
-    /// Returns `None` if type is not defined in a file (e.g. primitives).
-    fn file_id(&self) -> Option<FileId> {
-        match self {
-            TypeDef::Struct(def) => def.file_id(),
-            TypeDef::Enum(def) => def.file_id(),
-            TypeDef::Primitive(def) => def.file_id(),
-            TypeDef::Option(def) => def.file_id(),
-            TypeDef::Box(def) => def.file_id(),
-            TypeDef::Vec(def) => def.file_id(),
-            TypeDef::Cell(def) => def.file_id(),
         }
     }
 

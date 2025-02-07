@@ -3,7 +3,11 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
-use crate::{codegen::DeriveId, utils::create_ident, Schema};
+use crate::{
+    codegen::DeriveId,
+    schema::{File, Schema},
+    utils::create_ident,
+};
 
 use super::{extensions, Derives, FileId, TypeId};
 
@@ -31,9 +35,6 @@ pub trait Def {
 
     /// Get type name.
     fn name(&self) -> &str;
-
-    /// Get [`FileId`] of file containing definition of this type.
-    fn file_id(&self) -> Option<FileId>;
 
     /// Get all traits which have derives generated for this type.
     fn generated_derives(&self) -> Derives;

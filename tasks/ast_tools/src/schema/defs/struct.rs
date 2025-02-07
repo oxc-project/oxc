@@ -16,7 +16,7 @@ use super::{
         span::SpanStruct,
         visit::{VisitFieldOrVariant, VisitStruct},
     },
-    Def, Derives, FileId, Schema, TypeDef, TypeId,
+    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
 };
 
 /// Type definition for a struct.
@@ -77,6 +77,12 @@ impl StructDef {
         self.plural_name().to_case(Case::Snake)
     }
 
+    /// Get the [`File`] which this struct is defined in.
+    #[expect(dead_code)]
+    pub fn file<'s>(&self, schema: &'s Schema) -> &'s File {
+        &schema.files[self.file_id]
+    }
+
     /// Get iterator over field indexes.
     pub fn field_indices(&self) -> Range<usize> {
         0..self.fields.len()
@@ -92,11 +98,6 @@ impl Def for StructDef {
     /// Get type name.
     fn name(&self) -> &str {
         &self.name
-    }
-
-    /// Get [`FileId`] of file containing definition of this type.
-    fn file_id(&self) -> Option<FileId> {
-        Some(self.file_id)
     }
 
     /// Get all traits which have derives generated for this type.

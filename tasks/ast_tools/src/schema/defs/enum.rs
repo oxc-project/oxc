@@ -16,7 +16,7 @@ use super::{
         layout::Layout,
         visit::{VisitEnum, VisitFieldOrVariant},
     },
-    Def, Derives, FileId, Schema, TypeDef, TypeId,
+    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
 };
 
 pub type Discriminant = u8;
@@ -100,6 +100,12 @@ impl EnumDef {
         self.layout.layout_64.size == 1
     }
 
+    /// Get the [`File`] which this struct is defined in.
+    #[expect(dead_code)]
+    pub fn file<'s>(&self, schema: &'s Schema) -> &'s File {
+        &schema.files[self.file_id]
+    }
+
     /// Get iterator over variant indexes.
     ///
     /// Only includes own variant, not inherited.
@@ -122,11 +128,6 @@ impl Def for EnumDef {
     /// Get type name.
     fn name(&self) -> &str {
         &self.name
-    }
-
-    /// Get [`FileId`] of file containing definition of this type.
-    fn file_id(&self) -> Option<FileId> {
-        Some(self.file_id)
     }
 
     /// Get all traits which have derives generated for this type.
