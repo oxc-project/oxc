@@ -63,6 +63,7 @@ impl Case for EstreeTest262Case {
         let mut oxc_json =
             serde_json::from_str::<serde_json::Value>(&ret.program.to_json()).unwrap();
 
+        oxc_json.as_object_mut().unwrap().insert("sourceType".into(), "script".into()); // fix up obvious diff manually
         process_estree(&mut acorn_json, &mut oxc_json);
 
         let acorn_json = serde_json::to_string_pretty(&acorn_json).unwrap();

@@ -73,7 +73,7 @@ impl Serialize for Program<'_> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Program")?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("sourceType", &crate::serialize::SourceTypeWrapper(&self.source_type))?;
+        map.serialize_entry("sourceType", &self.source_type)?;
         map.serialize_entry("hashbang", &self.hashbang)?;
         map.serialize_entry("directives", &self.directives)?;
         map.serialize_entry("body", &self.body)?;
