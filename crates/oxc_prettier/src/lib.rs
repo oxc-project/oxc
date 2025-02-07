@@ -105,6 +105,11 @@ impl<'a> Prettier<'a> {
         (len > n).then(|| self.stack[len - n - 1])
     }
 
+    fn find_ancestor(&self, predicate: impl Fn(AstKind<'a>) -> bool) -> Option<AstKind<'a>> {
+        // Skip the current node
+        self.stack.iter().rev().skip(1).find(|&&kind| predicate(kind)).copied()
+    }
+
     /// A hack for erasing the lifetime requirement.
     #[allow(clippy::unused_self)]
     fn alloc<T>(&self, t: &T) -> &'a T {

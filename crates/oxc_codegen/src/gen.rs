@@ -767,8 +767,8 @@ impl Gen for Function<'_> {
                 this_param.print(p, ctx);
                 if !self.params.is_empty() || self.params.rest.is_some() {
                     p.print_str(",");
+                    p.print_soft_space();
                 }
-                p.print_soft_space();
             }
             self.params.print(p, ctx);
             p.print_ascii_byte(b')');
@@ -952,7 +952,7 @@ impl Gen for ImportDeclaration<'_> {
             p.print_str("from");
         }
         p.print_soft_space();
-        self.source.print(p, ctx);
+        p.print_quoted_utf16(&self.source.value, false);
         if let Some(with_clause) = &self.with_clause {
             p.print_soft_space();
             with_clause.print(p, ctx);
@@ -980,16 +980,18 @@ impl Gen for WithClause<'_> {
 }
 
 impl Gen for ImportAttribute<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         match &self.key {
             ImportAttributeKey::Identifier(identifier) => {
                 p.print_str(identifier.name.as_str());
             }
-            ImportAttributeKey::StringLiteral(literal) => literal.print(p, ctx),
+            ImportAttributeKey::StringLiteral(literal) => {
+                p.print_quoted_utf16(&literal.value, false);
+            }
         };
         p.print_colon();
         p.print_soft_space();
-        self.value.print(p, ctx);
+        p.print_quoted_utf16(&self.value.value, false);
     }
 }
 
@@ -1055,7 +1057,7 @@ impl Gen for ExportNamedDeclaration<'_> {
                 p.print_soft_space();
                 p.print_str("from");
                 p.print_soft_space();
-                source.print(p, ctx);
+                p.print_quoted_utf16(&source.value, false);
             }
             p.print_semicolon_after_statement();
         }
@@ -1111,7 +1113,7 @@ impl Gen for ModuleExportName<'_> {
         match self {
             Self::IdentifierName(ident) => ident.print(p, ctx),
             Self::IdentifierReference(ident) => ident.print(p, ctx),
-            Self::StringLiteral(literal) => literal.print(p, ctx),
+            Self::StringLiteral(literal) => p.print_quoted_utf16(&literal.value, false),
         };
     }
 }
@@ -1139,7 +1141,7 @@ impl Gen for ExportAllDeclaration<'_> {
 
         p.print_str("from");
         p.print_soft_space();
-        self.source.print(p, ctx);
+        p.print_quoted_utf16(&self.source.value, false);
         if let Some(with_clause) = &self.with_clause {
             p.print_hard_space();
             with_clause.print(p, ctx);
@@ -1346,7 +1348,7 @@ impl Gen for RegExpLiteral<'_> {
         let pattern_text = self.regex.pattern.source_text(p.source_text);
         // Avoid forming a single-line comment or "</script" sequence
         if last == Some(b'/')
-            || (last == Some(b'<') && pattern_text.cow_to_lowercase().starts_with("script"))
+            || (last == Some(b'<') && pattern_text.cow_to_ascii_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }
@@ -2069,7 +2071,7 @@ impl Gen for AssignmentTargetRest<'_> {
 impl GenExpr for SequenceExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
-            p.print_expressions(&self.expressions, Precedence::Lowest, ctx);
+            p.print_expressions(&self.expressions, Precedence::Lowest, ctx.and_forbid_call(false));
         });
     }
 }
@@ -2350,9 +2352,7 @@ impl Gen for ClassBody<'_> {
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
             for item in &self.body {
                 p.print_semicolon_if_needed();
-                if p.print_comments {
-                    p.print_leading_comments(item.span().start);
-                }
+                p.print_leading_comments(item.span().start);
                 p.print_indent();
                 item.print(p, ctx);
             }
@@ -2677,6 +2677,13 @@ impl Gen for MethodDefinition<'_> {
             type_parameters.print(p, ctx);
         }
         p.print_ascii_byte(b'(');
+        if let Some(this_param) = &self.value.this_param {
+            this_param.print(p, ctx);
+            if !self.value.params.is_empty() || self.value.params.rest.is_some() {
+                p.print_str(",");
+                p.print_soft_space();
+            }
+        }
         self.value.params.print(p, ctx);
         p.print_ascii_byte(b')');
         if let Some(return_type) = &self.value.return_type {
@@ -3296,21 +3303,15 @@ impl Gen for TSTemplateLiteralType<'_> {
 
 impl Gen for TSTypeLiteral<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        let single_line = self.members.len() <= 1;
-        p.print_curly_braces(self.span, single_line, |p| {
+        p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for item in &self.members {
-                if single_line {
-                    p.print_soft_space();
-                } else {
-                    p.print_indent();
-                }
+                p.print_leading_comments(item.span().start);
+                p.print_indent();
                 item.print(p, ctx);
-                if single_line {
-                    p.print_soft_space();
-                } else {
+                if p.options.minify {
                     p.print_semicolon();
-                    p.print_soft_newline();
                 }
+                p.print_soft_newline();
             }
         });
     }
@@ -3373,8 +3374,8 @@ impl Gen for TSFunctionType<'_> {
             this_param.print(p, ctx);
             if !self.params.is_empty() || self.params.rest.is_some() {
                 p.print_str(",");
+                p.print_soft_space();
             }
-            p.print_soft_space();
         }
         self.params.print(p, ctx);
         p.print_str(")");
@@ -3399,36 +3400,7 @@ impl Gen for TSSignature<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::TSIndexSignature(signature) => signature.print(p, ctx),
-            Self::TSPropertySignature(signature) => {
-                if signature.readonly {
-                    p.print_str("readonly ");
-                }
-                if signature.computed {
-                    p.print_ascii_byte(b'[');
-                    signature.key.print(p, ctx);
-                    p.print_ascii_byte(b']');
-                } else {
-                    match &signature.key {
-                        PropertyKey::StaticIdentifier(key) => {
-                            key.print(p, ctx);
-                        }
-                        PropertyKey::PrivateIdentifier(key) => {
-                            p.print_str(key.name.as_str());
-                        }
-                        key => {
-                            key.to_expression().print_expr(p, Precedence::Comma, ctx);
-                        }
-                    }
-                }
-                if signature.optional {
-                    p.print_str("?");
-                }
-                if let Some(type_annotation) = &signature.type_annotation {
-                    p.print_colon();
-                    p.print_soft_space();
-                    type_annotation.print(p, ctx);
-                }
-            }
+            Self::TSPropertySignature(signature) => signature.r#gen(p, ctx),
             Self::TSCallSignatureDeclaration(signature) => {
                 if let Some(type_parameters) = signature.type_parameters.as_ref() {
                     type_parameters.print(p, ctx);
@@ -3438,8 +3410,8 @@ impl Gen for TSSignature<'_> {
                     this_param.print(p, ctx);
                     if !signature.params.is_empty() || signature.params.rest.is_some() {
                         p.print_str(",");
+                        p.print_soft_space();
                     }
-                    p.print_soft_space();
                 }
                 signature.params.print(p, ctx);
                 p.print_str(")");
@@ -3481,6 +3453,9 @@ impl Gen for TSSignature<'_> {
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_str());
                         }
+                        PropertyKey::StringLiteral(key) => {
+                            p.print_quoted_utf16(&key.value, false);
+                        }
                         key => {
                             key.to_expression().print_expr(p, Precedence::Comma, ctx);
                         }
@@ -3497,8 +3472,8 @@ impl Gen for TSSignature<'_> {
                     this_param.print(p, ctx);
                     if !signature.params.is_empty() || signature.params.rest.is_some() {
                         p.print_str(",");
+                        p.print_soft_space();
                     }
-                    p.print_soft_space();
                 }
                 signature.params.print(p, ctx);
                 p.print_str(")");
@@ -3508,6 +3483,42 @@ impl Gen for TSSignature<'_> {
                     return_type.print(p, ctx);
                 }
             }
+        }
+    }
+}
+
+impl Gen for TSPropertySignature<'_> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.readonly {
+            p.print_str("readonly ");
+        }
+        if self.computed {
+            p.print_ascii_byte(b'[');
+            self.key.print(p, ctx);
+            p.print_ascii_byte(b']');
+        } else {
+            match &self.key {
+                PropertyKey::StaticIdentifier(key) => {
+                    key.print(p, ctx);
+                }
+                PropertyKey::PrivateIdentifier(key) => {
+                    p.print_str(key.name.as_str());
+                }
+                PropertyKey::StringLiteral(key) => {
+                    p.print_quoted_utf16(&key.value, false);
+                }
+                key => {
+                    key.to_expression().print_expr(p, Precedence::Comma, ctx);
+                }
+            }
+        }
+        if self.optional {
+            p.print_str("?");
+        }
+        if let Some(type_annotation) = &self.type_annotation {
+            p.print_colon();
+            p.print_soft_space();
+            type_annotation.print(p, ctx);
         }
     }
 }
@@ -3582,7 +3593,9 @@ impl Gen for TSImportAttributeName<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             TSImportAttributeName::Identifier(ident) => ident.print(p, ctx),
-            TSImportAttributeName::StringLiteral(literal) => literal.print(p, ctx),
+            TSImportAttributeName::StringLiteral(literal) => {
+                p.print_quoted_utf16(&literal.value, false);
+            }
         }
     }
 }
@@ -3686,7 +3699,7 @@ impl Gen for TSModuleDeclarationName<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => s.print(p, ctx),
+            Self::StringLiteral(s) => p.print_quoted_utf16(&s.value, false),
         }
     }
 }
@@ -3742,9 +3755,7 @@ impl Gen for TSInterfaceDeclaration<'_> {
         p.print_soft_space();
         p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {
             for item in &self.body.body {
-                if p.print_comments {
-                    p.print_leading_comments(item.span().start);
-                }
+                p.print_leading_comments(item.span().start);
                 p.print_indent();
                 item.print(p, ctx);
                 p.print_semicolon();
@@ -3778,9 +3789,7 @@ impl Gen for TSEnumDeclaration<'_> {
         p.print_space_before_identifier();
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for member in &self.members {
-                if p.print_comments {
-                    p.print_leading_comments(member.span().start);
-                }
+                p.print_leading_comments(member.span().start);
                 p.print_indent();
                 member.print(p, ctx);
                 p.print_comma();
@@ -3794,7 +3803,7 @@ impl Gen for TSEnumMember<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.id {
             TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
-            TSEnumMemberName::String(decl) => decl.print(p, ctx),
+            TSEnumMemberName::String(decl) => p.print_quoted_utf16(&decl.value, false),
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();
@@ -3838,7 +3847,7 @@ impl Gen for TSModuleReference<'_> {
         match self {
             Self::ExternalModuleReference(decl) => {
                 p.print_str("require(");
-                decl.expression.print(p, ctx);
+                p.print_quoted_utf16(&decl.expression.value, false);
                 p.print_str(")");
             }
             match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),

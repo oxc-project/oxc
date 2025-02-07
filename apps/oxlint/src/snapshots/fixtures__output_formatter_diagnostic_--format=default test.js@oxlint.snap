@@ -1,0 +1,39 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=default test.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'foo' is declared but never used.
+   ,-[test.js:1:10]
+ 1 | function foo(a, b) {
+   :          ^|^
+   :           `-- 'foo' is declared here
+ 2 |     return a;
+   `----
+  help: Consider removing this declaration.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ,-[test.js:1:17]
+ 1 | function foo(a, b) {
+   :                 |
+   :                 `-- 'b' is declared here
+ 2 |     return a;
+   `----
+  help: Consider removing this parameter.
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[test.js:5:1]
+ 4 | 
+ 5 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Delete this code.
+
+Found 2 warnings and 1 error.
+Finished in <variable>ms on 1 file with 97 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

@@ -1,5 +1,6 @@
 use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
+use commands::LSP_COMMANDS;
 use dashmap::DashMap;
 use futures::future::join_all;
 use globset::Glob;
@@ -14,8 +15,9 @@ use tower_lsp::{
         CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
         ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, InitializeParams, InitializeResult, InitializedParams,
-        NumberOrString, Position, Range, ServerInfo, TextEdit, Url, WorkspaceEdit,
+        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, Url,
+        WorkspaceEdit,
     },
     Client, LanguageServer, LspService, Server,
 };
@@ -27,6 +29,7 @@ use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::server_linter::ServerLinter;
 
 mod capabilities;
+mod commands;
 mod linter;
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
@@ -256,13 +259,10 @@ impl LanguageServer for Backend {
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
         if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
-            let reports = value
-                .iter()
-                .filter(|r| {
-                    r.diagnostic.range == params.range
-                        || range_includes(params.range, r.diagnostic.range)
-                })
-                .collect::<Vec<_>>();
+            let reports = value.iter().filter(|r| {
+                r.diagnostic.range == params.range
+                    || range_overlaps(params.range, r.diagnostic.range)
+            });
             for report in reports {
                 // TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
                 let mut rule_name: Option<String> = None;
@@ -385,6 +385,18 @@ impl LanguageServer for Backend {
         }
 
         Ok(Some(code_actions_vec))
+    }
+
+    async fn execute_command(
+        &self,
+        params: ExecuteCommandParams,
+    ) -> Result<Option<serde_json::Value>> {
+        let command = LSP_COMMANDS.iter().find(|c| c.command_id() == params.command);
+
+        return match command {
+            Some(c) => c.execute(self, params.arguments).await,
+            None => Err(Error::invalid_request()),
+        };
     }
 }
 
@@ -531,11 +543,7 @@ impl Backend {
                 if !uri_path.starts_with(gitignore.path()) {
                     continue;
                 }
-
-                let path = PathBuf::from(uri.path());
-                let ignored =
-                    gitignore.matched_path_or_any_parents(&path, path.is_dir()).is_ignore();
-                if ignored {
+                if gitignore.matched_path_or_any_parents(&uri_path, uri_path.is_dir()).is_ignore() {
                     debug!("ignored: {uri}");
                     return true;
                 }
@@ -568,12 +576,6 @@ async fn main() {
     Server::new(stdin, stdout, socket).serve(service).await;
 }
 
-fn range_includes(range: Range, to_include: Range) -> bool {
-    if range.start >= to_include.start {
-        return false;
-    }
-    if range.end <= to_include.end {
-        return false;
-    }
-    true
+fn range_overlaps(a: Range, b: Range) -> bool {
+    a.start <= b.end && a.end >= b.start
 }

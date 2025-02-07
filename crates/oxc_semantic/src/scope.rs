@@ -310,10 +310,8 @@ impl ScopeTree {
     /// If you only want bindings in a specific scope, use [`iter_bindings_in`].
     ///
     /// [`iter_bindings_in`]: ScopeTree::iter_bindings_in
-    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &str)> + '_ {
-        self.cell.borrow_dependent().bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
-            bindings.iter().map(move |(&name, &symbol_id)| (scope_id, symbol_id, name))
-        })
+    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, &Bindings)> + '_ {
+        self.cell.borrow_dependent().bindings.iter_enumerated()
     }
 
     /// Iterate over bindings declared inside a scope.

@@ -13,183 +13,177 @@ use crate::ast::*;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum AstType {
-    BooleanLiteral = 0,
-    NullLiteral = 1,
-    NumericLiteral = 2,
-    StringLiteral = 3,
-    BigIntLiteral = 4,
-    RegExpLiteral = 5,
-    Program = 6,
-    IdentifierName = 7,
-    IdentifierReference = 8,
-    BindingIdentifier = 9,
-    LabelIdentifier = 10,
-    ThisExpression = 11,
-    ArrayExpression = 12,
-    ArrayExpressionElement = 13,
-    Elision = 14,
-    ObjectExpression = 15,
-    ObjectProperty = 16,
-    PropertyKey = 17,
-    TemplateLiteral = 18,
-    TaggedTemplateExpression = 19,
-    MemberExpression = 20,
-    CallExpression = 21,
-    NewExpression = 22,
-    MetaProperty = 23,
-    SpreadElement = 24,
-    Argument = 25,
-    UpdateExpression = 26,
-    UnaryExpression = 27,
-    BinaryExpression = 28,
-    PrivateInExpression = 29,
-    LogicalExpression = 30,
-    ConditionalExpression = 31,
-    AssignmentExpression = 32,
-    AssignmentTarget = 33,
-    SimpleAssignmentTarget = 34,
-    AssignmentTargetPattern = 35,
-    ArrayAssignmentTarget = 36,
-    ObjectAssignmentTarget = 37,
-    AssignmentTargetWithDefault = 38,
-    SequenceExpression = 39,
-    Super = 40,
-    AwaitExpression = 41,
-    ChainExpression = 42,
-    ParenthesizedExpression = 43,
-    Directive = 44,
-    Hashbang = 45,
-    BlockStatement = 46,
-    VariableDeclaration = 47,
-    VariableDeclarator = 48,
-    EmptyStatement = 49,
-    ExpressionStatement = 50,
-    IfStatement = 51,
-    DoWhileStatement = 52,
-    WhileStatement = 53,
-    ForStatement = 54,
-    ForStatementInit = 55,
-    ForInStatement = 56,
-    ForOfStatement = 57,
-    ContinueStatement = 58,
-    BreakStatement = 59,
-    ReturnStatement = 60,
-    WithStatement = 61,
-    SwitchStatement = 62,
-    SwitchCase = 63,
-    LabeledStatement = 64,
-    ThrowStatement = 65,
-    TryStatement = 66,
-    CatchClause = 67,
-    CatchParameter = 68,
-    DebuggerStatement = 69,
-    AssignmentPattern = 70,
-    ObjectPattern = 71,
-    ArrayPattern = 72,
-    BindingRestElement = 73,
-    Function = 74,
-    FormalParameters = 75,
-    FormalParameter = 76,
-    FunctionBody = 77,
-    ArrowFunctionExpression = 78,
-    YieldExpression = 79,
-    Class = 80,
-    ClassBody = 81,
-    MethodDefinition = 82,
-    PropertyDefinition = 83,
-    PrivateIdentifier = 84,
-    StaticBlock = 85,
-    ModuleDeclaration = 86,
-    ImportExpression = 87,
-    ImportDeclaration = 88,
-    ImportSpecifier = 89,
-    ImportDefaultSpecifier = 90,
-    ImportNamespaceSpecifier = 91,
-    ExportNamedDeclaration = 92,
-    ExportDefaultDeclaration = 93,
-    ExportAllDeclaration = 94,
-    ExportSpecifier = 95,
-    TSThisParameter = 96,
-    TSEnumDeclaration = 97,
-    TSEnumMember = 98,
-    TSTypeAnnotation = 99,
-    TSLiteralType = 100,
-    TSConditionalType = 101,
-    TSUnionType = 102,
-    TSIntersectionType = 103,
-    TSParenthesizedType = 104,
-    TSIndexedAccessType = 105,
-    TSNamedTupleMember = 106,
-    TSAnyKeyword = 107,
-    TSStringKeyword = 108,
-    TSBooleanKeyword = 109,
-    TSNumberKeyword = 110,
-    TSNeverKeyword = 111,
-    TSIntrinsicKeyword = 112,
-    TSUnknownKeyword = 113,
-    TSNullKeyword = 114,
-    TSUndefinedKeyword = 115,
-    TSVoidKeyword = 116,
-    TSSymbolKeyword = 117,
-    TSThisType = 118,
-    TSObjectKeyword = 119,
-    TSBigIntKeyword = 120,
-    TSTypeReference = 121,
-    TSTypeName = 122,
-    TSQualifiedName = 123,
-    TSTypeParameterInstantiation = 124,
-    TSTypeParameter = 125,
-    TSTypeParameterDeclaration = 126,
-    TSTypeAliasDeclaration = 127,
-    TSClassImplements = 128,
-    TSInterfaceDeclaration = 129,
-    TSPropertySignature = 130,
-    TSMethodSignature = 131,
-    TSConstructSignatureDeclaration = 132,
-    TSInterfaceHeritage = 133,
-    TSModuleDeclaration = 134,
-    TSModuleBlock = 135,
-    TSTypeLiteral = 136,
-    TSInferType = 137,
-    TSTypeQuery = 138,
-    TSImportType = 139,
-    TSMappedType = 140,
-    TSTemplateLiteralType = 141,
-    TSAsExpression = 142,
-    TSSatisfiesExpression = 143,
-    TSTypeAssertion = 144,
-    TSImportEqualsDeclaration = 145,
-    TSModuleReference = 146,
-    TSExternalModuleReference = 147,
-    TSNonNullExpression = 148,
-    Decorator = 149,
-    TSExportAssignment = 150,
-    TSInstantiationExpression = 151,
-    JSXElement = 152,
-    JSXOpeningElement = 153,
-    JSXClosingElement = 154,
-    JSXFragment = 155,
-    JSXElementName = 156,
-    JSXNamespacedName = 157,
-    JSXMemberExpression = 158,
-    JSXMemberExpressionObject = 159,
-    JSXExpressionContainer = 160,
-    JSXAttributeItem = 161,
-    JSXSpreadAttribute = 162,
-    JSXIdentifier = 163,
-    JSXText = 164,
+    Program = 0,
+    IdentifierName = 1,
+    IdentifierReference = 2,
+    BindingIdentifier = 3,
+    LabelIdentifier = 4,
+    ThisExpression = 5,
+    ArrayExpression = 6,
+    ArrayExpressionElement = 7,
+    Elision = 8,
+    ObjectExpression = 9,
+    ObjectProperty = 10,
+    PropertyKey = 11,
+    TemplateLiteral = 12,
+    TaggedTemplateExpression = 13,
+    MemberExpression = 14,
+    CallExpression = 15,
+    NewExpression = 16,
+    MetaProperty = 17,
+    SpreadElement = 18,
+    Argument = 19,
+    UpdateExpression = 20,
+    UnaryExpression = 21,
+    BinaryExpression = 22,
+    PrivateInExpression = 23,
+    LogicalExpression = 24,
+    ConditionalExpression = 25,
+    AssignmentExpression = 26,
+    AssignmentTarget = 27,
+    SimpleAssignmentTarget = 28,
+    AssignmentTargetPattern = 29,
+    ArrayAssignmentTarget = 30,
+    ObjectAssignmentTarget = 31,
+    AssignmentTargetWithDefault = 32,
+    SequenceExpression = 33,
+    Super = 34,
+    AwaitExpression = 35,
+    ChainExpression = 36,
+    ParenthesizedExpression = 37,
+    Directive = 38,
+    Hashbang = 39,
+    BlockStatement = 40,
+    VariableDeclaration = 41,
+    VariableDeclarator = 42,
+    EmptyStatement = 43,
+    ExpressionStatement = 44,
+    IfStatement = 45,
+    DoWhileStatement = 46,
+    WhileStatement = 47,
+    ForStatement = 48,
+    ForStatementInit = 49,
+    ForInStatement = 50,
+    ForOfStatement = 51,
+    ContinueStatement = 52,
+    BreakStatement = 53,
+    ReturnStatement = 54,
+    WithStatement = 55,
+    SwitchStatement = 56,
+    SwitchCase = 57,
+    LabeledStatement = 58,
+    ThrowStatement = 59,
+    TryStatement = 60,
+    CatchClause = 61,
+    CatchParameter = 62,
+    DebuggerStatement = 63,
+    AssignmentPattern = 64,
+    ObjectPattern = 65,
+    ArrayPattern = 66,
+    BindingRestElement = 67,
+    Function = 68,
+    FormalParameters = 69,
+    FormalParameter = 70,
+    FunctionBody = 71,
+    ArrowFunctionExpression = 72,
+    YieldExpression = 73,
+    Class = 74,
+    ClassBody = 75,
+    MethodDefinition = 76,
+    PropertyDefinition = 77,
+    PrivateIdentifier = 78,
+    StaticBlock = 79,
+    ModuleDeclaration = 80,
+    ImportExpression = 81,
+    ImportDeclaration = 82,
+    ImportSpecifier = 83,
+    ImportDefaultSpecifier = 84,
+    ImportNamespaceSpecifier = 85,
+    ExportNamedDeclaration = 86,
+    ExportDefaultDeclaration = 87,
+    ExportAllDeclaration = 88,
+    ExportSpecifier = 89,
+    BooleanLiteral = 90,
+    NullLiteral = 91,
+    NumericLiteral = 92,
+    StringLiteral = 93,
+    BigIntLiteral = 94,
+    RegExpLiteral = 95,
+    JSXElement = 96,
+    JSXOpeningElement = 97,
+    JSXClosingElement = 98,
+    JSXFragment = 99,
+    JSXElementName = 100,
+    JSXNamespacedName = 101,
+    JSXMemberExpression = 102,
+    JSXMemberExpressionObject = 103,
+    JSXExpressionContainer = 104,
+    JSXAttributeItem = 105,
+    JSXSpreadAttribute = 106,
+    JSXIdentifier = 107,
+    JSXText = 108,
+    TSThisParameter = 109,
+    TSEnumDeclaration = 110,
+    TSEnumMember = 111,
+    TSTypeAnnotation = 112,
+    TSLiteralType = 113,
+    TSConditionalType = 114,
+    TSUnionType = 115,
+    TSIntersectionType = 116,
+    TSParenthesizedType = 117,
+    TSIndexedAccessType = 118,
+    TSNamedTupleMember = 119,
+    TSAnyKeyword = 120,
+    TSStringKeyword = 121,
+    TSBooleanKeyword = 122,
+    TSNumberKeyword = 123,
+    TSNeverKeyword = 124,
+    TSIntrinsicKeyword = 125,
+    TSUnknownKeyword = 126,
+    TSNullKeyword = 127,
+    TSUndefinedKeyword = 128,
+    TSVoidKeyword = 129,
+    TSSymbolKeyword = 130,
+    TSThisType = 131,
+    TSObjectKeyword = 132,
+    TSBigIntKeyword = 133,
+    TSTypeReference = 134,
+    TSTypeName = 135,
+    TSQualifiedName = 136,
+    TSTypeParameterInstantiation = 137,
+    TSTypeParameter = 138,
+    TSTypeParameterDeclaration = 139,
+    TSTypeAliasDeclaration = 140,
+    TSClassImplements = 141,
+    TSInterfaceDeclaration = 142,
+    TSPropertySignature = 143,
+    TSMethodSignature = 144,
+    TSConstructSignatureDeclaration = 145,
+    TSInterfaceHeritage = 146,
+    TSModuleDeclaration = 147,
+    TSModuleBlock = 148,
+    TSTypeLiteral = 149,
+    TSInferType = 150,
+    TSTypeQuery = 151,
+    TSImportType = 152,
+    TSMappedType = 153,
+    TSTemplateLiteralType = 154,
+    TSAsExpression = 155,
+    TSSatisfiesExpression = 156,
+    TSTypeAssertion = 157,
+    TSImportEqualsDeclaration = 158,
+    TSModuleReference = 159,
+    TSExternalModuleReference = 160,
+    TSNonNullExpression = 161,
+    Decorator = 162,
+    TSExportAssignment = 163,
+    TSInstantiationExpression = 164,
 }
 
 /// Untyped AST Node Kind
 #[derive(Debug, Clone, Copy)]
 #[repr(C, u8)]
 pub enum AstKind<'a> {
-    BooleanLiteral(&'a BooleanLiteral) = AstType::BooleanLiteral as u8,
-    NullLiteral(&'a NullLiteral) = AstType::NullLiteral as u8,
-    NumericLiteral(&'a NumericLiteral<'a>) = AstType::NumericLiteral as u8,
-    StringLiteral(&'a StringLiteral<'a>) = AstType::StringLiteral as u8,
-    BigIntLiteral(&'a BigIntLiteral<'a>) = AstType::BigIntLiteral as u8,
-    RegExpLiteral(&'a RegExpLiteral<'a>) = AstType::RegExpLiteral as u8,
     Program(&'a Program<'a>) = AstType::Program as u8,
     IdentifierName(&'a IdentifierName<'a>) = AstType::IdentifierName as u8,
     IdentifierReference(&'a IdentifierReference<'a>) = AstType::IdentifierReference as u8,
@@ -287,6 +281,26 @@ pub enum AstKind<'a> {
         AstType::ExportDefaultDeclaration as u8,
     ExportAllDeclaration(&'a ExportAllDeclaration<'a>) = AstType::ExportAllDeclaration as u8,
     ExportSpecifier(&'a ExportSpecifier<'a>) = AstType::ExportSpecifier as u8,
+    BooleanLiteral(&'a BooleanLiteral) = AstType::BooleanLiteral as u8,
+    NullLiteral(&'a NullLiteral) = AstType::NullLiteral as u8,
+    NumericLiteral(&'a NumericLiteral<'a>) = AstType::NumericLiteral as u8,
+    StringLiteral(&'a StringLiteral<'a>) = AstType::StringLiteral as u8,
+    BigIntLiteral(&'a BigIntLiteral<'a>) = AstType::BigIntLiteral as u8,
+    RegExpLiteral(&'a RegExpLiteral<'a>) = AstType::RegExpLiteral as u8,
+    JSXElement(&'a JSXElement<'a>) = AstType::JSXElement as u8,
+    JSXOpeningElement(&'a JSXOpeningElement<'a>) = AstType::JSXOpeningElement as u8,
+    JSXClosingElement(&'a JSXClosingElement<'a>) = AstType::JSXClosingElement as u8,
+    JSXFragment(&'a JSXFragment<'a>) = AstType::JSXFragment as u8,
+    JSXElementName(&'a JSXElementName<'a>) = AstType::JSXElementName as u8,
+    JSXNamespacedName(&'a JSXNamespacedName<'a>) = AstType::JSXNamespacedName as u8,
+    JSXMemberExpression(&'a JSXMemberExpression<'a>) = AstType::JSXMemberExpression as u8,
+    JSXMemberExpressionObject(&'a JSXMemberExpressionObject<'a>) =
+        AstType::JSXMemberExpressionObject as u8,
+    JSXExpressionContainer(&'a JSXExpressionContainer<'a>) = AstType::JSXExpressionContainer as u8,
+    JSXAttributeItem(&'a JSXAttributeItem<'a>) = AstType::JSXAttributeItem as u8,
+    JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>) = AstType::JSXSpreadAttribute as u8,
+    JSXIdentifier(&'a JSXIdentifier<'a>) = AstType::JSXIdentifier as u8,
+    JSXText(&'a JSXText<'a>) = AstType::JSXText as u8,
     TSThisParameter(&'a TSThisParameter<'a>) = AstType::TSThisParameter as u8,
     TSEnumDeclaration(&'a TSEnumDeclaration<'a>) = AstType::TSEnumDeclaration as u8,
     TSEnumMember(&'a TSEnumMember<'a>) = AstType::TSEnumMember as u8,
@@ -349,20 +363,6 @@ pub enum AstKind<'a> {
     TSExportAssignment(&'a TSExportAssignment<'a>) = AstType::TSExportAssignment as u8,
     TSInstantiationExpression(&'a TSInstantiationExpression<'a>) =
         AstType::TSInstantiationExpression as u8,
-    JSXElement(&'a JSXElement<'a>) = AstType::JSXElement as u8,
-    JSXOpeningElement(&'a JSXOpeningElement<'a>) = AstType::JSXOpeningElement as u8,
-    JSXClosingElement(&'a JSXClosingElement<'a>) = AstType::JSXClosingElement as u8,
-    JSXFragment(&'a JSXFragment<'a>) = AstType::JSXFragment as u8,
-    JSXElementName(&'a JSXElementName<'a>) = AstType::JSXElementName as u8,
-    JSXNamespacedName(&'a JSXNamespacedName<'a>) = AstType::JSXNamespacedName as u8,
-    JSXMemberExpression(&'a JSXMemberExpression<'a>) = AstType::JSXMemberExpression as u8,
-    JSXMemberExpressionObject(&'a JSXMemberExpressionObject<'a>) =
-        AstType::JSXMemberExpressionObject as u8,
-    JSXExpressionContainer(&'a JSXExpressionContainer<'a>) = AstType::JSXExpressionContainer as u8,
-    JSXAttributeItem(&'a JSXAttributeItem<'a>) = AstType::JSXAttributeItem as u8,
-    JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>) = AstType::JSXSpreadAttribute as u8,
-    JSXIdentifier(&'a JSXIdentifier<'a>) = AstType::JSXIdentifier as u8,
-    JSXText(&'a JSXText<'a>) = AstType::JSXText as u8,
 }
 
 impl AstKind<'_> {
@@ -378,15 +378,8 @@ impl AstKind<'_> {
 }
 
 impl GetSpan for AstKind<'_> {
-    #[allow(clippy::match_same_arms)]
     fn span(&self) -> Span {
         match self {
-            Self::BooleanLiteral(it) => it.span(),
-            Self::NullLiteral(it) => it.span(),
-            Self::NumericLiteral(it) => it.span(),
-            Self::StringLiteral(it) => it.span(),
-            Self::BigIntLiteral(it) => it.span(),
-            Self::RegExpLiteral(it) => it.span(),
             Self::Program(it) => it.span(),
             Self::IdentifierName(it) => it.span(),
             Self::IdentifierReference(it) => it.span(),
@@ -477,6 +470,25 @@ impl GetSpan for AstKind<'_> {
             Self::ExportDefaultDeclaration(it) => it.span(),
             Self::ExportAllDeclaration(it) => it.span(),
             Self::ExportSpecifier(it) => it.span(),
+            Self::BooleanLiteral(it) => it.span(),
+            Self::NullLiteral(it) => it.span(),
+            Self::NumericLiteral(it) => it.span(),
+            Self::StringLiteral(it) => it.span(),
+            Self::BigIntLiteral(it) => it.span(),
+            Self::RegExpLiteral(it) => it.span(),
+            Self::JSXElement(it) => it.span(),
+            Self::JSXOpeningElement(it) => it.span(),
+            Self::JSXClosingElement(it) => it.span(),
+            Self::JSXFragment(it) => it.span(),
+            Self::JSXElementName(it) => it.span(),
+            Self::JSXNamespacedName(it) => it.span(),
+            Self::JSXMemberExpression(it) => it.span(),
+            Self::JSXMemberExpressionObject(it) => it.span(),
+            Self::JSXExpressionContainer(it) => it.span(),
+            Self::JSXAttributeItem(it) => it.span(),
+            Self::JSXSpreadAttribute(it) => it.span(),
+            Self::JSXIdentifier(it) => it.span(),
+            Self::JSXText(it) => it.span(),
             Self::TSThisParameter(it) => it.span(),
             Self::TSEnumDeclaration(it) => it.span(),
             Self::TSEnumMember(it) => it.span(),
@@ -533,78 +545,11 @@ impl GetSpan for AstKind<'_> {
             Self::Decorator(it) => it.span(),
             Self::TSExportAssignment(it) => it.span(),
             Self::TSInstantiationExpression(it) => it.span(),
-            Self::JSXElement(it) => it.span(),
-            Self::JSXOpeningElement(it) => it.span(),
-            Self::JSXClosingElement(it) => it.span(),
-            Self::JSXFragment(it) => it.span(),
-            Self::JSXElementName(it) => it.span(),
-            Self::JSXNamespacedName(it) => it.span(),
-            Self::JSXMemberExpression(it) => it.span(),
-            Self::JSXMemberExpressionObject(it) => it.span(),
-            Self::JSXExpressionContainer(it) => it.span(),
-            Self::JSXAttributeItem(it) => it.span(),
-            Self::JSXSpreadAttribute(it) => it.span(),
-            Self::JSXIdentifier(it) => it.span(),
-            Self::JSXText(it) => it.span(),
         }
     }
 }
 
 impl<'a> AstKind<'a> {
-    #[inline]
-    pub fn as_boolean_literal(self) -> Option<&'a BooleanLiteral> {
-        if let Self::BooleanLiteral(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_null_literal(self) -> Option<&'a NullLiteral> {
-        if let Self::NullLiteral(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_numeric_literal(self) -> Option<&'a NumericLiteral<'a>> {
-        if let Self::NumericLiteral(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_string_literal(self) -> Option<&'a StringLiteral<'a>> {
-        if let Self::StringLiteral(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_big_int_literal(self) -> Option<&'a BigIntLiteral<'a>> {
-        if let Self::BigIntLiteral(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_reg_exp_literal(self) -> Option<&'a RegExpLiteral<'a>> {
-        if let Self::RegExpLiteral(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
     #[inline]
     pub fn as_program(self) -> Option<&'a Program<'a>> {
         if let Self::Program(v) = self {
@@ -1416,6 +1361,177 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
+    pub fn as_boolean_literal(self) -> Option<&'a BooleanLiteral> {
+        if let Self::BooleanLiteral(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_null_literal(self) -> Option<&'a NullLiteral> {
+        if let Self::NullLiteral(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_numeric_literal(self) -> Option<&'a NumericLiteral<'a>> {
+        if let Self::NumericLiteral(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_string_literal(self) -> Option<&'a StringLiteral<'a>> {
+        if let Self::StringLiteral(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_big_int_literal(self) -> Option<&'a BigIntLiteral<'a>> {
+        if let Self::BigIntLiteral(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_reg_exp_literal(self) -> Option<&'a RegExpLiteral<'a>> {
+        if let Self::RegExpLiteral(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_element(self) -> Option<&'a JSXElement<'a>> {
+        if let Self::JSXElement(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_opening_element(self) -> Option<&'a JSXOpeningElement<'a>> {
+        if let Self::JSXOpeningElement(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_closing_element(self) -> Option<&'a JSXClosingElement<'a>> {
+        if let Self::JSXClosingElement(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_fragment(self) -> Option<&'a JSXFragment<'a>> {
+        if let Self::JSXFragment(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_element_name(self) -> Option<&'a JSXElementName<'a>> {
+        if let Self::JSXElementName(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_namespaced_name(self) -> Option<&'a JSXNamespacedName<'a>> {
+        if let Self::JSXNamespacedName(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_member_expression(self) -> Option<&'a JSXMemberExpression<'a>> {
+        if let Self::JSXMemberExpression(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_member_expression_object(self) -> Option<&'a JSXMemberExpressionObject<'a>> {
+        if let Self::JSXMemberExpressionObject(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_expression_container(self) -> Option<&'a JSXExpressionContainer<'a>> {
+        if let Self::JSXExpressionContainer(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_attribute_item(self) -> Option<&'a JSXAttributeItem<'a>> {
+        if let Self::JSXAttributeItem(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_spread_attribute(self) -> Option<&'a JSXSpreadAttribute<'a>> {
+        if let Self::JSXSpreadAttribute(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_identifier(self) -> Option<&'a JSXIdentifier<'a>> {
+        if let Self::JSXIdentifier(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_jsx_text(self) -> Option<&'a JSXText<'a>> {
+        if let Self::JSXText(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
     pub fn as_ts_this_parameter(self) -> Option<&'a TSThisParameter<'a>> {
         if let Self::TSThisParameter(v) = self {
             Some(v)
@@ -1917,123 +2033,6 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_instantiation_expression(self) -> Option<&'a TSInstantiationExpression<'a>> {
         if let Self::TSInstantiationExpression(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_element(self) -> Option<&'a JSXElement<'a>> {
-        if let Self::JSXElement(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_opening_element(self) -> Option<&'a JSXOpeningElement<'a>> {
-        if let Self::JSXOpeningElement(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_closing_element(self) -> Option<&'a JSXClosingElement<'a>> {
-        if let Self::JSXClosingElement(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_fragment(self) -> Option<&'a JSXFragment<'a>> {
-        if let Self::JSXFragment(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_element_name(self) -> Option<&'a JSXElementName<'a>> {
-        if let Self::JSXElementName(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_namespaced_name(self) -> Option<&'a JSXNamespacedName<'a>> {
-        if let Self::JSXNamespacedName(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_member_expression(self) -> Option<&'a JSXMemberExpression<'a>> {
-        if let Self::JSXMemberExpression(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_member_expression_object(self) -> Option<&'a JSXMemberExpressionObject<'a>> {
-        if let Self::JSXMemberExpressionObject(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_expression_container(self) -> Option<&'a JSXExpressionContainer<'a>> {
-        if let Self::JSXExpressionContainer(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_attribute_item(self) -> Option<&'a JSXAttributeItem<'a>> {
-        if let Self::JSXAttributeItem(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_spread_attribute(self) -> Option<&'a JSXSpreadAttribute<'a>> {
-        if let Self::JSXSpreadAttribute(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_identifier(self) -> Option<&'a JSXIdentifier<'a>> {
-        if let Self::JSXIdentifier(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_jsx_text(self) -> Option<&'a JSXText<'a>> {
-        if let Self::JSXText(v) = self {
             Some(v)
         } else {
             None

@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/import/.oxlintrc.json fixtures/import/test.js
+working directory: 
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-default-export.html\eslint-plugin-import(no-default-export)]8;;\: Prefer named exports
+   ,-[fixtures/import/test.js:7:8]
+ 6 | // import/no-default-export
+ 7 | export default function foo() {}
+   :        ^^^^^^^
+ 8 | 
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 50 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

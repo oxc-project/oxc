@@ -1,4 +1,4 @@
-use oxc_ast::ast::{BinaryExpression, Expression};
+use oxc_ast::ast::{BinaryExpression, ConditionalExpression, Expression, LogicalExpression};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 /// JavaScript Language Type
@@ -94,6 +94,8 @@ impl<'a> From<&Expression<'a>> for ValueType {
                 e.expressions.last().map_or(ValueType::Undetermined, Self::from)
             }
             Expression::AssignmentExpression(e) => Self::from(&e.right),
+            Expression::ConditionalExpression(e) => Self::from(&**e),
+            Expression::LogicalExpression(e) => Self::from(&**e),
             _ => Self::Undetermined,
         }
     }
@@ -143,5 +145,33 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
             | BinaryOperator::GreaterThan
             | BinaryOperator::GreaterEqualThan => Self::Boolean,
         }
+    }
+}
+
+impl<'a> From<&ConditionalExpression<'a>> for ValueType {
+    fn from(e: &ConditionalExpression<'a>) -> Self {
+        let left = Self::from(&e.consequent);
+        if left.is_undetermined() {
+            return Self::Undetermined;
+        }
+        let right = Self::from(&e.alternate);
+        if left == right {
+            return left;
+        }
+        Self::Undetermined
+    }
+}
+
+impl<'a> From<&LogicalExpression<'a>> for ValueType {
+    fn from(e: &LogicalExpression<'a>) -> Self {
+        let left = Self::from(&e.left);
+        if !left.is_boolean() {
+            return Self::Undetermined;
+        }
+        let right = Self::from(&e.right);
+        if left == right {
+            return left;
+        }
+        Self::Undetermined
     }
 }

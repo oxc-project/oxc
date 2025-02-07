@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:18]
@@ -66,4 +65,16 @@ snapshot_kind: text
    ╭─[prefer_await_to_then.tsx:1:1]
  1 │ something().then(async () => await somethingElse())
    · ───────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:30]
+ 1 │ async function foo() { await thing().then() }
+   ·                              ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:24]
+ 1 │ async function foo() { thing().then() }
+   ·                        ──────────────
    ╰────

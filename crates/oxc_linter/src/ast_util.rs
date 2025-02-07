@@ -486,6 +486,41 @@ fn is_definitely_non_error_type(ty: &TSType) -> bool {
         _ => false,
     }
 }
+/// Get the preceding indentation string before the start of a Span in a given source_text string slice. Useful for maintaining the format of source code when applying a linting fix.
+///
+/// Slice into source_text until the start of given Span.
+/// Then, get the preceding spaces from the last line of the source_text.
+/// If there are any non-whitespace characters preceding the Span in the last line of source_text, return None.
+///
+/// Examples:
+///
+/// 1. Given the following source_text (with 2 preceding spaces):
+///
+/// ```ts
+///   break
+/// ```
+///
+/// and the Span encapsulating the break statement,
+///
+/// this function will return "  " (2 preceding spaces).
+///
+/// 2. Given the following source_text:
+///
+/// ```ts
+/// const foo = 'bar'; break;
+/// ```
+///
+/// and the Span encapsulating the break statement,
+///
+/// this function will return None because there is non-whitespace before the statement,
+/// meaning the line of source_text containing the Span is not indented on a new line.
+pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
+    let span_start = span.start as usize;
+    let preceding_source_text = &source_text[..span_start];
+
+    // only return last line if is whitespace
+    preceding_source_text.lines().last().filter(|&line| line.trim().is_empty())
+}
 
 pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
     match expr.get_inner_expression() {

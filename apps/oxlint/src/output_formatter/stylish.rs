@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use oxc_diagnostics::{
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
@@ -12,10 +10,6 @@ use crate::output_formatter::InternalFormatter;
 pub struct StylishOutputFormatter;
 
 impl InternalFormatter for StylishOutputFormatter {
-    fn all_rules(&mut self, writer: &mut dyn Write) {
-        writeln!(writer, "flag --rules with flag --format=stylish is not allowed").unwrap();
-    }
-
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(StylishReporter::default())
     }

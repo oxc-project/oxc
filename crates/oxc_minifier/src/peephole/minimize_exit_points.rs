@@ -1,33 +1,3 @@
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
-
-use super::PeepholeOptimizations;
-
-impl<'a> PeepholeOptimizations {
-    /// Transform the structure of the AST so that the number of explicit exits
-    /// are minimized and instead flows to implicit exits conditions.
-    ///
-    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_exit_points(
-        &mut self,
-        body: &mut FunctionBody<'_>,
-        _ctx: &mut TraverseCtx<'_>,
-    ) {
-        self.remove_last_return(&mut body.statements);
-    }
-
-    // `function foo() { return }` -> `function foo() {}`
-    fn remove_last_return(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        if let Some(last) = stmts.last() {
-            if matches!(last, Statement::ReturnStatement(ret) if ret.argument.is_none()) {
-                stmts.pop();
-                self.mark_current_function_as_changed();
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use crate::tester::{test, test_same};
@@ -133,7 +103,7 @@ mod test {
         test(
             "function f(a) {
               if (a) {
-                const a = Math.random();
+                let a = Math.random();
                 if (a < 0.5) {
                     return a;
                 }
@@ -142,7 +112,7 @@ mod test {
             }",
             "function f(a) {
               if (a) {
-                const a = Math.random();
+                let a = Math.random();
                 if (a < 0.5) return a;
               }
               return a;

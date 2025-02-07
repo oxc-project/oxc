@@ -1,7 +1,7 @@
 #![warn(missing_docs)]
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
-use oxc_span::{cmp::ContentEq, Span};
+use oxc_span::{ContentEq, Span};
 
 /// Indicates a line or block comment.
 #[ast]

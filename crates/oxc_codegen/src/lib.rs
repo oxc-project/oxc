@@ -19,7 +19,7 @@ use oxc_ast::ast::{
     BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
 };
 use oxc_data_structures::stack::Stack;
-use oxc_mangler::Mangler;
+use oxc_semantic::SymbolTable;
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_part_ascii, LS, PS},
@@ -79,7 +79,7 @@ pub struct Codegen<'a> {
     /// Original source code of the AST
     source_text: &'a str,
 
-    mangler: Option<Mangler>,
+    symbol_table: Option<SymbolTable>,
 
     /// Output Code
     code: CodeBuffer,
@@ -162,7 +162,7 @@ impl<'a> Codegen<'a> {
         Self {
             options,
             source_text: "",
-            mangler: None,
+            symbol_table: None,
             code: CodeBuffer::default(),
             needs_semicolon: false,
             need_space_before_dot: 0,
@@ -194,10 +194,12 @@ impl<'a> Codegen<'a> {
         self
     }
 
-    /// Set the mangler for mangling identifiers.
+    /// Set the symbol table used for identifier renaming.
+    ///
+    /// Can be used for easy renaming of variables (based on semantic analysis).
     #[must_use]
-    pub fn with_mangler(mut self, mangler: Option<Mangler>) -> Self {
-        self.mangler = mangler;
+    pub fn with_symbol_table(mut self, symbol_table: Option<SymbolTable>) -> Self {
+        self.symbol_table = symbol_table;
         self
     }
 
@@ -516,9 +518,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
-        if let Some(mangler) = &self.mangler {
+        if let Some(symbol_table) = &self.symbol_table {
             if let Some(reference_id) = reference.reference_id.get() {
-                if let Some(name) = mangler.get_reference_name(reference_id) {
+                if let Some(name) = symbol_table.get_reference_name(reference_id) {
                     // SAFETY: Hack the lifetime to be part of the allocator.
                     return unsafe { std::mem::transmute_copy(&name) };
                 }
@@ -528,9 +530,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
-        if let Some(mangler) = &self.mangler {
+        if let Some(symbol_table) = &self.symbol_table {
             if let Some(symbol_id) = ident.symbol_id.get() {
-                let name = mangler.get_symbol_name(symbol_id);
+                let name = symbol_table.get_name(symbol_id);
                 // SAFETY: Hack the lifetime to be part of the allocator.
                 return unsafe { std::mem::transmute_copy(&name) };
             }
@@ -575,12 +577,13 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_non_negative_float(&mut self, num: f64) {
-        use oxc_syntax::number::ToJsString;
+        // Inline the buffer here to avoid heap allocation on `buffer.format(*self).to_string()`.
+        let mut buffer = ryu_js::Buffer::new();
         if num < 1000.0 && num.fract() == 0.0 {
-            self.print_str(&num.to_js_string());
+            self.print_str(buffer.format(num));
             self.need_space_before_dot = self.code_len();
         } else {
-            let s = Self::get_minified_number(num);
+            let s = Self::get_minified_number(num, &mut buffer);
             self.print_str(&s);
             if !s.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
                 self.need_space_before_dot = self.code_len();
@@ -609,13 +612,13 @@ impl<'a> Codegen<'a> {
                 }
             }
             let mut quote = b'"';
-            if double_cost > single_cost {
-                quote = b'\'';
-                if single_cost > backtick_cost && allow_backtick {
-                    quote = b'`';
-                }
-            } else if double_cost > backtick_cost && allow_backtick {
+            if allow_backtick && double_cost >= backtick_cost {
                 quote = b'`';
+                if backtick_cost > single_cost {
+                    quote = b'\'';
+                }
+            } else if double_cost > single_cost {
+                quote = b'\'';
             }
             quote
         } else {
@@ -691,25 +694,25 @@ impl<'a> Codegen<'a> {
     // `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn get_minified_number(num: f64) -> String {
+    fn get_minified_number(num: f64, buffer: &mut ryu_js::Buffer) -> Cow<'_, str> {
         use cow_utils::CowUtils;
-        use oxc_syntax::number::ToJsString;
+
         if num < 1000.0 && num.fract() == 0.0 {
-            return num.to_js_string();
+            return Cow::Borrowed(buffer.format(num));
         }
 
-        let mut s = num.to_js_string();
+        let mut s = buffer.format(num);
 
         if s.starts_with("0.") {
-            s = s[1..].to_string();
+            s = &s[1..];
         }
 
-        s = s.cow_replacen("e+", "e", 1).to_string();
+        let s = s.cow_replacen("e+", "e", 1);
 
         let mut candidates = vec![s.clone()];
 
         if num.fract() == 0.0 {
-            candidates.push(format!("0x{:x}", num as u128));
+            candidates.push(Cow::Owned(format!("0x{:x}", num as u128)));
         }
 
         // create `1e-2`
@@ -717,14 +720,14 @@ impl<'a> Codegen<'a> {
             if let Some((i, _)) = s[1..].bytes().enumerate().find(|(_, c)| *c != b'0') {
                 let len = i + 1; // `+1` to include the dot.
                 let digits = &s[len..];
-                candidates.push(format!("{digits}e-{}", digits.len() + len - 1));
+                candidates.push(Cow::Owned(format!("{digits}e-{}", digits.len() + len - 1)));
             }
         }
 
         // create 1e2
         if s.ends_with('0') {
             if let Some((len, _)) = s.bytes().rev().enumerate().find(|(_, c)| *c != b'0') {
-                candidates.push(format!("{}e{len}", &s[0..s.len() - len]));
+                candidates.push(Cow::Owned(format!("{}e{len}", &s[0..s.len() - len])));
             }
         }
 
@@ -733,13 +736,13 @@ impl<'a> Codegen<'a> {
         if let Some((integer, point, exponent)) =
             s.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
         {
-            candidates.push(format!(
+            candidates.push(Cow::Owned(format!(
                 "{integer}{point}e{}",
                 exponent.parse::<isize>().unwrap() - point.len() as isize
-            ));
+            )));
         }
 
-        candidates.into_iter().min_by_key(String::len).unwrap()
+        candidates.into_iter().min_by_key(|c| c.len()).unwrap()
     }
 
     fn add_source_mapping(&mut self, span: Span) {

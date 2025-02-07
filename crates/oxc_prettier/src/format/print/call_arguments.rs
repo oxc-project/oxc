@@ -5,21 +5,15 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     array, break_parent, conditional_group,
-    format::print::{
-        array::{is_concisely_printed_array, Array},
-        call_expression::{is_commons_js_or_amd_call, CallExpressionLike},
-        misc,
-    },
+    format::print::{array, call_expression, misc},
     group, hardline, if_break, indent,
     ir::Doc,
-    line, softline, text,
-    utils::will_break,
-    Format, Prettier,
+    line, softline, text, utils, Format, Prettier,
 };
 
 pub fn print_call_arguments<'a>(
     p: &mut Prettier<'a>,
-    expression: &CallExpressionLike<'a, '_>,
+    expression: &call_expression::CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
     let arguments = expression.arguments();
 
@@ -89,7 +83,7 @@ pub fn print_call_arguments<'a>(
         let mut first_doc = arguments[0].format(p);
         p.args.expand_first_arg = false;
 
-        if will_break(&mut first_doc) {
+        if utils::will_break(&mut first_doc) {
             let last_doc = get_printed_arguments(p, 1).pop().unwrap();
             let all_args_broken_out_doc = all_args_broken_out(p);
 
@@ -120,7 +114,7 @@ pub fn print_call_arguments<'a>(
 
     if should_expand_last_arg(arguments) {
         let mut printed_arguments = get_printed_arguments(p, -1);
-        if printed_arguments.iter_mut().any(will_break) {
+        if printed_arguments.iter_mut().any(utils::will_break) {
             return all_args_broken_out(p);
         }
 
@@ -138,7 +132,7 @@ pub fn print_call_arguments<'a>(
 
         let mut last_doc = get_last_doc(p);
 
-        if will_break(&mut last_doc) {
+        if utils::will_break(&mut last_doc) {
             let all_args_broken_out_doc = all_args_broken_out(p);
             return array!(
                 p,
@@ -186,11 +180,12 @@ pub fn print_call_arguments<'a>(
 
     let mut printed_arguments = get_printed_arguments(p, 0);
 
-    let should_break = if matches!(expression, CallExpressionLike::CallExpression(_)) {
-        !is_commons_js_or_amd_call(expression.callee(), arguments)
-    } else {
-        true
-    };
+    let should_break =
+        if matches!(expression, call_expression::CallExpressionLike::CallExpression(_)) {
+            !call_expression::is_commons_js_or_amd_call(expression.callee(), arguments)
+        } else {
+            true
+        };
 
     if should_break {
         printed_arguments.insert(0, softline!());
@@ -209,6 +204,54 @@ pub fn print_call_arguments<'a>(
 
     group!(p, parts, should_break, None)
 }
+
+// In Prettier, `callArguments()` is also used for `ImportExpression`.
+// But it only passes 2/10 branches! so let's inline it here.
+pub fn print_import_source_and_arguments<'a>(
+    p: &mut Prettier<'a>,
+    expr: &ImportExpression<'a>,
+) -> Doc<'a> {
+    let mut parts = Vec::new_in(p.allocator);
+
+    // TODO:
+    // if (shouldExpandLastArg(args, printedArguments, options)) {
+    //   return conditionalGroup([
+    //     ["(", ...headArgs, lastArg, ")"],
+    //     ["(", ...headArgs, group(lastArg, { shouldBreak: true }), ")"],
+    //     allArgsBrokenOut(),
+    //   ]);
+    // }
+
+    // TODO:
+    // return group([
+    //   "(",
+    //   indent([softline, ...printedArguments]),
+    //   ifBreak(maybeTrailingComma),
+    //   softline,
+    //   ")",
+    // ])
+
+    parts.push(text!("("));
+
+    let mut indent_parts = Vec::new_in(p.allocator);
+    indent_parts.push(softline!());
+    indent_parts.push(expr.source.format(p));
+    if !expr.arguments.is_empty() {
+        for arg in &expr.arguments {
+            indent_parts.push(text!(","));
+            indent_parts.push(line!());
+            indent_parts.push(arg.format(p));
+        }
+    }
+    parts.push(group!(p, [indent!(p, indent_parts)]));
+    parts.push(softline!());
+
+    parts.push(text!(")"));
+
+    group!(p, parts)
+}
+
+// ---
 
 /// * Reference <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/print/call-arguments.js#L247-L272>
 fn should_expand_first_arg<'a>(arguments: &Vec<'a, Argument<'a>>) -> bool {
@@ -245,7 +288,7 @@ fn should_expand_last_arg(args: &Vec<'_, Argument<'_>>) -> bool {
         && (args.len() != 2
             || !matches!(penultimate_arg, Some(Argument::ArrowFunctionExpression(_)))
             || !matches!(last_arg, Expression::ArrayExpression(_)))
-        && !(args.len() > 1 && is_concisely_printed_array(last_arg))
+        && !(args.len() > 1 && array::is_concisely_printed_array(last_arg))
 }
 
 fn is_hopefully_short_call_argument(mut node: &Expression) -> bool {

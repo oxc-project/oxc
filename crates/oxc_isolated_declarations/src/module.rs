@@ -97,7 +97,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 declarations,
                 self.is_declare(),
             ));
-            Some((Some(variable_statement), self.ast.expression_identifier_reference(SPAN, name)))
+            Some((Some(variable_statement), self.ast.expression_identifier(SPAN, name)))
         }
     }
 

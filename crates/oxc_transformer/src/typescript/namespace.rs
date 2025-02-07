@@ -415,7 +415,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         // is smaller than `const a = 1; N.a = a`;
         if is_all_binding_identifier {
             var_decl.declarations.iter_mut().for_each(|declarator| {
-                let Some(property_name) = declarator.id.get_identifier() else {
+                let Some(property_name) = declarator.id.get_identifier_name() else {
                     return;
                 };
                 if let Some(init) = &mut declarator.init {

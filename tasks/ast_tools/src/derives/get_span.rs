@@ -1,24 +1,51 @@
+//! Derive for `GetSpan` trait.
+
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
 use crate::{
-    schema::{EnumDef, GetGenerics, Schema, StructDef, ToType, TypeDef},
-    util::{ToIdent, TypeWrapper},
+    schema::{Def, EnumDef, Schema, StructDef},
+    utils::create_safe_ident,
+    Result,
 };
 
-use super::{define_derive, Derive};
+use super::{define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum};
 
+/// Derive for `GetSpan` trait.
 pub struct DeriveGetSpan;
 
 define_derive!(DeriveGetSpan);
 
 impl Derive for DeriveGetSpan {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "GetSpan"
     }
 
-    fn prelude() -> TokenStream {
+    fn crate_name(&self) -> &'static str {
+        "oxc_span"
+    }
+
+    /// Register that accept `#[span]` attr on struct fields.
+    fn attrs(&self) -> &[(&'static str, AttrPositions)] {
+        &[("span", AttrPositions::StructField)]
+    }
+
+    /// Parse `#[span]` on struct field.
+    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
+        // No need to check attr name is `span`, because that's the only attribute this derive handles.
+        // Ditto location can only be `StructField`.
+        let AttrLocation::StructField(struct_def, field_index) = location else { unreachable!() };
+
+        if matches!(part, AttrPart::None) {
+            struct_def.span.span_field_index = Some(field_index);
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
+    fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]
 
@@ -27,22 +54,23 @@ impl Derive for DeriveGetSpan {
         }
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
-        let self_type = quote!(&self);
-        let result_type = quote!(Span);
+    fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
+        let trait_ident = create_safe_ident("GetSpan");
+        let method_ident = create_safe_ident("span");
+        let self_ty = quote!(&self);
+        let result_ty = quote!(Span);
         let result_expr = quote!(self.span);
-        let unbox = |it| quote!(#it.as_ref());
-        let reference = |it| quote!(&#it);
+        let reference = quote!( & );
 
-        derive(
-            Self::trait_name(),
-            "span",
-            &self_type,
-            &result_type,
+        derive_type(
+            type_def,
+            &trait_ident,
+            &method_ident,
+            &self_ty,
+            &result_ty,
             &result_expr,
-            def,
-            unbox,
-            reference,
+            &reference,
+            schema,
         )
     }
 }
@@ -52,11 +80,16 @@ pub struct DeriveGetSpanMut;
 define_derive!(DeriveGetSpanMut);
 
 impl Derive for DeriveGetSpanMut {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "GetSpanMut"
     }
 
-    fn prelude() -> TokenStream {
+    /// Get crate trait is defined in.
+    fn crate_name(&self) -> &'static str {
+        "oxc_span"
+    }
+
+    fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]
 
@@ -65,120 +98,115 @@ impl Derive for DeriveGetSpanMut {
         }
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
-        let self_type = quote!(&mut self);
-        let result_type = quote!(&mut Span);
+    fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
+        let trait_ident = create_safe_ident("GetSpanMut");
+        let method_ident = create_safe_ident("span_mut");
+        let self_ty = quote!(&mut self);
+        let result_ty = quote!(&mut Span);
         let result_expr = quote!(&mut self.span);
-        let unbox = |it| quote!(&mut **#it);
-        let reference = |it| quote!(&mut #it);
+        let reference = quote!( &mut );
 
-        derive(
-            Self::trait_name(),
-            "span_mut",
-            &self_type,
-            &result_type,
+        derive_type(
+            type_def,
+            &trait_ident,
+            &method_ident,
+            &self_ty,
+            &result_ty,
             &result_expr,
-            def,
-            unbox,
-            reference,
+            &reference,
+            schema,
         )
     }
 }
 
+/// Generate `GetSpan` / `GetSpanMut` trait implementation for a type.
 #[expect(clippy::too_many_arguments)]
-fn derive<U, R>(
-    trait_name: &str,
-    method_name: &str,
-    self_type: &TokenStream,
-    result_type: &TokenStream,
+fn derive_type(
+    type_def: StructOrEnum,
+    trait_ident: &Ident,
+    method_ident: &Ident,
+    self_ty: &TokenStream,
+    result_ty: &TokenStream,
     result_expr: &TokenStream,
-    def: &TypeDef,
-    unbox: U,
-    reference: R,
-) -> TokenStream
-where
-    U: Fn(TokenStream) -> TokenStream,
-    R: Fn(TokenStream) -> TokenStream,
-{
-    let trait_ident = trait_name.to_ident();
-    let method_ident = method_name.to_ident();
-    match &def {
-        TypeDef::Enum(def) => {
-            derive_enum(def, &trait_ident, &method_ident, self_type, result_type, unbox)
-        }
-        TypeDef::Struct(def) => derive_struct(
-            def,
-            &trait_ident,
-            &method_ident,
-            self_type,
-            result_type,
+    reference: &TokenStream,
+    schema: &Schema,
+) -> TokenStream {
+    match type_def {
+        StructOrEnum::Struct(struct_def) => derive_struct(
+            struct_def,
+            trait_ident,
+            method_ident,
+            self_ty,
+            result_ty,
             result_expr,
             reference,
+            schema,
         ),
+        StructOrEnum::Enum(enum_def) => {
+            derive_enum(enum_def, trait_ident, method_ident, self_ty, result_ty, reference, schema)
+        }
     }
 }
 
-fn derive_enum<U>(
-    def: &EnumDef,
-    trait_name: &Ident,
-    method_name: &Ident,
-    self_type: &TokenStream,
-    result_type: &TokenStream,
-    unbox: U,
-) -> TokenStream
-where
-    U: Fn(TokenStream) -> TokenStream,
-{
-    let target_type = if def.has_lifetime() { def.to_elided_type() } else { def.to_type_elide() };
+/// Generate `GetSpan` / `GetSpanMut` trait implementation for a struct.
+#[expect(clippy::too_many_arguments)]
+fn derive_struct(
+    struct_def: &StructDef,
+    trait_ident: &Ident,
+    method_ident: &Ident,
+    self_ty: &TokenStream,
+    result_ty: &TokenStream,
+    result_expr: &TokenStream,
+    reference: &TokenStream,
+    schema: &Schema,
+) -> TokenStream {
+    let ty = struct_def.ty_anon(schema);
 
-    let matches = def.all_variants().map(|var| {
-        let ident = var.ident();
-        let mut it = quote!(it);
-        if var.fields.first().is_some_and(|it| it.typ.analysis().wrapper == TypeWrapper::Box) {
-            it = unbox(it);
-        }
-        quote!(Self :: #ident(it) => #trait_name :: #method_name(#it))
-    });
+    let result_expr = if let Some(field_index) = struct_def.span.span_field_index {
+        let field_ident = struct_def.fields[field_index].ident();
+        &quote!( #trait_ident::#method_ident(#reference self.#field_ident) )
+    } else {
+        result_expr
+    };
 
     quote! {
-        impl #trait_name for #target_type {
-            fn #method_name(#self_type) -> #result_type {
-                match self {
-                    #(#matches),*
-                }
+        impl #trait_ident for #ty {
+            #[inline]
+            fn #method_ident(#self_ty) -> #result_ty {
+                #result_expr
             }
         }
     }
 }
 
-fn derive_struct<R>(
-    def: &StructDef,
-    trait_name: &Ident,
-    method_name: &Ident,
-    self_type: &TokenStream,
-    result_type: &TokenStream,
-    result_expr: &TokenStream,
-    reference: R,
-) -> TokenStream
-where
-    R: Fn(TokenStream) -> TokenStream,
-{
-    let target_type = if def.has_lifetime() { def.to_elided_type() } else { def.to_type_elide() };
+/// Generate `GetSpan` / `GetSpanMut` trait implementation for an enum.
+fn derive_enum(
+    enum_def: &EnumDef,
+    trait_ident: &Ident,
+    method_ident: &Ident,
+    self_ty: &TokenStream,
+    result_ty: &TokenStream,
+    reference: &TokenStream,
+    schema: &Schema,
+) -> TokenStream {
+    let ty = enum_def.ty_anon(schema);
 
-    let span_field = def.fields.iter().find(|field| field.markers.span);
-    let result_expr = if let Some(span_field) = span_field {
-        let ident = span_field.name.as_ref().map(ToIdent::to_ident).unwrap();
-        let reference = reference(quote!(self.#ident));
-        quote!(#trait_name :: #method_name (#reference))
-    } else {
-        result_expr.clone()
-    };
+    let matches = enum_def.all_variants(schema).map(|variant| {
+        let variant_ident = variant.ident();
+        let variant_type = variant.field_type(schema).unwrap();
+        if variant_type.is_box() {
+            quote!( Self::#variant_ident(it) => #trait_ident::#method_ident(#reference **it) )
+        } else {
+            quote!( Self::#variant_ident(it) => #trait_ident::#method_ident(it) )
+        }
+    });
 
     quote! {
-        impl #trait_name for #target_type {
-            #[inline]
-            fn #method_name(#self_type) -> #result_type {
-                #result_expr
+        impl #trait_ident for #ty {
+            fn #method_ident(#self_ty) -> #result_ty {
+                match self {
+                    #(#matches),*
+                }
             }
         }
     }

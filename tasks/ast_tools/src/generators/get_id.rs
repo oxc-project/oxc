@@ -1,5 +1,5 @@
-//! Generator for ID getter/setter methods on all types with `scope_id`, `symbol_id`, `reference_id`
-//! fields.
+//! Generator for ID getter/setter methods on all structs with semantic ID fields
+//! (`scope_id`, `symbol_id`, `reference_id`).
 //!
 //! e.g. Generates `scope_id` and `set_scope_id` methods on all types with a `scope_id` field.
 
@@ -8,20 +8,24 @@ use quote::{format_ident, quote};
 
 use crate::{
     output::{output_path, Output},
-    schema::{Schema, TypeDef},
-    util::ToIdent,
-    Generator,
+    schema::{Def, Schema, TypeDef},
+    Codegen, Generator, AST_CRATE_PATH,
 };
 
 use super::define_generator;
 
+/// Semantic ID types.
+/// We generate builder methods both with and without these fields for types which include any of them.
+const SEMANTIC_ID_TYPES: [&str; 3] = ["ScopeId", "SymbolId", "ReferenceId"];
+
+/// Generator for methods to get/set semantic IDs on structs which have them.
 pub struct GetIdGenerator;
 
 define_generator!(GetIdGenerator);
 
 impl Generator for GetIdGenerator {
-    fn generate(&mut self, schema: &Schema) -> Output {
-        let impls = schema.defs.iter().filter_map(generate_for_type);
+    fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
+        let impls = schema.types.iter().filter_map(|type_def| generate_for_type(type_def, schema));
 
         let output = quote! {
             use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
@@ -32,33 +36,33 @@ impl Generator for GetIdGenerator {
             #(#impls)*
         };
 
-        Output::Rust { path: output_path(crate::AST_CRATE, "get_id.rs"), tokens: output }
+        Output::Rust { path: output_path(AST_CRATE_PATH, "get_id.rs"), tokens: output }
     }
 }
 
-fn generate_for_type(def: &TypeDef) -> Option<TokenStream> {
-    let TypeDef::Struct(def) = def else { return None };
+fn generate_for_type(type_def: &TypeDef, schema: &Schema) -> Option<TokenStream> {
+    let TypeDef::Struct(struct_def) = type_def else { return None };
 
-    let struct_name = def.name.as_str();
+    let struct_name = struct_def.name();
 
-    let methods = def
+    let methods = struct_def
         .fields
         .iter()
         .filter_map(|field| {
-            let field_ident = field.ident().expect("expected named field");
-            let field_name = field_ident.to_string();
+            let field_type = field.type_def(schema);
+            let inner_type = field_type.as_cell()?.inner_type(schema).as_option()?.inner_type(schema);
+            let inner_type_name = inner_type.name();
+            if !SEMANTIC_ID_TYPES.contains(&inner_type_name) {
+                return None;
+            }
 
-            let type_name = match (field_name.as_str(), field.typ.raw()) {
-                ("scope_id", "Cell<Option<ScopeId>>") => "ScopeId",
-                ("symbol_id", "Cell<Option<SymbolId>>") => "SymbolId",
-                ("reference_id", "Cell<Option<ReferenceId>>") => "ReferenceId",
-                _ => return None,
-            };
-            let type_ident = type_name.to_ident();
+            let field_name = field.name();
+            let field_ident = field.ident();
+            let inner_type_ident = inner_type.ident();
 
             // Generate getter method
-            let get_doc1 = format!(" Get [`{type_name}`] of [`{struct_name}`].");
-            let get_doc2 = format!(" Only use this method on a post-semantic AST where [`{type_name}`]s are always defined.");
+            let get_doc1 = format!(" Get [`{inner_type_name}`] of [`{struct_name}`].");
+            let get_doc2 = format!(" Only use this method on a post-semantic AST where [`{inner_type_name}`]s are always defined.");
             let get_doc3 = format!(" Panics if `{field_name}` is [`None`].");
 
             let get_method = quote! {
@@ -69,18 +73,18 @@ fn generate_for_type(def: &TypeDef) -> Option<TokenStream> {
                 /// # Panics
                 #[doc = #get_doc3]
                 #[inline]
-                pub fn #field_ident(&self) -> #type_ident {
+                pub fn #field_ident(&self) -> #inner_type_ident {
                     self.#field_ident.get().unwrap()
                 }
             };
 
             // Generate setter method
             let set_method_ident = format_ident!("set_{field_name}");
-            let set_doc = format!(" Set [`{type_name}`] of [`{struct_name}`].");
+            let set_doc = format!(" Set [`{inner_type_name}`] of [`{struct_name}`].");
             let set_method = quote! {
                 #[doc = #set_doc]
                 #[inline]
-                pub fn #set_method_ident(&self, #field_ident: #type_ident) {
+                pub fn #set_method_ident(&self, #field_ident: #inner_type_ident) {
                     self.#field_ident.set(Some(#field_ident));
                 }
             };
@@ -93,19 +97,17 @@ fn generate_for_type(def: &TypeDef) -> Option<TokenStream> {
                 #set_method
             })
         })
-        .collect::<Vec<_>>();
+        .collect::<TokenStream>();
 
     if methods.is_empty() {
         return None;
     }
 
-    let struct_name_ident = struct_name.to_ident();
-    let lifetime = if def.has_lifetime { quote!(<'_>) } else { TokenStream::default() };
-
+    let struct_ty = struct_def.ty_anon(schema);
     Some(quote! {
         ///@@line_break
-        impl #struct_name_ident #lifetime {
-            #(#methods)*
+        impl #struct_ty {
+            #methods
         }
     })
 }

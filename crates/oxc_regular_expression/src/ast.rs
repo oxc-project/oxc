@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{cmp::ContentEq, Atom, GetSpan, Span};
+use oxc_span::{Atom, ContentEq, GetSpan, Span};
 
 /// The root of the `PatternParser` result.
 #[ast]

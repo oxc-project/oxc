@@ -1,0 +1,20 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/no_empty_disallow_empty_catch/eslintrc.json -W no-empty fixtures/no_empty_disallow_empty_catch/test.js
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-empty.html\eslint(no-empty)]8;;\: Unexpected empty block statements
+   ,-[fixtures/no_empty_disallow_empty_catch/test.js:1:29]
+ 1 | try { console.log() } catch {}
+   :                             ^^
+   `----
+  help: Remove this block or add a comment inside it
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 98 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

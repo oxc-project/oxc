@@ -1,9 +1,7 @@
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ValueType},
-    side_effects::MayHaveSideEffects,
-    ToJsString, ToNumber,
+    constant_evaluation::ValueType, side_effects::MayHaveSideEffects, ToJsString, ToNumber,
 };
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
@@ -13,7 +11,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
-use oxc_traverse::{Ancestor, TraverseCtx};
+use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -24,18 +22,14 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
-    pub fn substitute_object_property(
-        &mut self,
-        prop: &mut ObjectProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub fn substitute_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: Ctx<'a, '_>) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
     pub fn substitute_assignment_target_property_property(
         &mut self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
     }
@@ -43,7 +37,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_binding_property(
         &mut self,
         prop: &mut BindingProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -51,7 +45,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_method_definition(
         &mut self,
         prop: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -59,7 +53,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_property_definition(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -67,7 +61,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_accessor_property(
         &mut self,
         prop: &mut AccessorProperty<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -75,7 +69,7 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_return_statement(
         &mut self,
         stmt: &mut ReturnStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         self.compress_return_statement(stmt, ctx);
     }
@@ -83,28 +77,18 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         for declarator in &mut decl.declarations {
-            self.compress_variable_declarator(declarator, Ctx(ctx));
+            self.compress_variable_declarator(declarator, ctx);
         }
     }
 
-    pub fn substitute_call_expression(
-        &mut self,
-        expr: &mut CallExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub fn substitute_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: Ctx<'a, '_>) {
         self.try_compress_call_expression_arguments(expr, ctx);
     }
 
-    pub fn substitute_exit_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let ctx = Ctx(ctx);
-
+    pub fn substitute_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
         // Change syntax
         match expr {
             Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
@@ -172,10 +156,12 @@ impl<'a> PeepholeOptimizations {
 
     /// Compress `typeof foo == "undefined"`
     ///
-    /// - `typeof foo == "undefined"` (if foo is resolved) -> `foo === undefined`
-    /// - `typeof foo != "undefined"` (if foo is resolved) -> `foo !== undefined`
-    /// - `typeof foo == "undefined"` -> `typeof foo > "u"`
-    /// - `typeof foo != "undefined"` -> `typeof foo < "u"`
+    /// - `typeof foo == "undefined"` (if foo is not resolved) -> `typeof foo > "u"`
+    /// - `typeof foo != "undefined"` (if foo is not resolved) -> `typeof foo < "u"`
+    /// - `typeof foo == "undefined"` -> `foo === undefined`
+    /// - `typeof foo != "undefined"` -> `foo !== undefined`
+    /// - `typeof foo.bar == "undefined"` -> `foo.bar === undefined` (for any expression e.g.`typeof (foo + "")`)
+    /// - `typeof foo.bar != "undefined"` -> `foo.bar !== undefined` (for any expression e.g.`typeof (foo + "")`)
     ///
     /// Enabled by `compress.typeofs`
     fn try_compress_typeof_undefined(
@@ -199,24 +185,19 @@ impl<'a> PeepholeOptimizations {
             _ => return None,
         };
         if let Expression::Identifier(ident) = &unary_expr.argument {
-            if !ctx.is_global_reference(ident) {
-                let Expression::UnaryExpression(unary_expr) =
-                    ctx.ast.move_expression(&mut expr.left)
-                else {
-                    unreachable!()
-                };
-                let right = ctx.ast.void_0(expr.right.span());
-                return Some(ctx.ast.expression_binary(
-                    expr.span,
-                    unary_expr.unbox().argument,
-                    new_eq_op,
-                    right,
-                ));
+            if ctx.is_global_reference(ident) {
+                let left = ctx.ast.move_expression(&mut expr.left);
+                let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
+                return Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right));
             }
+        }
+
+        let Expression::UnaryExpression(unary_expr) = ctx.ast.move_expression(&mut expr.left)
+        else {
+            unreachable!()
         };
-        let left = ctx.ast.move_expression(&mut expr.left);
-        let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
-        Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right))
+        let right = ctx.ast.void_0(expr.right.span());
+        Some(ctx.ast.expression_binary(expr.span, unary_expr.unbox().argument, new_eq_op, right))
     }
 
     /// `a || (b || c);` -> `(a || b) || c;`
@@ -394,7 +375,7 @@ impl<'a> PeepholeOptimizations {
             ctx.ast.expression_unary(
                 SPAN,
                 UnaryOperator::LogicalNot,
-                ctx.ast.expression_identifier_reference(is_null_id_ref.span, is_null_id_ref.name),
+                ctx.ast.expression_identifier(is_null_id_ref.span, is_null_id_ref.name),
             )
         } else {
             ctx.ast.expression_unary(
@@ -403,8 +384,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.ast.expression_unary(
                     SPAN,
                     UnaryOperator::LogicalNot,
-                    ctx.ast
-                        .expression_identifier_reference(is_null_id_ref.span, is_null_id_ref.name),
+                    ctx.ast.expression_identifier(is_null_id_ref.span, is_null_id_ref.name),
                 ),
             )
         };
@@ -447,15 +427,13 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `return undefined` -> `return`
     /// `return void 0` -> `return`
-    fn compress_return_statement(
-        &mut self,
-        stmt: &mut ReturnStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn compress_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: Ctx<'a, '_>) {
         let Some(argument) = &stmt.argument else { return };
         if !match argument {
-            Expression::Identifier(ident) => Ctx(ctx).is_identifier_undefined(ident),
-            Expression::UnaryExpression(e) => e.operator.is_void() && !e.may_have_side_effects(),
+            Expression::Identifier(ident) => ctx.is_identifier_undefined(ident),
+            Expression::UnaryExpression(e) => {
+                e.operator.is_void() && !ctx.expression_may_have_side_effects(argument)
+            }
             _ => false,
         } {
             return;
@@ -524,20 +502,10 @@ impl<'a> PeepholeOptimizations {
             "Boolean" => match arg {
                 None => Some(ctx.ast.expression_boolean_literal(span, false)),
                 Some(arg) => {
-                    if let Expression::UnaryExpression(unary_expr) = arg {
-                        if unary_expr.operator == UnaryOperator::LogicalNot {
-                            return Some(ctx.ast.move_expression(arg));
-                        }
-                    }
-                    Some(ctx.ast.expression_unary(
-                        span,
-                        UnaryOperator::LogicalNot,
-                        ctx.ast.expression_unary(
-                            span,
-                            UnaryOperator::LogicalNot,
-                            ctx.ast.move_expression(arg),
-                        ),
-                    ))
+                    let mut arg = ctx.ast.move_expression(arg);
+                    Self::try_fold_expr_in_boolean_context(&mut arg, ctx);
+                    let arg = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, arg);
+                    Some(Self::minimize_not(span, arg, ctx))
                 }
             },
             "String" => {
@@ -642,7 +610,7 @@ impl<'a> PeepholeOptimizations {
                                 ));
                             }
                         }
-                        let callee = ctx.ast.expression_identifier_reference(n.span, "Array");
+                        let callee = ctx.ast.expression_identifier(n.span, "Array");
                         let args = ctx.ast.move_vec(args);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
@@ -655,7 +623,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     // `new Array(x)` -> `Array(x)`
                     else {
-                        let callee = ctx.ast.expression_identifier_reference(span, "Array");
+                        let callee = ctx.ast.expression_identifier(span, "Array");
                         let args = ctx.ast.move_vec(args);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
@@ -745,8 +713,7 @@ impl<'a> PeepholeOptimizations {
                     .as_member_expression()
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
-                call_expr.callee =
-                    ctx.ast.expression_identifier_reference(call_expr.callee.span(), "Object");
+                call_expr.callee = ctx.ast.expression_identifier(call_expr.callee.span(), "Object");
                 self.mark_current_function_as_changed();
             }
         }
@@ -762,7 +729,7 @@ impl<'a> PeepholeOptimizations {
         &mut self,
         key: &mut PropertyKey<'a>,
         computed: &mut bool,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         if let PropertyKey::NumericLiteral(_) = key {
             if *computed {
@@ -805,7 +772,7 @@ impl<'a> PeepholeOptimizations {
     fn try_compress_call_expression_arguments(
         &mut self,
         node: &mut CallExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         let (new_size, should_fold) =
             node.arguments.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
@@ -862,17 +829,73 @@ impl<'a> PeepholeOptimizations {
             self.mark_current_function_as_changed();
         }
     }
+
+    pub fn substitute_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
+        if let Statement::ExpressionStatement(expr_stmt) = stmt {
+            if let Some(folded_expr) = match &mut expr_stmt.expression {
+                Expression::LogicalExpression(expr) => {
+                    self.try_compress_is_null_and_to_nullish_coalescing(expr, ctx)
+                }
+                _ => None,
+            } {
+                expr_stmt.expression = folded_expr;
+                self.mark_current_function_as_changed();
+            }
+        }
+    }
+
+    /// Compress `a == null && b` to `a ?? b`
+    ///
+    /// - `a == null && b` -> `a ?? b`
+    /// - `a != null || b` -> `a ?? b`
+    ///
+    /// This can be only done when the return value is not used.
+    /// For example when a = 1, `a == null && b` returns `false` while `a ?? b` returns `1`.
+    fn try_compress_is_null_and_to_nullish_coalescing(
+        &self,
+        expr: &mut LogicalExpression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if self.target < ESTarget::ES2020 {
+            return None;
+        }
+        let target_op = match expr.operator {
+            LogicalOperator::And => BinaryOperator::Equality,
+            LogicalOperator::Or => BinaryOperator::Inequality,
+            LogicalOperator::Coalesce => return None,
+        };
+        let Expression::BinaryExpression(binary_expr) = &mut expr.left else {
+            return None;
+        };
+        if binary_expr.operator != target_op {
+            return None;
+        }
+        let new_left_hand_expr = if binary_expr.left.is_null() {
+            ctx.ast.move_expression(&mut binary_expr.right)
+        } else if binary_expr.right.is_null() {
+            ctx.ast.move_expression(&mut binary_expr.left)
+        } else {
+            return None;
+        };
+
+        Some(ctx.ast.expression_logical(
+            expr.span,
+            new_left_hand_expr,
+            LogicalOperator::Coalesce,
+            ctx.ast.move_expression(&mut expr.right),
+        ))
+    }
 }
 
 impl<'a> LatePeepholeOptimizations {
-    pub fn substitute_exit_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_exit_expression(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
         if let Expression::NewExpression(e) = expr {
             Self::try_compress_typed_array_constructor(e, ctx);
         }
 
         if let Some(folded_expr) = match expr {
-            Expression::Identifier(ident) => Self::try_compress_undefined(ident, ctx),
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
+            Expression::ArrayExpression(_) => Self::try_compress_array_expression(expr, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -880,10 +903,10 @@ impl<'a> LatePeepholeOptimizations {
     }
 
     /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
-    fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: Ctx<'a, '_>) {
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
-        if !Self::is_typed_array_name(name) || !Ctx(ctx).is_global_reference(ident) {
+        if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
             return;
         }
         if e.arguments.len() == 1
@@ -893,28 +916,8 @@ impl<'a> LatePeepholeOptimizations {
         }
     }
 
-    /// Transforms `undefined` => `void 0`
-    fn try_compress_undefined(
-        ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        if !Ctx(ctx).is_identifier_undefined(ident) {
-            return None;
-        }
-        // `delete undefined` returns `false`
-        // `delete void 0` returns `true`
-        if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
-        {
-            return None;
-        }
-        Some(ctx.ast.void_0(ident.span))
-    }
-
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
-    fn try_compress_boolean(
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
+    fn try_compress_boolean(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
         let Expression::BooleanLiteral(lit) = expr else { return None };
         let num = ctx.ast.expression_numeric_literal(
             lit.span,
@@ -925,11 +928,78 @@ impl<'a> LatePeepholeOptimizations {
         Some(ctx.ast.expression_unary(lit.span, UnaryOperator::LogicalNot, num))
     }
 
-    pub fn substitute_catch_clause(
-        &mut self,
-        catch: &mut CatchClause<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    /// Transforms long array expression with string literals to `"str1,str2".split(',')`
+    fn try_compress_array_expression(
+        expr: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        // this threshold is chosen by hand by checking the minsize output
+        const THRESHOLD: usize = 40;
+
+        let Expression::ArrayExpression(array) = expr else { unreachable!() };
+
+        let is_all_string = array.elements.iter().all(|element| {
+            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(_)))
+        });
+        if !is_all_string {
+            return None;
+        }
+
+        let element_count = array.elements.len();
+        // replace with `.split` only when the saved size is great enough
+        // because using `.split` in some places and not in others may cause gzipped size to be bigger
+        let can_save = element_count * 2 > ".split('.')".len() + THRESHOLD;
+        if !can_save {
+            return None;
+        }
+
+        let strings = array.elements.iter().map(|element| {
+            let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
+            str.value.as_str()
+        });
+        let delimiter = Self::pick_delimiter(&strings)?;
+
+        let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
+
+        // "str1,str2".split(',')
+        Some(ctx.ast.expression_call(
+            expr.span(),
+            Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
+                expr.span(),
+                ctx.ast.expression_string_literal(
+                    expr.span(),
+                    ctx.ast.atom(&concatenated_string),
+                    None,
+                ),
+                ctx.ast.identifier_name(expr.span(), "split"),
+                false,
+            )),
+            Option::<TSTypeParameterInstantiation>::None,
+            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
+                expr.span(),
+                ctx.ast.atom(delimiter),
+                None,
+            ))),
+            false,
+        ))
+    }
+
+    fn pick_delimiter<'s>(
+        strings: &(impl Iterator<Item = &'s str> + Clone),
+    ) -> Option<&'static str> {
+        // These delimiters are chars that appears a lot in the program
+        // therefore probably have a small Huffman encoding.
+        const DELIMITERS: [&str; 5] = [".", ",", "(", ")", " "];
+
+        let is_all_length_1 = strings.clone().all(|s| s.len() == 1);
+        if is_all_length_1 {
+            return Some("");
+        }
+
+        DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
+    }
+
+    pub fn substitute_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: Ctx<'a, '_>) {
         if self.target >= ESTarget::ES2019 {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
@@ -983,7 +1053,7 @@ mod test {
         test("function f(){return undefined;}", "function f(){}");
         test("function f(){if(a()){return undefined;}}", "function f(){if(a())return}");
         test_same("function a(undefined) { return undefined; }");
-        test_same("function f(){return foo()");
+        test_same("function f(){return foo()}");
 
         // `return undefined` has a different semantic in async generator function.
         test("function foo() { return undefined }", "function foo() { }");
@@ -1223,102 +1293,35 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    fn test_split_comma_expressions() {
-        // late = false;
-        // Don't try to split in expressions.
-        test_same("while (foo(), !0) boo()");
-        test_same("var a = (foo(), !0);");
-        test_same("a = (foo(), !0);");
-
-        // Don't try to split COMMA under LABELs.
-        test_same("a:a(),b()");
-        test("1, 2, 3, 4", "1; 2; 3; 4");
-        test("x = 1, 2, 3", "x = 1; 2; 3");
-        test_same("x = (1, 2, 3)");
-        test("1, (2, 3), 4", "1; 2; 3; 4");
-        test("(x=2), foo()", "x=2; foo()");
-        test("foo(), boo();", "foo(); boo()");
-        test("(a(), b()), (c(), d());", "a(); b(); c(); d()");
-        test("a(); b(); (c(), d());", "a(); b(); c(); d();");
-        test("foo(), true", "foo();true");
-        test_same("foo();true");
-        test("function x(){foo(), !0}", "function x(){foo(); !0}");
-        test_same("function x(){foo(); !0}");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_comma1() {
-        // late = false;
-        test("1, 2", "1; 2");
-        // late = true;
-        // test_same("1, 2");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_comma2() {
-        // late = false;
-        test("1, a()", "1; a()");
-        test("1, a?.()", "1; a?.()");
-
-        // late = true;
-        // test_same("1, a()");
-        // test_same("1, a?.()");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_comma3() {
-        // late = false;
-        test("1, a(), b()", "1; a(); b()");
-        test("1, a?.(), b?.()", "1; a?.(); b?.()");
-
-        // late = true;
-        // test_same("1, a(), b()");
-        // test_same("1, a?.(), b?.()");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_comma4() {
-        // late = false;
-        test("a(), b()", "a();b()");
-        test("a?.(), b?.()", "a?.();b?.()");
-
-        // late = true;
-        // test_same("a(), b()");
-        // test_same("a?.(), b?.()");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_comma5() {
-        // late = false;
-        test("a(), b(), 1", "a(); b(); 1");
-        test("a?.(), b?.(), 1", "a?.(); b?.(); 1");
-
-        // late = true;
-        // test_same("a(), b(), 1");
-        // test_same("a?.(), b?.(), 1");
-    }
-
-    #[test]
-    #[ignore]
     fn test_string_array_splitting() {
-        test_same("var x=['1','2','3','4']");
-        test_same("var x=['1','2','3','4','5']");
-        test("var x=['1','2','3','4','5','6']", "var x='123456'.split('')");
-        test("var x=['1','2','3','4','5','00']", "var x='1 2 3 4 5 00'.split(' ')");
-        test("var x=['1','2','3','4','5','6','7']", "var x='1234567'.split('')");
-        test("var x=['1','2','3','4','5','6','00']", "var x='1 2 3 4 5 6 00'.split(' ')");
-        test("var x=[' ,',',',',',',',',',',']", "var x=' ,;,;,;,;,;,'.split(';')");
-        test("var x=[',,',' ',',',',',',',',']", "var x=',,; ;,;,;,;,'.split(';')");
-        test("var x=['a,',' ',',',',',',',',']", "var x='a,; ;,;,;,;,'.split(';')");
+        const REPEAT: usize = 20;
+        let additional_args = ",'1'".repeat(REPEAT);
+        let test_with_longer_args =
+            |source_text_partial: &str, expected_partial: &str, delimiter: &str| {
+                let expected = &format!(
+                    "var x='{expected_partial}{}'.split('{delimiter}')",
+                    format!("{delimiter}1").repeat(REPEAT)
+                );
+                test(&format!("var x=[{source_text_partial}{additional_args}]"), expected);
+            };
+        let test_same_with_longer_args = |source_text_partial: &str| {
+            test_same(&format!("var x=[{source_text_partial}{additional_args}]"));
+        };
+
+        test_same_with_longer_args("'1','2','3','4'");
+        test_same_with_longer_args("'1','2','3','4','5'");
+        test_same_with_longer_args("`1${a}`,'2','3','4','5','6'");
+        test_with_longer_args("'1','2','3','4','5','6'", "123456", "");
+        test_with_longer_args("'1','2','3','4','5','00'", "1.2.3.4.5.00", ".");
+        test_with_longer_args("'1','2','3','4','5','6','7'", "1234567", "");
+        test_with_longer_args("'1','2','3','4','5','6','00'", "1.2.3.4.5.6.00", ".");
+        test_with_longer_args("'.,',',',',',',',',',','", ".,(,(,(,(,(,", "(");
+        test_with_longer_args("',,','.',',',',',',',','", ",,(.(,(,(,(,", "(");
+        test_with_longer_args("'a,','.',',',',',',',','", "a,(.(,(,(,(,", "(");
+        test_with_longer_args("`1`,'2','3','4','5','6'", "123456", "");
 
         // all possible delimiters used, leave it alone
-        test_same("var x=[',', ' ', ';', '{', '}']");
+        test_same_with_longer_args("'.', ',', '(', ')', ' '");
     }
 
     #[test]
@@ -1335,23 +1338,7 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_bind_to_call1() {
-        test("(goog.bind(f))()", "f()");
-        test("(goog.bind(f,a))()", "f.call(a)");
-        test("(goog.bind(f,a,b))()", "f.call(a,b)");
-
-        test("(goog.bind(f))(a)", "f(a)");
-        test("(goog.bind(f,a))(b)", "f.call(a,b)");
-        test("(goog.bind(f,a,b))(c)", "f.call(a,b,c)");
-
-        test("(goog.partial(f))()", "f()");
-        test("(goog.partial(f,a))()", "f(a)");
-        test("(goog.partial(f,a,b))()", "f(a,b)");
-
-        test("(goog.partial(f))(a)", "f(a)");
-        test("(goog.partial(f,a))(b)", "f(a,b)");
-        test("(goog.partial(f,a,b))(c)", "f(a,b,c)");
-
+    fn test_bind_to_call() {
         test("((function(){}).bind())()", "((function(){}))()");
         test("((function(){}).bind(a))()", "((function(){})).call(a)");
         test("((function(){}).bind(a,b))()", "((function(){})).call(a,b)");
@@ -1365,99 +1352,38 @@ mod test {
         test_same("(f.bind(a))()");
         test_same("(f.bind())(a)");
         test_same("(f.bind(a))(b)");
-
-        // Don't rewrite if the bind isn't the immediate call target
-        test_same("(goog.bind(f)).call(g)");
     }
 
+    // FIXME: the cases commented out can be implemented
     #[test]
-    #[ignore]
-    fn test_bind_to_call2() {
-        test("(goog$bind(f))()", "f()");
-        test("(goog$bind(f,a))()", "f.call(a)");
-        test("(goog$bind(f,a,b))()", "f.call(a,b)");
-
-        test("(goog$bind(f))(a)", "f(a)");
-        test("(goog$bind(f,a))(b)", "f.call(a,b)");
-        test("(goog$bind(f,a,b))(c)", "f.call(a,b,c)");
-
-        test("(goog$partial(f))()", "f()");
-        test("(goog$partial(f,a))()", "f(a)");
-        test("(goog$partial(f,a,b))()", "f(a,b)");
-
-        test("(goog$partial(f))(a)", "f(a)");
-        test("(goog$partial(f,a))(b)", "f(a,b)");
-        test("(goog$partial(f,a,b))(c)", "f(a,b,c)");
-        // Don't rewrite if the bind isn't the immediate call target
-        test_same("(goog$bind(f)).call(g)");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_bind_to_call3() {
-        // TODO(johnlenz): The code generator wraps free calls with (0,...) to
-        // prevent leaking "this", but the parser doesn't unfold it, making a
-        // AST comparison fail.  For now do a string comparison to validate the
-        // correct code is in fact generated.
-        // The FREE call wrapping should be moved out of the code generator
-        // and into a denormalizing pass.
-        // disableCompareAsTree();
-        // retraverseOnChange = true;
-        // late = false;
-
-        test("(goog.bind(f.m))()", "(0,f.m)()");
-        test("(goog.bind(f.m,a))()", "f.m.call(a)");
-
-        test("(goog.bind(f.m))(a)", "(0,f.m)(a)");
-        test("(goog.bind(f.m,a))(b)", "f.m.call(a,b)");
-
-        test("(goog.partial(f.m))()", "(0,f.m)()");
-        test("(goog.partial(f.m,a))()", "(0,f.m)(a)");
-
-        test("(goog.partial(f.m))(a)", "(0,f.m)(a)");
-        test("(goog.partial(f.m,a))(b)", "(0,f.m)(a,b)");
-
-        // Without using type information we don't know "f" is a function.
-        test_same("f.m.bind()()");
-        test_same("f.m.bind(a)()");
-        test_same("f.m.bind()(a)");
-        test_same("f.m.bind(a)(b)");
-
-        // Don't rewrite if the bind isn't the immediate call target
-        test_same("goog.bind(f.m).call(g)");
-    }
-
-    #[test]
-    #[ignore]
     fn test_rotate_associative_operators() {
-        test("a || (b || c); a * (b * c); a | (b | c)", "(a || b) || c; (a * b) * c; (a | b) | c");
-        test_same("a % (b % c); a / (b / c); a - (b - c);");
-        test("a * (b % c);", "b % c * a");
-        test("a * b * (c / d)", "c / d * b * a");
-        test("(a + b) * (c % d)", "c % d * (a + b)");
+        test("a || (b || c)", "(a || b) || c");
+        // float multiplication is not always associative
+        // <https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-multiply>
+        test_same("a * (b * c)");
+        // test("a | (b | c)", "(a | b) | c");
+        test_same("a % (b % c)");
+        test_same("a / (b / c)");
+        test_same("a - (b - c);");
+        // test("a * (b % c);", "b % c * a");
+        // test("a * (b / c);", "b / c * a");
+        // cannot transform to `c / d * a * b`
+        test_same("a * b * (c / d)");
+        // test("(a + b) * (c % d)", "c % d * (a + b)");
         test_same("(a / b) * (c % d)");
         test_same("(c = 5) * (c % d)");
-        test("(a + b) * c * (d % e)", "d % e * c * (a + b)");
-        test("!a * c * (d % e)", "d % e * c * !a");
+        // test("!a * c * (d % e)", "d % e * c * !a");
     }
 
     #[test]
-    #[ignore]
     fn nullish_coalesce() {
         test("a ?? (b ?? c);", "(a ?? b) ?? c");
     }
 
     #[test]
-    #[ignore]
-    fn test_no_rotate_infinite_loop() {
-        test("1/x * (y/1 * (1/z))", "1/x * (y/1) * (1/z)");
-        test_same("1/x * (y/1) * (1/z)");
-    }
-
-    #[test]
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
-        test("const foo = () => { foo; return 'baz' }", "const foo = () => (foo, 'baz');");
+        test("const foo = () => { foo.foo; return 'baz' }", "const foo = () => (foo.foo, 'baz')");
     }
 
     #[test]
@@ -1480,11 +1406,15 @@ mod test {
             "typeof x !== 'undefined'; function foo() { var x }",
             "typeof x < 'u'; function foo() { var x }",
         );
-        test("typeof x !== 'undefined'; { var x }", "x !== void 0; { var x }");
+        test("typeof x !== 'undefined'; { var x }", "x !== void 0; var x;");
         test("typeof x !== 'undefined'; { let x }", "typeof x < 'u'; { let x }");
         test("typeof x !== 'undefined'; var x", "x !== void 0; var x");
         // input and output both errors with same TDZ error
         test("typeof x !== 'undefined'; let x", "x !== void 0; let x");
+
+        test("typeof x.y === 'undefined'", "x.y === void 0");
+        test("typeof x.y !== 'undefined'", "x.y !== void 0");
+        test("typeof (x + '') === 'undefined'", "x + '' === void 0");
     }
 
     /// Port from <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser_test.go#L4658>
@@ -1499,9 +1429,6 @@ mod test {
         test("typeof x == 'undefined'", "typeof x > 'u'");
         test("'undefined' === typeof x", "typeof x > 'u'");
         test("'undefined' == typeof x", "typeof x > 'u'");
-
-        test("typeof x.y === 'undefined'", "typeof x.y > 'u'");
-        test("typeof x.y !== 'undefined'", "typeof x.y < 'u'");
     }
 
     #[test]
@@ -1687,5 +1614,14 @@ mod test {
             run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
             run(code, None)
         );
+    }
+
+    #[test]
+    fn test_compress_is_null_and_to_nullish_coalescing() {
+        test("x == null && y", "x ?? y");
+        test("x != null || y", "x ?? y");
+        test_same("v = x == null && y");
+        test_same("v = x != null || y");
+        test("void (x == null && y)", "x ?? y");
     }
 }

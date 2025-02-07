@@ -124,7 +124,37 @@ impl<T> SparseStack<T> {
         }
     }
 
-    /// Get value of last entry on the stack.
+    /// Get reference to value of first entry on the stack.
+    #[inline]
+    pub fn first(&self) -> Option<&T> {
+        let has_value = *self.has_values.first();
+        if has_value {
+            debug_assert!(!self.values.is_empty());
+            // SAFETY: First `self.has_values` is only `true` if there's a corresponding value in `self.values`.
+            // This invariant is maintained in `push`, `pop`, `take_last`, `last_or_init`, and `last_mut_or_init`.
+            let value = unsafe { self.values.get_unchecked(0) };
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    /// Get mutable reference to value of first entry on the stack.
+    #[inline]
+    pub fn first_mut(&mut self) -> Option<&mut T> {
+        let has_value = *self.has_values.first();
+        if has_value {
+            debug_assert!(!self.values.is_empty());
+            // SAFETY: First `self.has_values` is only `true` if there's a corresponding value in `self.values`.
+            // This invariant is maintained in `push`, `pop`, `take_last`, `last_or_init`, and `last_mut_or_init`.
+            let value = unsafe { self.values.get_unchecked_mut(0) };
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    /// Get reference to value of last entry on the stack.
     #[inline]
     pub fn last(&self) -> Option<&T> {
         let has_value = *self.has_values.last();
@@ -139,7 +169,7 @@ impl<T> SparseStack<T> {
         }
     }
 
-    /// Get value of last entry on the stack.
+    /// Get mutable reference to value of last entry on the stack.
     #[inline]
     pub fn last_mut(&mut self) -> Option<&mut T> {
         let has_value = *self.has_values.last();
@@ -147,7 +177,7 @@ impl<T> SparseStack<T> {
             debug_assert!(!self.values.is_empty());
             // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
             // This invariant is maintained in `push`, `pop`, `take_last`, `last_or_init`, and `last_mut_or_init`.
-            let value = unsafe { self.values.last_mut_unchecked() };
+            let value = unsafe { self.values.last_unchecked_mut() };
             Some(value)
         } else {
             None
@@ -206,7 +236,7 @@ impl<T> SparseStack<T> {
         // This invariant is maintained in `push`, `pop`, `take_last`, and `last_or_init`.
         // Here either last `self.has_values` was already `true`, or it's just been set to `true`
         // and a value pushed to `self.values` above.
-        unsafe { self.values.last_mut_unchecked() }
+        unsafe { self.values.last_unchecked_mut() }
     }
 
     /// Get number of entries on the stack.

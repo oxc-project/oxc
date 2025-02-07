@@ -19,7 +19,6 @@ use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 use serde::Serialize;
-use ureq::Response;
 
 mod json;
 mod template;
@@ -677,7 +676,10 @@ fn main() {
 
     println!("Reading test file from {rule_test_path}");
 
-    let body = oxc_tasks_common::agent().get(&rule_test_path).call().map(Response::into_string);
+    let body = oxc_tasks_common::agent()
+        .get(&rule_test_path)
+        .call()
+        .map(|mut res| res.body_mut().read_to_string());
     let context = match body {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();

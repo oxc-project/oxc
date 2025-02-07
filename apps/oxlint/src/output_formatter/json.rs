@@ -1,9 +1,8 @@
-use std::io::Write;
-
-use oxc_diagnostics::reporter::DiagnosticResult;
-use oxc_diagnostics::{reporter::DiagnosticReporter, Error};
-use oxc_linter::rules::RULES;
-use oxc_linter::RuleCategory;
+use oxc_diagnostics::{
+    reporter::{DiagnosticReporter, DiagnosticResult},
+    Error,
+};
+use oxc_linter::{rules::RULES, RuleCategory};
 
 use miette::JSONReportHandler;
 
@@ -13,7 +12,7 @@ use crate::output_formatter::InternalFormatter;
 pub struct JsonOutputFormatter;
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&mut self, writer: &mut dyn Write) {
+    fn all_rules(&self) -> Option<String> {
         #[derive(Debug, serde::Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
@@ -27,13 +26,10 @@ impl InternalFormatter for JsonOutputFormatter {
             category: rule.category(),
         });
 
-        writer
-            .write_all(
-                serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
-                    .expect("Failed to serialize")
-                    .as_bytes(),
-            )
-            .unwrap();
+        Some(
+            serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
+                .expect("Failed to serialize"),
+        )
     }
 
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
@@ -76,7 +72,7 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
         })
         .collect::<Vec<_>>()
         .join(",\n");
-    format!("[\n{messages}\n]")
+    format!("[\n{messages}\n]\n")
 }
 
 #[cfg(test)]
@@ -108,7 +104,7 @@ mod test {
         assert!(second_result.is_some());
         assert_eq!(
             second_result.unwrap(),
-            "[\n\t{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8}}],\"related\": []}\n]"
+            "[\n\t{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8}}],\"related\": []}\n]\n"
         );
     }
 }

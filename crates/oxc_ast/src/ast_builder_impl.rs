@@ -130,7 +130,8 @@ impl<'a> AstBuilder<'a> {
     /// [`AssignmentTarget::AssignmentTargetIdentifier`] with no name and an empty [`Span`].
     #[inline]
     pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
-        let dummy = self.simple_assignment_target_identifier_reference(SPAN, Atom::from(""));
+        let dummy =
+            self.simple_assignment_target_assignment_target_identifier(SPAN, Atom::from(""));
         mem::replace(target, dummy.into())
     }
 

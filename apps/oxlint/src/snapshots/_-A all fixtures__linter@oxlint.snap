@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -A all fixtures/linter
+working directory: 
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 3 files with 0 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

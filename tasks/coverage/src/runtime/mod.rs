@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::path::{Path, PathBuf};
 
 use serde_json::json;
 
@@ -211,17 +208,17 @@ impl Test262RuntimeCase {
             );
         }
 
-        let mangler = if minify {
+        let symbol_table = if minify {
             Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
                 .build(&allocator, &mut program)
-                .mangler
+                .symbol_table
         } else {
             None
         };
 
         let mut text = CodeGenerator::new()
             .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
-            .with_mangler(mangler)
+            .with_symbol_table(symbol_table)
             .build(&program)
             .code;
         if is_only_strict {
@@ -274,10 +271,9 @@ async fn request_run_code(json: impl serde::Serialize + Send + 'static) -> Resul
     tokio::spawn(async move {
         agent()
             .post("http://localhost:32055/run")
-            .timeout(Duration::from_secs(4))
             .send_json(json)
             .map_err(|err| err.to_string())
-            .and_then(|res| res.into_string().map_err(|err| err.to_string()))
+            .and_then(|mut res| res.body_mut().read_to_string().map_err(|err| err.to_string()))
     })
     .await
     .map_err(|err| err.to_string())?

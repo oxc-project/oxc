@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{Box, FromIn, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
@@ -11,7 +11,7 @@ use crate::{
     format::{
         print::{
             array, arrow_function, assignment, binaryish, block, call_expression, class, function,
-            function_parameters, literal, misc, module, object, property, statement,
+            function_parameters, literal, member, misc, module, object, property, statement,
             template_literal, ternary,
         },
         Format,
@@ -109,10 +109,12 @@ impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ExpressionStatement, {
             let mut parts = Vec::new_in(p.allocator);
+
             parts.push(self.expression.format(p));
             if let Some(semi) = p.semi() {
                 parts.push(semi);
             }
+
             array!(p, parts)
         })
     }
@@ -535,44 +537,49 @@ impl<'a> Format<'a> for Declaration<'a> {
 impl<'a> Format<'a> for VariableDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, VariableDeclaration, {
-            // We generally want to terminate all variable declarations with a
-            // semicolon, except when they in the () part of for loops.
-            let parent_for_loop = match p.parent_kind() {
-                AstKind::ForStatement(stmt) => Some(stmt.body.span()),
-                AstKind::ForInStatement(stmt) => Some(stmt.body.span()),
-                AstKind::ForOfStatement(stmt) => Some(stmt.body.span()),
-                _ => None,
-            };
-
-            let kind = self.kind.as_str();
-
             let mut parts = Vec::new_in(p.allocator);
 
             if self.declare {
                 parts.push(text!("declare "));
             }
-
-            parts.push(text!(kind));
+            parts.push(text!(self.kind.as_str()));
             parts.push(text!(" "));
 
-            let is_hardline = !p.parent_kind().is_iteration_statement()
-                && self.declarations.iter().all(|decl| decl.init.is_some());
+            // We generally want to terminate all variable declarations with a semicolon,
+            // except when they in the `()` part of for loops.
+            let parent_for_loop_span = match p.parent_kind() {
+                AstKind::ForStatement(stmt) => Some(stmt.body.span()),
+                AstKind::ForInStatement(stmt) => Some(stmt.body.span()),
+                AstKind::ForOfStatement(stmt) => Some(stmt.body.span()),
+                _ => None,
+            };
             let decls_len = self.declarations.len();
-            parts.extend(self.declarations.iter().enumerate().map(|(i, decl)| {
-                if decls_len > 1 {
-                    let mut d_parts = Vec::new_in(p.allocator);
-                    if i != 0 {
-                        d_parts.push(text!(","));
-                        d_parts.push(if is_hardline { hardline!(p) } else { line!() });
-                    }
-                    d_parts.push(decl.format(p));
-                    indent!(p, d_parts)
-                } else {
-                    decl.format(p)
-                }
-            }));
+            let is_hardline = parent_for_loop_span.is_none()
+                && self.declarations.iter().any(|decl| decl.init.is_some());
 
-            if !parent_for_loop.is_some_and(|span| span != self.span) {
+            for (idx, decl) in self.declarations.iter().enumerate() {
+                if idx == 0 {
+                    let first_decl_doc = decl.format(p);
+                    let first_decl_has_comment = false; // TODO
+                    parts.push(if decls_len > 1 || (decls_len == 1 && first_decl_has_comment) {
+                        // Indent first var to comply with eslint one-var rule
+                        indent!(p, [first_decl_doc])
+                    } else {
+                        first_decl_doc
+                    });
+                } else {
+                    parts.push(indent!(
+                        p,
+                        [
+                            text!(","),
+                            if is_hardline { hardline!(p) } else { line!() },
+                            decl.format(p)
+                        ]
+                    ));
+                }
+            }
+
+            if !parent_for_loop_span.is_some_and(|span| span != self.span) {
                 if let Some(semi) = p.semi() {
                     parts.push(semi);
                 }
@@ -870,6 +877,7 @@ impl<'a> Format<'a> for ThisExpression {
 
 impl<'a> Format<'a> for MemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        // This `wrap!` should be used for each type, but they are not listed in the `AstKind`
         wrap!(p, self, MemberExpression, {
             match self {
                 Self::ComputedMemberExpression(expr) => expr.format(p),
@@ -882,38 +890,28 @@ impl<'a> Format<'a> for MemberExpression<'a> {
 
 impl<'a> Format<'a> for ComputedMemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(self.object.format(p));
-        if self.optional {
-            parts.push(text!("?."));
-        }
-        parts.push(text!("["));
-        parts.push(self.expression.format(p));
-        parts.push(text!("]"));
-        array!(p, parts)
+        member::print_member_expression(
+            p,
+            &member::MemberExpressionLike::ComputedMemberExpression(self),
+        )
     }
 }
 
 impl<'a> Format<'a> for StaticMemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(self.object.format(p));
-        if self.optional {
-            parts.push(text!("?"));
-        }
-        parts.push(text!("."));
-        parts.push(self.property.format(p));
-        array!(p, parts)
+        member::print_member_expression(
+            p,
+            &member::MemberExpressionLike::StaticMemberExpression(self),
+        )
     }
 }
 
 impl<'a> Format<'a> for PrivateFieldExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(self.object.format(p));
-        parts.push(if self.optional { text!("?.") } else { text!(".") });
-        parts.push(self.field.format(p));
-        array!(p, parts)
+        member::print_member_expression(
+            p,
+            &member::MemberExpressionLike::PrivateFieldExpression(self),
+        )
     }
 }
 
@@ -949,17 +947,14 @@ impl<'a> Format<'a> for ArrayExpressionElement<'a> {
 
 impl<'a> Format<'a> for SpreadElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, SpreadElement, {
-            let argument_doc = self.argument.format(p);
-            array!(p, [text!("..."), argument_doc])
-        })
+        wrap!(p, self, SpreadElement, { array!(p, [text!("..."), self.argument.format(p)]) })
     }
 }
 
 impl<'a> Format<'a> for ArrayExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ArrayExpression, {
-            array::print_array(p, &array::Array::ArrayExpression(self))
+            array::print_array(p, &array::ArrayLike::ArrayExpression(self))
         })
     }
 }
@@ -967,7 +962,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
 impl<'a> Format<'a> for ObjectExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectExpression, {
-            object::print_object(p, object::ObjectLike::Expression(self))
+            object::print_object(p, &object::ObjectLike::ObjectExpression(self))
         })
     }
 }
@@ -984,31 +979,12 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectProperty, {
-            if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
-                let mut parts = Vec::new_in(p.allocator);
-                match self.kind {
-                    PropertyKind::Get => {
-                        parts.push(text!("get "));
-                    }
-                    PropertyKind::Set => {
-                        parts.push(text!("set "));
-                    }
-                    PropertyKind::Init => (),
-                }
-                if let Expression::FunctionExpression(func_expr) = &self.value {
-                    parts.push(wrap!(p, func_expr, Function, {
-                        function::print_function(
-                            p,
-                            func_expr,
-                            Some(self.key.span().source_text(p.source_text)),
-                        )
-                    }));
-                }
-                return group!(p, parts);
-            }
-
             if self.shorthand {
                 return self.value.format(p);
+            }
+
+            if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
+                return function::print_object_method(p, self);
             }
 
             let left_doc = property::print_property_key(
@@ -1190,7 +1166,7 @@ impl<'a> Format<'a> for AssignmentTargetPattern<'a> {
 
 impl<'a> Format<'a> for ArrayAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array::print_array(p, &array::Array::ArrayAssignmentTarget(self))
+        array::print_array(p, &array::ArrayLike::ArrayAssignmentTarget(self))
     }
 }
 
@@ -1207,7 +1183,9 @@ impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
 
 impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object(p, object::ObjectLike::AssignmentTarget(self))
+        wrap!(p, self, ObjectAssignmentTarget, {
+            object::print_object(p, &object::ObjectLike::ObjectAssignmentTarget(self))
+        })
     }
 }
 
@@ -1231,6 +1209,7 @@ impl<'a> Format<'a> for AssignmentTargetProperty<'a> {
 impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
+
         parts.push(self.binding.format(p));
 
         if let Some(init) = &self.init {
@@ -1244,7 +1223,11 @@ impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
 
 impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let left_doc = self.name.format(p);
+        let left_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(&self.name),
+            self.computed,
+        );
 
         // TODO: How to convert `AssignmentTargetMaybeDefault` to `Expression`?
         // Or `print_assignment` is not needed?
@@ -1261,50 +1244,67 @@ impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
 
 impl<'a> Format<'a> for AssignmentTargetRest<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let target_doc = self.target.format(p);
-        array!(p, [text!("..."), target_doc])
+        array!(p, [text!("..."), self.target.format(p)])
     }
 }
 
 impl<'a> Format<'a> for SequenceExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, SequenceExpression, {
-            let docs =
-                self.expressions.iter().map(|expr| expr.format(p)).collect::<std::vec::Vec<_>>();
-            group!(p, [join!(p, JoinSeparator::CommaLine, docs)])
+            // For ExpressionStatements and for-loop heads,
+            // which are among the few places a SequenceExpression appears unparenthesized,
+            // we want to indent expressions after the first.
+            let parent_kind = p.parent_kind();
+            if matches!(parent_kind, AstKind::ExpressionStatement(_) | AstKind::ForStatement(_)) {
+                let mut parts = Vec::new_in(p.allocator);
+                for (idx, expr) in self.expressions.iter().enumerate() {
+                    if idx == 0 {
+                        parts.push(expr.format(p));
+                    } else {
+                        parts.push(array!(p, [text!(","), indent!(p, [line!(), expr.format(p)])]));
+                    }
+                }
+                return group!(p, parts);
+            }
+
+            let mut parts = Vec::new_in(p.allocator);
+            for expr in &self.expressions {
+                parts.push(expr.format(p));
+            }
+            group!(p, [join!(p, JoinSeparator::CommaLine, parts)])
         })
     }
 }
 
 impl<'a> Format<'a> for ParenthesizedExpression<'a> {
+    // TODO: For now, this never be called since `preserve_panres: false` is used
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        unreachable!("Parser preserve_parens option need to be set to false.");
+        wrap!(p, self, ParenthesizedExpression, {
+            let should_hug = matches!(
+                &self.expression,
+                Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
+            );
+            // TODO: && !has_comment(self.expression)
+
+            if should_hug {
+                return array!(p, [text!("("), self.expression.format(p), text!(")")]);
+            }
+            group!(
+                p,
+                [
+                    text!("("),
+                    indent!(p, [softline!(), self.expression.format(p),]),
+                    softline!(),
+                    text!(")"),
+                ]
+            )
+        })
     }
 }
 
 impl<'a> Format<'a> for ImportExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ImportExpression, {
-            // TODO: Use `print_call_expression`?
-            let mut parts = Vec::new_in(p.allocator);
-            parts.push(text!("import"));
-            parts.push(text!("("));
-            let mut indent_parts = Vec::new_in(p.allocator);
-            indent_parts.push(softline!());
-            indent_parts.push(self.source.format(p));
-            if !self.arguments.is_empty() {
-                for arg in &self.arguments {
-                    indent_parts.push(text!(","));
-                    indent_parts.push(line!());
-                    indent_parts.push(arg.format(p));
-                }
-            }
-            parts.push(group!(p, [indent!(p, indent_parts)]));
-            parts.push(softline!());
-            parts.push(text!(")"));
-
-            group!(p, parts)
-        })
+        wrap!(p, self, ImportExpression, { call_expression::print_import_expression(p, self) })
     }
 }
 
@@ -1344,10 +1344,44 @@ impl<'a> Format<'a> for Super {
 impl<'a> Format<'a> for AwaitExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, AwaitExpression, {
-            let mut parts = Vec::new_in(p.allocator);
-            parts.push(text!("await "));
-            parts.push(self.argument.format(p));
-            array!(p, parts)
+            let parent_kind = p.parent_kind();
+            if parent_kind
+                .as_call_expression()
+                .is_some_and(|call_expr| call_expr.callee.span() == self.span)
+                || parent_kind
+                    .as_member_expression()
+                    .is_some_and(|member_expr| member_expr.object().span() == self.span)
+            {
+                // avoid printing `await (await` on one line
+                if let Some(ancestor) = p.find_ancestor(|kind| {
+                    matches!(kind, AstKind::BlockStatement(_) | AstKind::AwaitExpression(_))
+                }) {
+                    if (match ancestor {
+                        AstKind::BlockStatement(_) => true,
+                        AstKind::AwaitExpression(await_expr) => {
+                            // TODO: https://github.com/prettier/prettier/blob/cca946176c3ec04ae46bf7bcb08c5bba8c041682/src/language-js/utils/index.js#L709
+                            // Acutually this is not related to token thing.
+                            // And it seems to pass only limited branches for here, can be inlined?
+                            // && !startsWithNoLookaheadToken(
+                            //   await_expr.argument,
+                            //   (leftmostNode) => leftmostNode === node,
+                            // )
+                            false
+                        }
+                        _ => unreachable!(),
+                    }) {
+                        return group!(
+                            p,
+                            [
+                                indent!(p, [softline!(), text!("await "), self.argument.format(p)]),
+                                softline!()
+                            ]
+                        );
+                    }
+                }
+            }
+
+            array!(p, [text!("await "), self.argument.format(p)])
         })
     }
 }
@@ -1444,6 +1478,7 @@ impl<'a> Format<'a> for PrivateIdentifier<'a> {
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
+
         parts.push(match &self.kind {
             BindingPatternKind::BindingIdentifier(ident) => ident.format(p),
             BindingPatternKind::ObjectPattern(pattern) => pattern.format(p),
@@ -1456,9 +1491,9 @@ impl<'a> Format<'a> for BindingPattern<'a> {
         }
 
         if let Some(typ) = &self.type_annotation {
-            let type_annotation_doc = typ.type_annotation.format(p);
-            parts.push(array!(p, [text!(": "), type_annotation_doc]));
+            parts.push(array!(p, [text!(": "), typ.type_annotation.format(p)]));
         }
+
         array!(p, parts)
     }
 }
@@ -1466,7 +1501,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectPattern, {
-            object::print_object(p, object::ObjectLike::Pattern(self))
+            object::print_object(p, &object::ObjectLike::ObjectPattern(self))
         })
     }
 }
@@ -1477,7 +1512,11 @@ impl<'a> Format<'a> for BindingProperty<'a> {
             return self.value.format(p);
         }
 
-        let left_doc = self.key.format(p);
+        let left_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(&self.key),
+            self.computed,
+        );
 
         // TODO: How to convert `BindingPattern` to `Expression`...?
         // Or `print_assignment` is not needed?
@@ -1494,14 +1533,15 @@ impl<'a> Format<'a> for BindingProperty<'a> {
 
 impl<'a> Format<'a> for BindingRestElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let argument_doc = self.argument.format(p);
-        array!(p, [text!("..."), argument_doc])
+        wrap!(p, self, BindingRestElement, { array!(p, [text!("..."), self.argument.format(p)]) })
     }
 }
 
 impl<'a> Format<'a> for ArrayPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ArrayPattern, { array::print_array(p, &array::Array::ArrayPattern(self)) })
+        wrap!(p, self, ArrayPattern, {
+            array::print_array(p, &array::ArrayLike::ArrayPattern(self))
+        })
     }
 }
 

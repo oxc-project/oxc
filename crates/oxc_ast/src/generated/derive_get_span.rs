@@ -6,54 +6,9 @@
 use oxc_span::{GetSpan, Span};
 
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::literal::*;
-
 use crate::ast::ts::*;
-
-impl GetSpan for BooleanLiteral {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for NullLiteral {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for NumericLiteral<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for StringLiteral<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for BigIntLiteral<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for RegExpLiteral<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
 
 impl GetSpan for Program<'_> {
     #[inline]
@@ -65,48 +20,48 @@ impl GetSpan for Program<'_> {
 impl GetSpan for Expression<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
-            Self::Super(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
-            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
-            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
-            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
-            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
-            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::MetaProperty(it) => GetSpan::span(&**it),
+            Self::Super(it) => GetSpan::span(&**it),
+            Self::ArrayExpression(it) => GetSpan::span(&**it),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
+            Self::AssignmentExpression(it) => GetSpan::span(&**it),
+            Self::AwaitExpression(it) => GetSpan::span(&**it),
+            Self::BinaryExpression(it) => GetSpan::span(&**it),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::ChainExpression(it) => GetSpan::span(&**it),
+            Self::ClassExpression(it) => GetSpan::span(&**it),
+            Self::ConditionalExpression(it) => GetSpan::span(&**it),
+            Self::FunctionExpression(it) => GetSpan::span(&**it),
+            Self::ImportExpression(it) => GetSpan::span(&**it),
+            Self::LogicalExpression(it) => GetSpan::span(&**it),
+            Self::NewExpression(it) => GetSpan::span(&**it),
+            Self::ObjectExpression(it) => GetSpan::span(&**it),
+            Self::ParenthesizedExpression(it) => GetSpan::span(&**it),
+            Self::SequenceExpression(it) => GetSpan::span(&**it),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
+            Self::UpdateExpression(it) => GetSpan::span(&**it),
+            Self::YieldExpression(it) => GetSpan::span(&**it),
+            Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::JSXElement(it) => GetSpan::span(&**it),
+            Self::JSXFragment(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -156,50 +111,50 @@ impl GetSpan for ArrayExpression<'_> {
 impl GetSpan for ArrayExpressionElement<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::SpreadElement(it) => GetSpan::span(it.as_ref()),
+            Self::SpreadElement(it) => GetSpan::span(&**it),
             Self::Elision(it) => GetSpan::span(it),
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
-            Self::Super(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
-            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
-            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
-            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
-            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
-            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::MetaProperty(it) => GetSpan::span(&**it),
+            Self::Super(it) => GetSpan::span(&**it),
+            Self::ArrayExpression(it) => GetSpan::span(&**it),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
+            Self::AssignmentExpression(it) => GetSpan::span(&**it),
+            Self::AwaitExpression(it) => GetSpan::span(&**it),
+            Self::BinaryExpression(it) => GetSpan::span(&**it),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::ChainExpression(it) => GetSpan::span(&**it),
+            Self::ClassExpression(it) => GetSpan::span(&**it),
+            Self::ConditionalExpression(it) => GetSpan::span(&**it),
+            Self::FunctionExpression(it) => GetSpan::span(&**it),
+            Self::ImportExpression(it) => GetSpan::span(&**it),
+            Self::LogicalExpression(it) => GetSpan::span(&**it),
+            Self::NewExpression(it) => GetSpan::span(&**it),
+            Self::ObjectExpression(it) => GetSpan::span(&**it),
+            Self::ParenthesizedExpression(it) => GetSpan::span(&**it),
+            Self::SequenceExpression(it) => GetSpan::span(&**it),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
+            Self::UpdateExpression(it) => GetSpan::span(&**it),
+            Self::YieldExpression(it) => GetSpan::span(&**it),
+            Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::JSXElement(it) => GetSpan::span(&**it),
+            Self::JSXFragment(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -221,8 +176,8 @@ impl GetSpan for ObjectExpression<'_> {
 impl GetSpan for ObjectPropertyKind<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::ObjectProperty(it) => GetSpan::span(it.as_ref()),
-            Self::SpreadProperty(it) => GetSpan::span(it.as_ref()),
+            Self::ObjectProperty(it) => GetSpan::span(&**it),
+            Self::SpreadProperty(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -237,50 +192,50 @@ impl GetSpan for ObjectProperty<'_> {
 impl GetSpan for PropertyKey<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::StaticIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
-            Self::Super(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
-            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
-            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
-            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
-            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
-            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::StaticIdentifier(it) => GetSpan::span(&**it),
+            Self::PrivateIdentifier(it) => GetSpan::span(&**it),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::MetaProperty(it) => GetSpan::span(&**it),
+            Self::Super(it) => GetSpan::span(&**it),
+            Self::ArrayExpression(it) => GetSpan::span(&**it),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
+            Self::AssignmentExpression(it) => GetSpan::span(&**it),
+            Self::AwaitExpression(it) => GetSpan::span(&**it),
+            Self::BinaryExpression(it) => GetSpan::span(&**it),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::ChainExpression(it) => GetSpan::span(&**it),
+            Self::ClassExpression(it) => GetSpan::span(&**it),
+            Self::ConditionalExpression(it) => GetSpan::span(&**it),
+            Self::FunctionExpression(it) => GetSpan::span(&**it),
+            Self::ImportExpression(it) => GetSpan::span(&**it),
+            Self::LogicalExpression(it) => GetSpan::span(&**it),
+            Self::NewExpression(it) => GetSpan::span(&**it),
+            Self::ObjectExpression(it) => GetSpan::span(&**it),
+            Self::ParenthesizedExpression(it) => GetSpan::span(&**it),
+            Self::SequenceExpression(it) => GetSpan::span(&**it),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
+            Self::UpdateExpression(it) => GetSpan::span(&**it),
+            Self::YieldExpression(it) => GetSpan::span(&**it),
+            Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::JSXElement(it) => GetSpan::span(&**it),
+            Self::JSXFragment(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -309,9 +264,9 @@ impl GetSpan for TemplateElement<'_> {
 impl GetSpan for MemberExpression<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -368,49 +323,49 @@ impl GetSpan for SpreadElement<'_> {
 impl GetSpan for Argument<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::SpreadElement(it) => GetSpan::span(it.as_ref()),
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
-            Self::Super(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
-            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
-            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
-            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
-            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
-            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::SpreadElement(it) => GetSpan::span(&**it),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::MetaProperty(it) => GetSpan::span(&**it),
+            Self::Super(it) => GetSpan::span(&**it),
+            Self::ArrayExpression(it) => GetSpan::span(&**it),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
+            Self::AssignmentExpression(it) => GetSpan::span(&**it),
+            Self::AwaitExpression(it) => GetSpan::span(&**it),
+            Self::BinaryExpression(it) => GetSpan::span(&**it),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::ChainExpression(it) => GetSpan::span(&**it),
+            Self::ClassExpression(it) => GetSpan::span(&**it),
+            Self::ConditionalExpression(it) => GetSpan::span(&**it),
+            Self::FunctionExpression(it) => GetSpan::span(&**it),
+            Self::ImportExpression(it) => GetSpan::span(&**it),
+            Self::LogicalExpression(it) => GetSpan::span(&**it),
+            Self::NewExpression(it) => GetSpan::span(&**it),
+            Self::ObjectExpression(it) => GetSpan::span(&**it),
+            Self::ParenthesizedExpression(it) => GetSpan::span(&**it),
+            Self::SequenceExpression(it) => GetSpan::span(&**it),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
+            Self::UpdateExpression(it) => GetSpan::span(&**it),
+            Self::YieldExpression(it) => GetSpan::span(&**it),
+            Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::JSXElement(it) => GetSpan::span(&**it),
+            Self::JSXFragment(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -467,17 +422,17 @@ impl GetSpan for AssignmentExpression<'_> {
 impl GetSpan for AssignmentTarget<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::AssignmentTargetIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayAssignmentTarget(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectAssignmentTarget(it) => GetSpan::span(it.as_ref()),
+            Self::AssignmentTargetIdentifier(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
+            Self::ArrayAssignmentTarget(it) => GetSpan::span(&**it),
+            Self::ObjectAssignmentTarget(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -485,15 +440,15 @@ impl GetSpan for AssignmentTarget<'_> {
 impl GetSpan for SimpleAssignmentTarget<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::AssignmentTargetIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::AssignmentTargetIdentifier(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -501,8 +456,8 @@ impl GetSpan for SimpleAssignmentTarget<'_> {
 impl GetSpan for AssignmentTargetPattern<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::ArrayAssignmentTarget(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectAssignmentTarget(it) => GetSpan::span(it.as_ref()),
+            Self::ArrayAssignmentTarget(it) => GetSpan::span(&**it),
+            Self::ObjectAssignmentTarget(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -531,18 +486,18 @@ impl GetSpan for AssignmentTargetRest<'_> {
 impl GetSpan for AssignmentTargetMaybeDefault<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::AssignmentTargetWithDefault(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentTargetIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayAssignmentTarget(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectAssignmentTarget(it) => GetSpan::span(it.as_ref()),
+            Self::AssignmentTargetWithDefault(it) => GetSpan::span(&**it),
+            Self::AssignmentTargetIdentifier(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
+            Self::ArrayAssignmentTarget(it) => GetSpan::span(&**it),
+            Self::ObjectAssignmentTarget(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -557,8 +512,8 @@ impl GetSpan for AssignmentTargetWithDefault<'_> {
 impl GetSpan for AssignmentTargetProperty<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::AssignmentTargetPropertyIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentTargetPropertyProperty(it) => GetSpan::span(it.as_ref()),
+            Self::AssignmentTargetPropertyIdentifier(it) => GetSpan::span(&**it),
+            Self::AssignmentTargetPropertyProperty(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -608,11 +563,11 @@ impl GetSpan for ChainExpression<'_> {
 impl GetSpan for ChainElement<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -627,38 +582,38 @@ impl GetSpan for ParenthesizedExpression<'_> {
 impl GetSpan for Statement<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::BlockStatement(it) => GetSpan::span(it.as_ref()),
-            Self::BreakStatement(it) => GetSpan::span(it.as_ref()),
-            Self::ContinueStatement(it) => GetSpan::span(it.as_ref()),
-            Self::DebuggerStatement(it) => GetSpan::span(it.as_ref()),
-            Self::DoWhileStatement(it) => GetSpan::span(it.as_ref()),
-            Self::EmptyStatement(it) => GetSpan::span(it.as_ref()),
-            Self::ExpressionStatement(it) => GetSpan::span(it.as_ref()),
-            Self::ForInStatement(it) => GetSpan::span(it.as_ref()),
-            Self::ForOfStatement(it) => GetSpan::span(it.as_ref()),
-            Self::ForStatement(it) => GetSpan::span(it.as_ref()),
-            Self::IfStatement(it) => GetSpan::span(it.as_ref()),
-            Self::LabeledStatement(it) => GetSpan::span(it.as_ref()),
-            Self::ReturnStatement(it) => GetSpan::span(it.as_ref()),
-            Self::SwitchStatement(it) => GetSpan::span(it.as_ref()),
-            Self::ThrowStatement(it) => GetSpan::span(it.as_ref()),
-            Self::TryStatement(it) => GetSpan::span(it.as_ref()),
-            Self::WhileStatement(it) => GetSpan::span(it.as_ref()),
-            Self::WithStatement(it) => GetSpan::span(it.as_ref()),
-            Self::VariableDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ClassDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAliasDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSInterfaceDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSEnumDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSModuleDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSImportEqualsDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ImportDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ExportAllDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ExportDefaultDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ExportNamedDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSExportAssignment(it) => GetSpan::span(it.as_ref()),
-            Self::TSNamespaceExportDeclaration(it) => GetSpan::span(it.as_ref()),
+            Self::BlockStatement(it) => GetSpan::span(&**it),
+            Self::BreakStatement(it) => GetSpan::span(&**it),
+            Self::ContinueStatement(it) => GetSpan::span(&**it),
+            Self::DebuggerStatement(it) => GetSpan::span(&**it),
+            Self::DoWhileStatement(it) => GetSpan::span(&**it),
+            Self::EmptyStatement(it) => GetSpan::span(&**it),
+            Self::ExpressionStatement(it) => GetSpan::span(&**it),
+            Self::ForInStatement(it) => GetSpan::span(&**it),
+            Self::ForOfStatement(it) => GetSpan::span(&**it),
+            Self::ForStatement(it) => GetSpan::span(&**it),
+            Self::IfStatement(it) => GetSpan::span(&**it),
+            Self::LabeledStatement(it) => GetSpan::span(&**it),
+            Self::ReturnStatement(it) => GetSpan::span(&**it),
+            Self::SwitchStatement(it) => GetSpan::span(&**it),
+            Self::ThrowStatement(it) => GetSpan::span(&**it),
+            Self::TryStatement(it) => GetSpan::span(&**it),
+            Self::WhileStatement(it) => GetSpan::span(&**it),
+            Self::WithStatement(it) => GetSpan::span(&**it),
+            Self::VariableDeclaration(it) => GetSpan::span(&**it),
+            Self::FunctionDeclaration(it) => GetSpan::span(&**it),
+            Self::ClassDeclaration(it) => GetSpan::span(&**it),
+            Self::TSTypeAliasDeclaration(it) => GetSpan::span(&**it),
+            Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
+            Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
+            Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
+            Self::ImportDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportDefaultDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportNamedDeclaration(it) => GetSpan::span(&**it),
+            Self::TSExportAssignment(it) => GetSpan::span(&**it),
+            Self::TSNamespaceExportDeclaration(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -687,14 +642,14 @@ impl GetSpan for BlockStatement<'_> {
 impl GetSpan for Declaration<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::VariableDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ClassDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAliasDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSInterfaceDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSEnumDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSModuleDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSImportEqualsDeclaration(it) => GetSpan::span(it.as_ref()),
+            Self::VariableDeclaration(it) => GetSpan::span(&**it),
+            Self::FunctionDeclaration(it) => GetSpan::span(&**it),
+            Self::ClassDeclaration(it) => GetSpan::span(&**it),
+            Self::TSTypeAliasDeclaration(it) => GetSpan::span(&**it),
+            Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
+            Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
+            Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -758,49 +713,49 @@ impl GetSpan for ForStatement<'_> {
 impl GetSpan for ForStatementInit<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::VariableDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
-            Self::Super(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
-            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
-            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
-            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
-            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
-            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::VariableDeclaration(it) => GetSpan::span(&**it),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::MetaProperty(it) => GetSpan::span(&**it),
+            Self::Super(it) => GetSpan::span(&**it),
+            Self::ArrayExpression(it) => GetSpan::span(&**it),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
+            Self::AssignmentExpression(it) => GetSpan::span(&**it),
+            Self::AwaitExpression(it) => GetSpan::span(&**it),
+            Self::BinaryExpression(it) => GetSpan::span(&**it),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::ChainExpression(it) => GetSpan::span(&**it),
+            Self::ClassExpression(it) => GetSpan::span(&**it),
+            Self::ConditionalExpression(it) => GetSpan::span(&**it),
+            Self::FunctionExpression(it) => GetSpan::span(&**it),
+            Self::ImportExpression(it) => GetSpan::span(&**it),
+            Self::LogicalExpression(it) => GetSpan::span(&**it),
+            Self::NewExpression(it) => GetSpan::span(&**it),
+            Self::ObjectExpression(it) => GetSpan::span(&**it),
+            Self::ParenthesizedExpression(it) => GetSpan::span(&**it),
+            Self::SequenceExpression(it) => GetSpan::span(&**it),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
+            Self::UpdateExpression(it) => GetSpan::span(&**it),
+            Self::YieldExpression(it) => GetSpan::span(&**it),
+            Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::JSXElement(it) => GetSpan::span(&**it),
+            Self::JSXFragment(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -815,18 +770,18 @@ impl GetSpan for ForInStatement<'_> {
 impl GetSpan for ForStatementLeft<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::VariableDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentTargetIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayAssignmentTarget(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectAssignmentTarget(it) => GetSpan::span(it.as_ref()),
+            Self::VariableDeclaration(it) => GetSpan::span(&**it),
+            Self::AssignmentTargetIdentifier(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
+            Self::ArrayAssignmentTarget(it) => GetSpan::span(&**it),
+            Self::ObjectAssignmentTarget(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -932,10 +887,10 @@ impl GetSpan for BindingPattern<'_> {
 impl GetSpan for BindingPatternKind<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::BindingIdentifier(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectPattern(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayPattern(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentPattern(it) => GetSpan::span(it.as_ref()),
+            Self::BindingIdentifier(it) => GetSpan::span(&**it),
+            Self::ObjectPattern(it) => GetSpan::span(&**it),
+            Self::ArrayPattern(it) => GetSpan::span(&**it),
+            Self::AssignmentPattern(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1034,11 +989,11 @@ impl GetSpan for ClassBody<'_> {
 impl GetSpan for ClassElement<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::StaticBlock(it) => GetSpan::span(it.as_ref()),
-            Self::MethodDefinition(it) => GetSpan::span(it.as_ref()),
-            Self::PropertyDefinition(it) => GetSpan::span(it.as_ref()),
-            Self::AccessorProperty(it) => GetSpan::span(it.as_ref()),
-            Self::TSIndexSignature(it) => GetSpan::span(it.as_ref()),
+            Self::StaticBlock(it) => GetSpan::span(&**it),
+            Self::MethodDefinition(it) => GetSpan::span(&**it),
+            Self::PropertyDefinition(it) => GetSpan::span(&**it),
+            Self::AccessorProperty(it) => GetSpan::span(&**it),
+            Self::TSIndexSignature(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1074,12 +1029,12 @@ impl GetSpan for StaticBlock<'_> {
 impl GetSpan for ModuleDeclaration<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::ImportDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ExportAllDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ExportDefaultDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ExportNamedDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSExportAssignment(it) => GetSpan::span(it.as_ref()),
-            Self::TSNamespaceExportDeclaration(it) => GetSpan::span(it.as_ref()),
+            Self::ImportDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportDefaultDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportNamedDeclaration(it) => GetSpan::span(&**it),
+            Self::TSExportAssignment(it) => GetSpan::span(&**it),
+            Self::TSNamespaceExportDeclaration(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1108,9 +1063,9 @@ impl GetSpan for ImportDeclaration<'_> {
 impl GetSpan for ImportDeclarationSpecifier<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::ImportSpecifier(it) => GetSpan::span(it.as_ref()),
-            Self::ImportDefaultSpecifier(it) => GetSpan::span(it.as_ref()),
-            Self::ImportNamespaceSpecifier(it) => GetSpan::span(it.as_ref()),
+            Self::ImportSpecifier(it) => GetSpan::span(&**it),
+            Self::ImportDefaultSpecifier(it) => GetSpan::span(&**it),
+            Self::ImportNamespaceSpecifier(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1190,51 +1145,51 @@ impl GetSpan for ExportSpecifier<'_> {
 impl GetSpan for ExportDefaultDeclarationKind<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::FunctionDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::ClassDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSInterfaceDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
-            Self::Super(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
-            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
-            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
-            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
-            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
-            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
+            Self::FunctionDeclaration(it) => GetSpan::span(&**it),
+            Self::ClassDeclaration(it) => GetSpan::span(&**it),
+            Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::MetaProperty(it) => GetSpan::span(&**it),
+            Self::Super(it) => GetSpan::span(&**it),
+            Self::ArrayExpression(it) => GetSpan::span(&**it),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
+            Self::AssignmentExpression(it) => GetSpan::span(&**it),
+            Self::AwaitExpression(it) => GetSpan::span(&**it),
+            Self::BinaryExpression(it) => GetSpan::span(&**it),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::ChainExpression(it) => GetSpan::span(&**it),
+            Self::ClassExpression(it) => GetSpan::span(&**it),
+            Self::ConditionalExpression(it) => GetSpan::span(&**it),
+            Self::FunctionExpression(it) => GetSpan::span(&**it),
+            Self::ImportExpression(it) => GetSpan::span(&**it),
+            Self::LogicalExpression(it) => GetSpan::span(&**it),
+            Self::NewExpression(it) => GetSpan::span(&**it),
+            Self::ObjectExpression(it) => GetSpan::span(&**it),
+            Self::ParenthesizedExpression(it) => GetSpan::span(&**it),
+            Self::SequenceExpression(it) => GetSpan::span(&**it),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
+            Self::UpdateExpression(it) => GetSpan::span(&**it),
+            Self::YieldExpression(it) => GetSpan::span(&**it),
+            Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::JSXElement(it) => GetSpan::span(&**it),
+            Self::JSXFragment(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1246,6 +1201,266 @@ impl GetSpan for ModuleExportName<'_> {
             Self::IdentifierReference(it) => GetSpan::span(it),
             Self::StringLiteral(it) => GetSpan::span(it),
         }
+    }
+}
+
+impl GetSpan for BooleanLiteral {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for NullLiteral {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for NumericLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for StringLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for BigIntLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for RegExpLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXElement<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXOpeningElement<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXClosingElement<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXFragment<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXOpeningFragment {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXClosingFragment {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXElementName<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::IdentifierReference(it) => GetSpan::span(&**it),
+            Self::NamespacedName(it) => GetSpan::span(&**it),
+            Self::MemberExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for JSXNamespacedName<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXMemberExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXMemberExpressionObject<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::IdentifierReference(it) => GetSpan::span(&**it),
+            Self::MemberExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for JSXExpressionContainer<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXExpression<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::EmptyExpression(it) => GetSpan::span(it),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::MetaProperty(it) => GetSpan::span(&**it),
+            Self::Super(it) => GetSpan::span(&**it),
+            Self::ArrayExpression(it) => GetSpan::span(&**it),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
+            Self::AssignmentExpression(it) => GetSpan::span(&**it),
+            Self::AwaitExpression(it) => GetSpan::span(&**it),
+            Self::BinaryExpression(it) => GetSpan::span(&**it),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::ChainExpression(it) => GetSpan::span(&**it),
+            Self::ClassExpression(it) => GetSpan::span(&**it),
+            Self::ConditionalExpression(it) => GetSpan::span(&**it),
+            Self::FunctionExpression(it) => GetSpan::span(&**it),
+            Self::ImportExpression(it) => GetSpan::span(&**it),
+            Self::LogicalExpression(it) => GetSpan::span(&**it),
+            Self::NewExpression(it) => GetSpan::span(&**it),
+            Self::ObjectExpression(it) => GetSpan::span(&**it),
+            Self::ParenthesizedExpression(it) => GetSpan::span(&**it),
+            Self::SequenceExpression(it) => GetSpan::span(&**it),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
+            Self::UpdateExpression(it) => GetSpan::span(&**it),
+            Self::YieldExpression(it) => GetSpan::span(&**it),
+            Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::JSXElement(it) => GetSpan::span(&**it),
+            Self::JSXFragment(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for JSXEmptyExpression {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXAttributeItem<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Attribute(it) => GetSpan::span(&**it),
+            Self::SpreadAttribute(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for JSXAttribute<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXSpreadAttribute<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXAttributeName<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::NamespacedName(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for JSXAttributeValue<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::ExpressionContainer(it) => GetSpan::span(&**it),
+            Self::Element(it) => GetSpan::span(&**it),
+            Self::Fragment(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for JSXIdentifier<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXChild<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Text(it) => GetSpan::span(&**it),
+            Self::Element(it) => GetSpan::span(&**it),
+            Self::Fragment(it) => GetSpan::span(&**it),
+            Self::ExpressionContainer(it) => GetSpan::span(&**it),
+            Self::Spread(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for JSXSpreadChild<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXText<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
     }
 }
 
@@ -1273,8 +1488,8 @@ impl GetSpan for TSEnumMember<'_> {
 impl GetSpan for TSEnumMemberName<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::String(it) => GetSpan::span(it.as_ref()),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::String(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1296,14 +1511,14 @@ impl GetSpan for TSLiteralType<'_> {
 impl GetSpan for TSLiteral<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1311,44 +1526,44 @@ impl GetSpan for TSLiteral<'_> {
 impl GetSpan for TSType<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::TSAnyKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSBigIntKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSBooleanKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSIntrinsicKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSNeverKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSNullKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSNumberKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSObjectKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSStringKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSSymbolKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSUndefinedKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSUnknownKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSVoidKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSArrayType(it) => GetSpan::span(it.as_ref()),
-            Self::TSConditionalType(it) => GetSpan::span(it.as_ref()),
-            Self::TSConstructorType(it) => GetSpan::span(it.as_ref()),
-            Self::TSFunctionType(it) => GetSpan::span(it.as_ref()),
-            Self::TSImportType(it) => GetSpan::span(it.as_ref()),
-            Self::TSIndexedAccessType(it) => GetSpan::span(it.as_ref()),
-            Self::TSInferType(it) => GetSpan::span(it.as_ref()),
-            Self::TSIntersectionType(it) => GetSpan::span(it.as_ref()),
-            Self::TSLiteralType(it) => GetSpan::span(it.as_ref()),
-            Self::TSMappedType(it) => GetSpan::span(it.as_ref()),
-            Self::TSNamedTupleMember(it) => GetSpan::span(it.as_ref()),
-            Self::TSQualifiedName(it) => GetSpan::span(it.as_ref()),
-            Self::TSTemplateLiteralType(it) => GetSpan::span(it.as_ref()),
-            Self::TSThisType(it) => GetSpan::span(it.as_ref()),
-            Self::TSTupleType(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeOperatorType(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypePredicate(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeQuery(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeReference(it) => GetSpan::span(it.as_ref()),
-            Self::TSUnionType(it) => GetSpan::span(it.as_ref()),
-            Self::TSParenthesizedType(it) => GetSpan::span(it.as_ref()),
-            Self::JSDocNullableType(it) => GetSpan::span(it.as_ref()),
-            Self::JSDocNonNullableType(it) => GetSpan::span(it.as_ref()),
-            Self::JSDocUnknownType(it) => GetSpan::span(it.as_ref()),
+            Self::TSAnyKeyword(it) => GetSpan::span(&**it),
+            Self::TSBigIntKeyword(it) => GetSpan::span(&**it),
+            Self::TSBooleanKeyword(it) => GetSpan::span(&**it),
+            Self::TSIntrinsicKeyword(it) => GetSpan::span(&**it),
+            Self::TSNeverKeyword(it) => GetSpan::span(&**it),
+            Self::TSNullKeyword(it) => GetSpan::span(&**it),
+            Self::TSNumberKeyword(it) => GetSpan::span(&**it),
+            Self::TSObjectKeyword(it) => GetSpan::span(&**it),
+            Self::TSStringKeyword(it) => GetSpan::span(&**it),
+            Self::TSSymbolKeyword(it) => GetSpan::span(&**it),
+            Self::TSUndefinedKeyword(it) => GetSpan::span(&**it),
+            Self::TSUnknownKeyword(it) => GetSpan::span(&**it),
+            Self::TSVoidKeyword(it) => GetSpan::span(&**it),
+            Self::TSArrayType(it) => GetSpan::span(&**it),
+            Self::TSConditionalType(it) => GetSpan::span(&**it),
+            Self::TSConstructorType(it) => GetSpan::span(&**it),
+            Self::TSFunctionType(it) => GetSpan::span(&**it),
+            Self::TSImportType(it) => GetSpan::span(&**it),
+            Self::TSIndexedAccessType(it) => GetSpan::span(&**it),
+            Self::TSInferType(it) => GetSpan::span(&**it),
+            Self::TSIntersectionType(it) => GetSpan::span(&**it),
+            Self::TSLiteralType(it) => GetSpan::span(&**it),
+            Self::TSMappedType(it) => GetSpan::span(&**it),
+            Self::TSNamedTupleMember(it) => GetSpan::span(&**it),
+            Self::TSQualifiedName(it) => GetSpan::span(&**it),
+            Self::TSTemplateLiteralType(it) => GetSpan::span(&**it),
+            Self::TSThisType(it) => GetSpan::span(&**it),
+            Self::TSTupleType(it) => GetSpan::span(&**it),
+            Self::TSTypeLiteral(it) => GetSpan::span(&**it),
+            Self::TSTypeOperatorType(it) => GetSpan::span(&**it),
+            Self::TSTypePredicate(it) => GetSpan::span(&**it),
+            Self::TSTypeQuery(it) => GetSpan::span(&**it),
+            Self::TSTypeReference(it) => GetSpan::span(&**it),
+            Self::TSUnionType(it) => GetSpan::span(&**it),
+            Self::TSParenthesizedType(it) => GetSpan::span(&**it),
+            Self::JSDocNullableType(it) => GetSpan::span(&**it),
+            Self::JSDocNonNullableType(it) => GetSpan::span(&**it),
+            Self::JSDocUnknownType(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1433,46 +1648,46 @@ impl GetSpan for TSRestType<'_> {
 impl GetSpan for TSTupleElement<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::TSOptionalType(it) => GetSpan::span(it.as_ref()),
-            Self::TSRestType(it) => GetSpan::span(it.as_ref()),
-            Self::TSAnyKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSBigIntKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSBooleanKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSIntrinsicKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSNeverKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSNullKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSNumberKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSObjectKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSStringKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSSymbolKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSUndefinedKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSUnknownKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSVoidKeyword(it) => GetSpan::span(it.as_ref()),
-            Self::TSArrayType(it) => GetSpan::span(it.as_ref()),
-            Self::TSConditionalType(it) => GetSpan::span(it.as_ref()),
-            Self::TSConstructorType(it) => GetSpan::span(it.as_ref()),
-            Self::TSFunctionType(it) => GetSpan::span(it.as_ref()),
-            Self::TSImportType(it) => GetSpan::span(it.as_ref()),
-            Self::TSIndexedAccessType(it) => GetSpan::span(it.as_ref()),
-            Self::TSInferType(it) => GetSpan::span(it.as_ref()),
-            Self::TSIntersectionType(it) => GetSpan::span(it.as_ref()),
-            Self::TSLiteralType(it) => GetSpan::span(it.as_ref()),
-            Self::TSMappedType(it) => GetSpan::span(it.as_ref()),
-            Self::TSNamedTupleMember(it) => GetSpan::span(it.as_ref()),
-            Self::TSQualifiedName(it) => GetSpan::span(it.as_ref()),
-            Self::TSTemplateLiteralType(it) => GetSpan::span(it.as_ref()),
-            Self::TSThisType(it) => GetSpan::span(it.as_ref()),
-            Self::TSTupleType(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeOperatorType(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypePredicate(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeQuery(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeReference(it) => GetSpan::span(it.as_ref()),
-            Self::TSUnionType(it) => GetSpan::span(it.as_ref()),
-            Self::TSParenthesizedType(it) => GetSpan::span(it.as_ref()),
-            Self::JSDocNullableType(it) => GetSpan::span(it.as_ref()),
-            Self::JSDocNonNullableType(it) => GetSpan::span(it.as_ref()),
-            Self::JSDocUnknownType(it) => GetSpan::span(it.as_ref()),
+            Self::TSOptionalType(it) => GetSpan::span(&**it),
+            Self::TSRestType(it) => GetSpan::span(&**it),
+            Self::TSAnyKeyword(it) => GetSpan::span(&**it),
+            Self::TSBigIntKeyword(it) => GetSpan::span(&**it),
+            Self::TSBooleanKeyword(it) => GetSpan::span(&**it),
+            Self::TSIntrinsicKeyword(it) => GetSpan::span(&**it),
+            Self::TSNeverKeyword(it) => GetSpan::span(&**it),
+            Self::TSNullKeyword(it) => GetSpan::span(&**it),
+            Self::TSNumberKeyword(it) => GetSpan::span(&**it),
+            Self::TSObjectKeyword(it) => GetSpan::span(&**it),
+            Self::TSStringKeyword(it) => GetSpan::span(&**it),
+            Self::TSSymbolKeyword(it) => GetSpan::span(&**it),
+            Self::TSUndefinedKeyword(it) => GetSpan::span(&**it),
+            Self::TSUnknownKeyword(it) => GetSpan::span(&**it),
+            Self::TSVoidKeyword(it) => GetSpan::span(&**it),
+            Self::TSArrayType(it) => GetSpan::span(&**it),
+            Self::TSConditionalType(it) => GetSpan::span(&**it),
+            Self::TSConstructorType(it) => GetSpan::span(&**it),
+            Self::TSFunctionType(it) => GetSpan::span(&**it),
+            Self::TSImportType(it) => GetSpan::span(&**it),
+            Self::TSIndexedAccessType(it) => GetSpan::span(&**it),
+            Self::TSInferType(it) => GetSpan::span(&**it),
+            Self::TSIntersectionType(it) => GetSpan::span(&**it),
+            Self::TSLiteralType(it) => GetSpan::span(&**it),
+            Self::TSMappedType(it) => GetSpan::span(&**it),
+            Self::TSNamedTupleMember(it) => GetSpan::span(&**it),
+            Self::TSQualifiedName(it) => GetSpan::span(&**it),
+            Self::TSTemplateLiteralType(it) => GetSpan::span(&**it),
+            Self::TSThisType(it) => GetSpan::span(&**it),
+            Self::TSTupleType(it) => GetSpan::span(&**it),
+            Self::TSTypeLiteral(it) => GetSpan::span(&**it),
+            Self::TSTypeOperatorType(it) => GetSpan::span(&**it),
+            Self::TSTypePredicate(it) => GetSpan::span(&**it),
+            Self::TSTypeQuery(it) => GetSpan::span(&**it),
+            Self::TSTypeReference(it) => GetSpan::span(&**it),
+            Self::TSUnionType(it) => GetSpan::span(&**it),
+            Self::TSParenthesizedType(it) => GetSpan::span(&**it),
+            Self::JSDocNullableType(it) => GetSpan::span(&**it),
+            Self::JSDocNonNullableType(it) => GetSpan::span(&**it),
+            Self::JSDocUnknownType(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1585,8 +1800,8 @@ impl GetSpan for TSTypeReference<'_> {
 impl GetSpan for TSTypeName<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
-            Self::QualifiedName(it) => GetSpan::span(it.as_ref()),
+            Self::IdentifierReference(it) => GetSpan::span(&**it),
+            Self::QualifiedName(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1657,11 +1872,11 @@ impl GetSpan for TSPropertySignature<'_> {
 impl GetSpan for TSSignature<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::TSIndexSignature(it) => GetSpan::span(it.as_ref()),
-            Self::TSPropertySignature(it) => GetSpan::span(it.as_ref()),
-            Self::TSCallSignatureDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSConstructSignatureDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSMethodSignature(it) => GetSpan::span(it.as_ref()),
+            Self::TSIndexSignature(it) => GetSpan::span(&**it),
+            Self::TSPropertySignature(it) => GetSpan::span(&**it),
+            Self::TSCallSignatureDeclaration(it) => GetSpan::span(&**it),
+            Self::TSConstructSignatureDeclaration(it) => GetSpan::span(&**it),
+            Self::TSMethodSignature(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1718,7 +1933,7 @@ impl GetSpan for TSTypePredicate<'_> {
 impl GetSpan for TSTypePredicateName<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
+            Self::Identifier(it) => GetSpan::span(&**it),
             Self::This(it) => GetSpan::span(it),
         }
     }
@@ -1743,8 +1958,8 @@ impl GetSpan for TSModuleDeclarationName<'_> {
 impl GetSpan for TSModuleDeclarationBody<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::TSModuleDeclaration(it) => GetSpan::span(it.as_ref()),
-            Self::TSModuleBlock(it) => GetSpan::span(it.as_ref()),
+            Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSModuleBlock(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1780,9 +1995,9 @@ impl GetSpan for TSTypeQuery<'_> {
 impl GetSpan for TSTypeQueryExprName<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::TSImportType(it) => GetSpan::span(it.as_ref()),
-            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
-            Self::QualifiedName(it) => GetSpan::span(it.as_ref()),
+            Self::TSImportType(it) => GetSpan::span(&**it),
+            Self::IdentifierReference(it) => GetSpan::span(&**it),
+            Self::QualifiedName(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1876,9 +2091,9 @@ impl GetSpan for TSImportEqualsDeclaration<'_> {
 impl GetSpan for TSModuleReference<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::ExternalModuleReference(it) => GetSpan::span(it.as_ref()),
-            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
-            Self::QualifiedName(it) => GetSpan::span(it.as_ref()),
+            Self::ExternalModuleReference(it) => GetSpan::span(&**it),
+            Self::IdentifierReference(it) => GetSpan::span(&**it),
+            Self::QualifiedName(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1940,224 +2155,6 @@ impl GetSpan for JSDocNonNullableType<'_> {
 }
 
 impl GetSpan for JSDocUnknownType {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXElement<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXOpeningElement<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXClosingElement<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXFragment<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXOpeningFragment {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXClosingFragment {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXElementName<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
-            Self::NamespacedName(it) => GetSpan::span(it.as_ref()),
-            Self::MemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXNamespacedName<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXMemberExpression<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXMemberExpressionObject<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
-            Self::MemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXExpressionContainer<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXExpression<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::EmptyExpression(it) => GetSpan::span(it),
-            Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NullLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::NumericLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::BigIntLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::RegExpLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::TemplateLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::MetaProperty(it) => GetSpan::span(it.as_ref()),
-            Self::Super(it) => GetSpan::span(it.as_ref()),
-            Self::ArrayExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ArrowFunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AssignmentExpression(it) => GetSpan::span(it.as_ref()),
-            Self::AwaitExpression(it) => GetSpan::span(it.as_ref()),
-            Self::BinaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::CallExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ChainExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ClassExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ConditionalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::FunctionExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ImportExpression(it) => GetSpan::span(it.as_ref()),
-            Self::LogicalExpression(it) => GetSpan::span(it.as_ref()),
-            Self::NewExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ObjectExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ParenthesizedExpression(it) => GetSpan::span(it.as_ref()),
-            Self::SequenceExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TaggedTemplateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ThisExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UnaryExpression(it) => GetSpan::span(it.as_ref()),
-            Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
-            Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
-            Self::JSXElement(it) => GetSpan::span(it.as_ref()),
-            Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
-            Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSSatisfiesExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSTypeAssertion(it) => GetSpan::span(it.as_ref()),
-            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
-            Self::TSInstantiationExpression(it) => GetSpan::span(it.as_ref()),
-            Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
-            Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXEmptyExpression {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXAttributeItem<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Attribute(it) => GetSpan::span(it.as_ref()),
-            Self::SpreadAttribute(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXAttribute<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXSpreadAttribute<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXAttributeName<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Identifier(it) => GetSpan::span(it.as_ref()),
-            Self::NamespacedName(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXAttributeValue<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
-            Self::ExpressionContainer(it) => GetSpan::span(it.as_ref()),
-            Self::Element(it) => GetSpan::span(it.as_ref()),
-            Self::Fragment(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXIdentifier<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXChild<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Text(it) => GetSpan::span(it.as_ref()),
-            Self::Element(it) => GetSpan::span(it.as_ref()),
-            Self::Fragment(it) => GetSpan::span(it.as_ref()),
-            Self::ExpressionContainer(it) => GetSpan::span(it.as_ref()),
-            Self::Spread(it) => GetSpan::span(it.as_ref()),
-        }
-    }
-}
-
-impl GetSpan for JSXSpreadChild<'_> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for JSXText<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span

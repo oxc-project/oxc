@@ -7,13 +7,14 @@ mod promise;
 mod react;
 mod react_perf;
 mod unicorn;
+mod url;
 mod vitest;
 
 use std::{io, path::Path};
 
 pub use self::{
     config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*, react_perf::*,
-    unicorn::*, vitest::*,
+    unicorn::*, url::*, vitest::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.
@@ -42,6 +43,7 @@ const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
     "prefer-expect-resolves",
     "prefer-hooks-in-order",
     "prefer-hooks-on-top",
+    "prefer-lowercase-title",
     "prefer-mock-promise-shorthand",
     "prefer-strict-equal",
     "prefer-to-have-length",

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-import(named): named import "somethingElse" not found
    ╭─[index.js:1:10]

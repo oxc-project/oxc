@@ -2,23 +2,23 @@
 source: crates/oxc_minifier/tests/mangler/mod.rs
 ---
 function foo(a) {a}
-function foo(b) {
-	b;
+function foo(e) {
+	e;
 }
 
 function foo(a) { let _ = { x } }
-function foo(b) {
-	let c = { x };
+function foo(e) {
+	let t = { x };
 }
 
 function foo(a) { let { x } = y }
-function foo(b) {
-	let { x: c } = y;
+function foo(e) {
+	let { x: t } = y;
 }
 
 var x; function foo(a) { ({ x } = y) }
 var x;
-function foo(c) {
+function foo(t) {
 	({x} = y);
 }
 
@@ -31,9 +31,190 @@ function _(exports) {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }
 
+function foo(foo_a, foo_b, foo_c) {}; function bar(bar_a, bar_b, bar_c) {}
+function foo(e, t, n) {}
+;
+function bar(e, t, n) {}
+
+function _() { function foo() { var x; foo; } }
+function _() {
+	function e() {
+		var t;
+		e;
+	}
+}
+
+function _() { var x; function foo() { var y; function bar() { x } } }
+function _() {
+	var e;
+	function t() {
+		var t;
+		function n() {
+			e;
+		}
+	}
+}
+
+function _() { function x(a) {} }
+function _() {
+	function e(e) {}
+}
+
+function _() { function x(a) { x } }
+function _() {
+	function e(t) {
+		e;
+	}
+}
+
+function _() { var x; { var y }}
+function _() {
+	var e;
+	{
+		var t;
+	}
+}
+
+function _() { var x; { let y }}
+function _() {
+	var e;
+	{
+		let e;
+	}
+}
+
+function _() { let x; { let y }}
+function _() {
+	let e;
+	{
+		let e;
+	}
+}
+
+function _() { var x; { const y }}
+function _() {
+	var e;
+	{
+		const e;
+	}
+}
+
+function _() { let x; { const y }}
+function _() {
+	let e;
+	{
+		const e;
+	}
+}
+
+function _() { var x; { class Y{} }}
+function _() {
+	var e;
+	{
+		class e {}
+	}
+}
+
+function _() { let x; { class Y{} }}
+function _() {
+	let e;
+	{
+		class e {}
+	}
+}
+
+function _() { var x; try { throw 0 } catch (e) { e } }
+function _() {
+	var e;
+	try {
+		throw 0;
+	} catch (e) {
+		e;
+	}
+}
+
+function _() { var x; try { throw 0 } catch (e) { var e } }
+function _() {
+	var e;
+	try {
+		throw 0;
+	} catch (t) {
+		var t;
+	}
+}
+
+function _() { var x; try { throw 0 } catch { var e } }
+function _() {
+	var e;
+	try {
+		throw 0;
+	} catch {
+		var t;
+	}
+}
+
+function _() { var x; var y; }
+function _() {
+	var e;
+	var t;
+}
+
+function _() { var x; let y; }
+function _() {
+	var e;
+	let t;
+}
+
+function _() { { var x; var y; } }
+function _() {
+	{
+		var e;
+		var t;
+	}
+}
+
+function _() { { var x; let y; } }
+function _() {
+	{
+		var e;
+		let t;
+	}
+}
+
+function _() { let a; { let b; { let c; { let d; var x; } } } }
+function _() {
+	let e;
+	{
+		let e;
+		{
+			let e;
+			{
+				let e;
+				var t;
+			}
+		}
+	}
+}
+
+function _() { let a; { let b; { let c; { console.log(a); let d; var x; } } } }
+function _() {
+	let e;
+	{
+		let n;
+		{
+			let n;
+			{
+				console.log(e);
+				let n;
+				var t;
+			}
+		}
+	}
+}
+
 function foo(a) {a}
-function a(b) {
-	b;
+function e(e) {
+	e;
 }
 
 export function foo() {}; foo()
@@ -42,15 +223,15 @@ export function foo() {}
 foo();
 
 export default function foo() {}; foo()
-export default function a() {}
+export default function e() {}
 ;
-a();
+e();
 
 export const foo = 1; foo
 export const foo = 1;
 foo;
 
 const foo = 1; foo; export { foo }
-const a = 1;
-a;
-export { a as foo };
+const e = 1;
+e;
+export { e as foo };

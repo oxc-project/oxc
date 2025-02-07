@@ -1,9 +1,9 @@
 use oxc_ast::ast::*;
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::TraverseCtx;
+
+use crate::ctx::Ctx;
 
 use super::LatePeepholeOptimizations;
-use crate::ctx::Ctx;
 
 impl<'a> LatePeepholeOptimizations {
     /// Converts property accesses from quoted string or bracket access syntax to dot or unquoted string
@@ -13,10 +13,7 @@ impl<'a> LatePeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(
-        expr: &mut MemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: Ctx<'a, '_>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
         if is_identifier_name(&s.value) {
@@ -32,8 +29,7 @@ impl<'a> LatePeepholeOptimizations {
             return;
         }
         if let Some(n) = Ctx::string_to_equivalent_number_value(v) {
-            e.expression =
-                Ctx(ctx).ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
+            e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
         }
     }
 }
@@ -131,7 +127,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_convert_to_dotted_properties_computed_property_or_field() {
         test("const test1 = {['prop1']:87};", "const test1 = {prop1:87};");
         test(
@@ -150,7 +145,7 @@ mod test {
         test("class C {'x' = 0;  ['y'] = 1;}", "class C { x= 0;y= 1;}");
         test("class C {'m'() {} }", "class C {m() {}}");
 
-        test("const o = {'b'() {}, ['c']() {}};", "const o = {b: function() {}, c:function(){}};");
+        test("const o = {'b'() {}, ['c']() {}};", "const o = {b() {}, c(){}};");
         test("o = {['x']: () => this};", "o = {x: () => this};");
 
         test("const o = {get ['d']() {}};", "const o = {get d() {}};");
@@ -165,7 +160,7 @@ mod test {
         );
         test(
             "const o = {['a']: 1,'b'() {}, ['c']() {},  get ['d']() {},  set ['e'](x) {}};",
-            "const o = {a: 1,b: function() {}, c: function() {},  get d() {},  set e(x) {}};",
+            "const o = {a: 1,b() {}, c() {},  get d() {},  set e(x) {}};",
         );
 
         // test static keyword
@@ -219,14 +214,13 @@ mod test {
         );
 
         test_same("const o = {[fn()]: 0}");
-        test_same("const test1 = {[0]:87};");
-        test_same("const test1 = {['default']:87};");
+        test("const test1 = {[0]:87};", "const test1 = {0:87}");
+        test("const test1 = {['default']:87};", "const test1 = {default:87};");
         test_same("class C { ['constructor']() {} }");
         test_same("class C { ['constructor'] = 0 }");
     }
 
     #[test]
-    #[ignore]
     fn test_convert_to_dotted_properties_computed_property_with_default_value() {
         test("const {['o']: o = 0} = {};", "const {o:o = 0} = {};");
     }

@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.2] - 2025-02-02
+
+### Features
+
+- 256ae78 semantic: Report error for empty JSX attribute expression (#8815) (Dunqing)
+
+### Refactor
+
+- 6aa2dde codegen: Accept SymbolTable instead of Mangler (#8829) (Daniel Bulant)
+
+## [0.48.1] - 2025-01-26
+
+### Features
+
+- 6589c3b mangler: Reuse variable names (#8562) (翠 / green)
+
+### Refactor
+
+- c792068 semantic: Simplify `ScopeTree::iter_bindings` (#8723) (Dunqing)
+
+## [0.48.0] - 2025-01-24
+
+### Bug Fixes
+
+- d1c5dc4 semantic: Fix const assertions in `UnresolvedReferencesStack` (#8653) (overlookmotel)
+
+### Documentation
+
+- 5029547 semantic: Fix and reformat doc comments (#8652) (overlookmotel)
+
+### Refactor
+
+- a3dc4c3 crates: Clean up snapshot files (#8680) (Boshen)
+- e66da9f isolated_declarations, linter, minifier, prettier, semantic, transformer: Remove unnecessary `ref` / `ref mut` syntax (#8643) (overlookmotel)
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
 ## [0.47.0] - 2025-01-18
 
 - 4ce6329 semantic: [**BREAKING**] Ensure program outlives semantic (#8455) (Valentinas Janeiko)

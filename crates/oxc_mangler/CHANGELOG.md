@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.2] - 2025-02-02
+
+### Features
+
+- 86b6219 mangler: Use characters in the order of their likely frequency (#8771) (sapphi-red)
+
+### Performance
+
+- 2e4ff91 manger: Revert "perf(manger): remove useless tmp_bindings (#8735)" (#8741) (Dunqing)
+
+### Refactor
+
+- 6aa2dde codegen: Accept SymbolTable instead of Mangler (#8829) (Daniel Bulant)
+
+## [0.48.1] - 2025-01-26
+
+### Features
+
+- 6589c3b mangler: Reuse variable names (#8562) (翠 / green)
+
+### Bug Fixes
+
+- 33de70a mangler: Handle cases where a var is declared in a block scope (#8706) (翠 / green)
+
+### Performance
+
+- dc0b0f2 manger: Remove useless `tmp_bindings` (#8735) (Dunqing)
+- e472ced mangler: Optimize handling of collecting lived scope ids (#8724) (Dunqing)
+
+### Refactor
+
+- 52a37d0 mangler: Simplify initialization of `slots` (#8734) (Dunqing)
+
+## [0.48.0] - 2025-01-24
+
+### Refactor
+
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
 ## [0.47.0] - 2025-01-18
 
 ### Performance

@@ -50,40 +50,44 @@ pub fn print_import_declaration<'a>(p: &mut Prettier<'a>, decl: &ImportDeclarati
     array!(p, parts)
 }
 
-fn print_import_attributes<'a>(p: &mut Prettier<'a>, with_clause: &WithClause<'a>) -> Doc<'a> {
-    let mut parts = Vec::new_in(p.allocator);
-
-    parts.push(text!(" "));
-    parts.push(with_clause.attributes_keyword.format(p));
-    parts.push(text!(" {"));
-
-    if !with_clause.with_entries.is_empty() {
-        if p.options.bracket_spacing {
-            parts.push(text!(" "));
-        }
-
-        let attributes_doc = with_clause
-            .with_entries
-            .iter()
-            .map(|import_attr| import_attr.format(p))
-            .collect::<std::vec::Vec<_>>();
-        parts.push(join!(p, JoinSeparator::CommaSpace, attributes_doc));
-
-        if p.options.bracket_spacing {
-            parts.push(text!(" "));
-        }
-    }
-
-    parts.push(text!("}"));
-
-    array!(p, parts)
-}
-
 #[allow(clippy::enum_variant_names)]
 pub enum ExportDeclarationLike<'a, 'b> {
     ExportAllDeclaration(&'b ExportAllDeclaration<'a>),
     ExportNamedDeclaration(&'b ExportNamedDeclaration<'a>),
     ExportDefaultDeclaration(&'b ExportDefaultDeclaration<'a>),
+}
+
+impl<'a> ExportDeclarationLike<'a, '_> {
+    fn print_semicolon_after_export_declaration(&self, p: &Prettier<'a>) -> bool {
+        if !p.options.semi {
+            return false;
+        }
+
+        match self {
+            ExportDeclarationLike::ExportAllDeclaration(_) => true,
+            ExportDeclarationLike::ExportNamedDeclaration(decl) => {
+                let Some(declaration) = &decl.declaration else {
+                    return true;
+                };
+
+                // Prettier's `shouldOmitSemicolon()` function
+                !matches!(
+                    declaration,
+                    Declaration::ClassDeclaration(_)
+                        | Declaration::VariableDeclaration(_)
+                        | Declaration::FunctionDeclaration(_)
+                        | Declaration::TSInterfaceDeclaration(_)
+                        | Declaration::TSEnumDeclaration(_)
+                        | Declaration::TSModuleDeclaration(_)
+                        | Declaration::TSImportEqualsDeclaration(_)
+                )
+            }
+            ExportDeclarationLike::ExportDefaultDeclaration(decl) => {
+                matches!(decl.declaration, match_expression!(ExportDefaultDeclarationKind))
+            }
+            _ => false,
+        }
+    }
 }
 
 pub fn print_export_declaration<'a>(
@@ -159,45 +163,42 @@ pub fn print_export_declaration<'a>(
         parts.push(print_import_attributes(p, with_clause));
     }
 
-    if print_semicolon_after_export_declaration(p, decl) {
+    if decl.print_semicolon_after_export_declaration(p) {
         parts.push(text!(";"));
     }
 
     array!(p, parts)
 }
 
-fn print_semicolon_after_export_declaration<'a>(
-    p: &Prettier<'a>,
-    decl: &ExportDeclarationLike<'a, '_>,
-) -> bool {
-    if !p.options.semi {
-        return false;
+// ---
+
+fn print_import_attributes<'a>(p: &mut Prettier<'a>, with_clause: &WithClause<'a>) -> Doc<'a> {
+    let mut parts = Vec::new_in(p.allocator);
+
+    parts.push(text!(" "));
+    parts.push(with_clause.attributes_keyword.format(p));
+    parts.push(text!(" {"));
+
+    if !with_clause.with_entries.is_empty() {
+        if p.options.bracket_spacing {
+            parts.push(text!(" "));
+        }
+
+        let attributes_doc = with_clause
+            .with_entries
+            .iter()
+            .map(|import_attr| import_attr.format(p))
+            .collect::<std::vec::Vec<_>>();
+        parts.push(join!(p, JoinSeparator::CommaSpace, attributes_doc));
+
+        if p.options.bracket_spacing {
+            parts.push(text!(" "));
+        }
     }
 
-    match decl {
-        ExportDeclarationLike::ExportAllDeclaration(_) => true,
-        ExportDeclarationLike::ExportNamedDeclaration(decl) => {
-            let Some(declaration) = &decl.declaration else {
-                return true;
-            };
+    parts.push(text!("}"));
 
-            // Prettier's `shouldOmitSemicolon()` function
-            !matches!(
-                declaration,
-                Declaration::ClassDeclaration(_)
-                    | Declaration::VariableDeclaration(_)
-                    | Declaration::FunctionDeclaration(_)
-                    | Declaration::TSInterfaceDeclaration(_)
-                    | Declaration::TSEnumDeclaration(_)
-                    | Declaration::TSModuleDeclaration(_)
-                    | Declaration::TSImportEqualsDeclaration(_)
-            )
-        }
-        ExportDeclarationLike::ExportDefaultDeclaration(decl) => {
-            matches!(decl.declaration, match_expression!(ExportDefaultDeclarationKind))
-        }
-        _ => false,
-    }
+    array!(p, parts)
 }
 
 fn print_module_specifiers<'a, T: Format<'a>>(

@@ -42,20 +42,18 @@ declare_oxc_lint!(
 
 impl Rule for Eqeqeq {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj1 = value.get(0);
-        let obj2 = value.get(1);
+        let first_arg = value.get(0).and_then(serde_json::Value::as_str);
 
-        Self {
-            compare_type: obj1
-                .and_then(serde_json::Value::as_str)
-                .map(CompareType::from)
-                .unwrap_or_default(),
-            null_type: obj2
-                .and_then(|v| v.get("null"))
-                .and_then(serde_json::Value::as_str)
-                .map(NullType::from)
-                .unwrap_or_default(),
-        }
+        let null_type = value
+            .get(usize::from(first_arg.is_some()))
+            .and_then(|v| v.get("null"))
+            .and_then(serde_json::Value::as_str)
+            .map(NullType::from)
+            .unwrap_or_default();
+
+        let compare_type = first_arg.map(CompareType::from).unwrap_or_default();
+
+        Self { compare_type, null_type }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -227,6 +225,8 @@ fn test() {
         ("null == null", Some(json!(["always", {"null": "never"}]))),
         // Do not apply this rule to `null`.
         ("null == null", Some(json!(["smart", {"null": "ignore"}]))),
+        // Issue: <https://github.com/oxc-project/oxc/issues/8773>
+        ("href != null", Some(json!([{"null": "ignore"}]))),
     ];
 
     let fail = vec![

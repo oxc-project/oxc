@@ -79,29 +79,29 @@ doc_lazy_continuation = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.47.1", path = "crates/oxc" }
-oxc_allocator = { version = "0.47.1", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.47.1", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.47.1", path = "crates/oxc_ast_macros" }
-oxc_cfg = { version = "0.47.1", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.47.1", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.47.1", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.47.1", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.47.1", path = "crates/oxc_ecmascript" }
-oxc_estree = { version = "0.47.1", path = "crates/oxc_estree" }
-oxc_isolated_declarations = { version = "0.47.1", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.47.1", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.47.1", path = "crates/oxc_minifier" }
-oxc_napi = { version = "0.47.1", path = "crates/oxc_napi" }
-oxc_parser = { version = "0.47.1", path = "crates/oxc_parser" }
-oxc_parser_napi = { version = "0.47.1", path = "napi/parser" }
-oxc_regular_expression = { version = "0.47.1", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.47.1", path = "crates/oxc_semantic" }
-oxc_span = { version = "0.47.1", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.47.1", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.47.1", path = "napi/transform" }
-oxc_transformer = { version = "0.47.1", path = "crates/oxc_transformer" }
-oxc_traverse = { version = "0.47.1", path = "crates/oxc_traverse" }
+oxc = { version = "0.48.2", path = "crates/oxc" }
+oxc_allocator = { version = "0.48.2", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.48.2", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.48.2", path = "crates/oxc_ast_macros" }
+oxc_cfg = { version = "0.48.2", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.48.2", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.48.2", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.48.2", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.48.2", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.48.2", path = "crates/oxc_estree" }
+oxc_isolated_declarations = { version = "0.48.2", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.48.2", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.48.2", path = "crates/oxc_minifier" }
+oxc_napi = { version = "0.48.2", path = "crates/oxc_napi" }
+oxc_parser = { version = "0.48.2", path = "crates/oxc_parser" }
+oxc_parser_napi = { version = "0.48.2", path = "napi/parser" }
+oxc_regular_expression = { version = "0.48.2", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.48.2", path = "crates/oxc_semantic" }
+oxc_span = { version = "0.48.2", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.48.2", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.48.2", path = "napi/transform" }
+oxc_transformer = { version = "0.48.2", path = "crates/oxc_transformer" }
+oxc_traverse = { version = "0.48.2", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_linter = { path = "crates/oxc_linter" }
@@ -127,9 +127,9 @@ unicode-id-start = "1"
 
 #
 dashmap = "6"
-oxc-browserslist = "1.1.0"
+oxc-browserslist = "1.1.2"
 oxc_index = "2"
-oxc_resolver = "3"
+oxc_resolver = "4"
 oxc_sourcemap = "1"
 
 #
@@ -149,6 +149,7 @@ encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.5", default-features = false }
 fast-glob = "0.4.0"
+fixedbitset = "0.5.7"
 flate2 = "1.0.35"
 futures = "0.3.31"
 globset = "0.4.15"
@@ -168,7 +169,6 @@ markdown = "1.0.0-alpha.21"
 memchr = "2.7.4"
 miette = { package = "oxc-miette", version = "1.0.2", features = ["fancy-no-syscall"] }
 mimalloc = "0.1.43"
-mime_guess = "2.0.5"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
@@ -197,8 +197,7 @@ tokio = "1.42.0"
 tower-lsp = "0.20.0"
 tracing-subscriber = "0.3.19"
 tsify = "0.4.5"
-ureq = { version = "2.12.1", default-features = false }
-url = "2.5.4"
+ureq = { version = "3.0.0", default-features = false }
 walkdir = "2.5.0"
 wasm-bindgen = "0.2.99"
 

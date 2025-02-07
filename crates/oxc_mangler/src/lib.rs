@@ -1,17 +1,23 @@
-use std::ops::Deref;
+use std::{iter, ops::Deref};
 
+use fixedbitset::FixedBitSet;
 use itertools::Itertools;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_index::Idx;
-use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_semantic::{ScopeTree, Semantic, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::Atom;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
+    /// Also mangle exported variables.
     pub top_level: bool,
+    /// Use more readable mangled names
+    /// (e.g. `slot_0`, `slot_1`, `slot_2`, ...) for debugging.
+    ///
+    /// Uses base54 if false.
     pub debug: bool,
 }
 
@@ -19,20 +25,48 @@ type Slot = usize;
 
 /// # Name Mangler / Symbol Minification
 ///
+/// ## Example
+///
+/// ```rust
+/// use oxc_codegen::{Codegen, CodegenOptions};
+/// use oxc_ast::ast::Program;
+/// use oxc_parser::Parser;
+/// use oxc_allocator::Allocator;
+/// use oxc_span::SourceType;
+/// use oxc_mangler::{MangleOptions, Mangler};
+///
+/// let allocator = Allocator::default();
+/// let source = "const result = 1 + 2;";
+/// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+/// assert!(parsed.errors.is_empty());
+///
+/// let mangled_symbols = Mangler::new()
+///     .with_options(MangleOptions { top_level: true, debug: true })
+///     .build(&parsed.program);
+///
+/// let js = Codegen::new().with_symbol_table(mangled_symbols).build(&parsed.program);
+/// // this will be `const a = 1 + 2;` if debug = false
+/// assert_eq!(js.code, "const slot_0 = 1 + 2;\n");
+/// ```
+///
+/// ## Implementation
+///
 /// See:
 ///   * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/docs/architecture.md#symbol-minification)
 ///
-/// This algorithm is targeted for better gzip compression.
+/// This algorithm is based on the implementation of esbuild and additionally implements improved name reuse functionality.
+/// It targets for better gzip compression.
 ///
-/// Visually, a slot is the index position for binding identifiers:
+/// A slot is a placeholder for binding identifiers that shares the same name.
+/// Visually, it is the index position for binding identifiers:
 ///
 /// ```javascript
-/// function slot0(slot2, slot3, slot4) {
+/// function slot0(slot1, slot2, slot3) {
 ///     slot2 = 1;
 /// }
-/// function slot1(slot2, slot3) {
-///     function slot4() {
-///         slot2 = 1;
+/// function slot1(slot0) {
+///     function slot2() {
+///         slot0 = 1;
 ///     }
 /// }
 /// ```
@@ -40,28 +74,75 @@ type Slot = usize;
 /// The slot number for a new scope starts after the maximum slot of the parent scope.
 ///
 /// Occurrences of slots and their corresponding newly assigned short identifiers are:
-/// - slot2: 4 - a
-/// - slot3: 2 - b
-/// - slot4: 2 - c
-/// - slot0: 1 - d
-/// - slot1: 1 - e
+/// - slot2: 3 - a
+/// - slot0: 2 - b
+/// - slot1: 2 - c
+/// - slot3: 1 - d
 ///
 /// After swapping out the mangled names:
 ///
 /// ```javascript
-/// function d(a, b, c) {
+/// function b(c, a, d) {
 ///     a = 1;
 /// }
-/// function e(a, b) {
-///     function c() {
-///         a = 1;
+/// function c(b) {
+///     function a() {
+///         b = 1;
 ///     }
 /// }
 /// ```
+///
+/// ### Name Reuse Calculation
+///
+/// This improvement was inspired by [evanw/esbuild#2614](https://github.com/evanw/esbuild/pull/2614).
+///
+/// For better compression, we shadow the variables where possible to reuse the same name.
+/// For example, the following code:
+/// ```javascript
+/// var top_level_a = 0;
+/// var top_level_b = 1;
+/// function foo() {
+///   var foo_a = 1;
+///   console.log(top_level_b, foo_a);
+/// }
+/// function bar() {
+///   var bar_a = 1;
+///   console.log(top_level_b, bar_a);
+/// }
+/// console.log(top_level_a, foo(), bar())
+/// ```
+/// `top_level_a` is declared in the root scope, but is not used in function `foo` and function `bar`.
+/// Therefore, we can reuse the same name for `top_level_a` and `foo_a` and `bar_a`.
+///
+/// To calculate whether the variable name can be reused in the descendant scopes,
+/// this mangler introduces a concept of symbol liveness and slot liveness.
+/// Symbol liveness is a subtree of the scope tree that contains the declared scope of the symbol and
+/// all the scopes that the symbol is used in. It is a subtree, so any scopes that are between the declared scope and the used scope
+/// are also included. This is to ensure that the symbol is not shadowed by a different symbol before the use in the descendant scope.
+///
+/// For the example above, the liveness of each symbols are:
+/// - `top_level_a`: root_scope
+/// - `top_level_b`: root_scope -> foo, root_scope -> bar
+/// - `foo_a`: root_scope -> foo
+/// - `bar_a`: root_scope -> bar
+/// - `foo`: root_scope
+/// - `bar`: root_scope
+///
+/// Slot liveness is the same as symbol liveness, but it is a subforest (multiple subtrees) of the scope tree that can contain
+/// multiple symbol liveness.
+///
+/// Now that we have the liveness of each symbol, we want to assign symbols to minimal number of slots.
+/// This is a graph coloring problem where the node of the graph is the symbol and the edge of the graph indicates whether
+/// the symbols has a common alive scope and the color of the node is the slot.
+/// This mangler uses a greedy algorithm to assign symbols to slots to achieve that.
+/// In other words, it assigns symbols to the first slot that does not live in the liveness of the symbol.
+/// For the example above, each symbol is assigned to the following slots:
+/// - slot 0: `top_level_a`
+/// - slot 1: `top_level_b`, `foo_a`, `bar_a`
+/// - slot 2: `foo`
+/// - slot 3: `bar`
 #[derive(Default)]
 pub struct Mangler {
-    symbol_table: SymbolTable,
-
     options: MangleOptions,
 }
 
@@ -77,33 +158,24 @@ impl Mangler {
         self
     }
 
-    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &str {
-        self.symbol_table.get_name(symbol_id)
-    }
-
-    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
-        let symbol_id = self.symbol_table.get_reference(reference_id).symbol_id()?;
-        Some(self.symbol_table.get_name(symbol_id))
-    }
-
+    /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
+    /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
-    pub fn build(self, program: &Program<'_>) -> Mangler {
-        let semantic = SemanticBuilder::new().build(program).semantic;
-        let (symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
-        self.build_with_symbols_and_scopes(symbol_table, &scope_tree, program)
+    pub fn build(self, program: &Program<'_>) -> SymbolTable {
+        let semantic =
+            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
+        self.build_with_semantic(semantic, program)
     }
 
+    /// # Panics
+    ///
+    /// Panics if the child_ids does not exist in scope_tree.
     #[must_use]
-    pub fn build_with_symbols_and_scopes(
-        self,
-        symbol_table: SymbolTable,
-        scope_tree: &ScopeTree,
-        program: &Program<'_>,
-    ) -> Mangler {
+    pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> SymbolTable {
         if self.options.debug {
-            self.build_with_symbols_and_scopes_impl(symbol_table, scope_tree, program, debug_name)
+            self.build_with_symbols_and_scopes_impl(semantic, program, debug_name)
         } else {
-            self.build_with_symbols_and_scopes_impl(symbol_table, scope_tree, program, base54)
+            self.build_with_symbols_and_scopes_impl(semantic, program, base54)
         }
     }
 
@@ -111,12 +183,15 @@ impl Mangler {
         const CAPACITY: usize,
         G: Fn(usize) -> InlineString<CAPACITY>,
     >(
-        mut self,
-        symbol_table: SymbolTable,
-        scope_tree: &ScopeTree,
+        self,
+        semantic: Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
-    ) -> Mangler {
+    ) -> SymbolTable {
+        let (mut symbol_table, scope_tree, ast_nodes) = semantic.into_symbols_scopes_nodes();
+
+        assert!(scope_tree.has_child_ids(), "child_id needs to be generated");
+
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
         } else {
@@ -125,59 +200,80 @@ impl Mangler {
 
         let allocator = Allocator::default();
 
-        // Mangle the symbol table by computing slots from the scope tree.
-        // A slot is the occurrence index of a binding identifier inside a scope.
-        let mut symbol_table = symbol_table;
-
-        // Total number of slots for all scopes
-        let mut total_number_of_slots: Slot = 0;
-
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots: Vec<'_, Slot> = Vec::with_capacity_in(symbol_table.len(), &allocator);
-        for _ in 0..symbol_table.len() {
-            slots.push(0);
-        }
+        let mut slots: Vec<'_, Slot> =
+            Vec::from_iter_in(iter::repeat_n(0, symbol_table.len()), &allocator);
 
-        // Keep track of the maximum slot number for each scope
-        let mut max_slot_for_scope = Vec::with_capacity_in(scope_tree.len(), &allocator);
-        for _ in 0..scope_tree.len() {
-            max_slot_for_scope.push(0);
-        }
-
-        // Walk the scope tree and compute the slot number for each scope
+        // Stores the lived scope ids for each slot. Keyed by slot number.
+        let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
         let mut tmp_bindings = std::vec::Vec::with_capacity(100);
-        for scope_id in scope_tree.descendants_from_root() {
-            let bindings = scope_tree.get_bindings(scope_id);
 
-            // The current slot number is continued by the maximum slot from the parent scope
-            let parent_max_slot = scope_tree
-                .get_parent_id(scope_id)
-                .map_or(0, |parent_scope_id| max_slot_for_scope[parent_scope_id.index()]);
-
-            let mut slot = parent_max_slot;
-
-            if !bindings.is_empty() {
-                // Sort `bindings` in declaration order.
-                tmp_bindings.clear();
-                tmp_bindings.extend(bindings.values().copied());
-                tmp_bindings.sort_unstable();
-                for symbol_id in &tmp_bindings {
-                    slots[symbol_id.index()] = slot;
-                    slot += 1;
-                }
+        let mut reusable_slots = std::vec::Vec::new();
+        // Walk down the scope tree and assign a slot number for each symbol.
+        // It is possible to do this in a loop over the symbol list,
+        // but walking down the scope tree seems to generate a better code.
+        for (scope_id, bindings) in scope_tree.iter_bindings() {
+            if bindings.is_empty() {
+                continue;
             }
 
-            max_slot_for_scope[scope_id.index()] = slot;
+            let mut slot = slot_liveness.len();
 
-            if slot > total_number_of_slots {
-                total_number_of_slots = slot;
+            reusable_slots.clear();
+            reusable_slots.extend(
+                // Slots that are already assigned to other symbols, but does not live in the current scope.
+                slot_liveness
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
+                    .map(|(slot, _)| slot)
+                    .take(bindings.len()),
+            );
+
+            // The number of new slots that needs to be allocated.
+            let remaining_count = bindings.len() - reusable_slots.len();
+            reusable_slots.extend(slot..slot + remaining_count);
+
+            slot += remaining_count;
+            if slot_liveness.len() < slot {
+                slot_liveness.resize_with(slot, || FixedBitSet::with_capacity(scope_tree.len()));
+            }
+
+            // Sort `bindings` in declaration order.
+            tmp_bindings.clear();
+            tmp_bindings.extend(bindings.values().copied());
+            tmp_bindings.sort_unstable();
+            for (&symbol_id, assigned_slot) in
+                tmp_bindings.iter().zip(reusable_slots.iter().copied())
+            {
+                slots[symbol_id.index()] = assigned_slot;
+
+                // If the symbol is declared by `var`, then it can be hoisted to
+                // parent, so we need to include the scope where it is declared.
+                // (for cases like `function foo() { { var x; let y; } }`)
+                let declared_scope_id =
+                    ast_nodes.get_node(symbol_table.get_declaration(symbol_id)).scope_id();
+
+                // Calculate the scope ids that this symbol is alive in.
+                let lived_scope_ids = symbol_table
+                    .get_resolved_references(symbol_id)
+                    .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id())
+                    .chain([scope_id, declared_scope_id])
+                    .flat_map(|used_scope_id| {
+                        scope_tree.ancestors(used_scope_id).take_while(|s_id| *s_id != scope_id)
+                    });
+
+                // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
+                slot_liveness[assigned_slot].extend(lived_scope_ids.map(oxc_index::Idx::index));
             }
         }
+
+        let total_number_of_slots = slot_liveness.len();
 
         let frequencies = self.tally_slot_frequencies(
             &symbol_table,
             &exported_symbols,
-            scope_tree,
+            &scope_tree,
             total_number_of_slots,
             &slots,
             &allocator,
@@ -257,8 +353,7 @@ impl Mangler {
             }
         }
 
-        self.symbol_table = symbol_table;
-        self
+        symbol_table
     }
 
     fn tally_slot_frequencies<'a>(
@@ -350,8 +445,32 @@ fn is_keyword(s: &str) -> bool {
 #[repr(C, align(64))]
 struct Aligned64([u8; 64]);
 
+/// The characters are in frequency order, so that the characters with higher frequency are used first.
+///
+/// This idea was inspired by nanoid. <https://github.com/ai/nanoid/blob/5.0.9/url-alphabet/index.js>
+///
+/// This list was generated by the following steps:
+/// 1. Generate a source code with replacing all manglable variable names with `$` (assuming `$` is the least used character).
+///    You can do this by passing the following `blank` function to the `generate_name` parameter of [Mangler::build_with_symbols_and_scopes_impl].
+///    ```no_run
+///    fn blank(_: usize) -> InlineString<12> {
+///        let mut str = InlineString::new();
+///        unsafe { str.push_unchecked(b"$"[0]); }
+///        str
+///    }
+///    ```
+/// 2. Run the following command in `target/minifier/default` to check generate the list:
+///    ```shell
+///    find . -type f -exec cat {} + | `# concat all files in that directory` \
+///      tr -d '\n' | fold -w1 | `# separate each characters in to each line` \
+///      grep -E '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789]' | `# filter the character` \
+///      sort | uniq -c | `# count each characters` \
+///      sort -nr | awk '{print $2}' | tr -d '\n' `# format output`
+///    ```
+///    The result I got is `etnriaoscludfpmhg_10vy2436b8x579SCwTEDOkAjMNPFILRzBVHUWGKqJYXZQ`.
+/// 3. Add `$` at the end and then move all numbers to the end of the list.
 const BASE54_CHARS: Aligned64 =
-    Aligned64(*b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789");
+    Aligned64(*b"etnriaoscludfpmhg_vybxSCwTEDOkAjMNPFILRzBVHUWGKqJYXZQ$1024368579");
 
 /// Get the shortest mangled name for a given n.
 /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)

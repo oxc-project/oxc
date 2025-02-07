@@ -4,6 +4,59 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.10] - 2025-02-06
+
+### Features
+
+- 7e8568b linter: Junit reporter (#8756) (Tapan Prakash)
+
+### Bug Fixes
+
+- baf3e4e linter: Correctly replace rule severity with duplicate rule name configurations (#8840) (dalaoshu)
+
+## [0.15.9] - 2025-02-01
+
+### Bug Fixes
+
+- 8ce21d1 linter: Can't disable `no-nested-ternary` rule anymore (#8600) (dalaoshu)
+- e929f26 linter: Output `LintCommandInfo` for `CliRunResult::LintNoFilesFound` (#8714) (Sysix)
+- 9cc9d5f linter: `ignorePatterns` does not work when files are provided as command arguments (#8590) (dalaoshu)
+
+### Refactor
+
+- 194a5ff linter: Remove `LintResult` (#8712) (Sysix)
+- 4a2f2a9 linter: Move default `all_rules` output to trait (#8710) (Sysix)
+- 741fb40 linter: Move stdout outside LintRunner (#8694) (Sysix)
+- 10e5920 linter: Move finishing default diagnostic message to `GraphicalReporter` (#8683) (Sysix)
+- 9731c56 oxlint: Move output from `CliRunResult::InvalidOption` to outside and use more Enums for different invalid options (#8778) (Sysix)
+- fe45bee oxlint: Create different `CliRunResult` instead of passing `ExitCode` to it (#8777) (Sysix)
+- 2378fef oxlint: Move ConfigFileInit output outside CliRunResult, exit code 1 when it fails (#8776) (Sysix)
+- f4cecb5 oxlint: Remove unused `CliRunResult::PathNotFound` (#8775) (Sysix)
+
+### Testing
+
+- ad35e82 linter: Use snapshot testing instead of LintResult (#8711) (Sysix)
+- bf895eb linter: Add diagnostic format test snapshots (#8696) (Alexander S.)
+- 34d3d72 linter: Add snapshot tester for cli (#8695) (Sysix)
+- 0bf2bcf oxlint: Test two real rules with same name but from different plugins (#8821) (dalaoshu)
+- 2b83b71 oxlint: Improve disabling "no-nested-ternary" tests (#8814) (Alexander S.)
+- 45648e7 oxlint: Fix InvalidOptionTsConfig tests for windows (#8791) (Alexander S.)
+- 48bfed9 oxlint: Ignore windows path mismatch (Boshen)
+- 6f4a023 oxlint: Remove "--print-config" test (#8792) (Sysix)
+- 55c2025 oxlint: Add `CliRunResult` to snapshot (#8780) (Sysix)
+
+## [0.15.8] - 2025-01-24
+
+### Features
+
+- 4ae568e linter: Add DiagnosticResult to the Reporters for receiving a sub part result (#8666) (Alexander S.)
+- 8a0eb2a oxlint: Add stylish formatter (#8607) (Andrew Powell)
+
+### Bug Fixes
+
+- 40316af linter: Fix github `endColumn` output (#8647) (Alexander S.)
+- dc912fa linter: Added missing $schema property to default config (#8625) (Tapan Prakash)
+
 ## [0.15.7] - 2025-01-19
 
 ### Features

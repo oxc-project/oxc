@@ -1,0 +1,29 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --vitest-plugin -c fixtures/eslintrc_vitest_replace/eslintrc.json fixtures/eslintrc_vitest_replace/foo.test.js
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/expect-expect.html\eslint-plugin-jest(expect-expect)]8;;\: Test has no assertions
+   ,-[fixtures/eslintrc_vitest_replace/foo.test.js:1:1]
+ 1 | test.skip('foo', () => {
+   : ^^^^^^^^^
+ 2 |   // ...
+   `----
+  help: Add assertion(s) in this Test
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/no-disabled-tests.html\eslint-plugin-jest(no-disabled-tests)]8;;\: Disabled test
+   ,-[fixtures/eslintrc_vitest_replace/foo.test.js:1:1]
+ 1 | test.skip('foo', () => {
+   : ^^^^^^^^^
+ 2 |   // ...
+   `----
+  help: Remove the appending `.skip`
+
+Found 1 warning and 1 error.
+Finished in <variable>ms on 1 file with 109 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

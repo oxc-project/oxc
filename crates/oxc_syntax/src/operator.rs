@@ -5,7 +5,7 @@
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::cmp::ContentEq;
+use oxc_span::ContentEq;
 
 use crate::precedence::{GetPrecedence, Precedence};
 

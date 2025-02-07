@@ -8,7 +8,7 @@ describe('simple', () => {
   it('matches output', () => {
     const ret = minify('test.js', code, { sourcemap: true });
     expect(ret).toStrictEqual({
-      'code': 'function foo(){var b;b(void 0)}foo();',
+      'code': 'function foo(){var e;e(void 0)}foo();',
       'map': {
         'mappings': 'AAAA,SAAS,KAAM,CAAE,IAAIA,EAAK,SAAc,AAAE,CAAC,KAAK',
         'names': [

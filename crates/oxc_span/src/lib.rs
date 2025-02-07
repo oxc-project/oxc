@@ -5,14 +5,14 @@
 #![warn(missing_docs)]
 
 mod atom;
+mod cmp;
 mod compact_str;
 mod source_type;
 mod span;
 
-pub mod cmp;
-
 pub use crate::{
     atom::Atom,
+    cmp::ContentEq,
     compact_str::{CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN},
     source_type::{
         Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension, VALID_EXTENSIONS,

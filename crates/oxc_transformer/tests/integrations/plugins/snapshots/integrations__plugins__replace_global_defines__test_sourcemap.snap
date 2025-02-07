@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_transformer/tests/integrations/plugins/replace_global_defines.rs
 expression: snapshot
-snapshot_kind: text
 ---
 - test.js.map
 (0:0) "1;\n" --> (0:0) "1;\n"

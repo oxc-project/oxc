@@ -184,6 +184,12 @@ impl<T> Stack<T> {
         Self { cursor: start, start, end }
     }
 
+    // Note: There is no need to implement `first` and `first_mut` methods.
+    // `NonEmptyStack` can make those methods infallible, but `Stack` can't because `Stack` can be empty.
+    // `std`'s `first` and `first_mut` methods available via `Deref` / `DerefMut` to a `&[T]` / `&mut[T]`
+    // are just as efficient as a hand-written version.
+    // https://godbolt.org/z/rjb1dzob1
+
     /// Get reference to last value on stack.
     #[inline]
     pub fn last(&self) -> Option<&T> {
@@ -218,7 +224,7 @@ impl<T> Stack<T> {
         #[expect(clippy::if_not_else)]
         if !self.is_empty() {
             // SAFETY: Stack is not empty
-            Some(unsafe { self.last_mut_unchecked() })
+            Some(unsafe { self.last_unchecked_mut() })
         } else {
             None
         }
@@ -230,7 +236,7 @@ impl<T> Stack<T> {
     ///
     /// * Stack must not be empty.
     #[inline]
-    pub unsafe fn last_mut_unchecked(&mut self) -> &mut T {
+    pub unsafe fn last_unchecked_mut(&mut self) -> &mut T {
         debug_assert!(self.end > self.start);
         debug_assert!(self.cursor > self.start);
         debug_assert!(self.cursor <= self.end);

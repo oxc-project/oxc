@@ -199,11 +199,11 @@ impl<'a> IsolatedDeclarations<'a> {
         param: &FormalParameter<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Option<ClassElement<'a>> {
-        let Some(ident_name) = param.pattern.get_identifier() else {
+        let Some(ident_name) = param.pattern.get_identifier_name() else {
             // A parameter property may not be declared using a binding pattern.(1187)
             return None;
         };
-        let key = self.ast.property_key_identifier_name(SPAN, ident_name);
+        let key = self.ast.property_key_static_identifier(SPAN, ident_name);
         Some(self.ast.class_element_property_definition(
             param.span,
             PropertyDefinitionType::PropertyDefinition,

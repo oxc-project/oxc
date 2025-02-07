@@ -250,6 +250,13 @@ impl SymbolTable {
         &mut self.references[reference_id]
     }
 
+    /// Get the name of the symbol a reference is resolved to. Returns `None` if the reference is
+    /// not resolved.
+    #[inline]
+    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
+        self.get_name(self.references[reference_id].symbol_id()?).into()
+    }
+
     /// Returns `true` if the corresponding [`Reference`] is resolved to a symbol.
     ///
     /// When `false`, this could either be a reference to a global value or an identifier that does

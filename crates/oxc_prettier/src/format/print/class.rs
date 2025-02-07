@@ -339,7 +339,7 @@ pub fn print_class_method<'a>(p: &mut Prettier<'a>, node: &MethodDefinition<'a>)
         parts.push(text!("override "));
     }
 
-    parts.push(function::print_method(p, node));
+    parts.push(function::print_class_method(p, node));
 
     array!(p, parts)
 }

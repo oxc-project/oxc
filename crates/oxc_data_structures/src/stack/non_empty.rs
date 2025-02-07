@@ -216,6 +216,22 @@ impl<T> NonEmptyStack<T> {
         Self { cursor: start, start, end }
     }
 
+    /// Get reference to first value on stack.
+    #[inline]
+    pub fn first(&self) -> &T {
+        // SAFETY: All methods ensure stack is never empty, so `start` always points to
+        // a valid initialized `T`. `start` is always aligned for `T`.
+        unsafe { self.start.as_ref() }
+    }
+
+    /// Get mutable reference to first value on stack.
+    #[inline]
+    pub fn first_mut(&mut self) -> &mut T {
+        // SAFETY: All methods ensure stack is never empty, so `start` always points to
+        // a valid initialized `T`. `start` is always aligned for `T`.
+        unsafe { self.start.as_mut() }
+    }
+
     /// Get reference to last value on stack.
     #[inline]
     pub fn last(&self) -> &T {
@@ -546,6 +562,64 @@ mod tests {
     }
 
     #[test]
+    fn first() {
+        let mut stack = NonEmptyStack::new(10u64);
+        assert_len_cap_last!(stack, 1, 4, &10);
+        assert_eq!(stack.first(), &10);
+
+        // Make stack grow
+        stack.push(20);
+        stack.push(30);
+        stack.push(40);
+        stack.push(50);
+        assert_len_cap_last!(stack, 5, 8, &50);
+        assert_eq!(stack.first(), &10);
+
+        // Shrink stack back to just 1 entry
+        stack.pop();
+        stack.pop();
+        stack.pop();
+        stack.pop();
+        assert_len_cap_last!(stack, 1, 8, &10);
+        assert_eq!(stack.first(), &10);
+    }
+
+    #[test]
+    fn first_mut() {
+        let mut stack = NonEmptyStack::new(10u64);
+        assert_len_cap_last!(stack, 1, 4, &10);
+        assert_eq!(stack.first_mut(), &mut 10);
+
+        *stack.first_mut() = 11;
+        assert_eq!(stack[0], 11);
+        assert_eq!(stack.first_mut(), &mut 11);
+
+        // Make stack grow
+        stack.push(20);
+        stack.push(30);
+        stack.push(40);
+        stack.push(50);
+        assert_len_cap_last!(stack, 5, 8, &50);
+        assert_eq!(stack.first_mut(), &mut 11);
+
+        *stack.first_mut() = 12;
+        assert_eq!(stack[0], 12);
+        assert_eq!(stack.first_mut(), &mut 12);
+
+        // Shrink stack back to just 1 entry
+        stack.pop();
+        stack.pop();
+        stack.pop();
+        stack.pop();
+        assert_len_cap_last!(stack, 1, 8, &12);
+        assert_eq!(stack.first_mut(), &mut 12);
+
+        *stack.first_mut() = 13;
+        assert_eq!(stack[0], 13);
+        assert_eq!(stack.first_mut(), &mut 13);
+    }
+
+    #[test]
     fn last_mut() {
         let mut stack = NonEmptyStack::new(10u64);
         assert_len_cap_last!(stack, 1, 4, &10);
@@ -561,6 +635,84 @@ mod tests {
         assert_len_cap_last!(stack, 2, 4, &21);
         *stack.last_mut() = 22;
         assert_len_cap_last!(stack, 2, 4, &22);
+    }
+
+    #[test]
+    fn as_slice() {
+        let mut stack = NonEmptyStack::new(10u64);
+        assert_len_cap_last!(stack, 1, 4, &10);
+        assert_eq!(stack.as_slice(), &[10]);
+
+        stack.push(20);
+        stack.push(30);
+        stack.push(40);
+        assert_len_cap_last!(stack, 4, 4, &40);
+        assert_eq!(stack.as_slice(), &[10, 20, 30, 40]);
+
+        stack.push(50);
+        assert_len_cap_last!(stack, 5, 8, &50);
+        assert_eq!(stack.as_slice(), &[10, 20, 30, 40, 50]);
+
+        stack.pop();
+        assert_len_cap_last!(stack, 4, 8, &40);
+        assert_eq!(stack.as_slice(), &[10, 20, 30, 40]);
+
+        stack.pop();
+        assert_len_cap_last!(stack, 3, 8, &30);
+        assert_eq!(stack.as_slice(), &[10, 20, 30]);
+
+        stack.pop();
+        stack.pop();
+        assert_len_cap_last!(stack, 1, 8, &10);
+        assert_eq!(stack.as_slice(), &[10]);
+    }
+
+    #[test]
+    fn as_mut_slice() {
+        let mut stack = NonEmptyStack::new(10u64);
+        assert_len_cap_last!(stack, 1, 4, &10);
+        assert_eq!(stack.as_mut_slice(), &mut [10]);
+
+        stack.as_mut_slice()[0] = 11;
+        assert_len_cap_last!(stack, 1, 4, &11);
+        assert_eq!(&stack[..], &[11]);
+        assert_eq!(stack.as_mut_slice(), &mut [11]);
+
+        stack.push(20);
+        stack.push(30);
+        stack.push(40);
+        assert_len_cap_last!(stack, 4, 4, &40);
+        assert_eq!(&stack[..], &[11, 20, 30, 40]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 30, 40]);
+
+        stack.as_mut_slice()[2] = 31;
+        assert_len_cap_last!(stack, 4, 4, &40);
+        assert_eq!(&stack[..], &[11, 20, 31, 40]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 31, 40]);
+
+        stack.push(50);
+        assert_len_cap_last!(stack, 5, 8, &50);
+        assert_eq!(&stack[..], &[11, 20, 31, 40, 50]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 31, 40, 50]);
+
+        stack.pop();
+        assert_len_cap_last!(stack, 4, 8, &40);
+        assert_eq!(&stack[..], &[11, 20, 31, 40]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 31, 40]);
+
+        stack.pop();
+        assert_len_cap_last!(stack, 3, 8, &31);
+        assert_eq!(&stack[..], &[11, 20, 31]);
+        assert_eq!(stack.as_mut_slice(), &mut [11, 20, 31]);
+
+        stack.pop();
+        stack.pop();
+        assert_len_cap_last!(stack, 1, 8, &11);
+        assert_eq!(stack.as_mut_slice(), &mut [11]);
+
+        stack.as_mut_slice()[0] = 12;
+        assert_len_cap_last!(stack, 1, 8, &12);
+        assert_eq!(stack.as_mut_slice(), &mut [12]);
     }
 
     #[test]

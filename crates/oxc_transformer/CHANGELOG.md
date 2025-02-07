@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.2] - 2025-02-02
+
+### Features
+
+- 3bc05fa transformer: Implement jsx spread child (#8763) (Boshen)
+
+### Documentation
+
+- 57b7ca8 ast: Add documentation for all remaining JS AST methods (#8820) (Cam McHenry)
+
+## [0.48.1] - 2025-01-26
+
+### Bug Fixes
+
+- e7ab96c transformer/jsx: Incorrect `isStaticChildren` argument for `Fragment` with multiple children (#8713) (Dunqing)
+- 3e509e1 transformer/typescript: Enum merging when same name declared in outer scope (#8691) (branchseer)
+
+## [0.48.0] - 2025-01-24
+
+### Refactor
+
+- a3dc4c3 crates: Clean up snapshot files (#8680) (Boshen)
+- e66da9f isolated_declarations, linter, minifier, prettier, semantic, transformer: Remove unnecessary `ref` / `ref mut` syntax (#8643) (overlookmotel)
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+- a730f99 transformer: Move `create_prototype_member` to utils module (#8657) (Dunqing)
+- 61d96fd transformer/class-properties: Correct comments (#8636) (overlookmotel)
+
 ## [0.47.1] - 2025-01-19
 
 ### Bug Fixes

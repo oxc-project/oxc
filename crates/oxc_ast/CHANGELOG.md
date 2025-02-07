@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.2] - 2025-02-02
+
+### Features
+
+- d553318 minifier: Complete `MangleIf` (#8810) (Boshen)
+- e353a01 minifier: Compress `a != null ? a.b : undefined` to `a?.b` (#8802) (sapphi-red)
+
+### Documentation
+
+- 57b7ca8 ast: Add documentation for all remaining JS AST methods (#8820) (Cam McHenry)
+- b00b8c8 ast: Correct documentation for `JSXExpression::EmptyExpression`  (#8816) (Dunqing)
+- c63291a ast: Add more docs for JS expressions, declarations, and module AST types (#8800) (Cam McHenry)
+- fb5b1fa ast: Reformat `AstBuilder` doc comments (#8774) (overlookmotel)
+
+### Refactor
+
+- 0568210 ast: Remove excess line breaks from generated code (#8830) (overlookmotel)
+- 30eec26 ast: Make generated code for `Visit` more understandable (#8825) (overlookmotel)
+- d4eee50 ast: Comments for enums with no `AstKind` in generated code for `Visit` trait (#8796) (overlookmotel)
+- 87a7711 ast: Shorten generated code for `VisitMut` (#8795) (overlookmotel)
+- 70ad879 ast: Remove unnecessary lint from generated code for `AstKind` (#8794) (overlookmotel)
+- beeda9a ast: Alter comments in generated `Visit` trait (#8793) (overlookmotel)
+- 8cf9d34 ast: Rename `#[estree(type)]` attr on struct fields to `#[estree(ts_type)]` (#8767) (overlookmotel)
+- a316b10 ast: Rename `#[estree(type)]` attr on types to `#[estree(rename)]` (#8766) (overlookmotel)
+- a861d93 minifier: Port esbuild's `mangleStmts` (#8770) (Boshen)
+
+## [0.48.1] - 2025-01-26
+
+### Features
+
+- b7f13e6 ast: Implement utf8 to utf16 span converter (#8687) (Boshen)
+- e0117db minifier: Replace `const` with `let` for non-exported read-only variables (#8733) (sapphi-red)
+
+## [0.48.0] - 2025-01-24
+
+### Refactor
+
+- 997859c ast: Align `#[estree(via)]` behavior (#8599) (sapphi-red)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
 ## [0.47.0] - 2025-01-18
 
 - 19d3677 ast: [**BREAKING**] Always return `Array<ImportDeclarationSpecifier>` for `ImportDeclaration.specifiers` (#8560) (sapphi-red)

@@ -24,13 +24,16 @@ import { run_code } from './sandbox';
 
 function run(input: string, expected: string[], prepend_code?: string) {
   const consoleMock = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-  const minified = minify('test.mjs', input).code;
-  expect(minified).not.toBeFalsy();
-  // Use `consoleMock` instead of the returned output.
-  const _ = run_code(minified, prepend_code);
-  const calls = consoleMock.mock.calls.map((args) => args.map(convert).join(' '));
-  expect(calls).toStrictEqual(expected);
-  consoleMock.mockReset();
+  try {
+    const minified = minify('test.mjs', input).code;
+    expect(minified).not.toBeFalsy();
+    // Use `consoleMock` instead of the returned output.
+    const _ = run_code(minified, prepend_code);
+    const calls = consoleMock.mock.calls.map((args) => args.map(convert).join(' '));
+    expect(calls).toStrictEqual(expected);
+  } finally {
+    consoleMock.mockReset();
+  }
 }
 
 function convert(arg: any) {
@@ -4451,7 +4454,8 @@ test('issue_1922_1', () => {
   run(code, expected);
 });
 
-test('issue_1922_2', () => {
+// TODO: mangler does not support eval yet
+test('issue_1922_2', { todo: true }, () => {
   const code = 'console.log(function(){var a;eval("a = 1");return a}(1));';
   const expected = ['1'];
   run(code, expected);

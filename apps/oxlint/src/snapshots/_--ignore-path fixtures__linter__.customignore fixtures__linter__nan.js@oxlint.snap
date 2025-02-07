@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --ignore-path fixtures/linter/.customignore fixtures/linter/nan.js
+working directory: 
+----------
+Finished in <variable>ms on 0 files with 0 rules using 1 threads.
+----------
+CLI result: LintNoFilesFound
+----------

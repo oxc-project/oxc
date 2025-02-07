@@ -1,6 +1,6 @@
 [package]
 name = "oxc_diagnostics"
-version = "0.47.1"
+version = "0.48.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -19,4 +19,5 @@ workspace = true
 doctest = false
 
 [dependencies]
+cow-utils = { workspace = true }
 miette = { workspace = true }

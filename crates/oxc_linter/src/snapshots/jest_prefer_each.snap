@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   × Invalid Unicode escape sequence
    ╭─[prefer_each.tsx:2:10]

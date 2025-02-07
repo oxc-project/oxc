@@ -24,6 +24,7 @@ pub use crate::utils::jest::parse_jest_fn::{
 pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "afterAll",
     "afterEach",
+    "bench",
     "beforeAll",
     "beforeEach",
     "describe",
@@ -55,6 +56,7 @@ impl JestFnKind {
             "expect" => Self::Expect,
             "expectTypeOf" => Self::ExpectTypeOf,
             "vi" => Self::General(JestGeneralFnKind::Vitest),
+            "bench" => Self::General(JestGeneralFnKind::Bench),
             "jest" => Self::General(JestGeneralFnKind::Jest),
             "describe" | "fdescribe" | "xdescribe" => Self::General(JestGeneralFnKind::Describe),
             "fit" | "it" | "test" | "xit" | "xtest" => Self::General(JestGeneralFnKind::Test),
@@ -80,6 +82,7 @@ pub enum JestGeneralFnKind {
     Test,
     Jest,
     Vitest,
+    Bench,
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>

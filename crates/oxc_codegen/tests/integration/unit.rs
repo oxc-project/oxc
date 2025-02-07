@@ -17,6 +17,10 @@ fn module_decl() {
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
     test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
+    test_minify(
+        "import x from './foo.custom' with { 'type': 'json' }",
+        "import x from\"./foo.custom\"with{\"type\":\"json\"};",
+    );
 }
 
 #[test]
@@ -27,19 +31,20 @@ fn expr() {
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
 
-    test_minify("throw 'foo'", "throw\"foo\";");
-    test_minify("return 'foo'", "return\"foo\";");
+    test_minify("throw 'foo'", "throw`foo`;");
+    test_minify("return 'foo'", "return`foo`;");
     test_minify("return class {}", "return class{};");
     test_minify("return async function foo() {}", "return async function foo(){};");
     test_minify_same("return super();");
     test_minify_same("return new.target;");
     test_minify_same("throw await 1;");
-    test_minify_same("await import(\"\");");
+    test_minify_same("await import(``);");
 
     test("delete 2e308", "delete (0, Infinity);\n");
     test_minify("delete 2e308", "delete(1/0);");
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
+    test_minify_same("new(import(``),function(){});");
 }
 
 #[test]

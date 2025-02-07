@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-empty-static-block): Unexpected empty static blocks
    ╭─[no_empty_static_block.tsx:1:13]

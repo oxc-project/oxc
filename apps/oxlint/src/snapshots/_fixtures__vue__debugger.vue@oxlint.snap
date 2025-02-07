@@ -1,0 +1,29 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: fixtures/vue/debugger.vue
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/vue/debugger.vue:2:5]
+ 1 | 
+ 2 |     debugger
+   :     ^^^^^^^^
+   `----
+  help: Delete this code.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/vue/debugger.vue:3:5]
+ 2 |     let foo: T; // test ts syntax
+ 3 |     debugger;
+   :     ^^^^^^^^^
+   `----
+  help: Delete this code.
+
+Found 2 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 97 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

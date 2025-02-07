@@ -2,7 +2,6 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/if_stmt_in_for_in.js
-snapshot_kind: text
 ---
 bb0: {
 

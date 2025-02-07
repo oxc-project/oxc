@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.2] - 2025-02-02
+
+### Bug Fixes
+
+- 0928a19 codegen: Emit this parameters of class methods (#8834) (michaelm)
+
+### Documentation
+
+- 57b7ca8 ast: Add documentation for all remaining JS AST methods (#8820) (Cam McHenry)
+
+## [0.48.0] - 2025-01-24
+
+### Features
+
+- 99607d3 codegen: Print comments in `TSTypeLiteral` (#8679) (Boshen)
+
+### Refactor
+
+- a3dc4c3 crates: Clean up snapshot files (#8680) (Boshen)
+- e66da9f isolated_declarations, linter, minifier, prettier, semantic, transformer: Remove unnecessary `ref` / `ref mut` syntax (#8643) (overlookmotel)
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
+### Testing
+
+- 39dbd2d codegen: Fix snapshot file (#8685) (Boshen)
+
 ## [0.46.0] - 2025-01-14
 
 ### Bug Fixes

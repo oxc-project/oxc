@@ -6,9 +6,7 @@
 use oxc_allocator::{Address, GetAddress};
 
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::ts::*;
 
 impl GetAddress for Expression<'_> {
@@ -524,6 +522,81 @@ impl GetAddress for ExportDefaultDeclarationKind<'_> {
     }
 }
 
+impl GetAddress for JSXElementName<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::Identifier(it) => GetAddress::address(it),
+            Self::IdentifierReference(it) => GetAddress::address(it),
+            Self::NamespacedName(it) => GetAddress::address(it),
+            Self::MemberExpression(it) => GetAddress::address(it),
+            Self::ThisExpression(it) => GetAddress::address(it),
+        }
+    }
+}
+
+impl GetAddress for JSXMemberExpressionObject<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::IdentifierReference(it) => GetAddress::address(it),
+            Self::MemberExpression(it) => GetAddress::address(it),
+            Self::ThisExpression(it) => GetAddress::address(it),
+        }
+    }
+}
+
+impl GetAddress for JSXAttributeItem<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::Attribute(it) => GetAddress::address(it),
+            Self::SpreadAttribute(it) => GetAddress::address(it),
+        }
+    }
+}
+
+impl GetAddress for JSXAttributeName<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::Identifier(it) => GetAddress::address(it),
+            Self::NamespacedName(it) => GetAddress::address(it),
+        }
+    }
+}
+
+impl GetAddress for JSXAttributeValue<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::StringLiteral(it) => GetAddress::address(it),
+            Self::ExpressionContainer(it) => GetAddress::address(it),
+            Self::Element(it) => GetAddress::address(it),
+            Self::Fragment(it) => GetAddress::address(it),
+        }
+    }
+}
+
+impl GetAddress for JSXChild<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::Text(it) => GetAddress::address(it),
+            Self::Element(it) => GetAddress::address(it),
+            Self::Fragment(it) => GetAddress::address(it),
+            Self::ExpressionContainer(it) => GetAddress::address(it),
+            Self::Spread(it) => GetAddress::address(it),
+        }
+    }
+}
+
 impl GetAddress for TSEnumMemberName<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
@@ -704,81 +777,6 @@ impl GetAddress for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => GetAddress::address(it),
             Self::IdentifierReference(it) => GetAddress::address(it),
             Self::QualifiedName(it) => GetAddress::address(it),
-        }
-    }
-}
-
-impl GetAddress for JSXElementName<'_> {
-    // `#[inline]` because compiler should boil this down to a single assembly instruction
-    #[inline]
-    fn address(&self) -> Address {
-        match self {
-            Self::Identifier(it) => GetAddress::address(it),
-            Self::IdentifierReference(it) => GetAddress::address(it),
-            Self::NamespacedName(it) => GetAddress::address(it),
-            Self::MemberExpression(it) => GetAddress::address(it),
-            Self::ThisExpression(it) => GetAddress::address(it),
-        }
-    }
-}
-
-impl GetAddress for JSXMemberExpressionObject<'_> {
-    // `#[inline]` because compiler should boil this down to a single assembly instruction
-    #[inline]
-    fn address(&self) -> Address {
-        match self {
-            Self::IdentifierReference(it) => GetAddress::address(it),
-            Self::MemberExpression(it) => GetAddress::address(it),
-            Self::ThisExpression(it) => GetAddress::address(it),
-        }
-    }
-}
-
-impl GetAddress for JSXAttributeItem<'_> {
-    // `#[inline]` because compiler should boil this down to a single assembly instruction
-    #[inline]
-    fn address(&self) -> Address {
-        match self {
-            Self::Attribute(it) => GetAddress::address(it),
-            Self::SpreadAttribute(it) => GetAddress::address(it),
-        }
-    }
-}
-
-impl GetAddress for JSXAttributeName<'_> {
-    // `#[inline]` because compiler should boil this down to a single assembly instruction
-    #[inline]
-    fn address(&self) -> Address {
-        match self {
-            Self::Identifier(it) => GetAddress::address(it),
-            Self::NamespacedName(it) => GetAddress::address(it),
-        }
-    }
-}
-
-impl GetAddress for JSXAttributeValue<'_> {
-    // `#[inline]` because compiler should boil this down to a single assembly instruction
-    #[inline]
-    fn address(&self) -> Address {
-        match self {
-            Self::StringLiteral(it) => GetAddress::address(it),
-            Self::ExpressionContainer(it) => GetAddress::address(it),
-            Self::Element(it) => GetAddress::address(it),
-            Self::Fragment(it) => GetAddress::address(it),
-        }
-    }
-}
-
-impl GetAddress for JSXChild<'_> {
-    // `#[inline]` because compiler should boil this down to a single assembly instruction
-    #[inline]
-    fn address(&self) -> Address {
-        match self {
-            Self::Text(it) => GetAddress::address(it),
-            Self::Element(it) => GetAddress::address(it),
-            Self::Fragment(it) => GetAddress::address(it),
-            Self::ExpressionContainer(it) => GetAddress::address(it),
-            Self::Spread(it) => GetAddress::address(it),
         }
     }
 }

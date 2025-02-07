@@ -11,7 +11,7 @@ use oxc_allocator::{Box, CloneIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, Atom, GetSpan, GetSpanMut, Span};
+use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 
 /// Boolean literal
@@ -20,7 +20,11 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string | null")]
+#[estree(
+    rename = "Literal",
+    add_fields(raw = crate::serialize::boolean_literal_raw(self)),
+    add_ts = "raw: string | null",
+)]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
@@ -34,7 +38,14 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\" | null")]
+#[estree(
+    rename = "Literal",
+    add_fields(
+        value = (),
+        raw = crate::serialize::null_literal_raw(self),
+    ),
+    add_ts = "value: null, raw: \"null\" | null",
+)]
 pub struct NullLiteral {
     /// Node location in source code
     pub span: Span,
@@ -45,8 +56,8 @@ pub struct NullLiteral {
 /// <https://tc39.es/ecma262/#sec-literals-numeric-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
+#[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
+#[estree(rename = "Literal")]
 pub struct NumericLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -55,8 +66,10 @@ pub struct NumericLiteral<'a> {
     /// The number as it appears in source code
     ///
     /// `None` when this ast node is not constructed from the parser.
+    #[content_eq(skip)]
     pub raw: Option<Atom<'a>>,
     /// The base representation used by the literal in source code
+    #[content_eq(skip)]
     #[estree(skip)]
     pub base: NumberBase,
 }
@@ -66,8 +79,8 @@ pub struct NumericLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
+#[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
+#[estree(rename = "Literal")]
 pub struct StringLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -79,21 +92,30 @@ pub struct StringLiteral<'a> {
     /// The raw string as it appears in source code.
     ///
     /// `None` when this ast node is not constructed from the parser.
+    #[content_eq(skip)]
     pub raw: Option<Atom<'a>>,
 }
 
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, bigint: string")]
+#[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
+#[estree(
+    rename = "Literal",
+    add_fields(
+        value = (),
+        bigint = crate::serialize::bigint_literal_bigint(self),
+    ),
+    add_ts = "value: null, bigint: string",
+)]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
     /// The bigint as it appears in source code
-    #[estree(type = "string | null")]
+    #[estree(ts_type = "string | null")]
     pub raw: Atom<'a>,
     /// The base representation used by the literal in source code
+    #[content_eq(skip)]
     #[estree(skip)]
     pub base: BigintBase,
 }
@@ -103,22 +125,22 @@ pub struct BigIntLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
+#[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
 #[estree(
-	type = "Literal",
-	via = crate::serialize::ESTreeLiteral,
-	add_ts = "value: {} | null, regex: { pattern: string, flags: string }"
+    rename = "Literal",
+    add_fields(value = crate::serialize::EmptyObject),
+    add_ts = "value: {} | null",
 )]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code
     pub span: Span,
     /// The parsed regular expression. See [`oxc_regular_expression`] for more
     /// details.
-    #[estree(skip)]
     pub regex: RegExp<'a>,
     /// The regular expression as it appears in source code
     ///
     /// `None` when this ast node is not constructed from the parser.
+    #[content_eq(skip)]
     pub raw: Option<Atom<'a>>,
 }
 
@@ -131,8 +153,10 @@ pub struct RegExpLiteral<'a> {
 #[estree(no_type)]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
+    #[estree(ts_type = "string")]
     pub pattern: RegExpPattern<'a>,
     /// Regex flags after the closing slash
+    #[estree(ts_type = "string")]
     pub flags: RegExpFlags,
 }
 
@@ -142,6 +166,7 @@ pub struct RegExp<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ESTree)]
+#[estree(custom_serialize, no_ts_def)]
 pub enum RegExpPattern<'a> {
     /// Unparsed pattern. Contains string slice of the pattern.
     /// Pattern was not parsed, so may be valid or invalid.
@@ -195,3 +220,10 @@ bitflags! {
         const V = 1 << 7;
     }
 }
+
+/// Dummy type to communicate the content of `RegExpFlags` to `oxc_ast_tools`.
+#[ast(foreign = RegExpFlags)]
+#[generate_derive(ESTree)]
+#[estree(custom_serialize, no_ts_def)]
+#[expect(dead_code)]
+struct RegExpFlagsAlias(u8);

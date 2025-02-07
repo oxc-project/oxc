@@ -2,130 +2,77 @@ use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
 use serde::{
-    ser::{SerializeSeq, Serializer},
+    ser::{SerializeMap, SerializeSeq, Serializer},
     Serialize,
 };
 
-use oxc_allocator::Box;
-use oxc_span::{Atom, Span};
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_span::Span;
 use oxc_syntax::number::BigintBase;
 
-use crate::ast::{
-    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameter,
-    FormalParameterKind, FormalParameters, JSXElementName, JSXIdentifier,
-    JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral,
-    RegExpPattern, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
-};
+use crate::ast::*;
 
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "Literal")]
-pub struct ESTreeLiteral<'a, T> {
-    #[serde(flatten)]
-    span: Span,
-    value: T,
-    raw: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    bigint: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    regex: Option<SerRegExpValue>,
-}
+// --------------------
+// Literals
+// --------------------
 
-impl From<&BooleanLiteral> for ESTreeLiteral<'_, bool> {
-    fn from(lit: &BooleanLiteral) -> Self {
-        let raw = if lit.span.is_unspanned() {
-            None
-        } else {
-            Some(if lit.value { "true" } else { "false" })
-        };
-
-        Self { span: lit.span, value: lit.value, raw, bigint: None, regex: None }
+/// Get `raw` field of `BooleanLiteral`.
+pub fn boolean_literal_raw(lit: &BooleanLiteral) -> Option<&str> {
+    if lit.span.is_unspanned() {
+        None
+    } else if lit.value {
+        Some("true")
+    } else {
+        Some("false")
     }
 }
 
-impl From<&NullLiteral> for ESTreeLiteral<'_, ()> {
-    fn from(lit: &NullLiteral) -> Self {
-        let raw = if lit.span.is_unspanned() { None } else { Some("null") };
-        Self { span: lit.span, value: (), raw, bigint: None, regex: None }
+/// Get `raw` field of `NullLiteral`.
+pub fn null_literal_raw(lit: &NullLiteral) -> Option<&str> {
+    if lit.span.is_unspanned() {
+        None
+    } else {
+        Some("null")
     }
 }
 
-impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
-    fn from(lit: &'a NumericLiteral) -> Self {
-        Self {
-            span: lit.span,
-            value: lit.value,
-            raw: lit.raw.as_ref().map(Atom::as_str),
-            bigint: None,
-            regex: None,
-        }
+/// Get `bigint` field of `BigIntLiteral`.
+pub fn bigint_literal_bigint(lit: &BigIntLiteral) -> String {
+    let src = &lit.raw.strip_suffix('n').unwrap().cow_replace('_', "");
+    let src = match lit.base {
+        BigintBase::Decimal => src,
+        BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => &src[2..],
+    };
+
+    let radix = match lit.base {
+        BigintBase::Decimal => 10,
+        BigintBase::Binary => 2,
+        BigintBase::Octal => 8,
+        BigintBase::Hex => 16,
+    };
+
+    BigInt::from_str_radix(src, radix).unwrap().to_string()
+}
+
+/// A placeholder for `RegExpLiteral`'s `value` field.
+pub struct EmptyObject;
+
+impl Serialize for EmptyObject {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let map = serializer.serialize_map(None)?;
+        map.end()
     }
 }
 
-impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
-    fn from(lit: &'a StringLiteral) -> Self {
-        Self {
-            span: lit.span,
-            value: &lit.value,
-            raw: lit.raw.as_ref().map(Atom::as_str),
-            bigint: None,
-            regex: None,
-        }
+impl Serialize for RegExpFlags {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.to_string())
     }
 }
 
-impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
-    fn from(lit: &'a BigIntLiteral) -> Self {
-        let src = &lit.raw.strip_suffix('n').unwrap().cow_replace('_', "");
-
-        let src = match lit.base {
-            BigintBase::Decimal => src,
-            BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => &src[2..],
-        };
-        let radix = match lit.base {
-            BigintBase::Decimal => 10,
-            BigintBase::Binary => 2,
-            BigintBase::Octal => 8,
-            BigintBase::Hex => 16,
-        };
-        let bigint = BigInt::from_str_radix(src, radix).unwrap();
-
-        Self {
-            span: lit.span,
-            // BigInts can't be serialized to JSON
-            value: (),
-            raw: Some(lit.raw.as_str()),
-            bigint: Some(bigint.to_string()),
-            regex: None,
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct SerRegExpValue {
-    pattern: String,
-    flags: String,
-}
-
-/// A placeholder for regexp literals that can't be serialized to JSON
-#[derive(Serialize)]
-#[allow(clippy::empty_structs_with_brackets)]
-pub struct EmptyObject {}
-
-impl<'a> From<&'a RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> {
-    fn from(lit: &'a RegExpLiteral) -> Self {
-        Self {
-            span: lit.span,
-            raw: lit.raw.as_ref().map(Atom::as_str),
-            value: match &lit.regex.pattern {
-                RegExpPattern::Pattern(_) => Some(EmptyObject {}),
-                _ => None,
-            },
-            bigint: None,
-            regex: Some(SerRegExpValue {
-                pattern: lit.regex.pattern.to_string(),
-                flags: lit.regex.flags.to_string(),
-            }),
-        }
+impl Serialize for RegExpPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -158,21 +105,9 @@ impl Program<'_> {
     }
 }
 
-impl Serialize for RegExpFlags {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-/// Serialize `ArrayExpressionElement::Elision` variant as `null` in JSON
+/// Serialize `ArrayExpressionElement::Elision` variant as `null`.
 impl Serialize for Elision {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_none()
     }
 }
@@ -187,22 +122,8 @@ impl Serialize for FormalParameters<'_> {
             type_annotation: &rest.argument.type_annotation,
             optional: rest.argument.optional,
         });
-        let converted = SerFormalParameters {
-            span: self.span,
-            kind: self.kind,
-            items: ElementsAndRest::new(&self.items, converted_rest.as_ref()),
-        };
-        converted.serialize(serializer)
+        ElementsAndRest::new(&self.items, converted_rest.as_ref()).serialize(serializer)
     }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "FormalParameters")]
-struct SerFormalParameters<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    kind: FormalParameterKind,
-    items: ElementsAndRest<'b, FormalParameter<'a>, SerFormalParameterRest<'a, 'b>>,
 }
 
 #[derive(Serialize)]
@@ -211,7 +132,7 @@ struct SerFormalParameterRest<'a, 'b> {
     #[serde(flatten)]
     span: Span,
     argument: &'b BindingPatternKind<'a>,
-    type_annotation: &'b Option<Box<'a, TSTypeAnnotation<'a>>>,
+    type_annotation: &'b Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     optional: bool,
 }
 
@@ -241,7 +162,13 @@ impl<E: Serialize, R: Serialize> Serialize for ElementsAndRest<'_, E, R> {
     }
 }
 
-pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'a Option<oxc_allocator::Vec<'b, T>>);
+pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'b Option<ArenaVec<'a, T>>);
+
+impl<'a, 'b, T: Serialize> From<&'b Option<ArenaVec<'a, T>>> for OptionVecDefault<'a, 'b, T> {
+    fn from(opt_vec: &'b Option<ArenaVec<'a, T>>) -> Self {
+        Self(opt_vec)
+    }
+}
 
 impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {

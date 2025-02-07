@@ -18,7 +18,10 @@ pub fn print_rust(tokens: TokenStream, generator_path: &str) -> String {
     rust_fmt(&code)
 }
 
-fn rust_fmt(source_text: &str) -> String {
+/// Format Rust code with `rustfmt`.
+///
+/// Does not format on disk - interfaces with `rustfmt` via stdin/stdout.
+pub fn rust_fmt(source_text: &str) -> String {
     let mut rustfmt = Command::new("rustfmt")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -45,15 +48,15 @@ fn rust_fmt(source_text: &str) -> String {
 /// `quote!` macro ignores plain comments, but we can use these to generate plain comments
 /// in generated code.
 ///
+/// `//!@` form can be used to insert a line break in a position where `///@ ...`
+/// is not valid syntax e.g. before an `#![allow(...)]`.
+///
 /// To dynamically generate a comment:
 /// ```
 /// let comment = format!("@ NOTE: {} doesn't exist!", name);
-/// quote!(#[doc = #comment])
-/// // or `quote!(#![doc = #comment])`
+/// quote!( #[doc = #comment] )
+/// // or `quote!( #![doc = #comment] )`
 /// ```
-///
-/// `//!@@line_break` can be used to insert a line break in a position where `///@@line_break`
-/// is not valid syntax e.g. before an `#![allow(...)]`.
 struct CommentReplacer;
 
 impl Replacer for CommentReplacer {

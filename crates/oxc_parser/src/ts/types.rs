@@ -260,7 +260,7 @@ impl<'a> ParserImpl<'a> {
         {
             self.error(diagnostics::readonly_in_array_or_tuple_type(operator_span));
         }
-        Ok(self.ast.ts_type_type_operator(self.end_span(span), operator, ty))
+        Ok(self.ast.ts_type_type_operator_type(self.end_span(span), operator, ty))
     }
 
     fn parse_infer_type(&mut self) -> Result<TSType<'a>> {

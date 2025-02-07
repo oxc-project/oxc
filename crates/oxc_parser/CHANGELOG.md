@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.1] - 2025-01-26
+
+### Features
+
+- b7f13e6 ast: Implement utf8 to utf16 span converter (#8687) (Boshen)
+
+## [0.48.0] - 2025-01-24
+
+### Bug Fixes
+
+- 178c232 parser: Parse `intrinsic` TS keyword (#8627) (Kevin Deng 三咲智子)
+- 48717ab parser: Parse `true` as `TSLiteralType` (#8626) (Kevin Deng 三咲智子)
+
+### Performance
+
+- 3fa87ff lexer: Peak 2 bytes after `!` (#8662) (Boshen)
+
+### Documentation
+
+- 3be0392 lexer: Fix doc comment (#8664) (overlookmotel)
+
+### Refactor
+
+- 864b8ef parser: Shorten code (#8640) (overlookmotel)
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
 ## [0.47.0] - 2025-01-18
 
 ### Features

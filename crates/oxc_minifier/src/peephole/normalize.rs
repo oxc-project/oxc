@@ -1,15 +1,16 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::ConstantEvaluation;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{ctx::Ctx, CompressOptions};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
     pub convert_while_to_fors: bool,
+    pub convert_const_to_let: bool,
 }
 
 /// Normalize AST
@@ -19,9 +20,11 @@ pub struct NormalizeOptions {
 /// * remove `Statement::EmptyStatement`
 /// * remove `ParenthesizedExpression`
 /// * convert whiles to fors
+/// * convert `const` to `let` for non-exported variables
 /// * convert `Infinity` to `f64::INFINITY`
 /// * convert `NaN` to `f64::NaN`
 /// * convert `var x; void x` to `void 0`
+/// * convert `undefined` to `void 0`
 ///
 /// Also
 ///
@@ -48,9 +51,18 @@ impl<'a> Traverse<'a> for Normalize {
         });
     }
 
+    fn exit_variable_declaration(
+        &mut self,
+        decl: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.convert_const_to_let {
+            Self::convert_const_to_let(decl, ctx);
+        }
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::IfStatement(s) => Self::wrap_to_avoid_ambiguous_else(s, ctx),
             Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
                 Self::convert_while_to_for(stmt, ctx);
             }
@@ -62,20 +74,22 @@ impl<'a> Traverse<'a> for Normalize {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
             *expr = ctx.ast.move_expression(&mut paren_expr.expression);
         }
-        match expr {
-            Expression::Identifier(_) => {
-                Self::convert_infinity_or_nan_into_number(expr, ctx);
-            }
+        if let Some(e) = match expr {
+            Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
             Expression::UnaryExpression(e) if e.operator.is_void() => {
                 Self::convert_void_ident(e, ctx);
+                None
             }
             Expression::ArrowFunctionExpression(e) => {
                 self.recover_arrow_expression_after_drop_console(e);
+                None
             }
             Expression::CallExpression(_) if self.compress_options.drop_console => {
-                self.compress_console(expr, ctx);
+                self.compress_console(expr, ctx)
             }
-            _ => {}
+            _ => None,
+        } {
+            *expr = e;
         }
     }
 }
@@ -92,11 +106,13 @@ impl<'a> Normalize {
         matches!(stmt, Statement::DebuggerStatement(_)) && self.compress_options.drop_debugger
     }
 
-    fn compress_console(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn compress_console(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
         debug_assert!(self.compress_options.drop_console);
-        if Self::is_console(expr) {
-            *expr = ctx.ast.void_0(expr.span());
-        }
+        Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
     }
 
     fn drop_console(&mut self, stmt: &Statement<'a>) -> bool {
@@ -132,34 +148,53 @@ impl<'a> Normalize {
         *stmt = Statement::ForStatement(for_stmt);
     }
 
-    fn convert_infinity_or_nan_into_number(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::Identifier(ident) = expr {
-            let ctx = Ctx(ctx);
-            let value = if ctx.is_identifier_infinity(ident) {
-                f64::INFINITY
-            } else if ctx.is_identifier_nan(ident) {
-                f64::NAN
-            } else {
-                return;
-            };
-            *expr =
-                ctx.ast.expression_numeric_literal(ident.span, value, None, NumberBase::Decimal);
+    fn convert_const_to_let(decl: &mut VariableDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        // checking whether the current scope is the root scope instead of
+        // checking whether any variables are exposed to outside (e.g. `export` in ESM)
+        if decl.kind.is_const() && ctx.current_scope_id() != ctx.scopes().root_scope_id() {
+            let all_declarations_are_only_read =
+                decl.declarations.iter().flat_map(|d| d.id.get_binding_identifiers()).all(|id| {
+                    ctx.symbols()
+                        .get_resolved_references(id.symbol_id())
+                        .all(|reference| reference.flags().is_read_only())
+                });
+            if all_declarations_are_only_read {
+                decl.kind = VariableDeclarationKind::Let;
+            }
+            for decl in &mut decl.declarations {
+                decl.kind = VariableDeclarationKind::Let;
+            }
         }
     }
 
-    // Wrap to avoid ambiguous else.
-    // `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
-    fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
-            if if2.alternate.is_some() {
-                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                if_stmt.consequent =
-                    Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
-                        if_stmt.consequent.span(),
-                        ctx.ast.vec1(ctx.ast.move_statement(&mut if_stmt.consequent)),
-                        scope_id,
-                    ));
+    /// Transforms `undefined` => `void 0`, `Infinity` => `f64::Infinity`, `NaN` -> `f64::NaN`.
+    /// So subsequent passes don't need to look up whether these variables are shadowed or not.
+    fn try_compress_identifier(
+        ident: &IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        match ident.name.as_str() {
+            "undefined" if ident.is_global_reference(ctx.symbols()) => {
+                // `delete undefined` returns `false`
+                // `delete void 0` returns `true`
+                if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
+                {
+                    return None;
+                }
+                Some(ctx.ast.void_0(ident.span))
             }
+            "Infinity" if ident.is_global_reference(ctx.symbols()) => {
+                Some(ctx.ast.expression_numeric_literal(
+                    ident.span,
+                    f64::INFINITY,
+                    None,
+                    NumberBase::Decimal,
+                ))
+            }
+            "NaN" if ident.is_global_reference(ctx.symbols()) => Some(
+                ctx.ast.expression_numeric_literal(ident.span, f64::NAN, None, NumberBase::Decimal),
+            ),
+            _ => None,
         }
     }
 
@@ -175,12 +210,29 @@ impl<'a> Normalize {
 
 #[cfg(test)]
 mod test {
-    use crate::tester::test;
+    use crate::tester::{test, test_same};
 
     #[test]
     fn test_while() {
         // Verify while loops are converted to FOR loops.
         test("while(c < b) foo()", "for(; c < b;) foo()");
+    }
+
+    #[test]
+    fn test_const_to_let() {
+        test_same("const x = 1"); // keep top-level (can be replaced with "let" if it's ESM and not exported)
+        test("{ const x = 1 }", "{ let x = 1 }");
+        test_same("{ const x = 1; x = 2 }"); // keep assign error
+        test("{ const x = 1, y = 2 }", "{ let x = 1, y = 2 }");
+        test("{ const { x } = { x: 1 } }", "{ let { x } = { x: 1 } }");
+        test("{ const [x] = [1] }", "{ let [x] = [1] }");
+        test("{ const [x = 1] = [] }", "{ let [x = 1] = [] }");
+        test("for (const x in y);", "for (let x in y);");
+        // TypeError: Assignment to constant variable.
+        test_same("for (const i = 0; i < 1; i++);");
+        test_same("for (const x in [1, 2, 3]) x++");
+        test_same("for (const x of [1, 2, 3]) x++");
+        test("{ let foo; const bar = undefined; }", "{ let foo, bar; }");
     }
 
     #[test]

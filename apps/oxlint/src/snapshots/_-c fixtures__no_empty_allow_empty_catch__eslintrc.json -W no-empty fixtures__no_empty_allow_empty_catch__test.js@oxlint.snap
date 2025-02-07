@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/no_empty_allow_empty_catch/eslintrc.json -W no-empty fixtures/no_empty_allow_empty_catch/test.js
+working directory: 
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 98 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ oxc(bad-bitwise-operator): Bad bitwise operator
    ╭─[bad_bitwise_operator.tsx:1:9]

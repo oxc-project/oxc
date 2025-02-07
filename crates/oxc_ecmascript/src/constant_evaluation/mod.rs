@@ -14,11 +14,7 @@ pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::ValueType;
 
-pub trait ConstantEvaluation<'a> {
-    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
-        matches!(ident.name.as_str(), "undefined" | "NaN" | "Infinity")
-    }
-
+pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
     fn resolve_binding(&self, ident: &IdentifierReference<'a>) -> Option<ConstantValue<'a>> {
         match ident.name.as_str() {
             "undefined" if self.is_global_reference(ident) => Some(ConstantValue::Undefined),
@@ -36,7 +32,7 @@ pub trait ConstantEvaluation<'a> {
         // and there are only a very few cases where we can compute a number value, but there could
         // also be side effects. e.g. `void doSomething()` has value NaN, regardless of the behavior
         // of `doSomething()`
-        if value.is_some() && expr.may_have_side_effects() {
+        if value.is_some() && self.expression_may_have_side_effects(expr) {
             None
         } else {
             value
@@ -45,7 +41,7 @@ pub trait ConstantEvaluation<'a> {
 
     fn get_side_free_string_value(&self, expr: &Expression<'a>) -> Option<Cow<'a, str>> {
         let value = expr.to_js_string();
-        if value.is_some() && !expr.may_have_side_effects() {
+        if value.is_some() && !self.expression_may_have_side_effects(expr) {
             return value;
         }
         None
@@ -53,7 +49,7 @@ pub trait ConstantEvaluation<'a> {
 
     fn get_side_free_boolean_value(&self, expr: &Expression<'a>) -> Option<bool> {
         let value = self.get_boolean_value(expr);
-        if value.is_some() && !expr.may_have_side_effects() {
+        if value.is_some() && !self.expression_may_have_side_effects(expr) {
             return value;
         }
         None
@@ -61,7 +57,7 @@ pub trait ConstantEvaluation<'a> {
 
     fn get_side_free_bigint_value(&self, expr: &Expression<'a>) -> Option<BigInt> {
         let value = expr.to_big_int();
-        if value.is_some() && expr.may_have_side_effects() {
+        if value.is_some() && self.expression_may_have_side_effects(expr) {
             None
         } else {
             value
@@ -205,7 +201,9 @@ pub trait ConstantEvaluation<'a> {
     ) -> Option<ConstantValue<'a>> {
         match operator {
             BinaryOperator::Addition => {
-                if left.may_have_side_effects() || right.may_have_side_effects() {
+                if self.expression_may_have_side_effects(left)
+                    || self.expression_may_have_side_effects(right)
+                {
                     return None;
                 }
                 let left_type = ValueType::from(left);
@@ -321,7 +319,7 @@ pub trait ConstantEvaluation<'a> {
                 None
             }
             BinaryOperator::Instanceof => {
-                if left.may_have_side_effects() {
+                if self.expression_may_have_side_effects(left) {
                     return None;
                 }
                 if let Expression::Identifier(right_ident) = right {
@@ -329,6 +327,10 @@ pub trait ConstantEvaluation<'a> {
                     if matches!(name, "Object" | "Number" | "Boolean" | "String")
                         && self.is_global_reference(right_ident)
                     {
+                        let left_ty = ValueType::from(left);
+                        if left_ty.is_undetermined() {
+                            return None;
+                        }
                         return Some(ConstantValue::Boolean(
                             name == "Object" && ValueType::from(left).is_object(),
                         ));
@@ -380,21 +382,23 @@ pub trait ConstantEvaluation<'a> {
                 };
                 Some(ConstantValue::String(Cow::Borrowed(s)))
             }
-            UnaryOperator::Void => (expr.argument.is_literal() || !expr.may_have_side_effects())
-                .then_some(ConstantValue::Undefined),
+            UnaryOperator::Void => (expr.argument.is_literal()
+                || !self.expression_may_have_side_effects(&expr.argument))
+            .then_some(ConstantValue::Undefined),
             UnaryOperator::LogicalNot => self
                 .get_side_free_boolean_value(&expr.argument)
                 .map(|b| !b)
                 .map(ConstantValue::Boolean),
             UnaryOperator::UnaryPlus => {
-                self.eval_to_number(&expr.argument).map(ConstantValue::Number)
+                self.get_side_free_number_value(&expr.argument).map(ConstantValue::Number)
             }
             UnaryOperator::UnaryNegation => match ValueType::from(&expr.argument) {
-                ValueType::BigInt => {
-                    self.eval_to_big_int(&expr.argument).map(|v| -v).map(ConstantValue::BigInt)
-                }
+                ValueType::BigInt => self
+                    .get_side_free_bigint_value(&expr.argument)
+                    .map(|v| -v)
+                    .map(ConstantValue::BigInt),
                 ValueType::Number => self
-                    .eval_to_number(&expr.argument)
+                    .get_side_free_number_value(&expr.argument)
                     .map(|v| if v.is_nan() { v } else { -v })
                     .map(ConstantValue::Number),
                 ValueType::Undefined => Some(ConstantValue::Number(f64::NAN)),
@@ -402,12 +406,13 @@ pub trait ConstantEvaluation<'a> {
                 _ => None,
             },
             UnaryOperator::BitwiseNot => match ValueType::from(&expr.argument) {
-                ValueType::BigInt => {
-                    self.eval_to_big_int(&expr.argument).map(|v| !v).map(ConstantValue::BigInt)
-                }
+                ValueType::BigInt => self
+                    .get_side_free_bigint_value(&expr.argument)
+                    .map(|v| !v)
+                    .map(ConstantValue::BigInt),
                 #[expect(clippy::cast_lossless)]
                 _ => self
-                    .eval_to_number(&expr.argument)
+                    .get_side_free_number_value(&expr.argument)
                     .map(|v| (!v.to_int_32()) as f64)
                     .map(ConstantValue::Number),
             },
@@ -424,10 +429,9 @@ pub trait ConstantEvaluation<'a> {
                 if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
                 } else {
-                    if expr.object.may_have_side_effects() {
+                    if self.expression_may_have_side_effects(&expr.object) {
                         return None;
                     }
-
                     if let Expression::ArrayExpression(arr) = &expr.object {
                         Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
                     } else {
@@ -448,10 +452,9 @@ pub trait ConstantEvaluation<'a> {
                 if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
                 } else {
-                    if expr.object.may_have_side_effects() {
+                    if self.expression_may_have_side_effects(&expr.object) {
                         return None;
                     }
-
                     if let Expression::ArrayExpression(arr) = &expr.object {
                         Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
                     } else {

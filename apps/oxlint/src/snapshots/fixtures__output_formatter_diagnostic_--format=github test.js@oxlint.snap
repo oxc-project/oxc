@@ -1,0 +1,13 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=github test.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+::error file=test.js,line=5,endLine=5,col=1,endColumn=10,title=oxlint::`debugger` statement is not allowed
+::warning file=test.js,line=1,endLine=1,col=10,endColumn=13,title=oxlint::Function 'foo' is declared but never used.
+::warning file=test.js,line=1,endLine=1,col=17,endColumn=18,title=oxlint::Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+----------
+CLI result: LintFoundErrors
+----------

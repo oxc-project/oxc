@@ -394,7 +394,7 @@ impl RulesCache {
             "Cannot re-initialize a populated rules cache. It must be cleared first."
         );
 
-        let mut all_rules: Vec<_> = if self.plugins.is_all() {
+        let all_rules: Vec<_> = if self.plugins.is_all() {
             RULES.clone()
         } else {
             let mut plugins = self.plugins;
@@ -410,7 +410,6 @@ impl RulesCache {
                 .cloned()
                 .collect()
         };
-        all_rules.sort_unstable(); // TODO: do we need to sort? is is already sorted?
 
         *self.all_rules.borrow_mut() = Some(all_rules);
     }

@@ -6,97 +6,10 @@
 use oxc_allocator::{Allocator, CloneIn};
 
 use crate::ast::comment::*;
-
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::literal::*;
-
 use crate::ast::ts::*;
-
-impl<'alloc> CloneIn<'alloc> for BooleanLiteral {
-    type Cloned = BooleanLiteral;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        BooleanLiteral {
-            span: CloneIn::clone_in(&self.span, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
-        }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for NullLiteral {
-    type Cloned = NullLiteral;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        NullLiteral { span: CloneIn::clone_in(&self.span, allocator) }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for NumericLiteral<'_> {
-    type Cloned = NumericLiteral<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        NumericLiteral {
-            span: CloneIn::clone_in(&self.span, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
-            raw: CloneIn::clone_in(&self.raw, allocator),
-            base: CloneIn::clone_in(&self.base, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
-    type Cloned = StringLiteral<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        StringLiteral {
-            span: CloneIn::clone_in(&self.span, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
-            raw: CloneIn::clone_in(&self.raw, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for BigIntLiteral<'_> {
-    type Cloned = BigIntLiteral<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        BigIntLiteral {
-            span: CloneIn::clone_in(&self.span, allocator),
-            raw: CloneIn::clone_in(&self.raw, allocator),
-            base: CloneIn::clone_in(&self.base, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for RegExpLiteral<'_> {
-    type Cloned = RegExpLiteral<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        RegExpLiteral {
-            span: CloneIn::clone_in(&self.span, allocator),
-            regex: CloneIn::clone_in(&self.regex, allocator),
-            raw: CloneIn::clone_in(&self.raw, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for RegExp<'_> {
-    type Cloned = RegExp<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        RegExp {
-            pattern: CloneIn::clone_in(&self.pattern, allocator),
-            flags: CloneIn::clone_in(&self.flags, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'_> {
-    type Cloned = RegExpPattern<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Raw(it) => RegExpPattern::Raw(CloneIn::clone_in(it, allocator)),
-            Self::Invalid(it) => RegExpPattern::Invalid(CloneIn::clone_in(it, allocator)),
-            Self::Pattern(it) => RegExpPattern::Pattern(CloneIn::clone_in(it, allocator)),
-        }
-    }
-}
 
 impl<'new_alloc> CloneIn<'new_alloc> for Program<'_> {
     type Cloned = Program<'new_alloc>;
@@ -2568,6 +2481,458 @@ impl<'new_alloc> CloneIn<'new_alloc> for ModuleExportName<'_> {
     }
 }
 
+impl<'alloc> CloneIn<'alloc> for BooleanLiteral {
+    type Cloned = BooleanLiteral;
+    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+        BooleanLiteral {
+            span: CloneIn::clone_in(&self.span, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for NullLiteral {
+    type Cloned = NullLiteral;
+    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+        NullLiteral { span: CloneIn::clone_in(&self.span, allocator) }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for NumericLiteral<'_> {
+    type Cloned = NumericLiteral<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        NumericLiteral {
+            span: CloneIn::clone_in(&self.span, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
+            base: CloneIn::clone_in(&self.base, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
+    type Cloned = StringLiteral<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        StringLiteral {
+            span: CloneIn::clone_in(&self.span, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for BigIntLiteral<'_> {
+    type Cloned = BigIntLiteral<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        BigIntLiteral {
+            span: CloneIn::clone_in(&self.span, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
+            base: CloneIn::clone_in(&self.base, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for RegExpLiteral<'_> {
+    type Cloned = RegExpLiteral<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        RegExpLiteral {
+            span: CloneIn::clone_in(&self.span, allocator),
+            regex: CloneIn::clone_in(&self.regex, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for RegExp<'_> {
+    type Cloned = RegExp<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        RegExp {
+            pattern: CloneIn::clone_in(&self.pattern, allocator),
+            flags: CloneIn::clone_in(&self.flags, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'_> {
+    type Cloned = RegExpPattern<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Raw(it) => RegExpPattern::Raw(CloneIn::clone_in(it, allocator)),
+            Self::Invalid(it) => RegExpPattern::Invalid(CloneIn::clone_in(it, allocator)),
+            Self::Pattern(it) => RegExpPattern::Pattern(CloneIn::clone_in(it, allocator)),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXElement<'_> {
+    type Cloned = JSXElement<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXElement {
+            span: CloneIn::clone_in(&self.span, allocator),
+            opening_element: CloneIn::clone_in(&self.opening_element, allocator),
+            closing_element: CloneIn::clone_in(&self.closing_element, allocator),
+            children: CloneIn::clone_in(&self.children, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXOpeningElement<'_> {
+    type Cloned = JSXOpeningElement<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXOpeningElement {
+            span: CloneIn::clone_in(&self.span, allocator),
+            self_closing: CloneIn::clone_in(&self.self_closing, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+            attributes: CloneIn::clone_in(&self.attributes, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXClosingElement<'_> {
+    type Cloned = JSXClosingElement<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXClosingElement {
+            span: CloneIn::clone_in(&self.span, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXFragment<'_> {
+    type Cloned = JSXFragment<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXFragment {
+            span: CloneIn::clone_in(&self.span, allocator),
+            opening_fragment: CloneIn::clone_in(&self.opening_fragment, allocator),
+            closing_fragment: CloneIn::clone_in(&self.closing_fragment, allocator),
+            children: CloneIn::clone_in(&self.children, allocator),
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for JSXOpeningFragment {
+    type Cloned = JSXOpeningFragment;
+    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+        JSXOpeningFragment { span: CloneIn::clone_in(&self.span, allocator) }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for JSXClosingFragment {
+    type Cloned = JSXClosingFragment;
+    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+        JSXClosingFragment { span: CloneIn::clone_in(&self.span, allocator) }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXElementName<'_> {
+    type Cloned = JSXElementName<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Identifier(it) => JSXElementName::Identifier(CloneIn::clone_in(it, allocator)),
+            Self::IdentifierReference(it) => {
+                JSXElementName::IdentifierReference(CloneIn::clone_in(it, allocator))
+            }
+            Self::NamespacedName(it) => {
+                JSXElementName::NamespacedName(CloneIn::clone_in(it, allocator))
+            }
+            Self::MemberExpression(it) => {
+                JSXElementName::MemberExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ThisExpression(it) => {
+                JSXElementName::ThisExpression(CloneIn::clone_in(it, allocator))
+            }
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXNamespacedName<'_> {
+    type Cloned = JSXNamespacedName<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXNamespacedName {
+            span: CloneIn::clone_in(&self.span, allocator),
+            namespace: CloneIn::clone_in(&self.namespace, allocator),
+            property: CloneIn::clone_in(&self.property, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXMemberExpression<'_> {
+    type Cloned = JSXMemberExpression<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXMemberExpression {
+            span: CloneIn::clone_in(&self.span, allocator),
+            object: CloneIn::clone_in(&self.object, allocator),
+            property: CloneIn::clone_in(&self.property, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXMemberExpressionObject<'_> {
+    type Cloned = JSXMemberExpressionObject<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::IdentifierReference(it) => {
+                JSXMemberExpressionObject::IdentifierReference(CloneIn::clone_in(it, allocator))
+            }
+            Self::MemberExpression(it) => {
+                JSXMemberExpressionObject::MemberExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ThisExpression(it) => {
+                JSXMemberExpressionObject::ThisExpression(CloneIn::clone_in(it, allocator))
+            }
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXExpressionContainer<'_> {
+    type Cloned = JSXExpressionContainer<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXExpressionContainer {
+            span: CloneIn::clone_in(&self.span, allocator),
+            expression: CloneIn::clone_in(&self.expression, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
+    type Cloned = JSXExpression<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::EmptyExpression(it) => {
+                JSXExpression::EmptyExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::BooleanLiteral(it) => {
+                JSXExpression::BooleanLiteral(CloneIn::clone_in(it, allocator))
+            }
+            Self::NullLiteral(it) => JSXExpression::NullLiteral(CloneIn::clone_in(it, allocator)),
+            Self::NumericLiteral(it) => {
+                JSXExpression::NumericLiteral(CloneIn::clone_in(it, allocator))
+            }
+            Self::BigIntLiteral(it) => {
+                JSXExpression::BigIntLiteral(CloneIn::clone_in(it, allocator))
+            }
+            Self::RegExpLiteral(it) => {
+                JSXExpression::RegExpLiteral(CloneIn::clone_in(it, allocator))
+            }
+            Self::StringLiteral(it) => {
+                JSXExpression::StringLiteral(CloneIn::clone_in(it, allocator))
+            }
+            Self::TemplateLiteral(it) => {
+                JSXExpression::TemplateLiteral(CloneIn::clone_in(it, allocator))
+            }
+            Self::Identifier(it) => JSXExpression::Identifier(CloneIn::clone_in(it, allocator)),
+            Self::MetaProperty(it) => JSXExpression::MetaProperty(CloneIn::clone_in(it, allocator)),
+            Self::Super(it) => JSXExpression::Super(CloneIn::clone_in(it, allocator)),
+            Self::ArrayExpression(it) => {
+                JSXExpression::ArrayExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ArrowFunctionExpression(it) => {
+                JSXExpression::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::AssignmentExpression(it) => {
+                JSXExpression::AssignmentExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::AwaitExpression(it) => {
+                JSXExpression::AwaitExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::BinaryExpression(it) => {
+                JSXExpression::BinaryExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::CallExpression(it) => {
+                JSXExpression::CallExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ChainExpression(it) => {
+                JSXExpression::ChainExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ClassExpression(it) => {
+                JSXExpression::ClassExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ConditionalExpression(it) => {
+                JSXExpression::ConditionalExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::FunctionExpression(it) => {
+                JSXExpression::FunctionExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ImportExpression(it) => {
+                JSXExpression::ImportExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::LogicalExpression(it) => {
+                JSXExpression::LogicalExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::NewExpression(it) => {
+                JSXExpression::NewExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ObjectExpression(it) => {
+                JSXExpression::ObjectExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ParenthesizedExpression(it) => {
+                JSXExpression::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::SequenceExpression(it) => {
+                JSXExpression::SequenceExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::TaggedTemplateExpression(it) => {
+                JSXExpression::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ThisExpression(it) => {
+                JSXExpression::ThisExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::UnaryExpression(it) => {
+                JSXExpression::UnaryExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::UpdateExpression(it) => {
+                JSXExpression::UpdateExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::YieldExpression(it) => {
+                JSXExpression::YieldExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::PrivateInExpression(it) => {
+                JSXExpression::PrivateInExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::JSXElement(it) => JSXExpression::JSXElement(CloneIn::clone_in(it, allocator)),
+            Self::JSXFragment(it) => JSXExpression::JSXFragment(CloneIn::clone_in(it, allocator)),
+            Self::TSAsExpression(it) => {
+                JSXExpression::TSAsExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::TSSatisfiesExpression(it) => {
+                JSXExpression::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::TSTypeAssertion(it) => {
+                JSXExpression::TSTypeAssertion(CloneIn::clone_in(it, allocator))
+            }
+            Self::TSNonNullExpression(it) => {
+                JSXExpression::TSNonNullExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::TSInstantiationExpression(it) => {
+                JSXExpression::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::ComputedMemberExpression(it) => {
+                JSXExpression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::StaticMemberExpression(it) => {
+                JSXExpression::StaticMemberExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::PrivateFieldExpression(it) => {
+                JSXExpression::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
+            }
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for JSXEmptyExpression {
+    type Cloned = JSXEmptyExpression;
+    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+        JSXEmptyExpression { span: CloneIn::clone_in(&self.span, allocator) }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXAttributeItem<'_> {
+    type Cloned = JSXAttributeItem<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Attribute(it) => JSXAttributeItem::Attribute(CloneIn::clone_in(it, allocator)),
+            Self::SpreadAttribute(it) => {
+                JSXAttributeItem::SpreadAttribute(CloneIn::clone_in(it, allocator))
+            }
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXAttribute<'_> {
+    type Cloned = JSXAttribute<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXAttribute {
+            span: CloneIn::clone_in(&self.span, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXSpreadAttribute<'_> {
+    type Cloned = JSXSpreadAttribute<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXSpreadAttribute {
+            span: CloneIn::clone_in(&self.span, allocator),
+            argument: CloneIn::clone_in(&self.argument, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXAttributeName<'_> {
+    type Cloned = JSXAttributeName<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Identifier(it) => JSXAttributeName::Identifier(CloneIn::clone_in(it, allocator)),
+            Self::NamespacedName(it) => {
+                JSXAttributeName::NamespacedName(CloneIn::clone_in(it, allocator))
+            }
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXAttributeValue<'_> {
+    type Cloned = JSXAttributeValue<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::StringLiteral(it) => {
+                JSXAttributeValue::StringLiteral(CloneIn::clone_in(it, allocator))
+            }
+            Self::ExpressionContainer(it) => {
+                JSXAttributeValue::ExpressionContainer(CloneIn::clone_in(it, allocator))
+            }
+            Self::Element(it) => JSXAttributeValue::Element(CloneIn::clone_in(it, allocator)),
+            Self::Fragment(it) => JSXAttributeValue::Fragment(CloneIn::clone_in(it, allocator)),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXIdentifier<'_> {
+    type Cloned = JSXIdentifier<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXIdentifier {
+            span: CloneIn::clone_in(&self.span, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXChild<'_> {
+    type Cloned = JSXChild<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Text(it) => JSXChild::Text(CloneIn::clone_in(it, allocator)),
+            Self::Element(it) => JSXChild::Element(CloneIn::clone_in(it, allocator)),
+            Self::Fragment(it) => JSXChild::Fragment(CloneIn::clone_in(it, allocator)),
+            Self::ExpressionContainer(it) => {
+                JSXChild::ExpressionContainer(CloneIn::clone_in(it, allocator))
+            }
+            Self::Spread(it) => JSXChild::Spread(CloneIn::clone_in(it, allocator)),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXSpreadChild<'_> {
+    type Cloned = JSXSpreadChild<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXSpreadChild {
+            span: CloneIn::clone_in(&self.span, allocator),
+            expression: CloneIn::clone_in(&self.expression, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for JSXText<'_> {
+    type Cloned = JSXText<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        JSXText {
+            span: CloneIn::clone_in(&self.span, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
+        }
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for TSThisParameter<'_> {
     type Cloned = TSThisParameter<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
@@ -3737,375 +4102,6 @@ impl<'alloc> CloneIn<'alloc> for JSDocUnknownType {
     type Cloned = JSDocUnknownType;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         JSDocUnknownType { span: CloneIn::clone_in(&self.span, allocator) }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXElement<'_> {
-    type Cloned = JSXElement<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXElement {
-            span: CloneIn::clone_in(&self.span, allocator),
-            opening_element: CloneIn::clone_in(&self.opening_element, allocator),
-            closing_element: CloneIn::clone_in(&self.closing_element, allocator),
-            children: CloneIn::clone_in(&self.children, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXOpeningElement<'_> {
-    type Cloned = JSXOpeningElement<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXOpeningElement {
-            span: CloneIn::clone_in(&self.span, allocator),
-            self_closing: CloneIn::clone_in(&self.self_closing, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
-            attributes: CloneIn::clone_in(&self.attributes, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXClosingElement<'_> {
-    type Cloned = JSXClosingElement<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXClosingElement {
-            span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXFragment<'_> {
-    type Cloned = JSXFragment<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXFragment {
-            span: CloneIn::clone_in(&self.span, allocator),
-            opening_fragment: CloneIn::clone_in(&self.opening_fragment, allocator),
-            closing_fragment: CloneIn::clone_in(&self.closing_fragment, allocator),
-            children: CloneIn::clone_in(&self.children, allocator),
-        }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for JSXOpeningFragment {
-    type Cloned = JSXOpeningFragment;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        JSXOpeningFragment { span: CloneIn::clone_in(&self.span, allocator) }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for JSXClosingFragment {
-    type Cloned = JSXClosingFragment;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        JSXClosingFragment { span: CloneIn::clone_in(&self.span, allocator) }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXElementName<'_> {
-    type Cloned = JSXElementName<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Identifier(it) => JSXElementName::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::IdentifierReference(it) => {
-                JSXElementName::IdentifierReference(CloneIn::clone_in(it, allocator))
-            }
-            Self::NamespacedName(it) => {
-                JSXElementName::NamespacedName(CloneIn::clone_in(it, allocator))
-            }
-            Self::MemberExpression(it) => {
-                JSXElementName::MemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                JSXElementName::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXNamespacedName<'_> {
-    type Cloned = JSXNamespacedName<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXNamespacedName {
-            span: CloneIn::clone_in(&self.span, allocator),
-            namespace: CloneIn::clone_in(&self.namespace, allocator),
-            property: CloneIn::clone_in(&self.property, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXMemberExpression<'_> {
-    type Cloned = JSXMemberExpression<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXMemberExpression {
-            span: CloneIn::clone_in(&self.span, allocator),
-            object: CloneIn::clone_in(&self.object, allocator),
-            property: CloneIn::clone_in(&self.property, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXMemberExpressionObject<'_> {
-    type Cloned = JSXMemberExpressionObject<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::IdentifierReference(it) => {
-                JSXMemberExpressionObject::IdentifierReference(CloneIn::clone_in(it, allocator))
-            }
-            Self::MemberExpression(it) => {
-                JSXMemberExpressionObject::MemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                JSXMemberExpressionObject::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXExpressionContainer<'_> {
-    type Cloned = JSXExpressionContainer<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXExpressionContainer {
-            span: CloneIn::clone_in(&self.span, allocator),
-            expression: CloneIn::clone_in(&self.expression, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
-    type Cloned = JSXExpression<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::EmptyExpression(it) => {
-                JSXExpression::EmptyExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BooleanLiteral(it) => {
-                JSXExpression::BooleanLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::NullLiteral(it) => JSXExpression::NullLiteral(CloneIn::clone_in(it, allocator)),
-            Self::NumericLiteral(it) => {
-                JSXExpression::NumericLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::BigIntLiteral(it) => {
-                JSXExpression::BigIntLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::RegExpLiteral(it) => {
-                JSXExpression::RegExpLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                JSXExpression::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::TemplateLiteral(it) => {
-                JSXExpression::TemplateLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::Identifier(it) => JSXExpression::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::MetaProperty(it) => JSXExpression::MetaProperty(CloneIn::clone_in(it, allocator)),
-            Self::Super(it) => JSXExpression::Super(CloneIn::clone_in(it, allocator)),
-            Self::ArrayExpression(it) => {
-                JSXExpression::ArrayExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ArrowFunctionExpression(it) => {
-                JSXExpression::ArrowFunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AssignmentExpression(it) => {
-                JSXExpression::AssignmentExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::AwaitExpression(it) => {
-                JSXExpression::AwaitExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::BinaryExpression(it) => {
-                JSXExpression::BinaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::CallExpression(it) => {
-                JSXExpression::CallExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ChainExpression(it) => {
-                JSXExpression::ChainExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ClassExpression(it) => {
-                JSXExpression::ClassExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ConditionalExpression(it) => {
-                JSXExpression::ConditionalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::FunctionExpression(it) => {
-                JSXExpression::FunctionExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ImportExpression(it) => {
-                JSXExpression::ImportExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::LogicalExpression(it) => {
-                JSXExpression::LogicalExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::NewExpression(it) => {
-                JSXExpression::NewExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ObjectExpression(it) => {
-                JSXExpression::ObjectExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ParenthesizedExpression(it) => {
-                JSXExpression::ParenthesizedExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::SequenceExpression(it) => {
-                JSXExpression::SequenceExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TaggedTemplateExpression(it) => {
-                JSXExpression::TaggedTemplateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ThisExpression(it) => {
-                JSXExpression::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UnaryExpression(it) => {
-                JSXExpression::UnaryExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::UpdateExpression(it) => {
-                JSXExpression::UpdateExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::YieldExpression(it) => {
-                JSXExpression::YieldExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateInExpression(it) => {
-                JSXExpression::PrivateInExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::JSXElement(it) => JSXExpression::JSXElement(CloneIn::clone_in(it, allocator)),
-            Self::JSXFragment(it) => JSXExpression::JSXFragment(CloneIn::clone_in(it, allocator)),
-            Self::TSAsExpression(it) => {
-                JSXExpression::TSAsExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSSatisfiesExpression(it) => {
-                JSXExpression::TSSatisfiesExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSTypeAssertion(it) => {
-                JSXExpression::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSNonNullExpression(it) => {
-                JSXExpression::TSNonNullExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                JSXExpression::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::ComputedMemberExpression(it) => {
-                JSXExpression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::StaticMemberExpression(it) => {
-                JSXExpression::StaticMemberExpression(CloneIn::clone_in(it, allocator))
-            }
-            Self::PrivateFieldExpression(it) => {
-                JSXExpression::PrivateFieldExpression(CloneIn::clone_in(it, allocator))
-            }
-        }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for JSXEmptyExpression {
-    type Cloned = JSXEmptyExpression;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        JSXEmptyExpression { span: CloneIn::clone_in(&self.span, allocator) }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXAttributeItem<'_> {
-    type Cloned = JSXAttributeItem<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Attribute(it) => JSXAttributeItem::Attribute(CloneIn::clone_in(it, allocator)),
-            Self::SpreadAttribute(it) => {
-                JSXAttributeItem::SpreadAttribute(CloneIn::clone_in(it, allocator))
-            }
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXAttribute<'_> {
-    type Cloned = JSXAttribute<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXAttribute {
-            span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXSpreadAttribute<'_> {
-    type Cloned = JSXSpreadAttribute<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXSpreadAttribute {
-            span: CloneIn::clone_in(&self.span, allocator),
-            argument: CloneIn::clone_in(&self.argument, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXAttributeName<'_> {
-    type Cloned = JSXAttributeName<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Identifier(it) => JSXAttributeName::Identifier(CloneIn::clone_in(it, allocator)),
-            Self::NamespacedName(it) => {
-                JSXAttributeName::NamespacedName(CloneIn::clone_in(it, allocator))
-            }
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXAttributeValue<'_> {
-    type Cloned = JSXAttributeValue<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::StringLiteral(it) => {
-                JSXAttributeValue::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
-            Self::ExpressionContainer(it) => {
-                JSXAttributeValue::ExpressionContainer(CloneIn::clone_in(it, allocator))
-            }
-            Self::Element(it) => JSXAttributeValue::Element(CloneIn::clone_in(it, allocator)),
-            Self::Fragment(it) => JSXAttributeValue::Fragment(CloneIn::clone_in(it, allocator)),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXIdentifier<'_> {
-    type Cloned = JSXIdentifier<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXIdentifier {
-            span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXChild<'_> {
-    type Cloned = JSXChild<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Text(it) => JSXChild::Text(CloneIn::clone_in(it, allocator)),
-            Self::Element(it) => JSXChild::Element(CloneIn::clone_in(it, allocator)),
-            Self::Fragment(it) => JSXChild::Fragment(CloneIn::clone_in(it, allocator)),
-            Self::ExpressionContainer(it) => {
-                JSXChild::ExpressionContainer(CloneIn::clone_in(it, allocator))
-            }
-            Self::Spread(it) => JSXChild::Spread(CloneIn::clone_in(it, allocator)),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXSpreadChild<'_> {
-    type Cloned = JSXSpreadChild<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXSpreadChild {
-            span: CloneIn::clone_in(&self.span, allocator),
-            expression: CloneIn::clone_in(&self.expression, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for JSXText<'_> {
-    type Cloned = JSXText<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        JSXText {
-            span: CloneIn::clone_in(&self.span, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
-        }
     }
 }
 
