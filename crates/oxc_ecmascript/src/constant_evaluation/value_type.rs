@@ -78,10 +78,16 @@ impl<'a> From<&Expression<'a>> for ValueType {
                 UnaryOperator::Void => Self::Undefined,
                 UnaryOperator::UnaryNegation => {
                     let argument_ty = Self::from(&unary_expr.argument);
-                    if argument_ty == Self::BigInt {
-                        return Self::BigInt;
+                    match argument_ty {
+                        Self::BigInt => Self::BigInt,
+                        // non-object values other than BigInt are converted to number by `ToNumber`
+                        Self::Number
+                        | Self::Boolean
+                        | Self::String
+                        | Self::Null
+                        | Self::Undefined => Self::Number,
+                        Self::Undetermined | Self::Object => Self::Undetermined,
                     }
-                    Self::Number
                 }
                 UnaryOperator::UnaryPlus => Self::Number,
                 UnaryOperator::LogicalNot | UnaryOperator::Delete => Self::Boolean,

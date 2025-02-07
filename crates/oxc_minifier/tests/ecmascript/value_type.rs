@@ -50,7 +50,13 @@ fn unary_tests() {
     test("-0", ValueType::Number);
     test("-Infinity", ValueType::Number);
     test("-0n", ValueType::BigInt);
-    // test("-foo", ValueType::Undetermined); // can be number or bigint
+    test("-true", ValueType::Number); // -1
+    test("-''", ValueType::Number); // -0
+    test("-'0n'", ValueType::Number); // NaN
+    test("-null", ValueType::Number); // -0
+    test("-undefined", ValueType::Number); // NaN
+    test("-{ valueOf() { return 0n } }", ValueType::Undetermined);
+    test("-foo", ValueType::Undetermined); // can be number or bigint
 
     test("+0", ValueType::Number);
     test("+true", ValueType::Number);
