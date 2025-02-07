@@ -101,7 +101,7 @@ fn is_expr_global_builtin<'a, 'b>(
 ) -> Option<&'b str> {
     match expr {
         Expression::Identifier(ident) => {
-            if !ctx.semantic().is_reference_to_global_variable(ident) {
+            if !ctx.is_reference_to_global_variable(ident) {
                 return None;
             }
             Some(ident.name.as_str())

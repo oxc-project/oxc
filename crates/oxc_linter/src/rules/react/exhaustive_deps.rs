@@ -355,7 +355,7 @@ impl Rule for ExhaustiveDeps {
                     Expression::ArrayExpression(array_expr) => Some(array_expr),
                     Expression::Identifier(ident)
                         if ident.name == "undefined"
-                            && ctx.semantic().is_reference_to_global_variable(ident) =>
+                            && ctx.is_reference_to_global_variable(ident) =>
                     {
                         None
                     }

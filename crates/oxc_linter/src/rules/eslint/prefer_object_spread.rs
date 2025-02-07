@@ -91,16 +91,13 @@ impl Rule for PreferObjectSpread {
 
         match callee.object().get_inner_expression() {
             Expression::Identifier(ident) => {
-                if ident.name != "Object" || !ctx.semantic().is_reference_to_global_variable(ident)
-                {
+                if ident.name != "Object" || !ctx.is_reference_to_global_variable(ident) {
                     return;
                 }
             }
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = member_expr.object.get_inner_expression() {
-                    if ident.name != "globalThis"
-                        || !ctx.semantic().is_reference_to_global_variable(ident)
-                    {
+                    if ident.name != "globalThis" || !ctx.is_reference_to_global_variable(ident) {
                         return;
                     }
                 } else {
