@@ -14,13 +14,13 @@ use crate::LintContext;
 /// 1. Literal booleans (`true` or `false`)
 /// 2. Unary `!` expressions with a constant value
 /// 3. Constant booleans created via the `Boolean` global function
-pub fn is_static_boolean<'a>(expr: &Expression<'a>, semantic: &Semantic<'a>) -> bool {
+pub fn is_static_boolean<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
     match expr {
         Expression::BooleanLiteral(_) => true,
-        Expression::CallExpression(call_expr) => call_expr.is_constant(true, semantic),
+        Expression::CallExpression(call_expr) => call_expr.is_constant(true, ctx),
         Expression::UnaryExpression(unary_expr) => {
             unary_expr.operator == UnaryOperator::LogicalNot
-                && unary_expr.argument.is_constant(true, semantic)
+                && unary_expr.argument.is_constant(true, ctx)
         }
         _ => false,
     }
@@ -64,11 +64,11 @@ fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
 ///   When `false`, checks if -- for both string and number --
 ///   if coerced to that type, the value will be constant.
 pub trait IsConstant<'a, 'b> {
-    fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool;
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool;
 }
 
 impl<'a> IsConstant<'a, '_> for Expression<'a> {
-    fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         match self {
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
@@ -80,29 +80,29 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                         quasi.value.cooked.as_ref().is_some_and(|cooked| !cooked.is_empty())
                     });
                 let test_expressions =
-                    template.expressions.iter().all(|expr| expr.is_constant(false, semantic));
+                    template.expressions.iter().all(|expr| expr.is_constant(false, ctx));
                 test_quasis || test_expressions
             }
             Self::ArrayExpression(expr) => {
                 if in_boolean_position {
                     return true;
                 }
-                expr.elements.iter().all(|element| element.is_constant(false, semantic))
+                expr.elements.iter().all(|element| element.is_constant(false, ctx))
             }
             Self::UnaryExpression(expr) => match expr.operator {
                 UnaryOperator::Void => true,
                 UnaryOperator::Typeof if in_boolean_position => true,
-                UnaryOperator::LogicalNot => expr.argument.is_constant(true, semantic),
-                _ => expr.argument.is_constant(false, semantic),
+                UnaryOperator::LogicalNot => expr.argument.is_constant(true, ctx),
+                _ => expr.argument.is_constant(false, ctx),
             },
             Self::BinaryExpression(expr) => {
                 expr.operator != BinaryOperator::In
-                    && expr.left.is_constant(false, semantic)
-                    && expr.right.is_constant(false, semantic)
+                    && expr.left.is_constant(false, ctx)
+                    && expr.right.is_constant(false, ctx)
             }
             Self::LogicalExpression(expr) => {
-                let is_left_constant = expr.left.is_constant(in_boolean_position, semantic);
-                let is_right_constant = expr.right.is_constant(in_boolean_position, semantic);
+                let is_left_constant = expr.left.is_constant(in_boolean_position, ctx);
+                let is_right_constant = expr.right.is_constant(in_boolean_position, ctx);
                 let is_left_short_circuit =
                     is_left_constant && is_logical_identity(expr.operator, &expr.left);
                 let is_right_short_circuit = in_boolean_position
@@ -114,7 +114,7 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
             }
             Self::NewExpression(_) => in_boolean_position,
             Self::AssignmentExpression(expr) => match expr.operator {
-                AssignmentOperator::Assign => expr.right.is_constant(in_boolean_position, semantic),
+                AssignmentOperator::Assign => expr.right.is_constant(in_boolean_position, ctx),
                 AssignmentOperator::LogicalAnd if in_boolean_position => {
                     is_logical_identity(LogicalOperator::And, &expr.right)
                 }
@@ -127,31 +127,26 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                 .expressions
                 .iter()
                 .last()
-                .is_some_and(|last| last.is_constant(in_boolean_position, semantic)),
-            Self::CallExpression(call_expr) => call_expr.is_constant(in_boolean_position, semantic),
+                .is_some_and(|last| last.is_constant(in_boolean_position, ctx)),
+            Self::CallExpression(call_expr) => call_expr.is_constant(in_boolean_position, ctx),
             Self::ParenthesizedExpression(paren_expr) => {
-                paren_expr.expression.is_constant(in_boolean_position, semantic)
+                paren_expr.expression.is_constant(in_boolean_position, ctx)
             }
             Self::Identifier(ident) => {
-                ident.name == "undefined" && semantic.is_reference_to_global_variable(ident)
+                ident.name == "undefined" && ctx.is_reference_to_global_variable(ident)
             }
-            _ if self.is_literal() => true,
-            _ => false,
+            _ => self.is_literal(),
         }
     }
 }
 
 impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
-    fn is_constant(&self, _in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
+    fn is_constant(&self, _in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         if let Expression::Identifier(ident) = &self.callee {
             if ident.name == "Boolean"
-                && self
-                    .arguments
-                    .iter()
-                    .next()
-                    .map_or(true, |first| first.is_constant(true, semantic))
+                && self.arguments.iter().next().map_or(true, |first| first.is_constant(true, ctx))
             {
-                return semantic.is_reference_to_global_variable(ident);
+                return ctx.is_reference_to_global_variable(ident);
             }
         }
         false
@@ -159,31 +154,27 @@ impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
 }
 
 impl<'a> IsConstant<'a, '_> for Argument<'a> {
-    fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         match self {
-            Self::SpreadElement(element) => element.is_constant(in_boolean_position, semantic),
-            match_expression!(Self) => {
-                self.to_expression().is_constant(in_boolean_position, semantic)
-            }
+            Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
+            match_expression!(Self) => self.to_expression().is_constant(in_boolean_position, ctx),
         }
     }
 }
 
 impl<'a> IsConstant<'a, '_> for ArrayExpressionElement<'a> {
-    fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         match self {
-            Self::SpreadElement(element) => element.is_constant(in_boolean_position, semantic),
-            match_expression!(Self) => {
-                self.to_expression().is_constant(in_boolean_position, semantic)
-            }
+            Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
+            match_expression!(Self) => self.to_expression().is_constant(in_boolean_position, ctx),
             Self::Elision(_) => true,
         }
     }
 }
 
 impl<'a> IsConstant<'a, '_> for SpreadElement<'a> {
-    fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
-        self.argument.is_constant(in_boolean_position, semantic)
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
+        self.argument.is_constant(in_boolean_position, ctx)
     }
 }
 
@@ -191,7 +182,7 @@ impl<'a> IsConstant<'a, '_> for SpreadElement<'a> {
 /// enclosing the specified node
 pub fn get_enclosing_function<'a, 'b>(
     node: &'b AstNode<'a>,
-    semantic: &'b Semantic<'a>,
+    ctx: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
     loop {
@@ -202,7 +193,7 @@ pub fn get_enclosing_function<'a, 'b>(
         {
             return Some(current_node);
         }
-        current_node = semantic.nodes().parent_node(current_node.id())?;
+        current_node = ctx.nodes().parent_node(current_node.id())?;
     }
 }
 
@@ -213,14 +204,11 @@ pub fn is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usi
 }
 
 /// Jump to the outer most of chained parentheses if any
-pub fn outermost_paren<'a, 'b>(
-    node: &'b AstNode<'a>,
-    semantic: &'b Semantic<'a>,
-) -> &'b AstNode<'a> {
+pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b Semantic<'a>) -> &'b AstNode<'a> {
     let mut node = node;
 
     loop {
-        if let Some(parent) = semantic.nodes().parent_node(node.id()) {
+        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
             if let AstKind::ParenthesizedExpression(_) = parent.kind() {
                 node = parent;
                 continue;
@@ -235,10 +223,9 @@ pub fn outermost_paren<'a, 'b>(
 
 pub fn outermost_paren_parent<'a, 'b>(
     node: &'b AstNode<'a>,
-    semantic: &'b Semantic<'a>,
+    ctx: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    semantic
-        .nodes()
+    ctx.nodes()
         .ancestors(node.id())
         .skip(1)
         .find(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
@@ -246,11 +233,10 @@ pub fn outermost_paren_parent<'a, 'b>(
 
 pub fn nth_outermost_paren_parent<'a, 'b>(
     node: &'b AstNode<'a>,
-    semantic: &'b Semantic<'a>,
+    ctx: &'b Semantic<'a>,
     n: usize,
 ) -> Option<&'b AstNode<'a>> {
-    semantic
-        .nodes()
+    ctx.nodes()
         .ancestors(node.id())
         .skip(1)
         .filter(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
@@ -260,10 +246,10 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
 /// Iterate over parents of `node`, skipping nodes that are also ignored by
 /// [`Expression::get_inner_expression`].
 pub fn iter_outer_expressions<'a, 's>(
-    semantic: &'s Semantic<'a>,
+    ctx: &'s Semantic<'a>,
     node_id: NodeId,
 ) -> impl Iterator<Item = AstKind<'a>> + 's {
-    semantic.nodes().ancestor_kinds(node_id).skip(1).filter(|parent| {
+    ctx.nodes().ancestor_kinds(node_id).skip(1).filter(|parent| {
         !matches!(
             parent,
             AstKind::ParenthesizedExpression(_)
@@ -278,27 +264,27 @@ pub fn iter_outer_expressions<'a, 's>(
 
 pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference<'a>,
-    semantic: &'b Semantic<'a>,
+    ctx: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    let symbol_id = get_symbol_id_of_variable(ident, semantic)?;
-    let symbol_table = semantic.symbols();
-    Some(semantic.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+    let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
+    let symbol_table = ctx.symbols();
+    Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
 }
 
 pub fn get_declaration_from_reference_id<'a, 'b>(
     reference_id: ReferenceId,
-    semantic: &'b Semantic<'a>,
+    ctx: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    let symbol_table = semantic.symbols();
+    let symbol_table = ctx.symbols();
     let symbol_id = symbol_table.get_reference(reference_id).symbol_id()?;
-    Some(semantic.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+    Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
 }
 
 pub fn get_symbol_id_of_variable(
     ident: &IdentifierReference,
-    semantic: &Semantic<'_>,
+    ctx: &Semantic<'_>,
 ) -> Option<SymbolId> {
-    semantic.symbols().get_reference(ident.reference_id()).symbol_id()
+    ctx.symbols().get_reference(ident.reference_id()).symbol_id()
 }
 
 pub fn extract_regex_flags<'a>(
