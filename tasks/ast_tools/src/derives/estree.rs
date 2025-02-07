@@ -115,9 +115,8 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::String("custom_ts_def", value) => {
                 struct_def.estree.custom_ts_def = Some(value);
             }
-            AttrPart::String("add_ts_def", value) => {
-                struct_def.estree.add_ts_def = Some(value);
-            }
+            AttrPart::String("ts_alias", value) => struct_def.estree.ts_alias = Some(value),
+            AttrPart::String("add_ts_def", value) => struct_def.estree.add_ts_def = Some(value),
             AttrPart::String("rename", value) => struct_def.estree.rename = Some(value),
             AttrPart::String("via", value) => struct_def.estree.via = Some(value),
             _ => return Err(()),

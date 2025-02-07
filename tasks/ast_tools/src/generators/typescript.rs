@@ -108,6 +108,11 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
 
 /// Generate Typescript type definition for a struct.
 fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> Option<String> {
+    // If struct marked with `#[estree(ts_alias = "...")]`, then it needs no type def
+    if struct_def.estree.ts_alias.is_some() {
+        return None;
+    }
+
     // If struct is marked as `#[estree(flatten)]`, and only has a single field which isn't skipped,
     // don't generate a type def. That single field will be inserted inline into structs which include
     // this one rather than them extending this type.
@@ -252,7 +257,13 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> String 
 /// Get TS type name for a type.
 fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
     match type_def {
-        TypeDef::Struct(struct_def) => Cow::Borrowed(struct_def.name()),
+        TypeDef::Struct(struct_def) => {
+            if let Some(ts_alias) = &struct_def.estree.ts_alias {
+                Cow::Borrowed(ts_alias)
+            } else {
+                Cow::Borrowed(struct_def.name())
+            }
+        }
         TypeDef::Enum(enum_def) => Cow::Borrowed(enum_def.name()),
         TypeDef::Primitive(primitive_def) => Cow::Borrowed(match primitive_def.name() {
             #[rustfmt::skip]

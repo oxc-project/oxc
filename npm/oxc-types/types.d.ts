@@ -77,8 +77,10 @@ export interface ThisExpression extends Span {
 
 export interface ArrayExpression extends Span {
   type: 'ArrayExpression';
-  elements: Array<SpreadElement | Expression | null>;
+  elements: Array<ArrayExpressionElement>;
 }
+
+export type ArrayExpressionElement = SpreadElement | null | Expression;
 
 export interface ObjectExpression extends Span {
   type: 'ObjectExpression';
