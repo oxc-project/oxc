@@ -145,7 +145,20 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
             Expression::SequenceExpression(s) => {
                 s.expressions.last().and_then(|e| self.eval_to_number(e))
             }
+            // If the object is empty, `toString` / `valueOf` / `Symbol.toPrimitive` is not overridden.
+            // (assuming that those methods in Object.prototype are not modified)
+            // In that case, `ToPrimitive` returns `"[object Object]"`
             Expression::ObjectExpression(e) if e.properties.is_empty() => Some(f64::NAN),
+            // `ToPrimitive` for RegExp object returns `"/regexp/"`
+            Expression::RegExpLiteral(_) => Some(f64::NAN),
+            Expression::ArrayExpression(arr) => {
+                // If the array is empty, `ToPrimitive` returns `""`
+                if arr.elements.is_empty() {
+                    Some(0.0)
+                } else {
+                    None
+                }
+            }
             expr => {
                 use crate::ToNumber;
                 expr.to_number()

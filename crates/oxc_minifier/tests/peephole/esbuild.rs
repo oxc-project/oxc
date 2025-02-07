@@ -891,9 +891,9 @@ fn constant_evaluation_test() {
     test("x = !5", "x = !1;");
     test("x = typeof 5", "x = 'number';");
     test("x = +''", "x = 0;");
-    // test("x = +[]", "x = 0;");
+    test("x = +[]", "x = 0;");
     test("x = +{}", "x = NaN;");
-    // test("x = +/1/", "x = NaN;");
+    test("x = +/1/", "x = NaN;");
     test("x = +[1]", "x = +[1];");
     test("x = +'123'", "x = 123;");
     test("x = +'-123'", "x = -123;");
