@@ -61,10 +61,9 @@ impl<'a> From<&Expression<'a>> for ValueType {
     /// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
     /// To detect those cases, use [`crate::side_effects::MayHaveSideEffects::expression_may_have_side_effects`].
     fn from(expr: &Expression<'a>) -> Self {
-        // TODO: complete this
         match expr {
             Expression::BigIntLiteral(_) => Self::BigInt,
-            Expression::BooleanLiteral(_) => Self::Boolean,
+            Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => Self::Boolean,
             Expression::NullLiteral(_) => Self::Null,
             Expression::NumericLiteral(_) => Self::Number,
             Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => Self::String,

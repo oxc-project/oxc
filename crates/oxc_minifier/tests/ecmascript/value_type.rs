@@ -137,6 +137,7 @@ fn binary_tests() {
     test("foo <= bar", ValueType::Boolean);
     test("foo > bar", ValueType::Boolean);
     test("foo >= bar", ValueType::Boolean);
+    test("#foo in bar", ValueType::Boolean);
 }
 
 #[test]
