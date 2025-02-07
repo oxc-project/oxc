@@ -53,7 +53,7 @@ impl Rule for AvoidNew {
             return;
         };
 
-        if ident.name == "Promise" && ctx.semantic().is_reference_to_global_variable(ident) {
+        if ident.name == "Promise" && ctx.is_reference_to_global_variable(ident) {
             ctx.diagnostic(avoid_new_promise_diagnostic(expr.span));
         }
     }

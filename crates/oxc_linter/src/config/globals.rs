@@ -1,4 +1,4 @@
-use std::{borrow, fmt, hash};
+use std::{borrow, fmt, hash, ops::Deref};
 
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
@@ -32,6 +32,15 @@ use serde::{de::Visitor, Deserialize, Serialize};
 // <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema, Clone)]
 pub struct OxlintGlobals(FxHashMap<String, GlobalValue>);
+
+impl Deref for OxlintGlobals {
+    type Target = FxHashMap<String, GlobalValue>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl OxlintGlobals {
     pub fn is_enabled<Q>(&self, name: &Q) -> bool
     where

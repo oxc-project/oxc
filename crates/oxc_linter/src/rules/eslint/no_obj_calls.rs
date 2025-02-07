@@ -88,7 +88,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
     let nodes = ctx.nodes();
     let symbols = ctx.symbols();
 
-    if ctx.semantic().is_reference_to_global_variable(ident) {
+    if ctx.is_reference_to_global_variable(ident) {
         return Some(ident.name.as_str());
     }
 

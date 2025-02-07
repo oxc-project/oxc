@@ -84,7 +84,7 @@ impl Rule for NoConsole {
             return;
         };
 
-        if ctx.semantic().is_reference_to_global_variable(ident)
+        if ctx.is_reference_to_global_variable(ident)
             && ident.name == "console"
             && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
         {
