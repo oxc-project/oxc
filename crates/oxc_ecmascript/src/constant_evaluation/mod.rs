@@ -401,7 +401,9 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                         }
                         "object"
                     }
-                    Expression::FunctionExpression(_) => "function",
+                    Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
+                        "function"
+                    }
                     Expression::StringLiteral(_) => "string",
                     Expression::NumericLiteral(_) => "number",
                     Expression::BooleanLiteral(_) => "boolean",
