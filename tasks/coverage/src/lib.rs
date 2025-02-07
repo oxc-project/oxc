@@ -24,6 +24,7 @@ use crate::{
     test262::{Test262Case, Test262Suite},
     tools::{
         codegen::{CodegenBabelCase, CodegenMiscCase, CodegenTest262Case, CodegenTypeScriptCase},
+        estree::EstreeTest262Case,
         minifier::{MinifierBabelCase, MinifierTest262Case},
         prettier::{
             PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase,
@@ -108,6 +109,10 @@ impl AppArgs {
 
     pub fn run_transpiler(&self) {
         TranspileRunner::<TypeScriptTranspileCase>::new().run("transpile", self);
+    }
+
+    pub fn run_estree(&self) {
+        Test262Suite::<EstreeTest262Case>::new().run("estree_test262", self);
     }
 
     /// # Panics
