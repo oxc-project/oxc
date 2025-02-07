@@ -149,8 +149,32 @@ fn assignment_tests() {
     test("a = 1n", ValueType::BigInt);
     test("a = foo", ValueType::Undetermined);
 
-    // test("a += 1", ValueType::Undetermined);
-    // test("a += 1n", ValueType::Undetermined);
+    test("a += ''", ValueType::String);
+    // if `a` is a string, the result is string
+    // if `a` is an object, the result can be string or number or bigint
+    // if `a` is not a string nor an object, the result can be number or bigint
+    test("a += 1", ValueType::Undetermined);
+    test("a += 1n", ValueType::Undetermined);
+
+    test("a -= 1", ValueType::Number); // an error is thrown if `a` is converted to bigint
+    test("a -= undefined", ValueType::Number);
+    test("a -= null", ValueType::Number);
+    test("a -= ''", ValueType::Number);
+    test("a -= true", ValueType::Number);
+    test("a -= 1n", ValueType::BigInt); // an error is thrown if `a` is converted to number
+    test("a -= {}", ValueType::Undetermined); // number or bigint
+    test("a *= 1", ValueType::Number);
+    test("a /= 1", ValueType::Number);
+    test("a %= 1", ValueType::Number);
+    test("a <<= 1", ValueType::Number);
+    test("a |= 1", ValueType::Number);
+    test("a >>= 1", ValueType::Number);
+    test("a ^= 1", ValueType::Number);
+    test("a &= 1", ValueType::Number);
+    test("a **= 1", ValueType::Number);
+
+    test("a >>>= 1", ValueType::Number);
+    test("a >>>= 1n", ValueType::Number); // throws an error
 }
 
 #[test]

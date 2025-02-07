@@ -1,4 +1,7 @@
-use oxc_ast::ast::{BinaryExpression, ConditionalExpression, Expression, LogicalExpression};
+use oxc_ast::ast::{
+    AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
+    LogicalExpression,
+};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 /// JavaScript Language Type
@@ -97,7 +100,7 @@ impl<'a> From<&Expression<'a>> for ValueType {
             Expression::SequenceExpression(e) => {
                 e.expressions.last().map_or(ValueType::Undetermined, Self::from)
             }
-            Expression::AssignmentExpression(e) => Self::from(&e.right),
+            Expression::AssignmentExpression(e) => Self::from(&**e),
             Expression::ConditionalExpression(e) => Self::from(&**e),
             Expression::LogicalExpression(e) => Self::from(&**e),
             _ => Self::Undetermined,
@@ -163,6 +166,45 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterThan
             | BinaryOperator::GreaterEqualThan => Self::Boolean,
+        }
+    }
+}
+
+impl<'a> From<&AssignmentExpression<'a>> for ValueType {
+    fn from(e: &AssignmentExpression<'a>) -> Self {
+        match e.operator {
+            AssignmentOperator::Assign => Self::from(&e.right),
+            AssignmentOperator::Addition => {
+                let right = Self::from(&e.right);
+                if right.is_string() {
+                    Self::String
+                } else {
+                    Self::Undetermined
+                }
+            }
+            AssignmentOperator::Subtraction
+            | AssignmentOperator::Multiplication
+            | AssignmentOperator::Division
+            | AssignmentOperator::Remainder
+            | AssignmentOperator::ShiftLeft
+            | AssignmentOperator::BitwiseOR
+            | AssignmentOperator::ShiftRight
+            | AssignmentOperator::BitwiseXOR
+            | AssignmentOperator::BitwiseAnd
+            | AssignmentOperator::Exponential => {
+                let right = Self::from(&e.right);
+                if right.is_bigint() {
+                    Self::BigInt
+                } else if !(right.is_object() || right.is_undetermined()) {
+                    Self::Number
+                } else {
+                    Self::Undetermined
+                }
+            }
+            AssignmentOperator::ShiftRightZeroFill => Self::Number,
+            AssignmentOperator::LogicalAnd
+            | AssignmentOperator::LogicalOr
+            | AssignmentOperator::LogicalNullish => Self::Undetermined,
         }
     }
 }
