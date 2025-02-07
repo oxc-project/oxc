@@ -202,6 +202,14 @@ fn logical_tests() {
 
 #[test]
 fn undetermined_tests() {
+    test("foo++", ValueType::Undetermined); // can be number or bigint
+    test("foo--", ValueType::Undetermined); // can be number or bigint
+
+    test("foo ||= 1", ValueType::Undetermined);
+    test("foo &&= 1", ValueType::Undetermined);
+    test("foo ??= 1", ValueType::Undetermined);
+
+    test("this", ValueType::Undetermined);
     test("foo()", ValueType::Undetermined);
     test("''.foo", ValueType::Undetermined);
     test("foo.bar", ValueType::Undetermined);
