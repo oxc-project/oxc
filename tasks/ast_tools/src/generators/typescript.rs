@@ -80,12 +80,19 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
         }
     } else {
         // No custom definition. Generate one.
-        let ts_def = match type_def {
-            TypeDef::Struct(struct_def) => generate_ts_type_def_for_struct(struct_def, schema),
-            TypeDef::Enum(enum_def) => generate_ts_type_def_for_enum(enum_def, schema),
+        match type_def {
+            TypeDef::Struct(struct_def) => {
+                let ts_def = generate_ts_type_def_for_struct(struct_def, schema);
+                if let Some(ts_def) = ts_def {
+                    write!(code, "{ts_def};\n\n").unwrap();
+                }
+            }
+            TypeDef::Enum(enum_def) => {
+                let ts_def = generate_ts_type_def_for_enum(enum_def, schema);
+                write!(code, "{ts_def};\n\n").unwrap();
+            }
             _ => unreachable!(),
         };
-        write!(code, "{ts_def};\n\n").unwrap();
     };
 
     // Add additional custom TS def if provided via `#[estree(add_ts_def = "...")]` attribute
@@ -100,7 +107,14 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
 }
 
 /// Generate Typescript type definition for a struct.
-fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> String {
+fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> Option<String> {
+    // If struct is marked as `#[estree(flatten)]`, and only has a single field which isn't skipped,
+    // don't generate a type def. That single field will be inserted inline into structs which include
+    // this one rather than them extending this type.
+    if struct_def.estree.flatten && get_single_field(struct_def, schema).is_some() {
+        return None;
+    }
+
     let type_name = struct_def.name();
     let mut fields_str = String::new();
     let mut extends = vec![];
@@ -112,73 +126,108 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> S
 
     let mut output_as_type = false;
     for field in &struct_def.fields {
-        if should_skip_field(field, schema) {
-            continue;
+        if !should_skip_field(field, schema) {
+            generate_ts_type_def_for_struct_field(
+                struct_def,
+                field,
+                &mut fields_str,
+                &mut extends,
+                &mut output_as_type,
+                schema,
+            );
         }
-
-        let field_type_name = if let Some(append_field_index) = field.estree.append_field_index {
-            let appended_field = struct_def.fields[append_field_index].type_def(schema);
-            let appended_field = appended_field.as_option().unwrap();
-            let appended_type_name = ts_type_name(appended_field.inner_type(schema), schema);
-
-            let field_type = field.type_def(schema);
-            let (vec_def, is_option) = match field_type {
-                TypeDef::Vec(vec_def) => (vec_def, false),
-                TypeDef::Option(option_def) => {
-                    let vec_def = option_def.inner_type(schema).as_vec().unwrap();
-                    (vec_def, true)
-                }
-                _ => panic!(
-                    "Can only append a field to a `Vec<T>` or `Option<Vec<T>>`: `{}::{}`",
-                    type_name,
-                    field.name()
-                ),
-            };
-
-            let mut inner_type = vec_def.inner_type(schema);
-            let mut inner_is_option = false;
-            if let TypeDef::Option(option_def) = inner_type {
-                inner_is_option = true;
-                inner_type = option_def.inner_type(schema);
-            }
-            let inner_type_name = ts_type_name(inner_type, schema);
-            let mut field_type_name = format!("Array<{inner_type_name} | {appended_type_name}");
-            if inner_is_option {
-                field_type_name.push_str(" | null");
-            }
-            field_type_name.push('>');
-            if is_option {
-                field_type_name.push_str(" | null");
-            }
-
-            Cow::Owned(field_type_name)
-        } else {
-            get_field_type_name(field, schema)
-        };
-
-        if should_flatten_field(field, schema) {
-            if !output_as_type && field_type_name.contains('|') {
-                output_as_type = true;
-            }
-            extends.push(field_type_name);
-            continue;
-        }
-
-        let field_camel_name = get_struct_field_name(field);
-        fields_str.push_str(&format!("\n\t{field_camel_name}: {field_type_name};"));
     }
 
     if let Some(add_ts) = struct_def.estree.add_ts.as_deref() {
         fields_str.push_str(&format!("\n\t{add_ts};"));
     }
 
-    if extends.is_empty() {
+    let ts_def = if extends.is_empty() {
         format!("export interface {type_name} {{{fields_str}\n}}")
     } else if output_as_type {
         format!("export type {type_name} = ({{{fields_str}\n}}) & {};", extends.join(" & "))
     } else {
         format!("export interface {type_name} extends {} {{{fields_str}\n}}", extends.join(", "))
+    };
+    Some(ts_def)
+}
+
+/// Generate Typescript type definition for a struct field.
+///
+/// Field definition is appended to `fields_str` or `extends`.
+fn generate_ts_type_def_for_struct_field<'s>(
+    struct_def: &StructDef,
+    field: &'s FieldDef,
+    fields_str: &mut String,
+    extends: &mut Vec<Cow<'s, str>>,
+    output_as_type: &mut bool,
+    schema: &'s Schema,
+) {
+    let field_type_name = if let Some(append_field_index) = field.estree.append_field_index {
+        let appended_field = struct_def.fields[append_field_index].type_def(schema);
+        let appended_field = appended_field.as_option().unwrap();
+        let appended_type_name = ts_type_name(appended_field.inner_type(schema), schema);
+
+        let field_type = field.type_def(schema);
+        let (vec_def, is_option) = match field_type {
+            TypeDef::Vec(vec_def) => (vec_def, false),
+            TypeDef::Option(option_def) => {
+                let vec_def = option_def.inner_type(schema).as_vec().unwrap();
+                (vec_def, true)
+            }
+            _ => panic!(
+                "Can only append a field to a `Vec<T>` or `Option<Vec<T>>`: `{}::{}`",
+                struct_def.name(),
+                field.name()
+            ),
+        };
+
+        let mut inner_type = vec_def.inner_type(schema);
+        let mut inner_is_option = false;
+        if let TypeDef::Option(option_def) = inner_type {
+            inner_is_option = true;
+            inner_type = option_def.inner_type(schema);
+        }
+        let inner_type_name = ts_type_name(inner_type, schema);
+        let mut field_type_name = format!("Array<{inner_type_name} | {appended_type_name}");
+        if inner_is_option {
+            field_type_name.push_str(" | null");
+        }
+        field_type_name.push('>');
+        if is_option {
+            field_type_name.push_str(" | null");
+        }
+
+        Cow::Owned(field_type_name)
+    } else {
+        get_field_type_name(field, schema)
+    };
+
+    if should_flatten_field(field, schema) {
+        if let TypeDef::Struct(field_type) = field.type_def(schema) {
+            if let Some(flatten_field) = get_single_field(field_type, schema) {
+                // Only one field to flatten. Add it as a field on the parent type, instead of extending.
+                generate_ts_type_def_for_struct_field(
+                    field_type,
+                    flatten_field,
+                    fields_str,
+                    extends,
+                    output_as_type,
+                    schema,
+                );
+                return;
+            }
+        }
+
+        if field_type_name.contains('|') {
+            *output_as_type = true;
+        }
+        extends.push(field_type_name);
+        return;
     }
+
+    let field_camel_name = get_struct_field_name(field);
+    fields_str.push_str(&format!("\n\t{field_camel_name}: {field_type_name};"));
 }
 
 /// Generate Typescript type definition for an enum.
@@ -244,4 +293,19 @@ fn should_add_type_field_to_struct(struct_def: &StructDef) -> bool {
     } else {
         !struct_def.fields.iter().any(|field| matches!(field.name(), "type"))
     }
+}
+
+/// If struct has only a single unskipped field, return it.
+///
+/// If no fields, or more than 1 unskipped field, returns `None`.
+fn get_single_field<'s>(struct_def: &'s StructDef, schema: &Schema) -> Option<&'s FieldDef> {
+    let mut fields_which_are_not_skipped =
+        struct_def.fields.iter().filter(|field| !should_skip_field(field, schema));
+
+    if let Some(field) = fields_which_are_not_skipped.next() {
+        if fields_which_are_not_skipped.next().is_none() {
+            return Some(field);
+        }
+    }
+    None
 }
