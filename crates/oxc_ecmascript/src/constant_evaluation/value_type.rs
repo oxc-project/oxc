@@ -71,7 +71,15 @@ impl<'a> From<&Expression<'a>> for ValueType {
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)
             | Expression::RegExpLiteral(_)
-            | Expression::FunctionExpression(_) => Self::Object,
+            | Expression::FunctionExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::ClassExpression(_) => Self::Object,
+            Expression::MetaProperty(meta_prop) => {
+                match (meta_prop.meta.name.as_str(), meta_prop.property.name.as_str()) {
+                    ("import", "meta") => Self::Object,
+                    _ => Self::Undetermined,
+                }
+            }
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Self::Undefined,
                 "NaN" | "Infinity" => Self::Number,

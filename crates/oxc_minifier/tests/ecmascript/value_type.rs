@@ -30,8 +30,10 @@ fn literal_tests() {
     test("[0]", ValueType::Object);
     test("/a/", ValueType::Object);
     test("(function () {})", ValueType::Object);
-    // test("(() => {})", ValueType::Object);
-    // test("(class {})", ValueType::Object);
+    test("(() => {})", ValueType::Object);
+    test("(class {})", ValueType::Object);
+    test("import.meta", ValueType::Object);
+    // NOTE: new.target is undefined or object
 }
 
 #[test]
