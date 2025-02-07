@@ -55,6 +55,17 @@ impl<T: ESTree> ESTree for &[T] {
     }
 }
 
+/// [`ESTree`] implementation for arrays.
+impl<T: ESTree, const N: usize> ESTree for [T; N] {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) {
+        let mut seq = serializer.serialize_sequence();
+        for element in self {
+            seq.serialize_element(element);
+        }
+        seq.end();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::{CompactSerializer, PrettySerializer};
@@ -65,7 +76,7 @@ mod tests {
         struct Foo<'a> {
             none: &'a [&'a str],
             one: &'a [&'a str],
-            two: &'a [&'a str],
+            two: [&'a str; 2],
         }
 
         impl ESTree for Foo<'_> {
@@ -78,7 +89,7 @@ mod tests {
             }
         }
 
-        let foo = Foo { none: &[], one: &["one"], two: &["two one", "two two"] };
+        let foo = Foo { none: &[], one: &["one"], two: ["two one", "two two"] };
 
         let mut serializer = CompactSerializer::new();
         foo.serialize(&mut serializer);
