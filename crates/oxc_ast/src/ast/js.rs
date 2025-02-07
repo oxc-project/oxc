@@ -1401,6 +1401,7 @@ pub struct CatchClause<'a> {
 pub struct CatchParameter<'a> {
     pub span: Span,
     /// The bound error
+    /// TODO: need to avoid `extends BindingPattern` in d.ts
     #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
 }
@@ -1670,10 +1671,7 @@ pub struct FormalParameter<'a> {
     pub span: Span,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
-    #[estree(
-        flatten,
-        ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
-    )]
+    #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
     #[ts]
     pub accessibility: Option<TSAccessibility>,

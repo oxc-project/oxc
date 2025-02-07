@@ -483,9 +483,12 @@ export interface CatchClause extends Span {
   body: BlockStatement;
 }
 
-export interface CatchParameter extends Span, BindingPattern {
-  type: 'CatchParameter';
-}
+export type CatchParameter =
+  & ({
+    type: 'CatchParameter';
+  })
+  & Span
+  & BindingPattern;
 
 export interface DebuggerStatement extends Span {
   type: 'DebuggerStatement';
@@ -572,7 +575,7 @@ export type FormalParameter =
     override: boolean;
   })
   & Span
-  & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
+  & BindingPattern;
 
 export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
 
