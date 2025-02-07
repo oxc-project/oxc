@@ -372,6 +372,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                             .map(|assignment| assignment.create_this_property_assignment(ctx)),
                     );
             }
+            self.has_super_call = false;
         }
     }
 
