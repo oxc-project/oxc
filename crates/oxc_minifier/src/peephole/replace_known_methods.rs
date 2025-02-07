@@ -1816,11 +1816,11 @@ mod test {
     #[test]
     fn test_fold_pow() {
         test("Math.pow(2, 3)", "2 ** 3");
-        test("Math.pow(a, 3)", "+(a) ** 3");
-        test("Math.pow(2, b)", "2 ** +b");
-        test("Math.pow(a, b)", "+(a) ** +b");
-        test("Math.pow(2n, 3n)", "+(2n) ** +3n"); // errors both before and after
-        test("Math.pow(a + b, c)", "+(a + b) ** +c");
+        test("Math.pow(a, 3)", "a ** 3");
+        test("Math.pow(2, b)", "2 ** b");
+        test("Math.pow(a, b)", "a ** +b");
+        test("Math.pow(2n, 3n)", "2n ** +3n"); // errors both before and after
+        test("Math.pow(a + b, c)", "(a + b) ** +c");
         test_same("Math.pow()");
         test_same("Math.pow(1)");
         test_same("Math.pow(...a, 1)");

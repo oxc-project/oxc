@@ -1660,8 +1660,8 @@ mod test {
 
     #[test]
     fn test_fold_left() {
-        fold_same("(+x - 1) + 2"); // not yet
-        fold("(+x & 1) & 2", "+x & 0");
+        fold("(+x - 1) + 2", "x - 1 + 2"); // not yet
+        fold("(+x & 1) & 2", "x & 0");
     }
 
     #[test]
