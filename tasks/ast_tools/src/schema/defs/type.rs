@@ -106,7 +106,6 @@ impl Def for TypeDef {
 
 /// `is_*` / `as_*` / `as_*_mut` methods.
 impl TypeDef {
-    #[expect(dead_code)]
     pub fn is_struct(&self) -> bool {
         matches!(self, Self::Struct(_))
     }
@@ -125,7 +124,6 @@ impl TypeDef {
         }
     }
 
-    #[expect(dead_code)]
     pub fn is_enum(&self) -> bool {
         matches!(self, Self::Enum(_))
     }

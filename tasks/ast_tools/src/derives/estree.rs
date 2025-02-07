@@ -7,7 +7,7 @@ use quote::quote;
 use syn::{parse_str, Type};
 
 use crate::{
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
     utils::number_lit,
     Result,
 };
@@ -192,7 +192,8 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
         };
     }
 
-    let mut gen = StructSerializerGenerator::new(!struct_def.estree.no_type, schema);
+    let krate = struct_def.file(schema).krate();
+    let mut gen = StructSerializerGenerator::new(!struct_def.estree.no_type, krate, schema);
     gen.generate_stmts_for_struct(struct_def, &quote!(self));
 
     let type_field = if gen.add_type_field {
@@ -232,14 +233,16 @@ struct StructSerializerGenerator<'s> {
     /// `true` if a `type` field should be added.
     /// `false` one already exists (or if `#[estree(no_type)]` attr on struct).
     add_type_field: bool,
+    /// Crate in which the `Serialize` impl for the type will be generated
+    krate: &'s str,
     /// Schema
     schema: &'s Schema,
 }
 
 impl<'s> StructSerializerGenerator<'s> {
     /// Create new [`StructSerializerGenerator`].
-    fn new(add_type_field: bool, schema: &'s Schema) -> Self {
-        Self { stmts: quote!(), add_type_field, schema }
+    fn new(add_type_field: bool, krate: &'s str, schema: &'s Schema) -> Self {
+        Self { stmts: quote!(), add_type_field, krate, schema }
     }
 
     /// Generate code to serialize all fields in a struct.
@@ -263,20 +266,26 @@ impl<'s> StructSerializerGenerator<'s> {
         let field_name_ident = field.ident();
 
         if should_flatten_field(field, self.schema) {
-            match field.type_def(self.schema) {
-                TypeDef::Struct(inner_struct_def) => {
-                    self.generate_stmts_for_struct(
-                        inner_struct_def,
-                        &quote!(#self_path.#field_name_ident),
-                    );
-                }
-                TypeDef::Enum(_) => {
-                    self.stmts.extend(quote! {
-                        #self_path.#field_name_ident.serialize(FlatMapSerializer(&mut map))?;
-                    });
-                }
-                _ => panic!("Cannot flatten a field which is not a struct or enum"),
+            if can_flatten_field_inline(field, self.krate, self.schema) {
+                let inner_struct_def = field.type_def(self.schema).as_struct().unwrap();
+                self.generate_stmts_for_struct(
+                    inner_struct_def,
+                    &quote!(#self_path.#field_name_ident),
+                );
+                return;
             }
+
+            let field_type = field.type_def(self.schema);
+            assert!(
+                field_type.is_struct() || field_type.is_enum(),
+                "Cannot flatten a field which is not a struct or enum: `{}::{}`",
+                struct_def.name(),
+                field_type.name(),
+            );
+
+            self.stmts.extend(quote! {
+                #self_path.#field_name_ident.serialize(FlatMapSerializer(&mut map))?;
+            });
             return;
         }
 
@@ -362,6 +371,30 @@ pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
         let field_type = field.type_def(schema);
         matches!(field_type, TypeDef::Struct(field_struct_def) if field_struct_def.estree.flatten)
     }
+}
+
+/// Get if struct field can be flattened inline.
+///
+/// If the field's type is an enum, then it can't.
+///
+/// If the field's type is a struct, then usually it can.
+/// But it can't in the case where that type is defined in a different crate from where
+/// the `Serialize` impl will be generated, and one of the flattened fields is not public.
+pub fn can_flatten_field_inline(field: &FieldDef, krate: &str, schema: &Schema) -> bool {
+    let field_type = field.type_def(schema);
+    let TypeDef::Struct(struct_def) = field_type else { return false };
+
+    struct_def.fields.iter().all(|field| {
+        if should_skip_field(field, schema) {
+            true
+        } else {
+            match field.visibility {
+                Visibility::Public => true,
+                Visibility::Restricted => struct_def.file(schema).krate() == krate,
+                Visibility::Private => false,
+            }
+        }
+    })
 }
 
 /// Get value of a fieldless enum variant.
