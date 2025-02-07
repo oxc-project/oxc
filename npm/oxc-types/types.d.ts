@@ -515,11 +515,13 @@ export interface ObjectPattern extends Span {
 }
 
 export interface BindingProperty extends Span {
-  type: 'BindingProperty';
+  type: 'Property';
   key: PropertyKey;
   value: BindingPattern;
   shorthand: boolean;
   computed: boolean;
+  kind: 'init';
+  method: false;
 }
 
 export interface ArrayPattern extends Span {
