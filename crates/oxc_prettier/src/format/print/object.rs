@@ -1,173 +1,314 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstKind};
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     array,
     format::print::{function_parameters, misc},
-    group, if_break, indent,
+    group, hardline, if_break, indent,
     ir::Doc,
     line, softline, text, Format, Prettier,
 };
 
 pub enum ObjectLike<'a, 'b> {
     ObjectExpression(&'b ObjectExpression<'a>),
-    ObjectAssignmentTarget(&'b ObjectAssignmentTarget<'a>),
     ObjectPattern(&'b ObjectPattern<'a>),
+    ObjectAssignmentTarget(&'b ObjectAssignmentTarget<'a>),
     TSTypeLiteral(&'b TSTypeLiteral<'a>),
     TSInterfaceBody(&'b TSInterfaceBody<'a>),
+    TSEnumDeclaration(&'b TSEnumDeclaration<'a>),
 }
 
-impl<'a, 'b> ObjectLike<'a, 'b> {
-    fn len(&self) -> usize {
+impl<'a> ObjectLike<'a, '_> {
+    /// This includes rest element for `ObjectPattern` and `ObjectAssignmentTarget`
+    fn total_len(&self) -> usize {
         match self {
-            Self::ObjectExpression(expr) => expr.properties.len(),
-            Self::ObjectAssignmentTarget(target) => target.properties.len(),
-            Self::ObjectPattern(object) => object.properties.len(),
-            Self::TSTypeLiteral(literal) => literal.members.len(),
-            Self::TSInterfaceBody(body) => body.body.len(),
+            ObjectLike::ObjectExpression(obj) => obj.properties.len(),
+            ObjectLike::ObjectPattern(obj) => {
+                obj.properties.len() + usize::from(obj.rest.is_some())
+            }
+            ObjectLike::ObjectAssignmentTarget(obj) => {
+                obj.properties.len() + usize::from(obj.rest.is_some())
+            }
+            ObjectLike::TSTypeLiteral(obj) => obj.members.len(),
+            ObjectLike::TSInterfaceBody(obj) => obj.body.len(),
+            ObjectLike::TSEnumDeclaration(obj) => obj.members.len(),
         }
     }
 
-    fn has_rest(&self) -> bool {
+    fn is_ts_type(&self) -> bool {
+        matches!(self, ObjectLike::TSTypeLiteral(_) | ObjectLike::TSInterfaceBody(_))
+    }
+
+    fn separator(&self, p: &Prettier) -> Doc<'a> {
+        if self.is_ts_type() {
+            let semi = if p.options.semi { ";" } else { "" };
+            return if_break!(p, text!(semi), text!(","), None);
+        }
+        text!(",")
+    }
+
+    fn should_break(&self, p: &mut Prettier) -> bool {
         match self {
-            Self::ObjectAssignmentTarget(target) => target.rest.is_some(),
-            Self::ObjectPattern(object) => object.rest.is_some(),
-            _ => false,
-        }
-    }
-
-    fn is_empty(&self) -> bool {
-        match self {
-            Self::ObjectExpression(object) => object.properties.is_empty(),
-            Self::ObjectAssignmentTarget(object) => object.is_empty(),
-            Self::ObjectPattern(object) => object.is_empty(),
-            Self::TSTypeLiteral(literal) => literal.members.is_empty(),
-            Self::TSInterfaceBody(body) => body.body.is_empty(),
-        }
-    }
-
-    fn is_object_pattern(&self) -> bool {
-        matches!(self, Self::ObjectPattern(_))
-    }
-
-    fn span(&self) -> Span {
-        match self {
-            Self::ObjectExpression(object) => object.span,
-            Self::ObjectAssignmentTarget(object) => object.span,
-            Self::ObjectPattern(object) => object.span,
-            Self::TSTypeLiteral(literal) => literal.span,
-            Self::TSInterfaceBody(body) => body.span,
-        }
-    }
-
-    fn iter(&'b self, p: &'b mut Prettier<'a>) -> Box<dyn Iterator<Item = Doc<'a>> + 'b> {
-        match self {
-            Self::ObjectExpression(object) => {
-                Box::new(object.properties.iter().map(|prop| prop.format(p)))
+            ObjectLike::ObjectExpression(obj) => {
+                self.total_len() != 0
+                    && misc::has_new_line_in_range(p.source_text, obj.span.start, obj.span.end)
             }
-            Self::ObjectAssignmentTarget(object) => {
-                Box::new(object.properties.iter().map(|prop| prop.format(p)))
-            }
-            Self::ObjectPattern(object) => {
-                Box::new(object.properties.iter().map(|prop| prop.format(p)))
-            }
-            Self::TSTypeLiteral(literal) => {
-                Box::new(literal.members.iter().map(|member| member.format(p)))
-            }
-            Self::TSInterfaceBody(body) => {
-                Box::new(body.body.iter().map(|member| member.format(p)))
-            }
-        }
-    }
-
-    fn member_separator(&self, p: &'b Prettier<'a>) -> &'static str {
-        match self {
-            Self::TSTypeLiteral(_) | Self::TSInterfaceBody(_) => {
-                if p.semi().is_some() {
-                    ";"
-                } else {
-                    ""
-                }
-            }
-            _ => ",",
-        }
-    }
-}
-
-pub fn print_object<'a>(p: &mut Prettier<'a>, object: &ObjectLike<'a, '_>) -> Doc<'a> {
-    let should_break = matches!(object, ObjectLike::TSInterfaceBody(_));
-    let member_separator = object.member_separator(p);
-
-    let content = if object.is_empty() {
-        group!(p, [text!("{"), softline!(), text!("}")])
-    } else {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(text!("{"));
-
-        let indent_parts = {
-            let len = object.len();
-            let has_rest = object.has_rest();
-            let mut indent_parts = Vec::new_in(p.allocator);
-
-            indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
-
-            let object_docs = object.iter(p).collect::<std::vec::Vec<_>>();
-            for (i, doc) in object_docs.into_iter().enumerate() {
-                indent_parts.push(doc);
-                if i == len - 1 && !has_rest {
-                    break;
-                }
-
-                indent_parts.push(text!(member_separator));
-                indent_parts.push(line!());
-            }
-
-            match object {
-                ObjectLike::ObjectAssignmentTarget(target) => {
-                    if let Some(rest) = &target.rest {
-                        indent_parts.push(rest.format(p));
-                    }
-                }
-                ObjectLike::ObjectPattern(object) => {
-                    if let Some(rest) = &object.rest {
-                        indent_parts.push(rest.format(p));
-                    }
-                }
-                _ => {}
-            }
-            indent_parts
-        };
-        parts.push(indent!(p, indent_parts));
-        if p.should_print_es5_comma()
-            && match object {
-                ObjectLike::ObjectPattern(pattern) => pattern.rest.is_none(),
-                _ => true,
-            }
-        {
-            parts.push(if_break!(p, text!(member_separator)));
-        }
-        parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
-        parts.push(text!("}"));
-
-        let parent_kind = p.parent_kind();
-        if (object.is_object_pattern() && should_hug_the_only_parameter(p, parent_kind))
-            || (!should_break
-                && object.is_object_pattern()
-                && matches!(
+            ObjectLike::ObjectPattern(obj_pattern) => {
+                let parent_kind = p.parent_kind();
+                !matches!(
                     parent_kind,
-                    AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_)
-                ))
-        {
-            array!(p, parts)
-        } else {
-            let should_break =
-                misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            group!(p, parts, should_break, None)
+                    AstKind::Function(_)
+                        | AstKind::ArrowFunctionExpression(_)
+                        | AstKind::ObjectProperty(_)
+                        | AstKind::MethodDefinition(_)
+                        | AstKind::AssignmentPattern(_)
+                        | AstKind::CatchClause(_)
+                ) && (obj_pattern.properties.iter().any(|prop| {
+                    matches!(
+                        prop.value.kind,
+                        BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_)
+                    )
+                }) || obj_pattern.rest.as_ref().is_some_and(|rest| {
+                    matches!(
+                        rest.argument.kind,
+                        BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_)
+                    )
+                }))
+            }
+            ObjectLike::ObjectAssignmentTarget(obj_target) => {
+                let parent_kind = p.parent_kind();
+                !matches!(
+                    parent_kind,
+                    AstKind::Function(_)
+                        | AstKind::ArrowFunctionExpression(_)
+                        | AstKind::ObjectProperty(_)
+                        | AstKind::MethodDefinition(_)
+                        | AstKind::AssignmentPattern(_)
+                        | AstKind::CatchClause(_)
+                ) && (obj_target.properties.iter().any(|prop| match prop {
+                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
+                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
+                        prop.binding.is_assignment_target_pattern()
+                    }
+                }) || obj_target
+                    .rest
+                    .as_ref()
+                    .is_some_and(|rest| rest.target.is_assignment_target_pattern()))
+            }
+            ObjectLike::TSTypeLiteral(obj) => {
+                self.total_len() != 0
+                    && misc::has_new_line_in_range(p.source_text, obj.span.start, obj.span.end)
+            }
+            ObjectLike::TSInterfaceBody(_) | ObjectLike::TSEnumDeclaration(_) => true,
         }
+    }
+
+    fn print_properties(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut props = Vec::new_in(p.allocator);
+
+        // Separator is determined by the previous property
+        let mut separator_parts = array!(p, []);
+        let next_separator_fn =
+            |p: &Prettier<'a>, ts_signature: Option<&TSSignature>, span: Span| match (
+                ts_signature.is_some_and(|ts_signature| {
+                    matches!(
+                        ts_signature,
+                        TSSignature::TSPropertySignature(_)
+                            | TSSignature::TSMethodSignature(_)
+                            | TSSignature::TSConstructSignatureDeclaration(_)
+                            | TSSignature::TSCallSignatureDeclaration(_)
+                    ) // TODO: && has_comment(ts_signature, CommentCheckFlags::PrettierIgnore),
+                }),
+                p.is_next_line_empty(span),
+            ) {
+                (true, true) => array!(p, [line!(), hardline!(p)]),
+                (true, false) => array!(p, [line!()]),
+                (false, true) => array!(p, [self.separator(p), line!(), hardline!(p)]),
+                (false, false) => array!(p, [self.separator(p), line!()]),
+            };
+
+        match self {
+            ObjectLike::ObjectExpression(obj_expr) => {
+                for prop in &obj_expr.properties {
+                    props.push(std::mem::replace(
+                        &mut separator_parts,
+                        next_separator_fn(p, None, prop.span()),
+                    ));
+                    props.push(group!(p, [prop.format(p)]));
+                }
+            }
+            ObjectLike::ObjectPattern(obj_pattern) => {
+                for prop in &obj_pattern.properties {
+                    props.push(std::mem::replace(
+                        &mut separator_parts,
+                        next_separator_fn(p, None, prop.span()),
+                    ));
+                    props.push(group!(p, [prop.format(p)]));
+                }
+                if let Some(rest) = &obj_pattern.rest {
+                    props.push(std::mem::replace(
+                        &mut separator_parts,
+                        next_separator_fn(p, None, rest.span()),
+                    ));
+                    props.push(group!(p, [rest.format(p)]));
+                }
+            }
+            ObjectLike::ObjectAssignmentTarget(obj_target) => {
+                for prop in &obj_target.properties {
+                    props.push(std::mem::replace(
+                        &mut separator_parts,
+                        next_separator_fn(p, None, prop.span()),
+                    ));
+                    props.push(group!(p, [prop.format(p)]));
+                }
+                if let Some(rest) = &obj_target.rest {
+                    props.push(std::mem::replace(
+                        &mut separator_parts,
+                        next_separator_fn(p, None, rest.span()),
+                    ));
+                    props.push(group!(p, [rest.format(p)]));
+                }
+            }
+            ObjectLike::TSTypeLiteral(obj) => {
+                for member in &obj.members {
+                    props.push(std::mem::replace(
+                        &mut separator_parts,
+                        next_separator_fn(p, Some(member), member.span()),
+                    ));
+                    props.push(group!(p, [member.format(p)]));
+                }
+            }
+            ObjectLike::TSInterfaceBody(obj) => {
+                for member in &obj.body {
+                    props.push(std::mem::replace(
+                        &mut separator_parts,
+                        next_separator_fn(p, Some(member), member.span()),
+                    ));
+                    props.push(group!(p, [member.format(p)]));
+                }
+            }
+            ObjectLike::TSEnumDeclaration(obj) => {
+                for member in &obj.members {
+                    props.push(std::mem::replace(
+                        &mut separator_parts,
+                        next_separator_fn(p, None, member.span()),
+                    ));
+                    props.push(group!(p, [member.format(p)]));
+                }
+            }
+        }
+
+        array!(p, props)
+    }
+
+    fn can_have_trailing_separator(&self) -> bool {
+        debug_assert!(0 < self.total_len());
+
+        #[expect(clippy::match_same_arms)]
+        match self {
+            ObjectLike::ObjectExpression(_) => true,
+            ObjectLike::ObjectPattern(obj) => {
+                if obj.rest.is_some() {
+                    return false;
+                }
+                true
+            }
+            ObjectLike::ObjectAssignmentTarget(obj) => {
+                if obj.rest.is_some() {
+                    return false;
+                }
+                true
+            }
+            ObjectLike::TSTypeLiteral(obj) => {
+                if obj.members.last().is_some_and(|last| {
+                    matches!(
+                        last,
+                        TSSignature::TSPropertySignature(_)
+                            | TSSignature::TSCallSignatureDeclaration(_)
+                            | TSSignature::TSMethodSignature(_)
+                            | TSSignature::TSConstructSignatureDeclaration(_)
+                    ) // TODO: && has_comment(last, CommentCheckFlags::PrettierIgnore)
+                }) {
+                    return false;
+                }
+                true
+            }
+            ObjectLike::TSInterfaceBody(obj) => {
+                if obj.body.last().is_some_and(|last| {
+                    matches!(
+                        last,
+                        TSSignature::TSPropertySignature(_)
+                            | TSSignature::TSCallSignatureDeclaration(_)
+                            | TSSignature::TSMethodSignature(_)
+                            | TSSignature::TSConstructSignatureDeclaration(_)
+                    ) // TODO: && has_comment(last, CommentCheckFlags::PrettierIgnore)
+                }) {
+                    return false;
+                }
+                true
+            }
+            ObjectLike::TSEnumDeclaration(_) => true,
+        }
+    }
+}
+
+pub fn print_object<'a>(p: &mut Prettier<'a>, obj: &ObjectLike<'a, '_>) -> Doc<'a> {
+    if obj.total_len() == 0 {
+        // TODO: Comments
+        // group!(p, [text!("{"), dangling_comment, softline!(), text!("}")])
+        return text!("{}");
+    }
+
+    let bracket_spacing_fn = |p: &Prettier<'a>| {
+        if p.options.bracket_spacing {
+            return line!();
+        }
+        softline!()
     };
 
-    content
+    let mut parts = Vec::new_in(p.allocator);
+
+    parts.push(text!("{"));
+
+    parts.push(indent!(p, [bracket_spacing_fn(p), obj.print_properties(p)]));
+    if obj.can_have_trailing_separator() && (obj.is_ts_type() || p.should_print_es5_comma()) {
+        parts.push(if_break!(p, obj.separator(p)));
+    }
+    parts.push(bracket_spacing_fn(p));
+
+    parts.push(text!("}"));
+
+    let parent_kind = p.parent_kind();
+    let should_break = obj.should_break(p);
+
+    // If we inline the object as first argument of the parent,
+    // we don't want to create another group so that the object breaks before the return type
+    if matches!(obj, ObjectLike::ObjectPattern(obj_pattern))
+        && match parent_kind {
+            AstKind::FormalParameter(param) => param.decorators.is_empty(),
+            _ => true,
+        }
+        && should_hug_the_only_parameter(p, parent_kind)
+    {
+        return array!(p, parts);
+    }
+    if matches!(obj, ObjectLike::TSTypeLiteral(_))
+        && parent_kind.is_type()
+        && p.parent_parent_kind().is_some_and(AstKind::is_type)
+        && p.parent_parent_parent_kind().is_some_and(|k| should_hug_the_only_parameter(p, k))
+    {
+        return array!(p, parts);
+    }
+    // Assignment printing logic (printAssignment) is responsible for adding a group if needed
+    if !should_break
+        && matches!(obj, ObjectLike::ObjectPattern(_))
+        && matches!(parent_kind, AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_))
+    {
+        return array!(p, parts);
+    }
+
+    group!(p, parts, should_break, None)
 }
 
 fn should_hug_the_only_parameter(p: &mut Prettier<'_>, kind: AstKind<'_>) -> bool {
