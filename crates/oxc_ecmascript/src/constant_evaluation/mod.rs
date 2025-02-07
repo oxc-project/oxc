@@ -401,6 +401,12 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                         }
                         "object"
                     }
+                    Expression::ClassExpression(_) => {
+                        if self.expression_may_have_side_effects(&expr.argument) {
+                            return None;
+                        }
+                        "function"
+                    }
                     Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
                         "function"
                     }

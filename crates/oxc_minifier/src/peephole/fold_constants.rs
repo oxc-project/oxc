@@ -1161,10 +1161,12 @@ mod test {
         test("var foo; NOOP(x = typeof { foo })", "var foo; NOOP(x = \"object\")");
         fold("x = typeof function() {}", "x = 'function'");
         fold("x = typeof (() => {})", "x = 'function'");
+        fold("x = typeof class{}", "x = \"function\"");
         fold_same("x = typeof foo"); // no sideeffect, but we don't know the result
 
         fold_same("x = typeof[1,[foo()]]");
         fold_same("x = typeof{bathwater:baby()}");
+        fold_same("x = typeof class { static { foo() } }");
     }
 
     #[test]
