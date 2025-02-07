@@ -253,9 +253,9 @@ impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
     }
 }
 
-pub struct ESTreeSourceType<'a>(pub &'a SourceType);
+pub struct SourceTypeWrapper<'a>(pub &'a SourceType);
 
-impl Serialize for ESTreeSourceType<'_> {
+impl Serialize for SourceTypeWrapper<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.0.module_kind().serialize(serializer)
     }
