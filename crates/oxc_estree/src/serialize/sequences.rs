@@ -23,7 +23,7 @@ impl<'s, S: Serializer> SequenceSerializer<'s, S> {
     }
 
     /// Serialize sequence entry.
-    pub fn serialize_entry<T: ESTree>(&mut self, value: &T) {
+    pub fn serialize_element<T: ESTree>(&mut self, value: &T) {
         if self.state == SequenceState::Tail {
             self.serializer.buffer_mut().push_ascii_byte(b',');
             self.serializer.enter_element();
@@ -49,7 +49,7 @@ impl<T: ESTree> ESTree for &[T] {
     fn serialize<S: Serializer>(&self, serializer: &mut S) {
         let mut seq = serializer.serialize_sequence();
         for element in *self {
-            seq.serialize_entry(element);
+            seq.serialize_element(element);
         }
         seq.end();
     }
