@@ -150,17 +150,18 @@ pub trait Derive: Runner {
 
         let mut crate_contents = FxHashMap::<&str, CrateContent>::default();
         for type_def in &schema.types {
-            let derived = match type_def {
+            let (derived, file_id) = match type_def {
                 TypeDef::Struct(struct_def) if struct_def.generates_derive(derive_id) => {
-                    self.derive(StructOrEnum::Struct(struct_def), schema)
+                    let derived = self.derive(StructOrEnum::Struct(struct_def), schema);
+                    (derived, struct_def.file_id)
                 }
                 TypeDef::Enum(enum_def) if enum_def.generates_derive(derive_id) => {
-                    self.derive(StructOrEnum::Enum(enum_def), schema)
+                    let derived = self.derive(StructOrEnum::Enum(enum_def), schema);
+                    (derived, enum_def.file_id)
                 }
                 _ => continue,
             };
 
-            let file_id = type_def.file_id().unwrap();
             let content = crate_contents.entry(schema.files[file_id].krate()).or_default();
             content.import_file_ids.insert(file_id);
 
@@ -275,14 +276,6 @@ impl Def for StructOrEnum<'_> {
         match self {
             Self::Struct(struct_def) => struct_def.name(),
             Self::Enum(enum_def) => enum_def.name(),
-        }
-    }
-
-    /// Get [`FileId`] of file containing definition of this type.
-    fn file_id(&self) -> Option<FileId> {
-        match self {
-            Self::Struct(struct_def) => struct_def.file_id(),
-            Self::Enum(enum_def) => enum_def.file_id(),
         }
     }
 

@@ -13,31 +13,30 @@ pub use error::UnknownExtension;
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(ESTree)]
-#[estree(no_type)]
+#[estree(no_type, flatten)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
+    #[estree(skip)]
     pub(super) language: Language,
 
     /// Script or Module, default Module
+    #[estree(rename = "sourceType")]
     pub(super) module_kind: ModuleKind,
 
     /// Support JSX for JavaScript and TypeScript? default without JSX
+    #[estree(skip)]
     pub(super) variant: LanguageVariant,
 }
 
 /// JavaScript or TypeScript
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(ESTree)]
 pub enum Language {
     /// Indicates a JavaScript or JSX file
-    #[estree(rename = "javascript")]
     JavaScript = 0,
     /// Indicates a TypeScript file
-    #[estree(rename = "typescript")]
     TypeScript = 1,
     /// Indicates a TypeScript definition file (`*.d.ts`)
-    #[estree(rename = "typescriptDefinition")]
     TypeScriptDefinition = 2,
 }
 
@@ -64,7 +63,6 @@ pub enum ModuleKind {
 /// JSX for JavaScript and TypeScript
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(ESTree)]
 pub enum LanguageVariant {
     /// Standard JavaScript or TypeScript without any language extensions. Stage
     /// 3 proposals do not count as language extensions.

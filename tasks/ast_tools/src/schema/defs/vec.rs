@@ -3,7 +3,7 @@ use quote::quote;
 
 use super::{
     extensions::{layout::Layout, visit::VisitVec},
-    Def, Derives, FileId, Schema, TypeDef, TypeId,
+    Def, Derives, Schema, TypeDef, TypeId,
 };
 
 /// Type definition for a `Vec`.
@@ -48,13 +48,6 @@ impl Def for VecDef {
     /// Get type name.
     fn name(&self) -> &str {
         &self.name
-    }
-
-    /// Get [`FileId`] of file containing definition of this type.
-    ///
-    /// `Vec`s are not defined in a file, so returns `None`.
-    fn file_id(&self) -> Option<FileId> {
-        None
     }
 
     /// Get all traits which have derives generated for this type.

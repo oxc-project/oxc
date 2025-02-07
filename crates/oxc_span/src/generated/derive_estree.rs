@@ -22,22 +22,8 @@ impl Serialize for Span {
 impl Serialize for SourceType {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("language", &self.language)?;
-        map.serialize_entry("moduleKind", &self.module_kind)?;
-        map.serialize_entry("variant", &self.variant)?;
+        map.serialize_entry("sourceType", &self.module_kind)?;
         map.end()
-    }
-}
-
-impl Serialize for Language {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            Language::JavaScript => serializer.serialize_unit_variant("Language", 0, "javascript"),
-            Language::TypeScript => serializer.serialize_unit_variant("Language", 1, "typescript"),
-            Language::TypeScriptDefinition => {
-                serializer.serialize_unit_variant("Language", 2, "typescriptDefinition")
-            }
-        }
     }
 }
 
@@ -49,17 +35,6 @@ impl Serialize for ModuleKind {
             ModuleKind::Unambiguous => {
                 serializer.serialize_unit_variant("ModuleKind", 2, "unambiguous")
             }
-        }
-    }
-}
-
-impl Serialize for LanguageVariant {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            LanguageVariant::Standard => {
-                serializer.serialize_unit_variant("LanguageVariant", 0, "standard")
-            }
-            LanguageVariant::Jsx => serializer.serialize_unit_variant("LanguageVariant", 1, "jsx"),
         }
     }
 }

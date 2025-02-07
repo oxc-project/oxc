@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{extensions::layout::Layout, Def, Derives, FileId, Schema, TypeDef, TypeId};
+use super::{extensions::layout::Layout, Def, Derives, Schema, TypeDef, TypeId};
 
 /// Type definition for a `Box`.
 #[derive(Debug)]
@@ -38,13 +38,6 @@ impl Def for BoxDef {
     /// Get type name.
     fn name(&self) -> &str {
         &self.name
-    }
-
-    /// Get [`FileId`] of file containing definition of this type.
-    ///
-    /// `Box`es are not defined in a file, so returns `None`.
-    fn file_id(&self) -> Option<FileId> {
-        None
     }
 
     /// Get all traits which have derives generated for this type.

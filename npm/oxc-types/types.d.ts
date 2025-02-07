@@ -49,9 +49,7 @@ export type Expression =
   | TSTypeAssertion
   | TSNonNullExpression
   | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+  | MemberExpression;
 
 export interface IdentifierName extends Span {
   type: 'Identifier';
@@ -79,8 +77,10 @@ export interface ThisExpression extends Span {
 
 export interface ArrayExpression extends Span {
   type: 'ArrayExpression';
-  elements: Array<SpreadElement | Expression | null>;
+  elements: Array<ArrayExpressionElement>;
 }
+
+export type ArrayExpressionElement = SpreadElement | null | Expression;
 
 export interface ObjectExpression extends Span {
   type: 'ObjectExpression';
@@ -99,51 +99,7 @@ export interface ObjectProperty extends Span {
   computed: boolean;
 }
 
-export type PropertyKey =
-  | IdentifierName
-  | PrivateIdentifier
-  | BooleanLiteral
-  | NullLiteral
-  | NumericLiteral
-  | BigIntLiteral
-  | RegExpLiteral
-  | StringLiteral
-  | TemplateLiteral
-  | IdentifierReference
-  | MetaProperty
-  | Super
-  | ArrayExpression
-  | ArrowFunctionExpression
-  | AssignmentExpression
-  | AwaitExpression
-  | BinaryExpression
-  | CallExpression
-  | ChainExpression
-  | Class
-  | ConditionalExpression
-  | Function
-  | ImportExpression
-  | LogicalExpression
-  | NewExpression
-  | ObjectExpression
-  | ParenthesizedExpression
-  | SequenceExpression
-  | TaggedTemplateExpression
-  | ThisExpression
-  | UnaryExpression
-  | UpdateExpression
-  | YieldExpression
-  | PrivateInExpression
-  | JSXElement
-  | JSXFragment
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSTypeAssertion
-  | TSNonNullExpression
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
 
 export type PropertyKind = 'init' | 'get' | 'set';
 
@@ -223,50 +179,7 @@ export interface SpreadElement extends Span {
   argument: Expression;
 }
 
-export type Argument =
-  | SpreadElement
-  | BooleanLiteral
-  | NullLiteral
-  | NumericLiteral
-  | BigIntLiteral
-  | RegExpLiteral
-  | StringLiteral
-  | TemplateLiteral
-  | IdentifierReference
-  | MetaProperty
-  | Super
-  | ArrayExpression
-  | ArrowFunctionExpression
-  | AssignmentExpression
-  | AwaitExpression
-  | BinaryExpression
-  | CallExpression
-  | ChainExpression
-  | Class
-  | ConditionalExpression
-  | Function
-  | ImportExpression
-  | LogicalExpression
-  | NewExpression
-  | ObjectExpression
-  | ParenthesizedExpression
-  | SequenceExpression
-  | TaggedTemplateExpression
-  | ThisExpression
-  | UnaryExpression
-  | UpdateExpression
-  | YieldExpression
-  | PrivateInExpression
-  | JSXElement
-  | JSXFragment
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSTypeAssertion
-  | TSNonNullExpression
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+export type Argument = SpreadElement | Expression;
 
 export interface UpdateExpression extends Span {
   type: 'UpdateExpression';
@@ -316,18 +229,7 @@ export interface AssignmentExpression extends Span {
   right: Expression;
 }
 
-export type AssignmentTarget =
-  | IdentifierReference
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSNonNullExpression
-  | TSTypeAssertion
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression
-  | ArrayAssignmentTarget
-  | ObjectAssignmentTarget;
+export type AssignmentTarget = SimpleAssignmentTarget | AssignmentTargetPattern;
 
 export type SimpleAssignmentTarget =
   | IdentifierReference
@@ -336,9 +238,7 @@ export type SimpleAssignmentTarget =
   | TSNonNullExpression
   | TSTypeAssertion
   | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+  | MemberExpression;
 
 export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTarget;
 
@@ -357,19 +257,7 @@ export interface AssignmentTargetRest extends Span {
   argument: AssignmentTarget;
 }
 
-export type AssignmentTargetMaybeDefault =
-  | AssignmentTargetWithDefault
-  | IdentifierReference
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSNonNullExpression
-  | TSTypeAssertion
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression
-  | ArrayAssignmentTarget
-  | ObjectAssignmentTarget;
+export type AssignmentTargetMaybeDefault = AssignmentTargetWithDefault | AssignmentTarget;
 
 export interface AssignmentTargetWithDefault extends Span {
   type: 'AssignmentTargetWithDefault';
@@ -411,12 +299,7 @@ export interface ChainExpression extends Span {
   expression: ChainElement;
 }
 
-export type ChainElement =
-  | CallExpression
-  | TSNonNullExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+export type ChainElement = CallExpression | TSNonNullExpression | MemberExpression;
 
 export interface ParenthesizedExpression extends Span {
   type: 'ParenthesizedExpression';
@@ -442,20 +325,8 @@ export type Statement =
   | TryStatement
   | WhileStatement
   | WithStatement
-  | VariableDeclaration
-  | Function
-  | Class
-  | TSTypeAliasDeclaration
-  | TSInterfaceDeclaration
-  | TSEnumDeclaration
-  | TSModuleDeclaration
-  | TSImportEqualsDeclaration
-  | ImportDeclaration
-  | ExportAllDeclaration
-  | ExportDefaultDeclaration
-  | ExportNamedDeclaration
-  | TSExportAssignment
-  | TSNamespaceExportDeclaration;
+  | Declaration
+  | ModuleDeclaration;
 
 export interface Directive extends Span {
   type: 'Directive';
@@ -535,50 +406,7 @@ export interface ForStatement extends Span {
   body: Statement;
 }
 
-export type ForStatementInit =
-  | VariableDeclaration
-  | BooleanLiteral
-  | NullLiteral
-  | NumericLiteral
-  | BigIntLiteral
-  | RegExpLiteral
-  | StringLiteral
-  | TemplateLiteral
-  | IdentifierReference
-  | MetaProperty
-  | Super
-  | ArrayExpression
-  | ArrowFunctionExpression
-  | AssignmentExpression
-  | AwaitExpression
-  | BinaryExpression
-  | CallExpression
-  | ChainExpression
-  | Class
-  | ConditionalExpression
-  | Function
-  | ImportExpression
-  | LogicalExpression
-  | NewExpression
-  | ObjectExpression
-  | ParenthesizedExpression
-  | SequenceExpression
-  | TaggedTemplateExpression
-  | ThisExpression
-  | UnaryExpression
-  | UpdateExpression
-  | YieldExpression
-  | PrivateInExpression
-  | JSXElement
-  | JSXFragment
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSTypeAssertion
-  | TSNonNullExpression
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+export type ForStatementInit = VariableDeclaration | Expression;
 
 export interface ForInStatement extends Span {
   type: 'ForInStatement';
@@ -587,19 +415,7 @@ export interface ForInStatement extends Span {
   body: Statement;
 }
 
-export type ForStatementLeft =
-  | VariableDeclaration
-  | IdentifierReference
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSNonNullExpression
-  | TSTypeAssertion
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression
-  | ArrayAssignmentTarget
-  | ObjectAssignmentTarget;
+export type ForStatementLeft = VariableDeclaration | AssignmentTarget;
 
 export interface ForOfStatement extends Span {
   type: 'ForOfStatement';
@@ -951,52 +767,7 @@ export interface ExportSpecifier extends Span {
   exportKind: ImportOrExportKind;
 }
 
-export type ExportDefaultDeclarationKind =
-  | Function
-  | Class
-  | TSInterfaceDeclaration
-  | BooleanLiteral
-  | NullLiteral
-  | NumericLiteral
-  | BigIntLiteral
-  | RegExpLiteral
-  | StringLiteral
-  | TemplateLiteral
-  | IdentifierReference
-  | MetaProperty
-  | Super
-  | ArrayExpression
-  | ArrowFunctionExpression
-  | AssignmentExpression
-  | AwaitExpression
-  | BinaryExpression
-  | CallExpression
-  | ChainExpression
-  | Class
-  | ConditionalExpression
-  | Function
-  | ImportExpression
-  | LogicalExpression
-  | NewExpression
-  | ObjectExpression
-  | ParenthesizedExpression
-  | SequenceExpression
-  | TaggedTemplateExpression
-  | ThisExpression
-  | UnaryExpression
-  | UpdateExpression
-  | YieldExpression
-  | PrivateInExpression
-  | JSXElement
-  | JSXFragment
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSTypeAssertion
-  | TSNonNullExpression
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+export type ExportDefaultDeclarationKind = Function | Class | TSInterfaceDeclaration | Expression;
 
 export type ModuleExportName = IdentifierName | IdentifierReference | StringLiteral;
 
@@ -1033,36 +804,15 @@ export interface BigIntLiteral extends Span {
 
 export interface RegExpLiteral extends Span {
   type: 'Literal';
+  regex: RegExp;
   raw: string | null;
   value: {} | null;
-  regex: { pattern: string; flags: string };
 }
 
 export interface RegExp {
-  pattern: RegExpPattern;
-  flags: RegExpFlags;
+  pattern: string;
+  flags: string;
 }
-
-export type RegExpPattern = string | string | Pattern;
-
-export type RegExpFlags = {
-  /** Global flag */
-  G: 1;
-  /** Ignore case flag */
-  I: 2;
-  /** Multiline flag */
-  M: 4;
-  /** DotAll flag */
-  S: 8;
-  /** Unicode flag */
-  U: 16;
-  /** Sticky flag */
-  Y: 32;
-  /** Indices flag */
-  D: 64;
-  /** Unicode sets flag */
-  V: 128;
-};
 
 export interface JSXElement extends Span {
   type: 'JSXElement';
@@ -1120,50 +870,7 @@ export interface JSXExpressionContainer extends Span {
   expression: JSXExpression;
 }
 
-export type JSXExpression =
-  | JSXEmptyExpression
-  | BooleanLiteral
-  | NullLiteral
-  | NumericLiteral
-  | BigIntLiteral
-  | RegExpLiteral
-  | StringLiteral
-  | TemplateLiteral
-  | IdentifierReference
-  | MetaProperty
-  | Super
-  | ArrayExpression
-  | ArrowFunctionExpression
-  | AssignmentExpression
-  | AwaitExpression
-  | BinaryExpression
-  | CallExpression
-  | ChainExpression
-  | Class
-  | ConditionalExpression
-  | Function
-  | ImportExpression
-  | LogicalExpression
-  | NewExpression
-  | ObjectExpression
-  | ParenthesizedExpression
-  | SequenceExpression
-  | TaggedTemplateExpression
-  | ThisExpression
-  | UnaryExpression
-  | UpdateExpression
-  | YieldExpression
-  | PrivateInExpression
-  | JSXElement
-  | JSXFragment
-  | TSAsExpression
-  | TSSatisfiesExpression
-  | TSTypeAssertion
-  | TSNonNullExpression
-  | TSInstantiationExpression
-  | ComputedMemberExpression
-  | StaticMemberExpression
-  | PrivateFieldExpression;
+export type JSXExpression = JSXEmptyExpression | Expression;
 
 export interface JSXEmptyExpression extends Span {
   type: 'JSXEmptyExpression';
@@ -1348,47 +1055,7 @@ export interface TSRestType extends Span {
   typeAnnotation: TSType;
 }
 
-export type TSTupleElement =
-  | TSOptionalType
-  | TSRestType
-  | TSAnyKeyword
-  | TSBigIntKeyword
-  | TSBooleanKeyword
-  | TSIntrinsicKeyword
-  | TSNeverKeyword
-  | TSNullKeyword
-  | TSNumberKeyword
-  | TSObjectKeyword
-  | TSStringKeyword
-  | TSSymbolKeyword
-  | TSUndefinedKeyword
-  | TSUnknownKeyword
-  | TSVoidKeyword
-  | TSArrayType
-  | TSConditionalType
-  | TSConstructorType
-  | TSFunctionType
-  | TSImportType
-  | TSIndexedAccessType
-  | TSInferType
-  | TSIntersectionType
-  | TSLiteralType
-  | TSMappedType
-  | TSNamedTupleMember
-  | TSQualifiedName
-  | TSTemplateLiteralType
-  | TSThisType
-  | TSTupleType
-  | TSTypeLiteral
-  | TSTypeOperator
-  | TSTypePredicate
-  | TSTypeQuery
-  | TSTypeReference
-  | TSUnionType
-  | TSParenthesizedType
-  | JSDocNullableType
-  | JSDocNonNullableType
-  | JSDocUnknownType;
+export type TSTupleElement = TSOptionalType | TSRestType | TSType;
 
 export interface TSAnyKeyword extends Span {
   type: 'TSAnyKeyword';
@@ -1619,7 +1286,7 @@ export interface TSTypeQuery extends Span {
   typeParameters: TSTypeParameterInstantiation | null;
 }
 
-export type TSTypeQueryExprName = TSImportType | IdentifierReference | TSQualifiedName;
+export type TSTypeQueryExprName = TSImportType | TSTypeName;
 
 export interface TSImportType extends Span {
   type: 'TSImportType';
@@ -1702,7 +1369,7 @@ export interface TSImportEqualsDeclaration extends Span {
   importKind: ImportOrExportKind;
 }
 
-export type TSModuleReference = TSExternalModuleReference | IdentifierReference | TSQualifiedName;
+export type TSModuleReference = TSExternalModuleReference | TSTypeName;
 
 export interface TSExternalModuleReference extends Span {
   type: 'TSExternalModuleReference';
@@ -1806,17 +1473,7 @@ export interface Span {
   end: number;
 }
 
-export interface SourceType {
-  language: Language;
-  moduleKind: ModuleKind;
-  variant: LanguageVariant;
-}
-
-export type Language = 'javascript' | 'typescript' | 'typescriptDefinition';
-
 export type ModuleKind = 'script' | 'module' | 'unambiguous';
-
-export type LanguageVariant = 'standard' | 'jsx';
 
 export interface Pattern extends Span {
   type: 'Pattern';
