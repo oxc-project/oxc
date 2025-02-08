@@ -140,6 +140,10 @@ update-transformer-fixtures:
   cd tasks/coverage/babel; git reset --hard HEAD; git clean -f -q
   node tasks/transform_conformance/update_fixtures.mjs
 
+# Test ESTree
+test-estree *args='':
+  cargo run -p oxc_coverage --profile coverage -- estree {{args}}
+
 # Install wasm-pack
 install-wasm:
   cargo binstall wasm-pack
