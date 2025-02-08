@@ -10,6 +10,7 @@ mod structs;
 mod wrappers;
 use buffer::Buffer;
 use formatter::{CompactFormatter, Formatter, PrettyFormatter};
+use structs::{StructState, StructStateTrait};
 
 pub use sequences::SequenceSerializer;
 pub use structs::StructSerializer;
@@ -39,6 +40,14 @@ pub trait Serializer: SerializerWithFormatter {
 trait SerializerWithFormatter: Sized {
     /// Formatter type
     type Formatter: Formatter;
+
+    type StructState: StructStateTrait;
+
+    /// `true` if this is the root serializer
+    const IS_ROOT: bool = true;
+
+    fn get_struct_state(&self) -> StructState;
+    fn set_struct_state(&mut self, state: StructState);
 
     /// Get mutable reference to buffer.
     fn buffer_mut(&mut self) -> &mut Buffer;
@@ -82,6 +91,18 @@ impl<F: Formatter> Serializer for ESTreeSerializer<F> {}
 
 impl<F: Formatter> SerializerWithFormatter for ESTreeSerializer<F> {
     type Formatter = F;
+    type StructState = StructState;
+
+    /// This is the root serializer
+    const IS_ROOT: bool = true;
+
+    fn get_struct_state(&self) -> StructState {
+        unreachable!()
+    }
+
+    fn set_struct_state(&mut self, _state: StructState) {
+        unreachable!()
+    }
 
     /// Get mutable reference to buffer.
     #[inline(always)]
