@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
@@ -90,18 +92,56 @@ impl serde_json::ser::Formatter for EcmaFormatter {
 }
 
 impl Program<'_> {
-    /// # Panics
+    /// Serialize AST to JSON.
+    //
+    // Should not panic if everything is working correctly.
+    // Serializing into a `Vec<u8>` should be infallible.
+    #[expect(clippy::missing_panics_doc)]
     pub fn to_json(&self) -> String {
-        let ser = self.serializer();
-        String::from_utf8(ser.into_inner()).unwrap()
+        let buf = Vec::new();
+        let ser = self.to_json_into_writer(buf).unwrap();
+        let buf = ser.into_inner();
+        // SAFETY: `serde_json` outputs valid UTF-8.
+        // `serde_json::to_string` also uses `from_utf8_unchecked`.
+        // https://github.com/serde-rs/json/blob/1174c5f57db44c26460951b525c6ede50984b655/src/ser.rs#L2209-L2219
+        unsafe { String::from_utf8_unchecked(buf) }
     }
 
-    /// # Panics
-    pub fn serializer(&self) -> serde_json::Serializer<Vec<u8>, EcmaFormatter> {
-        let buf = Vec::new();
-        let mut ser = serde_json::Serializer::with_formatter(buf, EcmaFormatter);
-        self.serialize(&mut ser).unwrap();
-        ser
+    /// Serialize AST into a "black hole" writer.
+    ///
+    /// Only useful for testing, to make sure serialization completes successfully.
+    /// Should be faster than [`Program::to_json`], as does not actually produce any output.
+    ///
+    /// # Errors
+    /// Returns `Err` if serialization fails.
+    #[doc(hidden)]
+    pub fn test_to_json(&self) -> Result<(), serde_json::Error> {
+        struct BlackHole;
+
+        #[expect(clippy::inline_always)]
+        impl Write for BlackHole {
+            #[inline(always)]
+            fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
+                Ok(buf.len())
+            }
+
+            #[inline(always)]
+            fn flush(&mut self) -> Result<(), std::io::Error> {
+                Ok(())
+            }
+        }
+
+        self.to_json_into_writer(BlackHole).map(|_| ())
+    }
+
+    /// Serialize AST into the provided writer.
+    fn to_json_into_writer<W: Write>(
+        &self,
+        writer: W,
+    ) -> Result<serde_json::Serializer<W, EcmaFormatter>, serde_json::Error> {
+        let mut ser = serde_json::Serializer::with_formatter(writer, EcmaFormatter);
+        self.serialize(&mut ser)?;
+        Ok(ser)
     }
 }
 
