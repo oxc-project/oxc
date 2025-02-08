@@ -1,7 +1,9 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
+use oxc::{
+    allocator::Allocator, ast::utf8_to_utf16::Utf8ToUtf16, parser::Parser, span::SourceType,
+};
 
 use crate::{
     suite::{Case, TestResult},
@@ -50,18 +52,23 @@ impl Case for EstreeTest262Case {
             }
             Ok(acorn_json) => acorn_json,
         };
+
         let source_text = self.base.code();
         let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
         let allocator = Allocator::new();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         // Ignore empty AST or parse errors.
-        if ret.program.is_empty() || ret.panicked || !ret.errors.is_empty() {
+        let mut program = ret.program;
+        if program.is_empty() || ret.panicked || !ret.errors.is_empty() {
             self.base.set_result(TestResult::Passed);
             return;
         }
-        let mut oxc_json =
-            serde_json::from_str::<serde_json::Value>(&ret.program.to_json()).unwrap();
+
+        // Convert spans to UTF16
+        Utf8ToUtf16::new().convert(&mut program);
+
+        let mut oxc_json = serde_json::from_str::<serde_json::Value>(&program.to_json()).unwrap();
 
         process_estree(&mut acorn_json, &mut oxc_json);
 
