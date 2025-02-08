@@ -21,7 +21,7 @@ pub trait ESTree {
 
 /// Trait for serializers.
 #[expect(private_bounds)]
-pub trait Serializer: SerializerImpl {
+pub trait Serializer: SerializerWithFormatter {
     // Public methods
 
     /// Serialize struct.
@@ -36,12 +36,15 @@ pub trait Serializer: SerializerImpl {
 }
 
 /// Inner trait containing internal methods that we don't want to expose outside this crate.
-trait SerializerImpl: Sized {
+trait SerializerWithFormatter: Sized {
+    /// Formatter type
+    type Formatter: Formatter;
+
+    /// Get mutable reference to buffer.
     fn buffer_mut(&mut self) -> &mut Buffer;
-    fn enter_sequence(&mut self);
-    fn enter_element(&mut self);
-    fn enter_field_value(&mut self);
-    fn exit_sequence(&mut self);
+
+    /// Get mutable reference to buffer and formatter.
+    fn buffer_and_formatter_mut(&mut self) -> (&mut Buffer, &mut Self::Formatter);
 }
 
 /// ESTree serializer which produces compact JSON.
@@ -77,30 +80,18 @@ impl<F: Formatter> Default for ESTreeSerializer<F> {
 
 impl<F: Formatter> Serializer for ESTreeSerializer<F> {}
 
-impl<F: Formatter> SerializerImpl for ESTreeSerializer<F> {
+impl<F: Formatter> SerializerWithFormatter for ESTreeSerializer<F> {
+    type Formatter = F;
+
     /// Get mutable reference to buffer.
     #[inline(always)]
     fn buffer_mut(&mut self) -> &mut Buffer {
         &mut self.buffer
     }
 
+    /// Get mutable reference to buffer and formatter.
     #[inline(always)]
-    fn enter_sequence(&mut self) {
-        self.formatter.enter_sequence(&mut self.buffer);
-    }
-
-    #[inline(always)]
-    fn enter_element(&mut self) {
-        self.formatter.enter_field(&mut self.buffer);
-    }
-
-    #[inline(always)]
-    fn enter_field_value(&mut self) {
-        self.formatter.enter_field_value(&mut self.buffer);
-    }
-
-    #[inline(always)]
-    fn exit_sequence(&mut self) {
-        self.formatter.exit_sequence(&mut self.buffer);
+    fn buffer_and_formatter_mut(&mut self) -> (&mut Buffer, &mut F) {
+        (&mut self.buffer, &mut self.formatter)
     }
 }

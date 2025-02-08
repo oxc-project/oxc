@@ -1,4 +1,4 @@
-use super::{ESTree, Serializer};
+use super::{ESTree, Formatter, Serializer};
 
 /// Serializer for sequences.
 ///
@@ -24,11 +24,12 @@ impl<'s, S: Serializer> SequenceSerializer<'s, S> {
 
     /// Serialize sequence entry.
     pub fn serialize_element<T: ESTree>(&mut self, value: &T) {
+        let (buffer, formatter) = self.serializer.buffer_and_formatter_mut();
         if self.state == SequenceState::Rest {
-            self.serializer.buffer_mut().push_ascii_byte(b',');
-            self.serializer.enter_element();
+            buffer.push_ascii_byte(b',');
+            formatter.enter_field(buffer);
         } else {
-            self.serializer.enter_sequence();
+            formatter.enter_sequence(buffer);
             self.state = SequenceState::Rest;
         }
 
@@ -37,10 +38,11 @@ impl<'s, S: Serializer> SequenceSerializer<'s, S> {
 
     /// Finish serializing sequence.
     pub fn end(self) {
+        let (buffer, formatter) = self.serializer.buffer_and_formatter_mut();
         if self.state == SequenceState::Rest {
-            self.serializer.exit_sequence();
+            formatter.exit_sequence(buffer);
         }
-        self.serializer.buffer_mut().push_ascii_byte(b']');
+        buffer.push_ascii_byte(b']');
     }
 }
 

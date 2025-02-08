@@ -1,7 +1,7 @@
 use super::Buffer;
 
 /// Formatter trait.
-pub trait Formatter: Sized {
+pub trait Formatter {
     fn new() -> Self;
 
     fn enter_sequence(&mut self, buffer: &mut Buffer);
