@@ -39,6 +39,7 @@ mod eslint {
     pub mod eqeqeq;
     pub mod for_direction;
     pub mod func_names;
+    pub mod func_style;
     pub mod getter_return;
     pub mod guard_for_in;
     pub mod max_classes_per_file;
@@ -541,6 +542,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::default_param_last,
     eslint::eqeqeq,
     eslint::for_direction,
+    eslint::func_style,
     eslint::func_names,
     eslint::getter_return,
     eslint::guard_for_in,
