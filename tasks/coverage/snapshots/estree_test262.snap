@@ -1,8 +1,8 @@
-commit: c4317b0c
+commit: bc5c1417
 
 estree_test262 Summary:
-AST Parsed     : 44101/44101 (100.00%)
-Positive Passed: 5429/44101 (12.31%)
+AST Parsed     : 44293/44293 (100.00%)
+Positive Passed: 5505/44293 (12.43%)
 Mismatch: tasks/coverage/test262/test/annexB/built-ins/Array/from/iterator-method-emulates-undefined.js
 Mismatch: tasks/coverage/test262/test/annexB/built-ins/Date/prototype/getYear/B.2.4.js
 Mismatch: tasks/coverage/test262/test/annexB/built-ins/Date/prototype/getYear/length.js
@@ -3561,7 +3561,10 @@ Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/lengt
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/length-exceeding-array-length-limit.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/length-increased-while-iterating.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/length-tolength.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/not-a-constructor.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/property-descriptor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/this-value-boolean.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toReversed/this-value-nullish.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/comparefn-called-after-get-elements.js
@@ -3575,7 +3578,10 @@ Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/length-
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/length-exceeding-array-length-limit.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/length-increased-while-iterating.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/length-tolength.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/not-a-constructor.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/property-descriptor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/this-value-boolean.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSorted/this-value-nullish.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/deleteCount-clamped-between-zero-and-remaining-count.js
@@ -3591,8 +3597,11 @@ Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/length
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/length-exceeding-array-length-limit.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/length-increased-while-iterating.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/length-tolength.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/mutate-while-iterating.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/not-a-constructor.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/property-descriptor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/start-bigger-than-length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/start-neg-infinity-is-zero.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/start-neg-less-than-minus-length-is-zero.js
@@ -3644,8 +3653,11 @@ Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/length-decr
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/length-exceeding-array-length-limit.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/length-increased-while-iterating.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/length-tolength.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/no-get-replaced-index.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/not-a-constructor.js
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/property-descriptor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/this-value-boolean.js
 Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/with/this-value-nullish.js
 Mismatch: tasks/coverage/test262/test/built-ins/ArrayBuffer/Symbol.species/length.js
@@ -3836,6 +3848,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/ArrayIteratorPrototype/next/leng
 Mismatch: tasks/coverage/test262/test/built-ins/ArrayIteratorPrototype/next/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/ArrayIteratorPrototype/next/non-own-slots.js
 Mismatch: tasks/coverage/test262/test/built-ins/ArrayIteratorPrototype/next/property-descriptor.js
+Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/instance-extensible.js
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/name.js
@@ -3880,6 +3893,10 @@ Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/prototype/u
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/prototype/use/this-does-not-have-internal-asyncdisposablestate-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/prototype/use/this-not-object-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/prototype/use/throws-if-value-not-object.js
+Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/prototype-from-newtarget-abrupt.js
+Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/prototype-from-newtarget-custom.js
+Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/prototype-from-newtarget.js
+Mismatch: tasks/coverage/test262/test/built-ins/AsyncDisposableStack/undefined-newtarget-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/absent-value-not-passed.js
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-iterator-next-rejected-promise-close.js
 Mismatch: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-next-rejected-promise-close.js
@@ -5397,6 +5414,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Date/value-to-primitive-result-f
 Mismatch: tasks/coverage/test262/test/built-ins/Date/value-to-primitive-result-non-string-prim.js
 Mismatch: tasks/coverage/test262/test/built-ins/Date/value-to-primitive-result-string.js
 Mismatch: tasks/coverage/test262/test/built-ins/Date/year-zero.js
+Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/instance-extensible.js
 Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/name.js
@@ -5441,6 +5459,10 @@ Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/prototype/use/pr
 Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/prototype/use/this-does-not-have-internal-disposablestate-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/prototype/use/this-not-object-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/prototype/use/throws-if-value-not-object.js
+Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/prototype-from-newtarget-abrupt.js
+Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/prototype-from-newtarget-custom.js
+Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/prototype-from-newtarget.js
+Mismatch: tasks/coverage/test262/test/built-ins/DisposableStack/undefined-newtarget-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Error/cause_abrupt.js
 Mismatch: tasks/coverage/test262/test/built-ins/Error/cause_property.js
 Mismatch: tasks/coverage/test262/test/built-ins/Error/constructor.js
@@ -5746,6 +5768,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/apply/not-a-c
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/apply/resizable-buffer.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/apply/this-not-callable-realm.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/apply/this-not-callable.js
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/arguments/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/bind/15.3.4.5-0-1.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/bind/15.3.4.5-10-1.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/bind/15.3.4.5-11-1.js
@@ -5878,10 +5901,9 @@ Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/call/S15.3.4.
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/call/S15.3.4.4_A9.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/call/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/call/not-a-constructor.js
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/caller/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/name.js
-Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/restricted-property-arguments.js
-Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/restricted-property-caller.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/AsyncFunction.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/AsyncGenerator.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/GeneratorFunction.js
@@ -5926,7 +5948,6 @@ Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/gett
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/getter-class-statement.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/getter-object.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
-Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/method-class-expression-static.js
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/method-class-expression.js
@@ -6110,6 +6131,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/Symbol.toStri
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/constructor/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/constructor/weird-setter.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/drop/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/drop/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/drop/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/drop/exhaustion-does-not-call-return.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/drop/get-next-method-only-once.js
@@ -6142,6 +6164,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/drop/underlyi
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/drop/underlying-iterator-closed-in-parallel.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/drop/underlying-iterator-closed.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/every/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/every/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/every/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/every/get-next-method-only-once.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/every/get-next-method-throws.js
@@ -6173,6 +6196,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/every/this-no
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/every/this-non-object.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/every/this-plain-iterator.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/filter/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/filter/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/filter/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/filter/exhaustion-does-not-call-return.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/filter/get-next-method-only-once.js
@@ -6208,6 +6232,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/filter/underl
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/filter/underlying-iterator-closed-in-parallel.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/filter/underlying-iterator-closed.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/find/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/find/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/find/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/find/get-next-method-only-once.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/find/get-next-method-throws.js
@@ -6238,6 +6263,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/find/this-non
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/find/this-non-object.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/find/this-plain-iterator.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/flatMap/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/flatMap/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/flatMap/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/flatMap/exhaustion-does-not-call-return.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/flatMap/flattens-iterable.js
@@ -6280,6 +6306,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/flatMap/under
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/flatMap/underlying-iterator-closed-in-parallel.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/flatMap/underlying-iterator-closed.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/forEach/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/forEach/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/forEach/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/forEach/fn-args.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/forEach/fn-called-for-each-yielded-value.js
@@ -6306,6 +6333,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/forEach/this-
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/forEach/this-plain-iterator.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/initial-value.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/map/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/map/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/map/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/map/exhaustion-does-not-call-return.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/map/get-next-method-only-once.js
@@ -6340,6 +6368,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/map/underlyin
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/map/underlying-iterator-closed-in-parallel.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/map/underlying-iterator-closed.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/get-next-method-only-once.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/get-next-method-throws.js
@@ -6368,6 +6397,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/this-n
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/this-non-object.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/reduce/this-plain-iterator.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/some/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/some/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/some/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/some/get-next-method-only-once.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/some/get-next-method-throws.js
@@ -6399,6 +6429,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/some/this-non
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/some/this-non-object.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/some/this-plain-iterator.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/take/argument-effect-order.js
+Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/take/argument-validation-failure-closes-underlying.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/take/callable.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/take/exhaustion-calls-return.js
 Mismatch: tasks/coverage/test262/test/built-ins/Iterator/prototype/take/get-next-method-only-once.js
@@ -13864,6 +13895,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/relati
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/relativeto-undefined-throw-on-calendar-units.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/relativeto-year.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/relativeto-zoneddatetime-negative-epochnanoseconds.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/throws-when-target-zoned-date-time-outside-valid-limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/compare/year-zero.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/fractional-throws-rangeerror.js
@@ -13877,9 +13909,12 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/argument-
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/argument-string-fractional-units-rounding-mode.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/argument-string-fractional-with-zero-subparts.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/argument-string-invalid.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/argument-string-is-infinity.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/argument-string-negative-fractional-units.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/argument-string.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/get-property-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/infinity-throws-rangeerror.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/invalid-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/lower-limit.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/name.js
@@ -13889,7 +13924,10 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/not-a-con
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/order-of-operations.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/from/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/get-prototype-from-constructor-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/infinity-throws-rangeerror.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/invalid-type.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/large-number.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/max.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/mixed.js
@@ -13933,6 +13971,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/add/
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/add/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/add/result-out-of-range-1.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/add/result-out-of-range-2.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/add/result-out-of-range-3.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/add/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/blank/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/blank/branding.js
@@ -14101,6 +14140,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/subt
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/subtract/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/subtract/result-out-of-range-1.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/subtract/result-out-of-range-2.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/subtract/result-out-of-range-3.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/subtract/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toJSON/balance-subseconds.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toJSON/basic.js
@@ -14116,6 +14156,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toLo
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toLocaleString/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toLocaleString/not-a-constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toLocaleString/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toLocaleString/return-string.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toString/balance-subseconds.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toString/balance.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/toString/blank-duration-precision.js
@@ -14183,6 +14224,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/tota
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-leap-second.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-number.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-plaindate-add24hourdaystonormalizedtimeduration-out-of-range.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-plaindatetime.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-calendar-number.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-calendar-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-invalid-offset-string.js
@@ -14206,6 +14248,9 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/tota
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-zoneddatetime-with-fractional-days.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/rounds-calendar-units-in-durations-without-calendar-units.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/rounds-durations-with-calendar-units.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/throws-if-date-time-invalid-with-plaindate-relative.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/throws-if-date-time-invalid-with-zoneddatetime-relative.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/throws-if-target-nanoseconds-outside-valid-limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/throws-if-unit-property-missing.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/throws-on-disallowed-or-invalid-unit.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/throws-on-wrong-offset-for-zoneddatetime-relativeto.js
@@ -14307,19 +14352,25 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/from/not-a-cons
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/from/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/from/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/from/year-zero.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/argument.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/name.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/non-integer.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/not-a-constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochMilliseconds/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/argument.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/not-a-constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/fromEpochNanoseconds/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/get-prototype-from-constructor-throws.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/large-bigint.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/name.js
@@ -14531,6 +14582,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toStr
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/fractionalseconddigits-out-of-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/fractionalseconddigits-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/fractionalseconddigits-wrong-type.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/get-timezone-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/toString/negative-epochnanoseconds.js
@@ -14806,6 +14858,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/with-yea
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/with-year-monthCode-day-need-constrain.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/with-year-monthCode-day.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/from/year-zero.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/get-prototype-from-constructor-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/infinity-throws-rangeerror.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/limits.js
@@ -14971,6 +15024,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/sin
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/smallestunit-plurals-accepted.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/smallestunit-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/smallestunit-wrong-type.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/throws-if-rounded-date-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/weeks-months.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/wrapping-at-end-of-month.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/year-zero.js
@@ -15075,6 +15129,9 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toS
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toString/year-format.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toStringTag/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-number.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-object-get-plainTime-throws.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-object-get-timezone-throws.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-object-timezone-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-string-calendar-annotation-invalid-key.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-string-calendar-annotation.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-string-critical-unknown-annotation.js
@@ -15093,6 +15150,8 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZ
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/argument-zoneddatetime-negative-epochnanoseconds.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/branding.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/get-epoch-nanoseconds-for-throws.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/get-start-of-day-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/leap-second.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/name.js
@@ -15101,6 +15160,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZ
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/plaintime-argument-zoneddatetime-balance-negative-time-units.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/plaintime-propertybag-no-time-units.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/throws-if-combined-date-time-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/timezone-string-datetime.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/timezone-string-leap-second.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/toZonedDateTime/timezone-string-sub-minute-offset.js
@@ -15182,6 +15242,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/unt
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/smallestunit-plurals-accepted.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/smallestunit-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/smallestunit-wrong-type.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/throws-if-rounded-date-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/weeks-months.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/wrapping-at-end-of-month.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/year-zero.js
@@ -15321,6 +15382,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/over
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/year-zero.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/get-prototype-from-constructor-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/infinity-throws-rangeerror.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/limits.js
@@ -15358,6 +15420,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/add/overflow-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/add/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/add/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/add/throws-if-duration-days-too-large.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/calendarId/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/calendarId/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/constructor.js
@@ -15548,6 +15611,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/smallestunit-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/smallestunit-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/subseconds.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/throws-if-rounded-date-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/weeks-months-mutually-exclusive.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/wrapping-at-end-of-month.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/year-zero.js
@@ -15580,6 +15644,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/subtract/overflow-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/subtract/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/subtract/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/subtract/throws-if-duration-days-too-large.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/toJSON/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/toJSON/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/toJSON/length.js
@@ -15752,6 +15817,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/smallestunit-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/smallestunit-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/subseconds.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/throws-if-rounded-date-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/units-changed.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/weeks-months-mutually-exclusive.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/wrapping-at-end-of-month.js
@@ -15788,6 +15854,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/with/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/with/string-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/with/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/with/throws-if-combined-date-time-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/with/timezone-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withCalendar/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withCalendar/calendar-case-insensitive.js
@@ -15827,11 +15894,15 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withPlainTime/plaintime-propertybag-no-time-units.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withPlainTime/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withPlainTime/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withPlainTime/throws-if-combined-date-time-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withPlainTime/year-zero.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/year/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/year/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/yearOfWeek/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/yearOfWeek/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/throws-if-date-is-invalid.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/throws-if-time-is-invalid.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/argument-invalid.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/builtin.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/calendar-always.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/calendar-case-insensitive.js
@@ -15888,6 +15959,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/over
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/from/year-zero.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/get-prototype-from-constructor-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/infinity-throws-rangeerror.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/missing-arguments.js
@@ -15933,6 +16005,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/monthCode/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/monthCode/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toJSON/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toJSON/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toJSON/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toJSON/name.js
@@ -15943,6 +16016,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toLocaleString/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toLocaleString/not-a-constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toLocaleString/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toLocaleString/return-string.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toPlainDate/argument-not-object.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toPlainDate/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/toPlainDate/branding.js
@@ -15980,6 +16054,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/copy-properties-not-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/infinity-throws-rangeerror.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/monthdaylike-invalid.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/not-a-constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/with/options-invalid.js
@@ -16067,6 +16142,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/plaintim
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/from/year-zero.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/get-prototype-from-constructor-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/infinity-throws-rangeerror.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/name.js
@@ -16414,6 +16490,9 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/wit
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/with/plaintimelike-invalid.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/with/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/with/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/prototype/with/throws-if-time-is-invalid-when-overflow-is-reject.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainTime/throws-if-time-is-invalid.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/argument-invalid.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/builtin.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/calendar-always.js
@@ -16511,6 +16590,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/pro
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/reference-day.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/from/year-zero.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/get-prototype-from-constructor-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/infinity-throws-rangeerror.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/limits.js
@@ -16547,6 +16627,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototyp
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/add/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/add/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/add/subtract-from-last-representable-month.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/add/throws-if-year-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/calendarId/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/calendarId/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/constructor.js
@@ -16668,6 +16749,8 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototyp
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/smallestunit-plurals-accepted.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/smallestunit-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/smallestunit-wrong-type.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/throws-if-rounded-date-outside-valid-iso-range.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/throws-if-year-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/year-zero.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/subtract/argument-duration-max.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/subtract/argument-duration-out-of-range.js
@@ -16699,6 +16782,8 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototyp
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/subtract/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/subtract/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/subtract/subtract-from-last-representable-month.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/subtract/throws-if-year-outside-valid-iso-range.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toJSON/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toJSON/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toJSON/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toJSON/name.js
@@ -16710,6 +16795,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototyp
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toLocaleString/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toLocaleString/not-a-constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toLocaleString/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toLocaleString/return-string.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toPlainDate/argument-not-object.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toPlainDate/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/toPlainDate/branding.js
@@ -16807,6 +16893,8 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototyp
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/smallestunit-plurals-accepted.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/smallestunit-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/smallestunit-wrong-type.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/throws-if-rounded-date-outside-valid-iso-range.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/throws-if-year-outside-valid-iso-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/year-zero.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/valueOf/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/valueOf/branding.js
@@ -16833,6 +16921,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototyp
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/with/overflow-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/with/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/with/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/with/yearmonthlike-invalid.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/year/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/year/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/refisoday-undefined.js
@@ -16925,6 +17014,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argu
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-negative-extended-year.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-no-junk-at-end.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-optional-parts.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-start-of-day-not-valid-epoch-nanoseconds.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-sub-minute-offset.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-time-separators.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-string-time-zone-annotation.js
@@ -16964,7 +17054,9 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/time
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/year-zero.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/zoneddatetime-string-multiple-offsets.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/zoneddatetime-string.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/get-prototype-from-constructor-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/missing-arguments.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prop-desc.js
@@ -17001,6 +17093,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/add/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/add/symmetrical-wrt-negative-durations-in-time-part.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/add/throw-when-ambiguous-result-with-reject.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/add/throw-when-intermediate-datetime-outside-valid-limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/calendarId/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/calendarId/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/constructor.js
@@ -17089,7 +17182,9 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/hour/balance-negative-time-units.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/hour/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/hour/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/hoursInDay/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/hoursInDay/branding.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/hoursInDay/get-start-of-day-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/hoursInDay/next-day-out-of-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/hoursInDay/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/inLeapYear/basic.js
@@ -17123,6 +17218,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/day-rounding-out-of-range.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/get-start-of-day-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/length.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/negative-epochnanoseconds.js
@@ -17130,6 +17226,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/options-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/order-of-operations.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/rounded-date-time-outside-valid-limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/rounding-direction.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/rounding-increments.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/round/rounding-is-noop.js
@@ -17241,6 +17338,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/roundingmode-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/roundingmode-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/rounds-relative-to-receiver.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/same-epoch-nanoseconds.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/since-until.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/smallestunit-invalid-string.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/smallestunit-plurals-accepted.js
@@ -17259,6 +17357,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/startOfDay/not-a-constructor.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/startOfDay/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/startOfDay/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/startOfDay/throws-if-epoch-nanoseconds-outside-valid-limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/argument-duration-max.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/argument-duration-out-of-range.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/argument-invalid-property.js
@@ -17289,6 +17388,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/subclassing-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/symmetrical-wrt-negative-durations.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/throw-when-ambiguous-result-with-reject.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/subtract/throw-when-intermediate-datetime-outside-valid-limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/timeZoneId/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/timeZoneId/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/toInstant/branding.js
@@ -17466,6 +17566,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/roundingmode-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/roundingmode-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/rounds-relative-to-receiver.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/same-epoch-nanoseconds.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/smallestunit-invalid-string.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/smallestunit-plurals-accepted.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/smallestunit-undefined.js
@@ -17557,6 +17658,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/argument-zoneddatetime-negative-epochnanoseconds.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/branding.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/get-start-of-day-throws.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/incorrectly-spelled-properties-ignored.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/leap-second.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/length.js
@@ -17566,6 +17668,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/plaintime-propertybag-no-time-units.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/subclassing-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/throws-if-epoch-nanoseconds-outside-valid-limits.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/time-undefined.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withPlainTime/year-zero.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withTimeZone/branding.js
@@ -17584,6 +17687,7 @@ Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withTimeZone/timezone-wrong-type.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/year/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/year/prop-desc.js
+Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/yearOfWeek/basic.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/yearOfWeek/branding.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/yearOfWeek/prop-desc.js
 Mismatch: tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/subclass.js
@@ -18209,6 +18313,8 @@ Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/re
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/samevaluezero.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/search-found-returns-true.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/search-not-found-returns-false.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/search-undefined-after-shrinking-buffer-index-is-oob.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/search-undefined-after-shrinking-buffer.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/searchelement-not-integer.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/this-is-not-object.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/includes/this-is-not-typedarray-instance.js
@@ -18952,14 +19058,20 @@ Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toLocaleStr
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/ignores-species.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/immutable.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/length-property-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/not-a-constructor.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/property-descriptor.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/this-value-invalid.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/comparefn-not-a-function.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/comparefn-stop-after-error.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/ignores-species.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/immutable.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/length-property-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/not-a-constructor.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/property-descriptor.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/this-value-invalid.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toString/BigInt/detached-buffer.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/toString/detached-buffer.js
@@ -18995,8 +19107,13 @@ Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/index-
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/index-smaller-than-minus-length.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/index-validated-against-current-length.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/length-property-ignored.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/length.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/name.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/not-a-constructor.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/order-of-evaluation.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/property-descriptor.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/this-value-invalid.js
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/valid-typedarray-index-checked-after-coercions.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/BigInt64Array/BYTES_PER_ELEMENT.js
 Mismatch: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/BigInt64Array/constructor.js
@@ -20546,6 +20663,7 @@ Mismatch: tasks/coverage/test262/test/intl402/DurationFormat/newtarget-undefined
 Mismatch: tasks/coverage/test262/test/intl402/DurationFormat/prop-desc.js
 Mismatch: tasks/coverage/test262/test/intl402/DurationFormat/prototype/constructor/prop-desc.js
 Mismatch: tasks/coverage/test262/test/intl402/DurationFormat/prototype/format/branding.js
+Mismatch: tasks/coverage/test262/test/intl402/DurationFormat/prototype/format/digital-style-with-hours-display-auto-with-zero-hour.js
 Mismatch: tasks/coverage/test262/test/intl402/DurationFormat/prototype/format/duration-out-of-range-1.js
 Mismatch: tasks/coverage/test262/test/intl402/DurationFormat/prototype/format/duration-out-of-range-2.js
 Mismatch: tasks/coverage/test262/test/intl402/DurationFormat/prototype/format/duration-out-of-range-3.js
@@ -21523,12 +21641,10 @@ Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/calend
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/canonicalize-calendar.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/canonicalize-era-codes.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/disambiguation-undefined.js
-Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/do-not-canonicalize-iana-identifiers.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/dst-skipped-cross-midnight.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/etc-timezone.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/infinity-throws-rangeerror.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/options-undefined.js
-Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/timezone-case-insensitive.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/from/zoneddatetime-sub-minute-offset.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/iana-legacy-names.js
 Mismatch: tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/legacy-non-iana.js

@@ -1,9 +1,9 @@
-commit: c4317b0c
+commit: bc5c1417
 
 parser_test262 Summary:
-AST Parsed     : 44101/44101 (100.00%)
-Positive Passed: 44101/44101 (100.00%)
-Negative Passed: 4454/4454 (100.00%)
+AST Parsed     : 44293/44293 (100.00%)
+Positive Passed: 44293/44293 (100.00%)
+Negative Passed: 4519/4519 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -4711,6 +4711,13 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/assignmenttargettype/direct-importcall-defer.js:21:1]
+ 20 │ 
+ 21 │ import.defer() = 1;
+    · ──────────────
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/assignmenttargettype/direct-importcall-source.js:21:1]
  20 │ 
  21 │ import.source() = 1;
@@ -5811,6 +5818,13 @@ Negative Passed: 4454/4454 (100.00%)
  23 │ 
  24 │ (import.meta) = 1;
     ·  ───────────
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/assignmenttargettype/parenthesized-importcall-defer.js:24:2]
+ 23 │ 
+ 24 │ (import.defer()) = 1;
+    ·  ──────────────
     ╰────
 
   × import() requires a specifier.
@@ -14474,6 +14488,28 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-assignment-expr-not-optional.js:35:15]
+ 34 │ 
+ 35 │ let f = () => import.defer();
+    ·               ──────────────
+ 36 │ 
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-new-call-expression.js:38:19]
+ 37 │ 
+ 38 │ let f = () => new import.defer('./empty_FIXTURE.js');
+    ·                   ──────────────────────────────────
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-defer-no-rest-param.js:39:28]
+ 38 │ 
+ 39 │ let f = () => import.defer(...['./empty_FIXTURE.js']);
+    ·                            ───
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-import-source-assignment-expr-not-optional.js:35:15]
  34 │ 
  35 │ let f = () => import.source();
@@ -14549,6 +14585,30 @@ Negative Passed: 4454/4454 (100.00%)
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
     ·   ──────────────
  38 │ };
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-assignment-expr-not-optional.js:36:3]
+ 35 │ let f = () => {
+ 36 │   import.defer();
+    ·   ──────────────
+ 37 │ };
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-no-new-call-expression.js:39:7]
+ 38 │ let f = () => {
+ 39 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 40 │ };
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-import-defer-no-rest-param.js:40:16]
+ 39 │ let f = () => {
+ 40 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 41 │ };
     ╰────
 
   × import() requires a specifier.
@@ -14643,6 +14703,30 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-assignment-expr-not-optional.js:36:9]
+ 35 │ (async () => {
+ 36 │   await import.defer()
+    ·         ──────────────
+ 37 │ });
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-no-new-call-expression.js:39:13]
+ 38 │ (async () => {
+ 39 │   await new import.defer('./empty_FIXTURE.js')
+    ·             ──────────────────────────────────
+ 40 │ });
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-defer-no-rest-param.js:40:22]
+ 39 │ (async () => {
+ 40 │   await import.defer(...['./empty_FIXTURE.js'])
+    ·                      ───
+ 41 │ });
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-import-source-assignment-expr-not-optional.js:36:9]
  35 │ (async () => {
  36 │   await import.source()
@@ -14731,6 +14815,28 @@ Negative Passed: 4454/4454 (100.00%)
  36 │ (async () => await import.UNKNOWN('./empty_FIXTURE.js'))
     ·                    ──────────────
  37 │ 
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-assignment-expr-not-optional.js:35:20]
+ 34 │ 
+ 35 │ (async () => await import.defer())
+    ·                    ──────────────
+ 36 │ 
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-no-new-call-expression.js:38:24]
+ 37 │ 
+ 38 │ (async () => await new import.defer('./empty_FIXTURE.js'))
+    ·                        ──────────────────────────────────
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-import-defer-no-rest-param.js:39:33]
+ 38 │ 
+ 39 │ (async () => await import.defer(...['./empty_FIXTURE.js']))
+    ·                                 ───
     ╰────
 
   × import() requires a specifier.
@@ -14828,6 +14934,30 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-assignment-expr-not-optional.js:36:9]
+ 35 │ async function f() {
+ 36 │   await import.defer();
+    ·         ──────────────
+ 37 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-no-new-call-expression.js:39:13]
+ 38 │ async function f() {
+ 39 │   await new import.defer('./empty_FIXTURE.js');
+    ·             ──────────────────────────────────
+ 40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-defer-no-rest-param.js:40:22]
+ 39 │ async function f() {
+ 40 │   await import.defer(...['./empty_FIXTURE.js']);
+    ·                      ───
+ 41 │ }
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-import-source-assignment-expr-not-optional.js:36:9]
  35 │ async function f() {
  36 │   await import.source();
@@ -14911,6 +15041,30 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-assignment-expr-not-optional.js:36:3]
+ 35 │ async function f() {
+ 36 │   import.defer();
+    ·   ──────────────
+ 37 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-no-new-call-expression.js:39:7]
+ 38 │ async function f() {
+ 39 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-defer-no-rest-param.js:40:16]
+ 39 │ async function f() {
+ 40 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 41 │ }
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-import-source-assignment-expr-not-optional.js:36:3]
  35 │ async function f() {
  36 │   import.source();
@@ -14973,6 +15127,30 @@ Negative Passed: 4454/4454 (100.00%)
  37 │   return await import.UNKNOWN('./empty_FIXTURE.js');
     ·                ──────────────
  38 │ }
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-assignment-expr-not-optional.js:36:16]
+ 35 │ async function f() {
+ 36 │   return await import.defer();
+    ·                ──────────────
+ 37 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-no-new-call-expression.js:39:20]
+ 38 │ async function f() {
+ 39 │   return await new import.defer('./empty_FIXTURE.js');
+    ·                    ──────────────────────────────────
+ 40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-import-defer-no-rest-param.js:40:29]
+ 39 │ async function f() {
+ 40 │   return await import.defer(...['./empty_FIXTURE.js']);
+    ·                             ───
+ 41 │ }
     ╰────
 
   × import() requires a specifier.
@@ -15093,6 +15271,30 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-assignment-expr-not-optional.js:36:9]
+ 35 │ async function * f() {
+ 36 │   await import.defer()
+    ·         ──────────────
+ 37 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-no-new-call-expression.js:39:13]
+ 38 │ async function * f() {
+ 39 │   await new import.defer('./empty_FIXTURE.js')
+    ·             ──────────────────────────────────
+ 40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-defer-no-rest-param.js:40:22]
+ 39 │ async function * f() {
+ 40 │   await import.defer(...['./empty_FIXTURE.js'])
+    ·                      ───
+ 41 │ }
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-import-source-assignment-expr-not-optional.js:36:9]
  35 │ async function * f() {
  36 │   await import.source()
@@ -15184,6 +15386,30 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-assignment-expr-not-optional.js:36:3]
+ 35 │ {
+ 36 │   import.defer();
+    ·   ──────────────
+ 37 │ };
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-no-new-call-expression.js:39:7]
+ 38 │ {
+ 39 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 40 │ };
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-defer-no-rest-param.js:40:16]
+ 39 │ {
+ 40 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 41 │ };
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-import-source-assignment-expr-not-optional.js:36:3]
  35 │ {
  36 │   import.source();
@@ -15221,6 +15447,30 @@ Negative Passed: 4454/4454 (100.00%)
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
     ·   ──────────────
  38 │ };
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-assignment-expr-not-optional.js:36:3]
+ 35 │ label: {
+ 36 │   import.defer();
+    ·   ──────────────
+ 37 │ };
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-no-new-call-expression.js:39:7]
+ 38 │ label: {
+ 39 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 40 │ };
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-import-defer-no-rest-param.js:40:16]
+ 39 │ label: {
+ 40 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 41 │ };
     ╰────
 
   × import() requires a specifier.
@@ -15366,6 +15616,30 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-assignment-expr-not-optional.js:36:3]
+ 35 │ do {
+ 36 │   import.defer();
+    ·   ──────────────
+ 37 │ } while (false);
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-no-new-call-expression.js:39:7]
+ 38 │ do {
+ 39 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 40 │ } while (false);
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-defer-no-rest-param.js:40:16]
+ 39 │ do {
+ 40 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 41 │ } while (false);
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-import-source-assignment-expr-not-optional.js:36:3]
  35 │ do {
  36 │   import.source();
@@ -15465,6 +15739,28 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-assignment-expr-not-optional.js:37:8]
+ 36 │ 
+ 37 │ } else import.defer();
+    ·        ──────────────
+ 38 │ 
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-no-new-call-expression.js:40:12]
+ 39 │ 
+ 40 │ } else new import.defer('./empty_FIXTURE.js');
+    ·            ──────────────────────────────────
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-defer-no-rest-param.js:41:21]
+ 40 │ 
+ 41 │ } else import.defer(...['./empty_FIXTURE.js']);
+    ·                     ───
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-import-source-assignment-expr-not-optional.js:37:8]
  36 │ 
  37 │ } else import.source();
@@ -15540,6 +15836,30 @@ Negative Passed: 4454/4454 (100.00%)
  39 │   import.UNKNOWN('./empty_FIXTURE.js');
     ·   ──────────────
  40 │ }
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-assignment-expr-not-optional.js:38:3]
+ 37 │ } else {
+ 38 │   import.defer();
+    ·   ──────────────
+ 39 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-no-new-call-expression.js:41:7]
+ 40 │ } else {
+ 41 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 42 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-import-defer-no-rest-param.js:42:16]
+ 41 │ } else {
+ 42 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 43 │ }
     ╰────
 
   × import() requires a specifier.
@@ -15634,6 +15954,30 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-assignment-expr-not-optional.js:36:3]
+ 35 │ function fn() {
+ 36 │   import.defer();
+    ·   ──────────────
+ 37 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-no-new-call-expression.js:39:7]
+ 38 │ function fn() {
+ 39 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-defer-no-rest-param.js:40:16]
+ 39 │ function fn() {
+ 40 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 41 │ }
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-import-source-assignment-expr-not-optional.js:36:3]
  35 │ function fn() {
  36 │   import.source();
@@ -15696,6 +16040,30 @@ Negative Passed: 4454/4454 (100.00%)
  37 │   return import.UNKNOWN('./empty_FIXTURE.js');
     ·          ──────────────
  38 │ }
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-assignment-expr-not-optional.js:36:10]
+ 35 │ function fn() {
+ 36 │   return import.defer();
+    ·          ──────────────
+ 37 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-no-new-call-expression.js:39:14]
+ 38 │ function fn() {
+ 39 │   return new import.defer('./empty_FIXTURE.js');
+    ·              ──────────────────────────────────
+ 40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-import-defer-no-rest-param.js:40:23]
+ 39 │ function fn() {
+ 40 │   return import.defer(...['./empty_FIXTURE.js']);
+    ·                       ───
+ 41 │ }
     ╰────
 
   × import() requires a specifier.
@@ -15824,6 +16192,28 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-assignment-expr-not-optional.js:35:11]
+ 34 │ 
+ 35 │ if (true) import.defer();
+    ·           ──────────────
+ 36 │ 
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-no-new-call-expression.js:38:15]
+ 37 │ 
+ 38 │ if (true) new import.defer('./empty_FIXTURE.js');
+    ·               ──────────────────────────────────
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-defer-no-rest-param.js:39:24]
+ 38 │ 
+ 39 │ if (true) import.defer(...['./empty_FIXTURE.js']);
+    ·                        ───
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-import-source-assignment-expr-not-optional.js:35:11]
  34 │ 
  35 │ if (true) import.source();
@@ -15899,6 +16289,30 @@ Negative Passed: 4454/4454 (100.00%)
  37 │   import.UNKNOWN('./empty_FIXTURE.js');
     ·   ──────────────
  38 │ }
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-assignment-expr-not-optional.js:36:3]
+ 35 │ if (true) {
+ 36 │   import.defer();
+    ·   ──────────────
+ 37 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-no-new-call-expression.js:39:7]
+ 38 │ if (true) {
+ 39 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-import-defer-no-rest-param.js:40:16]
+ 39 │ if (true) {
+ 40 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 41 │ }
     ╰────
 
   × import() requires a specifier.
@@ -15990,6 +16404,30 @@ Negative Passed: 4454/4454 (100.00%)
  39 │   import.UNKNOWN('./empty_FIXTURE.js');
     ·   ──────────────
  40 │ };
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-assignment-expr-not-optional.js:38:3]
+ 37 │   x++;
+ 38 │   import.defer();
+    ·   ──────────────
+ 39 │ };
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-no-new-call-expression.js:41:7]
+ 40 │   x++;
+ 41 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 42 │ };
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-import-defer-no-rest-param.js:42:16]
+ 41 │   x++;
+ 42 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 43 │ };
     ╰────
 
   × import() requires a specifier.
@@ -16092,6 +16530,28 @@ Negative Passed: 4454/4454 (100.00%)
     ╰────
 
   × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-assignment-expr-not-optional.js:34:7]
+ 33 │ 
+ 34 │ with (import.defer()) {}
+    ·       ──────────────
+ 35 │ 
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-no-new-call-expression.js:37:11]
+ 36 │ 
+ 37 │ with (new import.defer('./empty_FIXTURE.js')) {}
+    ·           ──────────────────────────────────
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-defer-no-rest-param.js:38:20]
+ 37 │ 
+ 38 │ with (import.defer(...['./empty_FIXTURE.js'])) {}
+    ·                    ───
+    ╰────
+
+  × import() requires a specifier.
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-import-source-assignment-expr-not-optional.js:34:7]
  33 │ 
  34 │ with (import.source()) {}
@@ -16167,6 +16627,30 @@ Negative Passed: 4454/4454 (100.00%)
  36 │   import.UNKNOWN('./empty_FIXTURE.js');
     ·   ──────────────
  37 │ }
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-assignment-expr-not-optional.js:35:3]
+ 34 │ with ({}) {
+ 35 │   import.defer();
+    ·   ──────────────
+ 36 │ }
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-no-new-call-expression.js:38:7]
+ 37 │ with ({}) {
+ 38 │   new import.defer('./empty_FIXTURE.js');
+    ·       ──────────────────────────────────
+ 39 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-import-defer-no-rest-param.js:39:16]
+ 38 │ with ({}) {
+ 39 │   import.defer(...['./empty_FIXTURE.js']);
+    ·                ───
+ 40 │ }
     ╰────
 
   × import() requires a specifier.
@@ -16258,6 +16742,28 @@ Negative Passed: 4454/4454 (100.00%)
  26 │ import.UNKNOWN('./empty_FIXTURE.js');
     · ──────────────
  27 │ 
+    ╰────
+
+  × import() requires a specifier.
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-assignment-expr-not-optional.js:25:1]
+ 24 │ 
+ 25 │ import.defer();
+    · ──────────────
+ 26 │ 
+    ╰────
+
+  × Cannot use new with dynamic import
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-no-new-call-expression.js:28:5]
+ 27 │ 
+ 28 │ new import.defer('./empty_FIXTURE.js');
+    ·     ──────────────────────────────────
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-import-defer-no-rest-param.js:29:14]
+ 28 │ 
+ 29 │ import.defer(...['./empty_FIXTURE.js']);
+    ·              ───
     ╰────
 
   × import() requires a specifier.
