@@ -157,12 +157,42 @@ impl<'a> LintContext<'a> {
             && !self.globals().get(name).is_some_and(|value| *value == GlobalValue::Off)
     }
 
+    /// Checks if the provided identifier is a reference to a global variable.
+    pub fn get_global_variable_value(&self, name: &str) -> Option<GlobalValue> {
+        if !self.scopes().root_unresolved_references().contains_key(name) {
+            return None;
+        }
+
+        if let Some(value) = self.globals().get(name) {
+            return Some(*value);
+        }
+
+        self.get_env_global_entry(name)
+    }
+
     /// Runtime environments turned on/off by the user.
     ///
     /// Examples of environments are `builtin`, `browser`, `node`, etc.
     #[inline]
     pub fn env(&self) -> &OxlintEnv {
         &self.parent.config.env
+    }
+
+    fn get_env_global_entry(&self, var: &str) -> Option<GlobalValue> {
+        // builtin is always readonly
+        if GLOBALS["builtin"].contains_key(var) {
+            return Some(GlobalValue::Readonly);
+        }
+
+        for env in self.env().iter() {
+            if let Some(env) = GLOBALS.get(env) {
+                if let Some(value) = env.get(var) {
+                    return Some(GlobalValue::from(*value));
+                };
+            }
+        }
+
+        None
     }
 
     /// Checks if a given variable named is defined as a global variable in the current environment.

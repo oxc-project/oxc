@@ -2,7 +2,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{config::GlobalValue, context::LintContext, rule::Rule};
 
 fn no_global_assign_diagnostic(global_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Read-only global '{global_name}' should not be modified."))
@@ -65,7 +65,9 @@ impl Rule for NoGlobalAssign {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write()
                     && !self.excludes.iter().any(|n| n == name)
-                    && ctx.env_contains_var(name)
+                    && ctx
+                        .get_global_variable_value(name)
+                        .is_some_and(|global| global == GlobalValue::Readonly)
                 {
                     ctx.diagnostic(no_global_assign_diagnostic(
                         name,
@@ -82,28 +84,69 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("string='1';", None),
-        ("var string;", None),
-        ("Object = 0;", Some(serde_json::json!([{ "exceptions": ["Object"] }]))),
-        ("top = 0;", None),
-        // ("onload = 0;", None), // env: { browser: true }
-        ("require = 0;", None),
-        ("window[parseInt('42', 10)] = 99;", None),
-        // ("a = 1", None), // globals: { a: true } },
+        ("string='1';", None, None),
+        ("var string;", None, None),
+        ("Object = 0;", Some(serde_json::json!([{ "exceptions": ["Object"] }])), None),
+        ("top = 0;", None, None),
+        (
+            "onload = 0;",
+            None,
+            Some(serde_json::json!({
+                "env": {
+                    "browser": true
+                }
+            })),
+        ),
+        ("require = 0;", None, None),
+        ("window[parseInt('42', 10)] = 99;", None, None),
+        (
+            "a = 1",
+            None,
+            Some(serde_json::json!({
+                "globals": {
+                    "a": true
+                }
+            })),
+        ),
         // ("/*global a:true*/ a = 1", None),
     ];
 
     let fail = vec![
-        ("String = 'hello world';", None),
-        ("String++;", None),
-        ("({Object = 0, String = 0} = {});", None),
-        // ("top = 0;", None), // env: { browser: true },
-        // ("require = 0;", None), // env: { node: true },
-        ("function f() { Object = 1; }", None),
+        ("String = 'hello world';", None, None),
+        ("String++;", None, None),
+        ("({Object = 0, String = 0} = {});", None, None),
+        (
+            "top = 0;",
+            None,
+            Some(serde_json::json!({
+                "env": {
+                    "browser": true
+                }
+            })),
+        ),
+        (
+            "require = 0;",
+            None,
+            Some(serde_json::json!({
+                "env": {
+                    "node": true
+                }
+            })),
+        ),
+        ("function f() { Object = 1; }", None, None),
+        (
+            "a = 1",
+            None,
+            Some(serde_json::json!({
+                "globals": {
+                    "a": false
+                }
+            })),
+        ),
         // ("/*global b:false*/ function f() { b = 1; }", None),
         // ("/*global b:false*/ function f() { b++; }", None),
         // ("/*global b*/ b = 1;", None),
-        ("Array = 1;", None),
+        ("Array = 1;", None, None),
     ];
 
     Tester::new(NoGlobalAssign::NAME, NoGlobalAssign::PLUGIN, pass, fail).test_and_snapshot();
