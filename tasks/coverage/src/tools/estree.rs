@@ -90,7 +90,7 @@ impl Case for EstreeTest262Case {
                     .missing_newline_hint(false)
             )
             .unwrap();
-            self.base.set_result(TestResult::Mismatch("Mismatch", String::new(), String::new()));
+            self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
         }
     }
 }
