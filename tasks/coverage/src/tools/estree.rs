@@ -114,8 +114,8 @@ fn process_estree(old: &mut serde_json::Value, new: &mut serde_json::Value) {
         }
         serde_json::Value::Array(new) => {
             if let serde_json::Value::Array(old) = old {
-                for (i, value) in new.iter_mut().enumerate() {
-                    process_estree(&mut old[i], value);
+                for i in 0..old.len().min(new.len()) {
+                    process_estree(&mut old[i], &mut new[i]);
                 }
             }
         }

@@ -1557,7 +1557,11 @@ pub struct BindingRestElement<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // https://github.com/estree/estree/blob/master/es5.md#patterns
 // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/cd61c555bfc93e985b313263a42ed78074570d08/types/estree/index.d.ts#L411
-#[estree(add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest")]
+#[estree(
+    add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest",
+    add_fields(expression = false),
+    add_ts = "expression: false"
+)]
 pub struct Function<'a> {
     pub span: Span,
     pub r#type: FunctionType,
@@ -1695,9 +1699,11 @@ pub enum FormalParameterKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
     pub span: Span,
     pub directives: Vec<'a, Directive<'a>>,
+    #[estree(rename = "body")]
     pub statements: Vec<'a, Statement<'a>>,
 }
 
