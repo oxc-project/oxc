@@ -188,6 +188,24 @@ impl<'a> AstBuilder<'a> {
         mem::replace(function, empty_function)
     }
 
+    /// Move a class out by replacing it with an empty [`Class`].
+    pub fn move_class(self, class: &mut Class<'a>) -> Class<'a> {
+        let empty_class = self.class(
+            SPAN,
+            ClassType::ClassDeclaration,
+            self.vec(),
+            None,
+            NONE,
+            None,
+            NONE,
+            None,
+            self.class_body(SPAN, self.vec()),
+            false,
+            false,
+        );
+        mem::replace(class, empty_class)
+    }
+
     /// Move an array element out by replacing it with an [`ArrayExpressionElement::Elision`].
     pub fn move_array_expression_element(
         self,

@@ -15,8 +15,9 @@ use oxc::{
     diagnostics::OxcDiagnostic,
     span::SourceType,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
-        InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
+        DecoratorOptions, EnvOptions, HelperLoaderMode, HelperLoaderOptions,
+        InjectGlobalVariablesConfig, InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig,
+        RewriteExtensionsMode,
     },
     CompilerInterface,
 };
@@ -151,6 +152,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .typescript
                 .map(oxc::transformer::TypeScriptOptions::from)
                 .unwrap_or_default(),
+            decorator: DecoratorOptions::default(),
             jsx: match options.jsx {
                 Some(Either::A(s)) => {
                     if s == "preserve" {

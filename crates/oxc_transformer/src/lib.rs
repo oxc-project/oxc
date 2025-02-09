@@ -34,10 +34,12 @@ mod jsx;
 mod regexp;
 mod typescript;
 
+mod decorator;
 mod plugins;
 
 use common::Common;
 use context::TransformCtx;
+use decorator::Decorator;
 use es2015::ES2015;
 use es2016::ES2016;
 use es2017::ES2017;
@@ -54,6 +56,7 @@ use typescript::TypeScript;
 pub use crate::{
     common::helper_loader::{Helper, HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
+    decorator::DecoratorOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
@@ -80,6 +83,7 @@ pub struct Transformer<'a> {
     allocator: &'a Allocator,
 
     typescript: TypeScriptOptions,
+    decorator: DecoratorOptions,
     jsx: JsxOptions,
     env: EnvOptions,
 }
@@ -91,6 +95,7 @@ impl<'a> Transformer<'a> {
             ctx,
             allocator,
             typescript: options.typescript.clone(),
+            decorator: options.decorator,
             jsx: options.jsx.clone(),
             env: options.env,
         }
@@ -116,6 +121,7 @@ impl<'a> Transformer<'a> {
 
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
+            decorator: Decorator::new(self.decorator, &self.ctx),
             x0_typescript: program
                 .source_type
                 .is_typescript()
@@ -142,6 +148,7 @@ impl<'a> Transformer<'a> {
 struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
+    decorator: Decorator<'a, 'ctx>,
     x1_jsx: Jsx<'a, 'ctx>,
     x2_es2022: ES2022<'a, 'ctx>,
     x2_es2021: ES2021<'a, 'ctx>,
@@ -526,6 +533,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statement(stmt, ctx);
         }
+        self.decorator.enter_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
