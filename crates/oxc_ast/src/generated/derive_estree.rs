@@ -1222,7 +1222,9 @@ impl Serialize for CatchParameter<'_> {
         map.serialize_entry("type", "CatchParameter")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("pattern", &self.pattern)?;
+        self.pattern.kind.serialize(FlatMapSerializer(&mut map))?;
+        map.serialize_entry("typeAnnotation", &self.pattern.type_annotation)?;
+        map.serialize_entry("optional", &self.pattern.optional)?;
         map.end()
     }
 }

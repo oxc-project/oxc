@@ -1401,6 +1401,7 @@ pub struct CatchClause<'a> {
 pub struct CatchParameter<'a> {
     pub span: Span,
     /// The bound error
+    #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
 }
 

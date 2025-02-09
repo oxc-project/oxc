@@ -220,7 +220,8 @@ fn generate_ts_type_def_for_struct_field<'s>(
             }
         }
 
-        if field_type_name.contains('|') {
+        // need `type` instead of `interface` when flattening BindingPattern
+        if field_type_name.contains('|') || field_type_name == "BindingPattern" {
             *output_as_type = true;
         }
         extends.push(field_type_name);
