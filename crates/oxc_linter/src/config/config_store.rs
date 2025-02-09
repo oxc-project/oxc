@@ -85,12 +85,9 @@ impl ConfigStore {
             return config.base.clone();
         }
 
+        let mut env = config.base.config.env.clone();
+        let mut globals = config.base.config.globals.clone();
         let mut plugins = config.base.config.plugins;
-        let all_rules = RULES
-            .iter()
-            .filter(|rule| plugins.contains(LintPlugins::from(rule.plugin_name())))
-            .cloned()
-            .collect::<Vec<_>>();
         let mut rules = config
             .base
             .rules
@@ -98,6 +95,12 @@ impl ConfigStore {
             .filter(|rule| plugins.contains(LintPlugins::from(rule.plugin_name())))
             .cloned()
             .collect::<FxHashSet<_>>();
+
+        let all_rules = RULES
+            .iter()
+            .filter(|rule| plugins.contains(LintPlugins::from(rule.plugin_name())))
+            .cloned()
+            .collect::<Vec<_>>();
 
         for override_config in overrides_to_apply {
             if !override_config.rules.is_empty() {
@@ -107,18 +110,31 @@ impl ConfigStore {
             if let Some(override_plugins) = override_config.plugins {
                 plugins |= override_plugins;
             }
+
+            if let Some(override_env) = &override_config.env {
+                override_env.override_envs(&mut env);
+            }
+
+            if let Some(override_globals) = &override_config.globals {
+                override_globals.override_globals(&mut globals);
+            }
         }
 
-        let rules = rules.into_iter().collect::<Vec<_>>();
-        let config = if plugins == config.base.config.plugins {
+        let config = if plugins == config.base.config.plugins
+            && env == config.base.config.env
+            && globals == config.base.config.globals
+        {
             Arc::clone(&config.base.config)
         } else {
             let mut config = (*config.base.config).clone();
 
             config.plugins = plugins;
+            config.env = env;
+            config.globals = globals;
             Arc::new(config)
         };
 
+        let rules = rules.into_iter().collect::<Vec<_>>();
         ResolvedLinterState { rules: Arc::from(rules.into_boxed_slice()), config }
     }
 }
@@ -281,5 +297,110 @@ mod test {
 
         let app = store.resolve("App.tsx".as_ref()).config;
         assert_eq!(app.plugins, LintPlugins::IMPORT | LintPlugins::REACT | LintPlugins::TYPESCRIPT);
+    }
+
+    #[test]
+    fn test_add_env() {
+        let base_config = LintConfig {
+            env: OxlintEnv::default(),
+            plugins: LintPlugins::ESLINT,
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+            path: None,
+        };
+
+        let overrides = from_json!([{
+            "files": ["*.tsx"],
+            "env": {
+                "es2024": true
+            },
+        }]);
+
+        let store = ConfigStore::new(vec![], base_config, overrides);
+        assert!(!store.base.base.config.env.contains("React"));
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert!(app.env.contains("es2024"));
+    }
+
+    #[test]
+    fn test_replace_env() {
+        let base_config = LintConfig {
+            env: OxlintEnv::from_iter(["es2024".into()]),
+            plugins: LintPlugins::ESLINT,
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+            path: None,
+        };
+
+        let overrides = from_json!([{
+            "files": ["*.tsx"],
+            "env": {
+                "es2024": false
+            },
+        }]);
+
+        let store = ConfigStore::new(vec![], base_config, overrides);
+        assert!(store.base.base.config.env.contains("es2024"));
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert!(!app.env.contains("es2024"));
+    }
+
+    #[test]
+    fn test_add_globals() {
+        let base_config = LintConfig {
+            env: OxlintEnv::default(),
+            plugins: LintPlugins::ESLINT,
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+            path: None,
+        };
+
+        let overrides = from_json!([{
+            "files": ["*.tsx"],
+            "globals": {
+                "React": "readonly",
+                "Secret": "writeable"
+            },
+        }]);
+
+        let store = ConfigStore::new(vec![], base_config, overrides);
+        assert!(!store.base.base.config.globals.is_enabled("React"));
+        assert!(!store.base.base.config.globals.is_enabled("Secret"));
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert!(app.globals.is_enabled("React"));
+        assert!(app.globals.is_enabled("Secret"));
+    }
+
+    #[test]
+    fn test_replace_globals() {
+        let base_config = LintConfig {
+            env: OxlintEnv::default(),
+            plugins: LintPlugins::ESLINT,
+            settings: OxlintSettings::default(),
+            globals: from_json!({
+                "React": "readonly",
+                "Secret": "writeable"
+            }),
+            path: None,
+        };
+
+        let overrides = from_json!([{
+            "files": ["*.tsx"],
+            "globals": {
+                "React": "off",
+                "Secret": "off"
+            },
+        }]);
+
+        let store = ConfigStore::new(vec![], base_config, overrides);
+        assert!(store.base.base.config.globals.is_enabled("React"));
+        assert!(store.base.base.config.globals.is_enabled("Secret"));
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert!(!app.globals.is_enabled("React"));
+        assert!(!app.globals.is_enabled("Secret"));
     }
 }

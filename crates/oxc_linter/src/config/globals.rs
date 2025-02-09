@@ -30,7 +30,7 @@ use serde::{de::Visitor, Deserialize, Serialize};
 /// You may also use `"readable"` or `false` to represent `"readonly"`, and
 /// `"writeable"` or `true` to represent `"writable"`.
 // <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
-#[derive(Debug, Default, Deserialize, Serialize, JsonSchema, Clone)]
+#[derive(Debug, Default, PartialEq, Deserialize, Serialize, JsonSchema, Clone)]
 pub struct OxlintGlobals(FxHashMap<String, GlobalValue>);
 
 impl Deref for OxlintGlobals {
@@ -48,6 +48,12 @@ impl OxlintGlobals {
         Q: ?Sized + Eq + hash::Hash,
     {
         self.0.get(name).is_some_and(|value| *value != GlobalValue::Off)
+    }
+
+    pub(crate) fn override_globals(&self, globals_to_override: &mut OxlintGlobals) {
+        for (env, supported) in self.0.clone() {
+            globals_to_override.0.insert(env, supported);
+        }
     }
 }
 
@@ -173,5 +179,21 @@ mod test {
         });
         assert!(globals.is_enabled("foo"));
         assert!(globals.is_enabled("bar"));
+    }
+
+    #[test]
+    fn test_override_globals() {
+        let mut globals = OxlintGlobals::deserialize(&serde_json::json!({
+            "Foo": "writeable",
+        }))
+        .unwrap();
+        let override_globals = OxlintGlobals::deserialize(&serde_json::json!({
+            "Foo": "off",
+        }))
+        .unwrap();
+
+        override_globals.override_globals(&mut globals);
+
+        assert!(!globals.is_enabled("Foo"));
     }
 }
