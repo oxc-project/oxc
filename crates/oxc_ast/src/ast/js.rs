@@ -353,6 +353,7 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "Property")]
 pub struct ObjectProperty<'a> {
     pub span: Span,
     pub kind: PropertyKind,
@@ -1476,6 +1477,11 @@ pub struct ObjectPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(
+    rename = "Property",
+    add_fields(kind = "\"init\"", method = false),
+    add_ts = "kind: \"init\"; method: false"
+)]
 pub struct BindingProperty<'a> {
     pub span: Span,
     pub key: PropertyKey<'a>,

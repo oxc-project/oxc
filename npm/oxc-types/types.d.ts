@@ -90,7 +90,7 @@ export interface ObjectExpression extends Span {
 export type ObjectPropertyKind = ObjectProperty | SpreadElement;
 
 export interface ObjectProperty extends Span {
-  type: 'ObjectProperty';
+  type: 'Property';
   kind: PropertyKind;
   key: PropertyKey;
   value: Expression;
@@ -513,11 +513,13 @@ export interface ObjectPattern extends Span {
 }
 
 export interface BindingProperty extends Span {
-  type: 'BindingProperty';
+  type: 'Property';
   key: PropertyKey;
   value: BindingPattern;
   shorthand: boolean;
   computed: boolean;
+  kind: 'init';
+  method: false;
 }
 
 export interface ArrayPattern extends Span {

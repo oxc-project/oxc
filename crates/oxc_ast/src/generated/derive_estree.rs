@@ -214,7 +214,7 @@ impl Serialize for ObjectPropertyKind<'_> {
 impl Serialize for ObjectProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectProperty")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("kind", &self.kind)?;
@@ -1287,13 +1287,15 @@ impl Serialize for ObjectPattern<'_> {
 impl Serialize for BindingProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BindingProperty")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
         map.serialize_entry("computed", &self.computed)?;
+        map.serialize_entry("kind", &"init")?;
+        map.serialize_entry("method", &false)?;
         map.end()
     }
 }
