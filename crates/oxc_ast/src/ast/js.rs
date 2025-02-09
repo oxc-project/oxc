@@ -630,6 +630,7 @@ pub struct UpdateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(prefix = true), add_ts = "prefix: true")]
 pub struct UnaryExpression<'a> {
     pub span: Span,
     pub operator: UnaryOperator,

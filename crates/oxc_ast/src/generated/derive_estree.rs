@@ -507,6 +507,7 @@ impl Serialize for UnaryExpression<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("argument", &self.argument)?;
+        map.serialize_entry("prefix", &true)?;
         map.end()
     }
 }
