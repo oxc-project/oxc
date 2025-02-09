@@ -171,19 +171,18 @@ fn js_parser_test() {
     test("for (; ;) if (!x) break;", "for (; x; ) ;");
     test("for (; a;) if (x) break;", "for (; a && !x; ) ;");
     test("for (; a;) if (!x) break;", "for (; a && x; ) ;");
-    // TODO: optimizeImplicitJump in `mangleStmts`
-    // test("for (; ;) { if (x) break; y(); }", "for (; !x; ) y();");
-    // test("for (; a;) { if (x) break; y(); }", "for (; a && !x; ) y();");
+    test("for (; ;) { if (x) break; y(); }", "for (; !x; ) y();");
+    test("for (; a;) { if (x) break; y(); }", "for (; a && !x; ) y();");
     test("for (; ;) if (x) break; else y();", "for (; !x; ) y();");
     test("for (; a;) if (x) break; else y();", "for (; a && !x; ) y();");
-    // test("for (; ;) { if (x) break; else y(); z(); }", "for (; !x; ) y(), z();");
-    // test("for (; a;) { if (x) break; else y(); z(); }", "for (; a && !x; ) y(), z();");
+    test("for (; ;) { if (x) break; else y(); z(); }", "for (; !x; ) y(), z();");
+    test("for (; a;) { if (x) break; else y(); z(); }", "for (; a && !x; ) y(), z();");
     test("for (; ;) if (x) y(); else break;", "for (; x; ) y();");
     test("for (; ;) if (!x) y(); else break;", "for (; !x; ) y();");
     test("for (; a;) if (x) y(); else break;", "for (; a && x; ) y();");
     test("for (; a;) if (!x) y(); else break;", "for (; a && !x; ) y();");
-    // test("for (; ;) { if (x) y(); else break; z(); }", "for (; x; ) { y(); z();}");
-    // test("for (; a;) { if (x) y(); else break; z(); }", "for (; a && x; ) { y(); z();}");
+    test("for (; ;) { if (x) y(); else break; z(); }", "for (; x; ) y(), z()");
+    test("for (; a;) { if (x) y(); else break; z(); }", "for (; a && x; ) y(), z()");
     test("while (x) { if (1) break; z(); }", "for (; x; ) break;");
     test("while (x) { if (1) continue; z(); }", "for (; x; ) ;");
     test(

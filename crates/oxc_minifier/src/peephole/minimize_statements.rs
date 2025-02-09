@@ -491,7 +491,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9767>
-    fn statement_cares_about_scope(stmt: &Statement<'a>) -> bool {
+    pub fn statement_cares_about_scope(stmt: &Statement<'a>) -> bool {
         match stmt {
             Statement::BlockStatement(_)
             | Statement::EmptyStatement(_)
