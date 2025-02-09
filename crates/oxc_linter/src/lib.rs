@@ -102,6 +102,12 @@ impl Linter {
         self
     }
 
+    #[must_use]
+    pub fn with_report_unused_directives(mut self, report_config: Option<AllowWarnDeny>) -> Self {
+        self.options.report_unused_directive = report_config;
+        self
+    }
+
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
     }
@@ -203,6 +209,12 @@ impl Linter {
                         rule.run_on_jest_node(&jest_node, ctx);
                     }
                 }
+            }
+        }
+
+        if let Some(severity) = self.options.report_unused_directive {
+            if severity.is_warn_deny() {
+                ctx_host.report_unused_directives(severity.into());
             }
         }
 
