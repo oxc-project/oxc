@@ -29,18 +29,18 @@ describe('parse', () => {
 });
 
 it('utf16 span', async () => {
-  const code = "'🤨'"
+  const code = "'🤨'";
   {
     const ret = await parseAsync('test.js', code);
-    expect(ret.program.end).toMatchInlineSnapshot(`6`)
+    expect(ret.program.end).toMatchInlineSnapshot(`6`);
   }
   {
     const ret = await parseAsync('test.js', code, {
       convertSpanUtf16: true,
     });
-    expect(ret.program.end).toMatchInlineSnapshot(`4`)
+    expect(ret.program.end).toMatchInlineSnapshot(`4`);
   }
-})
+});
 
 describe('error', () => {
   const code = 'asdf asdf';
