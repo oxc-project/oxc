@@ -7,7 +7,7 @@ use bpaf::Bpaf;
 
 pub use self::{
     ignore::IgnoreOptions,
-    lint::{lint_command, LintCommand, OutputOptions, WarningOptions},
+    lint::{lint_command, LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions},
 };
 
 const VERSION: &str = match option_env!("OXC_VERSION") {

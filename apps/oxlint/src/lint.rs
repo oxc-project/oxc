@@ -16,7 +16,7 @@ use oxc_span::VALID_EXTENSIONS;
 use serde_json::Value;
 
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, Runner, WarningOptions},
+    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::{Extensions, Walk},
 };
@@ -55,6 +55,7 @@ impl Runner for LintRunner {
             fix_options,
             enable_plugins,
             misc_options,
+            inline_config_options,
             ..
         } = self.options;
 
@@ -245,8 +246,13 @@ impl Runner for LintRunner {
             }
         };
 
-        let linter =
-            Linter::new(LintOptions::default(), lint_config).with_fix(fix_options.fix_kind());
+        let linter = Linter::new(LintOptions::default(), lint_config)
+            .with_fix(fix_options.fix_kind())
+            .with_report_unused_directives(match inline_config_options.report_unused_directives {
+                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
+                ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
+                _ => None,
+            });
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
