@@ -34,6 +34,7 @@ const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
     "no-interpolation-in-snapshots",
     "no-restricted-jest-methods",
     "no-restricted-matchers",
+    "no-standalone-expect",
     "no-test-prefixes",
     "no-test-return-statement",
     "prefer-comparison-matcher",
