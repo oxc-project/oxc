@@ -7,7 +7,8 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
-    // pub mod no_deprecated;
+    //     pub mod extensions;
+    pub mod no_deprecated;
     // pub mod no_unused_modules;
     pub mod default;
     pub mod export;
@@ -670,6 +671,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::yoda,
     import::default,
     import::export,
+    import::extensions,
     import::first,
     import::no_named_default,
     import::no_namespace,
