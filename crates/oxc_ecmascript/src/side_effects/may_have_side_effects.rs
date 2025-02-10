@@ -5,6 +5,8 @@ use oxc_ast::ast::*;
 /// This trait assumes the following:
 /// - `.toString()`, `.valueOf()`, and `[Symbol.toPrimitive]()` are side-effect free.
 ///   - This is mainly to assume `ToPrimitive` is side-effect free.
+///   - Note that the builtin `Array::toString` has a side-effect when a value contains a Symbol as `ToString(Symbol)` throws an error. Maybe we should revisit this assumption and remove it.
+///     - For example, `"" == [Symbol()]` returns an error, but this trait returns `false`.
 /// - Errors thrown when creating a String or an Array that exceeds the maximum length does not happen.
 /// - TDZ errors does not happen.
 ///
