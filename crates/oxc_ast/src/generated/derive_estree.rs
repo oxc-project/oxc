@@ -1679,8 +1679,10 @@ impl Serialize for ImportExpression<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("arguments", &self.arguments)?;
-        map.serialize_entry("phase", &self.phase)?;
+        map.serialize_entry(
+            "options",
+            &crate::serialize::import_expression_options(&self.arguments),
+        )?;
         map.end()
     }
 }
