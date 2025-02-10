@@ -893,7 +893,11 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
     #[estree(rename = "key")]
     pub binding: IdentifierReference<'a>,
-    #[estree(rename = "value", via = crate::serialize::AssignmentTargetPropertyIdentifierValue(self), ts_type = "IdentifierReference | AssignmentTargetWithDefault")]
+    #[estree(
+        rename = "value",
+        via = crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
+        ts_type = "IdentifierReference | AssignmentTargetWithDefault",
+    )]
     pub init: Option<Expression<'a>>,
 }
 
