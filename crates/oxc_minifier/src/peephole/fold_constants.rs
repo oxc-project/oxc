@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, ValueType},
     side_effects::MayHaveSideEffects,
@@ -19,8 +20,9 @@ impl<'a> PeepholeOptimizations {
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
     pub fn fold_constants_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+        let current_len = Self::count_char_when_printing(expr);
         if let Some(folded_expr) = match expr {
-            Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
+            Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, current_len, ctx)
                 .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),
             Expression::UnaryExpression(e) => Self::try_fold_unary_expr(e, ctx),
             Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
@@ -202,25 +204,15 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn extract_numeric_values(e: &BinaryExpression<'a>) -> Option<(f64, f64)> {
-        if let (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) =
-            (&e.left, &e.right)
-        {
-            return Some((left.value, right.value));
-        }
-        None
-    }
-
-    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn try_fold_binary_expr(
         e: &mut BinaryExpression<'a>,
+        current_len: usize,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryReduceOperandsForOp
 
         // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1136
         // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1222
-        let span = e.span;
         match e.operator {
             BinaryOperator::Equality
             | BinaryOperator::Inequality
@@ -234,80 +226,19 @@ impl<'a> PeepholeOptimizations {
                 ctx.eval_binary(e).or_else(|| Self::try_fold_left_child_op(e, ctx))
             }
             BinaryOperator::Addition => Self::try_fold_add(e, ctx),
-            BinaryOperator::Subtraction => {
-                // Subtraction of small-ish integers can definitely be folded without issues
-                Self::extract_numeric_values(e)
-                    .filter(|(left, right)| {
-                        left.is_nan()
-                            || left.is_finite()
-                            || right.is_nan()
-                            || right.is_finite()
-                            || (left.fract() == 0.0
-                                && right.fract() == 0.0
-                                && (left.abs() as usize) <= 0xFFFF_FFFF
-                                && (right.abs() as usize) <= 0xFFFF_FFFF)
-                    })
-                    .and_then(|_| ctx.eval_binary(e))
+            _ => {
+                let folded_expr = ctx.eval_binary(e)?;
+                let folded_len = Self::count_char_when_printing(&folded_expr);
+                (folded_len <= current_len).then_some(folded_expr)
             }
-            BinaryOperator::Multiplication
-            | BinaryOperator::Exponential
-            | BinaryOperator::Remainder => Self::extract_numeric_values(e)
-                .filter(|(left, right)| {
-                    *left == 0.0
-                        || left.is_nan()
-                        || left.is_infinite()
-                        || *right == 0.0
-                        || right.is_nan()
-                        || right.is_infinite()
-                })
-                .and_then(|_| ctx.eval_binary(e)),
-            BinaryOperator::Division => Self::extract_numeric_values(e)
-                .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
-                .and_then(|_| ctx.eval_binary(e)),
-            BinaryOperator::ShiftLeft => {
-                if let Some((left, right)) = Self::extract_numeric_values(e) {
-                    let result = ctx.eval_binary_expression(e)?.into_number()?;
-                    let left_len = Self::approximate_printed_int_char_count(left);
-                    let right_len = Self::approximate_printed_int_char_count(right);
-                    let result_len = Self::approximate_printed_int_char_count(result);
-                    if result_len <= left_len + 2 + right_len {
-                        return Some(ctx.value_to_expr(span, ConstantValue::Number(result)));
-                    }
-                }
-                None
-            }
-            BinaryOperator::ShiftRightZeroFill => {
-                if let Some((left, right)) = Self::extract_numeric_values(e) {
-                    let result = ctx.eval_binary_expression(e)?.into_number()?;
-                    let left_len = Self::approximate_printed_int_char_count(left);
-                    let right_len = Self::approximate_printed_int_char_count(right);
-                    let result_len = Self::approximate_printed_int_char_count(result);
-                    if result_len <= left_len + 3 + right_len {
-                        return Some(ctx.value_to_expr(span, ConstantValue::Number(result)));
-                    }
-                }
-                None
-            }
-            BinaryOperator::ShiftRight | BinaryOperator::Instanceof => ctx.eval_binary(e),
-            BinaryOperator::In => None,
         }
     }
 
-    // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1128
-    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    #[must_use]
-    fn approximate_printed_int_char_count(value: f64) -> usize {
-        let mut count = if value.is_infinite() {
-            "Infinity".len()
-        } else if value.is_nan() {
-            "NaN".len()
-        } else {
-            1 + 0.max(value.abs().log10().floor() as usize)
-        };
-        if value.is_sign_negative() {
-            count += 1;
-        }
-        count
+    fn count_char_when_printing(expr: &Expression) -> usize {
+        let mut cg = Codegen::new()
+            .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() });
+        cg.print_expression(expr);
+        cg.into_source_text().len()
     }
 
     // Simplified version of `tryFoldAdd` from closure compiler.
@@ -1614,7 +1545,7 @@ mod test {
 
     #[test]
     fn test_fold_multiply() {
-        fold_same("x = 2.25 * 3");
+        fold("x = 2.25 * 3", "x = 6.75");
         fold_same("z = x * y");
         fold_same("x = y * 5");
         // test("x = null * undefined", "x = NaN");
@@ -1631,28 +1562,28 @@ mod test {
         fold("x = Infinity / 0", "x = Infinity");
         fold("x = 1 / 0", "x = Infinity");
         fold("x = 0 / 0", "x = NaN");
-        fold_same("x = 2 / 4");
+        fold("x = 2 / 4", "x = .5");
         fold_same("x = y / 2 / 4");
     }
 
     #[test]
     fn test_fold_remainder() {
-        fold_same("x = 3 % 2");
-        fold_same("x = 3 % -2");
-        fold_same("x = -1 % 3");
+        fold("x = 3 % 2", "x = 1");
+        fold("x = 3 % -2", "x = 1");
+        fold("x = -1 % 3", "x = -1");
         fold("x = 1 % 0", "x = NaN");
         fold("x = 0 % 0", "x = NaN");
     }
 
     #[test]
     fn test_fold_exponential() {
-        fold_same("x = 2 ** 3");
-        fold_same("x = 2 ** -3");
+        fold("x = 2 ** 3", "x = 8");
+        fold("x = 2 ** -3", "x = .125");
         fold_same("x = 2 ** 55");
         fold_same("x = 3 ** -1");
-        fold_same("x = (-1) ** 0.5");
+        fold("x = (-1) ** 0.5", "x = NaN");
         fold("x = (-0) ** 3", "x = -0");
-        fold_same("x = null ** 0");
+        fold("x = null ** 0", "x = 1");
     }
 
     #[test]

@@ -374,7 +374,11 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 }
                 None
             }
-            _ => None,
+            BinaryOperator::In
+            | BinaryOperator::Equality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality => None,
         }
     }
 
