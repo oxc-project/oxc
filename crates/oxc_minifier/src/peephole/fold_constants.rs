@@ -329,15 +329,11 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // typeof foo + ""
-        if let Expression::UnaryExpression(left) = &e.left {
-            if left.operator.is_typeof() {
-                if let Expression::StringLiteral(right) = &e.right {
-                    if right.value.is_empty() {
-                        return Some(ctx.ast.move_expression(&mut e.left));
-                    }
-                }
-            }
+        // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
+        if e.left.is_specific_string_literal("") && ValueType::from(&e.right).is_string() {
+            return Some(ctx.ast.move_expression(&mut e.right));
+        } else if e.right.is_specific_string_literal("") && ValueType::from(&e.left).is_string() {
+            return Some(ctx.ast.move_expression(&mut e.left));
         }
 
         None
@@ -1796,10 +1792,12 @@ mod test {
     }
 
     #[test]
-    fn test_fold_typeof_addition_string() {
+    fn test_fold_useless_string_addition() {
         fold_same("typeof foo");
         fold_same("typeof foo + '123'");
         fold("typeof foo + ''", "typeof foo");
+        fold("'' + typeof foo", "typeof foo");
+        fold("(foo ? 'a' : 'b') + ''", "foo ? 'a' : 'b'");
         fold_same("typeof foo - ''");
     }
 
