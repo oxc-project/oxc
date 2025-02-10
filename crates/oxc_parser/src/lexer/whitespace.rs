@@ -8,7 +8,7 @@ static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
 
 impl Lexer<'_> {
     pub(super) fn line_break_handler(&mut self) -> Kind {
-        self.token.is_on_new_line = true;
+        self.token.set_is_on_new_line();
         self.trivia_builder.handle_newline();
 
         // Indentation is common after a line break.

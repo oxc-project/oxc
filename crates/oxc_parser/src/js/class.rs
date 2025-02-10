@@ -218,7 +218,7 @@ impl<'a> ParserImpl<'a> {
 
         // async ...
         if key_name.is_none() && self.at(Kind::Async) && !self.peek_at(Kind::Question) {
-            if !self.peek_token().is_on_new_line
+            if !self.peek_token().is_on_new_line()
                 && (self.peek_kind().is_class_element_name_start() || self.peek_at(Kind::Star))
             {
                 self.bump(Kind::Async);

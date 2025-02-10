@@ -91,7 +91,7 @@ impl<'a> ParserImpl<'a> {
         let elem = self.parse_rest_element()?;
         if self.at(Kind::Comma) {
             if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
-                let span = self.cur_token().span();
+                let span = self.cur_token_span();
                 self.bump_any();
                 self.error(diagnostics::binding_rest_element_trailing_comma(span));
             }
@@ -111,7 +111,7 @@ impl<'a> ParserImpl<'a> {
         let kind = self.parse_binding_pattern_kind()?;
         // Rest element does not allow `?`, checked in checker/typescript.rs
         if self.at(Kind::Question) && self.is_ts {
-            let span = self.cur_token().span();
+            let span = self.cur_token_span();
             self.bump_any();
             self.error(diagnostics::a_rest_parameter_cannot_be_optional(span));
         }

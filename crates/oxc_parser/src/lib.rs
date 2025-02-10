@@ -561,7 +561,7 @@ impl<'a> ParserImpl<'a> {
                 return error;
             }
         }
-        diagnostics::unexpected_token(self.cur_token().span())
+        diagnostics::unexpected_token(self.cur_token_span())
     }
 
     /// Push a Syntax Error

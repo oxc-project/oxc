@@ -84,10 +84,10 @@ impl<'a> ParserImpl<'a> {
                 expr => Err(diagnostics::computed_property_names_not_allowed_in_enums(expr.span())),
             },
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => Err(
-                diagnostics::computed_property_names_not_allowed_in_enums(self.cur_token().span()),
+                diagnostics::computed_property_names_not_allowed_in_enums(self.cur_token_span()),
             ),
             kind if kind.is_number() => {
-                Err(diagnostics::enum_member_cannot_have_numeric_name(self.cur_token().span()))
+                Err(diagnostics::enum_member_cannot_have_numeric_name(self.cur_token_span()))
             }
             _ => {
                 let ident_name = self.parse_identifier_name()?;
@@ -188,7 +188,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn is_at_interface_declaration(&mut self) -> bool {
-        if !self.at(Kind::Interface) || self.peek_token().is_on_new_line {
+        if !self.at(Kind::Interface) || self.peek_token().is_on_new_line() {
             false
         } else {
             self.peek_token().kind.is_binding_identifier() || self.peek_at(Kind::LCurly)
@@ -257,7 +257,7 @@ impl<'a> ParserImpl<'a> {
 
         let next = self.nth(n + 1);
 
-        if next.is_on_new_line {
+        if next.is_on_new_line() {
             false
         } else {
             let followed_by_any_member =
@@ -508,11 +508,11 @@ impl<'a> ParserImpl<'a> {
                 Kind::Interface | Kind::Type => {
                     self.bump_any();
                     return self.cur_kind().is_binding_identifier()
-                        && !self.cur_token().is_on_new_line;
+                        && !self.cur_token().is_on_new_line();
                 }
                 Kind::Module | Kind::Namespace => {
                     self.bump_any();
-                    return !self.cur_token().is_on_new_line
+                    return !self.cur_token().is_on_new_line()
                         && (self.cur_kind().is_binding_identifier()
                             || self.cur_kind() == Kind::Str);
                 }
@@ -525,7 +525,7 @@ impl<'a> ParserImpl<'a> {
                 | Kind::Public
                 | Kind::Readonly => {
                     self.bump_any();
-                    if self.cur_token().is_on_new_line {
+                    if self.cur_token().is_on_new_line() {
                         return false;
                     }
                 }

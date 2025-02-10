@@ -320,14 +320,14 @@ impl<'a> Lexer<'a> {
     /// Save escaped template string
     fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
         self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then_some(s));
-        self.token.escaped = true;
+        self.token.set_escaped();
     }
 
     pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
-        if token.escaped {
+        if token.escaped() {
             return self.escaped_templates[&token.start];
         }
-        let raw = &self.source.whole()[token.start as usize..token.end as usize];
+        let raw = &self.source.whole()[self.token_span(token)];
         Some(match token.kind {
             Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
                 &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}" and trailing "`"
