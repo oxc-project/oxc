@@ -248,7 +248,9 @@ impl Rule for FuncStyle {
                                 }
                             }
 
-                            if let Some(NamedExports::Override(Style::Expression)) = self.named_exports {
+                            if let Some(NamedExports::Override(Style::Expression)) =
+                                self.named_exports
+                            {
                                 if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
                                     ctx.diagnostic(func_style_diagnostic(func.span, self.style));
                                 }
@@ -257,11 +259,15 @@ impl Rule for FuncStyle {
                         FunctionType::FunctionExpression => {
                             let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
                             if let AstKind::VariableDeclarator(decl) = parent.kind() {
-                                if is_decl_style && (self.named_exports.is_none() || !is_ancestor_export) {
+                                if is_decl_style
+                                    && (self.named_exports.is_none() || !is_ancestor_export)
+                                {
                                     ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                                 }
 
-                                if let Some(NamedExports::Override(Style::Declaration)) = self.named_exports {
+                                if let Some(NamedExports::Override(Style::Declaration)) =
+                                    self.named_exports
+                                {
                                     if is_ancestor_export {
                                         ctx.diagnostic(func_style_diagnostic(
                                             decl.span, self.style,
@@ -292,7 +298,7 @@ impl Rule for FuncStyle {
             }
         }
 
-        // step 2 
+        // step 2
         // We deal with arrow functions that do not contain this and super
         for node in arrow_func_nodes {
             if !arrow_func_ancestor_records.contains(&node.id()) {
