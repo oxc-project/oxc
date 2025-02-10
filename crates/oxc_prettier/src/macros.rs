@@ -150,7 +150,7 @@ macro_rules! fill {
         fill!($p, temp_vec)
     }};
     ($p:ident, $vec:expr) => {{
-        $crate::ir::Doc::Fill($crate::ir::Fill { contents: $vec })
+        $crate::ir::Doc::Fill($crate::ir::Fill { parts: $vec })
     }};
 }
 
