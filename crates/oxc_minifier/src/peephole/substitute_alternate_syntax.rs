@@ -1076,7 +1076,7 @@ impl<'a> LatePeepholeOptimizations {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
-                        || ctx.symbols().get_resolved_references(ident.symbol_id()).count() == 0
+                        || !ctx.symbols().symbol_is_used(ident.symbol_id())
                     {
                         catch.param = None;
                     }
