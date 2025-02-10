@@ -603,7 +603,6 @@ impl<'a> PeepholeOptimizations {
         bin_expr: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        // `typeof a === typeof b` -> `typeof a == typeof b`, `typeof a != typeof b` -> `typeof a != typeof b`,
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
         if bin_expr.operator.is_equality() {
             if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
@@ -624,22 +623,6 @@ impl<'a> PeepholeOptimizations {
                                 ),
                             ));
                         }
-                    }
-
-                    if matches!(
-                        bin_expr.operator,
-                        BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
-                    ) {
-                        return Some(ctx.ast.expression_binary(
-                            bin_expr.span,
-                            ctx.ast.move_expression(&mut bin_expr.left),
-                            if bin_expr.operator == BinaryOperator::StrictEquality {
-                                BinaryOperator::Equality
-                            } else {
-                                BinaryOperator::Inequality
-                            },
-                            ctx.ast.move_expression(&mut bin_expr.right),
-                        ));
                     }
                 }
             }
