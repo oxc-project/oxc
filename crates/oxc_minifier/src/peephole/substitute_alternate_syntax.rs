@@ -964,6 +964,7 @@ impl<'a> LatePeepholeOptimizations {
         if let Expression::NewExpression(e) = expr {
             Self::try_compress_typed_array_constructor(e, ctx);
         }
+        Self::remove_name_from_expressions(expr, ctx);
 
         if let Some(folded_expr) = match expr {
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
@@ -1082,6 +1083,30 @@ impl<'a> LatePeepholeOptimizations {
                     }
                 };
             }
+        }
+    }
+
+    /// Remove name from function / class expressions if it is not used.
+    ///
+    /// - `var a = function f() {}` -> `var a = function () {}`
+    /// - `var a = class C {}` -> `var a = class {}`
+    ///
+    /// This compression is not safe if the code relies on `Function::name`.
+    fn remove_name_from_expressions(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+        match expr {
+            Expression::FunctionExpression(func) => {
+                if func.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
+                {
+                    func.id = None;
+                }
+            }
+            Expression::ClassExpression(class) => {
+                if class.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
+                {
+                    class.id = None;
+                }
+            }
+            _ => {}
         }
     }
 
@@ -1259,7 +1284,7 @@ mod test {
         test("x = new Object()", "x = ({})");
         test("x = Object()", "x = ({})");
 
-        test_same("x = (function f(){function Object(){this.x=4}return new Object();})();");
+        test_same("x = (function (){function Object(){this.x=4}return new Object();})();");
 
         test("x = new window.Object", "x = ({})");
         test("x = new window.Object()", "x = ({})");
@@ -1269,8 +1294,8 @@ mod test {
         test("x = window.Object?.()", "x = Object?.()");
 
         test(
-            "x = (function f(){function Object(){this.x=4};return new window.Object;})();",
-            "x = (function f(){function Object(){this.x=4}return {};})();",
+            "x = (function (){function Object(){this.x=4};return new window.Object;})();",
+            "x = (function (){function Object(){this.x=4}return {};})();",
         );
     }
 
@@ -1697,6 +1722,14 @@ mod test {
             run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
             run(code, None)
         );
+    }
+
+    #[test]
+    fn test_remove_name_from_expressions() {
+        test("var a = function f() {}", "var a = function () {}");
+        test_same("var a = function f() { return f; }");
+        test("var a = class C {}", "var a = class {}");
+        test_same("var a = class C { foo() { return C } }");
     }
 
     #[test]
