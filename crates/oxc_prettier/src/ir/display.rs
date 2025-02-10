@@ -33,11 +33,11 @@ fn print_doc_ast(doc: &Doc<'_>) -> String {
         }
         Doc::IndentIfBreak(IndentIfBreak { contents, group_id }) => {
             json.push('{');
-            json.push_str(r#""type":"indent_if_break""#);
+            json.push_str(r#""type":"indent-if-break""#);
             json.push(',');
             json.push_str(&format!(r#""contents":{}"#, print_doc_ast(contents)));
             json.push(',');
-            json.push_str(&format!(r#"group_id":"{group_id}""#));
+            json.push_str(&format!(r#"groupId":"{group_id}""#));
             json.push('}');
         }
         Doc::Group(Group { contents, should_break, expanded_states, group_id }) => {
@@ -82,12 +82,12 @@ fn print_doc_ast(doc: &Doc<'_>) -> String {
             json.push('{');
             json.push_str(r#""type":"if-break""#);
             json.push(',');
-            json.push_str(&format!(r#""break_contents":{}"#, print_doc_ast(break_contents)));
+            json.push_str(&format!(r#""breakContents":{}"#, print_doc_ast(break_contents)));
             json.push(',');
-            json.push_str(&format!(r#""flat_contents":{}"#, print_doc_ast(flat_contents)));
+            json.push_str(&format!(r#""flatContents":{}"#, print_doc_ast(flat_contents)));
             if let Some(group_id) = group_id {
                 json.push(',');
-                json.push_str(&format!(r#""group_id":"{group_id}""#));
+                json.push_str(&format!(r#""groupId":"{group_id}""#));
             }
             json.push('}');
         }
