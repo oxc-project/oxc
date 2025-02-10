@@ -243,7 +243,7 @@ export type SimpleAssignmentTarget =
 export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTarget;
 
 export interface ArrayAssignmentTarget extends Span {
-  type: 'ArrayAssignmentTarget';
+  type: 'ArrayPattern';
   elements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;
 }
 
@@ -260,9 +260,9 @@ export interface AssignmentTargetRest extends Span {
 export type AssignmentTargetMaybeDefault = AssignmentTargetWithDefault | AssignmentTarget;
 
 export interface AssignmentTargetWithDefault extends Span {
-  type: 'AssignmentTargetWithDefault';
-  binding: AssignmentTarget;
-  init: Expression;
+  type: 'AssignmentPattern';
+  left: AssignmentTarget;
+  right: Expression;
 }
 
 export type AssignmentTargetProperty = AssignmentTargetPropertyIdentifier | AssignmentTargetPropertyProperty;

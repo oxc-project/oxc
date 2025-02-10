@@ -805,6 +805,7 @@ pub use match_assignment_target_pattern;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "ArrayPattern")]
 pub struct ArrayAssignmentTarget<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
@@ -859,9 +860,12 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "AssignmentPattern")]
 pub struct AssignmentTargetWithDefault<'a> {
     pub span: Span,
+    #[estree(rename = "left")]
     pub binding: AssignmentTarget<'a>,
+    #[estree(rename = "right")]
     pub init: Expression<'a>,
 }
 

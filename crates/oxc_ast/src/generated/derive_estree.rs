@@ -625,7 +625,7 @@ impl Serialize for AssignmentTargetPattern<'_> {
 impl Serialize for ArrayAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ArrayAssignmentTarget")?;
+        map.serialize_entry("type", "ArrayPattern")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("elements", &AppendTo { array: &self.elements, after: &self.rest })?;
@@ -684,11 +684,11 @@ impl Serialize for AssignmentTargetMaybeDefault<'_> {
 impl Serialize for AssignmentTargetWithDefault<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetWithDefault")?;
+        map.serialize_entry("type", "AssignmentPattern")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("binding", &self.binding)?;
-        map.serialize_entry("init", &self.init)?;
+        map.serialize_entry("left", &self.binding)?;
+        map.serialize_entry("right", &self.init)?;
         map.end()
     }
 }
