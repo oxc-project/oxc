@@ -207,12 +207,6 @@ impl<E: Serialize, R: Serialize> Serialize for ElementsAndRest<'_, E, R> {
 
 pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'b Option<ArenaVec<'a, T>>);
 
-impl<'a, 'b, T: Serialize> From<&'b Option<ArenaVec<'a, T>>> for OptionVecDefault<'a, 'b, T> {
-    fn from(opt_vec: &'b Option<ArenaVec<'a, T>>) -> Self {
-        Self(opt_vec)
-    }
-}
-
 impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         if let Some(vec) = &self.0 {
@@ -298,6 +292,18 @@ impl Serialize for JSXMemberExpressionObject<'_> {
             Self::ThisExpression(expr) => {
                 JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
             }
+        }
+    }
+}
+
+pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
+
+impl Serialize for ArrowFunctionExpressionBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(expression) = self.0.get_expression() {
+            expression.serialize(serializer)
+        } else {
+            self.0.body.serialize(serializer)
         }
     }
 }

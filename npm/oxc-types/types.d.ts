@@ -592,7 +592,7 @@ export interface ArrowFunctionExpression extends Span {
   typeParameters: TSTypeParameterDeclaration | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
-  body: FunctionBody;
+  body: FunctionBody | Expression;
   generator: false;
   id: null;
 }

@@ -1429,7 +1429,7 @@ impl Serialize for ArrowFunctionExpression<'_> {
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("body", &self.body)?;
+        map.serialize_entry("body", &crate::serialize::ArrowFunctionExpressionBody(self))?;
         map.serialize_entry("generator", &false)?;
         map.serialize_entry("id", &crate::serialize::NULL)?;
         map.end()
@@ -1681,10 +1681,7 @@ impl Serialize for ImportDeclaration<'_> {
         map.serialize_entry("type", "ImportDeclaration")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry(
-            "specifiers",
-            &crate::serialize::OptionVecDefault::from(&self.specifiers),
-        )?;
+        map.serialize_entry("specifiers", &crate::serialize::OptionVecDefault(&self.specifiers))?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("phase", &self.phase)?;
         map.serialize_entry("withClause", &self.with_clause)?;
