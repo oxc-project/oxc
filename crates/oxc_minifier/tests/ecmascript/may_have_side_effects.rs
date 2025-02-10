@@ -84,10 +84,10 @@ fn closure_compiler_tests() {
     test("/abc/gi", false);
     test("('a')", false); // wrapped with parentheses to avoid treated as a directive
     test("0", false);
-    test("a + c", false);
+    test("a + c", true);
     test("'c' + a[0]", true);
     test("a[0][1]", true);
-    test("'a' + c", false);
+    test("'a' + c", true);
     test("'a' + a.name", true);
     test("1, 2, 3", false);
     test("a, b, 3", false);
@@ -361,6 +361,8 @@ fn test_unary_expressions() {
     test("+null", false); // 0
     test("+true", false); // 1
     test("+'foo'", false); // NaN
+    test("+`foo`", false); // NaN
+    test("+/foo/", false); // NaN
     test_with_global_variables("+Infinity", vec!["Infinity".to_string()], false);
     test_with_global_variables("+NaN", vec!["NaN".to_string()], false);
     test_with_global_variables("+undefined", vec!["undefined".to_string()], false); // NaN
@@ -377,6 +379,8 @@ fn test_unary_expressions() {
     test("-null", false); // -0
     test("-true", false); // -1
     test("-'foo'", false); // -NaN
+    test("-`foo`", false); // NaN
+    test("-/foo/", false); // NaN
     test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
     test_with_global_variables("-NaN", vec!["NaN".to_string()], false);
     test_with_global_variables("-undefined", vec!["undefined".to_string()], false); // NaN
@@ -419,12 +423,108 @@ fn test_other_expressions() {
 
 #[test]
 fn test_binary_expressions() {
+    test("a === b", false);
+    test("a() === b", true);
+    test("a !== b", false);
+    test("a() !== b", true);
+
     test("a == b", false);
     test("a() == b", true);
+    // These actually have a side effect, but this treated as side-effect free.
+    test("'' == { toString() { console.log('sideeffect') } }", false);
+    test("'' == { valueOf() { console.log('sideeffect') } }", false);
+    test("'' == { [s]() { console.log('sideeffect') } }", false); // assuming s is Symbol.toPrimitive
+    test("a != b", false);
+    test("a() != b", true);
+
     test("a < b", false);
     test("a() < b", true);
-    test("a + b", false);
-    test("a() + b", true);
+    // These actually have a side effect, but this treated as side-effect free.
+    test("'' < { toString() { console.log('sideeffect') } }", false);
+    test("'' < { valueOf() { console.log('sideeffect') } }", false);
+    test("'' < { [s]() { console.log('sideeffect') } }", false); // assuming s is Symbol.toPrimitive
+    test("a > b", false);
+    test("a() > b", true);
+    test("a >= b", false);
+    test("a() >= b", true);
+    test("a <= b", false);
+    test("a() <= b", true);
+
+    test("'' + ''", false);
+    test("'' + ``", false);
+    test("'' + `${foo()}`", true);
+    test("'' + null", false);
+    test("'' + 0", false);
+    test("'' + 0n", false);
+    test("'' + true", false);
+    test("'' + /a/", false);
+    test("'' + []", false);
+    test("'' + [foo()]", true);
+    test("'' + Symbol()", true);
+    test_with_global_variables("'' + Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("'' + NaN", vec!["NaN".to_string()], false);
+    test_with_global_variables("'' + undefined", vec!["undefined".to_string()], false);
+    test("'' + s", true); // assuming s is Symbol
+    test("Symbol() + ''", true);
+    test("'' + {}", false);
+    test("'' + { toString() { return Symbol() } }", true);
+    test("'' + { valueOf() { return Symbol() } }", true);
+    test("'' + { [s]() { return Symbol() } }", true); // assuming s is Symbol.toPrimitive
+    test("/a/ + 1", false); // /a/1
+    test("[] + 1", false); // 1
+    test("({} + 1)", false); // [object Object]1
+    test("0 + 1", false);
+    test("0 + null", false); // 0
+    test("0 + true", false); // 1
+    test("0 + a", true); // a can be BigInt
+    test("0n + 1n", false);
+    test("0n + a", true); // a can be Number
+    test("a + b", true);
+
+    test("0n - 1n", false);
+    test("0n - 0", true);
+    test("0n - a", true); // a can be Number
+    test("a - 0n", true); // a can be Number
+    test("0n - a()", true);
+    test("0 - 1", false);
+    test("0 - a", true); // a can be BigInt
+    test("0 - ''", false); // 0
+    test("0 - ``", false); // 0
+    test("0 - true", false); // -1
+    test("0 - /a/", false); // NaN
+    test("0 - []", false); // 0
+    test("0 - [foo()]", true);
+    test_with_global_variables("0 - Infinity", vec!["Infinity".to_string()], false); // -Infinity
+    test_with_global_variables("0 - NaN", vec!["NaN".to_string()], false); // NaN
+    test_with_global_variables("0 - undefined", vec!["undefined".to_string()], false); // NaN
+    test_with_global_variables("null - Infinity", vec!["Infinity".to_string()], false); // -Infinity
+    test("0 - {}", false); // NaN
+    test("'' - { toString() { return Symbol() } }", true);
+    test("'' - { valueOf() { return Symbol() } }", true);
+    test("'' - { [s]() { return Symbol() } }", true); // assuming s is Symbol.toPrimitive
+    test("a - b", true);
+    test("0 * 1", false);
+    test("0 * a", true);
+    test("0 / 1", false);
+    test("0 / a", true);
+    test("0 % 1", false);
+    test("0 % a", true);
+    test("0 << 1", false);
+    test("0 << a", true);
+    test("0 | 1", false);
+    test("0 | a", true);
+    test("0 >> 1", false);
+    test("0 >> a", true);
+    test("0 ^ 1", false);
+    test("0 ^ a", true);
+    test("0 & 1", false);
+    test("0 & a", true);
+    test("0 ** 1", false);
+    test("0 ** a", true);
+    test("1n ** (-1n)", true); // `**` throws an error when the right operand is negative
+    test("1n / 0n", true); // `/` throws an error when the right operand is zero
+    test("1n % 0n", true); // `%` throws an error when the right operand is zero
+    test("0n >>> 1n", true); // `>>>` throws an error even when both operands are bigint
 
     // b maybe not a object
     // b maybe a proxy that has a side effectful "has" trap
@@ -501,23 +601,4 @@ fn test_side_effectful_expressions() {
     test("a.b", true);
     test("a[0]", true);
     test("a?.b", true);
-}
-
-#[test]
-fn tests() {
-    // This actually have a side effect, but this treated as side-effect free.
-    test("'' + { toString() { console.log('sideeffect') } }", false);
-    test("'' + { valueOf() { console.log('sideeffect') } }", false);
-    test("'' + { [s]() { console.log('sideeffect') } }", false); // assuming s is Symbol.toPrimitive
-
-    // FIXME: actually these have a side effect, but it's ignored now
-    // same for -, *, /, %, **, <<, >>
-    test("'' + s", false); // assuming s is Symbol
-    test("0 + b", false); // assuming b is a BitInt
-
-    // FIXME: actually these throws an error, but it's ignored now
-    test("1n ** (-1n)", false);
-    test("1n / 0n", false);
-    test("1n % 0n", false);
-    test("0n >>> 1n", false); // >>> throws an error even when both operands are bigint
 }

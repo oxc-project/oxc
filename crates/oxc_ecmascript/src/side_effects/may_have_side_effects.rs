@@ -4,11 +4,12 @@ use oxc_ast::ast::*;
 ///
 /// This trait assumes the following:
 /// - `.toString()`, `.valueOf()`, and `[Symbol.toPrimitive]()` are side-effect free.
+///   - This is mainly to assume `ToPrimitive` is side-effect free.
 /// - Errors thrown when creating a String or an Array that exceeds the maximum length does not happen.
 /// - TDZ errors does not happen.
 ///
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
-pub trait MayHaveSideEffects {
+pub trait MayHaveSideEffects: Sized {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool;
 
     fn expression_may_have_side_effects(&self, e: &Expression<'_>) -> bool {
@@ -73,58 +74,99 @@ pub trait MayHaveSideEffects {
                 }
             }
             UnaryOperator::UnaryPlus => {
-                match &e.argument {
-                    Expression::NumericLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::BooleanLiteral(_)
-                    | Expression::StringLiteral(_) => false,
-                    Expression::Identifier(ident) => {
-                        !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
-                            && self.is_global_reference(ident))
-                    }
-                    Expression::ArrayExpression(arr) => {
-                        self.array_expression_may_have_side_effects(arr)
-                    }
-                    // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-                    // ToPrimitive for an object returns `"[object Object]"`
-                    Expression::ObjectExpression(obj) => !obj.properties.is_empty(),
-                    // ToNumber throws an error when the argument is Symbol / BigInt / an object that
-                    // returns Symbol or BigInt from ToPrimitive
-                    _ => true,
-                }
+                // ToNumber throws an error when the argument is Symbol / BigInt / an object that
+                // returns Symbol or BigInt from ToPrimitive
+                maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
+                    self,
+                    &e.argument,
+                ) || self.expression_may_have_side_effects(&e.argument)
             }
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
-                match &e.argument {
-                    Expression::BigIntLiteral(_)
-                    | Expression::NumericLiteral(_)
-                    | Expression::NullLiteral(_)
-                    | Expression::BooleanLiteral(_)
-                    | Expression::StringLiteral(_) => false,
-                    Expression::Identifier(ident) => {
-                        !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
-                            && self.is_global_reference(ident))
-                    }
-                    Expression::ArrayExpression(arr) => {
-                        self.array_expression_may_have_side_effects(arr)
-                    }
-                    // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-                    // ToPrimitive for an object returns `"[object Object]"`
-                    Expression::ObjectExpression(obj) => !obj.properties.is_empty(),
-                    // ToNumber throws an error when the argument is Symbol an object that
-                    // returns Symbol from ToPrimitive
-                    _ => true,
-                }
+                // ToNumeric throws an error when the argument is Symbol / an object that
+                // returns Symbol from ToPrimitive
+                maybe_symbol_or_to_primitive_may_return_symbol(self, &e.argument)
+                    || self.expression_may_have_side_effects(&e.argument)
             }
         }
     }
 
     fn binary_expression_may_have_side_effects(&self, e: &BinaryExpression<'_>) -> bool {
-        // `instanceof` and `in` can throw `TypeError`
-        if matches!(e.operator, BinaryOperator::In | BinaryOperator::Instanceof) {
-            return true;
+        match e.operator {
+            BinaryOperator::Equality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::GreaterEqualThan => {
+                self.expression_may_have_side_effects(&e.left)
+                    || self.expression_may_have_side_effects(&e.right)
+            }
+            BinaryOperator::In | BinaryOperator::Instanceof => {
+                // instanceof and in can throw `TypeError`
+                true
+            }
+            BinaryOperator::Addition => {
+                if is_string_or_to_primitive_returns_string(&e.left)
+                    || is_string_or_to_primitive_returns_string(&e.right)
+                {
+                    let other_side = if is_string_or_to_primitive_returns_string(&e.left) {
+                        &e.right
+                    } else {
+                        &e.left
+                    };
+                    maybe_symbol_or_to_primitive_may_return_symbol(self, other_side)
+                        || self.expression_may_have_side_effects(&e.left)
+                        || self.expression_may_have_side_effects(&e.right)
+                } else if e.left.is_number() || e.right.is_number() {
+                    let other_side = if e.left.is_number() { &e.right } else { &e.left };
+                    !matches!(
+                        other_side,
+                        Expression::NullLiteral(_)
+                            | Expression::NumericLiteral(_)
+                            | Expression::BooleanLiteral(_)
+                    )
+                } else {
+                    !(e.left.is_big_int_literal() && e.right.is_big_int_literal())
+                }
+            }
+            BinaryOperator::Subtraction
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::ShiftLeft
+            | BinaryOperator::BitwiseOR
+            | BinaryOperator::ShiftRight
+            | BinaryOperator::BitwiseXOR
+            | BinaryOperator::BitwiseAnd
+            | BinaryOperator::Exponential
+            | BinaryOperator::ShiftRightZeroFill => {
+                if e.left.is_big_int_literal() || e.right.is_big_int_literal() {
+                    if let (Expression::BigIntLiteral(_), Expression::BigIntLiteral(right)) =
+                        (&e.left, &e.right)
+                    {
+                        match e.operator {
+                            BinaryOperator::Exponential => right.is_negative(),
+                            BinaryOperator::Division | BinaryOperator::Remainder => right.is_zero(),
+                            BinaryOperator::ShiftRightZeroFill => true,
+                            _ => false,
+                        }
+                    } else {
+                        true
+                    }
+                } else if !(maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
+                    self, &e.left,
+                ) || maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
+                    self, &e.right,
+                )) {
+                    self.expression_may_have_side_effects(&e.left)
+                        || self.expression_may_have_side_effects(&e.right)
+                } else {
+                    true
+                }
+            }
         }
-        self.expression_may_have_side_effects(&e.left)
-            || self.expression_may_have_side_effects(&e.right)
     }
 
     fn logical_expression_may_have_side_effects(&self, e: &LogicalExpression<'_>) -> bool {
@@ -213,5 +255,67 @@ pub trait MayHaveSideEffects {
             }
             ClassElement::TSIndexSignature(_) => false,
         }
+    }
+}
+
+fn is_string_or_to_primitive_returns_string(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::ArrayExpression(_) => true,
+        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
+        // ToPrimitive for an object returns `"[object Object]"`
+        Expression::ObjectExpression(obj) => obj.properties.is_empty(),
+        _ => false,
+    }
+}
+
+/// Whether the given expression may be a `Symbol` or converted to a `Symbol` when passed to `toPrimitive`.
+fn maybe_symbol_or_to_primitive_may_return_symbol(
+    m: &impl MayHaveSideEffects,
+    expr: &Expression<'_>,
+) -> bool {
+    match expr {
+        Expression::Identifier(ident) => {
+            !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
+                && m.is_global_reference(ident))
+        }
+        Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::ArrayExpression(_) => false,
+        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
+        // ToPrimitive for an object returns `"[object Object]"`
+        Expression::ObjectExpression(obj) => !obj.properties.is_empty(),
+        _ => true,
+    }
+}
+
+/// Whether the given expression may be a `Symbol`/`BigInt` or converted to a `Symbol`/`BigInt` when passed to `toPrimitive`.
+fn maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
+    m: &impl MayHaveSideEffects,
+    expr: &Expression<'_>,
+) -> bool {
+    match expr {
+        Expression::Identifier(ident) => {
+            !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
+                && m.is_global_reference(ident))
+        }
+        Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::ArrayExpression(_) => false,
+        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
+        // ToPrimitive for an object returns `"[object Object]"`
+        Expression::ObjectExpression(obj) => !obj.properties.is_empty(),
+        _ => true,
     }
 }

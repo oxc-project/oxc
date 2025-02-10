@@ -122,6 +122,11 @@ impl BigIntLiteral<'_> {
     pub fn is_zero(&self) -> bool {
         self.raw == "0n"
     }
+
+    /// Is this BigInt literal negative? (e.g. `-1n`).
+    pub fn is_negative(&self) -> bool {
+        self.raw.starts_with('-')
+    }
 }
 
 impl fmt::Display for BigIntLiteral<'_> {
