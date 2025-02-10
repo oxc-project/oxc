@@ -1,0 +1,41 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/overrides/directories-config.json fixtures/overrides
+working directory: 
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/overrides/lib/index.ts:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Delete this code.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/overrides/lib/tests/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Delete this code.
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/overrides/src/oxlint.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Delete this code.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/overrides/src/tests/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Delete this code.
+
+Found 2 warnings and 2 errors.
+Finished in <variable>ms on 7 files with 96 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

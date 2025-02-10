@@ -36,6 +36,7 @@ declare_oxc_lint!(
     /// const [foo] = parts;
     /// ```
     NoUnreadableArrayDestructuring,
+    unicorn,
     style
 );
 
@@ -140,7 +141,7 @@ fn test() {
 
     Tester::new(
         NoUnreadableArrayDestructuring::NAME,
-        NoUnreadableArrayDestructuring::CATEGORY,
+        NoUnreadableArrayDestructuring::PLUGIN,
         pass,
         fail,
     )

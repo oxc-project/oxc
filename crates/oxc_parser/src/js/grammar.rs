@@ -27,7 +27,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTarget<'a> {
 }
 
 impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
-    #[allow(clippy::only_used_in_recursion)]
+    #[expect(clippy::only_used_in_recursion)]
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
         match expr {
             Expression::Identifier(ident) => {

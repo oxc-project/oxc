@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoInnerDeclarations,
+    eslint,
     pedantic
 );
 
@@ -196,6 +197,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::CATEGORY, pass, fail)
+    Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

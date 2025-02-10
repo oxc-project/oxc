@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// <video><track kind="captions" src="caption_file.vtt" /></video>
     /// ```
     MediaHasCaption,
+    jsx_a11y,
     correctness
 );
 
@@ -269,5 +270,5 @@ fn test() {
         (r"<Box as='audio'><Track kind='subtitles' /></Box>", None, Some(settings()), None),
     ];
 
-    Tester::new(MediaHasCaption::NAME, MediaHasCaption::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(MediaHasCaption::NAME, MediaHasCaption::PLUGIN, pass, fail).test_and_snapshot();
 }

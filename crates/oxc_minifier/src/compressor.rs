@@ -4,8 +4,11 @@ use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
-    ast_passes::{DeadCodeElimination, Normalize, PeepholeOptimizations, RemoveSyntax},
-    CompressOptions, CompressorPass,
+    peephole::{
+        DeadCodeElimination, LatePeepholeOptimizations, Normalize, NormalizeOptions,
+        PeepholeOptimizations,
+    },
+    CompressOptions,
 };
 
 pub struct Compressor<'a> {
@@ -31,10 +34,11 @@ impl<'a> Compressor<'a> {
         program: &mut Program<'a>,
     ) {
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
-        RemoveSyntax::new(self.options).build(program, &mut ctx);
-        Normalize::new().build(program, &mut ctx);
-        PeepholeOptimizations::new(true, self.options).run_in_loop(program, &mut ctx);
-        PeepholeOptimizations::new(false, self.options).build(program, &mut ctx);
+        let normalize_options =
+            NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true };
+        Normalize::new(normalize_options, self.options).build(program, &mut ctx);
+        PeepholeOptimizations::new(self.options.target).run_in_loop(program, &mut ctx);
+        LatePeepholeOptimizations::new(self.options.target).build(program, &mut ctx);
     }
 
     pub fn dead_code_elimination(self, program: &mut Program<'a>) {
@@ -50,7 +54,9 @@ impl<'a> Compressor<'a> {
         program: &mut Program<'a>,
     ) {
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
-        RemoveSyntax::new(self.options).build(program, &mut ctx);
+        let normalize_options =
+            NormalizeOptions { convert_while_to_fors: false, convert_const_to_let: false };
+        Normalize::new(normalize_options, self.options).build(program, &mut ctx);
         DeadCodeElimination::new().build(program, &mut ctx);
     }
 }

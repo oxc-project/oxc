@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// const { bar } = obj?.foo;  // TypeError
     /// ```
     NoUnsafeOptionalChaining,
+    eslint,
     correctness
 );
 
@@ -274,6 +275,6 @@ fn test() {
         ("(foo ? obj?.foo : obj?.bar).bar", None),
     ];
 
-    Tester::new(NoUnsafeOptionalChaining::NAME, NoUnsafeOptionalChaining::CATEGORY, pass, fail)
+    Tester::new(NoUnsafeOptionalChaining::NAME, NoUnsafeOptionalChaining::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

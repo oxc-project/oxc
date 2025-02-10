@@ -33,6 +33,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConstructorSuper,
+    eslint,
     nursery // This rule should be implemented with CFG, the current implementation has a lot of
             // false positives.
 );
@@ -71,5 +72,5 @@ fn test() {
         // ("class A extends 'test' { constructor() { super(); } }", None),
     ];
 
-    Tester::new(ConstructorSuper::NAME, ConstructorSuper::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ConstructorSuper::NAME, ConstructorSuper::PLUGIN, pass, fail).test_and_snapshot();
 }

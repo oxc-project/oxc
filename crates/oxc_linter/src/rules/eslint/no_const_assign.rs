@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// b += 1;
     /// ```
     NoConstAssign,
+    eslint,
     correctness
 );
 
@@ -109,5 +110,5 @@ fn test() {
         ("const b = 0; ({a, ...b} = {a: 1, c: 2, d: 3})", None),
     ];
 
-    Tester::new(NoConstAssign::NAME, NoConstAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoConstAssign::NAME, NoConstAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

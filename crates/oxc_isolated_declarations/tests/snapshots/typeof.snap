@@ -1,0 +1,10 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/typeof.ts
+---
+```
+==================== .D.TS ====================
+
+import { ModA } from "mod";
+import { Variable } from "constant";
+export declare const Export: typeof ModA<typeof Variable>;

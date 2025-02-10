@@ -38,6 +38,7 @@ declare_oxc_lint!(
     /// <Item callback={this.props.callback} />
     /// ```
     JsxNoNewFunctionAsProp,
+    react_perf,
     perf
 );
 
@@ -191,7 +192,7 @@ fn test() {
         ",
     ];
 
-    Tester::new(JsxNoNewFunctionAsProp::NAME, JsxNoNewFunctionAsProp::CATEGORY, pass, fail)
+    Tester::new(JsxNoNewFunctionAsProp::NAME, JsxNoNewFunctionAsProp::PLUGIN, pass, fail)
         .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

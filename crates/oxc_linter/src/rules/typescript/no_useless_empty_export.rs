@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// export const value = 'Hello, world!';
     /// ```
     NoUselessEmptyExport,
+    typescript,
     correctness,
     fix
 );
@@ -140,7 +141,7 @@ fn test() {
         // ("import _ = require('_');export {};", "import _ = require('_');"),
     ];
 
-    Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::CATEGORY, pass, fail)
+    Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

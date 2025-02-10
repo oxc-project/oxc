@@ -1,5 +1,5 @@
 // NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/b5dc32740d9b45d11cff9b025896dd333c795b39/types/babel__core/index.d.ts).
-#![allow(rustdoc::bare_urls)]
+#![expect(rustdoc::bare_urls)]
 
 use std::{
     ops::ControlFlow,
@@ -133,6 +133,9 @@ pub struct TransformOptions {
     /// Inject Plugin
     #[napi(ts_type = "Record<string, string | [string, string]>")]
     pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
+
+    /// Decorator plugin
+    pub decorator: Option<DecoratorOptions>,
 }
 
 impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
@@ -150,6 +153,10 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             typescript: options
                 .typescript
                 .map(oxc::transformer::TypeScriptOptions::from)
+                .unwrap_or_default(),
+            decorator: options
+                .decorator
+                .map(oxc::transformer::DecoratorOptions::from)
                 .unwrap_or_default(),
             jsx: match options.jsx {
                 Some(Either::A(s)) => {
@@ -257,6 +264,25 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
                 }
             }),
         }
+    }
+}
+
+#[napi(object)]
+#[derive(Default)]
+pub struct DecoratorOptions {
+    /// Enables experimental support for decorators, which is a version of decorators that predates the TC39 standardization process.
+    ///
+    /// Decorators are a language feature which hasn’t yet been fully ratified into the JavaScript specification.
+    /// This means that the implementation version in TypeScript may differ from the implementation in JavaScript when it it decided by TC39.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#experimentalDecorators
+    /// @default false
+    pub legacy: Option<bool>,
+}
+
+impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
+    fn from(options: DecoratorOptions) -> Self {
+        oxc::transformer::DecoratorOptions { legacy: options.legacy.unwrap_or_default() }
     }
 }
 
@@ -597,7 +623,7 @@ impl CompilerInterface for Compiler {
         self.declaration_map = ret.map.map(SourceMap::from);
     }
 
-    #[allow(deprecated)]
+    #[expect(deprecated)]
     fn after_transform(
         &mut self,
         _program: &mut oxc::ast::ast::Program<'_>,
@@ -622,7 +648,7 @@ impl CompilerInterface for Compiler {
 ///
 /// @returns an object containing the transformed code, source maps, and any
 /// errors that occurred during parsing or transformation.
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 #[napi]
 pub fn transform(
     filename: String,

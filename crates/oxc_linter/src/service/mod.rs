@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
+use rayon::prelude::ParallelIterator;
 use runtime::Runtime;
 
 use oxc_diagnostics::DiagnosticSender;
@@ -91,8 +91,7 @@ impl LintService {
     /// # Panics
     pub fn run(&self, tx_error: &DiagnosticSender) {
         self.runtime
-            .iter_paths()
-            .par_bridge()
+            .par_iter_paths()
             .for_each_with(&self.runtime, |runtime, path| runtime.process_path(path, tx_error));
         tx_error.send(None).unwrap();
     }
@@ -107,7 +106,7 @@ impl LintService {
         tx_error: &DiagnosticSender,
     ) -> Vec<crate::Message<'a>> {
         self.runtime
-            .iter_paths()
+            .par_iter_paths()
             .flat_map(|path| {
                 let source_type = oxc_span::SourceType::from_path(path).unwrap();
                 self.runtime.init_cache_state(path);

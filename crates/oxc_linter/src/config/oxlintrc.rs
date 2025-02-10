@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -109,14 +112,14 @@ impl Oxlintrc {
         })?;
 
         let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
-            let guess = mime_guess::from_path(path);
-            let err = match guess.first() {
+            let ext = path.extension().and_then(OsStr::to_str);
+            let err = match ext {
                 // syntax error
-                Some(mime) if mime.subtype() == "json" => err.to_string(),
-                Some(_) => "Only json configuration is supported".to_string(),
+                Some(ext) if is_json_ext(ext) => err.to_string(),
+                Some(_) => "Only JSON configuration files are supported".to_string(),
                 None => {
                     format!(
-                        "{err}, if the configuration is not a json file, please use json instead."
+                        "{err}, if the configuration is not a JSON file, please use JSON instead."
                     )
                 }
             };
@@ -127,13 +130,14 @@ impl Oxlintrc {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
 
-        // Get absolute path from `path`
-        let absolute_path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
-
-        config.path = absolute_path;
+        config.path = path.to_path_buf();
 
         Ok(config)
     }
+}
+
+fn is_json_ext(ext: &str) -> bool {
+    ext == "json" || ext == "jsonc"
 }
 
 #[cfg(test)]

@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// <div> {'>'} </div>
     /// ```
     NoUnescapedEntities,
+    react,
     pedantic
 );
 
@@ -55,7 +56,7 @@ impl Rule for NoUnescapedEntities {
                     continue;
                 }
                 if let Some(escapes) = DEFAULTS.get(&char) {
-                    #[allow(clippy::cast_possible_truncation)]
+                    #[expect(clippy::cast_possible_truncation)]
                     ctx.diagnostic(no_unescaped_entities_diagnostic(
                         Span::new(
                             jsx_text.span.start + i as u32,
@@ -193,6 +194,6 @@ fn test() {
         r#"<script>测试 " 测试</script>"#,
     ];
 
-    Tester::new(NoUnescapedEntities::NAME, NoUnescapedEntities::CATEGORY, pass, fail)
+    Tester::new(NoUnescapedEntities::NAME, NoUnescapedEntities::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

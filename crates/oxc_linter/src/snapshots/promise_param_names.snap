@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^_?resolve$`
    ╭─[param_names.tsx:1:22]

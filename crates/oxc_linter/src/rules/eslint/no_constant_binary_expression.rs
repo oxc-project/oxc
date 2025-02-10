@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// // However, this will always result in `isEmpty` being `false`.
     /// ```
     NoConstantBinaryExpression,
+    eslint,
     correctness
 );
 
@@ -167,7 +168,7 @@ impl NoConstantBinaryExpression {
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
-                        && ctx.semantic().is_reference_to_global_variable(ident);
+                        && ctx.is_reference_to_global_variable(ident);
                 }
                 false
             }
@@ -187,7 +188,7 @@ impl NoConstantBinaryExpression {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| Self::has_constant_nullishness(last, non_nullish, ctx)),
+                .is_some_and(|last| Self::has_constant_nullishness(last, non_nullish, ctx)),
             Expression::Identifier(_) => expr.evaluate_to_undefined(),
             _ => false,
         }
@@ -254,7 +255,7 @@ impl NoConstantBinaryExpression {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| Self::has_constant_loose_boolean_comparison(last, ctx)),
+                .is_some_and(|last| Self::has_constant_loose_boolean_comparison(last, ctx)),
             Expression::ParenthesizedExpression(paren_expr) => {
                 Self::has_constant_loose_boolean_comparison(&paren_expr.expression, ctx)
             }
@@ -291,15 +292,12 @@ impl NoConstantBinaryExpression {
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     if ident.name == "String"
-                        || ident.name == "Number"
-                            && ctx.semantic().is_reference_to_global_variable(ident)
+                        || ident.name == "Number" && ctx.is_reference_to_global_variable(ident)
                     {
                         return true;
                     }
 
-                    if ident.name == "Boolean"
-                        && ctx.semantic().is_reference_to_global_variable(ident)
-                    {
+                    if ident.name == "Boolean" && ctx.is_reference_to_global_variable(ident) {
                         return call_expr
                             .arguments
                             .iter()
@@ -320,7 +318,7 @@ impl NoConstantBinaryExpression {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| Self::has_constant_strict_boolean_comparison(last, ctx)),
+                .is_some_and(|last| Self::has_constant_strict_boolean_comparison(last, ctx)),
             Expression::ParenthesizedExpression(paren_expr) => {
                 Self::has_constant_strict_boolean_comparison(&paren_expr.expression, ctx)
             }
@@ -341,7 +339,7 @@ impl NoConstantBinaryExpression {
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ctx.env_contains_var(ident.name.as_str())
-                        && ctx.semantic().is_reference_to_global_variable(ident);
+                        && ctx.is_reference_to_global_variable(ident);
                 }
                 false
             }
@@ -349,7 +347,7 @@ impl NoConstantBinaryExpression {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| Self::is_always_new(last, ctx)),
+                .is_some_and(|last| Self::is_always_new(last, ctx)),
             Expression::AssignmentExpression(assignment_expr)
                 if assignment_expr.operator == AssignmentOperator::Assign =>
             {
@@ -654,6 +652,6 @@ fn test() {
         ("window.abc ?? 'non-nullish' ?? anything", None),
     ];
 
-    Tester::new(NoConstantBinaryExpression::NAME, NoConstantBinaryExpression::CATEGORY, pass, fail)
+    Tester::new(NoConstantBinaryExpression::NAME, NoConstantBinaryExpression::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

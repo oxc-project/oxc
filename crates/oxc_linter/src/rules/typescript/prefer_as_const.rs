@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// let foo = { bar: 'baz' as 'baz' };
     /// ```
     PreferAsConst,
+    typescript,
     correctness,
     conditional_fix
 );
@@ -198,7 +199,7 @@ fn test() {
         // ("class foo { foo = <'bar'>'bar'; }", "class foo { foo = <const>'bar'; }", None),
     ];
 
-    Tester::new(PreferAsConst::NAME, PreferAsConst::CATEGORY, pass, fail)
+    Tester::new(PreferAsConst::NAME, PreferAsConst::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

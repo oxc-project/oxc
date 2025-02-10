@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// "Time: ${12 * 60 * 60 * 1000}";
     /// ```
     NoTemplateCurlyInString,
+    eslint,
     style,
     pending // TODO: conditional_fix
 );
@@ -112,6 +113,6 @@ fn test() {
         r#"'Hello, ${{foo: "bar"}.foo}'"#,
     ];
 
-    Tester::new(NoTemplateCurlyInString::NAME, NoTemplateCurlyInString::CATEGORY, pass, fail)
+    Tester::new(NoTemplateCurlyInString::NAME, NoTemplateCurlyInString::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

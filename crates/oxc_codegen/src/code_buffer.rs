@@ -506,7 +506,7 @@ mod test {
     }
 
     #[test]
-    #[allow(clippy::byte_char_slices)]
+    #[expect(clippy::byte_char_slices)]
     fn print_ascii_byte() {
         let mut code = CodeBuffer::new();
         code.print_ascii_byte(b'f');
@@ -519,7 +519,7 @@ mod test {
     }
 
     #[test]
-    #[allow(clippy::byte_char_slices)]
+    #[expect(clippy::byte_char_slices)]
     fn print_byte_unchecked() {
         let mut code = CodeBuffer::new();
         // SAFETY: These bytes are all ASCII
@@ -535,7 +535,7 @@ mod test {
     }
 
     #[test]
-    #[allow(clippy::byte_char_slices)]
+    #[expect(clippy::byte_char_slices)]
     fn print_ascii_bytes() {
         let mut code = CodeBuffer::new();
         code.print_ascii_bytes([b'f', b'o', b'o']);

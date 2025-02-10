@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUselessCatch,
+    eslint,
     correctness
 );
 
@@ -211,5 +212,5 @@ fn test() {
       ",
     ];
 
-    Tester::new(NoUselessCatch::NAME, NoUselessCatch::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessCatch::NAME, NoUselessCatch::PLUGIN, pass, fail).test_and_snapshot();
 }

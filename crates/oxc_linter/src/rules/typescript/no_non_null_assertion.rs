@@ -26,6 +26,7 @@ declare_oxc_lint!(
     /// x.y!;
     /// ```
     NoNonNullAssertion,
+    typescript,
     restriction,
 );
 
@@ -91,6 +92,6 @@ fn test() {
         	      ",
     ];
 
-    Tester::new(NoNonNullAssertion::NAME, NoNonNullAssertion::CATEGORY, pass, fail)
+    Tester::new(NoNonNullAssertion::NAME, NoNonNullAssertion::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

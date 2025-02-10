@@ -25,7 +25,7 @@ pub fn parse_regexp_literal(
     let mut offset = 0;
     for ch in source_text.chars() {
         let start = offset;
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         let end = start + ch.len_utf8() as u32;
 
         let offsets_and_cp: OffsetsAndCp = ((start, end), ch as u32);
@@ -498,7 +498,7 @@ impl Parser {
 
     fn advance(&mut self) {
         if let Some(ch) = self.chars.get(self.index) {
-            #[allow(clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_possible_truncation)]
             let len = ch.len_utf8() as u32;
             self.offset += len;
             self.index += 1;

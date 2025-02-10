@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// Promise.resolve(1).finally(() => { console.log(2) })
     /// ```
     NoReturnInFinally,
+    promise,
     nursery,
 );
 
@@ -112,6 +113,5 @@ fn test() {
         "Promise.resolve(1).finally(function () { return 2 })",
     ];
 
-    Tester::new(NoReturnInFinally::NAME, NoReturnInFinally::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoReturnInFinally::NAME, NoReturnInFinally::PLUGIN, pass, fail).test_and_snapshot();
 }

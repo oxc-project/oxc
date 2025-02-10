@@ -1,4 +1,4 @@
-#![allow(clippy::needless_pass_by_value)]
+#![expect(clippy::needless_pass_by_value)]
 
 use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
 use serde::{Deserialize, Serialize};

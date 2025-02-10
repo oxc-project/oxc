@@ -30,6 +30,7 @@ declare_oxc_lint!(
     ///    a! === b; // a non-null assertions(`!`) and an triple equals test(`===`)
     /// ```
     NoConfusingNonNullAssertion,
+    typescript,
     suspicious,
     pending
 );
@@ -158,11 +159,6 @@ fn test() {
     //     // ("f = 1 + d! == 2", "f = (1 + d!) == 2", None), TODO: Add suggest or the weird ;() fix
     //     // ("f =  d! == 2", "f = d == 2", None), TODO: Add suggest remove bang
     // ];
-    Tester::new(
-        NoConfusingNonNullAssertion::NAME,
-        NoConfusingNonNullAssertion::CATEGORY,
-        pass,
-        fail,
-    )
-    .test_and_snapshot();
+    Tester::new(NoConfusingNonNullAssertion::NAME, NoConfusingNonNullAssertion::PLUGIN, pass, fail)
+        .test_and_snapshot();
 }

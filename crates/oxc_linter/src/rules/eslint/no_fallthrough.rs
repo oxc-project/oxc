@@ -243,6 +243,7 @@ declare_oxc_lint!(
     /// Note that the last case statement in these examples does not cause a
     /// warning because there is nothing to fall through into.
     NoFallthrough,
+    eslint,
     // TODO: add options section to docs
     pedantic, // Fall through code are still incorrect.
     pending // TODO: add a dangerous suggestion for this rule.
@@ -670,5 +671,5 @@ fn test() {
         // ("switch (a === b ? c : d) { case 1: ; case 2: ; case 3: ; }", None)
     ];
 
-    Tester::new(NoFallthrough::NAME, NoFallthrough::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoFallthrough::NAME, NoFallthrough::PLUGIN, pass, fail).test_and_snapshot();
 }

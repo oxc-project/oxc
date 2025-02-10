@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// const fn = (a = 5, b = true, c = 'foo') => {};
     /// ```
     NoInferrableTypes,
+    typescript,
     style,
     pending
 );
@@ -157,7 +158,7 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
                 return true;
             }
             if let Expression::CallExpression(call_expr) = init.get_inner_expression() {
-                call_expr.callee.get_identifier_reference().map_or(false, |id| id.name == "Symbol")
+                call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "Symbol")
             } else {
                 false
             }
@@ -185,7 +186,7 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
 fn is_chain_call_expression_with_name(init: &Expression, name: &str) -> bool {
     if let Expression::ChainExpression(chain_expr) = init {
         if let ChainElement::CallExpression(call_expr) = &chain_expr.expression {
-            return call_expr.callee.get_identifier_reference().map_or(false, |id| id.name == name);
+            return call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == name);
         }
     }
     false
@@ -214,7 +215,7 @@ fn is_init_bigint(init: &Expression) -> bool {
 
     match init {
         Expression::CallExpression(call_expr) => {
-            call_expr.callee.get_identifier_reference().map_or(false, |id| id.name == "BigInt")
+            call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "BigInt")
         }
         Expression::BigIntLiteral(_) => true,
         _ => false,
@@ -230,7 +231,7 @@ fn is_init_boolean(init: &Expression) -> bool {
             matches!(unary_expr.operator, UnaryOperator::LogicalNot)
         }
         Expression::CallExpression(call_expr) => {
-            call_expr.callee.get_identifier_reference().map_or(false, |id| id.name == "Boolean")
+            call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "Boolean")
         }
         Expression::BooleanLiteral(_) => true,
         _ => false,
@@ -264,7 +265,7 @@ fn is_init_number(init: &Expression) -> bool {
     match init {
         Expression::Identifier(id) => id.name == "Infinity" || id.name == "NaN",
         Expression::CallExpression(call_expr) => {
-            call_expr.callee.get_identifier_reference().map_or(false, |id| id.name == "Number")
+            call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "Number")
         }
         Expression::NumericLiteral(_) => true,
         _ => false,
@@ -276,7 +277,7 @@ fn is_init_string(init: &Expression) -> bool {
     }
     match init {
         Expression::CallExpression(call_expr) => {
-            call_expr.callee.get_identifier_reference().map_or(false, |id| id.name == "String")
+            call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == "String")
         }
         Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
         _ => false,
@@ -512,7 +513,7 @@ fn test() {
             Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
     ];
-    Tester::new(NoInferrableTypes::NAME, NoInferrableTypes::CATEGORY, pass, fail)
+    Tester::new(NoInferrableTypes::NAME, NoInferrableTypes::PLUGIN, pass, fail)
         //.expect_fix(fix)
         .test_and_snapshot();
 }

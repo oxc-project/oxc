@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// <App {...props} myAttr="1" />
     /// ```
     JsxPropsNoSpreadMulti,
+    react,
     correctness,
     fix
 );
@@ -65,15 +66,15 @@ impl Rule for JsxPropsNoSpreadMulti {
             let spread_attrs =
                 jsx_opening_el.attributes.iter().filter_map(JSXAttributeItem::as_spread);
 
-            let mut identifier_names: FxHashMap<&Atom, Span> = FxHashMap::default();
+            let mut identifier_names: FxHashMap<Atom, Span> = FxHashMap::default();
             let mut member_expressions = Vec::new();
-            let mut duplicate_spreads: FxHashMap<&Atom, Vec<Span>> = FxHashMap::default();
+            let mut duplicate_spreads: FxHashMap<Atom, Vec<Span>> = FxHashMap::default();
 
             for spread_attr in spread_attrs {
                 let argument_without_parenthesized = spread_attr.argument.without_parentheses();
 
                 if let Some(identifier_name) =
-                    argument_without_parenthesized.get_identifier_reference().map(|arg| &arg.name)
+                    argument_without_parenthesized.get_identifier_reference().map(|arg| arg.name)
                 {
                     identifier_names
                         .entry(identifier_name)
@@ -96,7 +97,7 @@ impl Rule for JsxPropsNoSpreadMulti {
                 ctx.diagnostic_with_fix(
                     jsx_props_no_spread_multiple_identifiers_diagnostic(
                         spans.clone(),
-                        identifier_name,
+                        &identifier_name,
                     ),
                     |_fixer| {
                         spans
@@ -186,7 +187,7 @@ fn test() {
         ("<div {...props} {...props} {...props} />", "<div   {...props} />"),
     ];
 
-    Tester::new(JsxPropsNoSpreadMulti::NAME, JsxPropsNoSpreadMulti::CATEGORY, pass, fail)
+    Tester::new(JsxPropsNoSpreadMulti::NAME, JsxPropsNoSpreadMulti::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

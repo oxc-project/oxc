@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]
@@ -135,7 +134,7 @@ snapshot_kind: text
    ·                          ────────
  5 │                        */
    ╰────
-  help: Remove redundunt `@returns` tag.
+  help: Remove redundant `@returns` tag.
 
   ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
    ╭─[require_returns.tsx:5:14]

@@ -46,7 +46,7 @@ pub struct TransformCtx<'a> {
     pub top_level_statements: TopLevelStatementsStore<'a>,
 }
 
-impl<'a> TransformCtx<'a> {
+impl TransformCtx<'_> {
     pub fn new(source_path: &Path, options: &TransformOptions) -> Self {
         let filename = source_path
             .file_stem() // omit file extension

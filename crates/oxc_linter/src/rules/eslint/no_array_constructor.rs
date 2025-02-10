@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// let arr3 = new Array(9);
     /// ```
     NoArrayConstructor,
+    eslint,
     pedantic,
     pending
 );
@@ -124,6 +125,6 @@ fn test() {
         ("Array(0, 1, 2)", None),
     ];
 
-    Tester::new(NoArrayConstructor::NAME, NoArrayConstructor::CATEGORY, pass, fail)
+    Tester::new(NoArrayConstructor::NAME, NoArrayConstructor::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

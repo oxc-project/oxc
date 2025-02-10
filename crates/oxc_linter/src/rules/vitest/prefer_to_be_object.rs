@@ -61,6 +61,7 @@ declare_oxc_lint!(
     /// expectTypeOf({}).toBeObject();
     /// ```
     PreferToBeObject,
+    vitest,
     style,
     fix
 );
@@ -231,7 +232,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(PreferToBeObject::NAME, PreferToBeObject::CATEGORY, pass, fail)
+    Tester::new(PreferToBeObject::NAME, PreferToBeObject::PLUGIN, pass, fail)
         .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

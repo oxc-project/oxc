@@ -4,8 +4,9 @@ use oxc_syntax::identifier::{
     is_irregular_line_terminator, is_irregular_whitespace, CR, FF, LF, LS, PS, TAB, VT,
 };
 
-use super::{Kind, Lexer, Span};
 use crate::diagnostics;
+
+use super::{Kind, Lexer, Span};
 
 enum SurrogatePair {
     // valid \u Hex4Digits \u Hex4Digits

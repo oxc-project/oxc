@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// var re = /foo   bar/;
     /// ```
     NoRegexSpaces,
+    eslint,
     restriction,
     pending // TODO: This is somewhat autofixable, but the fixer does not exist yet.
 );
@@ -157,7 +158,7 @@ impl<'a> Visit<'a> for ConsecutiveSpaceFinder {
         if ch.value != u32::from(b' ') {
             return;
         }
-        if let Some(ref mut space_span) = self.last_space_span {
+        if let Some(space_span) = &mut self.last_space_span {
             // If this is consecutive with the last space, extend it
             if space_span.end == ch.span.start {
                 space_span.end = ch.span.end;
@@ -248,5 +249,5 @@ fn test() {
         "var foo = new RegExp('[[    ]    ]    ', 'v');",
     ];
 
-    Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail).test_and_snapshot();
 }

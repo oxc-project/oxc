@@ -128,7 +128,7 @@ fn parse_capturing_groups<'a>(
                 if reader.eat('>') {
                     let group_name = reader.atom(span_start, span_end);
 
-                    simplified.push(SimpleUnit::GroupName(group_name.clone()));
+                    simplified.push(SimpleUnit::GroupName(group_name));
                     // Check duplicates later
                     if let Some(last_span) = group_names.get(&group_name) {
                         let entry = may_duplicates.entry(group_name).or_default();
@@ -203,7 +203,7 @@ fn parse_capturing_groups<'a>(
         }
     }
 
-    Ok((num_of_left_capturing_parens, group_names.keys().cloned().collect()))
+    Ok((num_of_left_capturing_parens, group_names.keys().copied().collect()))
 }
 
 #[cfg(test)]

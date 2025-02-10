@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoIrregularWhitespace,
+    eslint,
     correctness
 );
 
@@ -40,7 +41,7 @@ impl Rule for NoIrregularWhitespace {
     }
 }
 
-#[allow(clippy::unicode_not_nfc, clippy::invisible_characters)]
+#[expect(clippy::unicode_not_nfc, clippy::invisible_characters)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -405,6 +406,6 @@ fn test() {
         // (r"<div>　</div>;", None),
     ];
 
-    Tester::new(NoIrregularWhitespace::NAME, NoIrregularWhitespace::CATEGORY, pass, fail)
+    Tester::new(NoIrregularWhitespace::NAME, NoIrregularWhitespace::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

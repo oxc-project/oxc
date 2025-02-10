@@ -1,13 +1,14 @@
 packages:
-  - 'napi/**'
-  - 'wasm/**'
-  - 'npm/**'
-  - 'editors/**'
+  - 'napi/*'
+  - 'wasm/*'
+  - 'npm/*'
+  - 'editors/*'
   - 'tasks/benchmark/codspeed'
   - 'tasks/transform_conformance'
   - 'tasks/compat_data'
+  - 'tasks/e2e'
 
 catalog:
-  "@napi-rs/cli": 3.0.0-alpha.61
-  "vitest": 2.1.2
-  "typescript": 5.6.3
+  "@napi-rs/cli": 3.0.0-alpha.70
+  "vitest": 3.0.5
+  "typescript": 5.7.3

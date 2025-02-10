@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// childNode.remove();
     /// ```
     PreferDomNodeRemove,
+    unicorn,
     pedantic
 );
 
@@ -188,6 +189,6 @@ fn test() {
         r"a?.b.parentNode.removeChild(a.b)",
     ];
 
-    Tester::new(PreferDomNodeRemove::NAME, PreferDomNodeRemove::CATEGORY, pass, fail)
+    Tester::new(PreferDomNodeRemove::NAME, PreferDomNodeRemove::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

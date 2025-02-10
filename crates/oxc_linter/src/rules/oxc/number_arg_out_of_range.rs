@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NumberArgOutOfRange,
+    oxc,
     correctness
 );
 
@@ -100,6 +101,6 @@ fn test() {
         ("var x = 42;var s = x.toPrecision(100);", None),
     ];
 
-    Tester::new(NumberArgOutOfRange::NAME, NumberArgOutOfRange::CATEGORY, pass, fail)
+    Tester::new(NumberArgOutOfRange::NAME, NumberArgOutOfRange::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

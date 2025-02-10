@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// const foo = [maybeArray].flat();
     /// ```
     PreferArrayFlat,
+    unicorn,
     pedantic,
     conditional_fix
 );
@@ -144,7 +145,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
             &first_argument.params.items[1].pattern.kind,
         ) {
             (
-                BindingPatternKind::BindingIdentifier(ref first_param),
+                BindingPatternKind::BindingIdentifier(first_param),
                 BindingPatternKind::BindingIdentifier(second_param),
             ) => Some((&first_param.name, &second_param.name)),
 
@@ -457,7 +458,7 @@ fn test() {
         ("array.reduce((a, b) => [...a, ...b], [])", "array.flat()"),
     ];
 
-    Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::CATEGORY, pass, fail)
+    Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

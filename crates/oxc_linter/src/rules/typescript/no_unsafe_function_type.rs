@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// identity = value => value;
     /// ```
     NoUnsafeFunctionType,
+    typescript,
     pedantic,
 );
 
@@ -121,6 +122,6 @@ fn test() {
 			      ",
     ];
 
-    Tester::new(NoUnsafeFunctionType::NAME, NoUnsafeFunctionType::CATEGORY, pass, fail)
+    Tester::new(NoUnsafeFunctionType::NAME, NoUnsafeFunctionType::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

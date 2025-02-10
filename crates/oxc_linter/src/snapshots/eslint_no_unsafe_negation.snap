@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-unsafe-negation): Unexpected logical not in the left hand side of 'in' operator
    ╭─[no_unsafe_negation.tsx:1:1]

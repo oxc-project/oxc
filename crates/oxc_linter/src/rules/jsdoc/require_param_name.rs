@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// function quux (foo) {}
     /// ```
     RequireParamName,
+    jsdoc,
     pedantic,
 );
 
@@ -189,5 +190,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireParamName::NAME, RequireParamName::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(RequireParamName::NAME, RequireParamName::PLUGIN, pass, fail).test_and_snapshot();
 }

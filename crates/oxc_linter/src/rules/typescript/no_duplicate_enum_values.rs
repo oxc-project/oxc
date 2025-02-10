@@ -82,11 +82,12 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDuplicateEnumValues,
+    typescript,
     correctness
 );
 
 impl Rule for NoDuplicateEnumValues {
-    #[allow(clippy::float_cmp)]
+    #[expect(clippy::float_cmp)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSEnumDeclaration(enum_body) = node.kind() else {
             return;
@@ -269,6 +270,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDuplicateEnumValues::NAME, NoDuplicateEnumValues::CATEGORY, pass, fail)
+    Tester::new(NoDuplicateEnumValues::NAME, NoDuplicateEnumValues::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

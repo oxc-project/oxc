@@ -58,6 +58,7 @@ declare_oxc_lint!(
     /// /** @private */
     /// ```
     EmptyTags,
+    jsdoc,
     restriction
 );
 
@@ -363,5 +364,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(EmptyTags::NAME, EmptyTags::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(EmptyTags::NAME, EmptyTags::PLUGIN, pass, fail).test_and_snapshot();
 }

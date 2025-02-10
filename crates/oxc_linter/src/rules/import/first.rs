@@ -88,6 +88,7 @@ declare_oxc_lint!(
     /// ```
     ///
     First,
+    import,
     style,
     pending  // TODO: fixer
 );
@@ -120,8 +121,8 @@ impl Rule for First {
 
         for statement in &program.body {
             match statement {
-                Statement::TSImportEqualsDeclaration(decl) => match decl.module_reference {
-                    TSModuleReference::ExternalModuleReference(ref mod_ref) => {
+                Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
+                    TSModuleReference::ExternalModuleReference(mod_ref) => {
                         if matches!(self.absolute_first, AbsoluteFirst::AbsoluteFirst) {
                             if is_relative_path(mod_ref.expression.value.as_str()) {
                                 any_relative = true;
@@ -229,7 +230,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(First::NAME, First::CATEGORY, pass, fail)
+    Tester::new(First::NAME, First::PLUGIN, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

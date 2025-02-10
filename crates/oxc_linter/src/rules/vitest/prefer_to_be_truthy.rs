@@ -95,6 +95,7 @@ declare_oxc_lint!(
     /// expectTypeOf(foo).toBeTruthy()
     /// ```
     PreferToBeTruthy,
+    vitest,
     style,
     fix
 );
@@ -166,7 +167,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(PreferToBeTruthy::NAME, PreferToBeTruthy::CATEGORY, pass, fail)
+    Tester::new(PreferToBeTruthy::NAME, PreferToBeTruthy::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_vitest_plugin(true)
         .test_and_snapshot();

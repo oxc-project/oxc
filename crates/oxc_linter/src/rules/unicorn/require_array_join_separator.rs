@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// foo.join(",")
     /// ```
     RequireArrayJoinSeparator,
+    unicorn,
     style,
     conditional_fix
 );
@@ -76,7 +77,7 @@ impl Rule for RequireArrayJoinSeparator {
                         .position(|c| c == '(');
 
                     if let Some(open_bracket) = open_bracket {
-                        #[allow(clippy::cast_possible_truncation)]
+                        #[expect(clippy::cast_possible_truncation)]
                         fixer.insert_text_after_range(
                             Span::new(
                                 0,
@@ -180,7 +181,7 @@ fn test() {
         (r"foo?.join()", r#"foo?.join(",")"#),
     ];
 
-    Tester::new(RequireArrayJoinSeparator::NAME, RequireArrayJoinSeparator::CATEGORY, pass, fail)
+    Tester::new(RequireArrayJoinSeparator::NAME, RequireArrayJoinSeparator::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -3,9 +3,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use regex::Regex;
+use regex::Regex;
 use rustc_hash::FxHashMap;
 use serde::{de::Error, Deserialize, Deserializer};
+use serde::{de::Error, Deserialize, Deserializer};
 use serde_json::Value;
+use std::borrow::Cow;
 use std::borrow::Cow;
 
 use crate::{
@@ -36,10 +39,132 @@ fn diagnostic_pattern(span: Span, help: Option<CompactStr>, source: &str) -> Oxc
 }
 
 fn diagnostic_pattern_and_import_name(
+fn diagnostic_with_maybe_help(span: Span, msg: String, help: Option<CompactStr>) -> OxcDiagnostic {
+    if let Some(help) = help {
+        return OxcDiagnostic::warn(msg).with_help(help).with_label(span);
+    }
+
+    OxcDiagnostic::warn(msg).with_label(span)
+}
+
+fn diagnostic_path(span: Span, help: Option<CompactStr>, source: &str) -> OxcDiagnostic {
+    let msg = format!("'{source}' import is restricted from being used.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_pattern(span: Span, help: Option<CompactStr>, source: &str) -> OxcDiagnostic {
+    let msg = format!("'{source}' import is restricted from being used by a pattern.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_pattern_and_import_name(
+    span: Span,
+    help: Option<CompactStr>,
+    name: &str,
+    help: Option<CompactStr>,
+    name: &str,
+    source: &str,
+) -> OxcDiagnostic {
+    let msg =
+        format!("'{name}' import from '{source}' is restricted from being used by a pattern.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_pattern_and_everything(
     span: Span,
     help: Option<CompactStr>,
     name: &str,
     source: &str,
+) -> OxcDiagnostic {
+    let msg =
+    format!("* import is invalid because '{name}' from '{source}' is restricted from being used by a pattern.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_pattern_and_everything_with_regex_import_name(
+    span: Span,
+    help: Option<CompactStr>,
+    name: &SerdeRegexWrapper<Regex>,
+    source: &str,
+) -> OxcDiagnostic {
+    let regex = name.as_str();
+    let msg =
+    format!("* import is invalid because import name matching '{regex}' pattern from '{source}' is restricted from being used.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_everything(
+    span: Span,
+    help: Option<CompactStr>,
+    name: &str,
+    source: &str,
+) -> OxcDiagnostic {
+    let msg = format!("* import is invalid because '{name}' from '{source}' is restricted.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_import_name(
+    span: Span,
+    help: Option<CompactStr>,
+    name: &str,
+    source: &str,
+) -> OxcDiagnostic {
+    let msg = format!("'{name}' import from '{source}' is restricted.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_allowed_import_name(
+    span: Span,
+    help: Option<CompactStr>,
+    name: &str,
+    source: &str,
+    allowed: &str,
+) -> OxcDiagnostic {
+    let msg = format!("'{name}' import from '{source}' is restricted because only {allowed} import(s) is/are allowed.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_everything_with_allowed_import_name(
+    span: Span,
+    help: Option<CompactStr>,
+    source: &str,
+    allowed: &str,
+) -> OxcDiagnostic {
+    let msg =
+        format!("* import is invalid because only '{allowed}' from '{source}' is/are allowed.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_allowed_import_name_pattern(
+    span: Span,
+    help: Option<CompactStr>,
+    name: &str,
+    source: &str,
+    allowed_pattern: &str,
+) -> OxcDiagnostic {
+    let msg = format!("'{name}' import from '{source}' is restricted because only imports that match the pattern '{allowed_pattern}' are allowed from '{source}'.");
+
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_everything_with_allowed_import_name_pattern(
+    span: Span,
+    help: Option<CompactStr>,
+    source: &str,
+    allowed_pattern: &str,
+) -> OxcDiagnostic {
+    let msg = format!("* import is invalid because only imports that match the pattern '{allowed_pattern}' from '{source}' are allowed.");
+
+    diagnostic_with_maybe_help(span, msg, help)
 ) -> OxcDiagnostic {
     let msg =
         format!("'{name}' import from '{source}' is restricted from being used by a pattern.");
@@ -209,6 +334,33 @@ impl<'de> Deserialize<'de> for SerdeRegexWrapper<Regex> {
     }
 }
 
+/// A wrapper type which implements `Serialize` and `Deserialize` for
+/// types involving `Regex`
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+pub struct SerdeRegexWrapper<T>(pub T);
+
+impl std::ops::Deref for SerdeRegexWrapper<Regex> {
+    type Target = Regex;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'de> Deserialize<'de> for SerdeRegexWrapper<Regex> {
+    fn deserialize<D>(d: D) -> Result<SerdeRegexWrapper<Regex>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = <Cow<str>>::deserialize(d)?;
+
+        match s.parse() {
+            Ok(regex) => Ok(SerdeRegexWrapper(regex)),
+            Err(err) => Err(D::Error::custom(err)),
+        }
+    }
+}
+
 #[derive(Debug)]
 enum GlobResult {
     Found,
@@ -246,6 +398,7 @@ declare_oxc_lint!(
     /// export { foo } from "bar";
     /// ```
     NoRestrictedImports,
+    eslint,
     nursery,
 );
 
@@ -319,6 +472,31 @@ fn add_configuration_patterns_from_object(
                     }
 
                     patterns.push(pattern);
+                if let Ok(pattern) = serde_json::from_value::<RestrictedPattern>(path_value.clone())
+                {
+                    if pattern.group.is_some() && pattern.regex.is_some() {
+                        // ToDo: not allowed
+                    }
+
+                    // allowImportNames cannot be used in combination with importNames, importNamePattern or allowImportNamePattern.
+                    if pattern.allow_import_names.is_some()
+                        && (pattern.import_names.is_some()
+                            || pattern.import_name_pattern.is_some()
+                            || pattern.allow_import_name_pattern.is_some())
+                    {
+                        // ToDo: not allowed
+                    }
+
+                    // allowImportNamePattern cannot be used in combination with importNames, importNamePattern or allowImportNames.
+                    if pattern.allow_import_name_pattern.is_some()
+                        && (pattern.import_names.is_some()
+                            || pattern.import_name_pattern.is_some()
+                            || pattern.allow_import_names.is_some())
+                    {
+                        // ToDo: not allowed
+                    }
+
+                    patterns.push(pattern);
                 }
             }
             _ => (),
@@ -330,7 +508,10 @@ fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, mo
     paths.push(RestrictedPattern {
         group: Some(vec![CompactStr::new(module_name)]),
         regex: None,
+        group: Some(vec![CompactStr::new(module_name)]),
+        regex: None,
         import_names: None,
+        import_name_pattern: None,
         import_name_pattern: None,
         allow_import_names: None,
         allow_import_name_pattern: None,
@@ -348,12 +529,27 @@ enum NameSpanAllowedResult {
 }
 
 fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> NameSpanAllowedResult {
+#[derive(PartialEq)]
+enum NameSpanAllowedResult {
+    Allowed,
+    GeneralDisallowed,
+    NameDisallowed,
+}
+
+fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> NameSpanAllowedResult {
     // fast check if this name is allowed
     if path.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
+        return NameSpanAllowedResult::Allowed;
         return NameSpanAllowedResult::Allowed;
     }
 
     if path.import_names.as_ref().is_none() {
+        // when no importNames and no allowImportNames option is provided, no import in general is allowed
+        if path.allow_import_names.is_some() {
+            return NameSpanAllowedResult::NameDisallowed;
+        }
+
+        return NameSpanAllowedResult::GeneralDisallowed;
         // when no importNames and no allowImportNames option is provided, no import in general is allowed
         if path.allow_import_names.is_some() {
             return NameSpanAllowedResult::NameDisallowed;
@@ -365,12 +561,18 @@ fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> Nam
     // the name is found is the importNames list
     if path.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
         return NameSpanAllowedResult::NameDisallowed;
+        return NameSpanAllowedResult::NameDisallowed;
     }
 
     // we allow it
     NameSpanAllowedResult::Allowed
+    NameSpanAllowedResult::Allowed
 }
 
+fn is_name_span_allowed_in_pattern(
+    name: &CompactStr,
+    pattern: &RestrictedPattern,
+) -> NameSpanAllowedResult {
 fn is_name_span_allowed_in_pattern(
     name: &CompactStr,
     pattern: &RestrictedPattern,
@@ -383,8 +585,21 @@ fn is_name_span_allowed_in_pattern(
     // fast check if this name is allowed
     if pattern.get_allow_import_name_pattern_result(name) {
         return NameSpanAllowedResult::Allowed;
+        return NameSpanAllowedResult::Allowed;
     }
 
+    // fast check if this name is allowed
+    if pattern.get_allow_import_name_pattern_result(name) {
+        return NameSpanAllowedResult::Allowed;
+    }
+
+    // when no importNames or importNamePattern option is provided, no import in general is allowed
+    if pattern.import_names.as_ref().is_none() && pattern.import_name_pattern.is_none() {
+        if pattern.allow_import_names.is_some() || pattern.allow_import_name_pattern.is_some() {
+            return NameSpanAllowedResult::NameDisallowed;
+        }
+
+        return NameSpanAllowedResult::GeneralDisallowed;
     // when no importNames or importNamePattern option is provided, no import in general is allowed
     if pattern.import_names.as_ref().is_none() && pattern.import_name_pattern.is_none() {
         if pattern.allow_import_names.is_some() || pattern.allow_import_name_pattern.is_some() {
@@ -402,9 +617,24 @@ fn is_name_span_allowed_in_pattern(
     // the name is found is the importNamePattern
     if pattern.get_import_name_pattern_result(name) {
         return NameSpanAllowedResult::NameDisallowed;
+        return NameSpanAllowedResult::NameDisallowed;
+    }
+
+    // the name is found is the importNamePattern
+    if pattern.get_import_name_pattern_result(name) {
+        return NameSpanAllowedResult::NameDisallowed;
     }
 
     // we allow it
+    NameSpanAllowedResult::Allowed
+}
+
+#[derive(PartialEq, Debug)]
+enum ImportNameResult {
+    Allowed,
+    GeneralDisallowed,
+    DefaultDisallowed,
+    NameDisallowed(NameSpan),
     NameSpanAllowedResult::Allowed
 }
 
@@ -442,7 +672,27 @@ impl RestrictedPath {
                     NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
                     NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
                 }
+            ImportImportName::Name(import) => {
+                match is_name_span_allowed_in_path(&import.name, self) {
+                    NameSpanAllowedResult::NameDisallowed => {
+                        ImportNameResult::NameDisallowed(import.clone())
+                    }
+                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                }
             }
+            ImportImportName::Default(span) => {
+                let name = CompactStr::new("default");
+
+                match is_name_span_allowed_in_path(&name, self) {
+                    NameSpanAllowedResult::NameDisallowed => {
+                        ImportNameResult::NameDisallowed(NameSpan::new(name, *span))
+                    }
+                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                }
+            }
+            ImportImportName::NamespaceObject => ImportNameResult::DefaultDisallowed,
             ImportImportName::NamespaceObject => ImportNameResult::DefaultDisallowed,
         }
     }
@@ -453,6 +703,19 @@ impl RestrictedPath {
         }
 
         match &name {
+            ExportImportName::Name(import) => {
+                match is_name_span_allowed_in_path(&import.name, self) {
+                    NameSpanAllowedResult::NameDisallowed => {
+                        ImportNameResult::NameDisallowed(import.clone())
+                    }
+                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                }
+            }
+            ExportImportName::All | ExportImportName::AllButDefault => {
+                ImportNameResult::DefaultDisallowed
+            }
+            ExportImportName::Null => ImportNameResult::Allowed,
             ExportImportName::Name(import) => {
                 match is_name_span_allowed_in_path(&import.name, self) {
                     NameSpanAllowedResult::NameDisallowed => {
@@ -495,7 +758,26 @@ impl RestrictedPattern {
                     NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
                     NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
                 }
+            ImportImportName::Name(import) => {
+                match is_name_span_allowed_in_pattern(&import.name, self) {
+                    NameSpanAllowedResult::NameDisallowed => {
+                        ImportNameResult::NameDisallowed(import.clone())
+                    }
+                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                }
             }
+            ImportImportName::Default(span) => {
+                let name: CompactStr = CompactStr::new("default");
+                match is_name_span_allowed_in_pattern(&name, self) {
+                    NameSpanAllowedResult::NameDisallowed => {
+                        ImportNameResult::NameDisallowed(NameSpan::new(name, *span))
+                    }
+                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                }
+            }
+            ImportImportName::NamespaceObject => ImportNameResult::DefaultDisallowed,
             ImportImportName::NamespaceObject => ImportNameResult::DefaultDisallowed,
         }
     }
@@ -519,8 +801,26 @@ impl RestrictedPattern {
                 ImportNameResult::DefaultDisallowed
             }
             ExportImportName::Null => ImportNameResult::Allowed,
+            ExportImportName::Name(import) => {
+                match is_name_span_allowed_in_pattern(&import.name, self) {
+                    NameSpanAllowedResult::NameDisallowed => {
+                        ImportNameResult::NameDisallowed(import.clone())
+                    }
+                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                }
+            }
+            ExportImportName::All | ExportImportName::AllButDefault => {
+                ImportNameResult::DefaultDisallowed
+            }
+            ExportImportName::Null => ImportNameResult::Allowed,
         }
     }
+
+    fn get_group_glob_result(&self, name: &NameSpan) -> GlobResult {
+        let Some(groups) = &self.group else {
+            return GlobResult::None;
+        };
 
     fn get_group_glob_result(&self, name: &NameSpan) -> GlobResult {
         let Some(groups) = &self.group else {
@@ -531,6 +831,7 @@ impl RestrictedPattern {
         // returns always OK, will be fixed in the next version
         let _ = builder.case_insensitive(!self.case_sensitive.unwrap_or(false));
 
+        for group in groups {
         for group in groups {
             // returns always OK
             let _ = builder.add_line(None, group.as_str());
@@ -661,6 +962,7 @@ impl NoRestrictedImports {
             for request in requests {
                 if request.is_import && module_record.import_entries.is_empty() {
                     side_effect_import_map.entry(source).or_default().push(request.statement_span);
+                    side_effect_import_map.entry(source).or_default().push(request.statement_span);
                 }
             }
         }
@@ -669,6 +971,7 @@ impl NoRestrictedImports {
             for (source, spans) in &side_effect_import_map {
                 if source.as_str() == path.name.as_str() && path.import_names.is_none() {
                     if let Some(span) = spans.iter().next() {
+                        ctx.diagnostic(diagnostic_path(*span, path.message.clone(), source));
                         ctx.diagnostic(diagnostic_path(*span, path.message.clone(), source));
                     }
                 }
@@ -696,7 +999,14 @@ impl NoRestrictedImports {
                 result,
                 path,
             );
+            let diagnostic = get_diagnostic_from_import_name_result_path(
+                entry.statement_span,
+                source,
+                result,
+                path,
+            );
 
+            ctx.diagnostic(diagnostic);
             ctx.diagnostic(diagnostic);
         }
 
@@ -711,6 +1021,7 @@ impl NoRestrictedImports {
             }
 
             match pattern.get_group_glob_result(&entry.module_request) {
+            match pattern.get_group_glob_result(&entry.module_request) {
                 GlobResult::Whitelist => {
                     whitelist_found = true;
                     break;
@@ -722,7 +1033,14 @@ impl NoRestrictedImports {
                         result,
                         pattern,
                     );
+                    let diagnostic = get_diagnostic_from_import_name_result_pattern(
+                        entry.statement_span,
+                        source,
+                        result,
+                        pattern,
+                    );
 
+                    found_errors.push(diagnostic);
                     found_errors.push(diagnostic);
                 }
                 GlobResult::None => (),
@@ -736,9 +1054,20 @@ impl NoRestrictedImports {
                     pattern,
                 ));
             }
+
+            if pattern.get_regex_result(&entry.module_request) {
+                ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
+                    entry.statement_span,
+                    source,
+                    result,
+                    pattern,
+                ));
+            }
         }
 
         if !whitelist_found && !found_errors.is_empty() {
+            for diagnostic in found_errors {
+                ctx.diagnostic(diagnostic);
             for diagnostic in found_errors {
                 ctx.diagnostic(diagnostic);
             }
@@ -764,7 +1093,10 @@ impl NoRestrictedImports {
 
             let diagnostic =
                 get_diagnostic_from_import_name_result_path(entry.span, source, result, path);
+            let diagnostic =
+                get_diagnostic_from_import_name_result_path(entry.span, source, result, path);
 
+            ctx.diagnostic(diagnostic);
             ctx.diagnostic(diagnostic);
         }
 
@@ -783,6 +1115,7 @@ impl NoRestrictedImports {
             };
 
             match pattern.get_group_glob_result(module_request) {
+            match pattern.get_group_glob_result(module_request) {
                 GlobResult::Whitelist => {
                     whitelist_found = true;
                     break;
@@ -791,7 +1124,11 @@ impl NoRestrictedImports {
                     let diagnostic = get_diagnostic_from_import_name_result_pattern(
                         entry.span, source, result, pattern,
                     );
+                    let diagnostic = get_diagnostic_from_import_name_result_pattern(
+                        entry.span, source, result, pattern,
+                    );
 
+                    found_errors.push(diagnostic);
                     found_errors.push(diagnostic);
                 }
                 GlobResult::None => (),
@@ -802,9 +1139,144 @@ impl NoRestrictedImports {
                     entry.span, source, result, pattern,
                 ));
             }
+
+            if pattern.get_regex_result(module_request) {
+                ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
+                    entry.span, source, result, pattern,
+                ));
+            }
         }
 
         if !whitelist_found && !found_errors.is_empty() {
+            for diagnostic in found_errors {
+                ctx.diagnostic(diagnostic);
+            }
+        }
+    }
+}
+
+fn get_diagnostic_from_import_name_result_path(
+    span: Span,
+    source: &str,
+    result: &ImportNameResult,
+    path: &RestrictedPath,
+) -> OxcDiagnostic {
+    match result {
+        ImportNameResult::GeneralDisallowed => diagnostic_path(span, path.message.clone(), source),
+        ImportNameResult::DefaultDisallowed => {
+            if let Some(import_names) = &path.import_names {
+                diagnostic_everything(
+                    span,
+                    path.message.clone(),
+                    import_names.join(", ").as_str(),
+                    source,
+                )
+            } else if let Some(allowed_import_names) = &path.allow_import_names {
+                diagnostic_everything_with_allowed_import_name(
+                    span,
+                    path.message.clone(),
+                    source,
+                    allowed_import_names.join(", ").as_str(),
+                )
+            } else {
+                diagnostic_path(span, path.message.clone(), source)
+            }
+        }
+        ImportNameResult::NameDisallowed(name_span) => {
+            if let Some(allow_import_names) = &path.allow_import_names {
+                diagnostic_allowed_import_name(
+                    name_span.clone().span(),
+                    path.message.clone(),
+                    name_span.name(),
+                    source,
+                    allow_import_names.join(", ").as_str(),
+                )
+            } else {
+                diagnostic_import_name(
+                    name_span.clone().span(),
+                    path.message.clone(),
+                    name_span.name(),
+                    source,
+                )
+            }
+        }
+        ImportNameResult::Allowed => unreachable!("should be filtered out by the parent function"),
+    }
+}
+
+fn get_diagnostic_from_import_name_result_pattern(
+    span: Span,
+    source: &str,
+    result: &ImportNameResult,
+    pattern: &RestrictedPattern,
+) -> OxcDiagnostic {
+    match result {
+        ImportNameResult::GeneralDisallowed => {
+            diagnostic_pattern(span, pattern.message.clone(), source)
+        }
+        ImportNameResult::DefaultDisallowed => {
+            let diagnostic = if let Some(import_names) = &pattern.import_names {
+                diagnostic_pattern_and_everything(
+                    span,
+                    pattern.message.clone(),
+                    import_names.join(", ").as_str(),
+                    source,
+                )
+            } else if let Some(import_name_patterns) = &pattern.import_name_pattern {
+                diagnostic_pattern_and_everything_with_regex_import_name(
+                    span,
+                    pattern.message.clone(),
+                    import_name_patterns,
+                    source,
+                )
+            } else if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
+                diagnostic_everything_with_allowed_import_name_pattern(
+                    span,
+                    pattern.message.clone(),
+                    source,
+                    allow_import_name_pattern.as_str(),
+                )
+            } else if let Some(allowed_import_names) = &pattern.allow_import_names {
+                diagnostic_everything_with_allowed_import_name(
+                    span,
+                    pattern.message.clone(),
+                    source,
+                    allowed_import_names.join(", ").as_str(),
+                )
+            } else {
+                diagnostic_pattern(span, pattern.message.clone(), source)
+            };
+
+            diagnostic
+        }
+        ImportNameResult::NameDisallowed(name_span) => {
+            if let Some(allow_import_names) = &pattern.allow_import_names {
+                diagnostic_allowed_import_name(
+                    name_span.clone().span(),
+                    pattern.message.clone(),
+                    name_span.name(),
+                    source,
+                    allow_import_names.join(", ").as_str(),
+                )
+            } else if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
+                diagnostic_allowed_import_name_pattern(
+                    name_span.clone().span(),
+                    pattern.message.clone(),
+                    name_span.name(),
+                    source,
+                    allow_import_name_pattern.as_str(),
+                )
+            } else {
+                diagnostic_pattern_and_import_name(
+                    name_span.clone().span(),
+                    pattern.message.clone(),
+                    name_span.name(),
+                    source,
+                )
+            }
+        }
+        ImportNameResult::Allowed => unreachable!("should be filtered out by parent function"),
+    }
             for diagnostic in found_errors {
                 ctx.diagnostic(diagnostic);
             }
@@ -1268,6 +1740,99 @@ fn test() {
             }])),
         ),
         (
+            "import Foo from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import Foo from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Foo"],
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import Foo from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { Bar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { Bar as Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { Bar as Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Foo"],
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import Foo, { Baz as Bar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^(Foo|Bar)"
+                }]
+            }])),
+        ),
+        (
+            "import Foo, { Baz as Bar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Foo"],
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Bar"
+                }]
+            }])),
+        ),
+        (
+            "export { Bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "export { Bar as Foo } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
             r#"import { AllowedObject } from "foo";"#,
             Some(serde_json::json!([{
                 "paths": [{
@@ -1313,6 +1878,21 @@ fn test() {
                 }]
             }])),
         ),
+        (
+            "import { Foo } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        // (
+        //     r#"import withPatterns from "foo/bar";"#,
+        //     Some(
+        //         serde_json::json!([{ "patterns": [{ "regex": "foo/(?!bar)", "message": "foo is forbidden, use bar instead" }] }]),
+        //     ),
+        // ),
         (
             "import { Foo } from 'foo';",
             Some(serde_json::json!([{
@@ -1702,6 +2282,7 @@ fn test() {
         (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export * as ns from "fs";"#, Some(serde_json::json!(["fs"]))),
         // ToDo: wrong span
+        // ToDo: wrong span
         (r#"export {a} from "fs";"#, Some(serde_json::json!(["fs"]))),
         (
             r#"export {foo as b} from "fs";"#,
@@ -1753,6 +2334,7 @@ fn test() {
                  }]
             }])),
         ),
+        // ToDo: wrong span
         // ToDo: wrong span
         (
             r#"export * as ns from "fs";"#,
@@ -2451,6 +3033,214 @@ fn test() {
             }])),
         ),
         (
+            "import { Foo } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { Foo as Bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import Foo, { Bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^(Foo|Bar)"
+                }]
+            }])),
+        ),
+        (
+            "import { Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { FooBar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import Foo, { Bar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo|^Bar"
+                }]
+            }])),
+        ),
+        (
+            "import { Foo, Bar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^(Foo|Bar)"
+                }]
+            }])),
+        ),
+        (
+            "import * as Foo from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import * as All from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import * as AllWithCustomMessage from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo",
+                    "message": "Import from @/utils instead."
+                }]
+            }])),
+        ),
+        (
+            "import * as AllWithCustomMessage from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Foo"],
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo",
+                    "message": "Import from @/utils instead."
+                }]
+            }])),
+        ),
+        (
+            "import { Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Foo"],
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Foo", "Bar"],
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Bar"],
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Foo"],
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Bar"
+                }]
+            }])),
+        ),
+        (
+            "import { Foo, Bar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Foo"],
+                    "group": ["**/my/relative-module"],
+                    "importNamePattern": "^Bar"
+                }]
+            }])),
+        ),
+        (
+            "export { Foo } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "export { Foo as Bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "export { Foo } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "importNames": ["Bar"],
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "export * from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "export { Bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "export { Bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNamePattern": "^Foo",
+                    "message": r#"Only imports that match the pattern "/^Foo/u" are allowed to be imported from "foo"."#
+                }]
+            }])),
+        ),
+        (
             r#"import { AllowedObject, DisallowedObject } from "foo";"#,
             Some(serde_json::json!([{
                 "paths": [{
@@ -2545,12 +3335,50 @@ fn test() {
                 }]
             }])),
         ),
+        (
+            r#"import * as AllowedObject from "foo/bar";"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo/*"],
+                    "allowImportNamePattern": "^Allow"
+                }]
+            }])),
+        ),
+        (
+            r#"import * as AllowedObject from "foo/bar";"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo/*"],
+                    "allowImportNamePattern": "^Allow",
+                    "message": r#"Only import names starting with "Allow" are allowed to be imported from "foo"."#
+                }]
+            }])),
+        ),
         // (
         //     r#"import withPatterns from "foo/baz";"#,
         //     Some(
         //         serde_json::json!([{ "patterns": [{ "regex": "foo/(?!bar)", "message": "foo is forbidden, use bar instead" }] }]),
         //     ),
         // ),
+        (
+            "import withPatternsCaseSensitive from 'FOO';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "regex": "FOO",
+                    "message": "foo is forbidden, use bar instead",
+                    "caseSensitive": true
+                }]
+            }])),
+        ),
+        (
+            "import { Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "regex": "my/relative-module",
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
         (
             "import withPatternsCaseSensitive from 'FOO';",
             Some(serde_json::json!([{

@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// export async function getServurSideProps(){};
     /// ```
     NoTypos,
+    nextjs,
     correctness,
     pending
 );
@@ -68,7 +69,7 @@ impl Rule for NoTypos {
         if let AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(en_decl)) =
             node.kind()
         {
-            if let Some(ref decl) = en_decl.declaration {
+            if let Some(decl) = &en_decl.declaration {
                 match decl {
                     Declaration::VariableDeclaration(decl) => {
                         for decl in &decl.declarations {
@@ -298,5 +299,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTypos::NAME, NoTypos::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoTypos::NAME, NoTypos::PLUGIN, pass, fail).test_and_snapshot();
 }

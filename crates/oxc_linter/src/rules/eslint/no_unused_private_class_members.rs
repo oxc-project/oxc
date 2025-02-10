@@ -85,6 +85,7 @@ declare_oxc_lint!(
     ///
     /// ```
     NoUnusedPrivateClassMembers,
+    eslint,
     correctness
 );
 
@@ -445,11 +446,6 @@ fn test() {
 			}",
     ];
 
-    Tester::new(
-        NoUnusedPrivateClassMembers::NAME,
-        NoUnusedPrivateClassMembers::CATEGORY,
-        pass,
-        fail,
-    )
-    .test_and_snapshot();
+    Tester::new(NoUnusedPrivateClassMembers::NAME, NoUnusedPrivateClassMembers::PLUGIN, pass, fail)
+        .test_and_snapshot();
 }

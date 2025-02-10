@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// function foo({a = false} = {}) {}
     /// ```
     NoObjectAsDefaultParameter,
+    unicorn,
     pedantic
 );
 
@@ -132,6 +133,6 @@ fn test() {
         r"function abc([a] = {a: 123}) {}",
     ];
 
-    Tester::new(NoObjectAsDefaultParameter::NAME, NoObjectAsDefaultParameter::CATEGORY, pass, fail)
+    Tester::new(NoObjectAsDefaultParameter::NAME, NoObjectAsDefaultParameter::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// array.some(Boolean);
     /// ```
     PreferNativeCoercionFunctions,
+    unicorn,
     pedantic,
     pending
 );
@@ -318,7 +319,7 @@ fn test() {
 
     Tester::new(
         PreferNativeCoercionFunctions::NAME,
-        PreferNativeCoercionFunctions::CATEGORY,
+        PreferNativeCoercionFunctions::PLUGIN,
         pass,
         fail,
     )

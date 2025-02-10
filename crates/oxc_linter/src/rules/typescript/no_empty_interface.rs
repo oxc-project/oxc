@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// interface Bar extends Foo {}
     /// ```
     NoEmptyInterface,
+    typescript,
     style
 );
 
@@ -214,5 +215,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoEmptyInterface::NAME, NoEmptyInterface::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyInterface::NAME, NoEmptyInterface::PLUGIN, pass, fail).test_and_snapshot();
 }

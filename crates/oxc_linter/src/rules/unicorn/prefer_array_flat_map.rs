@@ -33,6 +33,7 @@ declare_oxc_lint!(
     /// const bar = [1,2,3].flatMap(i => [i]); // ✓ pass
     /// ```
     PreferArrayFlatMap,
+    unicorn,
     style,
     fix
 );
@@ -186,7 +187,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferArrayFlatMap::NAME, PreferArrayFlatMap::CATEGORY, pass, fail)
+    Tester::new(PreferArrayFlatMap::NAME, PreferArrayFlatMap::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

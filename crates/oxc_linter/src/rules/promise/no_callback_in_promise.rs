@@ -70,6 +70,7 @@ declare_oxc_lint!(
     ///   .catch((err) => { console.error(err) })
     /// ```
     NoCallbackInPromise,
+    promise,
     correctness,
 );
 
@@ -182,6 +183,6 @@ fn test() {
         ("a.catch(function(err) { callback(err) })", None),
     ];
 
-    Tester::new(NoCallbackInPromise::NAME, NoCallbackInPromise::CATEGORY, pass, fail)
+    Tester::new(NoCallbackInPromise::NAME, NoCallbackInPromise::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

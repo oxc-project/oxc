@@ -9,3 +9,7 @@ class Bar extends Foo {
     super(foo, bar, zoo, bang, too);
   }
 }
+class Baz extends Bar {
+  constructor(public foo, private bar, protected zoo, readonly bang, override boom, too) {
+  }
+}

@@ -35,6 +35,7 @@ declare_oxc_lint!(
     ///   const list = new Array(5).map(_ => createElement());
     /// ```
     UninvokedArrayCallback,
+    oxc,
     correctness
 );
 
@@ -101,6 +102,6 @@ fn test() {
         ("const list = new Array(5)['every'](function(_) {})", None),
     ];
 
-    Tester::new(UninvokedArrayCallback::NAME, UninvokedArrayCallback::CATEGORY, pass, fail)
+    Tester::new(UninvokedArrayCallback::NAME, UninvokedArrayCallback::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

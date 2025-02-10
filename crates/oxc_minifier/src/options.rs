@@ -20,7 +20,7 @@ pub struct CompressOptions {
     pub drop_console: bool,
 }
 
-#[allow(clippy::derivable_impls)]
+#[expect(clippy::derivable_impls)]
 impl Default for CompressOptions {
     fn default() -> Self {
         Self { drop_console: false, ..Self::all_true() }

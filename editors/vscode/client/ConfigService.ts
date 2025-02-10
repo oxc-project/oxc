@@ -25,7 +25,7 @@ export class ConfigService implements IDisposable {
   private onVscodeConfigChange(event: ConfigurationChangeEvent): void {
     if (event.affectsConfiguration(ConfigService._namespace)) {
       this.config.refresh();
-      this.onConfigChange?.call(this, event);
+      this.onConfigChange?.(event);
     }
   }
 

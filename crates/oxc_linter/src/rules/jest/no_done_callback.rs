@@ -71,6 +71,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDoneCallback,
+    jest,
     // TODO: add suggestion (see jest-community/eslint-plugin-jest#586)
     style
 );
@@ -287,7 +288,7 @@ fn test() {
         ("it.each``('something', ({ a, b }, done) => { done(); })", None),
     ];
 
-    Tester::new(NoDoneCallback::NAME, NoDoneCallback::CATEGORY, pass, fail)
+    Tester::new(NoDoneCallback::NAME, NoDoneCallback::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

@@ -98,7 +98,7 @@ struct DotDefineState<'a> {
     value_atom: Option<Atom<'a>>,
 }
 
-impl<'a> From<&InjectImport> for DotDefineState<'a> {
+impl From<&InjectImport> for DotDefineState<'_> {
     fn from(inject: &InjectImport) -> Self {
         let parts = inject.specifier.local().split('.').map(CompactStr::from).collect::<Vec<_>>();
         let value = inject.replace_value.clone().unwrap();
@@ -249,14 +249,13 @@ impl<'a> InjectGlobalVariables<'a> {
                 ) {
                     // If this is first replacement made for this dot define,
                     // create `Atom` for replacement, and record in `replaced_dot_defines`
-                    let value_atom = value_atom.get_or_insert_with(|| {
+                    let value_atom = *value_atom.get_or_insert_with(|| {
                         self.replaced_dot_defines
                             .push((dot_define.parts[0].clone(), dot_define.value.clone()));
                         self.ast.atom(dot_define.value.as_str())
                     });
-                    let value_atom = value_atom.clone();
 
-                    let value = self.ast.expression_identifier_reference(SPAN, value_atom);
+                    let value = self.ast.expression_identifier(SPAN, value_atom);
                     *expr = value;
                     break;
                 }

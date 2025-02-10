@@ -63,6 +63,7 @@ declare_oxc_lint!(
     /// Promise.resolve(1)
     /// ```
     ValidParams,
+    promise,
     correctness,
 );
 
@@ -188,5 +189,5 @@ fn test() {
         "promiseReference.finally(() => {}, () => {})",
     ];
 
-    Tester::new(ValidParams::NAME, ValidParams::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ValidParams::NAME, ValidParams::PLUGIN, pass, fail).test_and_snapshot();
 }

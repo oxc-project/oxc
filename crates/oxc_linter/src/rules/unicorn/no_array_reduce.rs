@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// array.reduceRight(reducer, initialValue);
     /// ```
     NoArrayReduce,
+    unicorn,
     restriction
 );
 
@@ -476,5 +477,5 @@ fn test() {
             Some(json!({ "allowSimpleOperations": false})),
         ),
     ];
-    Tester::new(NoArrayReduce::NAME, NoArrayReduce::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayReduce::NAME, NoArrayReduce::PLUGIN, pass, fail).test_and_snapshot();
 }

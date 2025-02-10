@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     RequireYield,
+    eslint,
     correctness
 );
 
@@ -72,5 +73,5 @@ fn test() {
         "function* foo() { function* bar() { return 0; } yield 0; }",
     ];
 
-    Tester::new(RequireYield::NAME, RequireYield::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(RequireYield::NAME, RequireYield::PLUGIN, pass, fail).test_and_snapshot();
 }

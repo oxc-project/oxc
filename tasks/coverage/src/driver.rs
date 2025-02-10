@@ -4,14 +4,14 @@ use rustc_hash::FxHashSet;
 
 use oxc::{
     allocator::Allocator,
-    ast::{ast::Program, Comment},
+    ast::{ast::Program, AstKind, Comment},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
     regular_expression::{LiteralParser, Options},
     semantic::{Semantic, SemanticBuilderReturn},
-    span::{cmp::ContentEq, SourceType, Span},
+    span::{ContentEq, SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
@@ -76,16 +76,18 @@ impl CompilerInterface for Driver {
             self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
-        let _serializer = program.serializer();
+        program.test_to_json().unwrap();
         ControlFlow::Continue(())
     }
 
-    fn after_semantic(
-        &mut self,
-        program: &mut Program<'_>,
-        ret: &mut SemanticBuilderReturn,
-    ) -> ControlFlow<()> {
+    fn after_semantic(&mut self, ret: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         if self.check_semantic {
+            let Some(root_node) = ret.semantic.nodes().root_node() else {
+                return ControlFlow::Break(());
+            };
+            let AstKind::Program(program) = root_node.kind() else {
+                return ControlFlow::Break(());
+            };
             if let Some(errors) = check_semantic_ids(program) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());

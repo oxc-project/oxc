@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json test.js
+working directory: fixtures/two_rules_with_same_rule_name
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 61 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

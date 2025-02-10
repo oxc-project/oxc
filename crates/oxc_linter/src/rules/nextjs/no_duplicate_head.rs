@@ -41,6 +41,7 @@ declare_oxc_lint!(
     ///export default MyDocument
     /// ```
     NoDuplicateHead,
+    nextjs,
     correctness
 );
 
@@ -86,7 +87,6 @@ impl Rule for NoDuplicateHead {
             }
 
             let node_id = reference.node_id();
-            #[allow(clippy::unnecessary_unwrap)]
             if first_node_id.is_none() {
                 // First `<Head>` found
                 first_node_id = Some(node_id);
@@ -208,5 +208,5 @@ fn test() {
 			      "#,
     ];
 
-    Tester::new(NoDuplicateHead::NAME, NoDuplicateHead::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDuplicateHead::NAME, NoDuplicateHead::PLUGIN, pass, fail).test_and_snapshot();
 }

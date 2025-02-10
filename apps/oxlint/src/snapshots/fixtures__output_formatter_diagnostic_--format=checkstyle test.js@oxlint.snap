@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=checkstyle test.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+<?xml version="1.0" encoding="utf-8"?><checkstyle version="4.3"><file name="test.js"><error line="5" column="1" severity="error" message="`debugger` statement is not allowed" source="" /><error line="1" column="10" severity="warning" message="Function &apos;foo&apos; is declared but never used." source="" /><error line="1" column="17" severity="warning" message="Parameter &apos;b&apos; is declared but never used. Unused parameters should start with a &apos;_&apos;." source="" /></file></checkstyle>
+----------
+CLI result: LintFoundErrors
+----------

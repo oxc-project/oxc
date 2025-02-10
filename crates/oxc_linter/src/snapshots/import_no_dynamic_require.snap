@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-import(no-dynamic-require): Expected a literal string or immutable template literal
    ╭─[no_dynamic_require.tsx:1:1]

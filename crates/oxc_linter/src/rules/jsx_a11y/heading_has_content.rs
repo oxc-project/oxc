@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// <h1>Foo</h1>
     /// ```
     HeadingHasContent,
+    jsx_a11y,
     correctness
 );
 
@@ -181,7 +182,7 @@ fn test() {
         // (r#"<h1><CustomInput type="hidden" /></h1>"#, None, Some(settings())),
     ];
 
-    Tester::new(HeadingHasContent::NAME, HeadingHasContent::CATEGORY, pass, fail)
+    Tester::new(HeadingHasContent::NAME, HeadingHasContent::PLUGIN, pass, fail)
         .with_jsx_a11y_plugin(true)
         .test_and_snapshot();
 }

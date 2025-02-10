@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// const arr: number[] = new Array<number>();
     /// ```
     ArrayType,
+    typescript,
     style,
     fix
 );
@@ -175,7 +176,7 @@ fn check(
     }
 
     if let TSType::TSTypeReference(ts_type_reference) = &type_annotation {
-        check_and_report_error_array(default_config, readonly_config, ts_type_reference, ctx);
+        check_and_report_error_reference(default_config, readonly_config, ts_type_reference, ctx);
     }
 }
 
@@ -237,6 +238,65 @@ fn check_and_report_error_generic(
     });
 }
 
+fn check_and_report_error_reference(
+    default_config: &ArrayOption,
+    readonly_config: &ArrayOption,
+    ts_type_reference: &TSTypeReference,
+    ctx: &LintContext,
+) {
+    if let TSTypeName::IdentifierReference(ident_ref_type_name) = &ts_type_reference.type_name {
+        if ident_ref_type_name.name.as_str() == "ReadonlyArray"
+            || ident_ref_type_name.name.as_str() == "Array"
+        {
+            check_and_report_error_array(default_config, readonly_config, ts_type_reference, ctx);
+        } else if ident_ref_type_name.name.as_str() == "Promise" {
+            if let Some(type_params) = &ts_type_reference.type_parameters {
+                if type_params.params.len() == 1 {
+                    if let Some(type_param) = type_params.params.first() {
+                        if let TSType::TSArrayType(array_type) = &type_param {
+                            check_and_report_error_generic(
+                                default_config,
+                                array_type.span,
+                                &array_type.element_type,
+                                ctx,
+                                false,
+                            );
+                        }
+
+                        if let TSType::TSTypeOperatorType(ts_operator_type) = &type_param {
+                            if matches!(
+                                &ts_operator_type.operator,
+                                TSTypeOperatorOperator::Readonly
+                            ) {
+                                if let TSType::TSArrayType(array_type) =
+                                    &ts_operator_type.type_annotation
+                                {
+                                    check_and_report_error_generic(
+                                        readonly_config,
+                                        ts_operator_type.span,
+                                        &array_type.element_type,
+                                        ctx,
+                                        true,
+                                    );
+                                }
+                            }
+                        }
+
+                        if let TSType::TSTypeReference(ts_type_reference) = &type_param {
+                            check_and_report_error_reference(
+                                default_config,
+                                readonly_config,
+                                ts_type_reference,
+                                ctx,
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn check_and_report_error_array(
     default_config: &ArrayOption,
     readonly_config: &ArrayOption,
@@ -247,11 +307,6 @@ fn check_and_report_error_array(
         return;
     };
 
-    if ident_ref_type_name.name.as_str() != "ReadonlyArray"
-        && ident_ref_type_name.name.as_str() != "Array"
-    {
-        return;
-    }
     let is_readonly_array_type = ident_ref_type_name.name == "ReadonlyArray";
     let config = if is_readonly_array_type { readonly_config } else { default_config };
     if matches!(config, ArrayOption::Generic) {
@@ -344,7 +399,7 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         | TSType::TSQualifiedName(_)
         | TSType::TSThisType(_) => true,
         TSType::TSTypeReference(node) => {
-            let type_name = TSTypeName::get_first_name(&node.type_name);
+            let type_name = TSTypeName::get_identifier_reference(&node.type_name);
             if type_name.name.as_str() == "Array" {
                 if node.type_parameters.is_none() {
                     return true;
@@ -1115,6 +1170,10 @@ fn test() {
             "const foo: ReadonlyArray<new (...args: any[]) => void> = [];",
             Some(serde_json::json!([{"default":"array"}])),
         ),
+        (
+            "let a: Promise<string[]> = Promise.resolve([]);",
+            Some(serde_json::json!([{"default": "generic"}])),
+        ),
     ];
 
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
@@ -1642,9 +1701,12 @@ fn test() {
             "const foo: readonly (new (...args: any[]) => void)[] = [];",
             Some(serde_json::json!([{"default":"array"}])),
         ),
+        (
+            "let a: Promise<string[]> = Promise.resolve([]);",
+            "let a: Promise<Array<string>> = Promise.resolve([]);",
+            Some(serde_json::json!([{"default": "generic"}])),
+        ),
     ];
 
-    Tester::new(ArrayType::NAME, ArrayType::CATEGORY, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(ArrayType::NAME, ArrayType::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

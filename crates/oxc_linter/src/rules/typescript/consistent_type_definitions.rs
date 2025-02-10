@@ -56,6 +56,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConsistentTypeDefinitions,
+    typescript,
     style,
     fix
 );
@@ -533,7 +534,7 @@ export declare type Test = {
         ),
     ];
 
-    Tester::new(ConsistentTypeDefinitions::NAME, ConsistentTypeDefinitions::CATEGORY, pass, fail)
+    Tester::new(ConsistentTypeDefinitions::NAME, ConsistentTypeDefinitions::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

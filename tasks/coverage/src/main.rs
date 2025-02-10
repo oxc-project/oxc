@@ -27,6 +27,7 @@ fn main() {
         "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),
         "runtime" => args.run_runtime(),
+        "estree" => args.run_estree(),
         "all" => {
             args.run_default();
             args.run_runtime();

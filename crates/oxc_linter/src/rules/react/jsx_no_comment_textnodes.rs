@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     JsxNoCommentTextnodes,
+    react,
     suspicious
 );
 
@@ -315,6 +316,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoCommentTextnodes::NAME, JsxNoCommentTextnodes::CATEGORY, pass, fail)
+    Tester::new(JsxNoCommentTextnodes::NAME, JsxNoCommentTextnodes::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

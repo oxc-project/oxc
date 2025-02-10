@@ -51,7 +51,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
+impl<'a> Traverse<'a> for ExponentiationOperator<'a, '_> {
     // Note: Do not transform to `Math.pow` with BigInt arguments - that's a runtime error
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
@@ -98,7 +98,7 @@ impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
+impl<'a> ExponentiationOperator<'a, '_> {
     /// Convert `BinaryExpression`.
     ///
     /// `left ** right` -> `Math.pow(left, right)`
@@ -163,12 +163,11 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         let pow_left = if let Some(symbol_id) = reference.symbol_id() {
             // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
             // No need for a temp var.
-            ctx.create_bound_ident_expr(SPAN, ident.name.clone(), symbol_id, ReferenceFlags::Read)
+            ctx.create_bound_ident_expr(SPAN, ident.name, symbol_id, ReferenceFlags::Read)
         } else {
             // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
             // Assign to a temp var.
-            let reference =
-                ctx.create_unbound_ident_expr(SPAN, ident.name.clone(), ReferenceFlags::Read);
+            let reference = ctx.create_unbound_ident_expr(SPAN, ident.name, ReferenceFlags::Read);
             let binding = self.create_temp_var(reference, &mut temp_var_inits, ctx);
             binding.create_read_expression(ctx)
         };
@@ -245,8 +244,8 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         //                            ^^^^^^
         // ```
         let prop_span = member_expr.property.span;
-        let prop_name = member_expr.property.name.clone();
-        let prop = ctx.ast.expression_string_literal(prop_span, prop_name.clone(), None);
+        let prop_name = member_expr.property.name;
+        let prop = ctx.ast.expression_string_literal(prop_span, prop_name, None);
 
         // Complete 2nd member expression
         // ```
@@ -490,7 +489,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
                     // No need for a temp var.
                     return ctx.create_bound_ident_expr(
                         SPAN,
-                        ident.name.clone(),
+                        ident.name,
                         symbol_id,
                         ReferenceFlags::Read,
                     );

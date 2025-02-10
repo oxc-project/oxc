@@ -8,6 +8,9 @@ const outer = {
 
       const inner = {
         value: 0,
+        normal() {
+          console.log(super.value);
+        },
         method() {
           var _superprop_getValue2 = () => super.value;
           return babelHelpers.asyncToGenerator(function* () {

@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferCalledWith,
+    jest,
     style,
 );
 
@@ -114,7 +115,7 @@ fn test() {
         ("expect(fn).toHaveBeenCalled();", None),
     ];
 
-    Tester::new(PreferCalledWith::NAME, PreferCalledWith::CATEGORY, pass, fail)
+    Tester::new(PreferCalledWith::NAME, PreferCalledWith::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

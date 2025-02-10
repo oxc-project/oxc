@@ -119,6 +119,7 @@ declare_oxc_lint!(
     /// let foo = []; for (let i = 0; i < 10; i++) { foo.push(i); }
     /// ```
     NoAccumulatingSpread,
+    oxc,
     perf,
 );
 
@@ -128,7 +129,7 @@ impl Rule for NoAccumulatingSpread {
         let AstKind::SpreadElement(spread) = node.kind() else {
             return;
         };
-        let Expression::Identifier(ref ident) = spread.argument else {
+        let Expression::Identifier(ident) = &spread.argument else {
             return;
         };
 
@@ -460,6 +461,6 @@ fn test() {
         "let foo = {}; while (Object.keys(foo).length < 10) { foo = { ...foo, [Object.keys(foo).length]: Object.keys(foo).length }; }",
     ];
 
-    Tester::new(NoAccumulatingSpread::NAME, NoAccumulatingSpread::CATEGORY, pass, fail)
+    Tester::new(NoAccumulatingSpread::NAME, NoAccumulatingSpread::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

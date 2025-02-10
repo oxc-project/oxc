@@ -101,6 +101,7 @@ declare_oxc_lint!(
     /// /bar/g.test(baz)
     /// ```
     NoUnexpectedMultiline,
+    eslint,
     suspicious,
     fix_dangerous
 );
@@ -390,7 +391,7 @@ fn test() {
     // TODO: add more fixer tests
     let fix = vec![("var a = b\n(x || y).doSomething()", "var a = b\n;(x || y).doSomething()")];
 
-    Tester::new(NoUnexpectedMultiline::NAME, NoUnexpectedMultiline::CATEGORY, pass, fail)
+    Tester::new(NoUnexpectedMultiline::NAME, NoUnexpectedMultiline::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

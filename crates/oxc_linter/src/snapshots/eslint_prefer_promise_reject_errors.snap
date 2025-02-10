@@ -1,0 +1,252 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(5)
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject('foo')
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(`foo`)
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(!foo)
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(void foo)
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject()
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(undefined)
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject({ foo: 1 })
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject([1, 2, 3])
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject()
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:41]
+ 1 │ new Promise(function(resolve, reject) { reject() })
+   ·                                         ────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(undefined)
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject('foo', somethingElse)
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:41]
+ 1 │ new Promise(function(resolve, reject) { reject(5) })
+   ·                                         ─────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:36]
+ 1 │ new Promise((resolve, reject) => { reject(5) })
+   ·                                    ─────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:34]
+ 1 │ new Promise((resolve, reject) => reject(5))
+   ·                                  ─────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:34]
+ 1 │ new Promise((resolve, reject) => reject())
+   ·                                  ────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:33]
+ 1 │ new Promise(function(yes, no) { no(5) })
+   ·                                 ─────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:4:26]
+ 3 │                 fs.readFile('foo.txt', (err, file) => {
+ 4 │                 if (err) reject('File not found')
+   ·                          ────────────────────────
+ 5 │                 else resolve(file)
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:42]
+ 1 │ new Promise(({foo, bar, baz}, reject) => reject(5))
+   ·                                          ─────────
+   ╰────
+
+  × Identifier `reject` has already been declared
+   ╭─[prefer_promise_reject_errors.tsx:1:22]
+ 1 │ new Promise(function(reject, reject) { reject(5) })
+   ·                      ───┬──  ───┬──
+   ·                         │       ╰── It can not be redeclared here
+   ·                         ╰── `reject` has already been declared here
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:40]
+ 1 │ new Promise(function(foo, arguments) { arguments(5) })
+   ·                                        ────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:33]
+ 1 │ new Promise((foo, arguments) => arguments(5))
+   ·                                 ────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:36]
+ 1 │ new Promise(function({}, reject) { reject(5) })
+   ·                                    ─────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:29]
+ 1 │ new Promise(({}, reject) => reject(5))
+   ·                             ─────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:47]
+ 1 │ new Promise((resolve, reject, somethingElse = reject(5)) => {})
+   ·                                               ─────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject?.(5)
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise?.reject(5)
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise?.reject?.(5)
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ (Promise?.reject)(5)
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ (Promise?.reject)?.(5)
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(foo += new Error())
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(foo -= new Error())
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(foo **= new Error())
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(foo <<= new Error())
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(foo |= new Error())
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(foo &= new Error())
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(foo && 5)
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:1]
+ 1 │ Promise.reject(foo &&= 5)
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:43]
+ 1 │ new Promise(function (resolve, ...rest) { rest[0](5); });
+   ·                                           ──────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:34]
+ 1 │ new Promise(function (...rest) { rest[1](5); });
+   ·                                  ──────────
+   ╰────

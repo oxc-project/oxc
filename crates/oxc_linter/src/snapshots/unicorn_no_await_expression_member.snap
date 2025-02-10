@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
    ╭─[no_await_expression_member.tsx:1:1]

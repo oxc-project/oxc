@@ -1,0 +1,29 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/typescript_eslint/eslintrc.json --disable-typescript-plugin fixtures/typescript_eslint/test.ts
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'X' is declared but never used.
+   ,-[fixtures/typescript_eslint/test.ts:1:11]
+ 1 | namespace X {
+   :           |
+   :           `-- 'X' is declared here
+ 2 | }
+   `----
+  help: Consider removing this declaration.
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-loss-of-precision.html\eslint(no-loss-of-precision)]8;;\: This number literal will lose precision at runtime.
+   ,-[fixtures/typescript_eslint/test.ts:4:1]
+ 3 | 
+ 4 | 9007199254740993 // no-loss-of-precision
+   : ^^^^^^^^^^^^^^^^
+   `----
+
+Found 1 warning and 1 error.
+Finished in <variable>ms on 1 file with 48 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

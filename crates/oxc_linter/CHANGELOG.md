@@ -4,6 +4,138 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.10] - 2025-02-06
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Features
+
+- d6d80f7 linter: Add suggestion fixer for `eslint/no-iterator` (#8894) (dalaoshu)
+
+### Bug Fixes
+
+- baf3e4e linter: Correctly replace rule severity with duplicate rule name configurations (#8840) (dalaoshu)
+
+### Performance
+
+- 8a4988d linter: Use parallel iterator directly instead of iter and parallel bridge (#8831) (Cam McHenry)
+
+### Refactor
+
+- bb9d763 linter: Remove usage of `url` crate (#8833) (camchenry)
+- 4fcf719 linter: Replace MIME guessing with extension check (#8832) (camchenry)
+
+## [0.15.9] - 2025-02-01
+
+### Features
+
+- 1a41181 linter: Implement `eslint/prefer-object-spread` (#8216) (tbashiyy)
+- adb8ebd linter: Implement no-useless-call rule (#8789) (keita hino)
+- 3790933 linter: Add vitest/prefer-lowercase-title rule (#8152) (Tyler Earls)
+- e8e6917 linter: Unicorn/switch-cases-braces support options (#8704) (1zumii)
+
+### Bug Fixes
+
+- 8ce21d1 linter: Can't disable `no-nested-ternary` rule anymore (#8600) (dalaoshu)
+- 4f30a17 linter: Unicorn/switch-case-braces mangles code when applying fix (#8758) (Tyler Earls)
+- 1de6f85 linter: No-lone-blocks erroring on block statements containing comments (#8720) (Tyler Earls)
+- 77ef61a linter: Fix diagnostic spans for `oxc/no-async-await` (#8721) (camchenry)
+- f15bdce linter: Catch `Promise` in `typescript/array-type` rule (#8702) (Rintaro Itokawa)
+
+### Performance
+
+- d318238 linter: Remove sorting of rules in cache (#8718) (camchenry)
+
+### Documentation
+
+- 57b7ca8 ast: Add documentation for all remaining JS AST methods (#8820) (Cam McHenry)
+
+### Refactor
+
+- c2fdfc4 linter: Correctly handle loose options for `eslint/eqeqeq` (#8798) (dalaoshu)
+- 0aeaedd linter: Support loose options for `eslint/eqeqeq` (#8790) (dalaoshu)
+
+## [0.15.8] - 2025-01-24
+
+### Features
+
+- dcaebe6 linter: Add "strict" option to `promise/prefer-await-to-then` rule (#8674) (Neil Fisher)
+
+### Refactor
+
+- a3dc4c3 crates: Clean up snapshot files (#8680) (Boshen)
+- e66da9f isolated_declarations, linter, minifier, prettier, semantic, transformer: Remove unnecessary `ref` / `ref mut` syntax (#8643) (overlookmotel)
+- 23b49a6 linter: Use `cow_to_ascii_lowercase` instead `cow_to_lowercase` (#8678) (Boshen)
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
+## [0.15.7] - 2025-01-19
+
+- 4ce6329 semantic: [**BREAKING**] Ensure program outlives semantic (#8455) (Valentinas Janeiko)
+
+### Features
+
+- 01ac773 linter: Support `ignoreTypeOfTestName` for `jest/valid-title` (#8589) (dalaoshu)
+- 538b24a linter: Format the configuration documentation correctly (#8583) (Tapan Prakash)
+- 7ab14cc linter: Add more Vitest compatible Jest rules (#8445) (Anson Heung)
+- d178360 linter: Implement `eslint/prefer-promise-reject-errors` (#8254) (tbashiyy)
+
+### Bug Fixes
+
+- 855c839 codegen: Shorthand assignment target identifier consider mangled names (#8536) (Boshen)
+- c15af02 linter: False positive in `eslint/no-lone-blocks` (#8587) (dalaoshu)
+- 41f2070 linter: Rule `no-restricted-imports` support missing options (#8076) (Alexander S.)
+- 869bc73 linter: Enhance `default_param_last` rule to handle optional parameters (#8563) (Tapan Prakash)
+- c6260c2 linter: Support rest params for `prefer_promise_reject_errors` (#8468) (Yuichiro Yamashita)
+- 2be1e82 linter/no-unused-vars: False positives when variable and type have same name (#8465) (Dunqing)
+
+### Performance
+
+- 250bbd1 linter/react-exhaustive-deps: Use stack of `AstType`s instead of `AstKind`s (#8522) (overlookmotel)
+
+### Refactor
+
+- 40f5165 linter: Improve `eslint/no-lone-blocks` (#8588) (dalaoshu)
+- b4c87e2 linter: Move DiagnosticsReporters to oxlint (#8454) (Alexander S.)
+- bf00f82 linter: Move rule `prefer-each` from vitest to jest + remapping (#8448) (Alexander S.)
+- 8dd0013 linter/consistent-function-scoping: Remove `Visit::enter_node` usage (#8538) (overlookmotel)
+- 30c0689 linter/no-map-spread: Remove `Visit::enter_node` usage (#8537) (overlookmotel)
+- b5ed58e span: All methods take owned `Span` (#8297) (overlookmotel)
+
+### Styling
+
+- 3789d2f linter/react-exhaustive-deps: Fix indentation (#8520) (overlookmotel)
+
+## [0.15.6] - 2025-01-13
+
+### Features
+
+- 457aa31 linter: Implement `no-lone-blocks` rule (#8145) (Yuichiro Yamashita)
+
+### Refactor
+
+- aea9551 ast: Simplify `get_identifier_reference` of `TSType` and `TSTypeName` (#8273) (Dunqing)
+- 43ed3e1 linter: Add output formatter (#8436) (Alexander S.)
+- b19d809 linter: Split `unicorn/prefer-spread` and `eslint/prefer-spread` into own rules (#8329) (Alexander S.)
+- 3c534ae linter: Refactor `LintBuilder` to prep for nested configs (#8034) (camc314)
+- 2f9fab9 linter: Remove remapping for plugin name in diagnostics (#8223) (Alexander S.)
+
+### Testing
+
+- b6c1546 linter: Use plugin name instead of category for finding rule (#8353) (Alexander S.)
+
+## [0.15.5] - 2025-01-02
+
+### Features
+
+- 0e168b8 linter: Catch more cases in const-comparisons (#8215) (Cameron)
+- bde44a3 linter: Add `statement_span` to `ModuleRecord/ImportEntry` (#8195) (Alexander S.)
+- ccaa9f7 linter: Implement `eslint/new-cap`  (#8146) (Alexander S.)
+
+### Bug Fixes
+
+- 2b14a6f linter: Fix `ignorePattern` config for windows  (#8214) (Alexander S.)
+
 ## [0.15.4] - 2024-12-30
 
 - ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)

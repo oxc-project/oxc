@@ -63,6 +63,7 @@ declare_oxc_lint!(
     /// new Promise(function(resolve, reject) {})
     /// ```
     ParamNames,
+    promise,
     style,
 );
 
@@ -185,5 +186,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(ParamNames::NAME, ParamNames::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ParamNames::NAME, ParamNames::PLUGIN, pass, fail).test_and_snapshot();
 }

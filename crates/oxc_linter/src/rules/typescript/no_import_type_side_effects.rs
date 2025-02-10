@@ -62,6 +62,7 @@ declare_oxc_lint!(
     /// import { type A as AA, type B as BB } from 'mod';
     /// ```
     NoImportTypeSideEffects,
+    typescript,
     restriction,
     fix
 );
@@ -163,7 +164,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(NoImportTypeSideEffects::NAME, NoImportTypeSideEffects::CATEGORY, pass, fail)
+    Tester::new(NoImportTypeSideEffects::NAME, NoImportTypeSideEffects::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

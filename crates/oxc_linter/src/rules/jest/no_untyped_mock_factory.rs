@@ -83,6 +83,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoUntypedMockFactory,
+    jest,
     style,
     conditional_fix
 );
@@ -401,7 +402,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUntypedMockFactory::NAME, NoUntypedMockFactory::CATEGORY, pass, fail)
+    Tester::new(NoUntypedMockFactory::NAME, NoUntypedMockFactory::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

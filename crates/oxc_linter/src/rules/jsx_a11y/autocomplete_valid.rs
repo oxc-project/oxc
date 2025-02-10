@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// <input autocomplete="name" />
     /// ```
     AutocompleteValid,
+    jsx_a11y,
     correctness
 );
 
@@ -156,7 +157,7 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
         1 => VALID_AUTOCOMPLETE_VALUES.contains(parts[0]),
         2 => VALID_AUTOCOMPLETE_COMBINATIONS
             .get(parts[0])
-            .map_or(false, |valid_suffixes| valid_suffixes.contains(parts[1])),
+            .is_some_and(|valid_suffixes| valid_suffixes.contains(parts[1])),
         _ => false,
     }
 }
@@ -259,6 +260,5 @@ fn test() {
         ("<Input type='text' autocomplete='baz' />;", None, Some(settings())),
     ];
 
-    Tester::new(AutocompleteValid::NAME, AutocompleteValid::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(AutocompleteValid::NAME, AutocompleteValid::PLUGIN, pass, fail).test_and_snapshot();
 }

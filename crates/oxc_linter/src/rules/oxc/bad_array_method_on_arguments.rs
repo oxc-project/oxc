@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     BadArrayMethodOnArguments,
+    oxc,
     correctness,
 );
 
@@ -185,7 +186,7 @@ fn test() {
         ("function fn() {arguments['@@iterator'](() => {})}", None),
     ];
 
-    Tester::new(BadArrayMethodOnArguments::NAME, BadArrayMethodOnArguments::CATEGORY, pass, fail)
+    Tester::new(BadArrayMethodOnArguments::NAME, BadArrayMethodOnArguments::PLUGIN, pass, fail)
         .test_and_snapshot();
 }
 

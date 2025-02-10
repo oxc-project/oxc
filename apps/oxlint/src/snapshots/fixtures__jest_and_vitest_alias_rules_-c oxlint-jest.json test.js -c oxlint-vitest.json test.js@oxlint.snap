@@ -1,0 +1,42 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c oxlint-jest.json test.js
+working directory: fixtures/jest_and_vitest_alias_rules
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/no-identical-title.html\eslint-plugin-jest(no-identical-title)]8;;\: Test title is used multiple times in the same describe block.
+   ,-[test.js:3:6]
+ 2 |   it("works", () => {});
+ 3 |   it("works", () => {});
+   :      ^^^^^^^
+ 4 | });
+   `----
+  help: Change the title of test.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c oxlint-vitest.json test.js
+working directory: fixtures/jest_and_vitest_alias_rules
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/no-identical-title.html\eslint-plugin-jest(no-identical-title)]8;;\: Test title is used multiple times in the same describe block.
+   ,-[test.js:3:6]
+ 2 |   it("works", () => {});
+ 3 |   it("works", () => {});
+   :      ^^^^^^^
+ 4 | });
+   `----
+  help: Change the title of test.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

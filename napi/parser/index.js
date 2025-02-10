@@ -1,6 +1,5 @@
 const bindings = require('./bindings.js');
 
-module.exports.MagicString = bindings.MagicString;
 module.exports.ParseResult = bindings.ParseResult;
 module.exports.ExportExportNameKind = bindings.ExportExportNameKind;
 module.exports.ExportImportNameKind = bindings.ExportImportNameKind;
@@ -30,6 +29,13 @@ function wrap(result) {
     },
     get magicString() {
       if (!magicString) magicString = result.magicString;
+      magicString.generateMap = function generateMap(options) {
+        return {
+          toString: () => magicString.toSourcemapString(options),
+          toUrl: () => magicString.toSourcemapUrl(options),
+          toMap: () => magicString.toSourcemapObject(options),
+        };
+      };
       return magicString;
     },
   };

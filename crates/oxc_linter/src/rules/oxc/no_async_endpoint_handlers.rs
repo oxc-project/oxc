@@ -31,7 +31,7 @@ pub fn no_async_handlers(
     registered_span: Option<Span>,
     name: Option<&str>,
 ) -> OxcDiagnostic {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     const ASYNC_LEN: u32 = "async".len() as u32;
 
     // Only cover "async" in "async function (req, res) {}" or "async (req, res) => {}"
@@ -165,6 +165,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAsyncEndpointHandlers,
+    oxc,
     suspicious
 );
 
@@ -233,7 +234,7 @@ impl NoAsyncEndpointHandlers {
                             if let Expression::Identifier(id) = &init {
                                 if decl
                                     .id
-                                    .get_identifier()
+                                    .get_identifier_name()
                                     .is_some_and(|declared| declared == id.name)
                                 {
                                     return;
@@ -389,6 +390,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoAsyncEndpointHandlers::NAME, NoAsyncEndpointHandlers::CATEGORY, pass, fail)
+    Tester::new(NoAsyncEndpointHandlers::NAME, NoAsyncEndpointHandlers::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

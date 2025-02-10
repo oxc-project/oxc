@@ -2,9 +2,9 @@ use oxc_span::Span;
 
 #[derive(Debug)]
 pub struct StringLiteral {
-    #[allow(dead_code)]
+    #[allow(unused, clippy::allow_attributes)]
     pub span: Span,
-    #[allow(dead_code)]
+    #[allow(unused, clippy::allow_attributes)]
     pub kind: StringLiteralKind,
     pub body: Vec<CodePoint>,
 }

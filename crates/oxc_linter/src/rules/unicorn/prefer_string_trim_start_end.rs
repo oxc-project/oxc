@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// str.trimEnd();
     /// ```
     PreferStringTrimStartEnd,
+    unicorn,
     style,
     fix
 );
@@ -131,7 +132,7 @@ fn test() {
         (r"foo?.trimLeft()", r"foo?.trimStart()"),
     ];
 
-    Tester::new(PreferStringTrimStartEnd::NAME, PreferStringTrimStartEnd::CATEGORY, pass, fail)
+    Tester::new(PreferStringTrimStartEnd::NAME, PreferStringTrimStartEnd::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

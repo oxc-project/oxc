@@ -36,6 +36,7 @@ declare_oxc_lint!(
     /// const array = [42];
     /// ```
     NoNewArray,
+    unicorn,
     correctness,
     pending
 );
@@ -134,5 +135,5 @@ fn test() {
         r"const array = new Array(length)",
     ];
 
-    Tester::new(NoNewArray::NAME, NoNewArray::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNewArray::NAME, NoNewArray::PLUGIN, pass, fail).test_and_snapshot();
 }

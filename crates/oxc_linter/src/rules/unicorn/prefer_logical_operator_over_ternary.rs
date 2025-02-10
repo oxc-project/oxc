@@ -39,6 +39,7 @@ declare_oxc_lint!(
     ///
     /// ```
     PreferLogicalOperatorOverTernary,
+    unicorn,
     style,
     pending
 );
@@ -137,7 +138,7 @@ fn test() {
 
     Tester::new(
         PreferLogicalOperatorOverTernary::NAME,
-        PreferLogicalOperatorOverTernary::CATEGORY,
+        PreferLogicalOperatorOverTernary::PLUGIN,
         pass,
         fail,
     )

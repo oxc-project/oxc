@@ -57,6 +57,9 @@ pub struct ModuleRecord<'a> {
     /// Local exported bindings
     pub exported_bindings: FxHashMap<Atom<'a>, Span>,
 
+    /// Dynamic import expressions `import(specifier)`.
+    pub dynamic_imports: Vec<'a, DynamicImport>,
+
     /// Span position of `import.meta`.
     pub import_metas: Vec<'a, Span>,
 }
@@ -72,6 +75,7 @@ impl<'a> ModuleRecord<'a> {
             indirect_export_entries: Vec::new_in(allocator),
             star_export_entries: Vec::new_in(allocator),
             exported_bindings: FxHashMap::default(),
+            dynamic_imports: Vec::new_in(allocator),
             import_metas: Vec::new_in(allocator),
         }
     }
@@ -343,9 +347,9 @@ impl<'a> ExportLocalName<'a> {
     }
 
     /// Get the bound name of this export. [`None`] for [`ExportLocalName::Null`].
-    pub fn name(&self) -> Option<&Atom<'a>> {
+    pub fn name(&self) -> Option<Atom<'a>> {
         match self {
-            Self::Name(name) | Self::Default(name) => Some(&name.name),
+            Self::Name(name) | Self::Default(name) => Some(name.name),
             Self::Null => None,
         }
     }
@@ -372,6 +376,15 @@ pub struct RequestedModule {
 
     /// `true` if the module is requested by an import statement.
     pub is_import: bool,
+}
+
+/// Dynamic import expression.
+#[derive(Debug, Clone, Copy)]
+pub struct DynamicImport {
+    /// Span of the import expression.
+    pub span: Span,
+    /// Span the ModuleSpecifier, which is an expression.
+    pub module_request: Span,
 }
 
 #[cfg(test)]

@@ -1,18 +1,25 @@
-#![allow(missing_docs)] // fixme
+#![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
-use oxc_allocator::CloneIn;
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
+use oxc_allocator::CloneIn;
+
 use crate::{node::NodeId, symbol::SymbolId};
 
+use oxc_ast_macros::ast;
+
+#[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[clone_in(default)]
+#[content_eq(skip)]
+#[estree(skip)]
 pub struct ReferenceId(NonMaxU32);
 
 impl Idx for ReferenceId {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
         // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
@@ -159,7 +166,7 @@ impl ReferenceFlags {
     /// The identifier is only read from.
     #[inline]
     pub const fn is_read_only(&self) -> bool {
-        self.contains(Self::Read)
+        !self.contains(Self::Write)
     }
 
     /// The identifier is written to. It may also be read from.
@@ -171,7 +178,7 @@ impl ReferenceFlags {
     /// The identifier is only written to. It is not read from in this reference.
     #[inline]
     pub const fn is_write_only(&self) -> bool {
-        self.contains(Self::Write)
+        !self.contains(Self::Read)
     }
 
     /// The identifier is both read from and written to, e.g `a += 1`.

@@ -12,6 +12,7 @@ target/
 /tasks/benchmark/codspeed/node_modules/
 /tasks/transform_conformance/node_modules/
 /tasks/compat_data/node_modules/
+/tasks/e2e/node_modules/
 /npm/*/node_modules
 
 # vscode
@@ -25,6 +26,8 @@ target/
 tasks/coverage/babel/
 tasks/coverage/test262/
 tasks/coverage/typescript/
+tasks/coverage/acorn-test262/
+tasks/coverage/acorn-test262-diff/
 tasks/prettier_conformance/prettier/
 
 # Ignore accidental files from the root

@@ -1,149 +1,138 @@
-use std::{cell::RefCell, path::PathBuf};
-
-use itertools::Itertools;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 
 use crate::{
-    log, log_result,
-    output::{Output, RawOutput},
-    passes::Pass,
-    rust_ast::{AstRef, Module},
-    schema::{lower_ast_types, Schema},
-    Result, TypeId,
+    logln,
+    parse::attr::{AttrPositions, AttrProcessor},
+    Derive, Generator, Output, RawOutput, Result, Schema, DERIVES, GENERATORS,
 };
 
-#[derive(Default)]
-pub struct AstCodegen {
-    files: Vec<PathBuf>,
-    passes: Vec<Box<dyn Runner<Context = EarlyCtx>>>,
-    generators: Vec<Box<dyn Runner<Context = Schema>>>,
+pub type DeriveId = usize;
+pub type GeneratorId = usize;
+
+/// [`Codegen`] contains all data relating to the running of the codegen overall.
+///
+/// [`Schema`] is the source of truth on types, and which generators and derives act upon.
+/// [`Codegen`] is the engine which runs the generators and derives.
+pub struct Codegen {
+    /// Mapping from derive name to `DeriveId`
+    derive_name_to_id: FxHashMap<&'static str, DeriveId>,
+    /// Mapping from attribute name to ID of derive/generator which uses the attr,
+    /// and legal positions for the attribute
+    attr_processors: FxHashMap<&'static str, (AttrProcessor, AttrPositions)>,
 }
 
-pub struct AstCodegenResult {
-    pub outputs: Vec<RawOutput>,
-    pub schema: Schema,
-}
+impl Codegen {
+    /// Create new [`Codegen`].
+    pub fn new() -> Self {
+        let mut derive_name_to_id = FxHashMap::default();
 
-pub trait Runner {
-    type Context;
-    fn verb(&self) -> &'static str;
-    fn name(&self) -> &'static str;
-    fn file_path(&self) -> &'static str;
-    fn run(&mut self, ctx: &Self::Context) -> Result<Vec<Output>>;
-}
+        let mut attr_processors = FxHashMap::default();
 
-pub struct EarlyCtx {
-    ty_table: Vec<AstRef>,
-    ident_table: FxHashMap<String, TypeId>,
-    mods: RefCell<Vec<Module>>,
-}
+        for (id, &derive) in DERIVES.iter().enumerate() {
+            derive_name_to_id.insert(derive.trait_name(), id);
 
-impl EarlyCtx {
-    fn new(mods: Vec<Module>) -> Self {
-        // worst case len
-        let len = mods.iter().fold(0, |acc, it| acc + it.items.len());
-        let adts = mods.iter().flat_map(|it| it.items.iter());
-
-        let mut ty_table = Vec::with_capacity(len);
-        let mut ident_table = FxHashMap::with_capacity_and_hasher(len, FxBuildHasher);
-        for adt in adts {
-            if let Some(ident) = adt.borrow().ident() {
-                let ident = ident.to_string();
-                let type_id = ty_table.len();
-                ty_table.push(AstRef::clone(adt));
-                ident_table.insert(ident, type_id);
+            let processor = AttrProcessor::Derive(id);
+            for &(name, positions) in derive.attrs() {
+                let existing = attr_processors.insert(name, (processor, positions));
+                if let Some((existing_processor, _)) = existing {
+                    panic!(
+                        "Two derives expect same attr `#[{name:?}]`: {} and {}",
+                        existing_processor.name(),
+                        processor.name()
+                    );
+                }
             }
         }
 
-        Self { ty_table, ident_table, mods: RefCell::new(mods) }
+        for (id, &generator) in GENERATORS.iter().enumerate() {
+            let processor = AttrProcessor::Generator(id);
+
+            for &(name, positions) in generator.attrs() {
+                let existing_processor = attr_processors.insert(name, (processor, positions));
+                if let Some((existing_processor, _)) = existing_processor {
+                    panic!(
+                        "Two derives/generators expect same attr {name:?}: {} and {}",
+                        existing_processor.name(),
+                        processor.name()
+                    );
+                }
+            }
+        }
+
+        Self { derive_name_to_id, attr_processors }
     }
 
-    pub fn chronological_idents(&self) -> impl Iterator<Item = &String> {
-        self.ident_table.iter().sorted_by_key(|it| it.1).map(|it| it.0)
+    /// Get a [`Derive`] by its name.
+    pub fn get_derive_id_by_name(&self, name: &str) -> DeriveId {
+        self.derive_name_to_id.get(name).copied().unwrap_or_else(|| {
+            panic!("Unknown derive trait {name:?}");
+        })
     }
 
-    pub fn mods(&self) -> &RefCell<Vec<Module>> {
-        &self.mods
+    /// Get processor (derive or generator) for an attribute, and legal positions for the attribute
+    pub fn attr_processor(&self, attr_name: &str) -> Option<(AttrProcessor, AttrPositions)> {
+        self.attr_processors.get(attr_name).copied()
     }
 
-    pub fn find(&self, key: &String) -> Option<AstRef> {
-        self.type_id(key).map(|id| AstRef::clone(&self.ty_table[id]))
-    }
-
-    pub fn type_id(&self, key: &String) -> Option<TypeId> {
-        self.ident_table.get(key).copied()
-    }
-
-    pub fn ast_ref(&self, id: TypeId) -> AstRef {
-        AstRef::clone(&self.ty_table[id])
-    }
-
-    fn into_schema(self) -> Schema {
-        lower_ast_types(&self)
-    }
-}
-
-impl AstCodegen {
-    #[must_use]
-    pub fn add_file<P>(mut self, path: P) -> Self
-    where
-        P: AsRef<str>,
-    {
-        self.files.push(path.as_ref().into());
-        self
-    }
-
-    #[must_use]
-    pub fn pass<P>(mut self, pass: P) -> Self
-    where
-        P: Pass + Runner<Context = EarlyCtx> + 'static,
-    {
-        self.passes.push(Box::new(pass));
-        self
-    }
-
-    #[must_use]
-    pub fn generate<G>(mut self, generator: G) -> Self
-    where
-        G: Runner<Context = Schema> + 'static,
-    {
-        self.generators.push(Box::new(generator));
-        self
-    }
-
-    pub fn run(mut self) -> Result<AstCodegenResult> {
-        let modules = self
-            .files
-            .into_iter()
-            .map(Module::with_path)
-            .map(Module::load)
-            .map_ok(Module::expand)
-            .map_ok(|it| it.map(Module::analyze))
-            .collect::<Result<Result<Result<Vec<_>>>>>()???;
-
-        // Early passes
-        let early_ctx = EarlyCtx::new(modules);
-        let mut outputs = run_passes(&mut self.passes, &early_ctx)?;
-
-        // Late passes
-        let schema = early_ctx.into_schema();
-        outputs.extend(run_passes(&mut self.generators, &schema)?);
-
-        Ok(AstCodegenResult { outputs, schema })
+    /// Get all attributes which derives and generators handle.
+    pub fn attrs(&self) -> Vec<&'static str> {
+        self.attr_processors.keys().copied().collect()
     }
 }
 
-fn run_passes<C>(runners: &mut [Box<dyn Runner<Context = C>>], ctx: &C) -> Result<Vec<RawOutput>> {
-    let mut outputs = vec![];
-    for runner in runners {
-        log!("{} {}... ", runner.verb(), runner.name());
+/// Runner trait.
+///
+/// This is the super-trait of [`Derive`] and [`Generator`].
+///
+/// [`Generator`]: crate::Generator
+pub trait Runner {
+    fn name(&self) -> &'static str;
 
-        let result = runner.run(ctx);
-        log_result!(result);
-        let runner_outputs = result?;
+    fn file_path(&self) -> &'static str;
 
-        let generator_path = runner.file_path();
-        outputs.extend(runner_outputs.into_iter().map(|output| output.into_raw(generator_path)));
+    fn run(&self, schema: &Schema, codegen: &Codegen) -> Result<Vec<Output>>;
+}
+
+/// Get all runners (generators and derives).
+pub fn get_runners() -> Vec<GeneratorOrDerive> {
+    GENERATORS
+        .iter()
+        .map(|&gen| GeneratorOrDerive::Generator(gen))
+        .chain(DERIVES.iter().map(|&derive| GeneratorOrDerive::Derive(derive)))
+        .collect()
+}
+
+/// A `Generator` or a `Derive`.
+///
+/// Provides a single interface for running either.
+#[derive(Clone, Copy)]
+pub enum GeneratorOrDerive {
+    Generator(&'static (dyn Generator + Sync)),
+    Derive(&'static (dyn Derive + Sync)),
+}
+
+impl GeneratorOrDerive {
+    /// Execute `prepare` method on the [`Generator`] or [`Derive`].
+    pub fn prepare(self, schema: &mut Schema) {
+        match self {
+            Self::Generator(generator) => generator.prepare(schema),
+            Self::Derive(derive) => derive.prepare(schema),
+        }
     }
-    Ok(outputs)
+
+    /// Run the [`Generator`] or [`Derive`].
+    pub fn run(self, schema: &Schema, codegen: &Codegen) -> Vec<RawOutput> {
+        let (runner_path, result) = match self {
+            Self::Generator(generator) => {
+                logln!("Generate {}... ", generator.name());
+                (generator.file_path(), generator.run(schema, codegen))
+            }
+            Self::Derive(derive) => {
+                logln!("Derive {}... ", derive.name());
+                (derive.file_path(), derive.run(schema, codegen))
+            }
+        };
+        let runner_outputs = result.unwrap();
+        runner_outputs.into_iter().map(|output| output.into_raw(runner_path)).collect()
+    }
 }

@@ -86,6 +86,7 @@ declare_oxc_lint!(
     /// Whether to enable auto-fixing in which the `any` type is converted to the `unknown` type.
     /// `false` by default.
     NoExplicitAny,
+    typescript,
     restriction,
     conditional_fix
 );
@@ -147,9 +148,7 @@ mod tests {
             ("let x: any = 1", "let x: unknown = 1", Some(json!([{ "fixToUnknown": true }]))),
             ("let x: any = 1", "let x: any = 1", None),
         ];
-        Tester::new(NoExplicitAny::NAME, NoExplicitAny::CATEGORY, pass, fail)
-            .expect_fix(fix)
-            .test();
+        Tester::new(NoExplicitAny::NAME, NoExplicitAny::PLUGIN, pass, fail).expect_fix(fix).test();
     }
 
     #[test]
@@ -654,7 +653,7 @@ mod tests {
             // NOTE: no current way to check that fixes don't occur when `ignoreRestArgs` is
             // `true`, since no fix technically occurs and `expect_fix()` panics without a fix.
         ];
-        Tester::new(NoExplicitAny::NAME, NoExplicitAny::CATEGORY, pass, fail)
+        Tester::new(NoExplicitAny::NAME, NoExplicitAny::PLUGIN, pass, fail)
             .expect_fix(fixes)
             .test_and_snapshot();
     }

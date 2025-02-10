@@ -1,59 +1,14 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_span.rs`
 
-#![allow(clippy::match_same_arms)]
+#![expect(clippy::match_same_arms)]
 
 use oxc_span::{GetSpanMut, Span};
 
 use crate::ast::js::*;
-
 use crate::ast::jsx::*;
-
 use crate::ast::literal::*;
-
 use crate::ast::ts::*;
-
-impl GetSpanMut for BooleanLiteral {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for NullLiteral {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for NumericLiteral<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for StringLiteral<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for BigIntLiteral<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for RegExpLiteral<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
 
 impl GetSpanMut for Program<'_> {
     #[inline]
@@ -1249,6 +1204,266 @@ impl GetSpanMut for ModuleExportName<'_> {
     }
 }
 
+impl GetSpanMut for BooleanLiteral {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for NullLiteral {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for NumericLiteral<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for StringLiteral<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for BigIntLiteral<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for RegExpLiteral<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXElement<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXOpeningElement<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXClosingElement<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXFragment<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXOpeningFragment {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXClosingFragment {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXElementName<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NamespacedName(it) => GetSpanMut::span_mut(&mut **it),
+            Self::MemberExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for JSXNamespacedName<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXMemberExpression<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXMemberExpressionObject<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
+            Self::MemberExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for JSXExpressionContainer<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXExpression<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::EmptyExpression(it) => GetSpanMut::span_mut(it),
+            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
+            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for JSXEmptyExpression {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXAttributeItem<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::Attribute(it) => GetSpanMut::span_mut(&mut **it),
+            Self::SpreadAttribute(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for JSXAttribute<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXSpreadAttribute<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXAttributeName<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::NamespacedName(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for JSXAttributeValue<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExpressionContainer(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Element(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Fragment(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for JSXIdentifier<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXChild<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::Text(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Element(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Fragment(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExpressionContainer(it) => GetSpanMut::span_mut(&mut **it),
+            Self::Spread(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for JSXSpreadChild<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXText<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for TSThisParameter<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
@@ -1940,224 +2155,6 @@ impl GetSpanMut for JSDocNonNullableType<'_> {
 }
 
 impl GetSpanMut for JSDocUnknownType {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXElement<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXOpeningElement<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXClosingElement<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXFragment<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXOpeningFragment {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXClosingFragment {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXElementName<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NamespacedName(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-        }
-    }
-}
-
-impl GetSpanMut for JSXNamespacedName<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXMemberExpression<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXMemberExpressionObject<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-        }
-    }
-}
-
-impl GetSpanMut for JSXExpressionContainer<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXExpression<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::EmptyExpression(it) => GetSpanMut::span_mut(it),
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-        }
-    }
-}
-
-impl GetSpanMut for JSXEmptyExpression {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXAttributeItem<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::Attribute(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SpreadAttribute(it) => GetSpanMut::span_mut(&mut **it),
-        }
-    }
-}
-
-impl GetSpanMut for JSXAttribute<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXSpreadAttribute<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXAttributeName<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NamespacedName(it) => GetSpanMut::span_mut(&mut **it),
-        }
-    }
-}
-
-impl GetSpanMut for JSXAttributeValue<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExpressionContainer(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Element(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Fragment(it) => GetSpanMut::span_mut(&mut **it),
-        }
-    }
-}
-
-impl GetSpanMut for JSXIdentifier<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXChild<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::Text(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Element(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Fragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ExpressionContainer(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Spread(it) => GetSpanMut::span_mut(&mut **it),
-        }
-    }
-}
-
-impl GetSpanMut for JSXSpreadChild<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for JSXText<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

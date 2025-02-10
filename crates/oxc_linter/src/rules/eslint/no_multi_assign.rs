@@ -101,6 +101,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoMultiAssign,
+    eslint,
     style,
 );
 
@@ -222,5 +223,5 @@ fn test() {
         ), // { "ecmaVersion": 2022 }
     ];
 
-    Tester::new(NoMultiAssign::NAME, NoMultiAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoMultiAssign::NAME, NoMultiAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

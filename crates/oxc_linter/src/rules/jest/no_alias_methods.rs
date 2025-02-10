@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAliasMethods,
+    jest,
     style,
     fix
 );
@@ -226,7 +227,7 @@ fn test() {
     fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
     fix.extend(fix_vitest);
 
-    Tester::new(NoAliasMethods::NAME, NoAliasMethods::CATEGORY, pass, fail)
+    Tester::new(NoAliasMethods::NAME, NoAliasMethods::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .expect_fix(fix)

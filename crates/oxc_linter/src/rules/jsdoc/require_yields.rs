@@ -24,7 +24,7 @@ fn missing_yields(span: Span) -> OxcDiagnostic {
 
 fn duplicate_yields(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@yields` tags.")
-        .with_help("Remove redundunt `@yields` tag.")
+        .with_help("Remove redundant `@yields` tag.")
         .with_label(span)
 }
 
@@ -66,6 +66,7 @@ declare_oxc_lint!(
     /// function * quux (foo) { yield foo; }
     /// ```
     RequireYields,
+    jsdoc,
     correctness
 );
 
@@ -1458,5 +1459,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireYields::NAME, RequireYields::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(RequireYields::NAME, RequireYields::PLUGIN, pass, fail).test_and_snapshot();
 }

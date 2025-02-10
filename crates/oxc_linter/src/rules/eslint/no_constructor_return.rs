@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoConstructorReturn,
+    eslint,
     pedantic
 );
 
@@ -104,6 +105,6 @@ fn test() {
         "class C { constructor(a) { if (!a) { return '' } else { a() } } }",
     ];
 
-    Tester::new(NoConstructorReturn::NAME, NoConstructorReturn::CATEGORY, pass, fail)
+    Tester::new(NoConstructorReturn::NAME, NoConstructorReturn::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

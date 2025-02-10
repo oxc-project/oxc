@@ -65,7 +65,7 @@ impl<'a, 'ctx> Jsx<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for Jsx<'a, 'ctx> {
+impl<'a> Traverse<'a> for Jsx<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.enable_jsx_plugin {
             program.source_type = program.source_type.with_standard(true);

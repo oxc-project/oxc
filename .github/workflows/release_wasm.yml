@@ -1,5 +1,7 @@
 name: Release WASM
 
+permissions: {}
+
 on:
   workflow_dispatch:
   push:

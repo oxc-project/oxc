@@ -71,15 +71,16 @@ macro_rules! try_control {
     };
     ($e:expr, $p:stmt, $q:stmt) => {
         match $e {
-            x =>
-            {
-                #[allow(clippy::redundant_else)]
-                if x.should_break() {
-                    return x;
-                } else if x.should_prune() {
-                    $p
-                } else {
-                    $q
+            x => {
+                #[allow(clippy::redundant_else, clippy::allow_attributes)]
+                {
+                    if x.should_break() {
+                        return x;
+                    } else if x.should_prune() {
+                        $p
+                    } else {
+                        $q
+                    }
                 }
             }
         }

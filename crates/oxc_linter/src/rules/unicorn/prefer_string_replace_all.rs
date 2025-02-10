@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// foo.replace(pattern, bar)
     /// ```
     PreferStringReplaceAll,
+    unicorn,
     pedantic,
     fix
 );
@@ -237,7 +238,7 @@ fn test() {
         ("foo.replaceAll(/a/g, bar)", "foo.replaceAll(\"a\", bar)"),
     ];
 
-    Tester::new(PreferStringReplaceAll::NAME, PreferStringReplaceAll::CATEGORY, pass, fail)
+    Tester::new(PreferStringReplaceAll::NAME, PreferStringReplaceAll::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

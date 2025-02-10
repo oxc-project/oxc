@@ -132,7 +132,7 @@ enum Bindings<'a, 'ctx> {
     AutomaticModule(AutomaticModuleBindings<'a, 'ctx>),
 }
 
-impl<'a, 'ctx> Bindings<'a, 'ctx> {
+impl Bindings<'_, '_> {
     #[inline]
     fn is_classic(&self) -> bool {
         matches!(self, Self::Classic(_))
@@ -187,8 +187,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
         if self.require_jsx.is_none() {
             let var_name =
                 if self.is_development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
-            let id =
-                self.add_require_statement(var_name, self.jsx_runtime_importer.clone(), false, ctx);
+            let id = self.add_require_statement(var_name, self.jsx_runtime_importer, false, ctx);
             self.require_jsx = Some(id);
         };
         self.require_jsx.as_ref().unwrap().create_read_reference(ctx)
@@ -291,7 +290,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
         name: &'static str,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        self.add_import_statement(name, self.jsx_runtime_importer.clone(), ctx)
+        self.add_import_statement(name, self.jsx_runtime_importer, ctx)
     }
 
     fn add_import_statement(
@@ -365,20 +364,20 @@ impl<'a> Pragma<'a> {
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let (object, parts) = match self {
             Self::Double(first, second) => {
-                let object = get_read_identifier_reference(SPAN, first.clone(), ctx);
+                let object = get_read_identifier_reference(SPAN, *first, ctx);
                 return Expression::from(ctx.ast.member_expression_static(
                     SPAN,
                     object,
-                    ctx.ast.identifier_name(SPAN, second.clone()),
+                    ctx.ast.identifier_name(SPAN, *second),
                     false,
                 ));
             }
             Self::Single(single) => {
-                return get_read_identifier_reference(SPAN, single.clone(), ctx);
+                return get_read_identifier_reference(SPAN, *single, ctx);
             }
             Self::Multiple(parts) => {
                 let mut parts = parts.iter();
-                let first = parts.next().unwrap().clone();
+                let first = *parts.next().unwrap();
                 let object = get_read_identifier_reference(SPAN, first, ctx);
                 (object, parts)
             }
@@ -397,8 +396,8 @@ impl<'a> Pragma<'a> {
         };
 
         let mut expr = object;
-        for item in parts {
-            let name = ctx.ast.identifier_name(SPAN, item.clone());
+        for &item in parts {
+            let name = ctx.ast.identifier_name(SPAN, item);
             expr = ctx.ast.member_expression_static(SPAN, expr, name, false).into();
         }
         expr
@@ -428,7 +427,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 }
 
                 let is_development = options.development;
-                #[allow(clippy::single_match_else, clippy::cast_possible_truncation)]
+                #[expect(clippy::single_match_else, clippy::cast_possible_truncation)]
                 let (jsx_runtime_importer, source_len) = match options.import_source.as_ref() {
                     Some(import_source) => {
                         let mut import_source = &**import_source;
@@ -486,7 +485,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for JsxImpl<'a, 'ctx> {
+impl<'a> Traverse<'a> for JsxImpl<'a, '_> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.insert_filename_var_statement(ctx);
     }
@@ -502,7 +501,7 @@ impl<'a, 'ctx> Traverse<'a> for JsxImpl<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
+impl<'a> JsxImpl<'a, '_> {
     fn is_script(&self) -> bool {
         self.ctx.source_type.is_script()
     }
@@ -609,7 +608,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                                 let argument = unsafe { ctx.ast.copy(expr) };
                                 let object_property = ctx
                                     .ast
-                                    .object_property_kind_spread_element(spread.span, argument);
+                                    .object_property_kind_spread_property(spread.span, argument);
                                 properties.push(object_property);
                             }
                         }
@@ -626,7 +625,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
         // Append children to object properties in automatic mode
         if is_automatic {
             let mut children = ctx.ast.vec_from_iter(
-                children.iter().filter_map(|child| self.transform_jsx_child(child, ctx)),
+                children.iter().filter_map(|child| self.transform_jsx_child_automatic(child, ctx)),
             );
             children_len = children.len();
             if children_len != 0 {
@@ -642,7 +641,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 properties.push(ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_identifier_name(SPAN, "children"),
+                    ctx.ast.property_key_static_identifier(SPAN, "children"),
                     value,
                     false,
                     false,
@@ -720,10 +719,9 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
 
             // isStaticChildren
             if is_development {
-                arguments.push(Argument::from(ctx.ast.expression_boolean_literal(
-                    SPAN,
-                    if is_fragment { false } else { children_len > 1 },
-                )));
+                arguments.push(Argument::from(
+                    ctx.ast.expression_boolean_literal(SPAN, children_len > 1),
+                ));
             }
 
             // Fragment doesn't have source and self
@@ -752,10 +750,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             // React.createElement(type, arguments, ...children)
             //                                      ^^^^^^^^^^^
             arguments.extend(
-                children
-                    .iter()
-                    .filter_map(|child| self.transform_jsx_child(child, ctx))
-                    .map(Argument::from),
+                children.iter().filter_map(|child| self.transform_jsx_child_classic(child, ctx)),
             );
         }
 
@@ -770,7 +765,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     ) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name.clone(), None)
+                ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
             JSXElementName::IdentifierReference(ident) => {
                 Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
@@ -852,7 +847,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             }
             JSXMemberExpressionObject::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         };
-        let property = ctx.ast.identifier_name(expr.property.span, expr.property.name.clone());
+        let property = ctx.ast.identifier_name(expr.property.span, expr.property.name);
         ctx.ast.member_expression_static(expr.span, object, property, false).into()
     }
 
@@ -885,6 +880,40 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
         }
     }
 
+    fn transform_jsx_child_automatic(
+        &mut self,
+        child: &JSXChild<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // Align spread child behavior with esbuild.
+        // Instead of Babel throwing `Spread children are not supported in React.`
+        // `<>{...foo}</>` -> `jsxs(Fragment, { children: [ ...foo ] })`
+        if let JSXChild::Spread(e) = child {
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            let argument = unsafe { ctx.ast.copy(&e.expression) };
+            let spread_element = ctx.ast.array_expression_element_spread_element(e.span, argument);
+            let elements = ctx.ast.vec1(spread_element);
+            return Some(ctx.ast.expression_array(e.span, elements, None));
+        }
+        self.transform_jsx_child(child, ctx)
+    }
+
+    fn transform_jsx_child_classic(
+        &mut self,
+        child: &JSXChild<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Argument<'a>> {
+        // Align spread child behavior with esbuild.
+        // Instead of Babel throwing `Spread children are not supported in React.`
+        // `<>{...foo}</>` -> `React.createElement(React.Fragment, null, ...foo)`
+        if let JSXChild::Spread(e) = child {
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            let argument = unsafe { ctx.ast.copy(&e.expression) };
+            return Some(ctx.ast.argument_spread_element(e.span, argument));
+        }
+        self.transform_jsx_child(child, ctx).map(Argument::from)
+    }
+
     fn transform_jsx_child(
         &mut self,
         child: &JSXChild<'a>,
@@ -905,21 +934,18 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             JSXChild::Fragment(e) => {
                 Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx))
             }
-            JSXChild::Spread(e) => {
-                self.ctx.error(diagnostics::spread_children_are_not_supported(e.span));
-                None
-            }
+            JSXChild::Spread(_) => unreachable!(),
         }
     }
 
     fn get_attribute_name(name: &JSXAttributeName<'a>, ctx: &TraverseCtx<'a>) -> PropertyKey<'a> {
         match name {
             JSXAttributeName::Identifier(ident) => {
-                let name = ident.name.clone();
+                let name = ident.name;
                 if ident.name.contains('-') {
                     PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name, None))
                 } else {
-                    ctx.ast.property_key_identifier_name(ident.span, name)
+                    ctx.ast.property_key_static_identifier(ident.span, name)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {

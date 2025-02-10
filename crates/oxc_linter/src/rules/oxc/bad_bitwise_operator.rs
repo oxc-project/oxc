@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// input |= '';
     /// ```
     BadBitwiseOperator,
+    oxc,
     restriction // Restricted because there are false positives for enum bitflags in TypeScript,
                 // e.g. in the vscode repo
     pending
@@ -229,6 +230,6 @@ fn test() {
         // ("var a = '1'; var b = a | {}", None),
     ];
 
-    Tester::new(BadBitwiseOperator::NAME, BadBitwiseOperator::CATEGORY, pass, fail)
+    Tester::new(BadBitwiseOperator::NAME, BadBitwiseOperator::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

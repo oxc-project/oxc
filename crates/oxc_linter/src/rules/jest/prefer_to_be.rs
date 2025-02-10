@@ -65,6 +65,7 @@ declare_oxc_lint!(
     /// expect(loadMessage()).resolves.toEqual('hello world');
     /// ```
     PreferToBe,
+    jest,
     style,
     fix
 );
@@ -552,7 +553,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferToBe::NAME, PreferToBe::CATEGORY, pass, fail)
+    Tester::new(PreferToBe::NAME, PreferToBe::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]

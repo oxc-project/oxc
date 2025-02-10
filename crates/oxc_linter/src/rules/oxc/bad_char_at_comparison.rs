@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// a.charAt(4) === '\n';
     /// ```
     BadCharAtComparison,
+    oxc,
     correctness
 );
 
@@ -125,6 +126,6 @@ fn test() {
         r"a.charAt(4) === '\\ukeff'",
     ];
 
-    Tester::new(BadCharAtComparison::NAME, BadCharAtComparison::CATEGORY, pass, fail)
+    Tester::new(BadCharAtComparison::NAME, BadCharAtComparison::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

@@ -74,6 +74,7 @@ declare_oxc_lint!(
     /// foo > NaN;
     /// ```
     UseIsnan,
+    eslint,
     correctness,
     conditional_fix
 );
@@ -540,5 +541,5 @@ fn test() {
         ("1 !== Number.NaN", "!isNaN(1)", None),
     ];
 
-    Tester::new(UseIsnan::NAME, UseIsnan::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(UseIsnan::NAME, UseIsnan::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

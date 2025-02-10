@@ -41,11 +41,13 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::String as ArenaString;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::utils::ast_builder::wrap_statements_in_arrow_function_iife;
 
 pub struct ClassStaticBlock;
 
@@ -87,7 +89,7 @@ impl<'a> Traverse<'a> for ClassStaticBlock {
             return;
         }
 
-        for element in body.body.iter_mut() {
+        for element in &mut body.body {
             if let ClassElement::StaticBlock(block) = element {
                 *element = Self::convert_block_to_private_field(block, &mut keys, ctx);
             }
@@ -157,32 +159,7 @@ impl ClassStaticBlock {
         // Always strict mode since we're in a class.
         *ctx.scopes_mut().get_flags_mut(scope_id) =
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode;
-
-        Self::wrap_statements_in_iife(stmts, scope_id, ctx)
-    }
-
-    /// Wrap statements in an IIFE.
-    ///
-    /// This function also used by `ClassProperties` transform.
-    pub(super) fn wrap_statements_in_iife<'a>(
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-        scope_id: ScopeId,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let stmts = ctx.ast.move_vec(stmts);
-        let params = ctx.ast.alloc_formal_parameters(
-            SPAN,
-            FormalParameterKind::ArrowFormalParameters,
-            ctx.ast.vec(),
-            NONE,
-        );
-        let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts);
-        let arrow = Expression::ArrowFunctionExpression(
-            ctx.ast.alloc_arrow_function_expression_with_scope_id(
-                SPAN, false, false, NONE, params, NONE, body, scope_id,
-            ),
-        );
-        ctx.ast.expression_call(SPAN, arrow, NONE, ctx.ast.vec(), false)
+        wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
     }
 
     /// Convert static block to expression which will be value of private field,

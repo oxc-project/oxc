@@ -117,6 +117,7 @@ declare_oxc_lint!(
     /// ```
     ///
     MaxNestedDescribe,
+    jest,
     style,
 );
 
@@ -180,7 +181,7 @@ impl MaxNestedDescribe {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         (
             "
                 describe('foo', function() {
@@ -286,7 +287,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             "
                 describe('foo', function() {
@@ -396,7 +397,92 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxNestedDescribe::NAME, MaxNestedDescribe::CATEGORY, pass, fail)
+    let pass_vitest = vec![
+        (
+            "
+                describe('another suite', () => {
+                    describe('another suite', () => {
+                        it('skipped test', () => {
+                            // Test skipped, as tests are running in Only mode
+                            assert.equal(Math.sqrt(4), 3)
+                        })
+
+                        it.only('test', () => {
+                            // Only this test (and others marked with only) are run
+                            assert.equal(Math.sqrt(4), 2)
+                        })
+                    })
+                })
+            ",
+            None,
+        ),
+        (
+            "
+                describe('another suite', () => {
+                    describe('another suite', () => {
+                        describe('another suite', () => {
+                            describe('another suite', () => {
+                            
+                            })
+                        })
+                    })
+                })
+            ",
+            None,
+        ),
+    ];
+
+    let fail_vitest = vec![
+        (
+            "
+                describe('another suite', () => {
+                    describe('another suite', () => {
+                        describe('another suite', () => {
+                            describe('another suite', () => {
+                                describe('another suite', () => {
+                                    describe('another suite', () => {
+                                
+                                    })
+                                })
+                            })
+                        })
+                    })
+                })
+            ",
+            None,
+        ),
+        (
+            "
+                describe('another suite', () => {
+                    describe('another suite', () => {
+                        describe('another suite', () => {
+                            describe('another suite', () => {
+                                describe('another suite', () => {
+                                    describe('another suite', () => {
+                                        it('skipped test', () => {
+                                            // Test skipped, as tests are running in Only mode
+                                            assert.equal(Math.sqrt(4), 3)
+                                        })
+
+                                        it.only('test', () => {
+                                            // Only this test (and others marked with only) are run
+                                            assert.equal(Math.sqrt(4), 2)
+                                        })
+                                    })
+                                })
+                            })
+                        })
+                    })
+                })
+            ",
+            None,
+        ),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+
+    Tester::new(MaxNestedDescribe::NAME, MaxNestedDescribe::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

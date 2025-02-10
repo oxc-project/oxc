@@ -6,7 +6,6 @@
 use oxc_allocator::{Allocator, CloneIn};
 
 use crate::number::*;
-
 use crate::operator::*;
 
 impl<'alloc> CloneIn<'alloc> for NumberBase {

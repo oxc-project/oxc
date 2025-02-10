@@ -95,7 +95,7 @@ where
 {
     struct RewriteExtensionsModeVisitor;
 
-    impl<'de> Visitor<'de> for RewriteExtensionsModeVisitor {
+    impl Visitor<'_> for RewriteExtensionsModeVisitor {
         type Value = Option<RewriteExtensionsMode>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

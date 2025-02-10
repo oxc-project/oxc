@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoTitleInDocumentHead,
+    nextjs,
     correctness
 );
 
@@ -141,6 +142,6 @@ fn test() {
 			      }"#,
     ];
 
-    Tester::new(NoTitleInDocumentHead::NAME, NoTitleInDocumentHead::CATEGORY, pass, fail)
+    Tester::new(NoTitleInDocumentHead::NAME, NoTitleInDocumentHead::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

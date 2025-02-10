@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// class Foo extends OtherClass {}
     /// ```
     PreferEventTarget,
+    unicorn,
     pedantic
 );
 
@@ -110,6 +111,5 @@ fn test() {
         r"for (const EventEmitter of []) {new EventEmitter}",
     ];
 
-    Tester::new(PreferEventTarget::NAME, PreferEventTarget::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(PreferEventTarget::NAME, PreferEventTarget::PLUGIN, pass, fail).test_and_snapshot();
 }

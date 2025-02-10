@@ -1,8 +1,6 @@
 use std::{fmt, mem};
 
-use rustc_hash::FxBuildHasher;
-
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, HashMap as ArenaHashMap, Vec as ArenaVec};
 use oxc_index::{Idx, IndexVec};
 use oxc_syntax::{
     node::NodeId,
@@ -13,9 +11,8 @@ use oxc_syntax::{
 
 use crate::SymbolTable;
 
-pub(crate) type Bindings<'a> = hashbrown::HashMap<&'a str, SymbolId, FxBuildHasher, &'a Allocator>;
-pub type UnresolvedReferences<'a> =
-    hashbrown::HashMap<&'a str, ArenaVec<'a, ReferenceId>, FxBuildHasher, &'a Allocator>;
+pub(crate) type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
+pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, ReferenceId>>;
 
 /// Scope Tree
 ///
@@ -58,10 +55,7 @@ impl Default for ScopeTree {
             cell: ScopeTreeCell::new(Allocator::default(), |allocator| ScopeTreeInner {
                 bindings: IndexVec::new(),
                 child_ids: ArenaVec::new_in(allocator),
-                root_unresolved_references: UnresolvedReferences::with_hasher_in(
-                    FxBuildHasher,
-                    allocator,
-                ),
+                root_unresolved_references: UnresolvedReferences::new_in(allocator),
             }),
         }
     }
@@ -316,10 +310,8 @@ impl ScopeTree {
     /// If you only want bindings in a specific scope, use [`iter_bindings_in`].
     ///
     /// [`iter_bindings_in`]: ScopeTree::iter_bindings_in
-    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &str)> + '_ {
-        self.cell.borrow_dependent().bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
-            bindings.iter().map(move |(&name, &symbol_id)| (scope_id, symbol_id, name))
-        })
+    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, &Bindings)> + '_ {
+        self.cell.borrow_dependent().bindings.iter_enumerated()
     }
 
     /// Iterate over bindings declared inside a scope.
@@ -384,7 +376,7 @@ impl ScopeTree {
         let scope_id = self.parent_ids.push(parent_id);
         self.flags.push(flags);
         self.cell.with_dependent_mut(|allocator, inner| {
-            inner.bindings.push(Bindings::with_hasher_in(FxBuildHasher, allocator));
+            inner.bindings.push(Bindings::new_in(allocator));
         });
         self.node_ids.push(node_id);
         if self.build_child_ids {

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-unused-vars): Variable 'N' is declared but never used.
    ╭─[no_unused_vars.tsx:1:11]

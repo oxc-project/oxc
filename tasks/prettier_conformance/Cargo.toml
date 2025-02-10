@@ -30,6 +30,8 @@ oxc_prettier = { workspace = true }
 oxc_span = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
+cow-utils = { workspace = true }
 pico-args = { workspace = true }
 rustc-hash = { workspace = true }
+similar = { workspace = true }
 walkdir = { workspace = true }

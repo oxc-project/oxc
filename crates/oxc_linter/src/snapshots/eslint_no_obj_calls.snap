@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-obj-calls): `JSON` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:14]

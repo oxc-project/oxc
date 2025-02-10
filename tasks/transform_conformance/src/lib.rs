@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, clippy::print_stderr)]
+#![expect(clippy::print_stdout)]
 
 mod constants;
 mod driver;

@@ -278,7 +278,7 @@ fn test_value_used_as_type() {
     .test();
 
     // T is a value that gets shadowed by a type. When `T` is referenced within
-    // a value context, the root `const T` should be the symbol recoreded in the
+    // a value context, the root `const T` should be the symbol recorded in the
     // reference.
     let tester = SemanticTester::ts(
         "

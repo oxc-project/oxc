@@ -69,6 +69,9 @@ pub struct BabelPlugins {
     // ES2022
     pub class_static_block: bool,
     pub class_properties: Option<ClassPropertiesOptions>,
+
+    // Decorator
+    pub legacy_decorator: bool,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -138,6 +141,8 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         .map_err(|err| p.errors.push(err))
                         .ok();
                 }
+                // This is not a Babel plugin, we pretend it exists for running legacy decorator by Babel options
+                "transform-legacy-decorator" => p.legacy_decorator = true,
                 s => p.unsupported.push(s.to_string()),
             }
         }

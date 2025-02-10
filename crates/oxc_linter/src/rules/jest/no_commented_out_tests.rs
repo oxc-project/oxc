@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoCommentedOutTests,
+    jest,
     suspicious
 );
 
@@ -217,7 +218,7 @@ fn test() {
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
     fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
 
-    Tester::new(NoCommentedOutTests::NAME, NoCommentedOutTests::CATEGORY, pass, fail)
+    Tester::new(NoCommentedOutTests::NAME, NoCommentedOutTests::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

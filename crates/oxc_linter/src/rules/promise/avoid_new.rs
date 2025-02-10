@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// const bar = await Promise.all([baz(), bang()]);
     /// ```
     AvoidNew,
+    promise,
     style,
 );
 
@@ -52,7 +53,7 @@ impl Rule for AvoidNew {
             return;
         };
 
-        if ident.name == "Promise" && ctx.semantic().is_reference_to_global_variable(ident) {
+        if ident.name == "Promise" && ctx.is_reference_to_global_variable(ident) {
             ctx.diagnostic(avoid_new_promise_diagnostic(expr.span));
         }
     }
@@ -77,5 +78,5 @@ fn test() {
         "Thing(new Promise(() => {}))",
     ];
 
-    Tester::new(AvoidNew::NAME, AvoidNew::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(AvoidNew::NAME, AvoidNew::PLUGIN, pass, fail).test_and_snapshot();
 }

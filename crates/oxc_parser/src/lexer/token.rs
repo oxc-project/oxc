@@ -39,11 +39,6 @@ pub struct Token {
     _padding2: u32,
 }
 
-#[cfg(all(test, target_pointer_width = "64"))]
-mod size_asserts {
-    const _: () = assert!(std::mem::size_of::<super::Token>() == 16);
-}
-
 impl Token {
     pub(super) fn new_on_new_line() -> Self {
         Self { is_on_new_line: true, ..Self::default() }
@@ -67,4 +62,10 @@ impl Token {
         debug_assert!(!self.has_separator || self.kind.is_number() || self.kind == Kind::default());
         self.has_separator = true;
     }
+}
+
+#[cfg(test)]
+mod size_asserts {
+    use super::Token;
+    const _: () = assert!(std::mem::size_of::<Token>() == 16);
 }

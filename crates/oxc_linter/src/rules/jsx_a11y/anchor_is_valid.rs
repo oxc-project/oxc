@@ -116,6 +116,7 @@ declare_oxc_lint!(
     ///
     /// - [WCAG 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard)
     AnchorIsValid,
+    jsx_a11y,
     correctness
 );
 
@@ -768,5 +769,5 @@ fn test() {
         // ),
     ];
 
-    Tester::new(AnchorIsValid::NAME, AnchorIsValid::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(AnchorIsValid::NAME, AnchorIsValid::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// jest.spyOn(Date, 'now').mockImplementation(() => 10);
     /// ```
     PreferSpyOn,
+    jest,
     style,
     fix
 );
@@ -299,7 +300,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferSpyOn::NAME, PreferSpyOn::CATEGORY, pass, fail)
+    Tester::new(PreferSpyOn::NAME, PreferSpyOn::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

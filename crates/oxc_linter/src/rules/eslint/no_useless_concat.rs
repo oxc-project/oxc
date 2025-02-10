@@ -32,6 +32,7 @@ declare_oxc_lint!(
     /// var foo = "a" + "b";
     /// ```
     NoUselessConcat,
+    eslint,
     suspicious
 );
 
@@ -133,5 +134,5 @@ fn test() {
         "'a' + 'b' + 'c' + 'd' + 'e' + foo",
     ];
 
-    Tester::new(NoUselessConcat::NAME, NoUselessConcat::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessConcat::NAME, NoUselessConcat::PLUGIN, pass, fail).test_and_snapshot();
 }

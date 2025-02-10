@@ -78,6 +78,7 @@ declare_oxc_lint!(
     ///  }
     /// ```
     NoDirectMutationState,
+    react,
     correctness
 );
 
@@ -396,6 +397,6 @@ fn test() {
         "#,
     ];
 
-    Tester::new(NoDirectMutationState::NAME, NoDirectMutationState::CATEGORY, pass, fail)
+    Tester::new(NoDirectMutationState::NAME, NoDirectMutationState::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

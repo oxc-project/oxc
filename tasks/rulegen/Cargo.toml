@@ -26,4 +26,3 @@ lazy_static = { workspace = true }
 regex = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-ureq = { workspace = true }

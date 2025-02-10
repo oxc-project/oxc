@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// async () => bar;
     /// ```
     NoUselessPromiseResolveReject,
+    unicorn,
     pedantic,
     fix
 );
@@ -1370,7 +1371,7 @@ fn test() {
 
     Tester::new(
         NoUselessPromiseResolveReject::NAME,
-        NoUselessPromiseResolveReject::CATEGORY,
+        NoUselessPromiseResolveReject::PLUGIN,
         pass,
         fail,
     )

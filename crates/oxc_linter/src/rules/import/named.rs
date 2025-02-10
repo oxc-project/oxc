@@ -77,6 +77,7 @@ declare_oxc_lint!(
     /// import { SomeNonsenseThatDoesntExist } from 'react'
     /// ```
     Named,
+    import,
     nursery // There are race conditions in the runtime which may cause the module to
             // not find any exports from `exported_bindings_from_star_export`.
 );
@@ -271,7 +272,7 @@ fn test() {
         "import { FooBar } from './typescript-export-assign-object'",
     ];
 
-    Tester::new(Named::NAME, Named::CATEGORY, pass, fail)
+    Tester::new(Named::NAME, Named::PLUGIN, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

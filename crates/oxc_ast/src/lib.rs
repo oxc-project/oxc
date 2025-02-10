@@ -39,9 +39,6 @@
 //! [tsc]: <https://github.com/microsoft/TypeScript>
 //! [`Traverse`]: <https://github.com/oxc-project/oxc/tree/main/crates/oxc_traverse>
 
-// TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
-// module and the generated one.
-#![allow(clippy::self_named_module_files)]
 #![warn(missing_docs)]
 
 #[cfg(feature = "serialize")]
@@ -53,16 +50,17 @@ mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
 mod trivia;
+#[cfg(feature = "serialize")]
+pub mod utf8_to_utf16;
 
 mod generated {
-    #![allow(missing_docs)]
+    #![expect(missing_docs)]
     #[cfg(debug_assertions)]
     pub mod assert_layouts;
     pub mod ast_builder;
     pub mod ast_kind;
     pub mod derive_clone_in;
     pub mod derive_content_eq;
-    pub mod derive_content_hash;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
     pub mod derive_get_address;
@@ -74,12 +72,11 @@ mod generated {
 }
 
 pub mod visit {
-    #![allow(missing_docs)]
+    #![expect(missing_docs)]
     pub use crate::generated::{visit::*, visit_mut::*};
 }
 
 pub use generated::{ast_builder, ast_kind};
-pub use num_bigint::BigUint;
 
 pub use crate::{
     ast::comment::{Comment, CommentKind, CommentPosition},

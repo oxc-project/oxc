@@ -2,6 +2,8 @@
 
 name: Code Coverage
 
+permissions: {}
+
 on:
   workflow_dispatch:
   push:
@@ -40,7 +42,7 @@ jobs:
         run: cargo codecov --lcov --output-path lcov.info
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: codecov
           path: lcov.info
@@ -66,7 +68,7 @@ jobs:
 
       - name: Upload to codecov.io
         if: env.CODECOV_TOKEN
-        uses: codecov/codecov-action@7f8b4b4bde536c465e797be725718b88c5d95e0e # v5
+        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3 # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true

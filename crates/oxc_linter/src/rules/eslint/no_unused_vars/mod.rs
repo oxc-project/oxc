@@ -187,6 +187,7 @@ declare_oxc_lint!(
     /// var global_var = 42;
     /// ```
     NoUnusedVars,
+    eslint,
     correctness,
     dangerous_suggestion
 );

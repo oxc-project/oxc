@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -1261,3 +1260,52 @@ snapshot_kind: text
    ·                                       ───────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:15]
+ 1 │ expect(a > b).toBe(true)
+   ·               ────
+   ╰────
+  help: Prefer using `"toBeGreaterThan"` instead
+
+  ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:15]
+ 1 │ expect(a < b).toBe(true)
+   ·               ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead
+
+  ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:16]
+ 1 │ expect(a >= b).toBe(true)
+   ·                ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:16]
+ 1 │ expect(a <= b).toBe(true)
+   ·                ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(a > b).not.toBe(true)
+   ·                   ────
+   ╰────
+  help: Prefer using `"toBeLessThanOrEqual"` instead
+
+  ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:19]
+ 1 │ expect(a < b).not.toBe(true)
+   ·                   ────
+   ╰────
+  help: Prefer using `"toBeGreaterThanOrEqual"` instead
+
+  ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
+   ╭─[prefer_comparison_matcher.tsx:1:20]
+ 1 │ expect(a >= b).not.toBe(true)
+   ·                    ────
+   ╰────
+  help: Prefer using `"toBeLessThan"` instead

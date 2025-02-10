@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// <html lang="en" />
     /// ```
     HtmlHasLang,
+    jsx_a11y,
     correctness
 );
 
@@ -138,7 +139,7 @@ fn test() {
         ("<HTMLTop />", None, Some(settings()), None),
     ];
 
-    Tester::new(HtmlHasLang::NAME, HtmlHasLang::CATEGORY, pass, fail)
+    Tester::new(HtmlHasLang::NAME, HtmlHasLang::PLUGIN, pass, fail)
         .with_jsx_a11y_plugin(true)
         .test_and_snapshot();
 }

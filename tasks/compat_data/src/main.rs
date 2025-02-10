@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout)]
+#![expect(clippy::print_stdout)]
 use std::process::Command;
 
 use oxc_compat_data::generate;

@@ -48,7 +48,7 @@ impl Parse for AllLintRulesMeta {
     }
 }
 
-#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
+#[expect(clippy::cognitive_complexity, clippy::too_many_lines)]
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
 
@@ -85,7 +85,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
-        #[allow(clippy::enum_variant_names)]
+        #[expect(clippy::enum_variant_names)]
         pub enum RuleEnum {
             #(#struct_names(#struct_names)),*
         }

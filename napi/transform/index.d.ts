@@ -20,6 +20,19 @@ export interface CompilerAssumptions {
   setPublicClassFields?: boolean
 }
 
+export interface DecoratorOptions {
+  /**
+   * Enables experimental support for decorators, which is a version of decorators that predates the TC39 standardization process.
+   *
+   * Decorators are a language feature which hasn’t yet been fully ratified into the JavaScript specification.
+   * This means that the implementation version in TypeScript may differ from the implementation in JavaScript when it it decided by TC39.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#experimentalDecorators
+   * @default false
+   */
+  legacy?: boolean
+}
+
 export interface ErrorLabel {
   message?: string
   start: number
@@ -205,17 +218,6 @@ export declare const enum Severity {
   Advice = 'Advice'
 }
 
-export interface SourceMap {
-  file?: string
-  mappings: string
-  names: Array<string>
-  sourceRoot?: string
-  sources: Array<string>
-  sourcesContent?: Array<string>
-  version: number
-  x_google_ignoreList?: Array<number>
-}
-
 /**
  * Transpile a JavaScript or TypeScript into a target ECMAScript version.
  *
@@ -281,6 +283,8 @@ export interface TransformOptions {
   define?: Record<string, string>
   /** Inject Plugin */
   inject?: Record<string, string | [string, string]>
+  /** Decorator plugin */
+  decorator?: DecoratorOptions
 }
 
 export interface TransformResult {
@@ -363,4 +367,3 @@ export interface TypeScriptOptions {
    */
   rewriteImportExtensions?: 'rewrite' | 'remove' | boolean
 }
-

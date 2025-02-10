@@ -1,137 +1,76 @@
+use std::{borrow::Cow, io::Write};
+
 use cow_utils::CowUtils;
-use num_bigint::BigInt;
-use num_traits::Num;
 use serde::{
-    ser::{SerializeSeq, Serializer},
+    ser::{SerializeMap, SerializeSeq, Serializer},
     Serialize,
 };
 
-use oxc_allocator::Box;
-use oxc_span::{Atom, Span};
-use oxc_syntax::number::BigintBase;
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_span::Span;
 
-use crate::ast::{
-    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameter,
-    FormalParameterKind, FormalParameters, JSXElementName, JSXIdentifier,
-    JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral,
-    RegExpPattern, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
-};
+use crate::ast::*;
 
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "Literal")]
-pub struct ESTreeLiteral<'a, T> {
-    #[serde(flatten)]
-    span: Span,
-    value: T,
-    raw: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    bigint: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    regex: Option<SerRegExpValue>,
-}
+/// Constant value that will be serialized as `null` in JSON.
+pub(crate) const NULL: () = ();
 
-impl From<&BooleanLiteral> for ESTreeLiteral<'_, bool> {
-    fn from(lit: &BooleanLiteral) -> Self {
-        let raw = if lit.span.is_unspanned() {
-            None
-        } else {
-            Some(if lit.value { "true" } else { "false" })
-        };
-
-        Self { span: lit.span, value: lit.value, raw, bigint: None, regex: None }
+impl Program<'_> {
+    /// Serialize AST to JSON.
+    //
+    // Should not panic if everything is working correctly.
+    // Serializing into a `Vec<u8>` should be infallible.
+    #[expect(clippy::missing_panics_doc)]
+    pub fn to_json(&self) -> String {
+        let buf = Vec::new();
+        let ser = self.to_json_into_writer(buf).unwrap();
+        let buf = ser.into_inner();
+        // SAFETY: `serde_json` outputs valid UTF-8.
+        // `serde_json::to_string` also uses `from_utf8_unchecked`.
+        // https://github.com/serde-rs/json/blob/1174c5f57db44c26460951b525c6ede50984b655/src/ser.rs#L2209-L2219
+        unsafe { String::from_utf8_unchecked(buf) }
     }
-}
 
-impl From<&NullLiteral> for ESTreeLiteral<'_, ()> {
-    fn from(lit: &NullLiteral) -> Self {
-        let raw = if lit.span.is_unspanned() { None } else { Some("null") };
-        Self { span: lit.span, value: (), raw, bigint: None, regex: None }
-    }
-}
+    /// Serialize AST into a "black hole" writer.
+    ///
+    /// Only useful for testing, to make sure serialization completes successfully.
+    /// Should be faster than [`Program::to_json`], as does not actually produce any output.
+    ///
+    /// # Errors
+    /// Returns `Err` if serialization fails.
+    #[doc(hidden)]
+    pub fn test_to_json(&self) -> Result<(), serde_json::Error> {
+        struct BlackHole;
 
-impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
-    fn from(lit: &'a NumericLiteral) -> Self {
-        Self {
-            span: lit.span,
-            value: lit.value,
-            raw: lit.raw.as_ref().map(Atom::as_str),
-            bigint: None,
-            regex: None,
+        #[expect(clippy::inline_always)]
+        impl Write for BlackHole {
+            #[inline(always)]
+            fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
+                Ok(buf.len())
+            }
+
+            #[inline(always)]
+            fn flush(&mut self) -> Result<(), std::io::Error> {
+                Ok(())
+            }
         }
+
+        self.to_json_into_writer(BlackHole).map(|_| ())
+    }
+
+    /// Serialize AST into the provided writer.
+    fn to_json_into_writer<W: Write>(
+        &self,
+        writer: W,
+    ) -> Result<serde_json::Serializer<W, EcmaFormatter>, serde_json::Error> {
+        let mut ser = serde_json::Serializer::with_formatter(writer, EcmaFormatter);
+        self.serialize(&mut ser)?;
+        Ok(ser)
     }
 }
 
-impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
-    fn from(lit: &'a StringLiteral) -> Self {
-        Self {
-            span: lit.span,
-            value: &lit.value,
-            raw: lit.raw.as_ref().map(Atom::as_str),
-            bigint: None,
-            regex: None,
-        }
-    }
-}
-
-impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
-    fn from(lit: &'a BigIntLiteral) -> Self {
-        let src = &lit.raw.strip_suffix('n').unwrap().cow_replace('_', "");
-
-        let src = match lit.base {
-            BigintBase::Decimal => src,
-            BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => &src[2..],
-        };
-        let radix = match lit.base {
-            BigintBase::Decimal => 10,
-            BigintBase::Binary => 2,
-            BigintBase::Octal => 8,
-            BigintBase::Hex => 16,
-        };
-        let bigint = BigInt::from_str_radix(src, radix).unwrap();
-
-        Self {
-            span: lit.span,
-            // BigInts can't be serialized to JSON
-            value: (),
-            raw: Some(lit.raw.as_str()),
-            bigint: Some(bigint.to_string()),
-            regex: None,
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct SerRegExpValue {
-    pattern: String,
-    flags: String,
-}
-
-/// A placeholder for regexp literals that can't be serialized to JSON
-#[derive(Serialize)]
-#[allow(clippy::empty_structs_with_brackets)]
-pub struct EmptyObject {}
-
-impl<'a> From<&'a RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> {
-    fn from(lit: &'a RegExpLiteral) -> Self {
-        Self {
-            span: lit.span,
-            raw: lit.raw.as_ref().map(Atom::as_str),
-            value: match &lit.regex.pattern {
-                RegExpPattern::Pattern(_) => Some(EmptyObject {}),
-                _ => None,
-            },
-            bigint: None,
-            regex: Some(SerRegExpValue {
-                pattern: lit.regex.pattern.to_string(),
-                flags: lit.regex.flags.to_string(),
-            }),
-        }
-    }
-}
-
+/// `serde_json` formatter which uses `ryu_js` to serialize `f64`.
 pub struct EcmaFormatter;
 
-/// Serialize f64 with `ryu_js`
 impl serde_json::ser::Formatter for EcmaFormatter {
     fn write_f64<W>(&mut self, writer: &mut W, value: f64) -> std::io::Result<()>
     where
@@ -142,37 +81,64 @@ impl serde_json::ser::Formatter for EcmaFormatter {
     }
 }
 
-impl Program<'_> {
-    /// # Panics
-    pub fn to_json(&self) -> String {
-        let ser = self.serializer();
-        String::from_utf8(ser.into_inner()).unwrap()
-    }
+// --------------------
+// Literals
+// --------------------
 
-    /// # Panics
-    pub fn serializer(&self) -> serde_json::Serializer<Vec<u8>, EcmaFormatter> {
-        let buf = Vec::new();
-        let mut ser = serde_json::Serializer::with_formatter(buf, EcmaFormatter);
-        self.serialize(&mut ser).unwrap();
-        ser
+/// Get `raw` field of `BooleanLiteral`.
+pub fn boolean_literal_raw(lit: &BooleanLiteral) -> Option<&str> {
+    if lit.span.is_unspanned() {
+        None
+    } else if lit.value {
+        Some("true")
+    } else {
+        Some("false")
+    }
+}
+
+/// Get `raw` field of `NullLiteral`.
+pub fn null_literal_raw(lit: &NullLiteral) -> Option<&str> {
+    if lit.span.is_unspanned() {
+        None
+    } else {
+        Some("null")
+    }
+}
+
+/// Get `bigint` field of `BigIntLiteral`.
+pub fn bigint_literal_bigint<'a>(lit: &'a BigIntLiteral<'a>) -> Cow<'a, str> {
+    lit.raw.strip_suffix('n').unwrap().cow_replace('_', "")
+}
+
+/// A placeholder for `RegExpLiteral`'s `value` field.
+pub struct EmptyObject;
+
+impl Serialize for EmptyObject {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let map = serializer.serialize_map(None)?;
+        map.end()
     }
 }
 
 impl Serialize for RegExpFlags {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&self.to_string())
     }
 }
 
-/// Serialize `ArrayExpressionElement::Elision` variant as `null` in JSON
+impl Serialize for RegExpPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+// --------------------
+// Various
+// --------------------
+
+/// Serialize `ArrayExpressionElement::Elision` variant as `null`.
 impl Serialize for Elision {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_none()
     }
 }
@@ -187,22 +153,8 @@ impl Serialize for FormalParameters<'_> {
             type_annotation: &rest.argument.type_annotation,
             optional: rest.argument.optional,
         });
-        let converted = SerFormalParameters {
-            span: self.span,
-            kind: self.kind,
-            items: ElementsAndRest::new(&self.items, converted_rest.as_ref()),
-        };
-        converted.serialize(serializer)
+        ElementsAndRest::new(&self.items, converted_rest.as_ref()).serialize(serializer)
     }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "FormalParameters")]
-struct SerFormalParameters<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    kind: FormalParameterKind,
-    items: ElementsAndRest<'b, FormalParameter<'a>, SerFormalParameterRest<'a, 'b>>,
 }
 
 #[derive(Serialize)]
@@ -211,7 +163,7 @@ struct SerFormalParameterRest<'a, 'b> {
     #[serde(flatten)]
     span: Span,
     argument: &'b BindingPatternKind<'a>,
-    type_annotation: &'b Option<Box<'a, TSTypeAnnotation<'a>>>,
+    type_annotation: &'b Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     optional: bool,
 }
 
@@ -241,61 +193,67 @@ impl<E: Serialize, R: Serialize> Serialize for ElementsAndRest<'_, E, R> {
     }
 }
 
-/// Serialize `TSModuleBlock` to be ESTree compatible, with `body` and `directives` fields combined,
-/// and directives output as `StringLiteral` expression statements
-impl Serialize for TSModuleBlock<'_> {
+/// Wrap an `Option<Vec<T>>` so that it's serialized as an empty array (`[]`) if the `Option` is `None`.
+pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'b Option<ArenaVec<'a, T>>);
+
+impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerTSModuleBlock {
-            span: self.span,
-            body: DirectivesAndStatements { directives: &self.directives, body: &self.body },
-        };
-        converted.serialize(serializer)
+        if let Some(vec) = &self.0 {
+            vec.serialize(serializer)
+        } else {
+            [false; 0].serialize(serializer)
+        }
     }
 }
 
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "TSModuleBlock")]
-struct SerTSModuleBlock<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    body: DirectivesAndStatements<'a, 'b>,
-}
+/// Serializer for `ArrowFunctionExpression`'s `body` field.
+///
+/// Serializes as either an expression (if `expression` property is set),
+/// or a `BlockStatement` (if it's not).
+pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
 
-struct DirectivesAndStatements<'a, 'b> {
-    directives: &'b [Directive<'a>],
-    body: &'b [Statement<'a>],
-}
-
-impl Serialize for DirectivesAndStatements<'_, '_> {
+impl Serialize for ArrowFunctionExpressionBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut seq = serializer.serialize_seq(Some(self.directives.len() + self.body.len()))?;
-        for directive in self.directives {
-            seq.serialize_element(&DirectiveAsStatement {
-                span: directive.span,
-                expression: &directive.expression,
-            })?;
+        if let Some(expression) = self.0.get_expression() {
+            expression.serialize(serializer)
+        } else {
+            self.0.body.serialize(serializer)
         }
-        for stmt in self.body {
-            seq.serialize_element(stmt)?;
-        }
-        seq.end()
     }
 }
 
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ExpressionStatement")]
-struct DirectiveAsStatement<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    expression: &'b StringLiteral<'a>,
+/// Serializer for `AssignmentTargetPropertyIdentifier`'s `init` field
+/// (which is renamed to `value` in ESTree AST).
+pub struct AssignmentTargetPropertyIdentifierValue<'a>(
+    pub &'a AssignmentTargetPropertyIdentifier<'a>,
+);
+
+impl Serialize for AssignmentTargetPropertyIdentifierValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(init) = &self.0.init {
+            let mut map = serializer.serialize_map(None)?;
+            map.serialize_entry("type", "AssignmentPattern")?;
+            map.serialize_entry("start", &self.0.span.start)?;
+            map.serialize_entry("end", &self.0.span.end)?;
+            map.serialize_entry("left", &self.0.binding)?;
+            map.serialize_entry("right", init)?;
+            map.end()
+        } else {
+            self.0.binding.serialize(serializer)
+        }
+    }
 }
+
+// --------------------
+// JSX
+// --------------------
 
 impl Serialize for JSXElementName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::Identifier(ident) => ident.serialize(serializer),
             Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer)
             }
             Self::NamespacedName(name) => name.serialize(serializer),
             Self::MemberExpression(expr) => expr.serialize(serializer),
@@ -310,7 +268,7 @@ impl Serialize for JSXMemberExpressionObject<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer)
             }
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {

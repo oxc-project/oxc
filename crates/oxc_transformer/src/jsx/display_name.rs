@@ -61,7 +61,7 @@ impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ReactDisplayName<'a, 'ctx> {
+impl<'a> Traverse<'a> for ReactDisplayName<'a, '_> {
     fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
@@ -81,10 +81,10 @@ impl<'a, 'ctx> Traverse<'a> for ReactDisplayName<'a, 'ctx> {
                 // `foo = React.createClass({})`
                 Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
                     AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                        break ident.name.clone();
+                        break ident.name;
                     }
                     AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name.clone();
+                        break expr.property.name;
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement
@@ -99,7 +99,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactDisplayName<'a, 'ctx> {
                 // `let foo = React.createClass({})`
                 Ancestor::VariableDeclaratorInit(declarator) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &declarator.id().kind {
-                        break ident.name.clone();
+                        break ident.name;
                     }
                     return;
                 }
@@ -128,7 +128,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactDisplayName<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
+impl<'a> ReactDisplayName<'a, '_> {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,
@@ -172,7 +172,7 @@ impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
             ctx.ast.object_property_kind_object_property(
                 SPAN,
                 PropertyKind::Init,
-                ctx.ast.property_key_identifier_name(SPAN, DISPLAY_NAME),
+                ctx.ast.property_key_static_identifier(SPAN, DISPLAY_NAME),
                 ctx.ast.expression_string_literal(SPAN, name, None),
                 false,
                 false,

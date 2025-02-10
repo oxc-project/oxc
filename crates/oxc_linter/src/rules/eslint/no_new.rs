@@ -27,6 +27,7 @@ declare_oxc_lint!(
     /// new Person();
     /// ```
     NoNew,
+    eslint,
     suspicious,
 );
 
@@ -66,5 +67,5 @@ fn test() {
 
     let fail = vec!["new Date()", "(() => { new Date() })"];
 
-    Tester::new(NoNew::NAME, NoNew::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNew::NAME, NoNew::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// console.log(message);
     /// ```
     NoAbusiveEslintDisable,
+    unicorn,
     restriction
 );
 
@@ -142,6 +143,6 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoAbusiveEslintDisable::NAME, NoAbusiveEslintDisable::CATEGORY, pass, fail)
+    Tester::new(NoAbusiveEslintDisable::NAME, NoAbusiveEslintDisable::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

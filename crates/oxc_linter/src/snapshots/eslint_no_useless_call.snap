@@ -1,0 +1,179 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ foo.call(undefined, 1, 2);
+   · ─────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ foo.call(void 0, 1, 2);
+   · ──────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ foo.call(null, 1, 2);
+   · ────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ obj.foo.call(obj, 1, 2);
+   · ───────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ a.b.c.foo.call(a.b.c, 1, 2);
+   · ───────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ a.b(x, y).c.foo.call(a.b(x, y).c, 1, 2);
+   · ───────────────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ foo.apply(undefined, [1, 2]);
+   · ────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ foo.apply(void 0, [1, 2]);
+   · ─────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ foo.apply(null, [1, 2]);
+   · ───────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ obj.foo.apply(obj, [1, 2]);
+   · ──────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ a.b.c.foo.apply(a.b.c, [1, 2]);
+   · ──────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ a.b(x, y).c.foo.apply(a.b(x, y).c, [1, 2]);
+   · ──────────────────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ [].concat.apply([ ], [1, 2]);
+   · ────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ ╭─▶ [].concat.apply([
+ 2 │ │               /*empty*/
+ 3 │ ╰─▶             ], [1, 2]);
+ 4 │             
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ abc.get("foo", 0).concat.apply(abc . get("foo",  0 ), [1, 2]);
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ foo.call?.(undefined, 1, 2);
+   · ───────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ foo?.call(undefined, 1, 2);
+   · ──────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ (foo?.call)(undefined, 1, 2);
+   · ────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ obj.foo.call?.(obj, 1, 2);
+   · ─────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ obj?.foo.call(obj, 1, 2);
+   · ────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ (obj?.foo).call(obj, 1, 2);
+   · ──────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ (obj?.foo.call)(obj, 1, 2);
+   · ──────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ obj?.foo.bar.call(obj?.foo, 1, 2);
+   · ─────────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ (obj?.foo).bar.call(obj?.foo, 1, 2);
+   · ───────────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ obj.foo?.bar.call(obj.foo, 1, 2);
+   · ────────────────────────────────
+   ╰────
+  help: Replace with a normal function invocation

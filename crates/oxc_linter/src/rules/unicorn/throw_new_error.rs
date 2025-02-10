@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// throw new lib.TypeError('unicorn');
     /// ```
     ThrowNewError,
+    unicorn,
     style,
     fix
 );
@@ -152,7 +153,7 @@ fn test() {
         ("throw (( getGlobalThis().Error ))()", "throw new (( getGlobalThis().Error ))()"),
     ];
 
-    Tester::new(ThrowNewError::NAME, ThrowNewError::CATEGORY, pass, fail)
+    Tester::new(ThrowNewError::NAME, ThrowNewError::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

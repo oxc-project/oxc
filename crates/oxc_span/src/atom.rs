@@ -8,22 +8,28 @@ use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use crate::{cmp::ContentEq, hash::ContentHash, CompactStr};
+use crate::{CompactStr, ContentEq};
 
 /// An inlinable string for oxc_allocator.
 ///
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for
 /// the lifetimeless form.
-#[derive(Clone, Eq)]
+#[derive(Clone, Copy, Eq)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Atom<'a>(&'a str);
 
 impl Atom<'static> {
+    /// Get an [`Atom`] containing a static string.
+    #[inline]
+    pub const fn new_const(s: &'static str) -> Self {
+        Atom(s)
+    }
+
     /// Get an [`Atom`] containing the empty string (`""`).
     #[inline]
     pub const fn empty() -> Self {
-        Atom("")
+        Self::new_const("")
     }
 }
 
@@ -67,13 +73,13 @@ impl<'new_alloc> CloneIn<'new_alloc> for Atom<'_> {
 
 impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
     fn from_in(s: &Atom<'alloc>, _: &'alloc Allocator) -> Self {
-        Self::from(s.0)
+        *s
     }
 }
 
 impl<'alloc> FromIn<'alloc, &str> for Atom<'alloc> {
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
-        Self::from(oxc_allocator::String::from_str_in(s, allocator))
+        Self::from(&*allocator.alloc_str(s))
     }
 }
 
@@ -113,16 +119,16 @@ impl<'a> From<Atom<'a>> for &'a str {
     }
 }
 
-impl<'a> From<Atom<'a>> for CompactStr {
+impl From<Atom<'_>> for CompactStr {
     #[inline]
-    fn from(val: Atom<'a>) -> Self {
+    fn from(val: Atom<'_>) -> Self {
         val.into_compact_str()
     }
 }
 
-impl<'a> From<Atom<'a>> for String {
+impl From<Atom<'_>> for String {
     #[inline]
-    fn from(val: Atom<'a>) -> Self {
+    fn from(val: Atom<'_>) -> Self {
         val.into_string()
     }
 }
@@ -160,8 +166,8 @@ impl<T: AsRef<str>> PartialEq<T> for Atom<'_> {
     }
 }
 
-impl<'a> PartialEq<Atom<'a>> for &str {
-    fn eq(&self, other: &Atom<'a>) -> bool {
+impl PartialEq<Atom<'_>> for &str {
+    fn eq(&self, other: &Atom<'_>) -> bool {
         *self == other.as_str()
     }
 }
@@ -172,14 +178,8 @@ impl PartialEq<str> for Atom<'_> {
     }
 }
 
-impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
-    fn eq(&self, other: &Atom<'a>) -> bool {
-        self.as_ref() == other.as_str()
-    }
-}
-
-impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
-    fn eq(&self, other: &&Atom<'a>) -> bool {
+impl PartialEq<Atom<'_>> for Cow<'_, str> {
+    fn eq(&self, other: &Atom<'_>) -> bool {
         self.as_ref() == other.as_str()
     }
 }
@@ -187,12 +187,6 @@ impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
 impl ContentEq for Atom<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
-    }
-}
-
-impl ContentHash for Atom<'_> {
-    fn content_hash<H: hash::Hasher>(&self, state: &mut H) {
-        hash::Hash::hash(self, state);
     }
 }
 

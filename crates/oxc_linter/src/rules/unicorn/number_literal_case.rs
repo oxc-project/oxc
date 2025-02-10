@@ -73,6 +73,7 @@ declare_oxc_lint!(
     /// const foo = 2e+5;
     /// ```
     NumberLiteralCase,
+    unicorn,
     style,
     fix
 );
@@ -94,7 +95,7 @@ impl Rule for NumberLiteralCase {
     }
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiagnostic, String)> {
     if number_literal.starts_with("0B") || number_literal.starts_with("0O") {
         return Some((
@@ -102,7 +103,7 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
                 Span::new(raw_span.start + 1, raw_span.start + 2),
                 if number_literal.starts_with("0B") { "0b" } else { "0o" },
             ),
-            number_literal.cow_to_lowercase().into_owned(),
+            number_literal.cow_to_ascii_lowercase().into_owned(),
         ));
     }
     if number_literal.starts_with("0X") || number_literal.starts_with("0x") {
@@ -132,14 +133,14 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
         let char_position = raw_span.start + index as u32;
         return Some((
             uppercase_exponential_notation(Span::new(char_position, char_position + 1)),
-            number_literal.cow_to_lowercase().into_owned(),
+            number_literal.cow_to_ascii_lowercase().into_owned(),
         ));
     }
     None
 }
 
 fn digits_to_uppercase(digits: &str) -> String {
-    let mut result = digits.cow_to_uppercase().into_owned();
+    let mut result = digits.cow_to_ascii_uppercase().into_owned();
     if result.ends_with('N') {
         result.truncate(result.len() - 1);
         result.push('n');
@@ -242,7 +243,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NumberLiteralCase::NAME, NumberLiteralCase::CATEGORY, pass, fail)
+    Tester::new(NumberLiteralCase::NAME, NumberLiteralCase::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

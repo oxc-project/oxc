@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `babel!lodash`.
    ╭─[no_webpack_loader_syntax.tsx:1:15]

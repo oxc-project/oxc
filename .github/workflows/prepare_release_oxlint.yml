@@ -1,5 +1,7 @@
 name: Prepare Release Oxlint
 
+permissions: {}
+
 on:
   workflow_dispatch:
   push:

@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// const maxValue = Math.max.apply(Math, numbers);
     /// ```
     PreferPrototypeMethods,
+    unicorn,
     pedantic,
     fix
 );
@@ -282,7 +283,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferPrototypeMethods::NAME, PreferPrototypeMethods::CATEGORY, pass, fail)
+    Tester::new(PreferPrototypeMethods::NAME, PreferPrototypeMethods::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

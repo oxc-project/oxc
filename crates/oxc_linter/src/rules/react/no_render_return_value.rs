@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// ReactDOM.render(<App />, document.body);
     /// ```
     NoRenderReturnValue,
+    react,
     correctness
 );
 
@@ -68,7 +69,7 @@ impl Rule for NoRenderReturnValue {
                                 | AstKind::AssignmentExpression(_)
                         ) {
                             ctx.diagnostic(no_render_return_value_diagnostic(
-                                ident.span.merge(&property_span),
+                                ident.span.merge(property_span),
                             ));
                         }
 
@@ -79,7 +80,7 @@ impl Rule for NoRenderReturnValue {
                             {
                                 if e.expression {
                                     ctx.diagnostic(no_render_return_value_diagnostic(
-                                        ident.span.merge(&property_span),
+                                        ident.span.merge(property_span),
                                     ));
                                 }
                             }
@@ -148,6 +149,6 @@ fn test() {
         // ("var inst = React.render(<div />, document.body);", None),
     ];
 
-    Tester::new(NoRenderReturnValue::NAME, NoRenderReturnValue::CATEGORY, pass, fail)
+    Tester::new(NoRenderReturnValue::NAME, NoRenderReturnValue::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

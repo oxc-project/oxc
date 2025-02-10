@@ -1,0 +1,17 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/export-declare-declarations.ts
+---
+```
+==================== .D.TS ====================
+
+import { Reference } from "mod";
+declare class Class {}
+declare function Function(): Reference;
+declare const variable: number;
+declare enum Enum {
+	A = 0,
+	B = 1,
+	C = 2,
+}
+export { Class, Function, variable, Enum };

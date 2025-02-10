@@ -25,6 +25,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoHeadImportInDocument,
+    nextjs,
     correctness
 );
 
@@ -244,6 +245,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoHeadImportInDocument::NAME, NoHeadImportInDocument::CATEGORY, pass, fail)
+    Tester::new(NoHeadImportInDocument::NAME, NoHeadImportInDocument::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

@@ -77,6 +77,7 @@ declare_oxc_lint!(
     /// export function foo(sn: string | number): void;
     /// ```
     AdjacentOverloadSignatures,
+    typescript,
     style
 );
 
@@ -89,7 +90,7 @@ enum MethodKind {
 }
 
 fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
-    #[allow(clippy::match_same_arms)]
+    #[expect(clippy::match_same_arms)]
     match key {
         PropertyKey::StaticIdentifier(_) => MethodKind::Normal,
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,
@@ -114,7 +115,7 @@ struct Method {
 
 impl Method {
     fn is_same_method(&self, other: Option<&Self>) -> bool {
-        other.map_or(false, |other| {
+        other.is_some_and(|other| {
             self.name == other.name
                 && self.r#static == other.r#static
                 && self.call_signature == other.call_signature
@@ -765,6 +766,6 @@ fn test() {
       }",
     ];
 
-    Tester::new(AdjacentOverloadSignatures::NAME, AdjacentOverloadSignatures::CATEGORY, pass, fail)
+    Tester::new(AdjacentOverloadSignatures::NAME, AdjacentOverloadSignatures::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

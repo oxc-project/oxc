@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
    ╭─[bad_char_at_comparison.tsx:1:1]

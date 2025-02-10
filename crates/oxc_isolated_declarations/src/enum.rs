@@ -45,10 +45,10 @@ impl<'a> IsolatedDeclarations<'a> {
 
             if let Some(value) = &value {
                 let member_name = match &member.id {
-                    TSEnumMemberName::Identifier(id) => &id.name,
-                    TSEnumMemberName::String(str) => &str.value,
+                    TSEnumMemberName::Identifier(id) => id.name,
+                    TSEnumMemberName::String(str) => str.value,
                 };
-                prev_members.insert(member_name.clone(), value.clone());
+                prev_members.insert(member_name, value.clone());
             }
 
             let member = self.ast.ts_enum_member(
@@ -60,7 +60,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                         // Infinity
                         let expr = if v.is_infinite() {
-                            self.ast.expression_identifier_reference(SPAN, "Infinity")
+                            self.ast.expression_identifier(SPAN, "Infinity")
                         } else {
                             let value = if is_negative { -v } else { v };
                             self.ast.expression_numeric_literal(
@@ -104,7 +104,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.evaluate(expr, enum_name, prev_members)
     }
 
-    #[allow(clippy::unused_self, clippy::needless_pass_by_value)]
+    #[expect(clippy::unused_self)]
     fn evaluate_ref(
         &self,
         expr: &Expression<'a>,
@@ -174,7 +174,6 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss, clippy::cast_sign_loss)]
     fn eval_binary_expression(
         &self,
         expr: &BinaryExpression<'a>,
@@ -211,6 +210,7 @@ impl<'a> IsolatedDeclarations<'a> {
             ConstantValue::String(_) => return None,
         };
 
+        #[expect(clippy::cast_sign_loss)]
         match expr.operator {
             BinaryOperator::ShiftRight => Some(ConstantValue::Number(f64::from(
                 left.to_int_32().wrapping_shr(right.to_int_32() as u32),
@@ -240,7 +240,6 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn eval_unary_expression(
         &self,
         expr: &UnaryExpression<'a>,

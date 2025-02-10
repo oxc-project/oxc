@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// let myObject: object = "Type 'string' is not assignable to type 'object'.";
     /// ```
     NoWrapperObjectTypes,
+    typescript,
     correctness,
     fix
 );
@@ -92,7 +93,7 @@ impl Rule for NoWrapperObjectTypes {
 
             if can_fix {
                 ctx.diagnostic_with_fix(no_wrapper_object_types(ident_span), |fixer| {
-                    fixer.replace(ident_span, ident_name.cow_to_lowercase())
+                    fixer.replace(ident_span, ident_name.cow_to_ascii_lowercase())
                 });
             } else {
                 ctx.diagnostic(no_wrapper_object_types(ident_span));
@@ -197,7 +198,7 @@ fn test() {
         ("type MyType = Number & String;", "type MyType = number & string;", None),
     ];
 
-    Tester::new(NoWrapperObjectTypes::NAME, NoWrapperObjectTypes::CATEGORY, pass, fail)
+    Tester::new(NoWrapperObjectTypes::NAME, NoWrapperObjectTypes::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

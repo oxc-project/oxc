@@ -18,7 +18,10 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "rust-lang.rust-analyzer"
+        "rust-lang.rust-analyzer",
+        "EditorConfig.EditorConfig",
+        "tamasfe.even-better-toml",
+        "eamodio.gitlens"
       ]
     }
   },

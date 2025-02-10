@@ -62,6 +62,7 @@ declare_oxc_lint!(
     /// try { } catch (error) { }
     /// ```
     CatchErrorName,
+    unicorn,
     style,
     pending
 );
@@ -281,5 +282,5 @@ fn test() {
         ("promise.then(undefined, (foo) => { })", None),
     ];
 
-    Tester::new(CatchErrorName::NAME, CatchErrorName::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(CatchErrorName::NAME, CatchErrorName::PLUGIN, pass, fail).test_and_snapshot();
 }

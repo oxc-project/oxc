@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
    ╭─[no_named_default.tsx:1:10]

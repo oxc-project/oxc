@@ -12,17 +12,17 @@ export namespace presentNs {
 }
 const aliasing = Symbol;
 export type A = {
-	[missing]: number;
-	[ns.missing]: number;
-	[presentNs.a]: number;
-	[Symbol.iterator]: number;
-	[globalThis.Symbol.toStringTag]: number;
-	[globalThis.Symbol.unscopables]: number;
-	[aliasing.isConcatSpreadable]: number;
-	[1]: number;
-	["2"]: number;
-	[missing2]: number;
-	[Math.random() > .5 ? "f1" : "f2"]: number;
+	[missing]: number
+	[ns.missing]: number
+	[presentNs.a]: number
+	[Symbol.iterator]: number
+	[globalThis.Symbol.toStringTag]: number
+	[globalThis.Symbol.unscopables]: number
+	[aliasing.isConcatSpreadable]: number
+	[1]: number
+	["2"]: number
+	[missing2]: number
+	[Math.random() > .5 ? "f1" : "f2"]: number
 };
 export interface B {
 	[missing]: number;
@@ -70,17 +70,17 @@ export declare namespace presentNs {
 }
 declare const aliasing: unknown;
 export type A = {
-	[missing]: number;
-	[ns.missing]: number;
-	[presentNs.a]: number;
-	[Symbol.iterator]: number;
-	[globalThis.Symbol.toStringTag]: number;
-	[globalThis.Symbol.unscopables]: number;
-	[aliasing.isConcatSpreadable]: number;
-	[1]: number;
-	["2"]: number;
-	[missing2]: number;
-	[Math.random() > .5 ? "f1" : "f2"]: number;
+	[missing]: number
+	[ns.missing]: number
+	[presentNs.a]: number
+	[Symbol.iterator]: number
+	[globalThis.Symbol.toStringTag]: number
+	[globalThis.Symbol.unscopables]: number
+	[aliasing.isConcatSpreadable]: number
+	[1]: number
+	["2"]: number
+	[missing2]: number
+	[Math.random() > .5 ? "f1" : "f2"]: number
 };
 export interface B {
 	[missing]: number;
@@ -96,12 +96,16 @@ export interface B {
 	[Math.random() > .5 ? "f1" : "f2"]: number;
 }
 export declare class C {
+	[Symbol.iterator]: number;
+	[globalThis.Symbol.toStringTag]: number;
 	[1]: number;
 	["2"]: number;
 }
 export declare const D: {
-	1: number;
-	"2": number;
+	Symbol.iterator: number
+	globalThis.Symbol.toStringTag: number
+	1: number
+	"2": number
 };
 export {};
 
@@ -197,24 +201,6 @@ export {};
 
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:39:6]
- 38 |     [presentNs.a]: number = 1;
- 39 |     [Symbol.iterator]: number = 1;
-    :      ^^^^^^^^^^^^^^^
- 40 |     [globalThis.Symbol.toStringTag]: number = 1;
-    `----
-
-  x TS9038: Computed property names on class or object literals cannot be
-  | inferred with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:40:6]
- 39 |     [Symbol.iterator]: number = 1;
- 40 |     [globalThis.Symbol.toStringTag]: number = 1;
-    :      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 41 |     [(globalThis.Symbol).unscopables]: number = 1;
-    `----
-
-  x TS9038: Computed property names on class or object literals cannot be
-  | inferred with --isolatedDeclarations.
     ,-[declarationComputedPropertyNames.d.ts:41:6]
  40 |     [globalThis.Symbol.toStringTag]: number = 1;
  41 |     [(globalThis.Symbol).unscopables]: number = 1;
@@ -278,24 +264,6 @@ export {};
 
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:53:6]
- 52 |     [presentNs.a]: 1,
- 53 |     [Symbol.iterator]: 1,
-    :      ^^^^^^^^^^^^^^^
- 54 |     [globalThis.Symbol.toStringTag]: 1,
-    `----
-
-  x TS9038: Computed property names on class or object literals cannot be
-  | inferred with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:54:6]
- 53 |     [Symbol.iterator]: 1,
- 54 |     [globalThis.Symbol.toStringTag]: 1,
-    :      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 55 |     [(globalThis.Symbol).unscopables]: 1,
-    `----
-
-  x TS9038: Computed property names on class or object literals cannot be
-  | inferred with --isolatedDeclarations.
     ,-[declarationComputedPropertyNames.d.ts:55:6]
  54 |     [globalThis.Symbol.toStringTag]: 1,
  55 |     [(globalThis.Symbol).unscopables]: 1,
@@ -350,11 +318,15 @@ export function fnDeclBasic3(p: new () => any = class {}, rParam: string): void 
 ;
 export function fnDeclBasic4(p: [T] = [[]], rParam: string): void {}
 ;
-export function fnDeclBasic5(p: { a: T } = { a: [] }, rParam: string): void {}
+export function fnDeclBasic5(p: {
+	a: T
+} = { a: [] }, rParam: string): void {}
 ;
 export function fnDeclBasic6(p: `_${string}` = "_", rParam: string): void {}
 ;
-export function fnDeclBasic7(p: { a?: string } & number[] = [], rParam: string): void {}
+export function fnDeclBasic7(p: {
+	a?: string
+} & number[] = [], rParam: string): void {}
 ;
 export function fnDeclBasic8(p: (number[] | string[]) | number = [], rParam: string): void {}
 ;
@@ -420,9 +392,13 @@ export declare function fnDeclBasic1(p: number[] | string[] | [T] | undefined, r
 export declare function fnDeclBasic2(p: (n: T) => T | undefined, rParam: string): void;
 export declare function fnDeclBasic3(p: new () => any | undefined, rParam: string): void;
 export declare function fnDeclBasic4(p: [T] | undefined, rParam: string): void;
-export declare function fnDeclBasic5(p: { a: T } | undefined, rParam: string): void;
+export declare function fnDeclBasic5(p: {
+	a: T
+} | undefined, rParam: string): void;
 export declare function fnDeclBasic6(p: `_${string}` | undefined, rParam: string): void;
-export declare function fnDeclBasic7(p: { a?: string } & number[] | undefined, rParam: string): void;
+export declare function fnDeclBasic7(p: {
+	a?: string
+} & number[] | undefined, rParam: string): void;
 export declare function fnDeclBasic8(p: (number[] | string[]) | number | undefined, rParam: string): void;
 export declare function fnDeclHasUndefined(p: T | undefined, rParam: string): void;
 export declare function fnDeclBad(p: T, rParam: string): void;
@@ -432,15 +408,33 @@ export declare const fnExprBad: (array: T, rParam: string) => void;
 export declare const arrowOk1: (array: number[] | undefined, rParam: string) => void;
 export declare const arrowOk2: (array: T | undefined, rParam: string) => void;
 export declare const arrowBad: (array: T, rParam: string) => void;
-export declare const inObjectLiteralFnExprOk1: { o: (array: number[] | undefined, rParam: string) => void };
-export declare const inObjectLiteralFnExprOk2: { o: (array: T | undefined, rParam: string) => void };
-export declare const inObjectLiteralFnExprBad: { o: (array: T, rParam: string) => void };
-export declare const inObjectLiteralArrowOk1: { o: (array: number[] | undefined, rParam: string) => void };
-export declare const inObjectLiteralArrowOk2: { o: (array: T | undefined, rParam: string) => void };
-export declare const inObjectLiteralArrowBad: { o: (array: T, rParam: string) => void };
-export declare const inObjectLiteralMethodOk1: { o(array: number[] | undefined, rParam: string): void };
-export declare const inObjectLiteralMethodOk2: { o(array: T | undefined, rParam: string): void };
-export declare const inObjectLiteralMethodBad: { o(array: T, rParam: string): void };
+export declare const inObjectLiteralFnExprOk1: {
+	o: (array: number[] | undefined, rParam: string) => void
+};
+export declare const inObjectLiteralFnExprOk2: {
+	o: (array: T | undefined, rParam: string) => void
+};
+export declare const inObjectLiteralFnExprBad: {
+	o: (array: T, rParam: string) => void
+};
+export declare const inObjectLiteralArrowOk1: {
+	o: (array: number[] | undefined, rParam: string) => void
+};
+export declare const inObjectLiteralArrowOk2: {
+	o: (array: T | undefined, rParam: string) => void
+};
+export declare const inObjectLiteralArrowBad: {
+	o: (array: T, rParam: string) => void
+};
+export declare const inObjectLiteralMethodOk1: {
+	o(array: number[] | undefined, rParam: string): void
+};
+export declare const inObjectLiteralMethodOk2: {
+	o(array: T | undefined, rParam: string): void
+};
+export declare const inObjectLiteralMethodBad: {
+	o(array: T, rParam: string): void
+};
 export declare class InClassFnExprOk1 {
 	o: (array: number[] | undefined, rParam: string) => void;
 }

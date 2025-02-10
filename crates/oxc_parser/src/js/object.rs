@@ -133,7 +133,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_property_definition_shorthand(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
         let span = self.start_span();
         let identifier = self.parse_identifier_reference()?;
-        let key = self.ast.alloc_identifier_name(identifier.span, identifier.name.clone());
+        let key = self.ast.alloc_identifier_name(identifier.span, identifier.name);
         // IdentifierReference ({ foo })
         let value = Expression::Identifier(self.alloc(identifier.clone()));
         // CoverInitializedName ({ foo = bar })

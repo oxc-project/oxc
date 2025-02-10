@@ -29,6 +29,7 @@ declare_oxc_lint!(
     ///  Line 2";
     /// ```
     NoMultiStr,
+    eslint,
     style,
 );
 
@@ -83,5 +84,5 @@ fn test() {
         "'\\ still fails';",
     ];
 
-    Tester::new(NoMultiStr::NAME, NoMultiStr::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoMultiStr::NAME, NoMultiStr::PLUGIN, pass, fail).test_and_snapshot();
 }

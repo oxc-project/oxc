@@ -1,14 +1,13 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_async_await_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected async/await")
-        .with_help("Async/await is not allowed")
+fn no_async_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("async is not allowed")
+        .with_help("Remove the `async` keyword")
         .with_label(span)
 }
 
@@ -28,6 +27,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAsyncAwait,
+    oxc,
     restriction
 );
 
@@ -36,12 +36,40 @@ impl Rule for NoAsyncAwait {
         match node.kind() {
             AstKind::Function(func_decl) => {
                 if func_decl.r#async {
-                    report(node.id(), func_decl.span, ctx);
+                    let parent_kind = ctx.nodes().parent_kind(node.id());
+                    let async_span = match &func_decl.id {
+                        // named function like `async function run() {}`
+                        Some(id) => Span::new(func_decl.span.start, id.span.end),
+                        // anonymous function like `async function() {}`
+                        None => match parent_kind {
+                            // Actually part of a method definition like:
+                            // ```
+                            // class Foo {
+                            //     async bar() {}
+                            // }
+                            // ```
+                            Some(AstKind::MethodDefinition(method_def)) => {
+                                Span::new(method_def.span.start, method_def.key.span().start)
+                            }
+                            // The function is part of an object property like:
+                            // ```
+                            // const obj = {
+                            //     async foo() {}
+                            // };
+                            // ```
+                            Some(AstKind::ObjectProperty(obj_prop)) => {
+                                Span::new(obj_prop.span.start, obj_prop.key.span().start)
+                            }
+                            _ => func_decl.span,
+                        },
+                    };
+                    report_on_async_span(async_span, ctx);
                 }
             }
             AstKind::ArrowFunctionExpression(arrow_expr) => {
                 if arrow_expr.r#async {
-                    report(node.id(), arrow_expr.span, ctx);
+                    let async_span = Span::new(arrow_expr.span.start, arrow_expr.params.span.start);
+                    report_on_async_span(async_span, ctx);
                 }
             }
             _ => {}
@@ -49,16 +77,17 @@ impl Rule for NoAsyncAwait {
     }
 }
 
-fn report(node_id: NodeId, func_span: Span, ctx: &LintContext<'_>) {
-    /// "async".len()
-    const ASYNC_LEN: u32 = 5;
+/// "async".len()
+const ASYNC_LEN: u32 = 5;
 
-    let parent = ctx.nodes().parent_kind(node_id);
-    if let Some(AstKind::ObjectProperty(obj_prop)) = parent {
-        ctx.diagnostic(no_async_await_diagnostic(Span::sized(obj_prop.span.start, ASYNC_LEN)));
-    } else {
-        ctx.diagnostic(no_async_await_diagnostic(Span::sized(func_span.start, ASYNC_LEN)));
-    }
+#[expect(clippy::cast_possible_truncation)]
+fn report_on_async_span(async_span: Span, ctx: &LintContext<'_>) {
+    // find the `async` keyword within the span and report on it
+    let Some(async_keyword_offset) = ctx.source_range(async_span).find("async") else {
+        return;
+    };
+    let async_keyword_span = Span::sized(async_span.start + async_keyword_offset as u32, ASYNC_LEN);
+    ctx.diagnostic(no_async_diagnostic(async_keyword_span));
 }
 
 #[test]
@@ -70,6 +99,9 @@ fn test() {
         "const foo = () => {}",
         "function foo () { return bar(); }",
         "class Foo { foo() {} }",
+        "class async { }",
+        "const async = {};",
+        "class async { async() { async(); } }",
     ];
 
     let fail = vec![
@@ -82,7 +114,6 @@ fn test() {
                 async test() {}
             };
         ",
-        // FIXME: diagnostics on method `foo` have incorrect spans
         "
         class Foo {
             async foo() {}
@@ -93,13 +124,30 @@ fn test() {
             public async foo() {}
         }
         ",
-        // this one is fine
         "
         const obj = {
             async foo() {}
         }
         ",
+        "
+        class async {
+            async async() {
+                async();
+            }
+        }
+        ",
+        "
+        class async {
+            async async() {
+                function async() {
+                    const async = {
+                        async: async () => {},
+                    }
+                }
+            }
+        }
+        ",
     ];
 
-    Tester::new(NoAsyncAwait::NAME, NoAsyncAwait::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoAsyncAwait::NAME, NoAsyncAwait::PLUGIN, pass, fail).test_and_snapshot();
 }

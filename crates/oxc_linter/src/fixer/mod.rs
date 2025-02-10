@@ -83,7 +83,6 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     /// Delete text covered by a [`Span`]
-    #[allow(clippy::unused_self)]
     pub fn delete_range(&self, span: Span) -> RuleFix<'a> {
         self.new_fix(
             CompositeFix::Single(Fix::delete(span)),
@@ -110,7 +109,6 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     /// Replace a `target` AST node with a `replacement` string.
-    #[allow(clippy::unused_self)]
     pub fn replace<S: Into<Cow<'a, str>>>(&self, target: Span, replacement: S) -> RuleFix<'a> {
         // use an inner function to avoid megamorphic bloat
         fn inner<'a>(
@@ -171,7 +169,6 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     /// Creates a fix command that inserts text at the specified index in the source text.
-    #[allow(clippy::unused_self)]
     fn insert_text_at(&self, index: u32, text: Cow<'a, str>) -> RuleFix<'a> {
         let fix = Fix::new(text, Span::new(index, index));
         let content = self.possibly_truncate_snippet(&fix.content);
@@ -179,14 +176,13 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.new_fix(CompositeFix::Single(fix), message)
     }
 
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     #[must_use]
     pub fn codegen(self) -> CodeGenerator<'a> {
         CodeGenerator::new()
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 
-    #[allow(clippy::unused_self)]
     pub fn noop(&self) -> RuleFix<'a> {
         self.new_fix(CompositeFix::None, None)
     }
@@ -196,7 +192,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.possibly_truncate_snippet(snippet)
     }
 
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     fn possibly_truncate_snippet<'s>(&self, snippet: &'s str) -> Cow<'s, str>
     where
         'a: 's,
@@ -215,7 +211,6 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 }
 
 pub struct FixResult<'a> {
-    #[allow(unused)]
     pub fixed: bool,
     pub fixed_code: Cow<'a, str>,
     pub messages: Vec<Message<'a>>,
@@ -230,7 +225,7 @@ pub struct Message<'a> {
 }
 
 impl<'a> Message<'a> {
-    #[allow(clippy::cast_possible_truncation)] // for `as u32`
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
     pub fn new(error: OxcDiagnostic, fix: Option<Fix<'a>>) -> Self {
         let (start, end) = if let Some(labels) = &error.labels {
             let start = labels

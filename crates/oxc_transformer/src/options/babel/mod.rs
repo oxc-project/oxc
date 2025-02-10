@@ -69,7 +69,7 @@ enum PluginPresetEntry {
     String(String),
     Vec1([String; 1]),
     Tuple(String, serde_json::Value),
-    Triple(String, serde_json::Value, #[allow(unused)] String),
+    Triple(String, serde_json::Value, #[expect(unused)] String),
 }
 
 impl PluginPresetEntry {
@@ -180,10 +180,10 @@ impl BabelOptions {
     }
 
     pub fn is_module(&self) -> bool {
-        self.source_type.as_ref().map_or(false, |s| s.as_str() == "module")
+        self.source_type.as_ref().is_some_and(|s| s.as_str() == "module")
     }
 
     pub fn is_unambiguous(&self) -> bool {
-        self.source_type.as_ref().map_or(false, |s| s.as_str() == "unambiguous")
+        self.source_type.as_ref().is_some_and(|s| s.as_str() == "unambiguous")
     }
 }

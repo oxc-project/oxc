@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoUndefined,
+    eslint,
     restriction,
 );
 
@@ -138,5 +139,5 @@ fn test() {
         "[a = undefined] = b",
     ];
 
-    Tester::new(NoUndefined::NAME, NoUndefined::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoUndefined::NAME, NoUndefined::PLUGIN, pass, fail).test_and_snapshot();
 }

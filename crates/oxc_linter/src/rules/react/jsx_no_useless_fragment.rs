@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// <div>foo</div>
     /// ```
     JsxNoUselessFragment,
+    react,
     pedantic
 );
 
@@ -317,6 +318,6 @@ fn test() {
         (r"<><Foo>{moo}</Foo></>", None),
     ];
 
-    Tester::new(JsxNoUselessFragment::NAME, JsxNoUselessFragment::CATEGORY, pass, fail)
+    Tester::new(JsxNoUselessFragment::NAME, JsxNoUselessFragment::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

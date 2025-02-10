@@ -34,6 +34,48 @@ impl ContentEq for () {
     }
 }
 
+/// Compare `f64` as bits instead of using `==`.
+///
+/// Result is the same as `partial_eq` (`==`), with the following exceptions:
+///
+/// * `+0` and `-0` are not `content_eq` (they are `partial_eq`).
+/// * `f64::NAN` and `f64::NAN` are `content_eq` (they are not `partial_eq`).
+///
+/// <https://play.rust-lang.org/?version=stable&mode=release&edition=2021&gist=5f9ec4b26128363a660e27582d1de7cd>
+///
+/// ### NaN
+///
+/// Comparison of `NaN` is complicated. From Rust's docs for `f64`:
+///
+/// > Note that IEEE 754 doesn’t define just a single NaN value;
+/// > a plethora of bit patterns are considered to be NaN.
+///
+/// <https://doc.rust-lang.org/std/primitive.f64.html#associatedconstant.NAN>
+///
+/// If either value is `NaN`, `f64::content_eq` only returns `true` if both are the *same* `NaN`,
+/// with the same bit pattern. This means, for example:
+///
+/// ```
+/// f64::NAN.content_eq(f64::NAN) == true
+/// f64::NAN.content_eq(-f64::NAN) == false
+/// f64::NAN.content_eq(--f64::NAN) == true
+/// ```
+///
+/// Any other `NaN`s which are created through an arithmetic operation, rather than explicitly
+/// with `f64::NAN`, are not guaranteed to equal `f64::NAN`.
+///
+/// ```
+/// // This results in `false` on at least some flavors of `x84_64`,
+/// // but that's not specified - could also result in `true`!
+/// (-1f64).sqrt().content_eq(f64::NAN) == false
+/// ```
+impl ContentEq for f64 {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self.to_bits() == other.to_bits()
+    }
+}
+
 /// Blanket implementation for [Option] types
 impl<T: ContentEq> ContentEq for Option<T> {
     #[inline]
@@ -41,7 +83,7 @@ impl<T: ContentEq> ContentEq for Option<T> {
         // NOTE: based on the standard library
         // Spelling out the cases explicitly optimizes better than
         // `_ => false`
-        #[allow(clippy::match_same_arms)]
+        #[expect(clippy::match_same_arms)]
         match (self, other) {
             (Some(lhs), Some(rhs)) => lhs.content_eq(rhs),
             (Some(_), None) => false,
@@ -77,8 +119,8 @@ impl<T: ContentEq> ContentEq for oxc_allocator::Vec<'_, T> {
 }
 
 mod content_eq_auto_impls {
-    #![allow(clippy::float_cmp)]
     use super::ContentEq;
+
     macro_rules! content_eq_impl {
         ($($t:ty)*) => ($(
             impl ContentEq for $t {
@@ -95,6 +137,5 @@ mod content_eq_auto_impls {
         bool isize usize
         u8 u16 u32 u64 u128
         i8 i16 i32 i64 i128
-        f32 f64
     }
 }

@@ -23,6 +23,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoDocumentImportInPage,
+    nextjs,
     correctness
 );
 
@@ -210,6 +211,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDocumentImportInPage::NAME, NoDocumentImportInPage::CATEGORY, pass, fail)
+    Tester::new(NoDocumentImportInPage::NAME, NoDocumentImportInPage::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

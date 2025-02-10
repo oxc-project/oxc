@@ -42,6 +42,7 @@ declare_oxc_lint!(
     ///   .catch(console.error)
     /// ```
     NoPromiseInCallback,
+    promise,
     suspicious,
 );
 
@@ -162,6 +163,6 @@ fn test() {
         "let x = (err) => doThingWith(err).then(a)",
     ];
 
-    Tester::new(NoPromiseInCallback::NAME, NoPromiseInCallback::CATEGORY, pass, fail)
+    Tester::new(NoPromiseInCallback::NAME, NoPromiseInCallback::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

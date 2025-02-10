@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// declare namespace foo {}
     /// ```
     NoNamespace,
+    typescript,
     restriction
 );
 
@@ -60,7 +61,7 @@ impl Rule for NoNamespace {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return;
@@ -357,5 +358,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoNamespace::NAME, NoNamespace::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNamespace::NAME, NoNamespace::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -25,7 +25,7 @@ impl<'a> AstroPartialLoader<'a> {
     }
 
     /// Parse `---` frontmatter block
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn parse_frontmatter(&self) -> Option<JavaScriptSource<'a>> {
         let split_finder = Finder::new(ASTRO_SPLIT);
         let offsets = split_finder.find_iter(self.source_text.as_bytes()).collect::<Vec<_>>();
@@ -87,7 +87,7 @@ impl<'a> AstroPartialLoader<'a> {
             };
 
             // NOTE: loader checked that source_text.len() is less than u32::MAX
-            #[allow(clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_possible_truncation)]
             results.push(JavaScriptSource::partial(
                 &self.source_text[js_start..js_end],
                 SourceType::ts(),

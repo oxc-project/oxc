@@ -296,6 +296,7 @@ declare_oxc_lint!(
     /// consistency regarding the use of curly braces in JSX props and/or
     /// children as well as the use of unnecessary JSX expressions.
     JsxCurlyBracePresence,
+    react,
     style,
 );
 
@@ -961,6 +962,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxCurlyBracePresence::NAME, JsxCurlyBracePresence::CATEGORY, pass, fail)
+    Tester::new(JsxCurlyBracePresence::NAME, JsxCurlyBracePresence::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

@@ -45,7 +45,7 @@ impl<'a> SveltePartialLoader<'a> {
         let source_type = SourceType::mjs().with_typescript(is_ts);
 
         // NOTE: loader checked that source_text.len() is less than u32::MAX
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
     }
 }

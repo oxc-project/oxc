@@ -8,6 +8,9 @@ use crate::{Allocator, Box, Vec};
 /// It'd only differ in the lifetime, Here's an example:
 ///
 /// ```
+/// # use oxc_allocator::{Allocator, CloneIn, Vec};
+/// # struct Struct<'a> {a: Vec<'a, u8>, b: u8}
+///
 /// impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Struct<'old_alloc> {
 ///     type Cloned = Struct<'new_alloc>;
 ///     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {

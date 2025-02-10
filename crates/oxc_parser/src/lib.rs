@@ -193,7 +193,8 @@ pub struct ParseOptions {
     /// Allow [`return`] statements outside of functions.
     ///
     /// By default, a return statement at the top level raises an error (`false`).
-    /// Set this to `true` to accept such code.
+    ///
+    /// Default: `false`
     ///
     /// [`return`]: oxc_ast::ast::ReturnStatement
     pub allow_return_outside_function: bool,
@@ -482,7 +483,7 @@ impl<'a> ParserImpl<'a> {
         Ok(expr)
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn parse_program(&mut self) -> Result<Program<'a>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();

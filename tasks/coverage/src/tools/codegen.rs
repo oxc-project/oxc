@@ -6,7 +6,7 @@ use crate::{
     babel::BabelCase,
     misc::MiscCase,
     suite::{Case, TestResult},
-    test262::{Test262Case, TestFlag},
+    test262::Test262Case,
     typescript::TypeScriptCase,
     Driver,
 };
@@ -58,7 +58,7 @@ impl Case for CodegenTest262Case {
 
     fn run(&mut self) {
         let source_text = self.base.code();
-        let is_module = self.base.meta().flags.contains(&TestFlag::Module);
+        let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
         let result = get_result(source_text, source_type);
         self.base.set_result(result);

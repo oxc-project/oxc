@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// Object.assign(mod_ns, { foo: "foo" }) // ERROR: The members of 'mod_ns' are readonly.
     /// ```
     NoImportAssign,
+    eslint,
     correctness
 );
 
@@ -264,5 +265,5 @@ fn test() {
         ("import * as mod from 'mod'; delete mod?.prop", None),
     ];
 
-    Tester::new(NoImportAssign::NAME, NoImportAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoImportAssign::NAME, NoImportAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -3,7 +3,7 @@ commit: d85767ab
 parser_typescript Summary:
 AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
-Negative Passed: 1275/5747 (22.19%)
+Negative Passed: 1284/5747 (22.34%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -659,7 +659,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/emitCapturin
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/emitCapturingThisInTupleDestructuring2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/emitDecoratorMetadata_isolatedModules.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/emitThisInSuperMethodCall.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/emptyGenericParamList.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/emptyModuleName.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/emptyObjectNotSubtypeOfIndexSignatureContainingObject1.ts
@@ -1280,7 +1279,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeCas
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeNongenericInstantiationAttempt.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefMissingType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxCallElaborationCheckNoCrash1.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildWrongType.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildrenArrayWrongType.tsx
@@ -1927,15 +1925,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superCallIns
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superCallInsideClassExpression.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superCallWithMissingBaseClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superInConstructorParam1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superNewCall1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccessInSuperCall01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/superPropertyAccess_ES5.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/super_inside-object-literal-getters-and-setters.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/switchAssignmentCompat.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/switchCaseCircularRefeference.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/switchCases.ts
@@ -2387,7 +2382,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyInAmbientClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyInConstructorParameters.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/constructorWithAssignableReturnExpression.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassConstructorWithoutSuperCall.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassParameterProperties.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassSuperCallsWithThisArg.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassSuperProperties.ts
@@ -2437,7 +2431,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/m
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers8.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInstanceMemberNarrowedWithLoopAntecedent.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameAccessors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameAmbientNoImplicitAny.ts
@@ -3182,7 +3175,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportClassNameWithObjectSystem.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportClassNameWithObjectUMD.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDefaultClassNameWithObject.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesInIfThenStatementNoCrash1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonLocalDeclarations.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importNonExternalModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importTsBeforeDTs.ts
@@ -4080,7 +4072,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statement
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-ofTypeCheck9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/forStatements/forStatementsMultipleInvalidDecl.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/ifDoWhileStatements/ifDoWhileStatements.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/invalidReturnStatements.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/switchStatements/switchStatements.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/any/anyAsConstructor.ts
@@ -6772,6 +6763,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ 
    ╰────
 
+  × Missing initializer in const declaration
+    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:12:11]
+ 11 │ // error, can not be unintalized
+ 12 │ for(const c9; c9 < 1;) { }
+    ·           ──
+ 13 │ 
+    ╰────
+
+  × Missing initializer in const declaration
+    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:15:20]
+ 14 │ // error, can not be unintalized
+ 15 │ for(const c10 = 0, c11; c10 < 1;) { }
+    ·                    ───
+    ╰────
+
   × Lexical declaration cannot appear in a single-statement context
    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:3:5]
  2 │ if (true) 
@@ -7722,6 +7728,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  53 │ }
     ╰────
 
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/emitThisInSuperMethodCall.ts:10:17]
+  9 │             function inner() {
+ 10 │                 super.sayHello();
+    ·                 ─────
+ 11 │             }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/emitThisInSuperMethodCall.ts:17:17]
+ 16 │             () => {
+ 17 │                 super.sayHello();
+    ·                 ─────
+ 18 │             }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/emitThisInSuperMethodCall.ts:23:13]
+ 22 │         function inner() {
+ 23 │             super.sayHello();
+    ·             ─────
+ 24 │         }
+    ╰────
+
   × Empty parenthesized expression
    ╭─[typescript/tests/cases/compiler/emptyMemberAccess.ts:3:4]
  2 │ 
@@ -8359,6 +8389,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:9:32]
+  8 │         var r3 = () => { super(); }
+  9 │         var r4 = function () { super(); }
+    ·                                ───────
+ 10 │         var r5 = {
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:12:17]
  11 │             get foo() {
  12 │                 super();
@@ -8879,6 +8917,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ const x = <div foo= ></div>;
    ·                     ─
  2 │ const y = 0;
+   ╰────
+
+  × TS(17000): JSX attributes must only be assigned a non-empty 'expression'.
+   ╭─[typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx:4:35]
+ 3 │     <ListView refreshControl={
+ 4 │         <RefreshControl onRefresh={} refreshing={} />
+   ·                                   ──
+ 5 │     } dataSource={this.state.ds} renderRow={}>
+   ╰────
+
+  × TS(17000): JSX attributes must only be assigned a non-empty 'expression'.
+   ╭─[typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx:4:49]
+ 3 │     <ListView refreshControl={
+ 4 │         <RefreshControl onRefresh={} refreshing={} />
+   ·                                                 ──
+ 5 │     } dataSource={this.state.ds} renderRow={}>
+   ╰────
+
+  × TS(17000): JSX attributes must only be assigned a non-empty 'expression'.
+   ╭─[typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx:5:44]
+ 4 │         <RefreshControl onRefresh={} refreshing={} />
+ 5 │     } dataSource={this.state.ds} renderRow={}>
+   ·                                            ──
+ 6 │     </ListView>
    ╰────
 
   × Unexpected token
@@ -12694,6 +12756,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  7 │  
    ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[typescript/tests/cases/compiler/superCallOutsideConstructor.ts:16:13]
+ 15 │         var y2 = function() {
+ 16 │             super();
+    ·             ───────
+ 17 │         }
+    ╰────
+
   × 'with' statements are not allowed
     ╭─[typescript/tests/cases/compiler/superCallsInConstructor.ts:12:9]
  11 │     constructor() {
@@ -12798,6 +12868,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ }
    ╰────
 
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superErrors.ts:22:13]
+ 21 │         function inner() {
+ 22 │             super.sayHello();
+    ·             ─────
+ 23 │         }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superErrors.ts:27:27]
+ 26 │         function inner2() {
+ 27 │             var x = () => super.sayHello();
+    ·                           ─────
+ 28 │         }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superErrors.ts:31:36]
+ 30 │         // super call in a lambda in a function expression in a constructor 
+ 31 │         (function() { return () => super; })();
+    ·                                    ─────
+ 32 │     }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superErrors.ts:39:27]
+ 38 │         function inner() {
+ 39 │             var x = () => super.sayHello();
+    ·                           ─────
+ 40 │         }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superErrors.ts:43:36]
+ 42 │         // super call in a lambda in a function expression in a constructor 
+ 43 │         (function() { return () => super; })();
+    ·                                    ─────
+ 44 │     }
+    ╰────
+
   × 'super' can only be used with function calls or in property accesses
     ╭─[typescript/tests/cases/compiler/superInLambdas.ts:61:29]
  60 │         // super in a nested lambda in a constructor 
@@ -12815,6 +12925,86 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  66 │     }
     ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:39:17]
+ 38 │             method() {
+ 39 │                 super.method();
+    ·                 ─────
+ 40 │             },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:42:17]
+ 41 │             get prop() {
+ 42 │                 super.method();
+    ·                 ─────
+ 43 │                 return 10;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:46:17]
+ 45 │             set prop(value) {
+ 46 │                 super.method();
+    ·                 ─────
+ 47 │             },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:49:17]
+ 48 │             p1: function () {
+ 49 │                 super.method();
+    ·                 ─────
+ 50 │             },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:52:17]
+ 51 │             p2: function f() {
+ 52 │                 super.method();
+    ·                 ─────
+ 53 │             },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:39:17]
+ 38 │             method() {
+ 39 │                 super.method();
+    ·                 ─────
+ 40 │             },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:42:17]
+ 41 │             get prop() {
+ 42 │                 super.method();
+    ·                 ─────
+ 43 │                 return 10;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:46:17]
+ 45 │             set prop(value) {
+ 46 │                 super.method();
+    ·                 ─────
+ 47 │             },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:49:17]
+ 48 │             p1: function () {
+ 49 │                 super.method();
+    ·                 ─────
+ 50 │             },
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:52:17]
+ 51 │             p2: function f() {
+ 52 │                 super.method();
+    ·                 ─────
+ 53 │             },
+    ╰────
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[typescript/tests/cases/compiler/superWithTypeArgument.ts:7:9]
@@ -12842,6 +13032,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │     }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/compiler/super_inside-object-literal-getters-and-setters.ts:21:24]
+ 20 │             get F() {
+ 21 │                 return super.test();
+    ·                        ─────
+ 22 │             }
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:25:13]
@@ -14454,6 +14652,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassConstructorWithoutSuperCall.ts:24:31]
+ 23 │     constructor() { // error
+ 24 │         var r = function () { super() } // error
+    ·                               ───────
+ 25 │     }
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassSuperCallsInNonConstructorMembers.ts:8:13]
  7 │ class Derived extends Base {
@@ -14562,6 +14768,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                ───────
  7 │ }
    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers9.ts:7:56]
+ 6 │     static arrowFunctionBoundary = () => super.f + 1;
+ 7 │     static functionExprBoundary = function () { return super.f + 2 };
+   ·                                                        ─────
+ 8 │     static classExprBoundary = class { a = super.f + 3 };
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers9.ts:11:20]
+ 10 │         function foo () {
+ 11 │             return super.f + 4
+    ·                    ─────
+ 12 │         }
+    ╰────
 
   × Private identifier '#prop' is not allowed outside class bodies
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAccessorsAccess.ts:14:10]
@@ -19009,20 +19231,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × Invalid assignment in object literal
-    ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:48:5]
- 47 │ var h1 = {
- 48 │     x = 1,
-    ·     ─────
- 49 │     y = 2,
-    ╰────
-  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
-
-  × Invalid assignment in object literal
     ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:49:5]
  48 │     x = 1,
  49 │     y = 2,
     ·     ─────
  50 │     #z: 3
+    ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+    ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:48:5]
+ 47 │ var h1 = {
+ 48 │     x = 1,
+    ·     ─────
+ 49 │     y = 2,
     ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
@@ -19224,6 +19446,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  71 │         super();
     ·         ───────
  72 │     }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/conformance/expressions/superPropertyAccess/errorSuperPropertyAccess.ts:73:13]
+ 72 │         function inner() {
+ 73 │             super.publicFunc();
+    ·             ─────
+ 74 │         }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/conformance/expressions/superPropertyAccess/errorSuperPropertyAccess.ts:76:40]
+ 75 │         var x = {
+ 76 │             test: function () { return super.publicFunc(); }
+    ·                                        ─────
+ 77 │         }
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
@@ -19455,6 +19693,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ var;
    ·    ─
  2 │ let;
+   ╰────
+
+  × Missing initializer in const declaration
+   ╭─[typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesInIfThenStatementNoCrash1.ts:4:14]
+ 3 │ if (true)
+ 4 │ export const cssExports: CssExports;
+   ·              ──────────────────────
+ 5 │ export default cssExports;
    ╰────
 
   × Unexpected token
@@ -24000,6 +24246,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·              ╰── `,` expected
  14 │           `height: var foo`,
     ╰────
+
+  × Missing initializer in const declaration
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts:3:14]
+ 2 │ 
+ 3 │ export const box: string
+   ·              ───────────
+ 4 │ subTitle:
+   ╰────
+
+  × Missing initializer in const declaration
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts:5:14]
+ 4 │ subTitle:
+ 5 │ export const title: string
+   ·              ─────────────
+   ╰────
 
   × Generators can only be declared at the top level or inside a block
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:2:8]

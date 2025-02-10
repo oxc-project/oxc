@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// for (const element of foo) { /* ... */ }
     /// ```
     NoArrayForEach,
+    unicorn,
     restriction,
     pending
 );
@@ -128,5 +129,5 @@ fn test() {
         r"return foo.forEach(element => {bar(element)});",
     ];
 
-    Tester::new(NoArrayForEach::NAME, NoArrayForEach::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayForEach::NAME, NoArrayForEach::PLUGIN, pass, fail).test_and_snapshot();
 }

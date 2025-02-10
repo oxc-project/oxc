@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// array.flat(Infinity);
     /// ```
     NoMagicArrayFlatDepth,
+    unicorn,
     restriction,
 );
 
@@ -84,7 +85,7 @@ impl Rule for NoMagicArrayFlatDepth {
 }
 
 // gets the opening `(` and closing `)` of the argument
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn get_call_expression_parentheses_pos<'a>(
     call_expr: &CallExpression<'a>,
     ctx: &LintContext<'a>,
@@ -130,6 +131,6 @@ fn test() {
 
     let fail = vec!["array.flat(2)", "array?.flat(2)", "array.flat(99,)", "array.flat(0b10,)"];
 
-    Tester::new(NoMagicArrayFlatDepth::NAME, NoMagicArrayFlatDepth::CATEGORY, pass, fail)
+    Tester::new(NoMagicArrayFlatDepth::NAME, NoMagicArrayFlatDepth::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

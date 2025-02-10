@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// console.log('here');
     /// ```
     NoConsole,
+    eslint,
     restriction,
     suggestion
 );
@@ -83,12 +84,12 @@ impl Rule for NoConsole {
             return;
         };
 
-        if ctx.semantic().is_reference_to_global_variable(ident)
+        if ctx.is_reference_to_global_variable(ident)
             && ident.name == "console"
             && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
         {
             if let Some((mem_span, _)) = mem.static_property_info() {
-                let diagnostic_span = ident.span().merge(&mem_span);
+                let diagnostic_span = ident.span().merge(mem_span);
                 ctx.diagnostic_with_suggestion(no_console_diagnostic(diagnostic_span), |fixer| {
                     remove_console(fixer, ctx, node)
                 });
@@ -187,7 +188,5 @@ fn test() {
         ("const x = { foo: console.log(bar) }", "const x = { foo: undefined }", None),
     ];
 
-    Tester::new(NoConsole::NAME, NoConsole::CATEGORY, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(NoConsole::NAME, NoConsole::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

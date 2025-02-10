@@ -7,7 +7,10 @@ use std::{
     sync::Arc,
 };
 
-use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
+use rayon::{
+    iter::{IntoParallelRefIterator, ParallelBridge},
+    prelude::ParallelIterator,
+};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
@@ -101,7 +104,7 @@ impl Runtime {
 
     // clippy: the source field is checked and assumed to be less than 4GB, and
     // we assume that the fix offset will not exceed 2GB in either direction
-    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+    #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(super) fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
@@ -189,7 +192,6 @@ impl Runtime {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(super) fn process_source<'a>(
         &self,
         path: &Path,
@@ -223,7 +225,7 @@ impl Runtime {
             .with_scope_tree_child_ids(true)
             .with_build_jsdoc(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build(&ret.program);
+            .build(allocator.alloc(ret.program));
 
         if !semantic_ret.errors.is_empty() {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
@@ -288,7 +290,7 @@ impl Runtime {
         self.modules.len() - self.paths.len()
     }
 
-    pub(super) fn iter_paths(&self) -> impl Iterator<Item = &Box<Path>> + '_ {
-        self.paths.iter()
+    pub(super) fn par_iter_paths(&self) -> impl ParallelIterator<Item = &Box<Path>> {
+        self.paths.par_iter()
     }
 }

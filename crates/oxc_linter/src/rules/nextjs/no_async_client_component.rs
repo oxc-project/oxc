@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoAsyncClientComponent,
+    nextjs,
     correctness
 );
 
@@ -195,7 +196,7 @@ fn test() {
 			      "#,
     ];
 
-    Tester::new(NoAsyncClientComponent::NAME, NoAsyncClientComponent::CATEGORY, pass, fail)
+    Tester::new(NoAsyncClientComponent::NAME, NoAsyncClientComponent::PLUGIN, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

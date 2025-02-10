@@ -147,6 +147,7 @@ impl<'a> TraverseAncestry<'a> {
     /// # SAFETY
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
+    #[must_use] // `PopToken` must be passed to `pop_stack` to pop this entry off the stack again
     pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a, 'static>) -> PopToken {
         self.stack.push(ancestor);
 
@@ -159,7 +160,7 @@ impl<'a> TraverseAncestry<'a> {
     /// # SAFETY
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    #[allow(unused_variables, clippy::needless_pass_by_value)]
+    #[expect(unused_variables, clippy::needless_pass_by_value)]
     pub(crate) fn pop_stack(&mut self, token: PopToken) {
         // SAFETY: `PopToken`s are only created in `push_stack`, so the fact that caller provides one
         // guarantees that a push has happened. This method consumes the token which guarantees another
@@ -190,7 +191,7 @@ impl<'a> TraverseAncestry<'a> {
     ///
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::ref_as_ptr)]
+    #[expect(clippy::ptr_as_ptr, clippy::ref_as_ptr)]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
         debug_assert!(self.stack.len() >= 2);
         *(self.stack.last_mut() as *mut _ as *mut AncestorType) = ty;

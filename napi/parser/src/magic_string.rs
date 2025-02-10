@@ -1,12 +1,12 @@
-#![allow(clippy::cast_possible_truncation)]
-// use std::sync::Arc;
+#![expect(clippy::cast_possible_truncation)]
+use std::sync::Arc;
 
+use napi::Either;
 use napi_derive::napi;
 use self_cell::self_cell;
-use string_wizard::MagicString as MS;
+use string_wizard::{Hires, MagicString as MS};
 
 use oxc_data_structures::rope::{get_line_column, Rope};
-// use oxc_sourcemap::napi::SourceMap;
 
 #[napi]
 pub struct MagicString {
@@ -49,6 +49,43 @@ pub struct SourceMapOptions {
     pub hires: Option<bool>,
 }
 
+#[napi(object)]
+pub struct GenerateDecodedMapOptions {
+    /// The filename of the file containing the original source.
+    pub source: Option<String>,
+    /// Whether to include the original content in the map's `sourcesContent` array.
+    pub include_content: bool,
+    /// Whether the mapping should be high-resolution.
+    #[napi(ts_type = "boolean | 'boundary'")]
+    pub hires: Either<bool, String>,
+}
+
+impl Default for GenerateDecodedMapOptions {
+    fn default() -> Self {
+        Self { source: None, include_content: false, hires: Either::A(false) }
+    }
+}
+
+impl From<GenerateDecodedMapOptions> for string_wizard::SourceMapOptions {
+    fn from(o: GenerateDecodedMapOptions) -> Self {
+        Self {
+            source: Arc::from(o.source.unwrap_or_default()),
+            include_content: o.include_content,
+            hires: match o.hires {
+                Either::A(true) => Hires::True,
+                Either::A(false) => Hires::False,
+                Either::B(s) => {
+                    if s == "boundary" {
+                        Hires::Boundary
+                    } else {
+                        Hires::False
+                    }
+                }
+            },
+        }
+    }
+}
+
 #[napi]
 impl MagicString {
     /// Get source text from utf8 offset.
@@ -80,21 +117,15 @@ impl MagicString {
     }
 
     #[napi]
-    #[allow(clippy::inherent_to_string)]
+    #[allow(clippy::inherent_to_string, clippy::allow_attributes)]
     pub fn to_string(&self) -> String {
         self.cell.borrow_dependent().to_string()
     }
 
-    // #[napi]
-    // pub fn source_map(&self, options: Option<SourceMapOptions>) -> SourceMap {
-    // let options = options.map(|o| string_wizard::SourceMapOptions {
-    // include_content: o.include_content.unwrap_or_default(),
-    // source: o.source.map(Arc::from).unwrap_or_default(),
-    // hires: o.hires.unwrap_or_default(),
-    // });
-    // let map = self.cell.borrow_dependent().source_map(options.unwrap_or_default());
-    // oxc_sourcemap::napi::SourceMap::from(map)
-    // }
+    #[napi]
+    pub fn has_changed(&self) -> bool {
+        self.cell.borrow_dependent().has_changed()
+    }
 
     #[napi]
     pub fn append(&mut self, input: String) -> &Self {
@@ -166,5 +197,53 @@ impl MagicString {
             ms.remove(start as usize, end as usize);
         });
         self
+    }
+
+    #[napi(
+        ts_args_type = "options?: Partial<GenerateDecodedMapOptions>",
+        ts_return_type = r"{
+    toString: () => string;
+    toUrl: () => string;
+    toMap: () => {
+      file?: string
+      mappings: string
+      names: Array<string>
+      sourceRoot?: string
+      sources: Array<string>
+      sourcesContent?: Array<string>
+      version: number
+      x_google_ignoreList?: Array<number>
+    }
+    }"
+    )]
+    pub fn generate_map(&self) {
+        // only for .d.ts generation
+    }
+
+    #[napi(skip_typescript)]
+    pub fn to_sourcemap_string(&self, options: Option<GenerateDecodedMapOptions>) -> String {
+        self.get_sourcemap(options).to_json_string()
+    }
+
+    #[napi(skip_typescript)]
+    pub fn to_sourcemap_url(&self, options: Option<GenerateDecodedMapOptions>) -> String {
+        self.get_sourcemap(options).to_data_url()
+    }
+
+    #[napi(skip_typescript)]
+    pub fn to_sourcemap_object(
+        &self,
+        options: Option<GenerateDecodedMapOptions>,
+    ) -> oxc_sourcemap::napi::SourceMap {
+        oxc_sourcemap::napi::SourceMap::from(self.get_sourcemap(options))
+    }
+
+    fn get_sourcemap(
+        &self,
+        options: Option<GenerateDecodedMapOptions>,
+    ) -> oxc_sourcemap::SourceMap {
+        self.cell
+            .borrow_dependent()
+            .source_map(string_wizard::SourceMapOptions::from(options.unwrap_or_default()))
     }
 }

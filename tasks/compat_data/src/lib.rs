@@ -51,7 +51,7 @@ pub fn generate() {
     });
 
     let code = quote! {
-        #![allow(clippy::enum_glob_use, clippy::match_same_arms)]
+        #![expect(clippy::enum_glob_use, clippy::match_same_arms)]
 
         use std::sync::OnceLock;
 

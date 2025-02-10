@@ -2,8 +2,8 @@
   "name": "@oxc-transform/binding",
   "private": true,
   "scripts": {
-    "build-dev": "napi build --platform",
-    "build": "napi build --platform --release",
+    "build-dev": "napi --no-dts-cache build --platform",
+    "build": "napi --no-dts-cache build --platform --release",
     "test": "vitest --typecheck run ./test"
   },
   "napi": {

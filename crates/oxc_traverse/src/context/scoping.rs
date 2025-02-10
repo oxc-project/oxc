@@ -286,7 +286,7 @@ impl TraverseScoping {
     ///   what was found in AST.
     /// i.e. if source contains identifiers `_foo` and `__bar`, create UIDs names `___0`, `___1`,
     /// `___2` etc. They'll all be unique within the program.
-    #[allow(clippy::missing_panics_doc)]
+    #[expect(clippy::missing_panics_doc)]
     pub fn generate_uid_name(&mut self, name: &str) -> CompactStr {
         // If `uid_names` is not already populated, initialize it
         if self.uid_names.is_none() {

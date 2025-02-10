@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// const buffer = Buffer.alloc(10);
     /// ```
     NoNewBuffer,
+    unicorn,
     pedantic,
     pending
 );
@@ -85,5 +86,5 @@ fn test() {
         r"new Buffer(input, encoding);",
     ];
 
-    Tester::new(NoNewBuffer::NAME, NoNewBuffer::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNewBuffer::NAME, NoNewBuffer::PLUGIN, pass, fail).test_and_snapshot();
 }

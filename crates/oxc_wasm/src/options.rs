@@ -64,7 +64,7 @@ pub struct OxcParserOptions {
 #[tsify(from_wasm_abi)]
 #[serde(rename_all = "camelCase")]
 // allow empty object for future compatibility
-#[allow(clippy::empty_structs_with_brackets)]
+#[expect(clippy::empty_structs_with_brackets)]
 pub struct OxcLinterOptions {}
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]

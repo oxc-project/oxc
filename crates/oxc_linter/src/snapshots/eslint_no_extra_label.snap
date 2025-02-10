@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:20]

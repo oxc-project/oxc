@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(valid-title): "correct is not allowed in test title"
    ╭─[valid_title.tsx:1:6]
@@ -568,3 +567,10 @@ snapshot_kind: text
  4 │                 })
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
+
+  ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
+   ╭─[valid_title.tsx:1:4]
+ 1 │ it(abc, function () {})
+   ·    ───
+   ╰────
+  help: "Replace your title with a string"

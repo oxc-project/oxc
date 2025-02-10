@@ -5,3 +5,17 @@ enum Foo {
     b = a,
     c = b + x,
 }
+
+enum Merge { x = Math.random() }
+enum Merge { y = x }
+
+enum NestOuter {
+    a,
+    b = (() => {
+        enum NestInner {
+            a = Math.random(),
+            b = a
+        }
+        return NestInner.b;
+    })()
+}

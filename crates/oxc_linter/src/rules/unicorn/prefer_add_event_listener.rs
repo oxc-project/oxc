@@ -36,6 +36,7 @@ declare_oxc_lint!(
     /// foo.addEventListener('click', () => {});
     /// ```
     PreferAddEventListener,
+    unicorn,
     suspicious,
     pending
 );
@@ -353,6 +354,6 @@ fn test() {
         (r"(el as HTMLElement).onmouseenter = onAnchorMouseEnter;", None),
     ];
 
-    Tester::new(PreferAddEventListener::NAME, PreferAddEventListener::CATEGORY, pass, fail)
+    Tester::new(PreferAddEventListener::NAME, PreferAddEventListener::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

@@ -59,6 +59,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     TextEncodingIdentifierCase,
+    unicorn,
     style,
     fix
 );
@@ -210,7 +211,7 @@ fn test() {
         (r#"<META CHARSET="ASCII" />"#, r#"<META CHARSET="ascii" />"#),
     ];
 
-    Tester::new(TextEncodingIdentifierCase::NAME, TextEncodingIdentifierCase::CATEGORY, pass, fail)
+    Tester::new(TextEncodingIdentifierCase::NAME, TextEncodingIdentifierCase::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

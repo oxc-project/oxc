@@ -83,7 +83,7 @@ impl<'a> ConstructorParser<'a> {
             let reader =
                 Reader::initialize(flags_text, true, parse_string_literal).map_err(|_| {
                     let span_start = flags_span_offset;
-                    #[allow(clippy::cast_possible_truncation)]
+                    #[expect(clippy::cast_possible_truncation)]
                     let span_end = flags_span_offset + flags_text.len() as u32;
                     diagnostics::invalid_input(Span::new(span_start, span_end))
                 })?;
@@ -101,7 +101,7 @@ impl<'a> ConstructorParser<'a> {
         let reader =
             Reader::initialize(pattern_text, unicode_mode, parse_string_literal).map_err(|_| {
                 let span_start = pattern_span_offset;
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 let span_end = pattern_span_offset + pattern_text.len() as u32;
                 diagnostics::invalid_input(Span::new(span_start, span_end))
             })?;

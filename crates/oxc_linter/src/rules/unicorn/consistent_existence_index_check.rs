@@ -66,6 +66,7 @@ declare_oxc_lint!(
     /// if (index !== -1) {}
     /// ```
     ConsistentExistenceIndexCheck,
+    unicorn,
     style,
     fix,
 );
@@ -667,7 +668,7 @@ fn test() {
 
     Tester::new(
         ConsistentExistenceIndexCheck::NAME,
-        ConsistentExistenceIndexCheck::CATEGORY,
+        ConsistentExistenceIndexCheck::PLUGIN,
         pass,
         fail,
     )

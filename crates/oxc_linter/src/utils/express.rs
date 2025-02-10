@@ -33,10 +33,10 @@ pub fn as_endpoint_registration<'a, 'n>(
     let first = call.arguments[0].as_expression()?;
     match first {
         Expression::StringLiteral(path) => {
-            Some((Some(path.value.clone()), &call.arguments.as_slice()[1..]))
+            Some((Some(path.value), &call.arguments.as_slice()[1..]))
         }
         Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
-            Some((template.quasi().clone(), &call.arguments.as_slice()[1..]))
+            Some((template.quasi(), &call.arguments.as_slice()[1..]))
         }
         _ => Some((None, call.arguments.as_slice())),
     }
@@ -46,7 +46,7 @@ pub fn as_endpoint_registration<'a, 'n>(
 ///
 /// This will yield a lot of false positives if not called on the results of
 /// [`as_endpoint_registration`].
-#[allow(clippy::similar_names)]
+#[expect(clippy::similar_names)]
 pub fn is_endpoint_handler(maybe_handler: &Expression<'_>) -> bool {
     let params = match maybe_handler {
         Expression::FunctionExpression(f) => &f.params,
@@ -93,7 +93,7 @@ const COMMON_REQUEST_NAMES: Set<&'static str> = phf_set! {
     "request",
 };
 fn is_req_param(param: &FormalParameter) -> bool {
-    param.pattern.get_identifier().map_or(false, |id| COMMON_REQUEST_NAMES.contains(id.as_str()))
+    param.pattern.get_identifier_name().is_some_and(|id| COMMON_REQUEST_NAMES.contains(id.as_str()))
 }
 
 const COMMON_RESPONSE_NAMES: Set<&'static str> = phf_set! {
@@ -102,7 +102,10 @@ const COMMON_RESPONSE_NAMES: Set<&'static str> = phf_set! {
     "response",
 };
 fn is_res_param(param: &FormalParameter) -> bool {
-    param.pattern.get_identifier().map_or(false, |id| COMMON_RESPONSE_NAMES.contains(id.as_str()))
+    param
+        .pattern
+        .get_identifier_name()
+        .is_some_and(|id| COMMON_RESPONSE_NAMES.contains(id.as_str()))
 }
 
 const COMMON_NEXT_NAMES: Set<&'static str> = phf_set! {
@@ -110,7 +113,7 @@ const COMMON_NEXT_NAMES: Set<&'static str> = phf_set! {
     "next",
 };
 fn is_next_param(param: &FormalParameter) -> bool {
-    param.pattern.get_identifier().map_or(false, |id| COMMON_NEXT_NAMES.contains(id.as_str()))
+    param.pattern.get_identifier_name().is_some_and(|id| COMMON_NEXT_NAMES.contains(id.as_str()))
 }
 
 const COMMON_ERROR_NAMES: Set<&'static str> = phf_set! {
@@ -120,5 +123,5 @@ const COMMON_ERROR_NAMES: Set<&'static str> = phf_set! {
     "exception",
 };
 fn is_error_param(param: &FormalParameter) -> bool {
-    param.pattern.get_identifier().map_or(false, |id| COMMON_ERROR_NAMES.contains(id.as_str()))
+    param.pattern.get_identifier_name().is_some_and(|id| COMMON_ERROR_NAMES.contains(id.as_str()))
 }

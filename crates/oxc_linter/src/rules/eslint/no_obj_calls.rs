@@ -63,6 +63,7 @@ declare_oxc_lint! {
     /// let segmenterFrom = Intl.Segmenter("fr", { granularity: "word" });
     /// ```
     NoObjCalls,
+    eslint,
     correctness,
 }
 
@@ -87,7 +88,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
     let nodes = ctx.nodes();
     let symbols = ctx.symbols();
 
-    if ctx.semantic().is_reference_to_global_variable(ident) {
+    if ctx.is_reference_to_global_variable(ident) {
         return Some(ident.name.as_str());
     }
 
@@ -127,7 +128,6 @@ fn resolve_global_binding<'a, 'b: 'a>(
 
 impl Rule for NoObjCalls {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        #[allow(clippy::needless_return)]
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),
             AstKind::CallExpression(expr) => (&expr.callee, expr.span),
@@ -216,5 +216,5 @@ fn test() {
         ("let m = globalThis.Math; new m();", None),
     ];
 
-    Tester::new(NoObjCalls::NAME, NoObjCalls::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test_and_snapshot();
 }

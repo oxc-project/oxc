@@ -18,7 +18,7 @@ workspace = true
 
 [[bin]]
 name = "oxc_language_server"
-test = false
+test = true
 doctest = false
 
 [dependencies]

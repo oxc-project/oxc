@@ -61,6 +61,7 @@ declare_oxc_lint!(
     /// parentNode.replaceChild(newChildNode, oldChildNode);
     /// ```
     PreferModernDomApis,
+    unicorn,
     style,
     pending
 );
@@ -206,6 +207,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferModernDomApis::NAME, PreferModernDomApis::CATEGORY, pass, fail)
+    Tester::new(PreferModernDomApis::NAME, PreferModernDomApis::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

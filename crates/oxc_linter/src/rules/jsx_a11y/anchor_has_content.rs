@@ -57,6 +57,7 @@ declare_oxc_lint!(
     /// ```
     ///
     AnchorHasContent,
+    jsx_a11y,
     correctness,
     conditional_suggestion
 );
@@ -183,7 +184,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(AnchorHasContent::NAME, AnchorHasContent::CATEGORY, pass, fail)
+    Tester::new(AnchorHasContent::NAME, AnchorHasContent::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

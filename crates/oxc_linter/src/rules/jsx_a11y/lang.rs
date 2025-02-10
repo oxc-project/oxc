@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// - [eslint-plugin-jsx-a11y/lang](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/docs/rules/lang.md)
     /// - [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
     Lang,
+    jsx_a11y,
     correctness
 );
 
@@ -135,5 +136,5 @@ fn test() {
         ("<Box as='html' lang='foo' />", None, Some(settings()), None),
     ];
 
-    Tester::new(Lang::NAME, Lang::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail).test_and_snapshot();
 }

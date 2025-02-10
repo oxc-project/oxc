@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-promise(catch-or-return): eslint-plugin-promise(catch-or-return): Expected catch or return
    ╭─[catch_or_return.tsx:1:37]

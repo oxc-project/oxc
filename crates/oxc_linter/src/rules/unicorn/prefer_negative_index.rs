@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// foo.at(-1);
     /// ```
     PreferNegativeIndex,
+    unicorn,
     style,
     fix
 );
@@ -640,7 +641,7 @@ fn test() {
         							NOT_SUPPORTED.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
         						", None)
     ];
-    Tester::new(PreferNegativeIndex::NAME, PreferNegativeIndex::CATEGORY, pass, fail)
+    Tester::new(PreferNegativeIndex::NAME, PreferNegativeIndex::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

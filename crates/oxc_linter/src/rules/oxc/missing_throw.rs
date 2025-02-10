@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// const foo = () => { throw new Error() }
     /// ```
     MissingThrow,
+    oxc,
     correctness,
     suggestion
 );
@@ -99,7 +100,7 @@ fn test() {
         ("const foo = () => { new Error() }", "const foo = () => { throw new Error() }"),
     ];
 
-    Tester::new(MissingThrow::NAME, MissingThrow::CATEGORY, pass, fail)
+    Tester::new(MissingThrow::NAME, MissingThrow::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

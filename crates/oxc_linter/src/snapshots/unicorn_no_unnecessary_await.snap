@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(no-unnecessary-await): Unexpected `await` on a non-Promise value
    ╭─[no_unnecessary_await.tsx:1:1]

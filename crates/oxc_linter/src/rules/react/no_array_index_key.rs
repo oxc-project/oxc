@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// ));
     /// ```
     NoArrayIndexKey,
+    react,
     perf,
 );
 
@@ -146,11 +147,11 @@ fn find_index_param_name_by_position<'a>(
 ) -> Option<&'a str> {
     call_expr.arguments.first().and_then(|argument| match argument {
         Argument::ArrowFunctionExpression(arrow_fn_expr) => {
-            Some(arrow_fn_expr.params.items.get(position)?.pattern.get_identifier()?.as_str())
+            Some(arrow_fn_expr.params.items.get(position)?.pattern.get_identifier_name()?.as_str())
         }
-        Argument::FunctionExpression(regular_fn_expr) => {
-            Some(regular_fn_expr.params.items.get(position)?.pattern.get_identifier()?.as_str())
-        }
+        Argument::FunctionExpression(regular_fn_expr) => Some(
+            regular_fn_expr.params.items.get(position)?.pattern.get_identifier_name()?.as_str(),
+        ),
         _ => None,
     })
 }
@@ -293,5 +294,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoArrayIndexKey::NAME, NoArrayIndexKey::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayIndexKey::NAME, NoArrayIndexKey::PLUGIN, pass, fail).test_and_snapshot();
 }

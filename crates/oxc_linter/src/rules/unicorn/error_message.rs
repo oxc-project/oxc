@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// throw new TypeError('Number expected')
     /// ```
     ErrorMessage,
+    unicorn,
     style
 );
 
@@ -172,5 +173,5 @@ fn test() {
         ("const error = new AggregateError;", None),
     ];
 
-    Tester::new(ErrorMessage::NAME, ErrorMessage::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ErrorMessage::NAME, ErrorMessage::PLUGIN, pass, fail).test_and_snapshot();
 }

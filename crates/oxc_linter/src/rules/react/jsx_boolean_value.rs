@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// ```
     ///
     JsxBooleanValue,
+    react,
     style,
     fix,
 );
@@ -254,7 +255,7 @@ fn test() {
         ("<App foo />", "<App foo={true} />", Some(serde_json::json!(["always"]))),
     ];
 
-    Tester::new(JsxBooleanValue::NAME, JsxBooleanValue::CATEGORY, pass, fail)
+    Tester::new(JsxBooleanValue::NAME, JsxBooleanValue::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

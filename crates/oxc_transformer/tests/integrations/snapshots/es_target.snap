@@ -1,7 +1,5 @@
 ---
 source: crates/oxc_transformer/tests/integrations/es_target.rs
-assertion_line: 50
-snapshot_kind: text
 ---
 ########## 0 es5
 () => {}
@@ -80,13 +78,16 @@ a || (a = b);
 ########## 10 es2021
 class foo { static {} }
 ----------
-class foo {
-	static #_ = (() => {})();
-}
+class foo {}
+(() => {})();
 
 ########## 11 es2021
 class Foo { #a; }
 ----------
+import _classPrivateFieldInitSpec from '@babel/runtime/helpers/classPrivateFieldInitSpec';
+var _a = new WeakMap();
 class Foo {
-	#a;
+	constructor() {
+		_classPrivateFieldInitSpec(this, _a, void 0);
+	}
 }

@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// class Bar {}
     /// ```
     MaxClassesPerFile,
+    eslint,
     pedantic,
 );
 
@@ -188,6 +189,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxClassesPerFile::NAME, MaxClassesPerFile::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(MaxClassesPerFile::NAME, MaxClassesPerFile::PLUGIN, pass, fail).test_and_snapshot();
 }

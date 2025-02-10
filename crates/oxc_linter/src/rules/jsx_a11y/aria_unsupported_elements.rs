@@ -33,6 +33,7 @@ declare_oxc_lint! {
     /// ```
     ///
     AriaUnsupportedElements,
+    jsx_a11y,
     correctness,
     fix
 }
@@ -57,7 +58,7 @@ impl Rule for AriaUnsupportedElements {
                         JSXAttributeItem::SpreadAttribute(_) => continue,
                     };
                     let attr_name = get_jsx_attribute_name(&attr.name);
-                    let attr_name = attr_name.cow_to_lowercase();
+                    let attr_name = attr_name.cow_to_ascii_lowercase();
                     if INVALID_ATTRIBUTES.contains(&attr_name) {
                         ctx.diagnostic_with_fix(
                             aria_unsupported_elements_diagnostic(attr.span, &attr_name),
@@ -430,7 +431,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::CATEGORY, pass, fail)
+    Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::PLUGIN, pass, fail)
         .with_jsx_a11y_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

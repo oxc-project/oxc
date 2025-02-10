@@ -1,0 +1,25 @@
+---
+source: apps/oxlint/src/tester.rs
+assertion_line: 95
+---
+########## 
+arguments: --format=junit test.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Oxlint" tests="3" failures="2" errors="1">
+    <testsuite name="test.js" tests="3" disabled="0" errors="1" failures="2">
+        <testcase name="eslint(no-debugger)">
+            <error message="`debugger` statement is not allowed">line 5, column 1, `debugger` statement is not allowed</error>
+        </testcase>
+        <testcase name="eslint(no-unused-vars)">
+            <failure message="Function &apos;foo&apos; is declared but never used.">line 1, column 10, Function &apos;foo&apos; is declared but never used.</failure>
+        </testcase>
+        <testcase name="eslint(no-unused-vars)">
+            <failure message="Parameter &apos;b&apos; is declared but never used. Unused parameters should start with a &apos;_&apos;.">line 1, column 17, Parameter &apos;b&apos; is declared but never used. Unused parameters should start with a &apos;_&apos;.</failure>
+        </testcase>
+    </testsuite>
+</testsuites>
+----------
+CLI result: LintFoundErrors
+----------

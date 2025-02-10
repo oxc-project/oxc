@@ -9,6 +9,7 @@ use syn::{
 
 pub struct LintRuleMeta {
     name: Ident,
+    plugin: Ident,
     category: Ident,
     /// Describes what auto-fixing capabilities the rule has
     fix: Option<Ident>,
@@ -33,6 +34,8 @@ impl Parse for LintRuleMeta {
 
         let struct_name = input.parse()?;
         input.parse::<Token!(,)>()?;
+        let plugin = input.parse()?;
+        input.parse::<Token!(,)>()?;
         let category = input.parse()?;
 
         // Parse FixMeta if it's specified. It will otherwise be excluded from
@@ -48,18 +51,20 @@ impl Parse for LintRuleMeta {
         // Ignore the rest
         input.parse::<proc_macro2::TokenStream>()?;
 
-        Ok(Self { name: struct_name, category, fix, documentation, used_in_test: false })
+        Ok(Self { name: struct_name, plugin, category, fix, documentation, used_in_test: false })
     }
 }
 
 pub(crate) fn rule_name_converter() -> Converter {
-    Converter::new().remove_boundary(Boundary::LowerDigit).to_case(Case::Kebab)
+    Converter::new().remove_boundary(Boundary::LOWER_DIGIT).to_case(Case::Kebab)
 }
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
-    let LintRuleMeta { name, category, fix, documentation, used_in_test } = metadata;
+    let LintRuleMeta { name, plugin, category, fix, documentation, used_in_test } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
+    let plugin = plugin.to_string(); // ToDo: validate plugin name
+
     let category = match category.to_string().as_str() {
         "correctness" => quote! { RuleCategory::Correctness },
         "suspicious" => quote! { RuleCategory::Suspicious },
@@ -88,6 +93,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
 
         impl RuleMeta for #name {
             const NAME: &'static str = #canonical_name;
+
+            const PLUGIN: &'static str = #plugin;
 
             const CATEGORY: RuleCategory = #category;
 
@@ -131,9 +138,6 @@ fn parse_fix(s: &str) -> proc_macro2::TokenStream {
         }
         "fix" => return quote! { RuleFixMeta::Fixable(FixKind::SafeFix) },
         "suggestion" => return quote! { RuleFixMeta::Fixable(FixKind::Suggestion) },
-        // "fix-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Fix.union(FixKind::Dangerous)) },
-        // "suggestion" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion) },
-        // "suggestion-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion.union(FixKind::Dangerous)) },
         "conditional" => {
             panic!("Invalid fix capabilities: missing a fix kind. Did you mean 'fix-conditional'?")
         }

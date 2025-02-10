@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// Math.hypot(a, b);
     /// ```
     PreferModernMathApis,
+    unicorn,
     restriction,
     pending
 );
@@ -410,6 +411,6 @@ fn test() {
 		",
     ];
 
-    Tester::new(PreferModernMathApis::NAME, PreferModernMathApis::CATEGORY, pass, fail)
+    Tester::new(PreferModernMathApis::NAME, PreferModernMathApis::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

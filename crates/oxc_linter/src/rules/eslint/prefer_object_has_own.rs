@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// const hasProperty = Object.hasOwn(object, property);
     /// ```
     PreferObjectHasOwn,
+    eslint,
     style,
     conditional_fix
 );
@@ -381,7 +382,7 @@ fn test() {
         // Issue: <https://github.com/oxc-project/oxc/issues/7450>
         ("Object.prototype.hasOwnProperty.call(C,x);", " Object.hasOwn(C,x);", None),
     ];
-    Tester::new(PreferObjectHasOwn::NAME, PreferObjectHasOwn::CATEGORY, pass, fail)
+    Tester::new(PreferObjectHasOwn::NAME, PreferObjectHasOwn::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

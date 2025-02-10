@@ -20,7 +20,7 @@ const isMuslFromFilesystem = () => {
   const { readFileSync } = require("fs");
   try {
     return readFileSync("/usr/bin/ldd", "utf-8").includes("musl");
-  } catch {
+  } catch(_error) {
     return null;
   }
 };
@@ -91,9 +91,9 @@ const PLATFORMS = {
 };
 
 let binPath = (
-  PLATFORMS && 
-  PLATFORMS[platform] && 
-  PLATFORMS[platform][arch] && 
+  PLATFORMS &&
+  PLATFORMS[platform] &&
+  PLATFORMS[platform][arch] &&
   PLATFORMS[platform][arch][isMusl() ? "musl" : "gnu"]
 ) || null;
 
@@ -104,12 +104,11 @@ if (binPath) {
     {
       shell: false,
       stdio: "inherit",
-      env: {
-        ...env,
+      env: Object.assign({}, env, {
         JS_RUNTIME_VERSION: version,
         JS_RUNTIME_NAME: release.name,
         NODE_PACKAGE_MANAGER: detectPackageManager(),
-      },
+      }),
     }
   );
 

@@ -32,7 +32,7 @@ pub type BlockNodeId = petgraph::stable_graph::NodeIndex;
 pub struct BasicBlockId(NonMaxU32);
 
 impl Idx for BasicBlockId {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
         // SAFETY: We just checked `idx` is valid for `NonMaxU32`

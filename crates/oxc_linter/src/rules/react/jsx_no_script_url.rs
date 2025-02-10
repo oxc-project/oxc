@@ -66,6 +66,7 @@ declare_oxc_lint!(
     /// <Foo test="javascript:void(0)" />
     /// ```
     JsxNoScriptUrl,
+    react,
     suspicious,
     pending
 );
@@ -279,5 +280,5 @@ v	ascript:"></a>"#,
         ),
     ];
 
-    Tester::new(JsxNoScriptUrl::NAME, JsxNoScriptUrl::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoScriptUrl::NAME, JsxNoScriptUrl::PLUGIN, pass, fail).test_and_snapshot();
 }

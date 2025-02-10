@@ -93,6 +93,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoConditionalInTest,
+    jest,
     pedantic,
 );
 
@@ -644,7 +645,7 @@ fn test() {
 			      "#,
     ];
 
-    Tester::new(NoConditionalInTest::NAME, NoConditionalInTest::CATEGORY, pass, fail)
+    Tester::new(NoConditionalInTest::NAME, NoConditionalInTest::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

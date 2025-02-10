@@ -38,6 +38,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NextScriptForGa,
+    nextjs,
     correctness
 );
 
@@ -312,7 +313,7 @@ fn test() {
 			      }",
     ];
 
-    Tester::new(NextScriptForGa::NAME, NextScriptForGa::CATEGORY, pass, fail)
+    Tester::new(NextScriptForGa::NAME, NextScriptForGa::PLUGIN, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

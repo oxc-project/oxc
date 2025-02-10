@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// const a: Foo<string> = new Foo(); // prefer type annotation
     /// ```
     ConsistentGenericConstructors,
+    typescript,
     style,
     pending
 );
@@ -684,7 +685,7 @@ fn test() {
     ];
     Tester::new(
         ConsistentGenericConstructors::NAME,
-        ConsistentGenericConstructors::CATEGORY,
+        ConsistentGenericConstructors::PLUGIN,
         pass,
         fail,
     )

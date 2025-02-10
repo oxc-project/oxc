@@ -30,6 +30,7 @@ declare_oxc_lint!(
     /// function bar() { return /=foo/; }
     /// ```
     NoDivRegex,
+    eslint,
     restriction,
     fix
 );
@@ -71,7 +72,7 @@ fn test() {
         None,
     )];
 
-    Tester::new(NoDivRegex::NAME, NoDivRegex::CATEGORY, pass, fail)
+    Tester::new(NoDivRegex::NAME, NoDivRegex::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

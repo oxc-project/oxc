@@ -29,6 +29,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnnecessaryAwait,
+    unicorn,
     correctness,
     conditional_fix
 );
@@ -45,7 +46,7 @@ impl Rule for NoUnnecessaryAwait {
                     || matches!(expr.argument, Expression::ClassExpression(_))
             } || {
                 // `+await +1` -> `++1`
-                ctx.nodes().parent_node(node.id()).map_or(false, |parent| {
+                ctx.nodes().parent_node(node.id()).is_some_and(|parent| {
                     if let (
                         AstKind::UnaryExpression(parent_unary),
                         Expression::UnaryExpression(inner_unary),
@@ -166,7 +167,7 @@ fn test() {
         ("-await -1", "-await -1", None),                     // no autofix
     ];
 
-    Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::CATEGORY, pass, fail)
+    Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

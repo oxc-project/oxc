@@ -33,6 +33,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoBeforeInteractiveScriptOutsideDocument,
+    nextjs,
     correctness
 );
 
@@ -384,7 +385,7 @@ fn test() {
 
     Tester::new(
         NoBeforeInteractiveScriptOutsideDocument::NAME,
-        NoBeforeInteractiveScriptOutsideDocument::CATEGORY,
+        NoBeforeInteractiveScriptOutsideDocument::PLUGIN,
         pass,
         fail,
     )

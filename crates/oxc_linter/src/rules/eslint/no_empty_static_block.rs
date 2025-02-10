@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoEmptyStaticBlock,
+    eslint,
     correctness,
     suggestion,
 );
@@ -101,7 +102,7 @@ fn test() {
         ("class Foo { static { bar(); } static {} }", "class Foo { static { bar(); }  }"),
     ];
 
-    Tester::new(NoEmptyStaticBlock::NAME, NoEmptyStaticBlock::CATEGORY, pass, fail)
+    Tester::new(NoEmptyStaticBlock::NAME, NoEmptyStaticBlock::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -60,7 +60,7 @@ const fn decimal_byte_to_value(b: u8) -> u8 {
     b & 15
 }
 
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+#[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_decimal(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
@@ -86,7 +86,7 @@ fn parse_decimal(s: &str) -> f64 {
     result as f64
 }
 
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+#[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_decimal_with_underscores(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
@@ -146,7 +146,7 @@ const fn binary_byte_to_value(b: u8) -> u8 {
 /// we consider leading zeros as part of that length. Right now it doesn't seem
 /// worth it performance-wise to check and strip them. Further experimentation
 /// could be useful.
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+#[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_binary(s: &str) -> f64 {
     /// binary literals longer than this many characters have the chance to
     /// overflow a u64, forcing us to take the slow path.
@@ -178,7 +178,7 @@ fn parse_binary_slow(s: &str) -> f64 {
     result
 }
 
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+#[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_binary_with_underscores(s: &str) -> f64 {
     /// binary literals longer than this many characters have the chance to
     /// overflow a u64, forcing us to take the slow path.
@@ -228,7 +228,7 @@ const fn octal_byte_to_value(b: u8) -> u8 {
     b & 7
 }
 
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+#[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     const MAX_FAST_OCTAL_LEN: usize = 21;
@@ -250,7 +250,6 @@ fn parse_octal(s: &str) -> f64 {
 
 #[cold]
 #[inline(never)]
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal_slow(s: &str) -> f64 {
     let mut result = 0_f64;
     for &b in s.as_bytes() {
@@ -260,7 +259,7 @@ fn parse_octal_slow(s: &str) -> f64 {
     result
 }
 
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+#[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal_with_underscores(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     const MAX_FAST_OCTAL_LEN: usize = 21;
@@ -284,7 +283,6 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
 
 #[cold]
 #[inline(never)]
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal_with_underscores_slow(s: &str) -> f64 {
     let mut result = 0_f64;
     for &b in s.as_bytes() {
@@ -321,7 +319,7 @@ const fn hex_byte_to_value(b: u8) -> u8 {
     }
 }
 
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+#[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_hex(s: &str) -> f64 {
     /// Hex strings longer than this have the chance to overflow u64.
     const MAX_FAST_HEX_LEN: usize = 16;
@@ -353,7 +351,7 @@ fn parse_hex_slow(s: &str) -> f64 {
     result
 }
 
-#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+#[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_hex_with_underscores(s: &str) -> f64 {
     /// Hex strings longer than this have the chance to overflow u64.
     const MAX_FAST_HEX_LEN: usize = 16;
@@ -419,11 +417,11 @@ fn parse_big_int_without_underscores(s: &str, kind: Kind) -> Result<BigInt, &'st
 }
 
 #[cfg(test)]
-#[allow(clippy::unreadable_literal, clippy::mixed_case_hex_literals)]
+#[expect(clippy::unreadable_literal, clippy::mixed_case_hex_literals)]
 mod test {
     use super::*;
 
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     fn assert_all_ints_eq<I>(test_cases: I, kind: Kind, has_sep: bool)
     where
         I: IntoIterator<Item = (&'static str, i64)>,
@@ -474,7 +472,7 @@ mod test {
     };
 
     #[test]
-    #[allow(clippy::excessive_precision, clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     fn test_int_precision() {
         assert_eq!(
             // 18446744073709551616 = 1 << 64
@@ -508,7 +506,6 @@ mod test {
     }
 
     #[test]
-    #[allow(clippy::excessive_precision)]
     fn test_large_number_of_leading_zeros() {
         assert_all_ints_eq(
             vec![("000000000000000000000000000000000000000000000000000000001", 1)],
@@ -518,7 +515,7 @@ mod test {
     }
 
     #[test]
-    #[allow(clippy::excessive_precision)]
+    #[expect(clippy::excessive_precision)]
     fn test_float_precision() {
         let cases = vec![
             ("1.7976931348623157e+308", 1.7976931348623157e+308),

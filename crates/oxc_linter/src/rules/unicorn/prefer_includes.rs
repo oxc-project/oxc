@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// if (str.includes('foo')) { }
     /// ```
     PreferIncludes,
+    unicorn,
     style,
     pending
 );
@@ -143,5 +144,5 @@ fn test() {
         r"foo.indexOf(bar, 1) !== -1",
     ];
 
-    Tester::new(PreferIncludes::NAME, PreferIncludes::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(PreferIncludes::NAME, PreferIncludes::PLUGIN, pass, fail).test_and_snapshot();
 }

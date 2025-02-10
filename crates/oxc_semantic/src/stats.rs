@@ -103,7 +103,7 @@ impl Stats {
     #[must_use]
     pub fn increase_by(mut self, excess: f64) -> Self {
         let factor = excess + 1.0;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
         let increase = |n: u32| (n as f64 * factor) as u32;
 
         self.scopes = increase(self.scopes);

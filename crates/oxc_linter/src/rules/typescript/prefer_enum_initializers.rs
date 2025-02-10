@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferEnumInitializers,
+    typescript,
     pedantic,
     pending
 );
@@ -121,6 +122,6 @@ fn test() {
 			      ",
     ];
 
-    Tester::new(PreferEnumInitializers::NAME, PreferEnumInitializers::CATEGORY, pass, fail)
+    Tester::new(PreferEnumInitializers::NAME, PreferEnumInitializers::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

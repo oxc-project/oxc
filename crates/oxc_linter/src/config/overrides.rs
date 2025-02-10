@@ -6,13 +6,13 @@ use serde::{de, ser, Deserialize, Serialize};
 
 use oxc_index::{Idx, IndexVec};
 
-use crate::{config::OxlintRules, LintPlugins};
+use crate::{config::OxlintRules, LintPlugins, OxlintEnv, OxlintGlobals};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct OverrideId(NonMaxU32);
 
 impl Idx for OverrideId {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
         // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
@@ -72,6 +72,12 @@ pub struct OxlintOverride {
     /// ## Example
     /// `[ "*.test.ts", "*.spec.ts" ]`
     pub files: GlobSet,
+
+    /// Environments enable and disable collections of global variables.
+    pub env: Option<OxlintEnv>,
+
+    /// Enabled or disabled specific global variables.
+    pub globals: Option<OxlintGlobals>,
 
     /// Optionally change what plugins are enabled for this override. When
     /// omitted, the base config's plugins are used.
@@ -153,13 +159,15 @@ impl JsonSchema for GlobSet {
     }
 }
 
+#[cfg(test)]
 mod test {
+    use crate::config::globals::GlobalValue;
+
+    use super::*;
+    use serde_json::{from_value, json};
+
     #[test]
     fn test_globset() {
-        use serde_json::{from_value, json};
-
-        use super::*;
-
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx",],
         }))
@@ -177,10 +185,6 @@ mod test {
 
     #[test]
     fn test_parsing_plugins() {
-        use serde_json::{from_value, json};
-
-        use super::*;
-
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx"],
         }))
@@ -200,5 +204,46 @@ mod test {
         }))
         .unwrap();
         assert_eq!(config.plugins, Some(LintPlugins::REACT | LintPlugins::TYPESCRIPT));
+    }
+
+    #[test]
+    fn test_parsing_globals() {
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+        }))
+        .unwrap();
+        assert!(config.globals.is_none());
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+            "globals": {
+                "Foo": "readable"
+            },
+        }))
+        .unwrap();
+
+        assert_eq!(*config.globals.unwrap().get("Foo").unwrap(), GlobalValue::Readonly);
+    }
+
+    #[test]
+    fn test_parsing_env() {
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+        }))
+        .unwrap();
+        assert!(config.env.is_none());
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+            "env": {
+                "es2022": true,
+                "es2023": false,
+            },
+        }))
+        .unwrap();
+
+        let env = &config.env.unwrap();
+        assert!(env.contains("es2022"));
+        assert!(!env.contains("es2023"));
     }
 }

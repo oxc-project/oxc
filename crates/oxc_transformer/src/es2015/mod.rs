@@ -26,4 +26,4 @@ impl<'a, 'ctx> ES2015<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ES2015<'a, 'ctx> {}
+impl<'a> Traverse<'a> for ES2015<'a, '_> {}

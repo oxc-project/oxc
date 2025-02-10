@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// <App bar baz foo={3} />;
     /// ```
     JsxNoDuplicateProps,
+    react,
     correctness
 );
 
@@ -66,7 +67,7 @@ impl Rule for JsxNoDuplicateProps {
                 continue;
             };
 
-            if let Some(old_span) = props.insert(ident.name.clone(), ident.span) {
+            if let Some(old_span) = props.insert(ident.name, ident.span) {
                 ctx.diagnostic(jsx_no_duplicate_props_diagnostic(
                     ident.name.as_str(),
                     old_span,
@@ -122,6 +123,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoDuplicateProps::NAME, JsxNoDuplicateProps::CATEGORY, pass, fail)
+    Tester::new(JsxNoDuplicateProps::NAME, JsxNoDuplicateProps::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

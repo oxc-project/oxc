@@ -18,21 +18,63 @@ use crate::Allocator;
 
 /// A `Box` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// Should only be used for storing AST types.
+/// # No `Drop`s
 ///
-/// Must NOT be used to store types which have a [`Drop`] implementation.
-/// `T::drop` will NOT be called on the `Box`'s contents when the `Box` is dropped.
-/// If `T` owns memory outside of the arena, this will be a memory leak.
+/// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
+/// when the allocator is dropped, without dropping the individual objects in the arena.
 ///
-/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
-/// being called to guarantee soundness.
+/// Therefore, it would produce a memory leak if you allocated [`Drop`] types into the arena
+/// which own memory allocations outside the arena.
+///
+/// Static checks make this impossible to do. [`Box::new_in`] will refuse to compile if called
+/// with a [`Drop`] type.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
+impl<T: ?Sized> Box<'_, T> {
+    /// Const assertion that `T` is not `Drop`.
+    /// Must be referenced in all methods which create a `Box`.
+    const ASSERT_T_IS_NOT_DROP: () =
+        assert!(!std::mem::needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
+}
+
 impl<T> Box<'_, T> {
+    /// Put a `value` into a memory arena and get back a [`Box`] with ownership
+    /// to the allocation.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let arena = Allocator::default();
+    /// let in_arena: Box<i32> = Box::new_in(5, &arena);
+    /// ```
+    //
+    // `#[inline(always)]` because this is a hot path and `Allocator::alloc` is a very small function.
+    // We always want it to be inlined.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn new_in(value: T, allocator: &Allocator) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(NonNull::from(allocator.alloc(value)), PhantomData)
+    }
+
+    /// Create a fake [`Box`] with a dangling pointer.
+    ///
+    /// # SAFETY
+    /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
+    /// Only purpose is for mocking types without allocating for const assertions.
+    #[expect(unsafe_code, clippy::missing_safety_doc)]
+    pub const unsafe fn dangling() -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(NonNull::dangling(), PhantomData)
+    }
+
     /// Take ownership of the value stored in this [`Box`], consuming the box in
     /// the process.
     ///
-    /// ## Example
+    /// # Examples
     /// ```
     /// use oxc_allocator::{Allocator, Box};
     ///
@@ -45,40 +87,15 @@ impl<T> Box<'_, T> {
     ///
     /// assert_eq!(i, 5);
     /// ```
+    #[inline]
     pub fn unbox(self) -> T {
         // SAFETY:
         // This pointer read is safe because the reference `self.0` is
-        // guaranteed to be unique--not just now, but we're guaranteed it's not
+        // guaranteed to be unique - not just now, but we're guaranteed it's not
         // borrowed from some other reference. This in turn is because we never
         // construct a `Box` with a borrowed reference, only with a fresh
-        // one just allocated from a Bump.
+        // one just allocated from a `Bump`.
         unsafe { ptr::read(self.0.as_ptr()) }
-    }
-}
-
-impl<T> Box<'_, T> {
-    /// Put a `value` into a memory arena and get back a [`Box`] with ownership
-    /// to the allocation.
-    ///
-    /// ## Example
-    /// ```
-    /// use oxc_allocator::{Allocator, Box};
-    ///
-    /// let arena = Allocator::default();
-    /// let in_arena: Box<i32> = Box::new_in(5, &arena);
-    /// ```
-    pub fn new_in(value: T, allocator: &Allocator) -> Self {
-        Self(NonNull::from(allocator.alloc(value)), PhantomData)
-    }
-
-    /// Create a fake [`Box`] with a dangling pointer.
-    ///
-    /// # SAFETY
-    /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
-    /// Only purpose is for mocking types without allocating for const assertions.
-    #[allow(unsafe_code, clippy::missing_safety_doc)]
-    pub const unsafe fn dangling() -> Self {
-        Self(NonNull::dangling(), PhantomData)
     }
 }
 
@@ -95,14 +112,21 @@ impl<T: ?Sized> Box<'_, T> {
     /// with no other aliases. You must not, for example, create 2 `Box`es from the same pointer.
     ///
     /// `ptr` must have been created from a `*mut T` or `&mut T` (not a `*const T` / `&T`).
-    #[inline]
+    //
+    // `#[inline(always)]` because this is a no-op
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
         Self(ptr, PhantomData)
     }
 
     /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
-    #[inline]
-    #[expect(clippy::needless_pass_by_value)]
+    //
+    // `#[inline(always)]` because this is a no-op
+    #[expect(clippy::inline_always, clippy::needless_pass_by_value)]
+    #[inline(always)]
     pub fn into_non_null(boxed: Self) -> NonNull<T> {
         boxed.0
     }
@@ -111,6 +135,7 @@ impl<T: ?Sized> Box<'_, T> {
 impl<T: ?Sized> ops::Deref for Box<'_, T> {
     type Target = T;
 
+    #[inline]
     fn deref(&self) -> &T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_ref() }
@@ -118,6 +143,7 @@ impl<T: ?Sized> ops::Deref for Box<'_, T> {
 }
 
 impl<T: ?Sized> ops::DerefMut for Box<'_, T> {
+    #[inline]
     fn deref_mut(&mut self) -> &mut T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_mut() }
@@ -125,18 +151,21 @@ impl<T: ?Sized> ops::DerefMut for Box<'_, T> {
 }
 
 impl<T: ?Sized> AsRef<T> for Box<'_, T> {
+    #[inline]
     fn as_ref(&self) -> &T {
         self
     }
 }
 
 impl<T: ?Sized> AsMut<T> for Box<'_, T> {
+    #[inline]
     fn as_mut(&mut self) -> &mut T {
         self
     }
 }
 
 impl<T: ?Sized + Debug> Debug for Box<'_, T> {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         self.deref().fmt(f)
     }
@@ -166,6 +195,7 @@ where
 }
 
 impl<T: Hash> Hash for Box<'_, T> {
+    #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.deref().hash(state);
     }

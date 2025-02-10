@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// var booleanObject = Boolean(value);
     /// ```
     NoNewWrappers,
+    eslint,
     pedantic,
     pending
 );
@@ -59,7 +60,7 @@ impl Rule for NoNewWrappers {
             return;
         };
         if (ident.name == "String" || ident.name == "Number" || ident.name == "Boolean")
-            && ctx.semantic().is_reference_to_global_variable(ident)
+            && ctx.is_reference_to_global_variable(ident)
         {
             ctx.diagnostic(no_new_wrappers_diagnostic(ident.name.as_str(), expr.span));
         }
@@ -108,5 +109,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoNewWrappers::NAME, NoNewWrappers::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNewWrappers::NAME, NoNewWrappers::PLUGIN, pass, fail).test_and_snapshot();
 }

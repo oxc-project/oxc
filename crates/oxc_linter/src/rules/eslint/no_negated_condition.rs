@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// a ? doSomethingB() : doSomethingC()
     /// ```
     NoNegatedCondition,
+    eslint,
     pedantic,
     pending
 );
@@ -163,6 +164,6 @@ fn test() {
         r"(!!a) ? b() : c();",
     ];
 
-    Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::CATEGORY, pass, fail)
+    Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

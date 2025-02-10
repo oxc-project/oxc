@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoEqNull,
+    eslint,
     restriction,
     fix_dangerous
 );
@@ -112,5 +113,5 @@ fn test() {
         ("do {} while (null == x)", "do {} while (null === x)"),
     ];
 
-    Tester::new(NoEqNull::NAME, NoEqNull::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoEqNull::NAME, NoEqNull::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

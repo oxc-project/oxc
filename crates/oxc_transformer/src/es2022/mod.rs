@@ -36,7 +36,7 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ES2022<'a, 'ctx> {
+impl<'a> Traverse<'a> for ES2022<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_expression(expr, ctx);

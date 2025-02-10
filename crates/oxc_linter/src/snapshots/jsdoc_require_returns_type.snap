@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jsdoc(require-returns-type): Missing JSDoc `@returns` type.
    ╭─[require_returns_type.tsx:3:17]

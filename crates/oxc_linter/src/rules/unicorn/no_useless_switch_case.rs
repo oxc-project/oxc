@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUselessSwitchCase,
+    unicorn,
     pedantic,
     pending
 );
@@ -262,6 +263,6 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoUselessSwitchCase::NAME, NoUselessSwitchCase::CATEGORY, pass, fail)
+    Tester::new(NoUselessSwitchCase::NAME, NoUselessSwitchCase::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

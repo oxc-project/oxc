@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// let foo;
     /// ```
     NoUselessUndefined,
+    unicorn,
     pedantic,
     fix
 );
@@ -687,7 +688,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::CATEGORY, pass, fail)
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
    ╭─[no_fallthrough.tsx:2:1]

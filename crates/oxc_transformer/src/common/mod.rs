@@ -40,7 +40,7 @@ impl<'a, 'ctx> Common<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
+impl<'a> Traverse<'a> for Common<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.module_imports.exit_program(program, ctx);
         self.var_declarations.exit_program(program, ctx);
@@ -79,6 +79,14 @@ impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.arrow_function_converter.enter_arrow_function_expression(arrow, ctx);
+    }
+
+    fn exit_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_converter.exit_arrow_function_expression(arrow, ctx);
     }
 
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {

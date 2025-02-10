@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     EmptyBraceSpaces,
+    unicorn,
     style,
     fix
 );
@@ -80,7 +81,7 @@ fn remove_empty_braces_spaces(ctx: &LintContext, is_empty_body: bool, span: Span
     }
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn get_static_leading_count(span: Span, ctx: &LintContext) -> u32 {
     let src = span.source_text(ctx.source_text());
 
@@ -341,7 +342,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(EmptyBraceSpaces::NAME, EmptyBraceSpaces::CATEGORY, pass, fail)
+    Tester::new(EmptyBraceSpaces::NAME, EmptyBraceSpaces::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

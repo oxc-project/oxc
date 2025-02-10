@@ -57,13 +57,13 @@ impl<'a, 'ctx> TypeScript<'a, 'ctx> {
             annotations: TypeScriptAnnotations::new(options, ctx),
             r#enum: TypeScriptEnum::new(),
             namespace: TypeScriptNamespace::new(options, ctx),
-            module: TypeScriptModule::new(ctx),
+            module: TypeScriptModule::new(options.only_remove_type_imports, ctx),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
         }
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
+impl<'a> Traverse<'a> for TypeScript<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.ctx.source_type.is_typescript_definition() {
             // Output empty file for TS definitions

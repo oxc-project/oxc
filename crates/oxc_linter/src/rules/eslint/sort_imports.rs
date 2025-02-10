@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// import e from 'bar.js';
     /// ```
     SortImports,
+    eslint,
     style,
     conditional_fix
 );
@@ -212,9 +213,9 @@ impl SortImports {
 
         if self.ignore_case {
             current_local_member_name = current_local_member_name
-                .map(|name| Cow::Owned(name.cow_to_lowercase().into_owned()));
+                .map(|name| Cow::Owned(name.cow_to_ascii_lowercase().into_owned()));
             previous_local_member_name = previous_local_member_name
-                .map(|name| Cow::Owned(name.cow_to_lowercase().into_owned()));
+                .map(|name| Cow::Owned(name.cow_to_ascii_lowercase().into_owned()));
         }
 
         // "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
@@ -265,7 +266,7 @@ impl SortImports {
         let specifiers: Vec<_> = specifiers
             .iter()
             .filter_map(|specifier| {
-                if let ImportDeclarationSpecifier::ImportSpecifier(ref specifier) = specifier {
+                if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier {
                     Some(specifier)
                 } else {
                     None
@@ -284,7 +285,7 @@ impl SortImports {
                 let b = window[1].local.name.as_str();
 
                 if self.ignore_case {
-                    a.cow_to_lowercase() > b.cow_to_lowercase()
+                    a.cow_to_ascii_lowercase() > b.cow_to_ascii_lowercase()
                 } else {
                     a > b
                 }
@@ -306,7 +307,7 @@ impl SortImports {
 
         if is_fixable {
             // Safe to index because we know that `specifiers` is at least 2 element long
-            let specifiers_span = specifiers[0].span.merge(&specifiers[specifiers.len() - 1].span);
+            let specifiers_span = specifiers[0].span.merge(specifiers[specifiers.len() - 1].span);
             ctx.diagnostic_with_fix(
                 sort_members_alphabetically_diagnostic(unsorted_name, unsorted_span),
                 |fixer| {
@@ -331,7 +332,7 @@ impl SortImports {
                         let b = b.local.name.as_str();
 
                         if self.ignore_case {
-                            a.cow_to_lowercase().cmp(&b.cow_to_lowercase())
+                            a.cow_to_ascii_lowercase().cmp(&b.cow_to_ascii_lowercase())
                         } else {
                             a.cmp(b)
                         }
@@ -828,7 +829,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(SortImports::NAME, SortImports::CATEGORY, pass, fail)
+    Tester::new(SortImports::NAME, SortImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

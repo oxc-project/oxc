@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// import b from './b'; // Allowed: 2 dependencies (max: 2)
     /// ```
     MaxDependencies,
+    import,
     pedantic,
 );
 
@@ -207,7 +208,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxDependencies::NAME, MaxDependencies::CATEGORY, pass, fail)
+    Tester::new(MaxDependencies::NAME, MaxDependencies::PLUGIN, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

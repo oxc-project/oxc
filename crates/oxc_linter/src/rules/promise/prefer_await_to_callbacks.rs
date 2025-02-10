@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// eventEmitter.on('error', err => {})
     /// ```
     PreferAwaitToCallbacks,
+    promise,
     style,
 );
 
@@ -80,7 +81,7 @@ impl Rule for PreferAwaitToCallbacks {
                         return;
                     }
 
-                    let is_lodash = expr.callee.as_member_expression().map_or(false, |mem_expr| {
+                    let is_lodash = expr.callee.as_member_expression().is_some_and( |mem_expr| {
                         matches!(mem_expr.object(), Expression::Identifier(id) if matches!(id.name.as_str(), "_" | "lodash" | "underscore"))
                     });
 
@@ -99,8 +100,10 @@ impl Rule for PreferAwaitToCallbacks {
                         return;
                     };
 
-                    if matches!(param.pattern.get_identifier().as_deref(), Some("err" | "error"))
-                        && !Self::is_inside_yield_or_await(node.id(), ctx)
+                    if matches!(
+                        param.pattern.get_identifier_name().as_deref(),
+                        Some("err" | "error")
+                    ) && !Self::is_inside_yield_or_await(node.id(), ctx)
                     {
                         ctx.diagnostic(prefer_await_to_callbacks(last_arg.span()));
                     }
@@ -123,7 +126,7 @@ impl PreferAwaitToCallbacks {
             return;
         };
 
-        let id = param.pattern.get_identifier();
+        let id = param.pattern.get_identifier_name();
         if matches!(id.as_deref(), Some("callback" | "cb")) {
             ctx.diagnostic(prefer_await_to_callbacks(param.span));
         }
@@ -181,6 +184,6 @@ fn test() {
         "customMap(errors, (err) => err.message)",
     ];
 
-    Tester::new(PreferAwaitToCallbacks::NAME, PreferAwaitToCallbacks::CATEGORY, pass, fail)
+    Tester::new(PreferAwaitToCallbacks::NAME, PreferAwaitToCallbacks::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

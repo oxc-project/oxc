@@ -82,6 +82,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     SortKeys,
+    eslint,
     style,
     pending
 );
@@ -168,7 +169,7 @@ impl Rule for SortKeys {
                 for group in &mut property_groups {
                     *group = group
                         .iter()
-                        .map(|s| s.cow_to_lowercase().to_string())
+                        .map(|s| s.cow_to_ascii_lowercase().to_string())
                         .collect::<Vec<String>>();
                 }
             }
@@ -1023,5 +1024,5 @@ fn test() {
         ), // { "ecmaVersion": 2018 }
     ];
 
-    Tester::new(SortKeys::NAME, SortKeys::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).test_and_snapshot();
 }

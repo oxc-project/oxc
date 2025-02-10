@@ -33,9 +33,9 @@ fn test() {
         ast.alloc(ast.object_expression(SPAN, ast.vec(), None)),
     ));
     let joined = array2.array_join(Some("_"));
-    assert_eq!(joined, Some("__42_foo_true_42n_,,42,foo,true,42n_[object Object]".to_string()));
+    assert_eq!(joined, Some("__42_foo_true_42_,,42,foo,true,42_[object Object]".to_string()));
 
     let joined2 = array2.array_join(None);
     // By default, in `Array.prototype.toString`, the separator is a comma. However, in `Array.prototype.join`, the separator is none if not given.
-    assert_eq!(joined2, Some(",,42,foo,true,42n,,,42,foo,true,42n,[object Object]".to_string()));
+    assert_eq!(joined2, Some(",,42,foo,true,42,,,42,foo,true,42,[object Object]".to_string()));
 }

@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
-use super::{VariableDeclarationContext, VariableDeclarationParent};
+use super::VariableDeclarationParent;
 use crate::{
     diagnostics,
     lexer::Kind,
@@ -45,7 +45,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_variable_declaration(
         &mut self,
         start_span: Span,
-        decl_ctx: VariableDeclarationContext,
+        decl_parent: VariableDeclarationParent,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, VariableDeclaration<'a>>> {
         let kind = match self.cur_kind() {
@@ -58,17 +58,14 @@ impl<'a> ParserImpl<'a> {
 
         let mut declarations = self.ast.vec();
         loop {
-            let declaration = self.parse_variable_declarator(decl_ctx, kind)?;
+            let declaration = self.parse_variable_declarator(decl_parent, kind)?;
             declarations.push(declaration);
             if !self.eat(Kind::Comma) {
                 break;
             }
         }
 
-        if matches!(
-            decl_ctx.parent,
-            VariableDeclarationParent::Statement | VariableDeclarationParent::Clause
-        ) {
+        if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi()?;
         }
 
@@ -88,7 +85,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_variable_declarator(
         &mut self,
-        decl_ctx: VariableDeclarationContext,
+        decl_parent: VariableDeclarationParent,
         kind: VariableDeclarationKind,
     ) -> Result<VariableDeclarator<'a>> {
         let span = self.start_span();
@@ -115,27 +112,24 @@ impl<'a> ParserImpl<'a> {
         } else {
             (self.ast.binding_pattern(binding_kind, NONE, false), false)
         };
-
         let init =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
+        let decl = self.ast.variable_declarator(self.end_span(span), kind, id, init, definite);
+        if decl_parent == VariableDeclarationParent::Statement {
+            self.check_missing_initializer(&decl);
+        }
+        Ok(decl)
+    }
 
-        if init.is_none()
-            && !self.ctx.has_ambient()
-            && decl_ctx.parent == VariableDeclarationParent::Statement
-        {
-            // LexicalBinding[In, Yield, Await] :
-            //   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await] opt
-            //   BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
-            // the grammar forbids `let []`, `let {}`
-            if !matches!(id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_destrucuring_declaration(id.span()));
-            } else if kind == VariableDeclarationKind::Const {
+    pub(crate) fn check_missing_initializer(&mut self, decl: &VariableDeclarator<'a>) {
+        if decl.init.is_none() && !self.ctx.has_ambient() {
+            if !matches!(decl.id.kind, BindingPatternKind::BindingIdentifier(_)) {
+                self.error(diagnostics::invalid_destrucuring_declaration(decl.id.span()));
+            } else if decl.kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(diagnostics::missinginitializer_in_const(id.span()));
+                self.error(diagnostics::missinginitializer_in_const(decl.id.span()));
             }
         }
-
-        Ok(self.ast.variable_declarator(self.end_span(span), kind, id, init, definite))
     }
 
     /// Section 14.3.1 Let, Const, and Using Declarations
@@ -168,7 +162,7 @@ impl<'a> ParserImpl<'a> {
         let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(
-                VariableDeclarationContext::new(VariableDeclarationParent::Statement),
+                VariableDeclarationParent::Statement,
                 VariableDeclarationKind::Var,
             )?;
 

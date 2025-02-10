@@ -93,6 +93,7 @@ declare_oxc_lint!(
     /// }
     ///```
     NoUselessConstructor,
+    eslint,
     suspicious,
     fix
 );
@@ -363,7 +364,7 @@ class A extends B {  foo() { bar(); } }",
         ),
     ];
 
-    Tester::new(NoUselessConstructor::NAME, NoUselessConstructor::CATEGORY, pass, fail)
+    Tester::new(NoUselessConstructor::NAME, NoUselessConstructor::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

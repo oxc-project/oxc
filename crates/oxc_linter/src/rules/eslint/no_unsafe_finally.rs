@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// // > 3
     /// ```
     NoUnsafeFinally,
+    eslint,
     correctness
 );
 
@@ -225,5 +226,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUnsafeFinally::NAME, NoUnsafeFinally::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoUnsafeFinally::NAME, NoUnsafeFinally::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// function QuuzAny<T extends any>() {}
     /// ```
     NoUnnecessaryTypeConstraint,
+    typescript,
     suspicious
 );
 
@@ -119,11 +120,6 @@ fn test() {
         "type Data<T extends unknown> = {};",
     ];
 
-    Tester::new(
-        NoUnnecessaryTypeConstraint::NAME,
-        NoUnnecessaryTypeConstraint::CATEGORY,
-        pass,
-        fail,
-    )
-    .test_and_snapshot();
+    Tester::new(NoUnnecessaryTypeConstraint::NAME, NoUnnecessaryTypeConstraint::PLUGIN, pass, fail)
+        .test_and_snapshot();
 }

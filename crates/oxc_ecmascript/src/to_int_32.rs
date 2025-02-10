@@ -8,7 +8,7 @@ pub trait ToInt32 {
 }
 
 impl ToInt32 for f64 {
-    #[allow(clippy::float_cmp, clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+    #[expect(clippy::float_cmp, clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     fn to_int_32(&self) -> i32 {
         const SIGN_MASK: u64 = 0x8000_0000_0000_0000;
         const EXPONENT_MASK: u64 = 0x7FF0_0000_0000_0000;

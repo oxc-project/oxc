@@ -45,14 +45,14 @@ impl<'a> MaybeBoundIdentifier<'a> {
         ctx: &TraverseCtx<'a>,
     ) -> Self {
         let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
-        Self { name: ident.name.clone(), symbol_id }
+        Self { name: ident.name, symbol_id }
     }
 
     /// Convert `MaybeBoundIdentifier` to `BoundIdentifier`.
     ///
     /// Returns `None` if symbol is not bound.
     pub fn to_bound_identifier(&self) -> Option<BoundIdentifier<'a>> {
-        self.symbol_id.map(|symbol_id| BoundIdentifier::new(self.name.clone(), symbol_id))
+        self.symbol_id.map(|symbol_id| BoundIdentifier::new(self.name, symbol_id))
     }
 
     // --- Read only ---
@@ -263,7 +263,7 @@ impl<'a> MaybeBoundIdentifier<'a> {
         flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        ctx.create_ident_reference(span, self.name.clone(), self.symbol_id, flags)
+        ctx.create_ident_reference(span, self.name, self.symbol_id, flags)
     }
 
     /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`

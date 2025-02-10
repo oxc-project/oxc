@@ -10,6 +10,7 @@ const {
   updateImplementedStatus,
   overrideTypeScriptPluginStatusWithEslintPluginStatus: syncTypeScriptPluginStatusWithEslintPluginStatus,
   syncVitestPluginStatusWithJestPluginStatus,
+  syncUnicornPluginStatusWithEslintPluginStatus,
 } = require('./oxlint-rules.cjs');
 const { renderMarkdown } = require('./markdown-renderer.cjs');
 const { updateGitHubIssue } = require('./result-reporter.cjs');
@@ -63,6 +64,7 @@ Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(', ')}
   updateNotSupportedStatus(ruleEntries);
   await syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
   await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
+  syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);
 
   //
   // Render list and update if necessary

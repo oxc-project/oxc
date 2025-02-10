@@ -5,7 +5,7 @@ pub mod error_with_position;
 mod isolated_lint_handler;
 pub mod server_linter;
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 pub fn offset_to_position(offset: usize, source_text: &str) -> Position {
     // TODO(perf): share a single instance of `Rope`
     let rope = Rope::from_str(source_text);

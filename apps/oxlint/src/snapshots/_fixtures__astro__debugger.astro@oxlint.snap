@@ -1,0 +1,45 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: fixtures/astro/debugger.astro
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/astro/debugger.astro:2:1]
+ 1 | 
+ 2 | debugger
+   : ^^^^^^^^
+   `----
+  help: Delete this code.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/astro/debugger.astro:2:3]
+ 1 | 
+ 2 |   debugger
+   :   ^^^^^^^^
+   `----
+  help: Delete this code.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/astro/debugger.astro:2:3]
+ 1 | 
+ 2 |   debugger
+   :   ^^^^^^^^
+   `----
+  help: Delete this code.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/astro/debugger.astro:2:3]
+ 1 | 
+ 2 |   debugger
+   :   ^^^^^^^^
+   `----
+  help: Delete this code.
+
+Found 4 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 97 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

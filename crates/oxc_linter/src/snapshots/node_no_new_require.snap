@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-node(no-new-require): Unexpected use of new with require
    ╭─[no_new_require.tsx:1:17]

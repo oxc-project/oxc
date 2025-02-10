@@ -41,11 +41,11 @@ declare_oxc_lint!(
     /// x >= y;
     /// ```
     DoubleComparisons,
+    oxc,
     correctness,
     fix
 );
 
-#[allow(clippy::similar_names)]
 impl Rule for DoubleComparisons {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::LogicalExpression(logical_expr) = node.kind() else {
@@ -161,7 +161,7 @@ fn test() {
         ("x > y || x === y", "x >= y"),
     ];
 
-    Tester::new(DoubleComparisons::NAME, DoubleComparisons::CATEGORY, pass, fail)
+    Tester::new(DoubleComparisons::NAME, DoubleComparisons::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

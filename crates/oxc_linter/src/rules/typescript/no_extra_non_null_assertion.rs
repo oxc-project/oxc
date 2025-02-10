@@ -30,6 +30,7 @@ declare_oxc_lint!(
     /// const bar = foo!!!.bar;
     /// ```
     NoExtraNonNullAssertion,
+    typescript,
     correctness
 );
 
@@ -95,6 +96,6 @@ fn test() {
         "function foo(bar?: { n: number }) { return (bar!)?.(); }",
     ];
 
-    Tester::new(NoExtraNonNullAssertion::NAME, NoExtraNonNullAssertion::CATEGORY, pass, fail)
+    Tester::new(NoExtraNonNullAssertion::NAME, NoExtraNonNullAssertion::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

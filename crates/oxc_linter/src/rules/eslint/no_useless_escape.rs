@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// /[a-z-]/;
     /// ```
     NoUselessEscape,
+    eslint,
     correctness,
     fix
 );
@@ -123,7 +124,7 @@ fn is_within_jsx_attribute_item(id: NodeId, ctx: &LintContext) -> bool {
     false
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn check(ctx: &LintContext<'_>, node_id: NodeId, start: u32, offsets: &[usize]) {
     let source_text = ctx.source_text();
     for offset in offsets {
@@ -671,7 +672,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessEscape::NAME, NoUselessEscape::CATEGORY, pass, fail)
+    Tester::new(NoUselessEscape::NAME, NoUselessEscape::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

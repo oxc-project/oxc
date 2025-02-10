@@ -1,10 +1,9 @@
-#![allow(clippy::self_named_module_files)] // for rules.rs
+#![expect(clippy::self_named_module_files)] // for rules.rs
 
 #[cfg(test)]
 mod tester;
 
 mod ast_util;
-mod builder;
 mod config;
 mod context;
 mod disable_directives;
@@ -16,38 +15,35 @@ mod module_graph_visitor;
 mod module_record;
 mod options;
 mod rule;
-mod rules;
 mod service;
 mod utils;
 
 pub mod loader;
+pub mod rules;
 pub mod table;
 
-use std::{io::Write, path::Path, rc::Rc, sync::Arc};
+use std::{path::Path, rc::Rc, sync::Arc};
 
 use oxc_semantic::{AstNode, Semantic};
-use rules::RULES;
 
 pub use crate::{
-    builder::{LinterBuilder, LinterBuilderError},
-    config::{ESLintRule, LintPlugins, Oxlintrc},
+    config::{
+        ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintPlugins, Oxlintrc,
+    },
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
     module_record::ModuleRecord,
+    options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
-    config::{
-        ConfigStore, LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState,
-    },
+    config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
     context::ContextHost,
     fixer::{Fixer, Message},
-    options::LintOptions,
     rules::RuleEnum,
-    table::RuleTable,
     utils::iter_possible_jest_call_node,
 };
 
@@ -68,14 +64,8 @@ pub struct Linter {
     config: ConfigStore,
 }
 
-impl Default for Linter {
-    fn default() -> Self {
-        LinterBuilder::default().build()
-    }
-}
-
 impl Linter {
-    pub(crate) fn new(options: LintOptions, config: ConfigStore) -> Self {
+    pub fn new(options: LintOptions, config: ConfigStore) -> Self {
         Self { options, config }
     }
 
@@ -101,10 +91,6 @@ impl Linter {
 
     pub fn number_of_rules(&self) -> usize {
         self.config.number_of_rules()
-    }
-
-    pub(crate) fn rules(&self) -> &Arc<[RuleWithSeverity]> {
-        self.config.rules()
     }
 
     pub fn run<'a>(
@@ -195,52 +181,11 @@ impl Linter {
 
         ctx_host.take_diagnostics()
     }
-
-    /// # Panics
-    pub fn print_rules<W: Write>(writer: &mut W) {
-        let table = RuleTable::new();
-        for section in table.sections {
-            writeln!(writer, "{}", section.render_markdown_table(None)).unwrap();
-        }
-        writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
-        writeln!(writer, "Total: {}", table.total).unwrap();
-    }
-
-    /// # Panics
-    pub fn print_rules_json<W: Write>(writer: &mut W) {
-        #[derive(Debug, serde::Serialize)]
-        struct RuleInfoJson<'a> {
-            scope: &'a str,
-            value: &'a str,
-            category: RuleCategory,
-        }
-
-        let rules_info = RULES.iter().map(|rule| RuleInfoJson {
-            scope: rule.plugin_name(),
-            value: rule.name(),
-            category: rule.category(),
-        });
-
-        writer
-            .write_all(
-                serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
-                    .expect("Failed to serialize")
-                    .as_bytes(),
-            )
-            .unwrap();
-    }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Linter, Oxlintrc};
-
-    #[test]
-    fn print_rules() {
-        let mut writer = Vec::new();
-        Linter::print_rules(&mut writer);
-        assert!(!writer.is_empty());
-    }
+    use super::Oxlintrc;
 
     #[test]
     fn test_schema_json() {

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
    ╭─[no_restricted_matchers.tsx:1:11]

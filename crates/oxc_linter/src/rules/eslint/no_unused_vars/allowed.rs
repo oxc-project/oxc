@@ -78,7 +78,7 @@ fn is_ambient_namespace(namespace: &TSModuleDeclaration) -> bool {
 }
 
 impl NoUnusedVars {
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     pub(super) fn is_allowed_ts_namespace<'a>(
         &self,
         symbol: &Symbol<'_, 'a>,
@@ -109,7 +109,7 @@ impl NoUnusedVars {
         false
     }
 
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     pub(super) fn is_allowed_type_parameter(
         &self,
         symbol: &Symbol<'_, '_>,

@@ -31,6 +31,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoEmpty,
+    eslint,
     restriction,
     suggestion
 );
@@ -111,7 +112,7 @@ fn find_finally_start(ctx: &LintContext, finally_clause: &BlockStatement) -> Opt
                         src_chars.get(start) == Some(&c)
                     })
                 {
-                    #[allow(clippy::cast_possible_truncation)]
+                    #[expect(clippy::cast_possible_truncation)]
                     return Some(start as u32);
                 }
                 return None;
@@ -196,5 +197,5 @@ fn test() {
         ("try { foo(); } catch (ex) {} finally {}", "try { foo(); } catch (ex) {} ", None),
     ];
 
-    Tester::new(NoEmpty::NAME, NoEmpty::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoEmpty::NAME, NoEmpty::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

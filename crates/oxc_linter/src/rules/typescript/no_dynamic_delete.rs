@@ -24,6 +24,7 @@ declare_oxc_lint!(
     /// delete container['aa' + 'b'];
     /// ```
     NoDynamicDelete,
+    typescript,
     restriction,
 );
 
@@ -156,5 +157,5 @@ fn test() {
         	      ",
     ];
 
-    Tester::new(NoDynamicDelete::NAME, NoDynamicDelete::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDynamicDelete::NAME, NoDynamicDelete::PLUGIN, pass, fail).test_and_snapshot();
 }

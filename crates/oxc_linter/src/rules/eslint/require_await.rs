@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     RequireAwait,
+    eslint,
     pedantic,
 );
 
@@ -208,5 +209,5 @@ fn test() {
         "async function foo() { await (async () => { doSomething() }) }",
     ];
 
-    Tester::new(RequireAwait::NAME, RequireAwait::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(RequireAwait::NAME, RequireAwait::PLUGIN, pass, fail).test_and_snapshot();
 }

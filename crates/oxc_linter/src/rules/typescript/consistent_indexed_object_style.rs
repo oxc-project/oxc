@@ -56,6 +56,7 @@ declare_oxc_lint!(
     /// type Foo = Record<string, unknown>;
     /// ```
     ConsistentIndexedObjectStyle,
+    typescript,
     style,
     conditional_fix
 );
@@ -496,7 +497,7 @@ fn test() {
 
     Tester::new(
         ConsistentIndexedObjectStyle::NAME,
-        ConsistentIndexedObjectStyle::CATEGORY,
+        ConsistentIndexedObjectStyle::PLUGIN,
         pass,
         fail,
     )

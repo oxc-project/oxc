@@ -142,6 +142,7 @@ declare_oxc_lint!(
     ///
     /// ```
     NoUselessSpread,
+    unicorn,
     correctness,
     fix_dangerous
 );
@@ -754,7 +755,7 @@ fn test() {
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
     ];
-    Tester::new(NoUselessSpread::NAME, NoUselessSpread::CATEGORY, pass, fail)
+    Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

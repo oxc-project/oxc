@@ -79,14 +79,20 @@ impl<'a> ToJsString<'a> for IdentifierReference<'a> {
 impl<'a> ToJsString<'a> for NumericLiteral<'a> {
     fn to_js_string(&self) -> Option<Cow<'a, str>> {
         use oxc_syntax::number::ToJsString;
-        Some(Cow::Owned(self.value.to_js_string()))
+        let value = self.value;
+        let s = value.to_js_string();
+        Some(if value == 0.0 {
+            Cow::Borrowed("0")
+        } else {
+            Cow::Owned(if value.is_sign_negative() && value != 0.0 { format!("-{s}") } else { s })
+        })
     }
 }
 
+/// <https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-bigint.prototype.tostring>
 impl<'a> ToJsString<'a> for BigIntLiteral<'a> {
     fn to_js_string(&self) -> Option<Cow<'a, str>> {
-        // FIXME: to js bigint string
-        Some(Cow::Owned(self.raw.to_string()))
+        self.base.is_base_10().then(|| Cow::Owned(self.raw.trim_end_matches('n').to_string()))
     }
 }
 

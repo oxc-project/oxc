@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferBlobReadingMethods,
+    unicorn,
     pedantic,
     pending
 );
@@ -96,6 +97,6 @@ fn test() {
 
     let fail = vec![r"fileReader.readAsArrayBuffer(blob)", r"fileReader.readAsText(blob)"];
 
-    Tester::new(PreferBlobReadingMethods::NAME, PreferBlobReadingMethods::CATEGORY, pass, fail)
+    Tester::new(PreferBlobReadingMethods::NAME, PreferBlobReadingMethods::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

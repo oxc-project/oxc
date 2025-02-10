@@ -34,6 +34,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoDeprecated,
+    import,
     nursery
 );
 
@@ -109,7 +110,7 @@ fn test() {
         // r#"import { foo } from "./ts-deprecated.ts"; console.log(foo())"#,
     ];
 
-    Tester::new(NoDeprecated::NAME, NoDeprecated::CATEGORY, pass, fail)
+    Tester::new(NoDeprecated::NAME, NoDeprecated::PLUGIN, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

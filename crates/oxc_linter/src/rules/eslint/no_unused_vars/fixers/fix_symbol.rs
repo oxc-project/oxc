@@ -7,7 +7,6 @@ use crate::fixer::{Fix, RuleFix, RuleFixer};
 impl<'s, 'a> Symbol<'s, 'a> {
     /// Delete a single declarator from a [`VariableDeclaration`] list with more
     /// than one declarator.
-    #[allow(clippy::unused_self)]
     pub(super) fn delete_from_list<T>(
         &self,
         fixer: RuleFixer<'_, 'a>,

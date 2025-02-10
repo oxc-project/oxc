@@ -59,6 +59,7 @@ declare_oxc_lint!(
     ///   abstract class Foo {}
     /// ```
     NoExtraneousClass,
+    typescript,
     suspicious
 );
 
@@ -331,6 +332,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoExtraneousClass::NAME, NoExtraneousClass::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoExtraneousClass::NAME, NoExtraneousClass::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -1,7 +1,6 @@
 ---
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
-snapshot_kind: text
 ---
 ## Usage
  **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[_`PATH`_\]...
@@ -15,6 +14,8 @@ snapshot_kind: text
   If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
 - **`    --tsconfig`**=_`<./tsconfig.json>`_ &mdash; 
   TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
+- **`    --init`** &mdash; 
+  Initialize oxlint configuration with default values
 
 
 
@@ -109,7 +110,7 @@ Arguments:
 
 ## Output
 - **`-f`**, **`--format`**=_`ARG`_ &mdash; 
-  Use a specific output format (default, json, unix, checkstyle, github)
+  Use a specific output format (default, json, unix, checkstyle, github, stylish)
 
 
 

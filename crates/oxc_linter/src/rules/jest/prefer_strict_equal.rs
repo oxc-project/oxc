@@ -33,6 +33,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferStrictEqual,
+    jest,
     style,
     fix
 );
@@ -74,6 +75,8 @@ impl PreferStrictEqual {
 fn test() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("expect(something).toStrictEqual(somethingElse);", None),
         ("a().toEqual('b')", None),
@@ -104,7 +107,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferStrictEqual::NAME, PreferStrictEqual::CATEGORY, pass, fail)
+    Tester::new(PreferStrictEqual::NAME, PreferStrictEqual::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

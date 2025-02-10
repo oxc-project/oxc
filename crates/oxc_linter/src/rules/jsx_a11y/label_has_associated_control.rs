@@ -104,6 +104,7 @@ declare_oxc_lint!(
     /// </label>
     /// ```
     LabelHasAssociatedControl,
+    jsx_a11y,
     correctness,
 );
 
@@ -1594,6 +1595,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::CATEGORY, pass, fail)
+    Tester::new(LabelHasAssociatedControl::NAME, LabelHasAssociatedControl::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

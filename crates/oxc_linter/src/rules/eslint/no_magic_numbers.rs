@@ -225,6 +225,7 @@ declare_oxc_lint!(
     /// type Baz = Parameters<Foo>[2];
     /// ```
     NoMagicNumbers,
+    eslint,
     style,
     pending // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
 );
@@ -258,7 +259,7 @@ impl InternConfig<'_> {
                 }
             }
             AstKind::BigIntLiteral(bigint) => {
-                let big_int_string = bigint.raw.clone().into_string();
+                let big_int_string = bigint.raw.into_string();
                 if is_negative {
                     let raw = format!("-{big_int_string}");
 
@@ -919,5 +920,5 @@ fn test() {
         ("type Foo = -7.1e-8;", Some(serde_json::json!([{ "ignore": [7.1e-8] }]))),
     ];
 
-    Tester::new(NoMagicNumbers::NAME, NoMagicNumbers::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoMagicNumbers::NAME, NoMagicNumbers::PLUGIN, pass, fail).test_and_snapshot();
 }

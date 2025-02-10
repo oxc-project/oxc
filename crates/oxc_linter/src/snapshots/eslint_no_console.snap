@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:1]

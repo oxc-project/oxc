@@ -48,7 +48,6 @@
 //! service.run();
 //! ```
 
-mod reporter;
 mod service;
 
 use std::{
@@ -56,6 +55,8 @@ use std::{
     fmt::{self, Display},
     ops::{Deref, DerefMut},
 };
+
+pub mod reporter;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
 

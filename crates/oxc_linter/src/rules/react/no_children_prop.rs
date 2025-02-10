@@ -58,6 +58,7 @@ declare_oxc_lint!(
     /// React.createElement("div", 'Child 1', 'Child 2')
     /// ```
     NoChildrenProp,
+    react,
     correctness
 );
 
@@ -163,5 +164,5 @@ fn test() {
         (r#"React.createElement(MyComponent, {...props, children: "Children"})"#, None),
     ];
 
-    Tester::new(NoChildrenProp::NAME, NoChildrenProp::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoChildrenProp::NAME, NoChildrenProp::PLUGIN, pass, fail).test_and_snapshot();
 }

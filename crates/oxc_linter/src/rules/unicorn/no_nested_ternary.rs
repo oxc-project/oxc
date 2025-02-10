@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// const foo = i > 5 ? (i < 100 ? true : false) : (i < 100 ? true : false);
     /// ```
     NoNestedTernary,
+    unicorn,
     restriction,
     conditional_fix
 );
@@ -176,7 +177,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoNestedTernary::NAME, NoNestedTernary::CATEGORY, pass, fail)
+    Tester::new(NoNestedTernary::NAME, NoNestedTernary::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -41,7 +41,7 @@ pub const SEARCH_BATCH_SIZE: usize = 32;
 #[repr(C, align(64))]
 pub struct ByteMatchTable([bool; 256]);
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 impl ByteMatchTable {
     // Create new `ByteMatchTable`.
     pub const fn new(bytes: [bool; 256]) -> Self {
@@ -61,7 +61,7 @@ impl ByteMatchTable {
     /// An unsafe function here, whereas for `SafeByteMatchTable` it's safe.
     /// `byte_search!` macro calls `.use_table()` on whatever table it's provided, which makes
     /// using the macro unsafe for `ByteMatchTable`, but safe for `SafeByteMatchTable`.
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     #[inline]
     pub const unsafe fn use_table(&self) {}
 
@@ -79,7 +79,7 @@ impl ByteMatchTable {
 /// ```
 /// {
 ///   use crate::lexer::search::ByteMatchTable;
-///   #[allow(clippy::eq_op)]
+///   #[allow(clippy::eq_op, clippy::allow_attributes)]
 ///   const TABLE: ByteMatchTable = ByteMatchTable::new([
 ///     (0u8 < 3),
 ///     (1u8 < 3),
@@ -92,20 +92,20 @@ impl ByteMatchTable {
 ///   TABLE
 /// }
 /// ```
-#[allow(unused_macros)]
+#[expect(unused_macros)]
 macro_rules! byte_match_table {
     (|$byte:ident| $res:expr) => {{
         use crate::lexer::search::ByteMatchTable;
         // Clippy creates warnings because e.g. `byte_match_table!(|b| b == 0)`
         // is expanded to `ByteMatchTable([(0 == 0), ... ])`
-        #[allow(clippy::eq_op)]
+        #[allow(clippy::eq_op, clippy::allow_attributes)]
         const TABLE: ByteMatchTable = seq_macro::seq!($byte in 0u8..=255 {
             ByteMatchTable::new([ #($res,)* ])
         });
         TABLE
     }};
 }
-#[allow(unused_imports)]
+#[expect(unused_imports)]
 pub(crate) use byte_match_table;
 
 /// Safe byte matcher lookup table.
@@ -203,7 +203,7 @@ impl SafeByteMatchTable {
     /// A safe function here, whereas for `ByteMatchTable` it's unsafe.
     /// `byte_search!` macro calls `.use_table()` on whatever table it's provided, which makes
     /// using the macro unsafe for `ByteMatchTable`, but safe for `SafeByteMatchTable`.
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     #[inline]
     pub const fn use_table(&self) {}
 
@@ -221,7 +221,7 @@ impl SafeByteMatchTable {
 /// ```
 /// {
 ///   use crate::lexer::search::SafeByteMatchTable;
-///   #[allow(clippy::eq_op)]
+///   #[allow(clippy::eq_op, clippy::allow_attributes)]
 ///   const TABLE: SafeByteMatchTable = SafeByteMatchTable::new([
 ///     (!0u8.is_ascii()),
 ///     (!1u8.is_ascii()),
@@ -236,7 +236,7 @@ macro_rules! safe_byte_match_table {
         use crate::lexer::search::SafeByteMatchTable;
         // Clippy creates warnings because e.g. `safe_byte_match_table!(|b| b == 0)`
         // is expanded to `SafeByteMatchTable([0 == 0, ... ])`
-        #[allow(clippy::eq_op)]
+        #[allow(clippy::eq_op, clippy::allow_attributes)]
         const TABLE: SafeByteMatchTable = seq_macro::seq!($byte in 0u8..=255 {
             SafeByteMatchTable::new([#($res,)*])
         });
@@ -428,10 +428,12 @@ macro_rules! byte_search {
         // responsibility to uphold this invariant.
         // Therefore we can assume this is taken care of one way or another, and wrap the calls
         // to unsafe functions in this function with `unsafe {}`.
+        #[allow(clippy::unnecessary_safety_comment, clippy::allow_attributes)]
         $table.use_table();
 
         let mut $pos = $start;
-        #[allow(unused_unsafe)] // Silence warnings if macro called in unsafe code
+        // Silence warnings if macro called in unsafe code
+        #[allow(unused_unsafe, clippy::unnecessary_safety_comment, clippy::allow_attributes)]
         'outer: loop {
             let $byte = if $pos.addr() <= $lexer.source.end_for_batch_search_addr() {
                 // Search a batch of `SEARCH_BATCH_SIZE` bytes.
@@ -485,7 +487,12 @@ macro_rules! byte_search {
                     $lexer.source.set_position($pos);
 
                     // Avoid lint errors if `$eof_handler` contains `return` statement
-                    #[allow(unused_variables, unreachable_code, clippy::diverging_sub_expression)]
+                    #[allow(
+                        unused_variables,
+                        unreachable_code,
+                        clippy::diverging_sub_expression,
+                        clippy::allow_attributes
+                    )]
                     {
                         let eof_ret = $eof_handler;
                         break 'outer eof_ret;

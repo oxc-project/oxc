@@ -1,8 +1,8 @@
-#![allow(clippy::print_stdout, clippy::cast_possible_truncation)]
+#![expect(clippy::print_stdout)]
 use std::{env, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast, AstKind, Visit};
+use oxc_ast::{ast::*, Visit};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_regular_expression::{ConstructorParser as RegExpParser, Options as RegExpParserOptions};
 use oxc_span::SourceType;
@@ -43,55 +43,51 @@ struct RegularExpressionVisitor {
 }
 
 impl<'a> Visit<'a> for RegularExpressionVisitor {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        let allocator = Allocator::default();
+    fn visit_reg_exp_literal(&mut self, re: &RegExpLiteral<'a>) {
+        println!("🍀 {}", re.span.source_text(self.source_text.as_ref()));
 
-        match kind {
-            AstKind::RegExpLiteral(re) => {
-                println!("🍀 {}", re.span.source_text(self.source_text.as_ref()));
+        println!("{re:#?}");
+        println!();
+    }
 
-                println!("{re:#?}");
-                println!();
+    fn visit_new_expression(&mut self, new_expr: &NewExpression<'a>) {
+        if new_expr
+            .callee
+            .get_identifier_reference()
+            .filter(|ident| ident.name == "RegExp")
+            .is_some()
+        {
+            println!("🍀 {}", new_expr.span.source_text(&self.source_text));
+
+            let pattern_span = match new_expr.arguments.first() {
+                Some(Argument::StringLiteral(sl)) => sl.span,
+                _ => return,
+            };
+
+            let flags_span = match new_expr.arguments.get(1) {
+                Some(Argument::StringLiteral(sl)) => Some(sl.span),
+                _ => None,
+            };
+
+            let allocator = Allocator::default();
+            let parsed = RegExpParser::new(
+                &allocator,
+                pattern_span.source_text(&self.source_text),
+                flags_span.map(|span| span.source_text(&self.source_text)),
+                RegExpParserOptions {
+                    pattern_span_offset: pattern_span.start,
+                    flags_span_offset: flags_span.map_or(0, |span| span.start),
+                },
+            )
+            .parse();
+
+            if let Err(error) = parsed {
+                let error = error.with_source_code(Arc::clone(&self.source_text));
+                println!("{error:?}");
+                return;
             }
-            AstKind::NewExpression(new_expr)
-                if new_expr
-                    .callee
-                    .get_identifier_reference()
-                    .filter(|ident| ident.name == "RegExp")
-                    .is_some() =>
-            {
-                println!("🍀 {}", new_expr.span.source_text(&self.source_text));
-
-                let pattern_span = match new_expr.arguments.first() {
-                    Some(ast::Argument::StringLiteral(sl)) => sl.span,
-                    _ => return,
-                };
-
-                let flags_span = match new_expr.arguments.get(1) {
-                    Some(ast::Argument::StringLiteral(sl)) => Some(sl.span),
-                    _ => None,
-                };
-
-                let parsed = RegExpParser::new(
-                    &allocator,
-                    pattern_span.source_text(&self.source_text),
-                    flags_span.map(|span| span.source_text(&self.source_text)),
-                    RegExpParserOptions {
-                        pattern_span_offset: pattern_span.start,
-                        flags_span_offset: flags_span.map_or(0, |span| span.start),
-                    },
-                )
-                .parse();
-
-                if let Err(error) = parsed {
-                    let error = error.with_source_code(Arc::clone(&self.source_text));
-                    println!("{error:?}");
-                    return;
-                }
-                println!("{parsed:#?}");
-                println!();
-            }
-            _ => {}
+            println!("{parsed:#?}");
+            println!();
         }
     }
 }

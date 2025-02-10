@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// require('thing');
     /// ```
     NoMocksImport,
+    jest,
     style
 );
 
@@ -113,7 +114,7 @@ fn test() {
         ("import thing from './__mocks__/index'", None),
     ];
 
-    Tester::new(NoMocksImport::NAME, NoMocksImport::CATEGORY, pass, fail)
+    Tester::new(NoMocksImport::NAME, NoMocksImport::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

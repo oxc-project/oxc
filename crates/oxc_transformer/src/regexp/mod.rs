@@ -112,7 +112,7 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
+impl<'a> Traverse<'a> for RegExp<'a, '_> {
     fn enter_expression(
         &mut self,
         expr: &mut Expression<'a>,
@@ -192,7 +192,7 @@ impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> RegExp<'a, 'ctx> {
+impl<'a> RegExp<'a, '_> {
     /// Check if the regular expression contains any unsupported syntax.
     ///
     /// Based on parsed regular expression pattern.

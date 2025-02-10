@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoFindDomNode,
+    react,
     correctness
 );
 
@@ -202,5 +203,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoFindDomNode::NAME, NoFindDomNode::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoFindDomNode::NAME, NoFindDomNode::PLUGIN, pass, fail).test_and_snapshot();
 }

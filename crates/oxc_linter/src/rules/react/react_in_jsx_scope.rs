@@ -42,6 +42,7 @@ declare_oxc_lint!(
     ///
     /// ```
     ReactInJsxScope,
+    react,
     suspicious
 );
 
@@ -105,5 +106,5 @@ fn test() {
         ("var Foo, a = <img />;", None),
     ];
 
-    Tester::new(ReactInJsxScope::NAME, ReactInJsxScope::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ReactInJsxScope::NAME, ReactInJsxScope::PLUGIN, pass, fail).test_and_snapshot();
 }

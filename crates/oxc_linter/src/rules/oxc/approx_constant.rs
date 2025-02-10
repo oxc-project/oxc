@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// let log10e = Math.LOG10E
     /// ```
     ApproxConstant,
+    oxc,
     suspicious
 );
 
@@ -100,5 +101,5 @@ fn test() {
         "let sqrt2 = 1.414213",  // SQRT2
     ];
 
-    Tester::new(ApproxConstant::NAME, ApproxConstant::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ApproxConstant::NAME, ApproxConstant::PLUGIN, pass, fail).test_and_snapshot();
 }

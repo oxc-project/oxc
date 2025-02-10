@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
+    utils::{find_url_query_value, get_string_literal_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// ```
     ///
     GoogleFontDisplay,
+    nextjs,
     correctness
 );
 
@@ -101,21 +102,13 @@ impl Rule for GoogleFontDisplay {
         };
 
         if href_prop_value.starts_with("https://fonts.googleapis.com/css") {
-            let Ok(url) = url::Url::parse(href_prop_value) else {
-                return;
-            };
-
-            let Some((_, display_value)) = url.query_pairs().find(|(key, _)| key == "display")
-            else {
+            let Some(display_value) = find_url_query_value(href_prop_value, "display") else {
                 ctx.diagnostic(font_display_parameter_missing(jsx_opening_element_name.span));
                 return;
             };
 
-            if matches!(&*display_value, "auto" | "block" | "fallback") {
-                ctx.diagnostic(not_recommended_font_display_value(
-                    href_prop.span(),
-                    &display_value,
-                ));
+            if matches!(display_value, "auto" | "block" | "fallback") {
+                ctx.diagnostic(not_recommended_font_display_value(href_prop.span(), display_value));
             }
         }
     }
@@ -244,7 +237,7 @@ fn test() {
 			     "#,
     ];
 
-    Tester::new(GoogleFontDisplay::NAME, GoogleFontDisplay::CATEGORY, pass, fail)
+    Tester::new(GoogleFontDisplay::NAME, GoogleFontDisplay::PLUGIN, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

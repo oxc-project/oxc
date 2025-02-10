@@ -83,6 +83,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoExtraLabel,
+    eslint,
     style,
     fix
 );
@@ -272,7 +273,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(NoExtraLabel::NAME, NoExtraLabel::CATEGORY, pass, fail)
+    Tester::new(NoExtraLabel::NAME, NoExtraLabel::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// import foo, { bar } from './foo.js';
     /// ```
     NoNamedDefault,
+    import,
     style,
 );
 
@@ -67,5 +68,5 @@ fn test() {
         r#"import { "default" as bar } from "./bar";"#,
     ];
 
-    Tester::new(NoNamedDefault::NAME, NoNamedDefault::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNamedDefault::NAME, NoNamedDefault::PLUGIN, pass, fail).test_and_snapshot();
 }

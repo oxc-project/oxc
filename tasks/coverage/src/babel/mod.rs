@@ -110,7 +110,7 @@ impl BabelCase {
         let output_json = Self::read_output_json(path);
 
         if let Some(output_json) = output_json {
-            return output_json.errors.map_or(false, |errors| !errors.is_empty());
+            return output_json.errors.is_some_and(|errors| !errors.is_empty());
         }
 
         if options.throws.is_some() {

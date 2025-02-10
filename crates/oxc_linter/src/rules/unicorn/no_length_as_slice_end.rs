@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// foo.slice(1)
     /// ```
     NoLengthAsSliceEnd,
+    unicorn,
     restriction,
     fix
 );
@@ -136,7 +137,7 @@ fn test() {
         ("foo?.slice(1, foo?.length)", "foo?.slice(1)"),
     ];
 
-    Tester::new(NoLengthAsSliceEnd::NAME, NoLengthAsSliceEnd::CATEGORY, pass, fail)
+    Tester::new(NoLengthAsSliceEnd::NAME, NoLengthAsSliceEnd::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

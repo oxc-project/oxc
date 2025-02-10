@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoUnusedModules,
+    import,
     nursery
 );
 
@@ -103,7 +104,7 @@ fn test() {
         ("/* const a = 1 */", Some(missing_exports_options.clone())),
     ];
 
-    Tester::new(NoUnusedModules::NAME, NoUnusedModules::CATEGORY, pass, fail)
+    Tester::new(NoUnusedModules::NAME, NoUnusedModules::PLUGIN, pass, fail)
         .change_rule_path("missing-exports.js")
         .with_import_plugin(true)
         .test_and_snapshot();
@@ -122,7 +123,7 @@ fn test() {
 
     // let fail = vec![];
 
-    // Tester::new(NoUnusedModules::NAME, NoUnusedModules::CATEGORY, pass, fail)
+    // Tester::new(NoUnusedModules::NAME, NoUnusedModules::PLUGIN, pass, fail)
     //     .change_rule_path("unused-exports.js")
     //     .with_import_plugin(true)
     //     .test_and_snapshot();

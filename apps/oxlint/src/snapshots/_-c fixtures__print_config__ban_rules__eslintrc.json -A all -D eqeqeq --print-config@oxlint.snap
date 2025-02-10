@@ -1,0 +1,55 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/print_config/ban_rules/eslintrc.json -A all -D eqeqeq --print-config
+working directory: 
+----------
+{
+  "plugins": [
+    "react",
+    "unicorn",
+    "typescript",
+    "oxc"
+  ],
+  "categories": {},
+  "rules": {
+    "eqeqeq": [
+      "deny",
+      [
+        "always"
+      ]
+    ]
+  },
+  "settings": {
+    "jsx-a11y": {
+      "polymorphicPropName": null,
+      "components": {}
+    },
+    "next": {
+      "rootDir": []
+    },
+    "react": {
+      "formComponents": [],
+      "linkComponents": []
+    },
+    "jsdoc": {
+      "ignorePrivate": false,
+      "ignoreInternal": false,
+      "ignoreReplacesDocs": true,
+      "overrideReplacesDocs": true,
+      "augmentsExtendsReplacesDocs": false,
+      "implementsReplacesDocs": false,
+      "exemptDestructuredRootsFromChecks": false,
+      "tagNamePreference": {}
+    }
+  },
+  "env": {
+    "builtin": true
+  },
+  "globals": {},
+  "ignorePatterns": []
+}
+----------
+CLI result: PrintConfigResult
+----------

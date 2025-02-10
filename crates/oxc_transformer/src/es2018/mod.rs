@@ -32,7 +32,7 @@ impl<'a, 'ctx> ES2018<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ES2018<'a, 'ctx> {
+impl<'a> Traverse<'a> for ES2018<'a, '_> {
     fn exit_program(&mut self, program: &mut oxc_ast::ast::Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.object_rest_spread.is_some() {
             self.object_rest_spread.exit_program(program, ctx);

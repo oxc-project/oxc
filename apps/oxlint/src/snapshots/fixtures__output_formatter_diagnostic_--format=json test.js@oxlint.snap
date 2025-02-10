@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=json test.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+[
+	{"message": "`debugger` statement is not allowed","code": "eslint(no-debugger)","severity": "error","causes": [],"url": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html","help": "Delete this code.","filename": "test.js","labels": [{"span": {"offset": 38,"length": 9}}],"related": []},
+	{"message": "Function 'foo' is declared but never used.","code": "eslint(no-unused-vars)","severity": "warning","causes": [],"url": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html","help": "Consider removing this declaration.","filename": "test.js","labels": [{"label": "'foo' is declared here","span": {"offset": 9,"length": 3}}],"related": []},
+	{"message": "Parameter 'b' is declared but never used. Unused parameters should start with a '_'.","code": "eslint(no-unused-vars)","severity": "warning","causes": [],"url": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html","help": "Consider removing this parameter.","filename": "test.js","labels": [{"label": "'b' is declared here","span": {"offset": 16,"length": 1}}],"related": []}
+]
+----------
+CLI result: LintFoundErrors
+----------

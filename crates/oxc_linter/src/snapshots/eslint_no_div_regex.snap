@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-div-regex): A regular expression literal can be confused with '/='.
    ╭─[no_div_regex.tsx:1:29]

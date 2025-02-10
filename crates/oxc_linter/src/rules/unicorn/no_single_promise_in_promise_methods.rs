@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoSinglePromiseInPromiseMethods,
+    unicorn,
     correctness,
     conditional_fix
 );
@@ -265,7 +266,7 @@ fn test() {
 
     Tester::new(
         NoSinglePromiseInPromiseMethods::NAME,
-        NoSinglePromiseInPromiseMethods::CATEGORY,
+        NoSinglePromiseInPromiseMethods::PLUGIN,
         pass,
         fail,
     )

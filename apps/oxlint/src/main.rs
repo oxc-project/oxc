@@ -8,6 +8,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use oxlint::cli::{CliRunResult, LintRunner, Runner};
+use std::io::BufWriter;
 
 fn main() -> CliRunResult {
     init_tracing();
@@ -15,7 +16,11 @@ fn main() -> CliRunResult {
 
     let command = oxlint::cli::lint_command().run();
     command.handle_threads();
-    LintRunner::new(command).run()
+    // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
+    // See `https://github.com/rust-lang/rust/issues/60673`.
+    let mut stdout = BufWriter::new(std::io::stdout());
+
+    LintRunner::new(command).run(&mut stdout)
 }
 
 // Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.

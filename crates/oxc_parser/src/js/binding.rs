@@ -143,7 +143,7 @@ impl<'a> ParserImpl<'a> {
             if let PropertyKey::StaticIdentifier(ident) = &key {
                 shorthand = true;
                 let identifier =
-                    self.ast.binding_pattern_kind_binding_identifier(ident.span, &ident.name);
+                    self.ast.binding_pattern_kind_binding_identifier(ident.span, ident.name);
                 let left = self.ast.binding_pattern(identifier, NONE, false);
                 self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, left))?
             } else {

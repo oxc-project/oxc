@@ -33,6 +33,10 @@ fn ts() {
         "class A {constructor(public readonly a: number) {}}",
         "abstract class A {private abstract static m() {}}",
         "abstract class A {private abstract static readonly prop: string}",
+        "interface A { a: string, 'b': number, 'c'(): void }",
+        "enum A { a, 'b' }",
+        "module 'a'",
+        "declare module 'a'",
         "a = x!;",
         "b = (x as y);",
         "c = foo<string>;",
@@ -89,6 +93,10 @@ export { name12, /* …, */ nameN } from "module-name";
 export { import1 as name13, import2 as name14, /* …, */ name15 } from "module-name";
 export { default, /* …, */ } from "module-name";
 export { default as name16 } from "module-name";
+"#,
+        r#"
+import a = require("a");
+export import b = require("b");
 "#,
     ];
 

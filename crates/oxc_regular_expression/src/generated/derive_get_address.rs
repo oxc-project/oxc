@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_address.rs`
 
-#![allow(clippy::match_same_arms)]
+#![expect(clippy::match_same_arms)]
 
 use oxc_allocator::{Address, GetAddress};
 

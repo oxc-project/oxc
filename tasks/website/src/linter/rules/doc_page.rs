@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use oxc_linter::table::RuleTableRow;
+use oxc_linter::{table::RuleTableRow, LintPlugins};
 
 use super::HtmlWriter;
 
@@ -52,6 +52,11 @@ pub fn render_rule_docs_page(rule: &RuleTableRow, git_ref: &str) -> Result<Strin
         writeln!(page, "\n{}", *docs)?;
     }
 
+    // how to use
+    let usage = how_to_use(rule);
+    writeln!(page, "\n## How to use")?;
+    writeln!(page, "{usage}")?;
+
     let rule_source = rule_source(rule, git_ref);
     writeln!(page, "\n## References")?;
     writeln!(page, "- [Rule Source]({rule_source})")?;
@@ -84,4 +89,69 @@ fn rule_source(rule: &RuleTableRow, git_ref: &str) -> String {
     assert!(rule_path.is_file(), "Rule source is not a file: {}", rule_path.display());
 
     rule_path.to_string_lossy().replace(root.to_str().unwrap(), github_url.as_str())
+}
+
+/// Returns `true` if the given plugin is a default plugin.
+/// - Example: `eslint` => true
+/// - Example: `jest` => false
+fn is_default_plugin(plugin: &str) -> bool {
+    let plugin = LintPlugins::from(plugin);
+    LintPlugins::default().contains(plugin)
+}
+
+/// Returns the normalized plugin name.
+/// - Example: `react_perf` -> `react-perf`
+/// - Example: `eslint` -> `eslint`
+/// - Example: `jsx_a11y` -> `jsx-a11y`
+fn get_normalized_plugin_name(plugin: &str) -> &str {
+    LintPlugins::from(plugin).into()
+}
+
+fn how_to_use(rule: &RuleTableRow) -> String {
+    let plugin = &rule.plugin;
+    let normalized_plugin_name = get_normalized_plugin_name(plugin);
+    let rule_full_name = match (normalized_plugin_name, rule) {
+        ("eslint", rule) => rule.name.to_string(),
+        (plugin, rule) => format!("{}/{}", plugin, rule.name),
+    };
+    let enable_bash_example = if is_default_plugin(plugin) {
+        format!(r"oxlint --deny {rule_full_name}")
+    } else {
+        format!(r"oxlint --deny {rule_full_name} --{normalized_plugin_name}-plugin")
+    };
+    let enable_config_example = if is_default_plugin(plugin) {
+        format!(
+            r#"{{
+    "rules": {{
+        "{rule_full_name}": "error"
+    }}
+}}"#
+        )
+    } else {
+        format!(
+            r#"{{
+    "plugins": ["{normalized_plugin_name}"],
+    "rules": {{
+        "{rule_full_name}": "error"
+    }}
+}}"#
+        )
+    };
+    format!(
+        r"
+To **enable** this rule in the CLI or using the config file, you can use:
+
+::: code-group
+
+```bash [CLI]
+{enable_bash_example}
+```
+
+```json [Config (.oxlintrc.json)]
+{enable_config_example}
+```
+
+:::
+"
+    )
 }

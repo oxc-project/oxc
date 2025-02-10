@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc-eslint.json test.js
+working directory: fixtures/disable_eslint_and_unicorn_alias_rules
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 48 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: -c .oxlintrc-unicorn.json test.js
+working directory: fixtures/disable_eslint_and_unicorn_alias_rules
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 61 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

@@ -195,6 +195,8 @@ const defineSSRCustomElement = () => {
         let exp_no = /* @__PURE__ */ foo() ** foo();
         let new_exp_no = /* @__PURE__ */ new foo() ** foo();
         ",
+        "{ /* @__PURE__ */ (function() {})(); }",
+        "{ /* @__PURE__ */ (() => {})(); }",
     ];
 
     snapshot("pure_comments", &cases);

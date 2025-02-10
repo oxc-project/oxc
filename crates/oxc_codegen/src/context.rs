@@ -1,4 +1,4 @@
-#![allow(missing_docs)] // FIXME
+#![expect(missing_docs)] // FIXME
 use bitflags::bitflags;
 
 bitflags! {

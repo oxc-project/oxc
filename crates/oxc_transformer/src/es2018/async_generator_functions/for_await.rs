@@ -9,7 +9,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
 use super::AsyncGeneratorFunctions;
 use crate::common::helper_loader::Helper;
 
-impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
+impl<'a> AsyncGeneratorFunctions<'a, '_> {
     /// Check the parent node to see if multiple statements are allowed.
     fn is_multiple_statements_allowed(ctx: &TraverseCtx<'a>) -> bool {
         matches!(

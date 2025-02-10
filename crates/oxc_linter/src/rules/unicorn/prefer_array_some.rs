@@ -62,6 +62,7 @@ declare_oxc_lint!(
     /// !array.some(fn);
     /// ```
     PreferArraySome,
+    unicorn,
     pedantic,
     fix
 );
@@ -464,7 +465,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferArraySome::NAME, PreferArraySome::CATEGORY, pass, fail)
+    Tester::new(PreferArraySome::NAME, PreferArraySome::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

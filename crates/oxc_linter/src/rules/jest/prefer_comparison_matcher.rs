@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferComparisonMatcher,
+    jest,
     style,
     fix
 );
@@ -468,7 +469,48 @@ fn test() {
         fix.push((case.as_str(), fixer.as_str(), None));
     }
 
-    Tester::new(PreferComparisonMatcher::NAME, PreferComparisonMatcher::CATEGORY, pass, fail)
+    let pass_vitest = vec![
+        ("expect.hasAssertions", None),
+        ("expect.hasAssertions()", None),
+        ("expect.assertions(1)", None),
+        ("expect(true).toBe(...true)", None),
+        ("expect()", None),
+        ("expect({}).toStrictEqual({})", None),
+        ("expect(a === b).toBe(true)", None),
+        ("expect(a !== 2).toStrictEqual(true)", None),
+        ("expect(a === b).not.toEqual(true)", None),
+        (r#"expect(a !== "string").toStrictEqual(true)"#, None),
+        ("expect(5 != a).toBe(true)", None),
+        (r#"expect(a == "string").toBe(true)"#, None),
+        (r#"expect(a == "string").not.toBe(true)"#, None),
+        ("expect().fail('Should not succeed a HTTPS proxy request.');", None),
+    ];
+
+    let fail_vitest = vec![
+        ("expect(a > b).toBe(true)", None),
+        ("expect(a < b).toBe(true)", None),
+        ("expect(a >= b).toBe(true)", None),
+        ("expect(a <= b).toBe(true)", None),
+        ("expect(a > b).not.toBe(true)", None),
+        ("expect(a < b).not.toBe(true)", None),
+        ("expect(a >= b).not.toBe(true)", None),
+    ];
+
+    let fix_vitest = vec![
+        ("expect(a > b).toBe(true)", "expect(a).toBeGreaterThan(b)", None),
+        ("expect(a < b).toBe(true)", "expect(a).toBeLessThan(b)", None),
+        ("expect(a >= b).toBe(true)", "expect(a).toBeGreaterThanOrEqual(b)", None),
+        ("expect(a <= b).toBe(true)", "expect(a).toBeLessThanOrEqual(b)", None),
+        ("expect(a > b).not.toBe(true)", "expect(a).toBeLessThanOrEqual(b)", None),
+        ("expect(a < b).not.toBe(true)", "expect(a).toBeGreaterThanOrEqual(b)", None),
+        ("expect(a >= b).not.toBe(true)", "expect(a).toBeLessThan(b)", None),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+    fix.extend(fix_vitest);
+
+    Tester::new(PreferComparisonMatcher::NAME, PreferComparisonMatcher::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

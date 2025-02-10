@@ -57,6 +57,7 @@ declare_oxc_lint!(
     /// React.createElement('div', { dangerouslySetInnerHTML: { __html: 'HTML' } })
     /// ```
     VoidDomElementsNoChildren,
+    react,
     correctness
 );
 
@@ -234,6 +235,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(VoidDomElementsNoChildren::NAME, VoidDomElementsNoChildren::CATEGORY, pass, fail)
+    Tester::new(VoidDomElementsNoChildren::NAME, VoidDomElementsNoChildren::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

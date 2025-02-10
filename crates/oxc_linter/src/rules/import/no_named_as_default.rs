@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// import foo from './foo.js';
     /// ```
     NoNamedAsDefault,
+    import,
     suspicious
 );
 
@@ -106,7 +107,7 @@ fn test() {
         r#"import foo, { foo as bar } from "./export-default-string-and-named""#,
     ];
 
-    Tester::new(NoNamedAsDefault::NAME, NoNamedAsDefault::CATEGORY, pass, fail)
+    Tester::new(NoNamedAsDefault::NAME, NoNamedAsDefault::PLUGIN, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

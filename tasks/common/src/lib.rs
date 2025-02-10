@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, clippy::disallowed_methods)]
+#![expect(clippy::print_stdout, clippy::disallowed_methods)]
 use std::path::{Path, PathBuf};
 
 mod diff;
