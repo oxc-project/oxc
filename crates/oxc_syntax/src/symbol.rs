@@ -121,10 +121,8 @@ bitflags! {
         const ConstEnum               = 1 << 11;
         const EnumMember              = 1 << 12;
         const TypeParameter           = 1 << 13;
-        const NameSpaceModule         = 1 << 14;
-        const ValueModule             = 1 << 15;
-        // In a dts file or there is a declare flag
-        const Ambient                 = 1 << 16;
+        const NameSpaceModule         = 1 << 14; // Uninstantiated module
+        const ValueModule             = 1 << 15; // Instantiated module
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
