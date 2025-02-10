@@ -884,9 +884,16 @@ pub enum AssignmentTargetProperty<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(
+    rename = "Property",
+    add_fields(kind = "\"init\"", method = false, shorthand = true, computed = false),
+    add_ts = "kind: \"init\"; method: false; shorthand: false; computed: false"
+)]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
+    #[estree(rename = "key")]
     pub binding: IdentifierReference<'a>,
+    #[estree(rename = "value", via = crate::serialize::AssignmentTargetPropertyIdentifierValue(self), ts_type = "IdentifierReference | AssignmentTargetWithDefault")]
     pub init: Option<Expression<'a>>,
 }
 

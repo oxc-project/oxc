@@ -709,11 +709,18 @@ impl Serialize for AssignmentTargetProperty<'_> {
 impl Serialize for AssignmentTargetPropertyIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetPropertyIdentifier")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("binding", &self.binding)?;
-        map.serialize_entry("init", &self.init)?;
+        map.serialize_entry("key", &self.binding)?;
+        map.serialize_entry(
+            "value",
+            &crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
+        )?;
+        map.serialize_entry("kind", &"init")?;
+        map.serialize_entry("method", &false)?;
+        map.serialize_entry("shorthand", &true)?;
+        map.serialize_entry("computed", &false)?;
         map.end()
     }
 }

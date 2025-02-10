@@ -4,7 +4,7 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_str, Expr, Type};
+use syn::{parse_str, Expr};
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
@@ -186,9 +186,9 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
 /// Generate body of `serialize` method for a struct.
 fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
     if let Some(via_str) = struct_def.estree.via.as_deref() {
-        let via_ty = parse_str::<Type>(via_str).unwrap();
+        let via_expr = parse_str::<Expr>(via_str).unwrap();
         return quote! {
-            #via_ty::from(self).serialize(serializer)
+            #via_expr.serialize(serializer)
         };
     }
 

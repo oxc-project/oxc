@@ -268,9 +268,13 @@ export interface AssignmentTargetWithDefault extends Span {
 export type AssignmentTargetProperty = AssignmentTargetPropertyIdentifier | AssignmentTargetPropertyProperty;
 
 export interface AssignmentTargetPropertyIdentifier extends Span {
-  type: 'AssignmentTargetPropertyIdentifier';
-  binding: IdentifierReference;
-  init: Expression | null;
+  type: 'Property';
+  key: IdentifierReference;
+  value: IdentifierReference | AssignmentTargetWithDefault;
+  kind: 'init';
+  method: false;
+  shorthand: false;
+  computed: false;
 }
 
 export interface AssignmentTargetPropertyProperty extends Span {
