@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.49.0] - 2025-02-10
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Bug Fixes
+
+- 7e6a537 ast: Include `directives` in `body` (#8981) (hi-ogawa)
+- 81bed37 span: `f64::content_eq` return `false` for `0` and `-0` (#9007) (overlookmotel)
+
+### Refactor
+
+- c58f785 ast: Simplify serializing `SourceType` (#8936) (overlookmotel)
+- cbb4e9c ast: Generated `Serialize` impls flatten struct fields (#8904) (overlookmotel)
+- caa651c ast: `#[content_eq(skip)]` attr (#8875) (overlookmotel)
+- 7ddd219 ast: Rename `#[estree(always_flatten)]` attr to `#[estree(flatten)]` (#8871) (overlookmotel)
+- abfe5bf ast: Shorten generated code for numbers (#8864) (overlookmotel)
+- f69de07 ast: Remove unneeded lint attrs from generated code (#8862) (overlookmotel)
+- e930cae span: Combine `Span` type and impls in 1 file (#8900) (overlookmotel)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Refactor

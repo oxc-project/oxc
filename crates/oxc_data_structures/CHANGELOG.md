@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.49.0] - 2025-02-10
+
+- bec8fee data_structures: [**BREAKING**] Rename `Stack::last_unchecked_mut` method (#8911) (overlookmotel)
+
+### Features
+
+- 0a74cf5 data_structures: Add `first` and `first_mut` methods to stack types (#8908) (overlookmotel)
+
+### Documentation
+
+- f6b6e70 data_structures: Correct doc comments for `SparseStack` (#8907) (overlookmotel)
+
+### Refactor
+
+
+### Testing
+
+- 2d06260 data_structures: Add tests for `NonEmptyStack::as_slice` and `as_slice_mut` (#8912) (overlookmotel)
+
 ## [0.45.0] - 2025-01-11
 
 ### Documentation

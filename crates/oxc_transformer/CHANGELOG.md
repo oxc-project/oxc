@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.49.0] - 2025-02-10
+
+- bbb075d ast: [**BREAKING**] Name `AstBuilder` enum builders after variant name not type name (#8890) (overlookmotel)
+
+### Features
+
+- 0a74cf5 data_structures: Add `first` and `first_mut` methods to stack types (#8908) (overlookmotel)
+- f2d28f3 transformer: Support for transforming legacy decorator (#8614) (Dunqing)
+
+### Bug Fixes
+
+- 1b89e75 oxc_transformer: Avoid const unwrap in base64 length calc (#8914) (碳苯 Carbon)
+- 2c4f004 transformer/typescript: Typescript parameter properties disappear when there's two or more classes that uses that feature (#8969) (Dunqing)
+
+### Refactor
+
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Features
