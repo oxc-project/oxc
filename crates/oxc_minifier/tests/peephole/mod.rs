@@ -41,8 +41,8 @@ fn integration() {
             return undefined;
           return isTimeDisabled === null || isTimeDisabled === void 0 ? void 0 : isTimeDisabled(value);
     }",
-        "function foo() {
-        return value === null || Array.isArray(value) || isTimeDisabled == null ? void 0 : isTimeDisabled(value);
+    "function foo() {
+        if (!(value === null || Array.isArray(value))) return isTimeDisabled == null ? void 0 : isTimeDisabled(value);
     }");
 
     test_same("a && (b && (c && (d && (e && (f && (g && (h && i && j && k && l && m && n && o && p && q && r && s && t && u && v && w && x && y && z)))))))");

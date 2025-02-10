@@ -146,19 +146,20 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.minimize_statements(stmts, ctx);
     }
 
-    fn exit_statement(&mut self, stmt: &mut Statement<'a>, traverse_ctx: &mut TraverseCtx<'a>) {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_prev_function_changed() {
             return;
         }
-        Self::try_fold_stmt_in_boolean_context(stmt, Ctx(traverse_ctx));
-        self.remove_dead_code_exit_statement(stmt, Ctx(traverse_ctx));
+        let ctx = Ctx(ctx);
+        Self::try_fold_stmt_in_boolean_context(stmt, ctx);
+        self.remove_dead_code_exit_statement(stmt, ctx);
         if let Statement::IfStatement(if_stmt) = stmt {
-            if let Some(folded_stmt) = self.try_minimize_if(if_stmt, traverse_ctx) {
+            if let Some(folded_stmt) = self.try_minimize_if(if_stmt, ctx) {
                 *stmt = folded_stmt;
                 self.mark_current_function_as_changed();
             }
         }
-        self.substitute_exit_statement(stmt, Ctx(traverse_ctx));
+        self.substitute_exit_statement(stmt, ctx);
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
