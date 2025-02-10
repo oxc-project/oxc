@@ -4,7 +4,7 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_str, Type};
+use syn::{parse_str, Expr, Type};
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
@@ -297,8 +297,8 @@ impl<'s> StructSerializerGenerator<'s> {
 
         let mut value = quote!( #self_path.#field_name_ident );
         if let Some(via_str) = field.estree.via.as_deref() {
-            let via_ty = parse_str::<Type>(via_str).unwrap();
-            value = quote!( #via_ty::from(&#value) );
+            let via_expr = parse_str::<Expr>(via_str).unwrap();
+            value = quote!( #via_expr );
         } else if let Some(append_field_index) = field.estree.append_field_index {
             let append_field = &struct_def.fields[append_field_index];
             let append_from_ident = append_field.ident();

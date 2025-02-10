@@ -1743,6 +1743,8 @@ pub struct ArrowFunctionExpression<'a> {
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
+    // ESTree: https://github.com/estree/estree/blob/master/es2015.md#arrowfunctionexpression
+    #[estree(via = crate::serialize::ArrowFunctionExpressionBody(self), ts_type = "FunctionBody | Expression")]
     pub body: Box<'a, FunctionBody<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -2218,7 +2220,7 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    #[estree(via = crate::serialize::OptionVecDefault, ts_type = "Array<ImportDeclarationSpecifier>")]
+    #[estree(via = crate::serialize::OptionVecDefault(&self.specifiers), ts_type = "Array<ImportDeclarationSpecifier>")]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
     pub phase: Option<ImportPhase>,
