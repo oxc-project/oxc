@@ -1974,7 +1974,7 @@ impl Serialize for RegExpLiteral<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("regex", &crate::serialize::RegExpLiteralRegex(self))?;
         map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &crate::serialize::EmptyObject)?;
+        map.serialize_entry("value", &crate::serialize::RegExpLiteralValue(self))?;
         map.end()
     }
 }

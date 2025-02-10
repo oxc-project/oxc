@@ -2,7 +2,10 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use oxc::{
-    allocator::Allocator, ast::utf8_to_utf16::Utf8ToUtf16, parser::Parser, span::SourceType,
+    allocator::Allocator,
+    ast::utf8_to_utf16::Utf8ToUtf16,
+    parser::{ParseOptions, Parser},
+    span::SourceType,
 };
 
 use crate::{
@@ -57,7 +60,8 @@ impl Case for EstreeTest262Case {
         let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
         let allocator = Allocator::new();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
+        let ret = Parser::new(&allocator, source_text, source_type).with_options(options).parse();
         // Ignore empty AST or parse errors.
         let mut program = ret.program;
         if program.is_empty() || ret.panicked || !ret.errors.is_empty() {
