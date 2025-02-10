@@ -675,8 +675,8 @@ mod test {
 
         fold("null == 0", "!1");
         fold("null == 1", "!1");
-        // test("null == 0n", "!1");
-        // test("null == 1n", "!1");
+        fold("null == 0n", "!1");
+        fold("null == 1n", "!1");
         fold("null == 'hi'", "!1");
         fold("null == true", "!1");
         fold("null == false", "!1");
@@ -695,8 +695,8 @@ mod test {
 
         fold("null != 0", "!0");
         fold("null != 1", "!0");
-        // test("null != 0n", "!0");
-        // test("null != 1n", "!0");
+        fold("null != 0n", "!0");
+        fold("null != 1n", "!0");
         fold("null != 'hi'", "!0");
         fold("null != true", "!0");
         fold("null != false", "!0");
@@ -716,16 +716,16 @@ mod test {
         fold("0 < null", "!1");
         fold("0 > null", "!1");
         fold("0 >= null", "!0");
-        // test("0n < null", "!1");
-        // test("0n > null", "!1");
-        // test("0n >= null", "!0");
+        fold("0n < null", "!1");
+        fold("0n > null", "!1");
+        fold("0n >= null", "!0");
         fold("true > null", "!0");
         fold("'hi' < null", "!1");
         fold("'hi' >= null", "!1");
         fold("null <= null", "!0");
 
         fold("null < 0", "!1");
-        // test("null < 0n", "!1");
+        fold("null < 0n", "!1");
         fold("null > true", "!1");
         fold("null < 'hi'", "!1");
         fold("null >= 'hi'", "!1");
@@ -897,10 +897,10 @@ mod test {
         fold("NaN <= 1", "!1");
         fold("NaN > 1", "!1");
         fold("NaN >= 1", "!1");
-        // test("NaN < 1n", "!1");
-        // test("NaN <= 1n", "!1");
-        // test("NaN > 1n", "!1");
-        // test("NaN >= 1n", "!1");
+        fold("NaN < 1n", "!1");
+        fold("NaN <= 1n", "!1");
+        fold("NaN > 1n", "!1");
+        fold("NaN >= 1n", "!1");
 
         fold("NaN < NaN", "!1");
         fold("NaN >= NaN", "!1");
@@ -1713,7 +1713,6 @@ mod test {
         }
 
         #[test]
-        #[ignore]
         fn test_bigint_number_comparison() {
             fold("1n < 2", "!0");
             fold("1n > 2", "!1");
@@ -1754,7 +1753,6 @@ mod test {
         }
 
         #[test]
-        #[ignore]
         fn test_bigint_string_comparison() {
             fold("1n < '2'", "!0");
             fold("2n > '1'", "!0");
@@ -1767,7 +1765,6 @@ mod test {
         }
 
         #[test]
-        #[ignore]
         fn test_string_bigint_comparison() {
             fold("'1' < 2n", "!0");
             fold("'2' > 1n", "!0");
