@@ -151,7 +151,7 @@
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "ovsx": "^0.10.0",
     "oxlint": "^0.15.0",
     "typescript": "^5.4.5"
