@@ -315,25 +315,15 @@ pub struct AssignmentTargetPropertyIdentifierValue<'a>(
 impl Serialize for AssignmentTargetPropertyIdentifierValue<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         if let Some(init) = &self.0.init {
-            AssignmentTargetPropertyIdentifierValueAssignmentPattern {
-                span: self.0.span,
-                left: &self.0.binding,
-                right: init,
-            }
-            .serialize(serializer)
+            let mut map = serializer.serialize_map(None)?;
+            map.serialize_entry("type", "AssignmentPattern")?;
+            map.serialize_entry("start", &self.0.span.start)?;
+            map.serialize_entry("end", &self.0.span.end)?;
+            map.serialize_entry("left", &self.0.binding)?;
+            map.serialize_entry("right", init)?;
+            map.end()
         } else {
             self.0.binding.serialize(serializer)
         }
     }
-}
-
-/// wrapper to serialize same as `AssignmentTargetWithDefault`
-/// but without extra enum/Box for `AssignmentTargetWithDefault.binding`
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "AssignmentPattern")]
-pub struct AssignmentTargetPropertyIdentifierValueAssignmentPattern<'a> {
-    #[serde(flatten)]
-    pub span: Span,
-    pub left: &'a IdentifierReference<'a>,
-    pub right: &'a Expression<'a>,
 }
