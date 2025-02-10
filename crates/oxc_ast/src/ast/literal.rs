@@ -136,6 +136,7 @@ pub struct RegExpLiteral<'a> {
     pub span: Span,
     /// The parsed regular expression. See [`oxc_regular_expression`] for more
     /// details.
+    #[estree(via = crate::serialize::RegExpLiteralRegex(self))]
     pub regex: RegExp<'a>,
     /// The regular expression as it appears in source code
     ///

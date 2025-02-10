@@ -110,6 +110,29 @@ pub fn bigint_literal_bigint<'a>(lit: &'a BigIntLiteral<'a>) -> Cow<'a, str> {
     lit.raw.strip_suffix('n').unwrap().cow_replace('_', "")
 }
 
+/// Serializer for `RegExpLiteral`'s `regex` field.
+pub struct RegExpLiteralRegex<'a>(pub &'a RegExpLiteral<'a>);
+
+impl Serialize for RegExpLiteralRegex<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("pattern", &self.0.regex.pattern)?;
+
+        // If `raw` field is present, flags must be in same order as in source to match Acorn.
+        // Count number of set bits in `flags` to get number of flags
+        // (cheaper than searching through `raw` for last `/`).
+        let flags = self.0.regex.flags;
+        if let Some(raw) = &self.0.raw {
+            let flags_count = flags.bits().count_ones() as usize;
+            let flags_index = raw.len() - flags_count;
+            map.serialize_entry("flags", &raw[flags_index..])?;
+        } else {
+            map.serialize_entry("flags", &flags)?;
+        }
+        map.end()
+    }
+}
+
 /// A placeholder for `RegExpLiteral`'s `value` field.
 pub struct EmptyObject;
 

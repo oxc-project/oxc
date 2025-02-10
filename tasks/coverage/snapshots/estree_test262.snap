@@ -2,16 +2,10 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 43933/44293 (99.19%)
-Mismatch: tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/flags-string-invalid.js
-Mismatch: tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/flags-undefined.js
-Mismatch: tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-regexp-props.js
-Mismatch: tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-invalid-u.js
-Mismatch: tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-invalid.js
+Positive Passed: 43974/44293 (99.28%)
 tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-u.js
 serde_json error: unexpected end of hex escape at line 316 column 33
 
-Mismatch: tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string.js
 tasks/coverage/test262/test/annexB/built-ins/String/prototype/substr/surrogate-pairs.js
 serde_json error: lone leading surrogate in hex escape at line 154 column 28
 
@@ -22,23 +16,6 @@ tasks/coverage/test262/test/built-ins/JSON/stringify/value-string-escape-unicode
 serde_json error: unexpected end of hex escape at line 62 column 33
 
 Mismatch: tasks/coverage/test262/test/built-ins/Proxy/preventExtensions/trap-is-undefined-target-is-proxy.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-digit-class-escape-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-digit-class-escape-plus-quantifier-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-non-digit-class-escape-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-non-digit-class-escape-plus-quantifier-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-non-whitespace-class-escape-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-non-whitespace-class-escape-plus-quantifier-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-non-word-class-escape-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-non-word-class-escape-plus-quantifier-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-whitespace-class-escape-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-whitespace-class-escape-plus-quantifier-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-word-class-escape-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/CharacterClassEscapes/character-class-word-class-escape-plus-quantifier-flags-u.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.6_A1_T4.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.6_A1_T5.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.8_A3_T18.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/S15.10.2.8_A5_T1.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/S15.10.4.1_A2_T2.js
 tasks/coverage/test262/test/built-ins/RegExp/dotall/with-dotall-unicode.js
 serde_json error: unexpected end of hex escape at line 804 column 39
 
@@ -54,9 +31,6 @@ serde_json error: unexpected end of hex escape at line 839 column 39
 tasks/coverage/test262/test/built-ins/RegExp/escape/escaped-surrogates.js
 serde_json error: unexpected end of hex escape at line 62 column 33
 
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/match-indices/indices-array-unicode-match.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/match-indices/indices-array-unicode-property-names.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/match-indices/indices-groups-properties.js
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/named-groups/duplicate-names-exec.js
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/named-groups/duplicate-names-group-property-enumeration-order.js
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/named-groups/duplicate-names-match-indices.js
@@ -73,14 +47,9 @@ serde_json error: unexpected end of hex escape at line 473 column 44
 tasks/coverage/test262/test/built-ins/RegExp/named-groups/unicode-property-names-invalid.js
 serde_json error: unexpected end of hex escape at line 508 column 44
 
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/Symbol.match/u-advance-after-empty.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/Symbol.match/y-fail-global-return.js
 tasks/coverage/test262/test/built-ins/RegExp/prototype/Symbol.replace/coerce-unicode.js
 serde_json error: unexpected end of hex escape at line 232 column 32
 
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/Symbol.replace/u-advance-after-empty.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/Symbol.replace/y-fail-global-return.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/dotAll/this-val-regexp.js
 tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T2.js
 serde_json error: recursion limit exceeded at line 509 column 263
 
@@ -95,11 +64,6 @@ Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/duplicate-
 tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/u-captured-value.js
 serde_json error: unexpected end of hex escape at line 298 column 29
 
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/u-lastindex-value.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/hasIndices/this-val-regexp.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/sticky/this-val-regexp.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/unicode/this-val-regexp.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/prototype/unicodeSets/this-val-regexp.js
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-alternatives-outside.js
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-dotAll-property.js
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-ignoreCase-flag.js
@@ -180,7 +144,6 @@ Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/syntax/v
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-nested.js
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js
 Mismatch: tasks/coverage/test262/test/built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js
-Mismatch: tasks/coverage/test262/test/built-ins/RegExp/unicode_full_case_folding.js
 tasks/coverage/test262/test/built-ins/String/prototype/at/returns-code-unit.js
 serde_json error: unexpected end of hex escape at line 103 column 31
 
@@ -204,8 +167,6 @@ serde_json error: unexpected end of hex escape at line 242 column 36
 tasks/coverage/test262/test/built-ins/String/prototype/padStart/normal-operation.js
 serde_json error: unexpected end of hex escape at line 242 column 33
 
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/replace/S15.5.4.11_A4_T4.js
-Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/replaceAll/searchValue-tostring-regexp.js
 tasks/coverage/test262/test/built-ins/String/prototype/toWellFormed/returns-well-formed-string.js
 serde_json error: unexpected end of hex escape at line 129 column 29
 
@@ -267,8 +228,6 @@ Mismatch: tasks/coverage/test262/test/language/import/import-defer/errors/get-ot
 Mismatch: tasks/coverage/test262/test/language/import/import-defer/errors/get-other-while-evaluating/main.js
 Mismatch: tasks/coverage/test262/test/language/import/import-defer/errors/get-other-while-evaluating-async/main.js
 Mismatch: tasks/coverage/test262/test/language/import/import-defer/syntax/valid-default-binding-named-defer.js
-Mismatch: tasks/coverage/test262/test/language/literals/regexp/S7.8.5_A3.1_T5.js
-Mismatch: tasks/coverage/test262/test/language/literals/regexp/S7.8.5_A3.1_T6.js
 tasks/coverage/test262/test/language/literals/regexp/named-groups/invalid-lone-surrogate-groupname.js
 serde_json error: unexpected end of hex escape at line 64 column 40
 
