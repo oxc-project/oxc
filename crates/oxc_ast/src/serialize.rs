@@ -244,6 +244,13 @@ impl Serialize for AssignmentTargetPropertyIdentifierValue<'_> {
     }
 }
 
+/// Get `options` field of `ImportExpression` (from original `arguments` field).
+pub fn import_expression_options<'a>(
+    arguments: &'a [Expression<'a>],
+) -> Option<&'a Expression<'a>> {
+    arguments.first()
+}
+
 // --------------------
 // JSX
 // --------------------

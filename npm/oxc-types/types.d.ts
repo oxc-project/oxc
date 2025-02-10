@@ -702,8 +702,7 @@ export interface AccessorProperty extends Span {
 export interface ImportExpression extends Span {
   type: 'ImportExpression';
   source: Expression;
-  arguments: Array<Expression>;
-  phase: ImportPhase | null;
+  options: Expression | null;
 }
 
 export interface ImportDeclaration extends Span {

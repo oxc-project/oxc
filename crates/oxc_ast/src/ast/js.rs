@@ -2243,7 +2243,13 @@ pub struct AccessorProperty<'a> {
 pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
+    #[estree(
+        rename = "options",
+        via = crate::serialize::import_expression_options(&self.arguments),
+        ts_type = "Expression | null"
+    )]
     pub arguments: Vec<'a, Expression<'a>>,
+    #[estree(skip)]
     pub phase: Option<ImportPhase>,
 }
 
