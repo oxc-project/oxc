@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
+assertion_line: 147
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/function-declaration/overload.ts
 ---
 [
@@ -13,14 +14,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         "symbols": [
           {
             "flags": "SymbolFlags(FunctionScopedVariable)",
-            "id": 0,
+            "id": 1,
             "name": "a",
             "node": "FormalParameter(a)",
             "references": []
           },
           {
             "flags": "SymbolFlags(FunctionScopedVariable)",
-            "id": 1,
+            "id": 2,
             "name": "b",
             "node": "FormalParameter(b)",
             "references": []
@@ -63,7 +64,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
     "symbols": [
       {
         "flags": "SymbolFlags(BlockScopedVariable | Function)",
-        "id": 2,
+        "id": 0,
         "name": "foo",
         "node": "Function(foo)",
         "references": []
