@@ -1498,29 +1498,29 @@ mod test {
     fn compress_binary_boolean() {
         test("a instanceof b === true", "a instanceof b");
         test("a instanceof b == true", "a instanceof b");
-        test("a instanceof b === false", "!(a instanceof b)");
-        test("a instanceof b == false", "!(a instanceof b)");
+        test("a instanceof b === false", "a instanceof b");
+        test("a instanceof b == false", "a instanceof b");
 
-        test("a instanceof b !== true", "!(a instanceof b)");
-        test("a instanceof b != true", "!(a instanceof b)");
+        test("a instanceof b !== true", "a instanceof b");
+        test("a instanceof b != true", "a instanceof b");
         test("a instanceof b !== false", "a instanceof b");
         test("a instanceof b != false", "a instanceof b");
 
         test("delete x === true", "delete x");
         test("delete x == true", "delete x");
-        test("delete x === false", "!(delete x)");
-        test("delete x == false", "!(delete x)");
+        test("delete x === false", "delete x");
+        test("delete x == false", "delete x");
 
-        test("delete x !== true", "!(delete x)");
-        test("delete x != true", "!(delete x)");
+        test("delete x !== true", "delete x");
+        test("delete x != true", "delete x");
         test("delete x !== false", "delete x");
         test("delete x != false", "delete x");
     }
 
     #[test]
     fn compress_binary_number() {
-        test("if(x >> +y == 0){}", "!(x >> +y)");
-        test("if(x >> +y === 0){}", "!(x >> +y)");
+        test("if(x >> +y == 0){}", "x >> +y");
+        test("if(x >> +y === 0){}", "x >> +y");
         test("if(x >> +y != 0){}", "x >> +y");
         test("if(x >> +y !== 0){}", "x >> +y");
         test("if((-0 != +0) !== false){}", "");

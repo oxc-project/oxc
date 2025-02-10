@@ -197,11 +197,7 @@ fn js_parser_test() {
         "while (x) { debugger; if (y) { if (1) break; z() } }",
         "for (; x; ) { debugger; if (y) break; }",
     );
-    // FIXME: remove `!` from `!y`
-    test(
-        "while (x) { debugger; if (y) { if (1) continue; z() } }",
-        "for (; x; ) { debugger; !y; }",
-    );
+    test("while (x) { debugger; if (y) { if (1) continue; z() } }", "for (; x; ) { debugger; y; }");
     test(
         "while (x) { debugger; if (1) { if (1) break; z() } }",
         "for (; x; ) { debugger; break; }",
@@ -666,14 +662,12 @@ fn js_parser_test() {
     );
     test(
         "function _() { if (a) return c; if (b) return; }",
-        // FIXME: remove `!` from `!b`
-        "function _() { if (a) return c; !b; }",
+        "function _() { if (a) return c; b; }",
     );
     test(
         "function _() { if (a) return; if (b) return c; }",
         "function _() { if (!a && b) return c; }",
     );
-    // FIXME: remove `!` from `!b`
     test("function _() { if (a) return; if (b) return; }", "function _() { a || !b }");
     test("if (a) throw c; if (b) throw d;", "if (a) throw c;if (b) throw d;");
     test("if (a) throw c; if (b) throw c;", "if (a || b) throw c;");
