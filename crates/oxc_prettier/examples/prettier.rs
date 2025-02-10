@@ -11,6 +11,16 @@ use pico_args::Arguments;
 // create a `test.js`,
 // run `cargo run -p oxc_prettier --example prettier`
 // or `just example prettier`
+//
+// Debug:
+// run `cargo run -p oxc_prettier --example prettier -- --debug`
+//
+// The output will be the Doc AST JSON(= most verbose form) of the Prettier,
+// now you can paste and inspect it in their playground.
+// https://prettier.io/playground
+// Be sure to:
+// - change global option `--parser: doc-explorer`
+// - enable debug option `show doc`
 
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
