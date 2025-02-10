@@ -381,7 +381,7 @@ impl Serialize for PrivateFieldExpression<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("field", &self.field)?;
+        map.serialize_entry("property", &self.field)?;
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("computed", &false)?;
         map.end()

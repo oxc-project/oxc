@@ -526,6 +526,7 @@ pub struct StaticMemberExpression<'a> {
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
+    #[estree(rename = "property")]
     pub field: PrivateIdentifier<'a>,
     pub optional: bool, // for optional chaining
 }
