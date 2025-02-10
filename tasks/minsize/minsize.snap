@@ -3,7 +3,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 -------------------------------------------------------------------------------------
 72.14 kB   | 23.49 kB   | 23.70 kB   | 8.47 kB    | 8.54 kB    | react.development.js
 
-173.90 kB  | 59.53 kB   | 59.82 kB   | 19.18 kB   | 19.33 kB   | moment.js 
+173.90 kB  | 59.52 kB   | 59.82 kB   | 19.18 kB   | 19.33 kB   | moment.js 
 
 287.63 kB  | 89.34 kB   | 90.07 kB   | 30.95 kB   | 31.95 kB   | jquery.js 
 
