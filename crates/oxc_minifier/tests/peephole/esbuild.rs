@@ -615,9 +615,9 @@ fn js_parser_test() {
     test("let b; a = null === b || b === undefined ? c : b", "let b; a = b ?? c;");
     test("let b; a = b !== undefined && b !== null ? b : c", "let b; a = b ?? c;");
     test("a(b ? 0 : 0)", "a((b, 0));");
-    // test("a(b ? +0 : -0)", "a(b ? 0 : -0);");
-    // test("a(b ? +0 : 0)", "a((b, 0));");
-    // test("a(b ? -0 : 0)", "a(b ? -0 : 0);");
+    test("a(b ? +0 : -0)", "a(b ? 0 : -0);");
+    test("a(b ? +0 : 0)", "a((b, 0));");
+    test("a(b ? -0 : 0)", "a(b ? -0 : 0);");
     test("a ? b : b", "a, b;");
     test("let a; a ? b : b", "let a; b;");
     test("a ? -b : -b", "a, -b;");
@@ -678,15 +678,17 @@ fn js_parser_test() {
     test("if (a) throw c; if (b) throw d;", "if (a) throw c;if (b) throw d;");
     test("if (a) throw c; if (b) throw c;", "if (a || b) throw c;");
     test("while (x) { if (a) break; if (b) break; }", "for (; x && !(a || b); ) ;");
-    // test("while (x) { if (a) continue; if (b) continue; }", "for (; x; ) a || b;");
+    // FIXME: remove `!` from `!b`
+    test("while (x) { if (a) continue; if (b) continue; }", "for (; x; ) a || !b;");
     test(
         "while (x) { debugger; if (a) break; if (b) break; }",
         "for (; x; ) { debugger; if (a || b) break;}",
     );
-    // test(
-    // "while (x) { debugger; if (a) continue; if (b) continue; }",
-    // "for (; x; ) { debugger; a || b;}",
-    // );
+    // FIXME: remove `!` from `!b`
+    test(
+        "while (x) { debugger; if (a) continue; if (b) continue; }",
+        "for (; x; ) { debugger; a || !b; }",
+    );
     test(
         "x: while (x) y: while (y) { if (a) break x; if (b) break y; }",
         "x: for (; x; ) y: for (; y; ) { if (a) break x; if (b) break y;}",
