@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue},
     side_effects::MayHaveSideEffects,
@@ -19,7 +19,11 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
     }
 }
 
-impl<'a> ConstantEvaluation<'a> for Ctx<'a, '_> {}
+impl<'a> ConstantEvaluation<'a> for Ctx<'a, '_> {
+    fn ast(&self) -> AstBuilder<'a> {
+        self.ast
+    }
+}
 
 impl MayHaveSideEffects for Ctx<'_, '_> {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {

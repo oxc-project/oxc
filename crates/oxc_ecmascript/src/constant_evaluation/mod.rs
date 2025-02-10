@@ -3,10 +3,12 @@ use std::{borrow::Cow, cmp::Ordering};
 use num_bigint::BigInt;
 use num_traits::{ToPrimitive, Zero};
 
-use oxc_ast::ast::*;
+use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
+use oxc_ast::{ast::*, AstBuilder};
 
 use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber};
 
+mod equality_comparison;
 mod is_literal_value;
 mod value;
 mod value_type;
@@ -15,6 +17,8 @@ pub use value::ConstantValue;
 pub use value_type::ValueType;
 
 pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
+    fn ast(&self) -> AstBuilder<'a>;
+
     fn resolve_binding(&self, ident: &IdentifierReference<'a>) -> Option<ConstantValue<'a>> {
         match ident.name.as_str() {
             "undefined" if self.is_global_reference(ident) => Some(ConstantValue::Undefined),
@@ -374,7 +378,31 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 }
                 None
             }
-            _ => None,
+            BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::Equality
+            | BinaryOperator::Inequality => {
+                if self.expression_may_have_side_effects(left)
+                    || self.expression_may_have_side_effects(right)
+                {
+                    return None;
+                }
+                let value = match operator {
+                    BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
+                        strict_equality_comparison(self, left, right)?
+                    }
+                    BinaryOperator::Equality | BinaryOperator::Inequality => {
+                        abstract_equality_comparison(self, left, right)?
+                    }
+                    _ => unreachable!(),
+                };
+                Some(ConstantValue::Boolean(match operator {
+                    BinaryOperator::StrictEquality | BinaryOperator::Equality => value,
+                    BinaryOperator::StrictInequality | BinaryOperator::Inequality => !value,
+                    _ => unreachable!(),
+                }))
+            }
+            BinaryOperator::In => None,
         }
     }
 
