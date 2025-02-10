@@ -344,10 +344,13 @@ impl<'a, 'b> PeepholeOptimizations {
             {
                 Some(ctx.ast.statement_empty(stmt.span))
             }
-            // `typeof x.y` -> `x.y`, `void x` -> `x`
+            // `typeof x.y` -> `x.y`, `void x` -> `x`, `!x` -> `x`
             // `+0n` -> `Uncaught TypeError: Cannot convert a BigInt value to a number`
             Expression::UnaryExpression(unary_expr)
-                if matches!(unary_expr.operator, UnaryOperator::Typeof | UnaryOperator::Void) =>
+                if matches!(
+                    unary_expr.operator,
+                    UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::LogicalNot
+                ) =>
             {
                 Some(ctx.ast.statement_expression(
                     unary_expr.span,
@@ -770,11 +773,10 @@ mod test {
         test("void x.y", "x.y");
         test("void x.y.z()", "x.y.z()");
 
-        // Removed in `MinimizeConditions`, to keep this pass idempotent for DCE.
-        test_same("!x");
-        test_same("!x?.y");
-        test_same("!x.y");
-        test_same("!x.y.z()");
+        test("!x", "x");
+        test("!x?.y", "x?.y");
+        test("!x.y", "x.y");
+        test("!x.y.z()", "x.y.z()");
         test_same("-x.y.z()");
 
         test_same("delete x");
