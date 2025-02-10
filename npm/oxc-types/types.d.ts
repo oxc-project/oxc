@@ -147,7 +147,7 @@ export interface StaticMemberExpression extends Span {
 export interface PrivateFieldExpression extends Span {
   type: 'MemberExpression';
   object: Expression;
-  field: PrivateIdentifier;
+  property: PrivateIdentifier;
   optional: boolean;
   computed: false;
 }
