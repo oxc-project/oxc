@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { assert, describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
 
@@ -26,6 +26,20 @@ describe('parse', () => {
     });
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
   });
+});
+
+it('utf16 span', async () => {
+  const code = "'🤨'";
+  {
+    const ret = await parseAsync('test.js', code);
+    expect(ret.program.end).toMatchInlineSnapshot(`6`);
+  }
+  {
+    const ret = await parseAsync('test.js', code, {
+      convertSpanUtf16: true,
+    });
+    expect(ret.program.end).toMatchInlineSnapshot(`4`);
+  }
 });
 
 describe('error', () => {

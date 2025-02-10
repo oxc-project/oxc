@@ -198,6 +198,8 @@ export interface ParserOptions {
    * Default: true
    */
   preserveParens?: boolean
+  /** Default: false */
+  convertSpanUtf16?: boolean
 }
 
 /** Parse synchronously. */
