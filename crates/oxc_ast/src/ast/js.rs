@@ -821,6 +821,7 @@ pub struct ArrayAssignmentTarget<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "ObjectPattern")]
 pub struct ObjectAssignmentTarget<'a> {
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
@@ -895,9 +896,16 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(
+    rename = "Property",
+    add_fields(kind = "\"init\"", method = false, shorthand = false),
+    add_ts = "kind: \"init\"; method: false; shorthand: false"
+)]
 pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
+    #[estree(rename = "key")]
     pub name: PropertyKey<'a>,
+    #[estree(rename = "value")]
     pub binding: AssignmentTargetMaybeDefault<'a>,
     /// Property was declared with a computed key
     pub computed: bool,

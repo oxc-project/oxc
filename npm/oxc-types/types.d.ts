@@ -248,7 +248,7 @@ export interface ArrayAssignmentTarget extends Span {
 }
 
 export interface ObjectAssignmentTarget extends Span {
-  type: 'ObjectAssignmentTarget';
+  type: 'ObjectPattern';
   properties: Array<AssignmentTargetProperty | AssignmentTargetRest>;
 }
 
@@ -274,10 +274,13 @@ export interface AssignmentTargetPropertyIdentifier extends Span {
 }
 
 export interface AssignmentTargetPropertyProperty extends Span {
-  type: 'AssignmentTargetPropertyProperty';
-  name: PropertyKey;
-  binding: AssignmentTargetMaybeDefault;
+  type: 'Property';
+  key: PropertyKey;
+  value: AssignmentTargetMaybeDefault;
   computed: boolean;
+  kind: 'init';
+  method: false;
+  shorthand: false;
 }
 
 export interface SequenceExpression extends Span {

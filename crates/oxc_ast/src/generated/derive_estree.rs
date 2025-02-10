@@ -636,7 +636,7 @@ impl Serialize for ArrayAssignmentTarget<'_> {
 impl Serialize for ObjectAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectAssignmentTarget")?;
+        map.serialize_entry("type", "ObjectPattern")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry(
@@ -721,12 +721,15 @@ impl Serialize for AssignmentTargetPropertyIdentifier<'_> {
 impl Serialize for AssignmentTargetPropertyProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetPropertyProperty")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("binding", &self.binding)?;
+        map.serialize_entry("key", &self.name)?;
+        map.serialize_entry("value", &self.binding)?;
         map.serialize_entry("computed", &self.computed)?;
+        map.serialize_entry("kind", &"init")?;
+        map.serialize_entry("method", &false)?;
+        map.serialize_entry("shorthand", &false)?;
         map.end()
     }
 }
