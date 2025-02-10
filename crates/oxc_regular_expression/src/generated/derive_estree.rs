@@ -5,7 +5,7 @@
 
 use serde::{__private::ser::FlatMapSerializer, ser::SerializeMap, Serialize, Serializer};
 
-use oxc_estree::ser::AppendTo;
+use oxc_estree::ser::{AppendTo, AppendToConcat};
 
 use crate::ast::*;
 

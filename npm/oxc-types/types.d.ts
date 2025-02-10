@@ -5,8 +5,7 @@ export interface Program extends Span {
   type: 'Program';
   sourceType: ModuleKind;
   hashbang: Hashbang | null;
-  directives: Array<Directive>;
-  body: Array<Statement>;
+  body: Array<Directive | Statement>;
 }
 
 export type Expression =
@@ -330,7 +329,7 @@ export type Statement =
   | ModuleDeclaration;
 
 export interface Directive extends Span {
-  type: 'Directive';
+  type: 'ExpressionStatement';
   expression: StringLiteral;
   directive: string;
 }
@@ -583,8 +582,7 @@ export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' |
 
 export interface FunctionBody extends Span {
   type: 'BlockStatement';
-  directives: Array<Directive>;
-  body: Array<Statement>;
+  body: Array<Directive | Statement>;
 }
 
 export interface ArrowFunctionExpression extends Span {

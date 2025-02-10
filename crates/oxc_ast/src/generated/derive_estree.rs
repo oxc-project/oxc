@@ -5,7 +5,7 @@
 
 use serde::{__private::ser::FlatMapSerializer, ser::SerializeMap, Serialize, Serializer};
 
-use oxc_estree::ser::AppendTo;
+use oxc_estree::ser::{AppendTo, AppendToConcat};
 
 use crate::ast::js::*;
 use crate::ast::jsx::*;
@@ -20,8 +20,10 @@ impl Serialize for Program<'_> {
         map.serialize_entry("end", &self.span.end)?;
         self.source_type.serialize(FlatMapSerializer(&mut map))?;
         map.serialize_entry("hashbang", &self.hashbang)?;
-        map.serialize_entry("directives", &self.directives)?;
-        map.serialize_entry("body", &self.body)?;
+        map.serialize_entry(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.body },
+        )?;
         map.end()
     }
 }
@@ -837,7 +839,7 @@ impl Serialize for Statement<'_> {
 impl Serialize for Directive<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Directive")?;
+        map.serialize_entry("type", "ExpressionStatement")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
@@ -1408,8 +1410,10 @@ impl Serialize for FunctionBody<'_> {
         map.serialize_entry("type", "BlockStatement")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("directives", &self.directives)?;
-        map.serialize_entry("body", &self.statements)?;
+        map.serialize_entry(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.statements },
+        )?;
         map.end()
     }
 }

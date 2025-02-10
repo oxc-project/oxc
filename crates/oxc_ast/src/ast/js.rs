@@ -38,7 +38,9 @@ pub struct Program<'a> {
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
     pub hashbang: Option<Hashbang<'a>>,
+    #[estree(rename = "body")]
     pub directives: Vec<'a, Directive<'a>>,
+    #[estree(append_to = "directives")]
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1012,6 +1014,7 @@ pub enum Statement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "ExpressionStatement")]
 pub struct Directive<'a> {
     pub span: Span,
     /// Directive with any escapes unescaped
@@ -1710,8 +1713,9 @@ pub enum FormalParameterKind {
 #[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
     pub span: Span,
-    pub directives: Vec<'a, Directive<'a>>,
     #[estree(rename = "body")]
+    pub directives: Vec<'a, Directive<'a>>,
+    #[estree(append_to = "directives")]
     pub statements: Vec<'a, Statement<'a>>,
 }
 

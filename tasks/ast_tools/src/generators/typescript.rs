@@ -165,9 +165,18 @@ fn generate_ts_type_def_for_struct_field<'s>(
     schema: &'s Schema,
 ) {
     let field_type_name = if let Some(append_field_index) = field.estree.append_field_index {
-        let appended_field = struct_def.fields[append_field_index].type_def(schema);
-        let appended_field = appended_field.as_option().unwrap();
-        let appended_type_name = ts_type_name(appended_field.inner_type(schema), schema);
+        let appended_field = &struct_def.fields[append_field_index];
+        let appended_type = appended_field.type_def(schema);
+        let appended_type = match appended_type {
+            TypeDef::Option(option_def) => option_def.inner_type(schema),
+            TypeDef::Vec(vec_def) => vec_def.inner_type(schema),
+            _ => panic!(
+                "Appended field must be `Option<T>` or `Vec<T>`: `{}::{}`",
+                struct_def.name(),
+                appended_field.name()
+            ),
+        };
+        let appended_type_name = ts_type_name(appended_type, schema);
 
         let field_type = field.type_def(schema);
         let (vec_def, is_option) = match field_type {

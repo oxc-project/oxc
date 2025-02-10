@@ -61,7 +61,7 @@ impl Derive for DeriveESTree {
             };
 
             ///@@line_break
-            use oxc_estree::ser::AppendTo;
+            use oxc_estree::ser::{AppendTo, AppendToConcat};
         }
     }
 
@@ -300,10 +300,16 @@ impl<'s> StructSerializerGenerator<'s> {
             let via_ty = parse_str::<Type>(via_str).unwrap();
             value = quote!( #via_ty::from(&#value) );
         } else if let Some(append_field_index) = field.estree.append_field_index {
-            let append_from_ident = struct_def.fields[append_field_index].ident();
-            value = quote! {
-                AppendTo { array: &#value, after: &#self_path.#append_from_ident }
+            let append_field = &struct_def.fields[append_field_index];
+            let append_from_ident = append_field.ident();
+            let wrapper = if append_field.type_def(self.schema).is_option() {
+                quote! { AppendTo }
+            } else {
+                quote! { AppendToConcat }
             };
+            value = quote! {
+                #wrapper { array: &#value, after: &#self_path.#append_from_ident  }
+            }
         }
 
         self.stmts.extend(quote! {
