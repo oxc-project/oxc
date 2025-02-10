@@ -101,7 +101,7 @@ jobs:
 
       - name: Install cargo-zigbuild
         if: ${{ contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@1936c8cfe365805f86ceb097d570620cc3a19932 # v2.47.25
+        uses: taiki-e/install-action@c1952a69c392b2c5f2eaa845b56120fff5fe49d3 # v2.48.5
         with:
           tool: cargo-zigbuild
 
@@ -109,7 +109,7 @@ jobs:
 
       - name: Install cross
         if: ${{ !contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@1936c8cfe365805f86ceb097d570620cc3a19932 # v2.47.25
+        uses: taiki-e/install-action@c1952a69c392b2c5f2eaa845b56120fff5fe49d3 # v2.48.5
         with:
           tool: cross
 

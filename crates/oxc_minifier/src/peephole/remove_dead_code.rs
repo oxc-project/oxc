@@ -650,7 +650,7 @@ mod test {
         test("{ (function foo(){x++; foo()}) }", "");
         test("function f(){return;}", "function f(){}");
         test("function f(){return 3;}", "function f(){return 3}");
-        test("function f(){if(x)return; x=3; return; }", "function f(){if(x)return; x=3; }");
+        test("function f(){if(x)return; x=3; return; }", "function f(){ x ||= 3; }");
         test("{x=3;;;y=2;;;}", "x=3, y=2");
 
         // Cases to test for empty block.

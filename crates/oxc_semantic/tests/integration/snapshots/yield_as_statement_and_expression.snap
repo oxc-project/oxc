@@ -35,9 +35,9 @@ ExpressionStatement
 ExpressionStatement
 return" shape = box]
     4 [ label = "bb4" shape = box]
-    1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
-    3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
+    1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    3 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 3 [ label="NewFunction"]
-    4 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
+    4 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 4 [ label="Normal"]
 }

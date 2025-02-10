@@ -14,6 +14,9 @@ use oxc_syntax::number::BigintBase;
 
 use crate::ast::*;
 
+/// Constant value that will be serialized as `null` in JSON.
+pub(crate) const NULL: () = ();
+
 // --------------------
 // Literals
 // --------------------

@@ -1,6 +1,9 @@
+use std::ops::ControlFlow;
+
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
@@ -30,7 +33,9 @@ impl<'a> PeepholeOptimizations {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
-        for stmt in ctx.ast.vec_from_iter(stmts.drain(..)) {
+        let mut new_stmts = ctx.ast.vec_from_iter(stmts.drain(..));
+        for i in 0..new_stmts.len() {
+            let stmt = ctx.ast.move_statement(&mut new_stmts[i]);
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -38,7 +43,19 @@ impl<'a> PeepholeOptimizations {
                 keep_var.visit_statement(&stmt);
                 continue;
             }
-            self.minimize_statement(stmt, &mut result, &mut is_control_flow_dead, ctx);
+            if self
+                .minimize_statement(
+                    stmt,
+                    i,
+                    &mut new_stmts,
+                    &mut result,
+                    &mut is_control_flow_dead,
+                    ctx,
+                )
+                .is_break()
+            {
+                break;
+            };
         }
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             result.push(stmt);
@@ -176,10 +193,12 @@ impl<'a> PeepholeOptimizations {
     fn minimize_statement(
         &mut self,
         stmt: Statement<'a>,
+        i: usize,
+        stmts: &mut Vec<'a, Statement<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         is_control_flow_dead: &mut bool,
         ctx: Ctx<'a, '_>,
-    ) {
+    ) -> ControlFlow<()> {
         match stmt {
             Statement::EmptyStatement(_) => (),
             Statement::BreakStatement(s) => {
@@ -220,60 +239,10 @@ impl<'a> PeepholeOptimizations {
                 }
                 result.push(Statement::SwitchStatement(switch_stmt));
             }
-            Statement::IfStatement(mut if_stmt) => {
-                if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                    let a = &mut prev_expr_stmt.expression;
-                    let b = &mut if_stmt.test;
-                    if_stmt.test = Self::join_sequence(a, b, ctx);
-                    result.pop();
-                    self.mark_current_function_as_changed();
+            Statement::IfStatement(if_stmt) => {
+                if self.handle_if_statement(i, stmts, result, if_stmt, ctx).is_break() {
+                    return ControlFlow::Break(());
                 }
-
-                if if_stmt.consequent.is_jump_statement() {
-                    // Absorb a previous if statement
-                    if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut() {
-                        if prev_if_stmt.alternate.is_none()
-                            && Self::jump_stmts_look_the_same(
-                                &prev_if_stmt.consequent,
-                                &if_stmt.consequent,
-                            )
-                        {
-                            // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
-                            // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
-                            // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
-                            // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                            if_stmt.test = Self::join_with_left_associative_op(
-                                if_stmt.test.span(),
-                                LogicalOperator::Or,
-                                ctx.ast.move_expression(&mut prev_if_stmt.test),
-                                ctx.ast.move_expression(&mut if_stmt.test),
-                                ctx,
-                            );
-                            result.pop();
-                            self.mark_current_function_as_changed();
-                        }
-                    }
-
-                    if if_stmt.alternate.is_some() {
-                        // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
-                        result.push(Statement::IfStatement(if_stmt));
-                        loop {
-                            if let Some(Statement::IfStatement(if_stmt)) = result.last_mut() {
-                                if if_stmt.consequent.is_jump_statement() {
-                                    if let Some(stmt) = if_stmt.alternate.take() {
-                                        result.push(stmt);
-                                        self.mark_current_function_as_changed();
-                                        continue;
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                        return;
-                    }
-                }
-
-                result.push(Statement::IfStatement(if_stmt));
             }
             Statement::ReturnStatement(mut ret_stmt) => {
                 if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
@@ -443,6 +412,7 @@ impl<'a> PeepholeOptimizations {
             Statement::BlockStatement(block_stmt) => self.handle_block(result, block_stmt),
             stmt => result.push(stmt),
         }
+        ControlFlow::Continue(())
     }
 
     fn join_sequence(
@@ -473,6 +443,148 @@ impl<'a> PeepholeOptimizations {
             return left.content_eq(right);
         }
         false
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    fn handle_if_statement(
+        &mut self,
+        i: usize,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        result: &mut Vec<'a, Statement<'a>>,
+        mut if_stmt: Box<'a, IfStatement<'a>>,
+        ctx: Ctx<'a, '_>,
+    ) -> ControlFlow<()> {
+        // Absorb a previous expression statement
+        if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut if_stmt.test;
+            if_stmt.test = Self::join_sequence(a, b, ctx);
+            result.pop();
+            self.mark_current_function_as_changed();
+        }
+
+        if if_stmt.consequent.is_jump_statement() {
+            // Absorb a previous if statement
+            if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut() {
+                if prev_if_stmt.alternate.is_none()
+                    && Self::jump_stmts_look_the_same(&prev_if_stmt.consequent, &if_stmt.consequent)
+                {
+                    // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
+                    // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
+                    // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
+                    // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
+                    if_stmt.test = Self::join_with_left_associative_op(
+                        if_stmt.test.span(),
+                        LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut prev_if_stmt.test),
+                        ctx.ast.move_expression(&mut if_stmt.test),
+                        ctx,
+                    );
+                    result.pop();
+                    self.mark_current_function_as_changed();
+                }
+            }
+
+            let mut optimize_implicit_jump = false;
+            // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
+            // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
+            if ctx.ancestors().nth(1).is_some_and(Ancestor::is_for_statement) {
+                if let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent {
+                    if continue_stmt.label.is_none() {
+                        optimize_implicit_jump = true;
+                    }
+                }
+            }
+
+            // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
+            // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
+            if ctx.parent().is_function_body() {
+                if let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent {
+                    if return_stmt.argument.is_none() {
+                        optimize_implicit_jump = true;
+                    }
+                }
+            }
+            if optimize_implicit_jump {
+                // Don't do this transformation if the branch condition could
+                // potentially access symbols declared later on on this scope below.
+                // If so, inverting the branch condition and nesting statements after
+                // this in a block would break that access which is a behavior change.
+                //
+                //   // This transformation is incorrect
+                //   if (a()) return; function a() {}
+                //   if (!a()) { function a() {} }
+                //
+                //   // This transformation is incorrect
+                //   if (a(() => b)) return; let b;
+                //   if (a(() => b)) { let b; }
+                //
+                let mut can_move_branch_condition_outside_scope = true;
+                if let Some(alternate) = &if_stmt.alternate {
+                    if Self::statement_cares_about_scope(alternate) {
+                        can_move_branch_condition_outside_scope = false;
+                    }
+                }
+                if let Some(stmts) = stmts.get(i + 1..) {
+                    for stmt in stmts {
+                        if Self::statement_cares_about_scope(stmt) {
+                            can_move_branch_condition_outside_scope = false;
+                            break;
+                        }
+                    }
+                }
+
+                if can_move_branch_condition_outside_scope {
+                    let mut body = ctx.ast.vec();
+                    if let Some(alternate) = if_stmt.alternate.take() {
+                        body.push(alternate);
+                    }
+                    body.extend(stmts.drain(i + 1..));
+
+                    self.minimize_statements(&mut body, ctx);
+                    let span =
+                        if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
+                    let test = ctx.ast.move_expression(&mut if_stmt.test);
+                    let mut test = Self::minimize_not(test.span(), test, ctx);
+                    Self::try_fold_expr_in_boolean_context(&mut test, ctx);
+                    let consequent = if body.len() == 1 {
+                        body.remove(0)
+                    } else {
+                        let scope_id = ScopeId::new(ctx.scopes().len() as u32);
+                        let block_stmt =
+                            ctx.ast.block_statement_with_scope_id(span, body, scope_id);
+                        Statement::BlockStatement(ctx.ast.alloc(block_stmt))
+                    };
+                    let mut if_stmt = ctx.ast.if_statement(test.span(), test, consequent, None);
+                    let if_stmt = self
+                        .try_minimize_if(&mut if_stmt, ctx)
+                        .unwrap_or_else(|| Statement::IfStatement(ctx.ast.alloc(if_stmt)));
+                    result.push(if_stmt);
+                    return ControlFlow::Break(());
+                }
+            }
+
+            if if_stmt.alternate.is_some() {
+                // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
+                result.push(Statement::IfStatement(if_stmt));
+                loop {
+                    if let Some(Statement::IfStatement(if_stmt)) = result.last_mut() {
+                        if if_stmt.consequent.is_jump_statement() {
+                            if let Some(stmt) = if_stmt.alternate.take() {
+                                result.push(stmt);
+                                self.mark_current_function_as_changed();
+                                continue;
+                            }
+                        }
+                    }
+                    break;
+                }
+                return ControlFlow::Continue(());
+            }
+        }
+
+        result.push(Statement::IfStatement(if_stmt));
+        ControlFlow::Continue(())
     }
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>

@@ -1,8 +1,7 @@
 use oxc_ast::ast::*;
 
+use oxc_semantic::ScopeId;
 use oxc_span::GetSpan;
-use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::TraverseCtx;
 
 use crate::ctx::Ctx;
 
@@ -13,10 +12,9 @@ impl<'a> PeepholeOptimizations {
     pub fn try_minimize_if(
         &mut self,
         if_stmt: &mut IfStatement<'a>,
-        traverse_ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
-        self.wrap_to_avoid_ambiguous_else(if_stmt, traverse_ctx);
-        let ctx = Ctx(traverse_ctx);
+        self.wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {
@@ -94,7 +92,7 @@ impl<'a> PeepholeOptimizations {
                         // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
                         if_stmt.test = ctx.ast.move_expression(&mut unary_expr.argument);
                         std::mem::swap(&mut if_stmt.consequent, alternate);
-                        self.wrap_to_avoid_ambiguous_else(if_stmt, traverse_ctx);
+                        self.wrap_to_avoid_ambiguous_else(if_stmt, ctx);
                         self.mark_current_function_as_changed();
                     }
                 }
@@ -124,14 +122,11 @@ impl<'a> PeepholeOptimizations {
 
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
-    fn wrap_to_avoid_ambiguous_else(
-        &mut self,
-        if_stmt: &mut IfStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    #[expect(clippy::cast_possible_truncation)]
+    fn wrap_to_avoid_ambiguous_else(&mut self, if_stmt: &mut IfStatement<'a>, ctx: Ctx<'a, '_>) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
             if if2.consequent.is_jump_statement() && if2.alternate.is_some() {
-                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+                let scope_id = ScopeId::new(ctx.scoping.scopes().len() as u32);
                 if_stmt.consequent = Statement::BlockStatement(ctx.ast.alloc(
                     ctx.ast.block_statement_with_scope_id(
                         if_stmt.consequent.span(),

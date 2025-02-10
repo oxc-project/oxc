@@ -1426,6 +1426,8 @@ impl Serialize for ArrowFunctionExpression<'_> {
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
         map.serialize_entry("body", &self.body)?;
+        map.serialize_entry("generator", &false)?;
+        map.serialize_entry("id", &crate::serialize::NULL)?;
         map.end()
     }
 }
@@ -1908,7 +1910,7 @@ impl Serialize for NullLiteral {
         map.serialize_entry("type", "Literal")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("value", &())?;
+        map.serialize_entry("value", &crate::serialize::NULL)?;
         map.serialize_entry("raw", &crate::serialize::null_literal_raw(self))?;
         map.end()
     }
@@ -1945,7 +1947,7 @@ impl Serialize for BigIntLiteral<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &())?;
+        map.serialize_entry("value", &crate::serialize::NULL)?;
         map.serialize_entry("bigint", &crate::serialize::bigint_literal_bigint(self))?;
         map.end()
     }

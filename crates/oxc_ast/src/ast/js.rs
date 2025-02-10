@@ -1723,6 +1723,10 @@ pub struct FunctionBody<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(
+    add_fields(generator = false, id = crate::serialize::NULL),
+    add_ts = "generator: false; id: null"
+)]
 pub struct ArrowFunctionExpression<'a> {
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`

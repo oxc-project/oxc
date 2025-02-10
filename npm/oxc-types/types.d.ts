@@ -595,6 +595,8 @@ export interface ArrowFunctionExpression extends Span {
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
   body: FunctionBody;
+  generator: false;
+  id: null;
 }
 
 export interface YieldExpression extends Span {

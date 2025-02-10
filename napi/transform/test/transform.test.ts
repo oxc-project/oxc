@@ -244,3 +244,33 @@ describe('inject plugin', () => {
     expect(ret.code).toEqual('import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n');
   });
 });
+
+describe('legacy decorator', () => {
+  it('matches output', () => {
+    const code = `
+      export default @dce class C {
+        @dce
+        prop = 0;
+        method(@dce param) {}
+      }
+    `;
+    const ret = transform('test.tsx', code, {
+      decorator: {
+        legacy: true,
+      },
+    });
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import _decorate from "@babel/runtime/helpers/decorate";
+      import _decorateParam from "@babel/runtime/helpers/decorateParam";
+      let C = class C {
+      	prop = 0;
+      	method(param) {}
+      };
+      _decorate([dce], C.prototype, "prop", void 0);
+      _decorate([_decorateParam(0, dce)], C.prototype, "method", null);
+      C = _decorate([dce], C);
+      export default C;
+      "
+    `);
+  });
+});

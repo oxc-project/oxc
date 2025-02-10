@@ -20,6 +20,19 @@ export interface CompilerAssumptions {
   setPublicClassFields?: boolean
 }
 
+export interface DecoratorOptions {
+  /**
+   * Enables experimental support for decorators, which is a version of decorators that predates the TC39 standardization process.
+   *
+   * Decorators are a language feature which hasn’t yet been fully ratified into the JavaScript specification.
+   * This means that the implementation version in TypeScript may differ from the implementation in JavaScript when it it decided by TC39.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#experimentalDecorators
+   * @default false
+   */
+  legacy?: boolean
+}
+
 export interface ErrorLabel {
   message?: string
   start: number
@@ -270,6 +283,8 @@ export interface TransformOptions {
   define?: Record<string, string>
   /** Inject Plugin */
   inject?: Record<string, string | [string, string]>
+  /** Decorator plugin */
+  decorator?: DecoratorOptions
 }
 
 export interface TransformResult {

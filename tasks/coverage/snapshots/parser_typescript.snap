@@ -19231,20 +19231,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × Invalid assignment in object literal
-    ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:48:5]
- 47 │ var h1 = {
- 48 │     x = 1,
-    ·     ─────
- 49 │     y = 2,
-    ╰────
-  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
-
-  × Invalid assignment in object literal
     ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:49:5]
  48 │     x = 1,
  49 │     y = 2,
     ·     ─────
  50 │     #z: 3
+    ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+    ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:48:5]
+ 47 │ var h1 = {
+ 48 │     x = 1,
+    ·     ─────
+ 49 │     y = 2,
     ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
