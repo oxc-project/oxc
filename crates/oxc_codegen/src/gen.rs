@@ -1345,7 +1345,7 @@ impl Gen for RegExpLiteral<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         let last = p.last_byte();
-        let pattern_text = self.regex.pattern.source_text(p.source_text);
+        let pattern_text = self.regex.pattern.to_string();
         // Avoid forming a single-line comment or "</script" sequence
         if last == Some(b'/')
             || (last == Some(b'<') && pattern_text.cow_to_ascii_lowercase().starts_with("script"))
