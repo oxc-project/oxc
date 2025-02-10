@@ -41,7 +41,7 @@ pub struct BooleanLiteral {
 #[estree(
     rename = "Literal",
     add_fields(
-        value = (),
+        value = crate::serialize::NULL,
         raw = crate::serialize::null_literal_raw(self),
     ),
     add_ts = "value: null, raw: \"null\" | null",
@@ -103,7 +103,7 @@ pub struct StringLiteral<'a> {
 #[estree(
     rename = "Literal",
     add_fields(
-        value = (),
+        value = crate::serialize::NULL,
         bigint = crate::serialize::bigint_literal_bigint(self),
     ),
     add_ts = "value: null, bigint: string",

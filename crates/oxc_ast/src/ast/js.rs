@@ -1724,7 +1724,7 @@ pub struct FunctionBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
-    add_fields(generator = false, id = ()),
+    add_fields(generator = false, id = crate::serialize::NULL),
     add_ts = "generator: false; id: null"
 )]
 pub struct ArrowFunctionExpression<'a> {
