@@ -1585,8 +1585,6 @@ dependencies = [
  "bitflags 2.8.0",
  "cow-utils",
  "nonmax",
- "num-bigint",
- "num-traits",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",

@@ -1,8 +1,6 @@
-use std::io::Write;
+use std::{borrow::Cow, io::Write};
 
 use cow_utils::CowUtils;
-use num_bigint::BigInt;
-use num_traits::Num;
 use serde::{
     ser::{SerializeMap, SerializeSeq, Serializer},
     Serialize,
@@ -10,7 +8,6 @@ use serde::{
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_span::Span;
-use oxc_syntax::number::BigintBase;
 
 use crate::ast::*;
 
@@ -109,21 +106,8 @@ pub fn null_literal_raw(lit: &NullLiteral) -> Option<&str> {
 }
 
 /// Get `bigint` field of `BigIntLiteral`.
-pub fn bigint_literal_bigint(lit: &BigIntLiteral) -> String {
-    let src = &lit.raw.strip_suffix('n').unwrap().cow_replace('_', "");
-    let src = match lit.base {
-        BigintBase::Decimal => src,
-        BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => &src[2..],
-    };
-
-    let radix = match lit.base {
-        BigintBase::Decimal => 10,
-        BigintBase::Binary => 2,
-        BigintBase::Octal => 8,
-        BigintBase::Hex => 16,
-    };
-
-    BigInt::from_str_radix(src, radix).unwrap().to_string()
+pub fn bigint_literal_bigint<'a>(lit: &'a BigIntLiteral<'a>) -> Cow<'a, str> {
+    lit.raw.strip_suffix('n').unwrap().cow_replace('_', "")
 }
 
 /// A placeholder for `RegExpLiteral`'s `value` field.
