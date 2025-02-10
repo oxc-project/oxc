@@ -1426,6 +1426,8 @@ impl Serialize for ArrowFunctionExpression<'_> {
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
         map.serialize_entry("body", &self.body)?;
+        map.serialize_entry("generator", &false)?;
+        map.serialize_entry("id", &())?;
         map.end()
     }
 }
