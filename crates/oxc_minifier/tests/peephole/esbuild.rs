@@ -907,10 +907,10 @@ fn constant_evaluation_test() {
     test("x = +{valueOf:()=>1}", "x = +{ valueOf: () => 1 };");
     test("x = 3 + 6", "x = 9;");
     test("x = 3 - 6", "x = -3;");
-    test("x = 3 * 6", "x = 3 * 6;");
-    test("x = 3 / 6", "x = 3 / 6;");
-    test("x = 3 % 6", "x = 3 % 6;");
-    test("x = 3 ** 6", "x = 3 ** 6;");
+    test("x = 3 * 6", "x = 18;");
+    test("x = 3 / 6", "x = .5;");
+    test("x = 3 % 6", "x = 3;");
+    test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
     test("x = 123 / 0", "x = Infinity;");
     test("x = 123 / -0", "x = -Infinity;");
