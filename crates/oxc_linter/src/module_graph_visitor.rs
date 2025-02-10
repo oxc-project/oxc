@@ -1,4 +1,3 @@
-#![allow(missing_docs)] // fixme
 use std::{marker::PhantomData, path::PathBuf, sync::Arc};
 
 use oxc_span::CompactStr;
@@ -143,7 +142,7 @@ struct ModuleGraphVisitor {
 }
 
 impl ModuleGraphVisitor {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn filter_fold_while<
         T,
         Filter: Fn(ModulePair, &ModuleRecord) -> bool,
@@ -173,7 +172,7 @@ impl ModuleGraphVisitor {
         .into_inner()
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn filter_fold_recursive<
         T,
         Filter: Fn(ModulePair, &ModuleRecord) -> bool,

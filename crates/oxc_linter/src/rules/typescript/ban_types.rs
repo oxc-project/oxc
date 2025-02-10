@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// let bar: Boolean = true;
     /// ```
     BanTypes,
+    typescript,
     pedantic,
     pending
 );
@@ -70,7 +71,7 @@ impl Rule for BanTypes {
                     "String" | "Boolean" | "Number" | "Symbol" | "BigInt" => {
                         ctx.diagnostic(type_diagnostic(
                             name.as_str(),
-                            &name.as_str().cow_to_lowercase(),
+                            &name.as_str().cow_to_ascii_lowercase(),
                             typ.span,
                         ));
                     }
@@ -170,5 +171,5 @@ type Props = {
         ),
     ];
 
-    Tester::new(BanTypes::NAME, BanTypes::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(BanTypes::NAME, BanTypes::PLUGIN, pass, fail).test_and_snapshot();
 }

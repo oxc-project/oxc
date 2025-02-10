@@ -62,6 +62,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     NoDupeKeys,
+    eslint,
     correctness
 );
 
@@ -149,5 +150,5 @@ fn test() {
         ("var x = ({ '/(?<zero>0)/': 1, [/(?<zero>0)/]: 2 })", None),
     ];
 
-    Tester::new(NoDupeKeys::NAME, NoDupeKeys::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDupeKeys::NAME, NoDupeKeys::PLUGIN, pass, fail).test_and_snapshot();
 }

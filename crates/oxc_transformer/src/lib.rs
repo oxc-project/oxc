@@ -1,4 +1,3 @@
-#![allow(clippy::needless_lifetimes)]
 //! Transformer / Transpiler
 //!
 //! References:
@@ -20,6 +19,7 @@ mod common;
 mod compiler_assumptions;
 mod context;
 mod options;
+mod utils;
 
 // Presets: <https://babel.dev/docs/presets>
 mod es2015;
@@ -34,10 +34,12 @@ mod jsx;
 mod regexp;
 mod typescript;
 
+mod decorator;
 mod plugins;
 
 use common::Common;
 use context::TransformCtx;
+use decorator::Decorator;
 use es2015::ES2015;
 use es2016::ES2016;
 use es2017::ES2017;
@@ -54,6 +56,7 @@ use typescript::TypeScript;
 pub use crate::{
     common::helper_loader::{Helper, HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
+    decorator::DecoratorOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
@@ -80,6 +83,7 @@ pub struct Transformer<'a> {
     allocator: &'a Allocator,
 
     typescript: TypeScriptOptions,
+    decorator: DecoratorOptions,
     jsx: JsxOptions,
     env: EnvOptions,
 }
@@ -91,6 +95,7 @@ impl<'a> Transformer<'a> {
             ctx,
             allocator,
             typescript: options.typescript.clone(),
+            decorator: options.decorator,
             jsx: options.jsx.clone(),
             env: options.env,
         }
@@ -116,6 +121,7 @@ impl<'a> Transformer<'a> {
 
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
+            decorator: Decorator::new(self.decorator, &self.ctx),
             x0_typescript: program
                 .source_type
                 .is_typescript()
@@ -134,7 +140,7 @@ impl<'a> Transformer<'a> {
 
         let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
         let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
-        #[allow(deprecated)]
+        #[expect(deprecated)]
         TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes, helpers_used }
     }
 }
@@ -142,6 +148,7 @@ impl<'a> Transformer<'a> {
 struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
+    decorator: Decorator<'a, 'ctx>,
     x1_jsx: Jsx<'a, 'ctx>,
     x2_es2022: ES2022<'a, 'ctx>,
     x2_es2021: ES2021<'a, 'ctx>,
@@ -156,7 +163,7 @@ struct TransformerImpl<'a, 'ctx> {
     common: Common<'a, 'ctx>,
 }
 
-impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
+impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_program(program, ctx);
@@ -282,6 +289,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.enter_expression(expr, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_expression(expr, ctx);
         }
@@ -291,15 +299,14 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x2_es2018.enter_expression(expr, ctx);
         self.x2_es2016.enter_expression(expr, ctx);
         self.x4_regexp.enter_expression(expr, ctx);
-        self.common.enter_expression(expr, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.exit_expression(expr, ctx);
         self.x1_jsx.exit_expression(expr, ctx);
         self.x2_es2022.exit_expression(expr, ctx);
         self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
-        self.common.exit_expression(expr, ctx);
     }
 
     fn enter_simple_assignment_target(
@@ -478,6 +485,8 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.common.exit_arrow_function_expression(arrow, ctx);
+
         // Some plugins may add new statements to the ArrowFunctionExpression's body,
         // which can cause issues with the `() => x;` case, as it only allows a single statement.
         // To address this, we wrap the last statement in a return statement and set the expression to false.
@@ -524,6 +533,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statement(stmt, ctx);
         }
+        self.decorator.enter_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }

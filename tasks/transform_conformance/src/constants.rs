@@ -5,8 +5,8 @@ pub const PLUGINS: &[&str] = &[
     // // ES2022
     "babel-plugin-transform-class-properties",
     "babel-plugin-transform-class-static-block",
-    // "babel-plugin-transform-private-methods",
-    // "babel-plugin-transform-private-property-in-object",
+    "babel-plugin-transform-private-methods",
+    "babel-plugin-transform-private-property-in-object",
     // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
     // ES2021
     "babel-plugin-transform-logical-assignment-operators",
@@ -59,6 +59,8 @@ pub const PLUGINS: &[&str] = &[
 
     // RegExp tests ported from esbuild + a few additions
     "regexp",
+    // Legacy decorators, tests almost ported from TypeScript
+    "legacy-decorators",
 ];
 
 pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
@@ -67,7 +69,6 @@ pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "transform-destructuring",
     "transform-modules-commonjs",
     "transform-parameters",
-    "transform-private-methods",
     "transform-property-literals",
     "transform-react-constant-elements",
 ];

@@ -1,14 +1,8 @@
-#![allow(
-    clippy::fn_params_excessive_bools,
-    clippy::must_use_candidate, // must_use_candidate is too annoying for this file
-    clippy::too_many_arguments,
-    clippy::unused_self,
-)]
 #![warn(missing_docs)]
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, Vec};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
@@ -16,7 +10,6 @@ use crate::{ast::*, AstBuilder};
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
-#[allow(clippy::upper_case_acronyms)]
 pub struct NONE;
 
 impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
@@ -78,7 +71,7 @@ impl<'a> AstBuilder<'a> {
     /// in the heap.
     #[inline]
     pub fn str(self, value: &str) -> &'a str {
-        String::from_str_in(value, self.allocator).into_bump_str()
+        self.allocator.alloc_str(value)
     }
 
     /// Allocate an [`Atom`] from a string slice.
@@ -105,7 +98,7 @@ impl<'a> AstBuilder<'a> {
     /// This method is completely unsound and should not be used.
     /// We need to remove all uses of it. Please don't add any more!
     /// <https://github.com/oxc-project/oxc/issues/3483>
-    #[allow(clippy::missing_safety_doc)]
+    #[expect(clippy::missing_safety_doc)]
     #[inline]
     pub unsafe fn copy<T>(self, src: &T) -> T {
         // SAFETY: Not safe (see above)
@@ -130,7 +123,8 @@ impl<'a> AstBuilder<'a> {
     /// [`AssignmentTarget::AssignmentTargetIdentifier`] with no name and an empty [`Span`].
     #[inline]
     pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
-        let dummy = self.simple_assignment_target_identifier_reference(SPAN, Atom::from(""));
+        let dummy =
+            self.simple_assignment_target_assignment_target_identifier(SPAN, Atom::from(""));
         mem::replace(target, dummy.into())
     }
 
@@ -194,6 +188,24 @@ impl<'a> AstBuilder<'a> {
         mem::replace(function, empty_function)
     }
 
+    /// Move a class out by replacing it with an empty [`Class`].
+    pub fn move_class(self, class: &mut Class<'a>) -> Class<'a> {
+        let empty_class = self.class(
+            SPAN,
+            ClassType::ClassDeclaration,
+            self.vec(),
+            None,
+            NONE,
+            None,
+            NONE,
+            None,
+            self.class_body(SPAN, self.vec()),
+            false,
+            false,
+        );
+        mem::replace(class, empty_class)
+    }
+
     /// Move an array element out by replacing it with an [`ArrayExpressionElement::Elision`].
     pub fn move_array_expression_element(
         self,
@@ -233,7 +245,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn use_strict_directive(self) -> Directive<'a> {
         let use_strict = Atom::from("use strict");
-        self.directive(SPAN, self.string_literal(SPAN, use_strict.clone(), None), use_strict)
+        self.directive(SPAN, self.string_literal(SPAN, use_strict, None), use_strict)
     }
 
     /* ---------- Functions ---------- */

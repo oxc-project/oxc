@@ -21,3 +21,21 @@ impl<TVec: Serialize, TAfter: Serialize> Serialize for AppendTo<'_, TVec, TAfter
         }
     }
 }
+
+pub struct AppendToConcat<'a, TVec, TAfter> {
+    pub array: &'a [TVec],
+    pub after: &'a [TAfter],
+}
+
+impl<TVec: Serialize, TAfter: Serialize> Serialize for AppendToConcat<'_, TVec, TAfter> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut seq = serializer.serialize_seq(Some(self.array.len() + self.after.len()))?;
+        for element in self.array {
+            seq.serialize_element(element)?;
+        }
+        for element in self.after {
+            seq.serialize_element(element)?;
+        }
+        seq.end()
+    }
+}

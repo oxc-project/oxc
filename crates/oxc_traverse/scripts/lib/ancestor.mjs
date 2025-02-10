@@ -112,9 +112,7 @@ export default function generateAncestorsCode(types) {
   }
 
   return `
-    #![allow(
-      unsafe_code,
-      clippy::missing_safety_doc,
+    #![expect(
       clippy::ptr_as_ptr,
       clippy::undocumented_unsafe_blocks,
       clippy::cast_ptr_alignment,
@@ -131,7 +129,6 @@ export default function generateAncestorsCode(types) {
     /// Used in [\`crate::TraverseCtx::retag_stack\`].
     #[repr(u16)]
     #[derive(Clone, Copy)]
-    #[allow(dead_code)]
     pub(crate) enum AncestorType {
       None = 0,
       ${ancestorTypeEnumVariants}

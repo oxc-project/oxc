@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// <div />
     /// ```
     NoAccessKey,
+    jsx_a11y,
     correctness,
     suggestion,
 );
@@ -104,7 +105,7 @@ fn test() {
         (r"<div accessKey={`${undefined}${undefined}`} />", r"<div  />"),
     ];
 
-    Tester::new(NoAccessKey::NAME, NoAccessKey::CATEGORY, pass, fail)
+    Tester::new(NoAccessKey::NAME, NoAccessKey::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -385,7 +385,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    #[allow(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
+    #[expect(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_method_definition(
         &mut self,
         span: Span,
@@ -402,7 +402,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<ClassElement<'a>> {
         let kind = if !r#static
             && !computed
-            && key.prop_name().map_or(false, |(name, _)| name == "constructor")
+            && key.prop_name().is_some_and(|(name, _)| name == "constructor")
         {
             MethodDefinitionKind::Constructor
         } else {
@@ -450,7 +450,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// `FieldDefinition`[?Yield, ?Await] ;
-    #[allow(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
+    #[expect(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_property_definition(
         &mut self,
         span: Span,
@@ -502,7 +502,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// <https://github.com/tc39/proposal-decorators>
-    #[allow(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
+    #[expect(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_accessor_property(
         &mut self,
         span: Span,

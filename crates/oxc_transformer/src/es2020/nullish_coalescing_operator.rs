@@ -47,7 +47,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
+impl<'a> Traverse<'a> for NullishCoalescingOperator<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -64,7 +64,7 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
+impl<'a> NullishCoalescingOperator<'a, '_> {
     fn transform_logical_expression(
         &mut self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
@@ -91,7 +91,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
                     // Check binding is not mutated.
                     // TODO(improve-on-babel): Remove this check. Whether binding is mutated or not is not relevant.
                     if ctx.symbols().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
-                        let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
+                        let binding = BoundIdentifier::new(ident.name, symbol_id);
                         let ident_span = ident.span;
                         return Self::create_conditional_expression(
                             logical_expr.left,

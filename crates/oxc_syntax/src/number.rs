@@ -1,11 +1,11 @@
-#![allow(missing_docs)] // fixme
+#![expect(missing_docs)] // fixme
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
-use oxc_span::{cmp::ContentEq, hash::ContentHash};
+use oxc_span::ContentEq;
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
+#[generate_derive(CloneIn, ContentEq)]
 pub enum NumberBase {
     Float = 0,
     Decimal = 1,
@@ -22,7 +22,7 @@ impl NumberBase {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
+#[generate_derive(CloneIn, ContentEq)]
 pub enum BigintBase {
     Decimal = 0,
     Binary = 1,

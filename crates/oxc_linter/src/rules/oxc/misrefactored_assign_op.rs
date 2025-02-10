@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// a -= b;
     /// ```
     MisrefactoredAssignOp,
+    oxc,
     suspicious,
     pending
 );
@@ -227,6 +228,6 @@ fn test() {
         //~^ ERROR: variable appears on both sides of an assignment operation
     ];
 
-    Tester::new(MisrefactoredAssignOp::NAME, MisrefactoredAssignOp::CATEGORY, pass, fail)
+    Tester::new(MisrefactoredAssignOp::NAME, MisrefactoredAssignOp::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

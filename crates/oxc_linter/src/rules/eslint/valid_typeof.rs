@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// typeof foo === baz
     /// ```
     ValidTypeof,
+    eslint,
     correctness,
     conditional_fix
 );
@@ -97,7 +98,7 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::Identifier(ident) = sibling {
-            if ident.name == "undefined" && ctx.semantic().is_reference_to_global_variable(ident) {
+            if ident.name == "undefined" && ctx.is_reference_to_global_variable(ident) {
                 ctx.diagnostic_with_fix(
                     if self.require_string_literals {
                         not_string(
@@ -124,7 +125,7 @@ impl Rule for ValidTypeof {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let require_string_literals = value.get(0).map_or(false, |config| {
+        let require_string_literals = value.get(0).is_some_and(|config| {
             config
                 .get("requireStringLiterals")
                 .and_then(serde_json::Value::as_bool)
@@ -224,7 +225,7 @@ fn test() {
 
     let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];
 
-    Tester::new(ValidTypeof::NAME, ValidTypeof::CATEGORY, pass, fail)
+    Tester::new(ValidTypeof::NAME, ValidTypeof::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

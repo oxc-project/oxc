@@ -316,7 +316,7 @@ impl<'a> ParserImpl<'a> {
         answer
     }
 
-    #[allow(clippy::inline_always)]
+    #[expect(clippy::inline_always)]
     #[inline(always)] // inline because this is always on a hot path
     pub(crate) fn context<F, T>(&mut self, add_flags: Context, remove_flags: Context, cb: F) -> T
     where

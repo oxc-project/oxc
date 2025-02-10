@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-empty-character-class): Empty character class will not match anything
    ╭─[no_empty_character_class.tsx:1:16]

@@ -5,19 +5,25 @@
   },
   "overrides": [
     {
-      "files": ["*.js"],
+      "files": [
+        "*.js"
+      ],
       "rules": {
         "no-console": "warn"
       }
     },
     {
-      "files": ["*.{js,jsx}"],
+      "files": [
+        "*.{js,jsx}"
+      ],
       "rules": {
         "no-console": "off"
       }
     },
     {
-      "files": ["*.ts"],
+      "files": [
+        "*.ts"
+      ],
       "rules": {
         "no-console": "warn"
       }

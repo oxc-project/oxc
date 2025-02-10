@@ -1,0 +1,218 @@
+name: Release NAPI
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        type: string
+        description: "The component name"
+    secrets:
+      NPM_TOKEN:
+        required: true
+
+jobs:
+  check:
+    name: Check version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ env.version }}
+      version_changed: ${{ steps.version.outputs.changed }}
+    env:
+      name: ${{ inputs.name }}
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2.1.5
+        id: version
+        with:
+          static-checking: localIsNew
+          file-url: https://unpkg.com/oxc-${{ inputs.name }}@latest/package.json
+          file-name: npm/oxc-${{ inputs.name }}/package.json
+
+      - name: Set version name
+        if: steps.version.outputs.changed == 'true'
+        env:
+          VERSION_NUMBER: ${{ steps.version.outputs.version }}
+          VERSION_TYPE: ${{ steps.version.outputs.version_type }}
+        run: |
+          echo "Version change found! New version: ${VERSION_NUMBER} (${VERSION_NUMBER})"
+          echo "version=${VERSION_NUMBER}" >> $GITHUB_ENV
+
+  build:
+    needs: check
+    if: needs.check.outputs.version_changed == 'true'
+    name: Package ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    env:
+      version: ${{ needs.check.outputs.version }}
+      name: ${{ inputs.name }}
+    outputs:
+      version: ${{ env.version }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            code-target: win32-x64-msvc
+
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            code-target: win32-arm64-msvc
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            code-target: linux-x64-gnu
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            code-target: linux-arm64-gnu
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            code-target: linux-x64-musl
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            code-target: linux-arm64-musl
+
+          - os: macos-13
+            target: x86_64-apple-darwin
+            code-target: darwin-x64
+
+          - os: macos-14 # M1
+            target: aarch64-apple-darwin
+            code-target: darwin-arm64
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      ### install musl dependencies ###
+
+      - uses: mlugg/setup-zig@a67e68dc5c8281d9608136d3d7ca1b282213e4ac # v1.2.1
+        if: ${{ contains(matrix.target, 'musl') }}
+        with:
+          version: 0.11.0
+
+      - name: Install cargo-zigbuild
+        if: ${{ contains(matrix.target, 'musl') }}
+        uses: taiki-e/install-action@c1952a69c392b2c5f2eaa845b56120fff5fe49d3 # v2.48.5
+        with:
+          tool: cargo-zigbuild
+
+      ### install non-musl dependencies ###
+
+      - name: Install cross
+        if: ${{ !contains(matrix.target, 'musl') }}
+        uses: taiki-e/install-action@c1952a69c392b2c5f2eaa845b56120fff5fe49d3 # v2.48.5
+        with:
+          tool: cross
+
+      ### Build
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build with cross
+        if: ${{ !contains(matrix.target, 'musl') }}
+        run: cross build --release -p oxc_${name}_napi --target=${{ matrix.target }}
+
+      - name: Build with zig
+        if: ${{ contains(matrix.target, 'musl') }}
+        env:
+          RUSTFLAGS: "-C target-feature=-crt-static"
+        run: cargo zigbuild --release -p oxc_${name}_napi --target=${{ matrix.target }}
+
+      ### Build Done
+
+      - name: Move file on ${{ matrix.os }}
+        run: |
+          shopt -s extglob
+          ls target/${{ matrix.target }}/release/*.@(so|dll|dylib)
+          mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) napi/${name}/${name}.${{ matrix.code-target }}.node
+          ls napi/${name}
+
+      - uses: ./.github/actions/pnpm
+        if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
+
+      - name: Test
+        working-directory: napi/${{ inputs.name }}
+        if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
+        run: pnpm run test
+
+      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binary
+        if: runner.os == 'Windows'
+        run: 7z a ${{ matrix.code-target }}.zip napi/${name}/${name}.${{ matrix.code-target }}.node
+
+      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binary
+        if: runner.os != 'Windows'
+        run: tar czf ${{ matrix.code-target }}.tar.gz napi/${name}/${name}.${{ matrix.code-target }}.node
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
+        with:
+          if-no-files-found: error
+          name: binaries-${{ matrix.code-target }}
+          path: |
+            *.zip
+            *.tar.gz
+
+  publish:
+    name: Publish NAPI
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # for `pnpm publish --provenance`
+    env:
+      name: ${{ inputs.name }}
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: ./.github/actions/pnpm
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          merge-multiple: true
+
+      - name: Unzip
+        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
+        with:
+          args: unzip -qq *.zip -d .
+
+      - name: Untar
+        run: ls *.gz | xargs -i tar xvf {}
+
+      - name: Generate npm packages
+        run: |
+          ls
+          ls napi/${name}
+          node npm/oxc-${name}/scripts/generate-packages.mjs
+          cat npm/oxc-${name}/package.json
+          for package in npm/oxc-${name}*
+          do
+            ls $package
+            cat $package/package.json
+            echo '----'
+          done
+
+      - name: Publish npm packages as latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+        run: |
+          # publish subpackages first
+          for package in npm/oxc-${name}-*
+          do
+            pnpm publish $package/ --provenance --access public --no-git-checks
+          done
+          # publish root package last
+          pnpm publish npm/oxc-${name}/ --provenance --access public --no-git-checks

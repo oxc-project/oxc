@@ -57,7 +57,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for JsxSource<'a, 'ctx> {
+impl<'a> Traverse<'a> for JsxSource<'a, '_> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(stmt) = self.get_filename_var_statement(ctx) {
             self.ctx.top_level_statements.insert_statement(stmt);
@@ -73,7 +73,7 @@ impl<'a, 'ctx> Traverse<'a> for JsxSource<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> JsxSource<'a, 'ctx> {
+impl<'a> JsxSource<'a, '_> {
     /// Get line and column from offset and source text.
     ///
     /// Line number starts at 1.
@@ -95,7 +95,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = ctx.ast.property_key_identifier_name(SPAN, SOURCE);
+        let key = ctx.ast.property_key_static_identifier(SPAN, SOURCE);
         let value = self.get_source_object(line, column, ctx);
         ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }
@@ -129,15 +129,15 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
             }
         }
 
-        let key = ctx.ast.jsx_attribute_name_jsx_identifier(SPAN, SOURCE);
+        let key = ctx.ast.jsx_attribute_name_identifier(SPAN, SOURCE);
         // TODO: We shouldn't calculate line + column from scratch each time as it's expensive.
         // Build a table of byte indexes of each line's start on first usage, and save it.
         // Then calculate line and column from that.
         let (line, column) = self.get_line_column(elem.span.start);
         let object = self.get_source_object(line, column, ctx);
         let value =
-            ctx.ast.jsx_attribute_value_jsx_expression_container(SPAN, JSXExpression::from(object));
-        let attribute_item = ctx.ast.jsx_attribute_item_jsx_attribute(SPAN, key, Some(value));
+            ctx.ast.jsx_attribute_value_expression_container(SPAN, JSXExpression::from(object));
+        let attribute_item = ctx.ast.jsx_attribute_item_attribute(SPAN, key, Some(value));
         elem.attributes.push(attribute_item);
     }
 
@@ -151,14 +151,14 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
         let kind = PropertyKind::Init;
 
         let filename = {
-            let key = ctx.ast.property_key_identifier_name(SPAN, "fileName");
+            let key = ctx.ast.property_key_static_identifier(SPAN, "fileName");
             let value = self.get_filename_var(ctx).create_read_expression(ctx);
             ctx.ast
                 .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };
 
         let line_number = {
-            let key = ctx.ast.property_key_identifier_name(SPAN, "lineNumber");
+            let key = ctx.ast.property_key_static_identifier(SPAN, "lineNumber");
             let value =
                 ctx.ast.expression_numeric_literal(SPAN, line as f64, None, NumberBase::Decimal);
             ctx.ast
@@ -166,7 +166,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
         };
 
         let column_number = {
-            let key = ctx.ast.property_key_identifier_name(SPAN, "columnNumber");
+            let key = ctx.ast.property_key_static_identifier(SPAN, "columnNumber");
             let value =
                 ctx.ast.expression_numeric_literal(SPAN, column as f64, None, NumberBase::Decimal);
             ctx.ast

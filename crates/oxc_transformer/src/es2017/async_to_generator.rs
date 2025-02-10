@@ -54,7 +54,7 @@
 use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString};
-use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_ast::{ast::*, Visit, NONE};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::{
@@ -76,7 +76,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
+impl<'a> Traverse<'a> for AsyncToGenerator<'a, '_> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -144,7 +144,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
+impl<'a> AsyncToGenerator<'a, '_> {
     /// Check whether the current node is inside an async function.
     fn is_inside_async_function(ctx: &mut TraverseCtx<'a>) -> bool {
         // Early return if current scope is top because we don't need to transform top-level await expression.
@@ -220,23 +220,70 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             return;
         };
 
+        // If parameters could throw errors, we need to move them to the inner function,
+        // because it is an async function, which should return a rejecting promise if
+        // there is an error.
+        let needs_move_parameters_to_inner_function =
+            Self::could_throw_errors_parameters(&func.params);
+
         let (generator_scope_id, wrapper_scope_id) = {
             let new_scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
             let scope_id = func.scope_id.replace(Some(new_scope_id)).unwrap();
             // We need to change the parent id to new scope id because we need to this function's body inside the wrapper function,
             // and then the new scope id will be wrapper function's scope id.
             ctx.scopes_mut().change_parent_id(scope_id, Some(new_scope_id));
-            // We need to transform formal parameters change back to the original scope,
-            // because we only move out the function body.
-            Self::move_formal_parameters_to_target_scope(new_scope_id, &func.params, ctx);
+            if !needs_move_parameters_to_inner_function {
+                // We need to change formal parameters's scope back to the original scope,
+                // because we only move out the function body.
+                Self::move_formal_parameters_to_target_scope(new_scope_id, &func.params, ctx);
+            }
 
             (scope_id, new_scope_id)
         };
 
-        let params = Self::create_empty_params(ctx);
-        let expression = self.create_async_to_generator_call(params, body, generator_scope_id, ctx);
-        // Construct the IIFE
-        let expression = ctx.ast.expression_call(SPAN, expression, NONE, ctx.ast.vec(), false);
+        let params = if needs_move_parameters_to_inner_function {
+            // Make sure to not change the value of the "length" property. This is
+            // done by generating dummy arguments for the outer function equal to
+            // the expected length of the function:
+            //
+            //   async function foo(a, b, c = d, ...e) {
+            //   }
+            //
+            // This turns into:
+            //
+            //   function foo(_x, _x1) {
+            //     return _asyncToGenerator(function* (a, b, c = d, ...e) {
+            //     }).call(this, arguments);
+            //   }
+            //
+            // The "_x" and "_x1" are dummy variables to ensure "foo.length" is 2.
+            let new_params = Self::create_placeholder_params(&func.params, wrapper_scope_id, ctx);
+            mem::replace(&mut func.params, new_params)
+        } else {
+            Self::create_empty_params(ctx)
+        };
+
+        let callee = self.create_async_to_generator_call(params, body, generator_scope_id, ctx);
+        let (callee, arguments) = if needs_move_parameters_to_inner_function {
+            // callee.apply(this, arguments)
+            let property = ctx.ast.identifier_name(SPAN, "apply");
+            let callee =
+                Expression::from(ctx.ast.member_expression_static(SPAN, callee, property, false));
+
+            // this, arguments
+            let this_argument = Argument::from(ctx.ast.expression_this(SPAN));
+            let arguments_argument = Argument::from(ctx.create_unbound_ident_expr(
+                SPAN,
+                Atom::new_const("arguments"),
+                ReferenceFlags::Read,
+            ));
+            (callee, ctx.ast.vec_from_iter([this_argument, arguments_argument]))
+        } else {
+            // callee()
+            (callee, ctx.ast.vec())
+        };
+
+        let expression = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         let statement = ctx.ast.statement_return(SPAN, Some(expression));
 
         // Modify the wrapper function
@@ -315,7 +362,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 // `function foo() { ... }` -> `function foo() {} return foo;`
                 let reference = ctx.create_bound_ident_expr(
                     SPAN,
-                    id.name.clone(),
+                    id.name,
                     id.symbol_id(),
                     ReferenceFlags::Read,
                 );
@@ -513,11 +560,11 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         match ctx.parent() {
             // infer `foo` from `const foo = async function() {}`
             Ancestor::VariableDeclaratorInit(declarator) => {
-                declarator.id().get_binding_identifier().map(|id| id.name.clone())
+                declarator.id().get_binding_identifier().map(|id| id.name)
             }
             // infer `foo` from `({ foo: async function() {} })`
             Ancestor::ObjectPropertyValue(property) if !*property.method() => {
-                property.key().static_name().map(|key| Self::normalize_function_name(&key, ctx.ast))
+                property.key().static_name().map(|key| Self::normalize_function_name(&key, ctx))
             }
             _ => None,
         }
@@ -534,13 +581,13 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     /// // Reserved keyword
     /// * `this` -> `_this`
     /// * `arguments` -> `_arguments`
-    fn normalize_function_name(input: &Cow<'a, str>, ast: AstBuilder<'a>) -> Atom<'a> {
+    fn normalize_function_name(input: &Cow<'a, str>, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         let input_str = input.as_ref();
         if !is_reserved_keyword(input_str) && is_identifier_name(input_str) {
-            return ast.atom_from_cow(input);
+            return ctx.ast.atom_from_cow(input);
         }
 
-        let mut name = ArenaString::with_capacity_in(input_str.len() + 1, ast.allocator);
+        let mut name = ArenaString::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
         let mut capitalize_next = false;
 
         let mut chars = input_str.chars();
@@ -788,6 +835,32 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         params.items.first().is_some_and(|param| !param.pattern.kind.is_assignment_pattern())
     }
 
+    /// Check whether the function parameters could throw errors.
+    #[inline]
+    fn could_throw_errors_parameters(params: &FormalParameters<'a>) -> bool {
+        params.items.iter().any(|param|
+            matches!(
+                &param.pattern.kind,
+                BindingPatternKind::AssignmentPattern(pattern) if Self::could_potentially_throw_error_expression(&pattern.right)
+            )
+        )
+    }
+
+    /// Check whether the expression could potentially throw an error.
+    #[inline]
+    fn could_potentially_throw_error_expression(expr: &Expression<'a>) -> bool {
+        !(matches!(
+            expr,
+            Expression::NullLiteral(_)
+                | Expression::BooleanLiteral(_)
+                | Expression::NumericLiteral(_)
+                | Expression::StringLiteral(_)
+                | Expression::BigIntLiteral(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::FunctionExpression(_)
+        ) || expr.is_undefined())
+    }
+
     #[inline]
     fn move_formal_parameters_to_target_scope(
         target_scope_id: ScopeId,
@@ -819,7 +892,7 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Visit<'a> for BindingMover<'a, 'ctx> {
+impl<'a> Visit<'a> for BindingMover<'a, '_> {
     /// Visits a binding identifier and moves it to the target scope.
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         let symbols = self.ctx.symbols();

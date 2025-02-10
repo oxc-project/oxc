@@ -36,7 +36,7 @@ use crate::{diagnostics::type_containing_private_name, IsolatedDeclarations};
 /// }
 /// // We can't infer return type if there are multiple return statements with different types
 /// ```
-#[allow(clippy::option_option)]
+#[expect(clippy::option_option)]
 pub struct FunctionReturnType<'a> {
     ast: AstBuilder<'a>,
     return_expression: Option<Option<Expression<'a>>>,
@@ -75,14 +75,14 @@ impl<'a> FunctionReturnType<'a> {
         if let Some((reference_name, is_value)) = match &expr_type {
             TSType::TSTypeReference(type_reference) => {
                 if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name {
-                    Some((ident.name.clone(), false))
+                    Some((ident.name, false))
                 } else {
                     None
                 }
             }
             TSType::TSTypeQuery(query) => {
                 if let TSTypeQueryExprName::IdentifierReference(ident) = &query.expr_name {
-                    Some((ident.name.clone(), true))
+                    Some((ident.name, true))
                 } else {
                     None
                 }
@@ -132,13 +132,13 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
 
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         if self.scope_depth == 0 {
-            self.value_bindings.push(ident.name.clone());
+            self.value_bindings.push(ident.name);
         }
     }
 
     fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
         if self.scope_depth == 0 {
-            self.type_bindings.push(decl.id.name.clone());
+            self.type_bindings.push(decl.id.name);
         }
     }
 

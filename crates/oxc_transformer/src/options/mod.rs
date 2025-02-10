@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
+    decorator::DecoratorOptions,
     es2015::ES2015Options,
     es2016::ES2016Options,
     es2017::ES2017Options,
@@ -53,6 +54,9 @@ pub struct TransformOptions {
     /// [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
     pub typescript: TypeScriptOptions,
 
+    /// Decorator
+    pub decorator: DecoratorOptions,
+
     /// Jsx Transform
     ///
     /// See [preset-react](https://babeljs.io/docs/babel-preset-react)
@@ -74,6 +78,7 @@ impl TransformOptions {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
+            decorator: DecoratorOptions::default(),
             jsx: JsxOptions {
                 development: true,
                 refresh: Some(ReactRefreshOptions::default()),
@@ -124,8 +129,7 @@ impl From<ESTarget> for TransformOptions {
         use crate::options::es_target::ESVersion;
         let mut engine_targets = EngineTargets::default();
         engine_targets.insert(Engine::Es, target.version());
-        let mut env = EnvOptions::from(engine_targets);
-        env.es2022.class_properties = None;
+        let env = EnvOptions::from(engine_targets);
         Self { env, ..Self::default() }
     }
 }
@@ -145,6 +149,8 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             .clone()
             .or_else(|| options.plugins.typescript.clone())
             .unwrap_or_default();
+
+        let decorator = DecoratorOptions { legacy: options.plugins.legacy_decorator };
 
         let jsx = if let Some(options) = &options.presets.jsx {
             options.clone()
@@ -245,6 +251,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             cwd: options.cwd.clone().unwrap_or_default(),
             assumptions: options.assumptions,
             typescript,
+            decorator,
             jsx,
             env: EnvOptions {
                 module,

@@ -250,6 +250,13 @@ impl SymbolTable {
         &mut self.references[reference_id]
     }
 
+    /// Get the name of the symbol a reference is resolved to. Returns `None` if the reference is
+    /// not resolved.
+    #[inline]
+    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
+        self.get_name(self.references[reference_id].symbol_id()?).into()
+    }
+
     /// Returns `true` if the corresponding [`Reference`] is resolved to a symbol.
     ///
     /// When `false`, this could either be a reference to a global value or an identifier that does
@@ -288,6 +295,11 @@ impl SymbolTable {
         } else {
             self.get_resolved_references(symbol_id).any(Reference::is_write)
         }
+    }
+
+    /// Get whether a symbol is used (i.e. read or written after declaration).
+    pub fn symbol_is_used(&self, symbol_id: SymbolId) -> bool {
+        self.get_resolved_references(symbol_id).count() > 0
     }
 
     /// Add a reference to a symbol.

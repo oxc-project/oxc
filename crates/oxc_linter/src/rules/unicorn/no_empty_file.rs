@@ -33,6 +33,7 @@ declare_oxc_lint!(
     /// Meaningless files clutter a codebase.
     ///
     NoEmptyFile,
+    unicorn,
     correctness,
 );
 
@@ -139,5 +140,5 @@ fn test() {
         r#""use strict";"#,
     ];
 
-    Tester::new(NoEmptyFile::NAME, NoEmptyFile::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyFile::NAME, NoEmptyFile::PLUGIN, pass, fail).test_and_snapshot();
 }

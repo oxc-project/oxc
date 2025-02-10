@@ -1,0 +1,395 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:10]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                   ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:24]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                                 ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:2:33]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                                          ┬
+   ·                                          ╰── `,` expected
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:16]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               describe(\`when the input is $\{input}\`, () => {
+   ·                         ─
+ 3 │                 it(\`results in $\{expected}\`, () => {
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[prefer_each.tsx:2:22]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               describe(\`when the input is $\{input}\`, () => {
+   ·                               ─┬─
+   ·                                ╰── `,` expected
+ 3 │                 it(\`results in $\{expected}\`, () => {
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:16]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               describe(\`when the input is $\{input}\`, () => {
+   ·                         ─
+ 3 │                 it(\`results in $\{expected}\`, () => {
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[prefer_each.tsx:2:22]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               describe(\`when the input is $\{input}\`, () => {
+   ·                               ─┬─
+   ·                                ╰── `,` expected
+ 3 │                 it(\`results in $\{expected}\`, () => {
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:15]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                        ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:29]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                                      ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:2:38]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                                               ┬
+   ·                                               ╰── `,` expected
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:5:15]
+ 4 │             for (const [input, expected] of data) {
+ 5 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                        ─
+ 6 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:5:29]
+ 4 │             for (const [input, expected] of data) {
+ 5 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                                      ─
+ 6 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:5:38]
+ 4 │             for (const [input, expected] of data) {
+ 5 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                                               ┬
+   ·                                               ╰── `,` expected
+ 6 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:15]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                        ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:29]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                                      ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:2:38]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                                               ┬
+   ·                                               ╰── `,` expected
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:5:15]
+ 4 │             for (const [input, expected] of data) {
+ 5 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                        ─
+ 6 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:5:29]
+ 4 │             for (const [input, expected] of data) {
+ 5 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                                      ─
+ 6 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:5:38]
+ 4 │             for (const [input, expected] of data) {
+ 5 │               it.skip(\`results in $\{expected}\`, () => {
+   ·                                               ┬
+   ·                                               ╰── `,` expected
+ 6 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:10]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                   ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:24]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                                 ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:2:33]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                                          ┬
+   ·                                          ╰── `,` expected
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:10]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                   ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:24]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                                 ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:2:33]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                                          ┬
+   ·                                          ╰── `,` expected
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:10]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                   ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:2:24]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                                 ─
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:2:33]
+ 1 │ for (const [input, expected] of data) {
+ 2 │               it(\`results in $\{expected}\`, () => {
+   ·                                          ┬
+   ·                                          ╰── `,` expected
+ 3 │                 expect(fn(input)).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:3:12]
+ 2 │               beforeEach(() => setupSomething(input));
+ 3 │               test(\`results in $\{expected}\`, () => {
+   ·                     ─
+ 4 │                 expect(doSomething()).toBe(expected)
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[prefer_each.tsx:3:26]
+ 2 │               beforeEach(() => setupSomething(input));
+ 3 │               test(\`results in $\{expected}\`, () => {
+   ·                                   ─
+ 4 │                 expect(doSomething()).toBe(expected)
+   ╰────
+
+  × Expected `,` but found `}`
+   ╭─[prefer_each.tsx:3:35]
+ 2 │               beforeEach(() => setupSomething(input));
+ 3 │               test(\`results in $\{expected}\`, () => {
+   ·                                            ┬
+   ·                                            ╰── `,` expected
+ 4 │                 expect(doSomething()).toBe(expected)
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:1]
+ 1 │ for (const [input, expected] of data) {
+   · ──────────────────────────────────────
+ 2 │               it("only returns numbers that are greater than seven", function () {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:1]
+ 1 │ for (const [input, expected] of data) {
+   · ──────────────────────────────────────
+ 2 │               beforeEach(() => setupSomething(input));
+   ╰────
+  help: Prefer using `describe.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:3]
+ 1 │   for (const [input, expected] of data) {
+   ·   ──────────────────────────────────────
+ 2 │                   it(`results in ${expected}`, () => {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:2]
+ 1 │  for (const [input, expected] of data) {
+   ·  ──────────────────────────────────────
+ 2 │                   describe(`when the input is ${input}`, () => {
+   ╰────
+  help: Prefer using `describe.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:1]
+ 1 │ for (const [input, expected] of data) {
+   · ──────────────────────────────────────
+ 2 │                   describe(`when the input is ${input}`, () => {
+   ╰────
+  help: Prefer using `describe.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+    ╭─[prefer_each.tsx:9:11]
+  8 │ 
+  9 │                    for (const [input, expected] of data) {
+    ·                    ──────────────────────────────────────
+ 10 │                   it.skip(`results in ${expected}`, () => {
+    ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:1]
+ 1 │ for (const [input, expected] of data) {
+   · ──────────────────────────────────────
+ 2 │                   it.skip(`results in ${expected}`, () => {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:5:11]
+ 4 │ 
+ 5 │                    for (const [input, expected] of data) {
+   ·                    ──────────────────────────────────────
+ 6 │                   it.skip(`results in ${expected}`, () => {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:2]
+ 1 │  for (const [input, expected] of data) {
+   ·  ──────────────────────────────────────
+ 2 │                   it.skip(`results in ${expected}`, () => {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:5:11]
+ 4 │ 
+ 5 │                    for (const [input, expected] of data) {
+   ·                    ──────────────────────────────────────
+ 6 │                   it.skip(`results in ${expected}`, () => {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:1]
+ 1 │ for (const [input, expected] of data) {
+   · ──────────────────────────────────────
+ 2 │                   it(`results in ${expected}`, () => {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:1]
+ 1 │ for (const [input, expected] of data) {
+   · ──────────────────────────────────────
+ 2 │                   it(`results in ${expected}`, () => {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:7:11]
+ 6 │ 
+ 7 │                    for (const [input, expected] of data) {
+   ·                    ──────────────────────────────────────
+ 8 │                   it(`results in ${expected}`, () => {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:1:1]
+ 1 │ for (const [input, expected] of data) {
+   · ──────────────────────────────────────
+ 2 │                   beforeEach(() => setupSomething(input));
+   ╰────
+  help: Prefer using `describe.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:2:11]
+ 1 │ 
+ 2 │                    for (const [input, expected] of data) {
+   ·                    ──────────────────────────────────────
+ 3 │                   it("only returns numbers that are greater than seven", function () {
+   ╰────
+  help: Prefer using `it.each` rather than a manual loop.
+
+  ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
+   ╭─[prefer_each.tsx:2:11]
+ 1 │ 
+ 2 │                    for (const [input, expected] of data) {
+   ·                    ──────────────────────────────────────
+ 3 │                   beforeEach(() => setupSomething(input));
+   ╰────
+  help: Prefer using `describe.each` rather than a manual loop.

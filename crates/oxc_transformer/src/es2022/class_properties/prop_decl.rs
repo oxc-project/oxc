@@ -14,7 +14,7 @@ use super::{
 };
 
 // Instance properties
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Convert instance property to initialization expression.
     /// Property `prop = 123;` -> Expression `this.prop = 123` or `_defineProperty(this, "prop", 123)`.
     pub(super) fn convert_instance_property(
@@ -80,7 +80,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 // Static properties
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Convert static property to initialization expression.
     /// Property `static prop = 123;` -> Expression `C.prop = 123` or `_defineProperty(C, "prop", 123)`.
     pub(super) fn convert_static_property(
@@ -88,8 +88,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Get value, and transform it to replace `this` with reference to class name,
-        // and transform class fields (`object.#prop`)
+        // Get value.
+        // Transform it to replace `this` and references to class name with temp var for class.
+        // Also transform `super`.
         let value = match prop.value.take() {
             Some(mut value) => {
                 self.transform_static_initializer(&mut value, ctx);
@@ -203,7 +204,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 // Used for both instance and static properties
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// `assignee.prop = value` or `_defineProperty(assignee, "prop", value)`
     fn create_init_assignment(
         &mut self,
@@ -281,7 +282,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Expression<'a> {
         let key = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name.clone(), None)
+                ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
@@ -333,7 +334,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_identifier_name(SPAN, Atom::from("writable")),
+                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("writable")),
                     ctx.ast.expression_boolean_literal(SPAN, true),
                     false,
                     false,
@@ -342,7 +343,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_identifier_name(SPAN, Atom::from("value")),
+                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("value")),
                     value,
                     false,
                     false,

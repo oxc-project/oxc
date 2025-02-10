@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
-use crate::{cmp::ContentEq, hash::ContentHash};
+use crate::ContentEq;
 
 mod error;
 pub use error::UnknownExtension;
@@ -13,31 +13,30 @@ pub use error::UnknownExtension;
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(ESTree)]
-#[estree(no_type)]
+#[estree(no_type, flatten)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
+    #[estree(skip)]
     pub(super) language: Language,
 
     /// Script or Module, default Module
+    #[estree(rename = "sourceType")]
     pub(super) module_kind: ModuleKind,
 
     /// Support JSX for JavaScript and TypeScript? default without JSX
+    #[estree(skip)]
     pub(super) variant: LanguageVariant,
 }
 
 /// JavaScript or TypeScript
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(ESTree)]
 pub enum Language {
     /// Indicates a JavaScript or JSX file
-    #[estree(rename = "javascript")]
     JavaScript = 0,
     /// Indicates a TypeScript file
-    #[estree(rename = "typescript")]
     TypeScript = 1,
     /// Indicates a TypeScript definition file (`*.d.ts`)
-    #[estree(rename = "typescriptDefinition")]
     TypeScriptDefinition = 2,
 }
 
@@ -64,7 +63,6 @@ pub enum ModuleKind {
 /// JSX for JavaScript and TypeScript
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(ESTree)]
 pub enum LanguageVariant {
     /// Standard JavaScript or TypeScript without any language extensions. Stage
     /// 3 proposals do not count as language extensions.
@@ -93,13 +91,6 @@ impl ContentEq for SourceType {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other
-    }
-}
-
-impl ContentHash for SourceType {
-    #[inline]
-    fn content_hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.hash(state);
     }
 }
 
@@ -487,7 +478,7 @@ impl SourceType {
             }
             "js" | "cjs" | "mjs" | "jsx" => Language::JavaScript,
             "tsx" => Language::TypeScript,
-            #[allow(clippy::case_sensitive_file_extension_comparisons)]
+            #[expect(clippy::case_sensitive_file_extension_comparisons)]
             "mts" | "cts" => {
                 if file_name[..file_name.len() - 4].ends_with(".d") {
                     Language::TypeScriptDefinition
@@ -514,7 +505,6 @@ mod tests {
     use super::SourceType;
 
     #[test]
-    #[allow(clippy::similar_names)]
     fn test_ts_from_path() {
         let ts = SourceType::from_path("foo.ts")
             .expect("foo.ts should be a valid TypeScript file path.");
@@ -555,7 +545,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::similar_names)]
+    #[expect(clippy::similar_names)]
     fn test_d_ts_from_path() {
         let dts = SourceType::from_path("foo.d.ts").unwrap();
         let dmts = SourceType::from_path("foo.d.mts").unwrap();
@@ -588,7 +578,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::similar_names)]
     fn test_js_from_path() {
         let js = SourceType::from_path("foo.js")
             .expect("foo.js should be a valid JavaScript file path.");

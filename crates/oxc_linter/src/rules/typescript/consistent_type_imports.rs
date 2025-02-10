@@ -102,6 +102,7 @@ declare_oxc_lint!(
     /// type S = import("Foo");
     /// ```
     ConsistentTypeImports,
+    typescript,
     nursery,
     conditional_fix
 );
@@ -321,7 +322,7 @@ fn fixer_error<S: Into<String>, T>(message: S) -> FixerResult<T> {
 }
 
 // import { Foo, Bar } from 'foo' => import type { Foo, Bar } from 'foo'
-#[allow(clippy::unnecessary_cast, clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, type_names, fix_style, ctx } = options;
     let fixer = fixer.for_multifix();
@@ -3371,7 +3372,7 @@ export class Foo extends Bar {}
         .map(|(a, b, c)| (remove_common_prefix_space(a), remove_common_prefix_space(b), c))
         .collect::<Vec<_>>();
 
-    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::CATEGORY, pass, fail)
+    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

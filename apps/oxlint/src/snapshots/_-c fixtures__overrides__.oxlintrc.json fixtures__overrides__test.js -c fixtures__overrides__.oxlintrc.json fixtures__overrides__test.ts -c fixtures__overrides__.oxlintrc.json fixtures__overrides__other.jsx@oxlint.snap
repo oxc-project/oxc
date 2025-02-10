@@ -1,0 +1,67 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/overrides/.oxlintrc.json fixtures/overrides/test.js
+working directory: 
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-var.html\eslint(no-var)]8;;\: Unexpected var, use let or const instead.
+   ,-[fixtures/overrides/test.js:1:1]
+ 1 | var msg = "hello";
+   : ^^^
+ 2 | console.log(msg);
+   `----
+  help: Replace var with let or const
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 99 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c fixtures/overrides/.oxlintrc.json fixtures/overrides/test.ts
+working directory: 
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-var.html\eslint(no-var)]8;;\: Unexpected var, use let or const instead.
+   ,-[fixtures/overrides/test.ts:1:1]
+ 1 | var msg = "hello";
+   : ^^^
+ 2 | console.log(msg);
+   `----
+  help: Replace var with let or const
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: eslint(no-console): Unexpected console statement.
+   ,-[fixtures/overrides/test.ts:2:1]
+ 1 | var msg = "hello";
+ 2 | console.log(msg);
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 1 warning and 1 error.
+Finished in <variable>ms on 1 file with 99 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c fixtures/overrides/.oxlintrc.json fixtures/overrides/other.jsx
+working directory: 
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-var.html\eslint(no-var)]8;;\: Unexpected var, use let or const instead.
+   ,-[fixtures/overrides/other.jsx:1:1]
+ 1 | var msg = "hello";
+   : ^^^
+ 2 | console.log(msg);
+   `----
+  help: Replace var with let or const
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 99 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

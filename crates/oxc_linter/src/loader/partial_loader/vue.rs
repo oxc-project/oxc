@@ -58,7 +58,7 @@ impl<'a> VuePartialLoader<'a> {
         let source_text = &self.source_text[js_start..js_end];
         let source_type = SourceType::mjs().with_typescript(is_ts).with_jsx(is_jsx);
         // NOTE: loader checked that source_text.len() is less than u32::MAX
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
     }
 }

@@ -2,12 +2,9 @@
   "name": "@oxc-minify/binding",
   "private": true,
   "scripts": {
-    "build-dev": "napi build --platform",
-    "build": "napi build --platform --release",
-    "test": "echo 'skip'"
-  },
-  "engines": {
-    "node": ">=14.*"
+    "build-dev": "napi build --no-dts-cache --platform",
+    "build": "napi build --no-dts-cache --platform --release",
+    "test": "vitest --typecheck run ./test"
   },
   "napi": {
     "binaryName": "minify",

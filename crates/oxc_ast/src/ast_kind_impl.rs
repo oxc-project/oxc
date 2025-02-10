@@ -1,4 +1,4 @@
-#![allow(missing_docs)] // FIXME
+#![expect(missing_docs)] // FIXME
 use oxc_span::Atom;
 use oxc_syntax::scope::ScopeId;
 
@@ -67,10 +67,10 @@ impl<'a> AstKind<'a> {
 
     pub fn identifier_name(self) -> Option<Atom<'a>> {
         match self {
-            Self::BindingIdentifier(ident) => Some(ident.name.clone()),
-            Self::IdentifierReference(ident) => Some(ident.name.clone()),
-            Self::LabelIdentifier(ident) => Some(ident.name.clone()),
-            Self::IdentifierName(ident) => Some(ident.name.clone()),
+            Self::BindingIdentifier(ident) => Some(ident.name),
+            Self::IdentifierReference(ident) => Some(ident.name),
+            Self::LabelIdentifier(ident) => Some(ident.name),
+            Self::IdentifierName(ident) => Some(ident.name),
             _ => None,
         }
     }
@@ -172,7 +172,6 @@ impl<'a> AstKind<'a> {
 }
 
 impl AstKind<'_> {
-    #[allow(clippy::match_same_arms)]
     /// Get the AST kind name with minimal details. Particularly useful for
     /// when debugging an iteration over an AST.
     ///
@@ -222,7 +221,7 @@ impl AstKind<'_> {
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(v) => format!(
                 "VariableDeclarator({})",
-                v.id.get_identifier().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
+                v.id.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
             )
             .into(),
 
@@ -290,7 +289,8 @@ impl AstKind<'_> {
             Self::ArrayExpressionElement(_) => "ArrayExpressionElement".into(),
             Self::AssignmentTarget(_) => "AssignmentTarget".into(),
             Self::SimpleAssignmentTarget(a) => {
-                format!("SimpleAssignmentTarget({})", a.get_identifier().unwrap_or(&UNKNOWN)).into()
+                format!("SimpleAssignmentTarget({})", a.get_identifier_name().unwrap_or(&UNKNOWN))
+                    .into()
             }
             Self::AssignmentTargetPattern(_) => "AssignmentTargetPattern".into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
@@ -305,7 +305,7 @@ impl AstKind<'_> {
             Self::FormalParameters(_) => "FormalParameters".into(),
             Self::FormalParameter(p) => format!(
                 "FormalParameter({})",
-                p.pattern.get_identifier().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
+                p.pattern.get_identifier_name().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
             )
             .into(),
             Self::CatchParameter(_) => "CatchParameter".into(),

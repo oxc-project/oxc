@@ -43,6 +43,7 @@ declare_oxc_lint!(
     ///
     ///
     SymbolDescription,
+    eslint,
     pedantic,
 );
 
@@ -58,7 +59,7 @@ impl Rule for SymbolDescription {
 
         if ident.name == "Symbol"
             && call_expr.arguments.len() == 0
-            && ctx.semantic().is_reference_to_global_variable(ident)
+            && ctx.is_reference_to_global_variable(ident)
         {
             ctx.diagnostic(symbol_description_diagnostic(call_expr.span));
         }
@@ -80,6 +81,5 @@ fn test() {
 
     let fail = vec!["Symbol();", "Symbol(); Symbol = function () {};"];
 
-    Tester::new(SymbolDescription::NAME, SymbolDescription::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(SymbolDescription::NAME, SymbolDescription::PLUGIN, pass, fail).test_and_snapshot();
 }

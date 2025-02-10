@@ -63,6 +63,7 @@ declare_oxc_lint!(
     /// import { bar } from './bar'; // Correct: accessing named export directly
     /// ```
     NoNamedAsDefaultMember,
+    import,
     suspicious
 );
 
@@ -208,7 +209,7 @@ fn test() {
         r#"import baz from "./named-and-default-export"; const {foo: _foo} = baz"#,
     ];
 
-    Tester::new(NoNamedAsDefaultMember::NAME, NoNamedAsDefaultMember::CATEGORY, pass, fail)
+    Tester::new(NoNamedAsDefaultMember::NAME, NoNamedAsDefaultMember::PLUGIN, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

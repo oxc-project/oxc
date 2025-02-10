@@ -43,7 +43,7 @@ impl<'a> Visit<'a> for KeepVar<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         if it.kind.is_var() {
             it.bound_names(&mut |ident| {
-                self.vars.push((ident.name.clone(), ident.span));
+                self.vars.push((ident.name, ident.span));
             });
             if it.has_init() {
                 self.all_hoisted = false;
@@ -73,8 +73,7 @@ impl<'a> KeepVar<'a> {
             self.ast.variable_declarator(span, kind, id, None, false)
         }));
 
-        let decl = self.ast.alloc_variable_declaration(SPAN, kind, decls, false);
-        Some(decl)
+        Some(self.ast.alloc_variable_declaration(SPAN, kind, decls, false))
     }
 
     pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {

@@ -101,11 +101,7 @@ pub trait CompilerInterface {
         ControlFlow::Continue(())
     }
 
-    fn after_semantic(
-        &mut self,
-        _program: &mut Program<'_>,
-        _semantic_return: &mut SemanticBuilderReturn,
-    ) -> ControlFlow<()> {
+    fn after_semantic(&mut self, _semantic_return: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
 
@@ -148,7 +144,7 @@ pub trait CompilerInterface {
             self.handle_errors(semantic_return.errors);
             return;
         }
-        if self.after_semantic(&mut program, &mut semantic_return).is_break() {
+        if self.after_semantic(&mut semantic_return).is_break() {
             return;
         }
 
@@ -235,7 +231,7 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(&self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
+    fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         let mut builder = SemanticBuilder::new();
 
         if self.transform_options().is_some() {
@@ -267,7 +263,6 @@ pub trait CompilerInterface {
         self.after_isolated_declarations(ret);
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn transform<'a>(
         &self,
         options: &TransformOptions,
@@ -290,7 +285,7 @@ pub trait CompilerInterface {
         Compressor::new(allocator, options).build(program);
     }
 
-    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> Mangler {
+    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> SymbolTable {
         Mangler::new().with_options(options).build(program)
     }
 
@@ -298,13 +293,13 @@ pub trait CompilerInterface {
         &self,
         program: &Program<'_>,
         source_path: &Path,
-        mangler: Option<Mangler>,
+        symbol_table: Option<SymbolTable>,
         options: CodegenOptions,
     ) -> CodegenReturn {
         let mut options = options;
         if self.enable_sourcemap() {
             options.source_map_path = Some(source_path.to_path_buf());
         }
-        CodeGenerator::new().with_options(options).with_mangler(mangler).build(program)
+        CodeGenerator::new().with_options(options).with_symbol_table(symbol_table).build(program)
     }
 }

@@ -58,6 +58,7 @@ declare_oxc_lint!(
     /// [1, 2, 3]?.map(x => <BabelEslintApp key={x} />)
     /// ```
     JsxKey,
+    react,
     correctness
 );
 
@@ -100,7 +101,7 @@ pub fn import_matcher<'a>(
     actual_local_name: &'a str,
     expected_module_name: &'a str,
 ) -> bool {
-    let expected_module_name = expected_module_name.cow_to_lowercase();
+    let expected_module_name = expected_module_name.cow_to_ascii_lowercase();
     ctx.module_record().import_entries.iter().any(|import| {
         import.module_request.name() == expected_module_name
             && import.local_name.name() == actual_local_name
@@ -625,5 +626,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(JsxKey::NAME, JsxKey::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -7,7 +7,7 @@ use base64::{
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{Address, CloneIn, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -71,7 +71,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                 let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
                 Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
                     ident.span,
-                    ident.name.clone(),
+                    ident.name,
                     reference_id,
                 ))
             }
@@ -80,7 +80,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                 let ident =
                     Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
                         ident.span,
-                        ident.name.clone(),
+                        ident.name,
                         reference_id,
                     ));
                 Expression::from(ctx.ast.member_expression_static(
@@ -137,7 +137,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
+impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
         for mut statement in program.body.drain(..) {
@@ -312,8 +312,8 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         }
 
         let hook_name = match &call_expr.callee {
-            Expression::Identifier(ident) => ident.name.clone(),
-            Expression::StaticMemberExpression(ref member) => member.property.name.clone(),
+            Expression::Identifier(ident) => ident.name,
+            Expression::StaticMemberExpression(member) => member.property.name,
             _ => return,
         };
 
@@ -324,10 +324,10 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
             let (binding_name, is_member_expression) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name.clone()), false),
+                Expression::Identifier(ident) => (Some(ident.name), false),
                 Expression::StaticMemberExpression(member) => {
                     if let Expression::Identifier(object) = &member.object {
-                        (Some(object.name.clone()), true)
+                        (Some(object.name), true)
                     } else {
                         (None, false)
                     }
@@ -355,7 +355,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
                                 expr = Expression::from(ctx.ast.member_expression_static(
                                     SPAN,
                                     expr,
-                                    ctx.ast.identifier_name(SPAN, hook_name.clone()),
+                                    ctx.ast.identifier_name(SPAN, hook_name),
                                     false,
                                 ));
                             }
@@ -413,7 +413,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
 }
 
 // Internal Methods
-impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
+impl<'a> ReactRefresh<'a, '_> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,
@@ -434,7 +434,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         match expr {
-            Expression::Identifier(ref ident) => {
+            Expression::Identifier(ident) => {
                 // For case like:
                 // export const Something = hoc(Foo)
                 // we don't want to wrap Foo inside the call.
@@ -451,7 +451,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                     return false;
                 }
             }
-            Expression::CallExpression(ref mut call_expr) => {
+            Expression::CallExpression(call_expr) => {
                 let allowed_callee = matches!(
                     call_expr.callee,
                     Expression::Identifier(_)
@@ -516,13 +516,9 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let left = self.create_registration(id.name.clone(), ctx);
-        let right = ctx.create_bound_ident_expr(
-            SPAN,
-            id.name.clone(),
-            id.symbol_id(),
-            ReferenceFlags::Read,
-        );
+        let left = self.create_registration(id.name, ctx);
+        let right =
+            ctx.create_bound_ident_expr(SPAN, id.name, id.symbol_id(), ReferenceFlags::Read);
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }
@@ -544,7 +540,13 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             // We also need it for www that has transforms like cx()
             // that don't understand if something is part of a string.
             const SHA1_HASH_LEN: usize = 20;
-            const ENCODED_LEN: usize = base64_encoded_len(SHA1_HASH_LEN, true).unwrap();
+            const ENCODED_LEN: usize = {
+                let len = base64_encoded_len(SHA1_HASH_LEN, true);
+                match len {
+                    Some(l) => l,
+                    None => panic!("Invalid base64 length"),
+                }
+            };
 
             let mut hasher = Sha1::new();
             hasher.update(&key);
@@ -555,7 +557,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             let mut hashed_key = ArenaVec::from_array_in([0; ENCODED_LEN], ctx.ast.allocator);
             let encoded_bytes = BASE64_STANDARD.encode_slice(hash, &mut hashed_key).unwrap();
             debug_assert_eq!(encoded_bytes, ENCODED_LEN);
-            let hashed_key = hashed_key.into_string().unwrap();
+            let hashed_key = ArenaString::from_utf8(hashed_key).unwrap();
             Atom::from(hashed_key)
         };
 
@@ -664,7 +666,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                     None
                 }
             }
-            Statement::ExportDefaultDeclaration(ref mut stmt_decl) => {
+            Statement::ExportDefaultDeclaration(stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
                         let expression = declaration.to_expression_mut();

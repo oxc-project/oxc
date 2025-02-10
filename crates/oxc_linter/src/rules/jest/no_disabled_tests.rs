@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDisabledTests,
+    jest,
     correctness
 );
 
@@ -141,9 +142,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.callee.span()));
             }
         } else if let Expression::Identifier(ident) = &call_expr.callee {
-            if ident.name.as_str() == "pending"
-                && ctx.semantic().is_reference_to_global_variable(ident)
-            {
+            if ident.name.as_str() == "pending" && ctx.is_reference_to_global_variable(ident) {
                 // `describe('foo', function () { pending() })`
                 let (error, help) = Message::Pending.details();
                 ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
@@ -267,7 +266,7 @@ fn test() {
         r#"it("contains a call to pending", function () { pending() })"#,
         "pending();",
         r#"
-            import { describe } from 'vitest'; 
+            import { describe } from 'vitest';
             describe.skip("foo", function () {})
         "#,
     ];
@@ -275,7 +274,7 @@ fn test() {
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
     fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
 
-    Tester::new(NoDisabledTests::NAME, NoDisabledTests::CATEGORY, pass, fail)
+    Tester::new(NoDisabledTests::NAME, NoDisabledTests::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

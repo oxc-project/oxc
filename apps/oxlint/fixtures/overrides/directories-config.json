@@ -4,13 +4,18 @@
   },
   "overrides": [
     {
-      "files": ["lib/*.{js,ts}", "src/*"],
+      "files": [
+        "lib/*.{js,ts}",
+        "src/*"
+      ],
       "rules": {
         "no-debugger": "error"
       }
     },
     {
-      "files": ["**/tests/*"],
+      "files": [
+        "**/tests/*"
+      ],
       "rules": {
         "no-debugger": "warn"
       }

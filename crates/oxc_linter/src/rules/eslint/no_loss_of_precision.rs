@@ -31,6 +31,7 @@ declare_oxc_lint!(
     /// var x = 2e999;
     /// ```
     NoLossOfPrecision,
+    eslint,
     correctness
 );
 
@@ -127,7 +128,7 @@ impl<'a> RawNum<'a> {
         let precision = self.frac.len();
         if self.int.starts_with('0') {
             let frac_zeros = self.frac.chars().take_while(|&ch| ch == '0').count();
-            #[allow(clippy::cast_possible_wrap)]
+            #[expect(clippy::cast_possible_wrap)]
             let exp = self.exp - 1 - frac_zeros as isize;
             self.frac = &self.frac[frac_zeros..];
 
@@ -155,7 +156,7 @@ impl<'a> RawNum<'a> {
                 },
             }
         } else {
-            #[allow(clippy::cast_possible_wrap)]
+            #[expect(clippy::cast_possible_wrap)]
             let exp = self.exp + self.int.len() as isize - 1;
             if self.int.len() == 1 {
                 ScientificNotation {
@@ -185,8 +186,8 @@ impl<'a> RawNum<'a> {
 impl NoLossOfPrecision {
     fn not_base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
         let raw = node.raw.as_ref().unwrap().as_str().cow_replace('_', "");
-        let raw = raw.cow_to_uppercase();
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let raw = raw.cow_to_ascii_uppercase();
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         // AST always store number as f64, need a cast to format in bin/oct/hex
         let value = node.value as u64;
         let suffix = if raw.starts_with("0B") {
@@ -196,7 +197,7 @@ impl NoLossOfPrecision {
         } else {
             format!("{value:o}")
         };
-        !raw.ends_with(&suffix.cow_to_uppercase().as_ref())
+        !raw.ends_with(&suffix.cow_to_ascii_uppercase().as_ref())
     }
 
     fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
@@ -356,6 +357,5 @@ fn test() {
         ("var x = 1e18_446_744_073_709_551_615", None),
     ];
 
-    Tester::new(NoLossOfPrecision::NAME, NoLossOfPrecision::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoLossOfPrecision::NAME, NoLossOfPrecision::PLUGIN, pass, fail).test_and_snapshot();
 }

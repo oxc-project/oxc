@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// const regexp = new RegExp(String.raw`foo\.bar`);
     /// ```
     PreferStringRaw,
+    unicorn,
     style,
     fix,
 );
@@ -66,7 +67,7 @@ fn unescape_backslash(input: &str, quote: char) -> String {
 }
 
 impl Rule for PreferStringRaw {
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::StringLiteral(string_literal) = node.kind() else {
             return;
@@ -279,7 +280,7 @@ fn test() {
         (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}", None),
     ];
 
-    Tester::new(PreferStringRaw::NAME, PreferStringRaw::CATEGORY, pass, fail)
+    Tester::new(PreferStringRaw::NAME, PreferStringRaw::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

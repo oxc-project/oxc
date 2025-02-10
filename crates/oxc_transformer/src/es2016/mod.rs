@@ -22,7 +22,7 @@ impl<'a, 'ctx> ES2016<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ES2016<'a, 'ctx> {
+impl<'a> Traverse<'a> for ES2016<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.exponentiation_operator {
             self.exponentiation_operator.enter_expression(expr, ctx);

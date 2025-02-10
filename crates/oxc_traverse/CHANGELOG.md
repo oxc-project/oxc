@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.49.0] - 2025-02-10
+
+### Refactor
+
+- 04786ac ast: Use `=` syntax for `#[scope]` attrs (#8878) (overlookmotel)
+
+## [0.48.0] - 2025-01-24
+
+### Refactor
+
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
+## [0.47.0] - 2025-01-18
+
+### Refactor
+
+- 04bc259 traverse: Remove unnecessary `#[allow]` (#8518) (overlookmotel)
+- a368726 traverse: Harden soundness of `Traverse` and document safety invariants better (#8507) (overlookmotel)
+
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- 6c7acac allocator: Implement `IntoIterator` for `&mut Vec` (#8389) (overlookmotel)
+
 ## [0.44.0] - 2024-12-25
 
 - ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)

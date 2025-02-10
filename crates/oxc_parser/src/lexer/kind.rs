@@ -196,8 +196,8 @@ pub enum Kind {
     At,
 }
 
-#[allow(clippy::enum_glob_use)]
-use self::Kind::*;
+#[allow(clippy::enum_glob_use, clippy::allow_attributes)]
+use Kind::*;
 
 impl Kind {
     #[inline]

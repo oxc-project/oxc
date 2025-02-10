@@ -104,6 +104,7 @@ declare_oxc_lint!(
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
     RulesOfHooks,
+    react,
     pedantic
 );
 
@@ -250,7 +251,7 @@ impl Rule for RulesOfHooks {
         }
 
         if has_conditional_path_accept_throw(cfg, parent_func, node) {
-            #[allow(clippy::needless_return)]
+            #[expect(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
         }
     }
@@ -395,18 +396,18 @@ fn get_declaration_identifier<'a>(
 
             match parent.kind() {
                 AstKind::VariableDeclarator(decl) => {
-                    decl.id.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
+                    decl.id.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
                 }
                 // useHook = () => {};
                 AstKind::AssignmentExpression(expr)
                     if matches!(expr.operator, AssignmentOperator::Assign) =>
                 {
-                    expr.left.get_identifier().map(std::convert::Into::into)
+                    expr.left.get_identifier_name().map(std::convert::Into::into)
                 }
                 // const {useHook = () => {}} = {};
                 // ({useHook = () => {}} = {});
                 AstKind::AssignmentPattern(patt) => {
-                    patt.left.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
+                    patt.left.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
                 }
                 // { useHook: () => {} }
                 // { useHook() {} }
@@ -1592,5 +1593,5 @@ fn test() {
         r"const MyComponent3 = makeComponent(function foo () { useHook(); });",
     ];
 
-    Tester::new(RulesOfHooks::NAME, RulesOfHooks::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(RulesOfHooks::NAME, RulesOfHooks::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// ```
     ///
     RequireToThrowMessage,
+    jest,
     correctness
 );
 
@@ -89,6 +90,8 @@ impl RequireToThrowMessage {
 #[test]
 fn test() {
     use crate::tester::Tester;
+
+    // Note: Both Jest and Vitest share the same unit tests
 
     let pass = vec![
         // String
@@ -179,7 +182,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireToThrowMessage::NAME, RequireToThrowMessage::CATEGORY, pass, fail)
+    Tester::new(RequireToThrowMessage::NAME, RequireToThrowMessage::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

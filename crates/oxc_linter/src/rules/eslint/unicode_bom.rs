@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// ﻿var a = 123;
     /// ```
     UnicodeBom,
+    eslint,
     restriction,
     fix
 );
@@ -116,7 +117,7 @@ fn test() {
         ("var a = 123;", "﻿var a = 123;", Some(serde_json::json!(["always"]))),
     ];
 
-    Tester::new(UnicodeBom::NAME, UnicodeBom::CATEGORY, pass, fail)
+    Tester::new(UnicodeBom::NAME, UnicodeBom::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -135,6 +135,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     PreferHooksOnTop,
+    jest,
     style,
 );
 
@@ -190,6 +191,8 @@ impl PreferHooksOnTop {
 #[test]
 fn test() {
     use crate::tester::Tester;
+
+    // Note: Both Jest and Vitest share the same unit tests
 
     let pass = vec![
         (
@@ -375,7 +378,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferHooksOnTop::NAME, PreferHooksOnTop::CATEGORY, pass, fail)
+    Tester::new(PreferHooksOnTop::NAME, PreferHooksOnTop::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

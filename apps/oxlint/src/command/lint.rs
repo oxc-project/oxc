@@ -1,10 +1,11 @@
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 
 use bpaf::Bpaf;
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 
+use crate::output_formatter::OutputFormat;
+
 use super::{
-    expand_glob,
     ignore::{ignore_options, IgnoreOptions},
     misc_options, validate_paths, MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
 };
@@ -41,7 +42,7 @@ pub struct LintCommand {
     pub misc_options: MiscOptions,
 
     /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE), map(expand_glob))]
+    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
 }
 
@@ -70,6 +71,10 @@ pub struct BasicOptions {
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
+
+    /// Initialize oxlint configuration with default values
+    #[bpaf(switch, hide_usage)]
+    pub init: bool,
 }
 
 // This is formatted according to
@@ -180,39 +185,13 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format (default, json, unix, checkstyle, github)
+    /// Use a specific output format (default, json, unix, checkstyle, github, stylish)
     #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum OutputFormat {
-    Default,
-    /// GitHub Check Annotation
-    /// <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>
-    Github,
-    Json,
-    Unix,
-    Checkstyle,
-}
-
-impl FromStr for OutputFormat {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "json" => Ok(Self::Json),
-            "default" => Ok(Self::Default),
-            "unix" => Ok(Self::Unix),
-            "checkstyle" => Ok(Self::Checkstyle),
-            "github" => Ok(Self::Github),
-            _ => Err(format!("'{s}' is not a known format")),
-        }
-    }
-}
-
 /// Enable Plugins
-#[allow(clippy::struct_field_names)]
+#[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone, Bpaf)]
 pub struct EnablePlugins {
     /// Disable react plugin, which is turned on by default
@@ -291,7 +270,6 @@ pub struct EnablePlugins {
 /// changing default behavior if they're not explicitly passed by the user. This scheme is a bit
 /// convoluted, but needed due to architectural constraints imposed by `bpaf`.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(clippy::enum_variant_names)]
 pub enum OverrideToggle {
     /// Override the option to enabled
     Enable,
@@ -460,7 +438,7 @@ mod lint_options {
     }
 
     #[test]
-    #[allow(clippy::similar_names)]
+    #[expect(clippy::similar_names)]
     fn multiple_paths() {
         let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
         let file_foo = temp_dir.path().join("foo.js");
@@ -478,27 +456,6 @@ mod lint_options {
         let options =
             get_lint_options(format!("{file_name_foo} {file_name_bar} {file_name_baz}").as_str());
         assert_eq!(options.paths, [file_foo, file_bar, file_baz]);
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    #[allow(clippy::similar_names)]
-    fn wildcard_expansion() {
-        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
-        let file_foo = temp_dir.path().join("foo.js");
-        File::create(&file_foo).expect("Could not create foo.js temp file");
-        let file_bar = temp_dir.path().join("bar.js");
-        File::create(&file_bar).expect("Could not create bar.js temp file");
-        let file_baz = temp_dir.path().join("baz");
-        File::create(&file_baz).expect("Could not create baz temp file");
-
-        let js_files_wildcard = temp_dir.path().join("*.js");
-        let options = get_lint_options(
-            js_files_wildcard.to_str().expect("could not get js files wildcard path"),
-        );
-        assert!(options.paths.contains(&file_foo));
-        assert!(options.paths.contains(&file_bar));
-        assert!(!options.paths.contains(&file_baz));
     }
 
     #[test]

@@ -1,0 +1,18 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c fixtures/config_ignore_patterns/ignore_extension/eslintrc.json fixtures/config_ignore_patterns/ignore_extension
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/unicorn/no-empty-file.html\eslint-plugin-unicorn(no-empty-file)]8;;\: Empty files are not allowed.
+   ,-[fixtures/config_ignore_patterns/ignore_extension/main.ts:1:1]
+   `----
+  help: Delete this file or add some code to it.
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 97 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

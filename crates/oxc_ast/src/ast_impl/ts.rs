@@ -14,8 +14,8 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
     pub fn static_name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(ident) => ident.name.clone(),
-            Self::String(lit) => lit.value.clone(),
+            Self::Identifier(ident) => ident.name,
+            Self::String(lit) => lit.value,
         }
     }
 }
@@ -25,19 +25,14 @@ impl<'a> TSType<'a> {
     ///
     /// For qualified (i.e.  namespaced) types, the left-most identifier is
     /// returned.
-    ///
-    /// ```
-    /// let ty = get_type_for("foo.bar.Baz"); // TSType::TSQualifiedName
-    /// get_identifier_reference(&ty); // Some(IdentifierReference { name: "foo", .. })
-    /// ```
-    pub fn get_identifier_reference(&self) -> Option<IdentifierReference<'a>> {
+    pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
         match self {
             TSType::TSTypeReference(reference) => {
-                Some(TSTypeName::get_first_name(&reference.type_name))
+                Some(reference.type_name.get_identifier_reference())
             }
-            TSType::TSQualifiedName(qualified) => Some(TSTypeName::get_first_name(&qualified.left)),
+            TSType::TSQualifiedName(name) => Some(name.left.get_identifier_reference()),
             TSType::TSTypeQuery(query) => match &query.expr_name {
-                TSTypeQueryExprName::IdentifierReference(ident) => Some((*ident).clone()),
+                TSTypeQueryExprName::IdentifierReference(ident) => Some(ident),
                 _ => None,
             },
             _ => None,
@@ -87,10 +82,10 @@ impl<'a> TSTypeName<'a> {
     /// type Foo = Bar; // -> Bar
     /// type Foo = Bar.Baz; // -> Bar
     /// ```
-    pub fn get_first_name(name: &TSTypeName<'a>) -> IdentifierReference<'a> {
-        match name {
-            TSTypeName::IdentifierReference(name) => (*name).clone(),
-            TSTypeName::QualifiedName(name) => TSTypeName::get_first_name(&name.left),
+    pub fn get_identifier_reference(&self) -> &IdentifierReference<'a> {
+        match self {
+            TSTypeName::IdentifierReference(ident) => ident,
+            TSTypeName::QualifiedName(name) => name.left.get_identifier_reference(),
         }
     }
 
@@ -216,8 +211,8 @@ impl<'a> TSModuleDeclarationName<'a> {
     /// Get the static name of this module declaration name.
     pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(ident) => ident.name.clone(),
-            Self::StringLiteral(lit) => lit.value.clone(),
+            Self::Identifier(ident) => ident.name,
+            Self::StringLiteral(lit) => lit.value,
         }
     }
 }

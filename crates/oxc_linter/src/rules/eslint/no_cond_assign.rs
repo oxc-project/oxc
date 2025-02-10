@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoCondAssign,
+    eslint,
     correctness
 );
 
@@ -120,7 +121,7 @@ impl Rule for NoCondAssign {
 }
 
 impl NoCondAssign {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn emit_diagnostic(ctx: &LintContext<'_>, expr: &AssignmentExpression<'_>) {
         let mut operator_span = Span::new(expr.left.span().end, expr.right.span().start);
         let start =
@@ -250,5 +251,5 @@ fn test() {
         ("(((3496.29)).bkufyydt = 2e308) ? foo : bar;", None),
     ];
 
-    Tester::new(NoCondAssign::NAME, NoCondAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoCondAssign::NAME, NoCondAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

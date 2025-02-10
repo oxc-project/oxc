@@ -1,0 +1,40 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c oxlint-eslint.json test.js
+working directory: fixtures/eslint_and_typescript_alias_rules
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-magic-numbers.html\eslint(no-magic-numbers)]8;;\: No magic number: 0.19
+   ,-[test.js:4:32]
+ 3 | const price = 200;
+ 4 | const price_with_tax = price * 0.19; // taxes are expensive
+   :                                ^^^^
+ 5 | 
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
+
+########## 
+arguments: -c oxlint-typescript.json test.js
+working directory: fixtures/eslint_and_typescript_alias_rules
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-magic-numbers.html\eslint(no-magic-numbers)]8;;\: No magic number: 0.19
+   ,-[test.js:4:32]
+ 3 | const price = 200;
+ 4 | const price_with_tax = price * 0.19; // taxes are expensive
+   :                                ^^^^
+ 5 | 
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

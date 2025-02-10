@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// new Bar(this).method();
     /// ```
     NoThisAssignment,
+    unicorn,
     pedantic
 );
 
@@ -134,5 +135,5 @@ fn test() {
         r"var foo = (bar), baz = (this);",
     ];
 
-    Tester::new(NoThisAssignment::NAME, NoThisAssignment::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoThisAssignment::NAME, NoThisAssignment::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -1,15 +1,18 @@
-use super::{Kind, Lexer};
 use crate::diagnostics;
 
-#[allow(clippy::unnecessary_safety_comment)]
-/// Handle next byte of source.
-///
-/// SAFETY:
-/// * Lexer must not be at end of file.
-/// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
-/// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
-pub(super) unsafe fn handle_byte(byte: u8, lexer: &mut Lexer) -> Kind {
-    BYTE_HANDLERS[byte as usize](lexer)
+use super::{Kind, Lexer};
+
+impl Lexer<'_> {
+    /// Handle next byte of source.
+    ///
+    /// # SAFETY
+    ///
+    /// * Lexer must not be at end of file.
+    /// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
+    /// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
+    pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
+        BYTE_HANDLERS[byte as usize](self)
+    }
 }
 
 type ByteHandler = unsafe fn(&mut Lexer<'_>) -> Kind;
@@ -53,7 +56,7 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
 ///
 /// ```
 /// const UNI: ByteHandler = {
-///   #[allow(non_snake_case)]
+///   #[expect(non_snake_case)]
 ///   fn UNI(lexer: &mut Lexer) -> Kind {
 ///     lexer.unicode_char_handler()
 ///   }
@@ -63,7 +66,7 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
 macro_rules! byte_handler {
     ($id:ident($lex:ident) $body:expr) => {
         const $id: ByteHandler = {
-            #[allow(non_snake_case)]
+            #[expect(non_snake_case)]
             fn $id($lex: &mut Lexer) -> Kind {
                 $body
             }
@@ -72,7 +75,6 @@ macro_rules! byte_handler {
     };
 }
 
-#[allow(clippy::unnecessary_safety_comment)]
 /// Macro for defining byte handler for an ASCII character.
 ///
 /// In addition to defining a `const` for the handler, it also asserts that lexer
@@ -101,12 +103,11 @@ macro_rules! byte_handler {
 ///
 /// ```
 /// const SPS: ByteHandler = {
-///   #[allow(non_snake_case)]
+///   #[expect(non_snake_case)]
 ///   fn SPS(lexer: &mut Lexer) {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
 ///       use assert_unchecked::assert_unchecked;
-///       let s = lexer.current.chars.as_str();
 ///       assert_unchecked!(!lexer.source.is_eof());
 ///       assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
@@ -132,7 +133,6 @@ macro_rules! ascii_byte_handler {
     };
 }
 
-#[allow(clippy::unnecessary_safety_comment)]
 /// Macro for defining byte handler for an ASCII character which is start of an identifier
 /// (`a`-`z`, `A`-`Z`, `$` or `_`).
 ///
@@ -157,7 +157,7 @@ macro_rules! ascii_byte_handler {
 ///
 /// ```
 /// const L_G: ByteHandler = {
-///   #[allow(non_snake_case)]
+///   #[expect(non_snake_case)]
 ///   fn L_G(lexer: &mut Lexer) -> Kind {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     let id_without_first_char = unsafe { lexer.identifier_name_handler() };
@@ -209,14 +209,28 @@ ascii_byte_handler!(LIN(lexer) {
 // !
 ascii_byte_handler!(EXL(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Neq2
-        } else {
-            Kind::Neq
+    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
+        match next_2_bytes[0] {
+            b'=' => {
+                if next_2_bytes[1] == b'=' {
+                    lexer.consume_2_chars();
+                    Kind::Neq2
+                } else {
+                    lexer.consume_char();
+                    Kind::Neq
+                }
+            }
+            _ => Kind::Bang
         }
     } else {
-        Kind::Bang
+        // At EOF, or only 1 byte left
+        match lexer.peek_byte() {
+            Some(b'=') => {
+                lexer.consume_char();
+                Kind::Neq
+            }
+            _ => Kind::Bang
+        }
     }
 });
 

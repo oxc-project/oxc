@@ -162,6 +162,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoElseReturn,
+    eslint,
     pedantic,
     conditional_fix
 );
@@ -258,7 +259,7 @@ fn no_else_return_diagnostic_fix(
     });
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn left_offset_for_whitespace(ctx: &LintContext, position: u32) -> u32 {
     if position == 0 {
         return position;
@@ -833,7 +834,7 @@ fn test() {
         ),
         ("if (foo) { return true; } else { let a; }", "if (foo) { return true; } let a;", None),
     ];
-    Tester::new(NoElseReturn::NAME, NoElseReturn::CATEGORY, pass, fail)
+    Tester::new(NoElseReturn::NAME, NoElseReturn::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

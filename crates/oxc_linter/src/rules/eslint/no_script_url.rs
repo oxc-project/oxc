@@ -36,6 +36,7 @@ declare_oxc_lint!(
     /// location.href = `javascript:void(0)`;
     /// ```
     NoScriptUrl,
+    eslint,
     style
 );
 
@@ -43,7 +44,7 @@ impl Rule for NoScriptUrl {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
-                if literal.value.cow_to_lowercase().starts_with("javascript:") =>
+                if literal.value.cow_to_ascii_lowercase().starts_with("javascript:") =>
             {
                 emit_diagnostic(ctx, literal.span);
             }
@@ -57,7 +58,7 @@ impl Rule for NoScriptUrl {
                         .unwrap()
                         .value
                         .raw
-                        .cow_to_lowercase()
+                        .cow_to_ascii_lowercase()
                         .starts_with("javascript:")
                 {
                     emit_diagnostic(ctx, literal.span);
@@ -99,5 +100,5 @@ fn test() {
         "var a = `JavaScript:`;",
     ];
 
-    Tester::new(NoScriptUrl::NAME, NoScriptUrl::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoScriptUrl::NAME, NoScriptUrl::PLUGIN, pass, fail).test_and_snapshot();
 }

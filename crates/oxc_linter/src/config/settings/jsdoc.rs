@@ -186,14 +186,8 @@ impl JSDocPluginSettings {
 #[serde(untagged)]
 enum TagNamePreference {
     TagNameOnly(String),
-    ObjectWithMessageAndReplacement {
-        message: String,
-        replacement: String,
-    },
-    ObjectWithMessage {
-        message: String,
-    },
-    #[allow(dead_code)]
+    ObjectWithMessageAndReplacement { message: String, replacement: String },
+    ObjectWithMessage { message: String },
     FalseOnly(bool), // Should care `true`...?
 }
 

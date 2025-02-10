@@ -19,7 +19,7 @@ const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
 pub struct ColumnOffsetsId(NonMaxU32);
 
 impl Idx for ColumnOffsetsId {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
         // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
@@ -64,7 +64,7 @@ pub struct ColumnOffsets {
     columns: Box<[u32]>,
 }
 
-#[allow(clippy::struct_field_names)]
+#[expect(clippy::struct_field_names)]
 pub struct SourcemapBuilder {
     source_id: u32,
     original_source: Arc<str>,
@@ -248,7 +248,7 @@ impl SourcemapBuilder {
         idx
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn update_generated_line_and_column(&mut self, output: &[u8]) {
         let remaining = &output[self.last_generated_update..];
 
@@ -327,7 +327,7 @@ impl SourcemapBuilder {
 
             let remaining = &content.as_bytes()[line_byte_offset as usize..];
             for (byte_offset_from_line_start, b) in remaining.iter().enumerate() {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 let mut byte_offset_from_line_start = byte_offset_from_line_start as u32;
                 match b {
                     b'\n' => {
@@ -359,7 +359,7 @@ impl SourcemapBuilder {
                         line_byte_offset += byte_offset_from_line_start;
                         let remaining = &content[line_byte_offset as usize..];
                         for (chunk_byte_offset, ch) in remaining.char_indices() {
-                            #[allow(clippy::cast_possible_truncation)]
+                            #[expect(clippy::cast_possible_truncation)]
                             let mut chunk_byte_offset = chunk_byte_offset as u32;
                             for _ in 0..ch.len_utf8() {
                                 columns.push(column);
@@ -382,7 +382,7 @@ impl SourcemapBuilder {
                                 LS | PS => {
                                     chunk_byte_offset += 3;
                                 }
-                                #[allow(clippy::cast_possible_truncation)]
+                                #[expect(clippy::cast_possible_truncation)]
                                 _ => {
                                     // Mozilla's "source-map" library counts columns using UTF-16 code units
                                     column += ch.len_utf16() as u32;
@@ -505,7 +505,7 @@ mod test {
             let mut builder = SourcemapBuilder::new(Path::new("x.js"), source);
             let output: Vec<u8> = source.as_bytes().into();
             for (i, _ch) in source.char_indices() {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 builder.add_source_mapping(&output, i as u32, None);
                 assert!(
                     builder.generated_line == line && builder.generated_column == column,

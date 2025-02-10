@@ -54,11 +54,12 @@ declare_oxc_lint!(
     /// export { foo } from 'foo';
     /// ```
     NoBarrelFile,
+    oxc,
     restriction
 );
 
 impl Rule for NoBarrelFile {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_configuration(value: serde_json::Value) -> Self {
         Self {
             threshold: value
@@ -144,7 +145,7 @@ fn test() {
         settings,
     )];
 
-    Tester::new(NoBarrelFile::NAME, NoBarrelFile::CATEGORY, pass, fail)
+    Tester::new(NoBarrelFile::NAME, NoBarrelFile::PLUGIN, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

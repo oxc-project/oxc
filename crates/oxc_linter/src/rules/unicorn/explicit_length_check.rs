@@ -88,6 +88,7 @@ declare_oxc_lint!(
     /// const isEmpty = foo.length === 0;
     /// ```
     ExplicitLengthCheck,
+    unicorn,
     pedantic,
     conditional_fix
 );
@@ -223,7 +224,7 @@ impl ExplicitLengthCheck {
             if need_paren { ")" } else { "" },
             if need_pad_end { " " } else { "" },
         );
-        let property = static_member_expr.property.name.clone();
+        let property = static_member_expr.property.name;
         let help = if auto_fix {
             None
         } else {
@@ -414,7 +415,7 @@ fn test() {
         ("for(const a of!foo.length);", "for(const a of foo.length === 0);", None),
         ("for(const a in!foo.length);", "for(const a in foo.length === 0);", None),
     ];
-    Tester::new(ExplicitLengthCheck::NAME, ExplicitLengthCheck::CATEGORY, pass, fail)
+    Tester::new(ExplicitLengthCheck::NAME, ExplicitLengthCheck::PLUGIN, pass, fail)
         .expect_fix(fixes)
         .test_and_snapshot();
 }

@@ -1,5 +1,6 @@
 use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
+use commands::LSP_COMMANDS;
 use dashmap::DashMap;
 use futures::future::join_all;
 use globset::Glob;
@@ -14,19 +15,21 @@ use tower_lsp::{
         CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
         ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, InitializeParams, InitializeResult, InitializedParams,
-        NumberOrString, Position, Range, ServerInfo, TextEdit, Url, WorkspaceEdit,
+        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, Url,
+        WorkspaceEdit,
     },
     Client, LanguageServer, LspService, Server,
 };
 
-use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
+use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 
 use crate::capabilities::{Capabilities, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC};
 use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::server_linter::ServerLinter;
 
 mod capabilities;
+mod commands;
 mod linter;
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
@@ -256,13 +259,10 @@ impl LanguageServer for Backend {
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
         if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
-            let reports = value
-                .iter()
-                .filter(|r| {
-                    r.diagnostic.range == params.range
-                        || range_includes(params.range, r.diagnostic.range)
-                })
-                .collect::<Vec<_>>();
+            let reports = value.iter().filter(|r| {
+                r.diagnostic.range == params.range
+                    || range_overlaps(params.range, r.diagnostic.range)
+            });
             for report in reports {
                 // TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
                 let mut rule_name: Option<String> = None;
@@ -386,6 +386,18 @@ impl LanguageServer for Backend {
 
         Ok(Some(code_actions_vec))
     }
+
+    async fn execute_command(
+        &self,
+        params: ExecuteCommandParams,
+    ) -> Result<Option<serde_json::Value>> {
+        let command = LSP_COMMANDS.iter().find(|c| c.command_id() == params.command);
+
+        return match command {
+            Some(c) => c.execute(self, params.arguments).await,
+            None => Err(Error::invalid_request()),
+        };
+    }
 }
 
 impl Backend {
@@ -451,7 +463,7 @@ impl Backend {
         }
     }
 
-    #[allow(clippy::ptr_arg)]
+    #[expect(clippy::ptr_arg)]
     async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
         join_all(result.iter().map(|(path, diagnostics)| {
             self.client.publish_diagnostics(
@@ -488,10 +500,11 @@ impl Backend {
             let mut linter = self.server_linter.write().await;
             let config = Oxlintrc::from_file(&config_path)
                 .expect("should have initialized linter with new options");
+            let config_store = ConfigStoreBuilder::from_oxlintrc(true, config.clone())
+                .build()
+                .expect("failed to build config");
             *linter = ServerLinter::new_with_linter(
-                LinterBuilder::from_oxlintrc(true, config.clone())
-                    .with_fix(FixKind::SafeFix)
-                    .build(),
+                Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix),
             );
             return Some(config);
         }
@@ -530,11 +543,7 @@ impl Backend {
                 if !uri_path.starts_with(gitignore.path()) {
                     continue;
                 }
-
-                let path = PathBuf::from(uri.path());
-                let ignored =
-                    gitignore.matched_path_or_any_parents(&path, path.is_dir()).is_ignore();
-                if ignored {
+                if gitignore.matched_path_or_any_parents(&uri_path, uri_path.is_dir()).is_ignore() {
                     debug!("ignored: {uri}");
                     return true;
                 }
@@ -567,12 +576,6 @@ async fn main() {
     Server::new(stdin, stdout, socket).serve(service).await;
 }
 
-fn range_includes(range: Range, to_include: Range) -> bool {
-    if range.start >= to_include.start {
-        return false;
-    }
-    if range.end <= to_include.end {
-        return false;
-    }
-    true
+fn range_overlaps(a: Range, b: Range) -> bool {
+    a.start <= b.end && a.end >= b.start
 }

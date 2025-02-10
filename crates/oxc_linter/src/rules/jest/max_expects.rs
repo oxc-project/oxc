@@ -61,6 +61,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     MaxExpects,
+    jest,
     style,
 );
 
@@ -120,7 +121,7 @@ impl MaxExpects {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("test('should pass')", None),
         ("test('should pass', () => {})", None),
         ("test.skip('should pass', () => {})", None),
@@ -357,7 +358,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             "
                 test('should not pass', function () {
@@ -470,7 +471,89 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxExpects::NAME, MaxExpects::CATEGORY, pass, fail)
+    let pass_vitest = vec![
+        ("test('should pass')", None),
+        ("test('should pass', () => {})", None),
+        ("test.skip('should pass', () => {})", None),
+        (
+            "test('should pass', () => {
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			    });",
+            None,
+        ),
+        (
+            "test('should pass', () => {
+			     expect(true).toBeDefined();
+			     expect(true).toBeDefined();
+			     expect(true).toBeDefined();
+			     expect(true).toBeDefined();
+			     expect(true).toBeDefined();
+			      });",
+            None,
+        ),
+        (
+            " test('should pass', async () => {
+			     expect.hasAssertions();
+			   
+			     expect(true).toBeDefined();
+			     expect(true).toBeDefined();
+			     expect(true).toBeDefined();
+			     expect(true).toBeDefined();
+			     expect(true).toEqual(expect.any(Boolean));
+			      });",
+            None,
+        ),
+    ];
+
+    let fail_vitest = vec![
+        (
+            "test('should not pass', function () {
+			       expect(true).toBeDefined();
+			       expect(true).toBeDefined();
+			       expect(true).toBeDefined();
+			       expect(true).toBeDefined();
+			       expect(true).toBeDefined();
+			       expect(true).toBeDefined();
+			     });
+			      ",
+            None,
+        ),
+        (
+            "test('should not pass', () => {
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			    });
+			    test('should not pass', () => {
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			    });",
+            None,
+        ),
+        (
+            "test('should not pass', () => {
+			      expect(true).toBeDefined();
+			      expect(true).toBeDefined();
+			       });",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+
+    Tester::new(MaxExpects::NAME, MaxExpects::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

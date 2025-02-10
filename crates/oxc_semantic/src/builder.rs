@@ -39,7 +39,7 @@ use crate::{
 
 macro_rules! control_flow {
     ($self:ident, |$cfg:tt| $body:expr) => {
-        if let Some(ref mut $cfg) = $self.cfg {
+        if let Some($cfg) = &mut $self.cfg {
             $body
         } else {
             Default::default()
@@ -223,7 +223,7 @@ impl<'a> SemanticBuilder<'a> {
     /// Finalize the builder.
     ///
     /// # Panics
-    pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
+    pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
         if self.build_jsdoc {
@@ -262,7 +262,7 @@ impl<'a> SemanticBuilder<'a> {
             // Check that estimated counts accurately (unless in release mode)
             #[cfg(debug_assertions)]
             if let Some(stats) = check_stats {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 let actual_stats = Stats::new(
                     self.nodes.len() as u32,
                     self.scope.len() as u32,
@@ -344,7 +344,6 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[inline]
-    #[allow(clippy::unnecessary_wraps)]
     fn retrieve_recorded_ast_node(&mut self) -> Option<NodeId> {
         if self.cfg.is_some() {
             Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
@@ -712,8 +711,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
             self.scope.cell.with_dependent_mut(|allocator, inner| {
                 if !inner.bindings[parent_scope_id].is_empty() {
-                    let mut parent_bindings =
-                        Bindings::with_hasher_in(rustc_hash::FxBuildHasher, allocator);
+                    let mut parent_bindings = Bindings::new_in(allocator);
                     mem::swap(&mut inner.bindings[parent_scope_id], &mut parent_bindings);
                     for &symbol_id in parent_bindings.values() {
                         self.symbols.set_scope_id(symbol_id, self.current_scope_id);
@@ -2075,7 +2073,6 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::Class(_) => {
@@ -2121,7 +2118,7 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
         let reference = Reference::new(self.current_node_id, flags);
-        let reference_id = self.declare_reference(ident.name.clone(), reference);
+        let reference_id = self.declare_reference(ident.name, reference);
         ident.reference_id.set(Some(reference_id));
     }
 

@@ -24,7 +24,6 @@ impl NoUnusedVars {
     ///
     /// Only a small set of `varsIgnorePattern` values are supported for
     /// renaming. Feel free to add support for more as needed.
-    #[allow(clippy::cast_possible_truncation)]
     pub(in super::super) fn rename_or_remove_var_declaration<'a>(
         &self,
         fixer: RuleFixer<'_, 'a>,

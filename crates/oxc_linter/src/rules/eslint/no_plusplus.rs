@@ -77,6 +77,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoPlusplus,
+    eslint,
     restriction,
     // This is not guaranteed to rewrite the code in a way that is equivalent.
     // For example, `++i` and `i++` will be rewritten as `i += 1` even though they are not the same.
@@ -105,7 +106,7 @@ impl Rule for NoPlusplus {
             return;
         }
 
-        let ident = expr.argument.get_identifier();
+        let ident = expr.argument.get_identifier_name();
 
         if let Some(ident) = ident {
             let operator = match expr.operator {
@@ -266,7 +267,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoPlusplus::NAME, NoPlusplus::CATEGORY, pass, fail)
+    Tester::new(NoPlusplus::NAME, NoPlusplus::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// const createObject = Object => new Object();
     /// ```
     NoObjectConstructor,
+    eslint,
     pedantic,
     pending
 );
@@ -173,6 +174,6 @@ fn test() {
         }",
     ];
 
-    Tester::new(NoObjectConstructor::NAME, NoObjectConstructor::CATEGORY, pass, fail)
+    Tester::new(NoObjectConstructor::NAME, NoObjectConstructor::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

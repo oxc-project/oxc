@@ -1,8 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:21]
  2 │                     const withDatabase = () => {
  3 │ ╭─▶                     afterAll(() => {
@@ -17,7 +16,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:17]
  1 │     
  2 │ ╭─▶                 afterAll(() => {
@@ -32,7 +31,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:17]
  1 │ 
  2 │                 afterAll(() => {});
@@ -45,7 +44,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:17]
  1 │ 
  2 │                 afterEach(() => {});
@@ -58,7 +57,7 @@ snapshot_kind: text
    ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:17]
  1 │ 
  2 │                 afterEach(() => {});
@@ -71,7 +70,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:17]
  1 │ 
  2 │                 beforeEach(() => {});
@@ -84,7 +83,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:17]
  1 │ 
  2 │                 afterAll(() => {});
@@ -97,7 +96,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:17]
  1 │ 
  2 │                 afterAll(() => {});
@@ -112,7 +111,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:17]
  2 │                 afterAll(() => {});
  3 │                 afterAll(() => {});
@@ -125,7 +124,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:21]
  2 │                 describe('my test', () => {
  3 │                     afterAll(() => {});
@@ -138,7 +137,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:21]
  2 │                 describe('my test', () => {
  3 │                     afterAll(() => {});
@@ -151,7 +150,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:8:21]
   7 │ 
   8 │                     beforeEach(() => {});
@@ -164,7 +163,7 @@ snapshot_kind: text
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:21]
  2 │                 describe('my test', () => {
  3 │                     afterAll(() => {});
@@ -177,7 +176,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:8:21]
   7 │ 
   8 │                     beforeEach(() => {});
@@ -190,7 +189,7 @@ snapshot_kind: text
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:6:25]
  5 │                     describe('when something is true', () => {
  6 │                         beforeEach(() => {});
@@ -203,7 +202,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:4:21]
  3 │                     beforeAll(() => {});
  4 │                     afterAll(() => {});
@@ -216,7 +215,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:9:25]
   8 │                         beforeAll(() => {});
   9 │                         afterEach(() => {});
@@ -229,7 +228,7 @@ snapshot_kind: text
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:21:29]
  20 │                             afterAll(() => {});
  21 │                             afterAll(() => {});
@@ -243,7 +242,7 @@ snapshot_kind: text
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:4:25]
   3 │                         const setupDatabase = () => {
   4 │ ╭─▶                         beforeEach(() => {
@@ -259,7 +258,7 @@ snapshot_kind: text
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:18:25]
  17 │                     describe('my nested test', () => {
  18 │                         afterAll(() => {});
@@ -272,7 +271,7 @@ snapshot_kind: text
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:3:21]
   2 │                     describe('foo', () => {
   3 │ ╭─▶                     beforeEach(() => {
@@ -288,7 +287,7 @@ snapshot_kind: text
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:34:25]
  33 │     
  34 │ ╭─▶                         afterEach(() => {
@@ -304,7 +303,7 @@ snapshot_kind: text
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:17]
  2 │                 const withDatabase = () => {
  3 │ ╭─▶                 afterAll(() => {
@@ -319,7 +318,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:13]
  1 │     
  2 │ ╭─▶             afterAll(() => {
@@ -334,7 +333,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:13]
  1 │ 
  2 │             afterAll(() => {});
@@ -347,7 +346,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:13]
  1 │ 
  2 │             afterEach(() => {});
@@ -360,7 +359,7 @@ snapshot_kind: text
    ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:13]
  1 │ 
  2 │             afterEach(() => {});
@@ -373,7 +372,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:13]
  1 │ 
  2 │             beforeEach(() => {});
@@ -386,7 +385,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:13]
  1 │ 
  2 │             afterAll(() => {});
@@ -399,7 +398,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:2:13]
  1 │ 
  2 │             afterAll(() => {});
@@ -414,7 +413,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:13]
  2 │             afterAll(() => {});
  3 │             afterAll(() => {});
@@ -427,7 +426,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:17]
  2 │             describe('my test', () => {
  3 │                 afterAll(() => {});
@@ -440,7 +439,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:17]
  2 │             describe('my test', () => {
  3 │                 afterAll(() => {});
@@ -453,7 +452,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:8:17]
   7 │ 
   8 │                 beforeEach(() => {});
@@ -466,7 +465,7 @@ snapshot_kind: text
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:3:17]
  2 │             describe('my test', () => {
  3 │                 afterAll(() => {});
@@ -479,7 +478,7 @@ snapshot_kind: text
    ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:8:17]
   7 │ 
   8 │                 beforeEach(() => {});
@@ -492,7 +491,7 @@ snapshot_kind: text
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:6:21]
  5 │                 describe('when something is true', () => {
  6 │                     beforeEach(() => {});
@@ -505,7 +504,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:4:17]
  3 │                 beforeAll(() => {});
  4 │                 afterAll(() => {});
@@ -518,7 +517,7 @@ snapshot_kind: text
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:9:21]
   8 │                     beforeAll(() => {});
   9 │                     afterEach(() => {});
@@ -531,7 +530,7 @@ snapshot_kind: text
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:21:25]
  20 │                         afterAll(() => {});
  21 │                         afterAll(() => {});
@@ -545,7 +544,7 @@ snapshot_kind: text
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:4:21]
   3 │                     const setupDatabase = () => {
   4 │ ╭─▶                     beforeEach(() => {
@@ -561,7 +560,7 @@ snapshot_kind: text
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:18:21]
  17 │                 describe('my nested test', () => {
  18 │                     afterAll(() => {});
@@ -574,7 +573,7 @@ snapshot_kind: text
     ╰────
   help: "afterEach" hooks should be before any "afterAll" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:3:17]
   2 │                 describe('foo', () => {
   3 │ ╭─▶                 beforeEach(() => {
@@ -590,7 +589,7 @@ snapshot_kind: text
     ╰────
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Test hooks are not in a consistent order.
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Test hooks are not in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:34:21]
  33 │                     
  34 │ ╭─▶                     afterEach(() => {

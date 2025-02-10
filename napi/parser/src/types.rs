@@ -81,10 +81,12 @@ pub struct EcmaScriptModule {
     ///
     /// Dynamic imports `import('foo')` are ignored since they can be used in non-ESM files.
     pub has_module_syntax: bool,
-    /// Import Statements.
+    /// Import statements.
     pub static_imports: Vec<StaticImport>,
-    /// Export Statements.
+    /// Export statements.
     pub static_exports: Vec<StaticExport>,
+    /// Dynamic import expressions.
+    pub dynamic_imports: Vec<DynamicImport>,
     /// Span positions` of `import.meta`
     pub import_metas: Vec<Span>,
 }
@@ -244,4 +246,11 @@ pub enum ExportLocalNameKind {
     /// If the exported value is not locally accessible from within the module.
     /// `export default function () {}`
     None,
+}
+
+#[napi(object)]
+pub struct DynamicImport {
+    pub start: u32,
+    pub end: u32,
+    pub module_request: Span,
 }

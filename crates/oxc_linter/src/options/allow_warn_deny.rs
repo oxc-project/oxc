@@ -73,7 +73,7 @@ impl TryFrom<&Value> for AllowWarnDeny {
 
 fn invalid_int_severity<D: Display>(value: D) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
-        r#"Failed to parse rule severity, expected one of `0`, `1` or `2`, but got {value}"#
+        r"Failed to parse rule severity, expected one of `0`, `1` or `2`, but got {value}"
     ))
 }
 
@@ -97,7 +97,7 @@ impl TryFrom<i64> for AllowWarnDeny {
         if value < 0 {
             return Err(invalid_int_severity("a negative number"));
         }
-        #[allow(clippy::cast_sign_loss)]
+        #[expect(clippy::cast_sign_loss)]
         Self::try_from(value as u64)
     }
 }

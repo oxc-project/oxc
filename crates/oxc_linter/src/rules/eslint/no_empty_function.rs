@@ -57,6 +57,7 @@ declare_oxc_lint!(
     /// const add = (a, b) => a + b
     /// ```
     NoEmptyFunction,
+    eslint,
     restriction,
 );
 
@@ -111,7 +112,7 @@ fn get_function_name_and_kind<'a>(
                 return (kind, method.key.name());
             }
             AstKind::VariableDeclarator(decl) => {
-                return ("function", decl.id.get_identifier().map(Into::into));
+                return ("function", decl.id.get_identifier_name().map(Into::into));
             }
             _ => return ("function", None),
         }
@@ -226,5 +227,5 @@ fn test() {
     ",
     ];
 
-    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail).test_and_snapshot();
 }

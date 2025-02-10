@@ -1,0 +1,19 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -W no-undef -c fixtures/eslintrc_env/eslintrc_no_env.json fixtures/eslintrc_env/test.js
+working directory: 
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-undef.html\eslint(no-undef)]8;;\: 'console' is not defined.
+   ,-[fixtures/eslintrc_env/test.js:1:1]
+ 1 | console.log('')
+   : ^^^^^^^
+   `----
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 98 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

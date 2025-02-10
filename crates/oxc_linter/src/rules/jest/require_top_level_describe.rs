@@ -106,6 +106,7 @@ declare_oxc_lint!(
     /// ```
     ///
     RequireTopLevelDescribe,
+    jest,
     style,
 );
 
@@ -192,6 +193,8 @@ impl RequireTopLevelDescribe {
 #[test]
 fn test() {
     use crate::tester::Tester;
+
+    // Note: Both Jest and Vitest share the same unit tests
 
     let pass = vec![
         ("it.each()", None),
@@ -392,7 +395,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireTopLevelDescribe::NAME, RequireTopLevelDescribe::CATEGORY, pass, fail)
+    Tester::new(RequireTopLevelDescribe::NAME, RequireTopLevelDescribe::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use tower_lsp::lsp_types::Url;
 
-use oxc_linter::{FixKind, Linter};
+use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter};
 
 use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::isolated_lint_handler::IsolatedLintHandler;
@@ -13,7 +13,9 @@ pub struct ServerLinter {
 
 impl ServerLinter {
     pub fn new() -> Self {
-        let linter = Linter::default().with_fix(FixKind::SafeFix);
+        let config_store =
+            ConfigStoreBuilder::default().build().expect("Failed to build config store");
+        let linter = Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix);
         Self { linter: Arc::new(linter) }
     }
 

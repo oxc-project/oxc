@@ -13,6 +13,8 @@
 
 name: Benchmark
 
+permissions: {}
+
 on:
   workflow_dispatch:
   pull_request:
@@ -100,7 +102,7 @@ jobs:
           run: cargo codspeed run
 
       - name: Upload bench data artefact
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: result-${{ matrix.component }}
           path: ${{ env.DATA_DIR }} # env.DATA_DIR from `capture.mjs`
@@ -133,7 +135,7 @@ jobs:
           rm target/codspeed/oxc_benchmark/*.d
 
       - name: Upload Binary
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           if-no-files-found: error
           name: benchmark-linter
@@ -168,7 +170,7 @@ jobs:
           chmod +x ./target/codspeed/oxc_benchmark/*
 
       - name: Install codspeed
-        uses: taiki-e/install-action@8c39981484df4e7ba41af8e8e078ac546d5e1b11 # v2.46.8
+        uses: taiki-e/install-action@c1952a69c392b2c5f2eaa845b56120fff5fe49d3 # v2.48.5
         with:
           tool: cargo-codspeed
 
@@ -193,7 +195,7 @@ jobs:
           run: cargo codspeed run
 
       - name: Upload bench data artefact
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
         with:
           name: result-linter${{ matrix.fixture }}
           path: ${{ env.DATA_DIR }} # env.DATA_DIR from `capture.mjs`

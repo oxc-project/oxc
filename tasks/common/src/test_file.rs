@@ -1,4 +1,4 @@
-use std::{fmt, str::FromStr};
+use std::fmt;
 
 use crate::{project_root, request::agent};
 
@@ -94,11 +94,11 @@ impl TestFile {
     /// # Errors
     /// # Panics
     pub fn get_source_text(lib: &str) -> Result<(String, String), String> {
-        let url = url::Url::from_str(lib).map_err(err_to_string)?;
-
-        let segments = url.path_segments().ok_or_else(|| "lib url has no segments".to_string())?;
-
-        let filename = segments.last().ok_or_else(|| "lib url has no segments".to_string())?;
+        if !lib.starts_with("https://") {
+            return Err(format!("Not an https url: {lib:?}"));
+        }
+        let filename =
+            lib.split('/').last().ok_or_else(|| "lib url has no segments".to_string())?;
 
         let file = project_root().join("target").join(filename);
 
@@ -107,8 +107,8 @@ impl TestFile {
         } else {
             println!("[{filename}] - Downloading [{lib}] to [{}]", file.display());
             match agent().get(lib).call() {
-                Ok(response) => {
-                    let mut reader = response.into_reader();
+                Ok(mut response) => {
+                    let mut reader = response.body_mut().as_reader();
 
                     let _drop = std::fs::remove_file(&file);
                     let mut writer = std::fs::File::create(&file).map_err(err_to_string)?;

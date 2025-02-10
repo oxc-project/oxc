@@ -16,9 +16,11 @@ pub struct NoIterator;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow the use of the `__iterator__` property
     ///
     /// ### Why is this bad?
+    ///
     /// The `__iterator__` property was a SpiderMonkey extension to JavaScript
     /// that could be used to create custom iterators that are compatible with
     /// JavaScript’s for in and for each constructs. However, this property is
@@ -53,8 +55,9 @@ declare_oxc_lint!(
     /// };
     /// ```
     NoIterator,
+    eslint,
     restriction,
-    pending // TODO: suggestion
+    suggestion
 );
 
 impl Rule for NoIterator {
@@ -64,10 +67,11 @@ impl Rule for NoIterator {
         };
         if let Some(static_property_name) = member_expression.static_property_name() {
             if static_property_name == "__iterator__" {
-                ctx.diagnostic(no_iterator_diagnostic(Span::new(
-                    member_expression.span().start,
-                    member_expression.span().end,
-                )));
+                let mem_span = member_expression.span();
+                let obj_span = member_expression.object().span();
+                ctx.diagnostic_with_suggestion(no_iterator_diagnostic(mem_span), |fixer| {
+                    fixer.replace(Span::new(obj_span.end, mem_span.end), "[Symbol.iterator]")
+                });
             }
         }
     }
@@ -81,8 +85,7 @@ fn test() {
         "var a = test[__iterator__];",
         "var __iterator__ = null;",
         "foo[`__iterator`] = null;",
-        "foo[`__iterator__
-			`] = null;",
+        "foo[`__iterator__\n`] = null;",
     ];
 
     let fail = vec![
@@ -93,5 +96,18 @@ fn test() {
         "test[`__iterator__`] = function () {};",
     ];
 
-    Tester::new(NoIterator::NAME, NoIterator::CATEGORY, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("var a = test.__iterator__;", "var a = test[Symbol.iterator];"),
+        (
+            "Foo.prototype.__iterator__ = function() {};",
+            "Foo.prototype[Symbol.iterator] = function() {};",
+        ),
+        ("var a = test['__iterator__'];", "var a = test[Symbol.iterator];"),
+        ("var a = test[`__iterator__`];", "var a = test[Symbol.iterator];"),
+        ("test[`__iterator__`] = function () {};", "test[Symbol.iterator] = function () {};"),
+    ];
+
+    Tester::new(NoIterator::NAME, NoIterator::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

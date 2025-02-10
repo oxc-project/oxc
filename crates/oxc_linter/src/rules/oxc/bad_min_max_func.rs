@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// ```
     ///
     BadMinMaxFunc,
+    oxc,
     correctness
 );
 
@@ -159,5 +160,5 @@ fn test() {
         ("Math.min(Math.max(1e3, x), 1.55e2)", None),
     ];
 
-    Tester::new(BadMinMaxFunc::NAME, BadMinMaxFunc::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(BadMinMaxFunc::NAME, BadMinMaxFunc::PLUGIN, pass, fail).test_and_snapshot();
 }

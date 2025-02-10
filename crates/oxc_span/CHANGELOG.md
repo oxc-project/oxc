@@ -4,6 +4,79 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.49.0] - 2025-02-10
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Bug Fixes
+
+- 7e6a537 ast: Include `directives` in `body` (#8981) (hi-ogawa)
+- 81bed37 span: `f64::content_eq` return `false` for `0` and `-0` (#9007) (overlookmotel)
+
+### Refactor
+
+- c58f785 ast: Simplify serializing `SourceType` (#8936) (overlookmotel)
+- cbb4e9c ast: Generated `Serialize` impls flatten struct fields (#8904) (overlookmotel)
+- caa651c ast: `#[content_eq(skip)]` attr (#8875) (overlookmotel)
+- 7ddd219 ast: Rename `#[estree(always_flatten)]` attr to `#[estree(flatten)]` (#8871) (overlookmotel)
+- abfe5bf ast: Shorten generated code for numbers (#8864) (overlookmotel)
+- f69de07 ast: Remove unneeded lint attrs from generated code (#8862) (overlookmotel)
+- e930cae span: Combine `Span` type and impls in 1 file (#8900) (overlookmotel)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
+## [0.48.2] - 2025-02-02
+
+### Refactor
+
+- 0568210 ast: Remove excess line breaks from generated code (#8830) (overlookmotel)
+
+## [0.48.0] - 2025-01-24
+
+- 54d0fac span: [**BREAKING**] Remove `PartialEq` impl for `&Atom` (#8642) (overlookmotel)
+
+### Refactor
+
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- 20f52b1 span: Remove unnecessary lifetimes on `Atom` impls (#8639) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
+## [0.47.0] - 2025-01-18
+
+- 7066d1c ast, span, syntax, regular_expression: [**BREAKING**] Remove `ContentHash` (#8512) (overlookmotel)
+
+### Features
+
+
+### Performance
+
+- 63eb298 span: Compare `Span`s as single `u64`s (#8300) (overlookmotel)
+- a43560c span: Hash `Span` as a single `u64` (#8299) (overlookmotel)
+- 3fff7d2 span: Align `Span` same as `usize` (#8298) (overlookmotel)
+
+### Refactor
+
+- ac05134 allocator: `String` type (#8568) (overlookmotel)
+- b5ed58e span: All methods take owned `Span` (#8297) (overlookmotel)
+
+## [0.46.0] - 2025-01-14
+
+### Features
+
+- 9d550aa span: Add `Atom::r#static` (#8479) (_Kerman)
+
+### Refactor
+
+- de5b288 span: Rename `Atom::new_const` method (#8480) (overlookmotel)
+
+## [0.45.0] - 2025-01-11
+
+### Styling
+
+- e81f34f span: Reformat code (#8296) (overlookmotel)
+
 ## [0.44.0] - 2024-12-25
 
 ### Features

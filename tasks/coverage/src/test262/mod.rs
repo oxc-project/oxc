@@ -2,6 +2,7 @@ mod meta;
 
 use std::path::{Path, PathBuf};
 
+use cow_utils::CowUtils;
 use oxc::span::SourceType;
 
 pub use self::meta::{MetaData, Phase, TestFlag};
@@ -27,6 +28,7 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
 
     fn skip_test_path(&self, path: &Path) -> bool {
         let path = path.to_string_lossy();
+        let path = path.cow_replace('\\', "/");
         path.contains("test262/test/staging") ||
         // ignore markdown files
         path.ends_with(".md") ||
@@ -57,10 +59,6 @@ pub struct Test262Case {
 }
 
 impl Test262Case {
-    pub fn meta(&self) -> &MetaData {
-        &self.meta
-    }
-
     /// # Panics
     pub fn read_metadata(code: &str) -> MetaData {
         let (start, end) = (code.find("/*---").unwrap(), code.find("---*/").unwrap());
@@ -68,12 +66,36 @@ impl Test262Case {
         MetaData::from_str(s)
     }
 
+    fn compute_should_fail(meta: &MetaData) -> bool {
+        meta.negative.as_ref().filter(|n| n.phase == Phase::Parse).is_some()
+    }
+
     pub fn set_result(&mut self, result: TestResult) {
         self.result = result;
     }
 
-    fn compute_should_fail(meta: &MetaData) -> bool {
-        meta.negative.as_ref().filter(|n| n.phase == Phase::Parse).is_some()
+    pub fn meta(&self) -> &MetaData {
+        &self.meta
+    }
+
+    pub fn is_module(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::Module)
+    }
+
+    pub fn is_only_strict(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::OnlyStrict)
+    }
+
+    pub fn is_no_strict(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::NoStrict)
+    }
+
+    pub fn is_raw(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::Raw)
+    }
+
+    pub fn is_async(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::Async)
     }
 }
 

@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoRestrictedGlobals,
+    eslint,
     restriction,
 );
 
@@ -85,7 +86,7 @@ impl Rule for NoRestrictedGlobals {
                 return;
             };
 
-            if ctx.semantic().is_reference_to_global_variable(ident) {
+            if ctx.is_reference_to_global_variable(ident) {
                 ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
             }
         }
@@ -148,6 +149,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRestrictedGlobals::NAME, NoRestrictedGlobals::CATEGORY, pass, fail)
+    Tester::new(NoRestrictedGlobals::NAME, NoRestrictedGlobals::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

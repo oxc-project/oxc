@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// file, most people would agree it should not be in the thousands.
     /// Recommendations usually range from 100 to 500 lines.
     MaxLines,
+    eslint,
     pedantic
 );
 
@@ -78,7 +79,7 @@ impl Rule for MaxLines {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn run_once(&self, ctx: &LintContext) {
         let comment_lines = if self.skip_comments {
             let mut comment_lines: usize = 0;
@@ -420,5 +421,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxLines::NAME, MaxLines::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(MaxLines::NAME, MaxLines::PLUGIN, pass, fail).test_and_snapshot();
 }

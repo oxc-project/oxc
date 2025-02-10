@@ -12,7 +12,7 @@ use oxc_ast::{
     },
     match_expression,
     visit::walk::walk_function_body,
-    AstKind, Visit,
+    AstKind, AstType, Visit,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -56,9 +56,9 @@ fn unknown_dependencies_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic
 
 fn async_effect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Effect callbacks are synchronous to prevent race conditions.")
-      .with_label(span)
-      .with_help("Consider putting the asynchronous code inside a function and calling it from the effect.")
-      .with_error_code_scope(SCOPE)
+        .with_label(span)
+        .with_help("Consider putting the asynchronous code inside a function and calling it from the effect.")
+        .with_error_code_scope(SCOPE)
 }
 
 fn missing_dependency_diagnostic(hook_name: &str, deps: &[String], span: Span) -> OxcDiagnostic {
@@ -188,6 +188,7 @@ declare_oxc_lint!(
     ///     return <div />;
     /// }
     ExhaustiveDeps,
+    react,
     nursery
 );
 
@@ -354,7 +355,7 @@ impl Rule for ExhaustiveDeps {
                     Expression::ArrayExpression(array_expr) => Some(array_expr),
                     Expression::Identifier(ident)
                         if ident.name == "undefined"
-                            && ctx.semantic().is_reference_to_global_variable(ident) =>
+                            && ctx.is_reference_to_global_variable(ident) =>
                     {
                         None
                     }
@@ -369,7 +370,6 @@ impl Rule for ExhaustiveDeps {
             }
         });
 
-        #[allow(clippy::mutable_key_type)]
         let (found_dependencies, refs_inside_cleanups) = {
             let mut found_dependencies = ExhaustiveDepsVisitor::new(ctx.semantic());
 
@@ -463,7 +463,6 @@ impl Rule for ExhaustiveDeps {
                 }
             });
 
-        #[allow(clippy::mutable_key_type)]
         let declared_dependencies = {
             let mut declared_dependencies = FxHashSet::default();
             for item in declared_dependencies_iter {
@@ -503,7 +502,7 @@ impl Rule for ExhaustiveDeps {
                 return false;
             }
 
-            if !is_identifier_a_dependency(&dep.name, dep.reference_id, ctx, component_scope_id) {
+            if !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id) {
                 return false;
             };
             true
@@ -699,7 +698,7 @@ impl PartialEq for Dependency<'_> {
 impl Eq for Dependency<'_> {}
 
 impl Dependency<'_> {
-    #[allow(clippy::inherent_to_string)]
+    #[expect(clippy::inherent_to_string)]
     fn to_string(&self) -> String {
         std::iter::once(&self.name).chain(self.chain.iter()).map(oxc_span::Atom::as_str).join(".")
     }
@@ -727,7 +726,7 @@ fn analyze_property_chain<'a, 'b>(
     match expr {
         Expression::Identifier(ident) => Ok(Some(Dependency {
             span: ident.span(),
-            name: ident.name.clone(),
+            name: ident.name,
             reference_id: ident.reference_id(),
             chain: vec![],
             symbol_id: semantic.symbols().get_reference(ident.reference_id()).symbol_id(),
@@ -751,11 +750,11 @@ fn concat_members<'a, 'b>(
         return Ok(None);
     };
 
-    let new_chain = Vec::from([member_expr.property.name.clone()]);
+    let new_chain = Vec::from([member_expr.property.name]);
 
     Ok(Some(Dependency {
         span: member_expr.span,
-        name: source.name.clone(),
+        name: source.name,
         reference_id: source.reference_id,
         chain: [source.chain, new_chain].concat(),
         symbol_id: semantic.symbols().get_reference(source.reference_id).symbol_id(),
@@ -763,7 +762,7 @@ fn concat_members<'a, 'b>(
 }
 
 fn is_identifier_a_dependency<'a>(
-    ident_name: &Atom<'a>,
+    ident_name: Atom<'a>,
     ident_reference_id: ReferenceId,
     ctx: &'_ LintContext<'a>,
     component_scope_id: ScopeId,
@@ -823,7 +822,7 @@ fn is_identifier_a_dependency<'a>(
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L164
 fn is_stable_value<'a, 'b>(
     node: &'b AstNode<'a>,
-    ident_name: &Atom<'a>,
+    ident_name: Atom<'a>,
     ident_reference_id: ReferenceId,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
@@ -935,16 +934,14 @@ fn is_function_stable<'a, 'b>(
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
 ) -> bool {
-    #[allow(clippy::mutable_key_type)]
     let deps = {
         let mut collector = ExhaustiveDepsVisitor::new(ctx.semantic());
         collector.visit_function_body(function_body);
         collector.found_dependencies
     };
 
-    deps.iter().all(|dep| {
-        !is_identifier_a_dependency(&dep.name, dep.reference_id, ctx, component_scope_id)
-    })
+    deps.iter()
+        .all(|dep| !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id))
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1742
@@ -972,7 +969,7 @@ fn func_call_without_react_namespace<'a>(
 
 struct ExhaustiveDepsVisitor<'a, 'b> {
     semantic: &'b Semantic<'a>,
-    stack: Vec<AstKind<'a>>,
+    stack: Vec<AstType>,
     skip_reporting_dependency: bool,
     set_state_call: bool,
     found_dependencies: FxHashSet<Dependency<'a>>,
@@ -998,7 +995,7 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
 
 impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        self.stack.push(kind);
+        self.stack.push(kind.ty());
     }
 
     fn leave_node(&mut self, _kind: AstKind<'a>) {
@@ -1040,10 +1037,8 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             return;
         }
 
-        let is_parent_call_expr = self
-            .stack
-            .get(self.stack.len() - 2)
-            .is_some_and(|kind| matches!(kind, AstKind::CallExpression(_)));
+        let is_parent_call_expr =
+            self.stack.get(self.stack.len() - 2).is_some_and(|&ty| ty == AstType::CallExpression);
 
         match analyze_property_chain(&it.object, self.semantic) {
             Ok(source) => {
@@ -1051,9 +1046,9 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                     if is_parent_call_expr {
                         self.found_dependencies.insert(source);
                     } else {
-                        let new_chain = Vec::from([it.property.name.clone()]);
+                        let new_chain = Vec::from([it.property.name]);
                         self.found_dependencies.insert(Dependency {
-                            name: source.name.clone(),
+                            name: source.name,
                             reference_id: source.reference_id,
                             span: source.span,
                             chain: [source.chain.clone(), new_chain].concat(),
@@ -1085,7 +1080,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             return;
         }
         self.found_dependencies.insert(Dependency {
-            name: ident.name.clone(),
+            name: ident.name,
             reference_id: ident.reference_id(),
             span: ident.span,
             chain: vec![],
@@ -1109,9 +1104,10 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             };
 
             if is_set_state_call
-                && self.stack.iter().all(|kind| {
-                    !matches!(kind, AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-                })
+                && self
+                    .stack
+                    .iter()
+                    .all(|&ty| !matches!(ty, AstType::Function | AstType::ArrowFunctionExpression))
             {
                 self.set_state_call = true;
             }
@@ -1119,20 +1115,17 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
     }
 }
 
-fn is_inside_effect_cleanup(stack: &[AstKind<'_>]) -> bool {
+fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
     let mut iter = stack.iter().rev();
     let mut is_in_returned_function = false;
 
-    while let Some(cur) = iter.next() {
-        match cur {
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                if let Some(parent) = iter.next() {
-                    if matches!(parent, AstKind::ReturnStatement(_)) {
-                        is_in_returned_function = true;
-                    }
+    while let Some(&cur) = iter.next() {
+        if matches!(cur, AstType::Function | AstType::ArrowFunctionExpression) {
+            if let Some(&parent) = iter.next() {
+                if parent == AstType::ReturnStatement {
+                    is_in_returned_function = true;
                 }
             }
-            _ => {}
         }
     }
 
@@ -3532,5 +3525,5 @@ fn test() {
         }",
     ];
 
-    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail).test_and_snapshot();
 }

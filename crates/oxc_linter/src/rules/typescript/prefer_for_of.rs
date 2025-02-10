@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferForOf,
+    typescript,
     style,
     pending
 );
@@ -227,7 +228,7 @@ impl Rule for PreferForOf {
             return;
         }
 
-        let span = for_stmt_init.span.merge(&test_expr.span).merge(&update_expr.span());
+        let span = for_stmt_init.span.merge(test_expr.span).merge(update_expr.span());
         ctx.diagnostic(prefer_for_of_diagnostic(span));
     }
 }
@@ -306,5 +307,5 @@ fn test() {
         "function* gen() { for (let i = 0; i < this.array.length; ++i) { yield this.array[i]; } }",
     ];
 
-    Tester::new(PreferForOf::NAME, PreferForOf::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(PreferForOf::NAME, PreferForOf::PLUGIN, pass, fail).test_and_snapshot();
 }

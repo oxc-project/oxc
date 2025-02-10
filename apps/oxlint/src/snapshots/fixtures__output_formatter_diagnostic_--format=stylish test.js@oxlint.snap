@@ -1,0 +1,17 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=stylish test.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+
+[4mtest.js[0m
+  [2m9:3 [0m  [33mwarning[0m  Function 'foo' is declared but never used.  [2meslint(no-unused-vars)[0m
+  [2m16:1[0m  [33mwarning[0m  Parameter 'b' is declared but never used. Unused parameters should start with a '_'.  [2meslint(no-unused-vars)[0m
+  [2m38:9[0m  [31merror[0m  `debugger` statement is not allowed  [2meslint(no-debugger)[0m
+
+[31m✖ 3 problems (1 error, 2 warnings)[0m
+----------
+CLI result: LintFoundErrors
+----------

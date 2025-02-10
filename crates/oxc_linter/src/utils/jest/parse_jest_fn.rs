@@ -354,7 +354,7 @@ pub struct ParsedGeneralJestFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: Cow<'a, str>,
-    #[allow(unused)]
+    #[expect(unused)]
     pub local: Cow<'a, str>,
 }
 
@@ -362,7 +362,7 @@ pub struct ParsedGeneralJestFnCall<'a> {
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
-    #[allow(unused)]
+    #[expect(unused)]
     pub name: Cow<'a, str>,
     pub local: Cow<'a, str>,
     pub head: KnownMemberExpressionProperty<'a>,
@@ -428,7 +428,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
     }
 
     pub fn is_name_equal(&self, name: &str) -> bool {
-        self.name().map_or(false, |n| n == name)
+        self.name().is_some_and(|n| n == name)
     }
 
     pub fn is_name_unequal(&self, name: &str) -> bool {
@@ -436,7 +436,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
     }
 
     pub fn is_name_in_modifiers(&self, modifiers: &[ModifierName]) -> bool {
-        self.name().map_or(false, |name| {
+        self.name().is_some_and(|name| {
             if let Some(modifier_name) = ModifierName::from(name.as_ref()) {
                 return modifiers.contains(&modifier_name);
             }
@@ -567,11 +567,12 @@ fn recurse_extend_node_chain<'a>(
 }
 
 // sorted list for binary search.
-const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 51] = [
+const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 52] = [
     ["afterAll", "", "", ""],
     ["afterEach", "", "", ""],
     ["beforeAll", "", "", ""],
     ["beforeEach", "", "", ""],
+    ["bench", "", "", ""],
     ["describe", "", "", ""],
     ["describe", "each", "", ""],
     ["describe", "only", "", ""],

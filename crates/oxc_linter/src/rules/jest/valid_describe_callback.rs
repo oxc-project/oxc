@@ -69,6 +69,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ValidDescribeCallback,
+    jest,
     correctness
 );
 
@@ -130,7 +131,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
             }
 
-            let Some(ref body) = fn_expr.body else {
+            let Some(body) = &fn_expr.body else {
                 return;
             };
             if let Some(span) = find_first_return_stmt_span(body) {
@@ -512,7 +513,7 @@ fn test() {
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
 
-    Tester::new(ValidDescribeCallback::NAME, ValidDescribeCallback::CATEGORY, pass, fail)
+    Tester::new(ValidDescribeCallback::NAME, ValidDescribeCallback::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

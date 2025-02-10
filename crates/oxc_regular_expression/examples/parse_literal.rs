@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout)]
+#![expect(clippy::print_stdout)]
 
 use oxc_allocator::Allocator;
 use oxc_regular_expression::{LiteralParser, Options};

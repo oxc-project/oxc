@@ -1,4 +1,4 @@
-#![allow(clippy::inline_always)]
+#![expect(clippy::inline_always)]
 
 use crate::{Allocator, Box};
 
@@ -49,7 +49,7 @@ impl<'a> FromIn<'a, String> for crate::String<'a> {
 impl<'a> FromIn<'a, String> for &'a str {
     #[inline(always)]
     fn from_in(value: String, allocator: &'a Allocator) -> Self {
-        crate::String::from_str_in(value.as_str(), allocator).into_bump_str()
+        allocator.alloc_str(value.as_str())
     }
 }
 

@@ -57,6 +57,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoRestrictedJestMethods,
+    jest,
     style,
 );
 
@@ -135,7 +136,6 @@ impl NoRestrictedJestMethods {
         }
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     pub fn compile_restricted_jest_methods(
         matchers: &serde_json::Map<String, serde_json::Value>,
     ) -> Option<FxHashMap<String, String>> {
@@ -215,7 +215,7 @@ fn test() {
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
 
-    Tester::new(NoRestrictedJestMethods::NAME, NoRestrictedJestMethods::CATEGORY, pass, fail)
+    Tester::new(NoRestrictedJestMethods::NAME, NoRestrictedJestMethods::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:3:10]

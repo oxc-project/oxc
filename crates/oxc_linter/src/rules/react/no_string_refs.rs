@@ -76,6 +76,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoStringRefs,
+    react,
     correctness
 );
 
@@ -331,5 +332,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoStringRefs::NAME, NoStringRefs::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoStringRefs::NAME, NoStringRefs::PLUGIN, pass, fail).test_and_snapshot();
 }

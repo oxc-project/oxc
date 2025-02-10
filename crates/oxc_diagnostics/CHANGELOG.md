@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.2] - 2025-02-02
+
+### Testing
+
+- ad35e82 linter: Use snapshot testing instead of LintResult (#8711) (Sysix)
+
+## [0.48.1] - 2025-01-26
+
+### Refactor
+
+- 10e5920 linter: Move finishing default diagnostic message to `GraphicalReporter` (#8683) (Sysix)
+
+## [0.48.0] - 2025-01-24
+
+### Features
+
+- 4ae568e linter: Add DiagnosticResult to the Reporters for receiving a sub part result (#8666) (Alexander S.)
+
+### Bug Fixes
+
+- 40316af linter: Fix github `endColumn` output (#8647) (Alexander S.)
+
+## [0.47.0] - 2025-01-18
+
+### Refactor
+
+- b4c87e2 linter: Move DiagnosticsReporters to oxlint (#8454) (Alexander S.)
+
 ## [0.42.0] - 2024-12-18
 
 ### Styling

@@ -9,26 +9,32 @@ pub trait StringCharAt {
 impl StringCharAt for &str {
     #[expect(clippy::cast_sign_loss)]
     fn char_at(&self, index: Option<f64>) -> Option<char> {
-        let index = index.map_or(0, |x| x.to_int_32() as isize);
+        let index = index.unwrap_or(0.0);
+        if index.fract() != 0.0 || index.is_nan() || index.is_infinite() {
+            return None;
+        }
+        let index = index.to_int_32() as isize;
         if index < 0 {
             None
         } else {
-            self.chars().nth(index as usize)
+            self.encode_utf16().nth(index as usize).and_then(|n| char::from_u32(u32::from(n)))
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use super::StringCharAt;
 
     #[test]
     fn test_evaluate_string_char_at() {
-        use crate::string_char_at::StringCharAt;
-        assert_eq!("test".char_at(Some(0.0)), Some('t'));
-        assert_eq!("test".char_at(Some(1.0)), Some('e'));
-        assert_eq!("test".char_at(Some(2.0)), Some('s'));
-        assert_eq!("test".char_at(Some(-1.0)), None);
-        assert_eq!("test".char_at(Some(-1.1)), None);
-        assert_eq!("test".char_at(Some(-1_073_741_825.0)), None);
+        let s = "test";
+        assert_eq!(s.char_at(Some(0.0)), Some('t'));
+        assert_eq!(s.char_at(Some(1.0)), Some('e'));
+        assert_eq!(s.char_at(Some(2.0)), Some('s'));
+        assert_eq!(s.char_at(Some(0.5)), None);
+        assert_eq!(s.char_at(Some(-1.0)), None);
+        assert_eq!(s.char_at(Some(-1.1)), None);
+        assert_eq!(s.char_at(Some(-1_073_741_825.0)), None);
     }
 }

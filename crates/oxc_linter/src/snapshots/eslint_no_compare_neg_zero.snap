@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-compare-neg-zero): Do not use the === operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]

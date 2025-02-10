@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
     AstKind,
@@ -8,7 +9,11 @@ use oxc_semantic::AstNode;
 use oxc_span::Span;
 use phf::{phf_set, Set};
 
-use crate::{context::LintContext, rule::Rule, utils::get_next_script_import_local_name};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{find_url_query_value, get_next_script_import_local_name},
+};
 
 fn no_unwanted_polyfillio_diagnostic(polyfill_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -35,6 +40,7 @@ declare_oxc_lint!(
     /// <script src='https://polyfill.io/v3/polyfill.min.js?features=WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6'></script>
     /// ```
     NoUnwantedPolyfillio,
+    nextjs,
     correctness
 );
 
@@ -146,13 +152,13 @@ impl Rule for NoUnwantedPolyfillio {
         if src_value.value.as_str().starts_with("https://cdn.polyfill.io/v2/")
             || src_value.value.as_str().starts_with("https://polyfill.io/v3/")
         {
-            let Ok(url) = url::Url::parse(src_value.value.as_str()) else {
-                return;
-            };
-            let Some((_, features_value)) = url.query_pairs().find(|(key, _)| key == "features")
+            let Some(features_value) = find_url_query_value(src_value.value.as_str(), "features")
             else {
                 return;
             };
+
+            // Replace URL encoded values
+            let features_value = features_value.cow_replace("%2C", ",");
 
             let unwanted_features: Vec<&str> = features_value
                 .split(',')
@@ -262,6 +268,6 @@ fn test() {
                   }",
     ];
 
-    Tester::new(NoUnwantedPolyfillio::NAME, NoUnwantedPolyfillio::CATEGORY, pass, fail)
+    Tester::new(NoUnwantedPolyfillio::NAME, NoUnwantedPolyfillio::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

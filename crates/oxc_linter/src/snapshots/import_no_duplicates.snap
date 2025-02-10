@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:19]
@@ -34,11 +33,11 @@ snapshot_kind: text
    ╰────
   help: Merge these imports into a single import statement
 
-  ⚠ eslint-plugin-import(no-duplicates): Module './bar?optionX' is imported more than once in this file
-   ╭─[index.ts:1:15]
+  ⚠ eslint-plugin-import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
+   ╭─[index.ts:1:46]
  1 │ import x from './bar?optionX'; import y from './bar.js?optionX';
-   ·               ───────┬───────                ──────────────────
-   ·                      ╰── It is first imported here
+   ·               ───────────────                ─────────┬────────
+   ·                      │                                ╰── It is first imported here
    ╰────
   help: Merge these imports into a single import statement
 

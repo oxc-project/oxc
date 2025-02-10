@@ -31,6 +31,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     InlineScriptId,
+    nextjs,
     correctness
 );
 
@@ -74,7 +75,7 @@ impl Rule for InlineScriptId {
                 match prop {
                     JSXAttributeItem::Attribute(attr) => {
                         if let JSXAttributeName::Identifier(ident) = &attr.name {
-                            prop_names_hash_set.insert(ident.name.clone());
+                            prop_names_hash_set.insert(ident.name);
                         }
                     }
                     JSXAttributeItem::SpreadAttribute(spread_attr) => {
@@ -84,7 +85,7 @@ impl Rule for InlineScriptId {
                             for prop in &obj_expr.properties {
                                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
                                     if let PropertyKey::StaticIdentifier(ident) = &obj_prop.key {
-                                        prop_names_hash_set.insert(ident.name.clone());
+                                        prop_names_hash_set.insert(ident.name);
                                     }
                                 }
                             }
@@ -234,7 +235,7 @@ fn test() {
 			        }",
     ];
 
-    Tester::new(InlineScriptId::NAME, InlineScriptId::CATEGORY, pass, fail)
+    Tester::new(InlineScriptId::NAME, InlineScriptId::PLUGIN, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

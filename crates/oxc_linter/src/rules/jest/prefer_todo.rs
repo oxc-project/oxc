@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// test.todo('i need to write this test');
     /// ```
     PreferTodo,
+    jest,
     style,
     fix
 );
@@ -182,6 +183,8 @@ fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFi
 fn tests() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("test()", None),
         ("test.concurrent()", None),
@@ -226,6 +229,8 @@ fn tests() {
         ("test(`i need to write this test`);", "test.todo(`i need to write this test`);", None),
         ("it.skip('foo', function () {})", "it.todo('foo')", None),
         ("it(`i need to write this test`, () => {})", "it.todo(`i need to write this test`)", None),
+        ("it('foo', function () {})", "it.todo('foo')", None),
+        ("it('foo', () => {})", "it.todo('foo')", None),
         (
             "test.skip('i need to write this test', () => {});",
             "test.todo('i need to write this test');",
@@ -248,7 +253,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferTodo::NAME, PreferTodo::CATEGORY, pass, fail)
+    Tester::new(PreferTodo::NAME, PreferTodo::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

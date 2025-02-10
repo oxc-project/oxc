@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout)]
+#![expect(clippy::print_stdout)]
 use std::path::Path;
 
 use oxc_allocator::Allocator;
@@ -11,12 +11,24 @@ use pico_args::Arguments;
 // create a `test.js`,
 // run `cargo run -p oxc_prettier --example prettier`
 // or `just example prettier`
+//
+// Debug:
+// run `cargo run -p oxc_prettier --example prettier -- --debug`
+//
+// The output will be the Doc AST JSON(= most verbose form) of the Prettier,
+// now you can paste and inspect it in their playground.
+// https://prettier.io/playground
+// Be sure to:
+// - change global option `--parser: doc-explorer`
+// - enable debug option `show doc`
 
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
     let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let semi = !args.contains("--no-semi");
+
+    let debug = args.contains("--debug");
 
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;
@@ -25,11 +37,13 @@ fn main() -> std::io::Result<()> {
     let ret = Parser::new(&allocator, &source_text, source_type)
         .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
         .parse();
-    let output = Prettier::new(
+    let mut prettier = Prettier::new(
         &allocator,
         PrettierOptions { semi, trailing_comma: TrailingComma::All, ..PrettierOptions::default() },
-    )
-    .build(&ret.program);
+    );
+
+    let output =
+        if debug { prettier.doc(&ret.program).to_string() } else { prettier.build(&ret.program) };
     println!("{output}");
 
     Ok(())

@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     NoIsMounted,
+    react,
     correctness
 );
 
@@ -152,5 +153,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoIsMounted::NAME, NoIsMounted::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoIsMounted::NAME, NoIsMounted::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -1,25 +1,8 @@
 import { promises as fsPromises } from 'node:fs';
 
-import {
-  CodeAction,
-  Command,
-  commands,
-  ExtensionContext,
-  StatusBarAlignment,
-  StatusBarItem,
-  ThemeColor,
-  window,
-  workspace,
-} from 'vscode';
+import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
 
-import {
-  CodeActionRequest,
-  CodeActionTriggerKind,
-  MessageType,
-  Position,
-  Range,
-  ShowMessageNotification,
-} from 'vscode-languageclient';
+import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -35,6 +18,10 @@ const enum OxcCommands {
   ApplyAllFixesFile = `${commandPrefix}.applyAllFixesFile`,
   ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
   ToggleEnable = `${commandPrefix}.toggleEnable`,
+}
+
+const enum LspCommands {
+  FixAll = 'oxc.fixAll',
 }
 
 let client: LanguageClient;
@@ -92,45 +79,14 @@ export async function activate(context: ExtensionContext) {
         return;
       }
 
-      const lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
-      const codeActionResult = await client.sendRequest(CodeActionRequest.type, {
-        textDocument: {
+      const params = {
+        command: LspCommands.FixAll,
+        arguments: [{
           uri: textEditor.document.uri.toString(),
-        },
-        range: Range.create(Position.create(0, 0), lastLine.range.end),
-        context: {
-          diagnostics: [],
-          only: [],
-          triggerKind: CodeActionTriggerKind.Invoked,
-        },
-      });
-      const commandsOrCodeActions = await client.protocol2CodeConverter.asCodeActionResult(codeActionResult || []);
+        }],
+      };
 
-      await Promise.all(
-        commandsOrCodeActions
-          .map(async (codeActionOrCommand) => {
-            // Commands are always applied. Regardless of whether it's a Command or CodeAction#command.
-            if (isCommand(codeActionOrCommand)) {
-              await commands.executeCommand(codeActionOrCommand.command, codeActionOrCommand.arguments);
-            } else {
-              // Only preferred edits are applied
-              // LSP states edits must be run first, then commands
-              if (codeActionOrCommand.edit && codeActionOrCommand.isPreferred) {
-                await workspace.applyEdit(codeActionOrCommand.edit);
-              }
-              if (codeActionOrCommand.command) {
-                await commands.executeCommand(
-                  codeActionOrCommand.command.command,
-                  codeActionOrCommand.command.arguments,
-                );
-              }
-            }
-          }),
-      );
-
-      function isCommand(codeActionOrCommand: CodeAction | Command): codeActionOrCommand is Command {
-        return typeof codeActionOrCommand.command === 'string';
-      }
+      await client.sendRequest(ExecuteCommandRequest.type, params);
     },
   );
 

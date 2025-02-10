@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// document.querySelector('li').querySelectorAll('a');
     /// ```
     PreferQuerySelector,
+    unicorn,
     pedantic,
     conditional_fix
 );
@@ -135,7 +136,7 @@ impl Rule for PreferQuerySelector {
                         }
                         _ => literal_value.to_string(),
                     };
-                    let span = property_span.merge(&argument_expr.span());
+                    let span = property_span.merge(argument_expr.span());
                     fixer.replace(
                         span,
                         format!("{preferred_selector}({quotes_symbol}{argument}{quotes_symbol}"),
@@ -215,7 +216,7 @@ fn test() {
         ("document.getElementsByClassName(fn());", "document.getElementsByClassName(fn());", None),
     ];
 
-    Tester::new(PreferQuerySelector::NAME, PreferQuerySelector::CATEGORY, pass, fail)
+    Tester::new(PreferQuerySelector::NAME, PreferQuerySelector::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// var B, a, c;
     /// ```
     SortVars,
+    eslint,
     pedantic,
     pending
 );
@@ -94,7 +95,7 @@ impl SortVars {
         };
 
         if self.ignore_case {
-            return ident.name.as_str().cow_to_lowercase();
+            return ident.name.as_str().cow_to_ascii_lowercase();
         }
 
         Cow::Borrowed(ident.name.as_str()) // avoid string allocs in the default case
@@ -222,5 +223,5 @@ fn test() {
         ("var {} = 1, b, a", "var {} = 1, a, b", Some(serde_json::json!([{ "ignoreCase": true }]))),
     ];
 
-    Tester::new(SortVars::NAME, SortVars::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(SortVars::NAME, SortVars::PLUGIN, pass, fail).test_and_snapshot();
 }

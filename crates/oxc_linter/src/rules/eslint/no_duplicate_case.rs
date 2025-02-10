@@ -1,7 +1,7 @@
 use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{cmp::ContentEq, GetSpan, Span};
+use oxc_span::{ContentEq, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDuplicateCase,
+    eslint,
     correctness
 );
 
@@ -133,5 +134,5 @@ fn test() {
         "var a = 1, f = function(s) { return { p1: s } }; switch (a) {case f(\na + 1 // comment\n).p1: break; case f(a+1)\n.p1: break; default: break;}",
     ];
 
-    Tester::new(NoDuplicateCase::NAME, NoDuplicateCase::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDuplicateCase::NAME, NoDuplicateCase::PLUGIN, pass, fail).test_and_snapshot();
 }

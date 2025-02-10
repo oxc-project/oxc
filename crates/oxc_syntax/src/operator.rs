@@ -5,7 +5,7 @@
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{cmp::ContentEq, hash::ContentHash};
+use oxc_span::ContentEq;
 
 use crate::precedence::{GetPrecedence, Precedence};
 
@@ -15,7 +15,7 @@ use crate::precedence::{GetPrecedence, Precedence};
 /// - [13.15 Assignment Operators](https://tc39.es/ecma262/#sec-assignment-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum AssignmentOperator {
     /// `=`
     #[estree(rename = "=")]
@@ -159,7 +159,7 @@ impl AssignmentOperator {
 /// - [12.10 Binary Logical Operators](https://tc39.es/ecma262/#sec-binary-logical-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum BinaryOperator {
     /// `==`
     #[estree(rename = "==")]
@@ -268,6 +268,11 @@ impl BinaryOperator {
         self == Self::In
     }
 
+    /// Returns `true` if this is an [`In`](BinaryOperator::Instanceof) operator.
+    pub fn is_instance_of(self) -> bool {
+        self == Self::Instanceof
+    }
+
     /// Returns `true` for any bitwise operator
     #[rustfmt::skip]
     pub fn is_bitwise(self) -> bool {
@@ -309,6 +314,25 @@ impl BinaryOperator {
             Self::Inequality => Some(Self::Equality),
             Self::StrictEquality => Some(Self::StrictInequality),
             Self::StrictInequality => Some(Self::StrictEquality),
+            _ => None,
+        }
+    }
+
+    /// Get [`AssignmentOperator`] corresponding to this [`BinaryOperator`].
+    pub fn to_assignment_operator(self) -> Option<AssignmentOperator> {
+        match self {
+            Self::Addition => Some(AssignmentOperator::Addition),
+            Self::Subtraction => Some(AssignmentOperator::Subtraction),
+            Self::Multiplication => Some(AssignmentOperator::Multiplication),
+            Self::Division => Some(AssignmentOperator::Division),
+            Self::Remainder => Some(AssignmentOperator::Remainder),
+            Self::Exponential => Some(AssignmentOperator::Exponential),
+            Self::ShiftLeft => Some(AssignmentOperator::ShiftLeft),
+            Self::ShiftRight => Some(AssignmentOperator::ShiftRight),
+            Self::ShiftRightZeroFill => Some(AssignmentOperator::ShiftRightZeroFill),
+            Self::BitwiseOR => Some(AssignmentOperator::BitwiseOR),
+            Self::BitwiseXOR => Some(AssignmentOperator::BitwiseXOR),
+            Self::BitwiseAnd => Some(AssignmentOperator::BitwiseAnd),
             _ => None,
         }
     }
@@ -392,7 +416,7 @@ impl GetPrecedence for BinaryOperator {
 /// Logical binary operators
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum LogicalOperator {
     /// `||`
     #[estree(rename = "||")]
@@ -425,6 +449,15 @@ impl LogicalOperator {
             Self::Coalesce => Precedence::Conditional,
         }
     }
+
+    /// Get [`AssignmentOperator`] corresponding to this [`LogicalOperator`].
+    pub fn to_assignment_operator(self) -> AssignmentOperator {
+        match self {
+            Self::Or => AssignmentOperator::LogicalOr,
+            Self::And => AssignmentOperator::LogicalAnd,
+            Self::Coalesce => AssignmentOperator::LogicalNullish,
+        }
+    }
 }
 
 impl GetPrecedence for LogicalOperator {
@@ -445,7 +478,7 @@ impl GetPrecedence for LogicalOperator {
 /// - [12.5 Unary Operators](https://tc39.es/ecma262/#sec-unary-operators)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum UnaryOperator {
     /// `+`
     #[estree(rename = "+")]
@@ -498,6 +531,11 @@ impl UnaryOperator {
         self == Self::Void
     }
 
+    /// Returns `true` if this is the [`delete`](UnaryOperator::Delete) operator.
+    pub fn is_delete(self) -> bool {
+        self == Self::Delete
+    }
+
     /// Returns `true` if this operator is a keyword instead of punctuation.
     pub fn is_keyword(self) -> bool {
         matches!(self, Self::Typeof | Self::Void | Self::Delete)
@@ -520,7 +558,7 @@ impl UnaryOperator {
 /// Unary update operators.
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum UpdateOperator {
     /// `++`
     #[estree(rename = "++")]

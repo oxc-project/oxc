@@ -17,6 +17,10 @@ fn module_decl() {
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
     test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
     test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
+    test_minify(
+        "import x from './foo.custom' with { 'type': 'json' }",
+        "import x from\"./foo.custom\"with{\"type\":\"json\"};",
+    );
 }
 
 #[test]
@@ -27,19 +31,20 @@ fn expr() {
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
 
-    test_minify("throw 'foo'", "throw\"foo\";");
-    test_minify("return 'foo'", "return\"foo\";");
+    test_minify("throw 'foo'", "throw`foo`;");
+    test_minify("return 'foo'", "return`foo`;");
     test_minify("return class {}", "return class{};");
     test_minify("return async function foo() {}", "return async function foo(){};");
     test_minify_same("return super();");
     test_minify_same("return new.target;");
     test_minify_same("throw await 1;");
-    test_minify_same("await import(\"\");");
+    test_minify_same("await import(``);");
 
     test("delete 2e308", "delete (0, Infinity);\n");
     test_minify("delete 2e308", "delete(1/0);");
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
+    test_minify_same("new(import(``),function(){});");
 }
 
 #[test]
@@ -85,6 +90,26 @@ fn for_stmt() {
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;\n",
     );
+}
+
+#[test]
+fn do_while_stmt() {
+    test("do ; while (true)", "do;\nwhile (true);\n");
+    test_minify("do ; while (true)", "do;while(true);");
+    test_minify("do break; while (true)", "do break;while(true);");
+    test_minify("do continue; while (true)", "do continue;while(true);");
+    test_minify("do debugger; while (true)", "do debugger;while(true);");
+    test_minify("do for(x in y); while (true)", "do for(x in y);while(true);");
+    test_minify("do for(x of y); while (true)", "do for(x of y);while(true);");
+    test_minify("do for(;;); while (true)", "do for(;;);while(true);");
+    test_minify("do if (test) {} while (true)", "do if(test){}while(true);");
+    test_minify("do foo:; while (true)", "do foo:;while(true);");
+    test_minify("do return; while (true)", "do return;while(true);");
+    test_minify("do switch(test){} while (true)", "do switch(test){}while(true);");
+    test_minify("do throw x; while (true)", "do throw x;while(true);");
+    test_minify("do with(x); while (true)", "do with(x);while(true);");
+    test_minify("do try{} catch{} while (true)", "do try{}catch{}while(true);");
+    test_minify("do do ; while(true) while (true)", "do do;while(true);while(true);");
 }
 
 #[test]
@@ -382,6 +407,9 @@ fn big_int() {
     test("0xfabn", "0xfabn;\n");
     test("0xaef_en;", "0xaefen;\n");
     test("0xaefen;", "0xaefen;\n");
+
+    test("return 1n", "return 1n;\n");
+    test_minify("return 1n", "return 1n;");
 }
 
 #[test]

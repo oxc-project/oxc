@@ -1,0 +1,20 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -D correctness fixtures/linter/debugger.js
+working directory: 
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[fixtures/linter/debugger.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Delete this code.
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 97 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

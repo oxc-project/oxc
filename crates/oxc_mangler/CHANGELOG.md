@@ -4,6 +4,72 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.49.0] - 2025-02-10
+
+### Bug Fixes
+
+- f11dff0 mangler, prettier, ast_tools: Remove methods which are unstable in our MSRV (#8929) (overlookmotel)
+
+## [0.48.2] - 2025-02-02
+
+### Features
+
+- 86b6219 mangler: Use characters in the order of their likely frequency (#8771) (sapphi-red)
+
+### Performance
+
+- 2e4ff91 manger: Revert "perf(manger): remove useless tmp_bindings (#8735)" (#8741) (Dunqing)
+
+### Refactor
+
+- 6aa2dde codegen: Accept SymbolTable instead of Mangler (#8829) (Daniel Bulant)
+
+## [0.48.1] - 2025-01-26
+
+### Features
+
+- 6589c3b mangler: Reuse variable names (#8562) (翠 / green)
+
+### Bug Fixes
+
+- 33de70a mangler: Handle cases where a var is declared in a block scope (#8706) (翠 / green)
+
+### Performance
+
+- dc0b0f2 manger: Remove useless `tmp_bindings` (#8735) (Dunqing)
+- e472ced mangler: Optimize handling of collecting lived scope ids (#8724) (Dunqing)
+
+### Refactor
+
+- 52a37d0 mangler: Simplify initialization of `slots` (#8734) (Dunqing)
+
+## [0.48.0] - 2025-01-24
+
+### Refactor
+
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
+## [0.47.0] - 2025-01-18
+
+### Performance
+
+- d17021c mangler: Optimize `base54` function (#8557) (overlookmotel)
+- 6b52d7a mangler: Use a single allocation space for temporary vecs (#8495) (Boshen)
+
+## [0.46.0] - 2025-01-14
+
+### Performance
+
+- 7a8200c mangler: Allocate base54 name without heap allocation (#8472) (Boshen)
+- 31dac22 mangler: Allocate data in arena (#8471) (Boshen)
+- 372eb09 minifier: Preallocate mangler's semantic data (#8451) (Boshen)
+
+## [0.45.0] - 2025-01-11
+
+### Bug Fixes
+
+- 5c63414 mangler: Keep exported symbols for `top_level: true` (#7927) (翠 / green)
+
 ## [0.43.0] - 2024-12-21
 
 ### Performance

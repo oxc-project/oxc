@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// let result = BigInt(9007199254740991);
     /// ```
     NoNewNativeNonconstructor,
+    eslint,
     correctness,
 );
 
@@ -53,7 +54,7 @@ impl Rule for NoNewNativeNonconstructor {
             return;
         };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")
-            && ctx.semantic().is_reference_to_global_variable(ident)
+            && ctx.is_reference_to_global_variable(ident)
         {
             let start = expr.span.start;
             let end = start + 3;
@@ -89,6 +90,6 @@ fn test() {
         "function bar() { return function BigInt() {}; } var baz = new BigInt(9007199254740991);",
     ];
 
-    Tester::new(NoNewNativeNonconstructor::NAME, NoNewNativeNonconstructor::CATEGORY, pass, fail)
+    Tester::new(NoNewNativeNonconstructor::NAME, NoNewNativeNonconstructor::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

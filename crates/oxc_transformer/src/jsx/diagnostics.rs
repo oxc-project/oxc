@@ -30,7 +30,3 @@ pub fn valueless_key(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={true}\" is not allowed.")
         .with_label(span)
 }
-
-pub fn spread_children_are_not_supported(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Spread children are not supported in React.").with_label(span)
-}

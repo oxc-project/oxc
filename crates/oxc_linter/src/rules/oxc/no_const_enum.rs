@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoConstEnum,
+    oxc,
     restriction,
     fix
 );
@@ -80,7 +81,7 @@ fn test() {
         ("const   enum Color { Red, Green, Blue }", "enum Color { Red, Green, Blue }", None),
     ];
 
-    Tester::new(NoConstEnum::NAME, NoConstEnum::CATEGORY, pass, fail)
+    Tester::new(NoConstEnum::NAME, NoConstEnum::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

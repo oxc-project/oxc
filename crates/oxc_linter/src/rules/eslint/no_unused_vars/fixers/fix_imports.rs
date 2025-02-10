@@ -5,7 +5,7 @@ use super::{count_whitespace_or_commas, NoUnusedVars, Symbol};
 use crate::fixer::{RuleFix, RuleFixer};
 
 impl NoUnusedVars {
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     pub(in super::super) fn remove_unused_import_declaration<'a>(
         &self,
         fixer: RuleFixer<'_, 'a>,

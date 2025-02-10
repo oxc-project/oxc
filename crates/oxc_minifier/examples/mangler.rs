@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout)]
+#![expect(clippy::print_stdout)]
 use std::path::Path;
 
 use oxc_allocator::Allocator;
@@ -15,9 +15,9 @@ use pico_args::Arguments;
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
-    let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let debug = args.contains("--debug");
     let twice = args.contains("--twice");
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;
@@ -38,8 +38,8 @@ fn main() -> std::io::Result<()> {
 fn mangler(source_text: &str, source_type: SourceType, debug: bool) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let mangler = Mangler::new()
+    let symbol_table = Mangler::new()
         .with_options(MangleOptions { debug, top_level: source_type.is_module() })
         .build(&ret.program);
-    CodeGenerator::new().with_mangler(Some(mangler)).build(&ret.program).code
+    CodeGenerator::new().with_symbol_table(Some(symbol_table)).build(&ret.program).code
 }

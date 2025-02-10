@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// require(`../name`);
     /// ```
     NoAmd,
+    import,
     restriction
 );
 
@@ -55,7 +56,7 @@ impl Rule for NoAmd {
             return;
         }
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Expression::Identifier(ref identifier) = &call_expr.callee {
+            if let Expression::Identifier(identifier) = &call_expr.callee {
                 if identifier.name != "define" && identifier.name != "require" {
                     return;
                 }
@@ -112,7 +113,7 @@ fn test() {
         r#"require(["a"], function(a) { console.log(a); })"#,
     ];
 
-    Tester::new(NoAmd::NAME, NoAmd::CATEGORY, pass, fail)
+    Tester::new(NoAmd::NAME, NoAmd::PLUGIN, pass, fail)
         .change_rule_path("no-amd.js")
         .with_import_plugin(true)
         .test_and_snapshot();

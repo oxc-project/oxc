@@ -152,6 +152,7 @@ pub enum Helper {
     ToPropertyKey,
     DefineProperty,
     ClassPrivateFieldInitSpec,
+    ClassPrivateMethodInitSpec,
     ClassPrivateFieldGet2,
     ClassPrivateFieldSet2,
     AssertClassBrand,
@@ -160,6 +161,11 @@ pub enum Helper {
     ClassPrivateFieldLooseBase,
     SuperPropGet,
     SuperPropSet,
+    ReadOnlyError,
+    WriteOnlyError,
+    CheckInRHS,
+    Decorate,
+    DecorateParam,
 }
 
 impl Helper {
@@ -177,6 +183,7 @@ impl Helper {
             Self::ToPropertyKey => "toPropertyKey",
             Self::DefineProperty => "defineProperty",
             Self::ClassPrivateFieldInitSpec => "classPrivateFieldInitSpec",
+            Self::ClassPrivateMethodInitSpec => "classPrivateMethodInitSpec",
             Self::ClassPrivateFieldGet2 => "classPrivateFieldGet2",
             Self::ClassPrivateFieldSet2 => "classPrivateFieldSet2",
             Self::AssertClassBrand => "assertClassBrand",
@@ -185,6 +192,11 @@ impl Helper {
             Self::ClassPrivateFieldLooseBase => "classPrivateFieldLooseBase",
             Self::SuperPropGet => "superPropGet",
             Self::SuperPropSet => "superPropSet",
+            Self::ReadOnlyError => "readOnlyError",
+            Self::WriteOnlyError => "writeOnlyError",
+            Self::CheckInRHS => "checkInRHS",
+            Self::Decorate => "decorate",
+            Self::DecorateParam => "decorateParam",
         }
     }
 }
@@ -198,7 +210,7 @@ pub struct HelperLoaderStore<'a> {
     pub(crate) used_helpers: RefCell<FxHashMap<Helper, String>>,
 }
 
-impl<'a> HelperLoaderStore<'a> {
+impl HelperLoaderStore<'_> {
     pub fn new(options: &HelperLoaderOptions) -> Self {
         Self {
             module_name: options.module_name.clone(),

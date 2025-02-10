@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// const CONFIG = {};
     /// ```
     NoVar,
+    eslint,
     restriction,
     fix
 );
@@ -158,5 +159,5 @@ fn test() {
         ("var { a } = {}; let b = a", "const { a } = {}; let b = a"),
     ];
 
-    Tester::new(NoVar::NAME, NoVar::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -114,6 +114,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoRequireImports,
+    typescript,
     restriction,
     pending  // TODO: fixer (change require to import)
 );
@@ -192,8 +193,8 @@ impl Rule for NoRequireImports {
 
                 ctx.diagnostic(no_require_imports_diagnostic(call_expr.span));
             }
-            AstKind::TSImportEqualsDeclaration(decl) => match decl.module_reference {
-                TSModuleReference::ExternalModuleReference(ref mod_ref) => {
+            AstKind::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
+                TSModuleReference::ExternalModuleReference(mod_ref) => {
                     if self.allow_as_import {
                         return;
                     }
@@ -399,7 +400,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRequireImports::NAME, NoRequireImports::CATEGORY, pass, fail)
+    Tester::new(NoRequireImports::NAME, NoRequireImports::PLUGIN, pass, fail)
         .change_rule_path_extension("ts")
         .test_and_snapshot();
 }

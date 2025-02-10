@@ -34,7 +34,10 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_in(has_in);
         self.bump(Kind::Comma);
         self.expect(Kind::RParen)?;
-        Ok(self.ast.expression_import(self.end_span(span), expression, arguments, phase))
+        let expr =
+            self.ast.alloc_import_expression(self.end_span(span), expression, arguments, phase);
+        self.module_record_builder.visit_import_expression(&expr);
+        Ok(Expression::ImportExpression(expr))
     }
 
     /// Section 16.2.2 Import Declaration
@@ -297,7 +300,7 @@ impl<'a> ParserImpl<'a> {
 
         // ExportDeclaration : export NamedExports ;
         if source.is_none() {
-            for specifier in specifiers.iter_mut() {
+            for specifier in &mut specifiers {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {
@@ -354,13 +357,15 @@ impl<'a> ParserImpl<'a> {
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
+        let reserved_ctx = self.ctx;
         let modifiers =
             if self.is_ts { self.eat_modifiers_before_declaration()? } else { Modifiers::empty() };
+        self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
 
         let declaration = self.parse_declaration(decl_span, &modifiers)?;
-        let span = self.end_span(span);
+        self.ctx = reserved_ctx;
         Ok(self.ast.alloc_export_named_declaration(
-            span,
+            self.end_span(span),
             Some(declaration),
             self.ast.vec(),
             None,
@@ -468,7 +473,7 @@ impl<'a> ParserImpl<'a> {
             (imported, local)
         } else {
             let local = self.parse_binding_identifier()?;
-            (self.ast.module_export_name_identifier_name(local.span, local.name.clone()), local)
+            (self.ast.module_export_name_identifier_name(local.span, local.name), local)
         };
         Ok(self.ast.import_declaration_specifier_import_specifier(
             self.end_span(specifier_span),

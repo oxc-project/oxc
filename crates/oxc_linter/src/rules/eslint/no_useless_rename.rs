@@ -19,7 +19,6 @@ fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessRename(Box<NoUselessRenameConfig>);
 
-#[allow(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessRenameConfig {
     ignore_destructuring: bool,
@@ -60,6 +59,7 @@ declare_oxc_lint!(
     /// export { baz };
     /// ```
     NoUselessRename,
+    eslint,
     correctness
 );
 
@@ -103,13 +103,12 @@ impl Rule for NoUselessRename {
                         BindingPatternKind::AssignmentPattern(assignment_pattern) => {
                             match &assignment_pattern.left.kind {
                                 BindingPatternKind::BindingIdentifier(binding_ident) => {
-                                    &binding_ident.name
+                                    binding_ident.name
                                 }
                                 _ => continue,
                             }
                         }
-
-                        BindingPatternKind::BindingIdentifier(binding_ident) => &binding_ident.name,
+                        BindingPatternKind::BindingIdentifier(binding_ident) => binding_ident.name,
                         _ => continue,
                     };
 
@@ -130,14 +129,13 @@ impl Rule for NoUselessRename {
                     else {
                         continue;
                     };
-
                     let Some(key) = property.name.static_name() else {
                         continue;
                     };
-                    let Some(renamed_key) = property.binding.name() else {
+                    let Some(renamed_key) = property.binding.identifier().map(|ident| ident.name)
+                    else {
                         continue;
                     };
-
                     if key == renamed_key {
                         ctx.diagnostic(no_useless_rename_diagnostic(property.span));
                     }
@@ -397,5 +395,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessRename::NAME, NoUselessRename::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessRename::NAME, NoUselessRename::PLUGIN, pass, fail).test_and_snapshot();
 }

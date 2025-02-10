@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     diagnostics,
-    js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
+    js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
     ParserImpl,
@@ -69,7 +69,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LBrack => match self.parse_computed_property_name()? {
                 Expression::StringLiteral(literal) => Ok(TSEnumMemberName::String(literal)),
                 Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
-                    Ok(self.ast.ts_enum_member_name_string_literal(
+                    Ok(self.ast.ts_enum_member_name_string(
                         template.span,
                         template.quasi().unwrap(),
                         Some(Atom::from(
@@ -124,7 +124,13 @@ impl<'a> ParserImpl<'a> {
         let params = self.parse_ts_type_parameters()?;
         self.expect(Kind::Eq)?;
 
-        let annotation = self.parse_ts_type()?;
+        let annotation = if self.at(Kind::Intrinsic) && !self.peek_at(Kind::Dot) {
+            let span = self.start_span();
+            self.bump_any();
+            self.ast.ts_type_intrinsic_keyword(self.end_span(span))
+        } else {
+            self.parse_ts_type()?
+        };
 
         self.asi()?;
         let span = self.end_span(span);
@@ -379,7 +385,7 @@ impl<'a> ParserImpl<'a> {
             kind if kind.is_variable_declaration() => self
                 .parse_variable_declaration(
                     start_span,
-                    VariableDeclarationContext::new(VariableDeclarationParent::Clause),
+                    VariableDeclarationParent::Statement,
                     modifiers,
                 )
                 .map(Declaration::VariableDeclaration),

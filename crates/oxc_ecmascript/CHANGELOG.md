@@ -4,6 +4,131 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.49.0] - 2025-02-10
+
+### Features
+
+- ad1a878 ecmascript: Support BigInt comparison (#9014) (sapphi-red)
+- d515cfd ecmascript: Detect objects without overridden `toString`/`valueOf`/`Symbol.toPrimitive` (#8993) (sapphi-red)
+- 2a10a99 ecmascript: Support arrays and objects for unary expression may_have_side_effects (#8990) (sapphi-red)
+- dd383c0 ecmascript: `ValueType::from` for PrivateInExpression (#8964) (sapphi-red)
+- c3eef2f ecmascript: `ValueType::from` for parenthesized expressions (#8962) (sapphi-red)
+- 2c3a46d ecmascript: Support more simple expressions by `ValueType::from` (#8961) (sapphi-red)
+- 4cec83f ecmascript: `ValueType::from` for bitwise not operator (#8955) (sapphi-red)
+- e3e9999 ecmascript: Complete may_have_side_effects (#8855) (sapphi-red)
+- ca4831b minifier: Fold `typeof class {}` to `'function'` (#8949) (sapphi-red)
+- 9ffe9e9 minifier: Fold `typeof (() => {})` to `'function'` (#8948) (sapphi-red)
+- 36007de minifier: Fold typeof `{ foo }` when `foo` is declared (#8947) (sapphi-red)
+- 56575b2 minifier: Fold complicated array literals passed to unary `+` (#8944) (sapphi-red)
+- 14462be minifier: Fold simple literals passed to unary `+` (#8943) (sapphi-red)
+- d6d13dd minifier: Minimize `!!(boolean_expr)` -> `boolean_expr` (#8849) (Boshen)
+
+### Bug Fixes
+
+- 9a5a926 ecmascript: Fix may_have_side_effects for binary expressions (#8991) (sapphi-red)
+- 660c314 ecmascript: Fix may_have_side_effects for unary expressions (#8989) (sapphi-red)
+- 8ab7204 ecmascript: Fix `ValueType::from` for `AssignmentExpression` (#8959) (sapphi-red)
+- aeb122d ecmascript: Fix `ValueType::from` for numeric binary operators (#8956) (sapphi-red)
+- 1182c20 ecmascript: `ValueType::from` for unknown value should return Undetermined instead of Number (#8954) (sapphi-red)
+- b5a7785 minifier: Fix comparison of strings with unicode characters (#8942) (sapphi-red)
+
+### Refactor
+
+- 9b5d800 minifier: Move equality comparison to ConstantEvaluation (#9009) (sapphi-red)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
+### Testing
+
+- cc7bb9c ecmascript: Add test for `ValueType` and update document (#8951) (sapphi-red)
+
+## [0.48.2] - 2025-02-02
+
+### Bug Fixes
+
+- ae7f670 minifier: Avoid minifying `+void unknown` to `NaN` and fix typo (#8784) (7086cmd)
+
+## [0.48.1] - 2025-01-26
+
+### Refactor
+
+- 58002e2 ecmascript: Remove the lifetime annotation on `MayHaveSideEffects` (#8717) (Boshen)
+- 0af0267 minifier: Side effect detection needs symbols resolution (#8715) (Boshen)
+
+### Testing
+
+- 03229c5 minifier: Fix broken tests (#8722) (Boshen)
+
+## [0.48.0] - 2025-01-24
+
+### Bug Fixes
+
+- 4ff6e85 minifier: Remove expression statement `void 0` (#8602) (Boshen)
+
+### Performance
+
+- 9953ac7 minifier: Add `LatePeepholeOptimizations` (#8651) (Boshen)
+
+## [0.47.1] - 2025-01-19
+
+### Bug Fixes
+
+- 7b219a9 minifier: Fix dce shadowed undefined (#8582) (Boshen)
+
+## [0.47.0] - 2025-01-18
+
+### Features
+
+- 927f43f minifier: Improve `.charCodeAt(arg)` when arg is valid (#8534) (Boshen)
+
+### Bug Fixes
+
+- b1d0186 minifier: Do not fold `!!void b` (#8533) (Boshen)
+
+### Refactor
+
+- 8f57929 minifier: Merge `try_compress_type_of_equal_string` into `try_minimize_binary` (#8561) (sapphi-red)
+
+## [0.46.0] - 2025-01-14
+
+### Bug Fixes
+
+- 1d6e84d minifier: Fix incorrect `null.toString()` and `1n.toString()` (#8464) (Boshen)
+
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- 438a6e7 minifier: Minimize conditions in boolean context (#8381) (Boshen)
+- e88a6bd minifier: Minimize `!0 + null !== 1` -> `!0 + null != 1` (#8332) (Boshen)
+- 922c514 minifier: Fold `.toString()` (#8308) (Boshen)
+- 66a2443 minifier: Minify sequence expressions (#8305) (camc314)
+- f000596 minifier: Minify call expressionsto `Number` (#8267) (camc314)
+- cec63e2 minifier: `{}` evals to `f64::NaN` (Boshen)
+- 4d8a08d minifier: Improve constant evaluation (#8252) (Boshen)
+- bd8d677 minifier: Minimize `~undefined`, `~null`, `~true`, `~false` (#8247) (Boshen)
+- f73dc9e minifier: Constant fold `'x'.toString()` and `true.toString()` (#8246) (Boshen)
+- fc43ec5 minifier: Fold `string.length` / `array.length` (#8172) (sapphi-red)
+- 6615e1e minifier: Constant fold `instanceof` (#8142) (翠 / green)
+- ad9a0a9 mininifier: Minimize variants of `a instanceof b == true` (#8241) (Boshen)
+
+### Bug Fixes
+
+- 74572de ecmascript: Incorrect `to_int_32` value for Infinity (#8144) (翠 / green)
+- 0efc845 minifier: `+0n` produces `TypeError` (#8410) (Boshen)
+- 7ce6a7c minifier: `a in b` has error throwing side effect (#8406) (Boshen)
+- c0a3dda minifier: `instanceof` has error throwing side effect (#8378) (Boshen)
+- 5516f7f minifier: Do not fold object comparisons (#8375) (Boshen)
+- 05be1fc minifier: Remove incorrect fold `Expression::AssignmentExpression` (#8211) (Boshen)
+- 56b7f13 minifier: Do not constant fold `0 instanceof F` (#8199) (Boshen)
+
+### Refactor
+
+- 1835687 ecmascript: Remove unnecessary `use` statement (#8284) (overlookmotel)
+- 9a5c66a minifier: Clean up (#8346) (Boshen)
+
 ## [0.44.0] - 2024-12-25
 
 ### Features

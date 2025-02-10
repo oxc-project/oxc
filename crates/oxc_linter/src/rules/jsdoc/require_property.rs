@@ -55,6 +55,7 @@ declare_oxc_lint!(
     ///  */
     /// ```
     RequireProperty,
+    jsdoc,
     correctness
 );
 
@@ -91,7 +92,7 @@ impl Rule for RequireProperty {
 
                     let r#type = type_part.parsed();
                     if r#type == "Object" || r#type == "object" || r#type == "PlainObject" {
-                        should_report = Some(tag.kind.span.merge(&type_part.span));
+                        should_report = Some(tag.kind.span.merge(type_part.span));
                     }
                 }
 
@@ -283,5 +284,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireProperty::NAME, RequireProperty::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(RequireProperty::NAME, RequireProperty::PLUGIN, pass, fail).test_and_snapshot();
 }

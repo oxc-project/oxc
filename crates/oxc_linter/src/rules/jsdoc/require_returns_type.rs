@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// function quux (foo) {}
     /// ```
     RequireReturnsType,
+    jsdoc,
     pedantic,
 );
 
@@ -161,6 +162,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireReturnsType::NAME, RequireReturnsType::CATEGORY, pass, fail)
+    Tester::new(RequireReturnsType::NAME, RequireReturnsType::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

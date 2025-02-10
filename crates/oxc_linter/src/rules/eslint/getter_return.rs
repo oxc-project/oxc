@@ -77,6 +77,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     GetterReturn,
+    eslint,
     nursery
 );
 
@@ -226,7 +227,7 @@ impl GetterReturn {
                 // If the signature of function supports the return of the `undefined` value,
                 // you do not need to check this rule
                 if let AstKind::Function(func) = node.kind() {
-                    if let Some(ref ret) = func.return_type {
+                    if let Some(ret) = &func.return_type {
                         if ret.type_annotation.is_maybe_undefined() {
                             break 'returns true;
                         }
@@ -519,7 +520,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(GetterReturn::NAME, GetterReturn::CATEGORY, pass, fail)
+    Tester::new(GetterReturn::NAME, GetterReturn::PLUGIN, pass, fail)
         .change_rule_path_extension("js")
         .test_and_snapshot();
 
@@ -537,5 +538,5 @@ fn test() {
 
     let fail = vec![];
 
-    Tester::new(GetterReturn::NAME, GetterReturn::CATEGORY, pass, fail).test();
+    Tester::new(GetterReturn::NAME, GetterReturn::PLUGIN, pass, fail).test();
 }

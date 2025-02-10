@@ -1,11 +1,17 @@
-#![allow(missing_docs)] // fixme
+#![expect(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
+use oxc_ast_macros::ast;
+
+#[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[clone_in(default)]
+#[content_eq(skip)]
+#[estree(skip)]
 pub struct SymbolId(NonMaxU32);
 
 impl SymbolId {
@@ -24,7 +30,7 @@ impl SymbolId {
     ///
     /// # SAFETY
     /// `idx` must not be `u32::MAX`.
-    #[allow(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
+    #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
     pub const unsafe fn new_unchecked(idx: u32) -> Self {
         // SAFETY: Caller must ensure `idx` is not `u32::MAX`
         Self(NonMaxU32::new_unchecked(idx))
@@ -32,7 +38,7 @@ impl SymbolId {
 }
 
 impl Idx for SymbolId {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
         // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
@@ -58,7 +64,7 @@ impl Serialize for SymbolId {
 pub struct RedeclarationId(NonMaxU32);
 
 impl Idx for RedeclarationId {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
         // SAFETY: We just checked `idx` is valid for `NonMaxU32`

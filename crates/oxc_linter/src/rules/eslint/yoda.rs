@@ -184,6 +184,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     Yoda,
+    eslint,
     style,
     fix
 );
@@ -263,7 +264,7 @@ fn is_not_yoda(expr: &BinaryExpression) -> bool {
         && is_literal_or_simple_template_literal(expr.right.get_inner_expression())
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: bool) {
     ctx.diagnostic_with_fix(yoda_diagnostic(expr.span, never, expr.operator.as_str()), |fix| {
         let left_span = expr.left.span();
@@ -1165,5 +1166,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(Yoda::NAME, Yoda::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(Yoda::NAME, Yoda::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// import fs from "node:fs";
     /// ```
     PreferNodeProtocol,
+    unicorn,
     restriction,
     fix
 );
@@ -46,26 +47,24 @@ declare_oxc_lint!(
 impl Rule for PreferNodeProtocol {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let string_lit_value_with_span = match node.kind() {
-            AstKind::ImportExpression(import) => match import.source {
-                Expression::StringLiteral(ref str_lit) => {
-                    Some((str_lit.value.clone(), str_lit.span))
-                }
+            AstKind::ImportExpression(import) => match &import.source {
+                Expression::StringLiteral(str_lit) => Some((str_lit.value, str_lit.span)),
                 _ => None,
             },
             AstKind::TSImportEqualsDeclaration(import) => match &import.module_reference {
                 TSModuleReference::ExternalModuleReference(external) => {
-                    Some((external.expression.value.clone(), external.expression.span))
+                    Some((external.expression.value, external.expression.span))
                 }
                 _ => None,
             },
             AstKind::CallExpression(call) if !call.optional => {
-                call.common_js_require().map(|s| (s.value.clone(), s.span))
+                call.common_js_require().map(|s| (s.value, s.span))
             }
             AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import)) => {
-                Some((import.source.value.clone(), import.source.span))
+                Some((import.source.value, import.source.span))
             }
             AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(export)) => {
-                export.source.as_ref().map(|item| (item.value.clone(), item.span))
+                export.source.as_ref().map(|item| (item.value, item.span))
             }
             _ => None,
         };
@@ -159,7 +158,7 @@ fn test() {
         (r#"import fs from "fs/promises";"#, r#"import fs from "node:fs/promises";"#, None),
     ];
 
-    Tester::new(PreferNodeProtocol::NAME, PreferNodeProtocol::CATEGORY, pass, fail)
+    Tester::new(PreferNodeProtocol::NAME, PreferNodeProtocol::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

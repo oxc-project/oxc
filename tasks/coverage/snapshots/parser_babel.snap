@@ -1,9 +1,9 @@
-commit: 54a8389f
+commit: acbc09a8
 
 parser_babel Summary:
-AST Parsed     : 2205/2218 (99.41%)
-Positive Passed: 2184/2218 (98.47%)
-Negative Passed: 1522/1634 (93.15%)
+AST Parsed     : 2277/2292 (99.35%)
+Positive Passed: 2256/2292 (98.43%)
+Negative Passed: 1542/1662 (92.78%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -25,13 +25,14 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-spread-nested/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/super-inside-function/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/yield-in-class-property-in-generator/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-decorators/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/inside-class-property/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0276/input.js
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-interface/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-type/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-fragment/input.js
@@ -96,23 +97,30 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-extends/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-extends-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-implements/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-implements-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-new/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-new-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-superclass/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-superclass-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-tsx/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-tsx-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-import/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-import-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-ref/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-ref-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-in-type/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-error/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
@@ -600,10 +608,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                 ─┬
    ·                  ╰── `{` expected
    ╰────
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage-babel-7/input.ts
+
+  × Expected `{` but found `<<`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage-babel-7/input.ts:1:17]
+ 1 │ (class extends f<<T>(v: T) => void> {});
+   ·                 ─┬
+   ·                  ╰── `{` expected
+   ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx:1:11]
+ 1 │ <Component<<T>(v: T) => void> />
+   ·           ──
+   ╰────
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element-babel-7/input.tsx
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element-babel-7/input.tsx:1:11]
  1 │ <Component<<T>(v: T) => void> />
    ·           ──
    ╰────
@@ -5459,16 +5482,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Try insert a semicolon here
 
   × Invalid assignment in object literal
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:25]
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:10]
  1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·                         ─────────────
+   ·          ─────────────
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Invalid assignment in object literal
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:10]
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:25]
  1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·          ─────────────
+   ·                         ─────────────
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
@@ -8246,6 +8269,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │       foo = super();
    ·             ───────
  5 │     }
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/super-inside-function/input.js:3:5]
+ 2 │   foo = function fn() {
+ 3 │     super.x();
+   ·     ─────
+ 4 │   }
    ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -11557,6 +11588,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ func<T>(a: T);
    ╰────
 
+  × Expected `,` but found `:`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/parameter-typecast-babel-7/input.ts:1:7]
+ 1 │ func(a: T);
+   ·       ┬
+   ·       ╰── `,` expected
+ 2 │ func<T>(a: T);
+   ╰────
+
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-in-non-abstract-class-1/input.ts:2:12]
  1 │ class Foo {
@@ -12247,6 +12286,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Identifier `A` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-class-enum-babel-7/input.ts:1:7]
+ 1 │ class A {}
+   ·       ┬
+   ·       ╰── `A` has already been declared here
+ 2 │ enum A {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `A` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-class-type/input.ts:1:7]
  1 │ class A {}
    ·       ┬
@@ -12267,7 +12316,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Identifier `X` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-enum-babel-7/input.ts:1:12]
+ 1 │ const enum X {}
+   ·            ┬
+   ·            ╰── `X` has already been declared here
+ 2 │ enum X {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-class/input.ts:1:6]
+ 1 │ enum X {}
+   ·      ┬
+   ·      ╰── `X` has already been declared here
+ 2 │ class X {}
+   ·       ┬
+   ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-class-babel-7/input.ts:1:6]
  1 │ enum X {}
    ·      ┬
    ·      ╰── `X` has already been declared here
@@ -12286,8 +12355,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ╰── It can not be redeclared here
    ╰────
 
+  × Identifier `X` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-constenum-babel-7/input.ts:1:6]
+ 1 │ enum X {}
+   ·      ┬
+   ·      ╰── `X` has already been declared here
+ 2 │ const enum X {}
+   ·            ┬
+   ·            ╰── It can not be redeclared here
+   ╰────
+
   × Identifier `Foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-function/input.ts:1:6]
+ 1 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── `Foo` has already been declared here
+ 2 │ function Foo() {}
+   ·          ─┬─
+   ·           ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-function-babel-7/input.ts:1:6]
  1 │ enum Foo {}
    ·      ─┬─
    ·       ╰── `Foo` has already been declared here
@@ -12306,6 +12395,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·           ╰── It can not be redeclared here
    ╰────
 
+  × Identifier `X` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-interface-babel-7/input.ts:1:6]
+ 1 │ enum X {}
+   ·      ┬
+   ·      ╰── `X` has already been declared here
+ 2 │ interface X {}
+   ·           ┬
+   ·           ╰── It can not be redeclared here
+   ╰────
+
   × Identifier `Foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-let/input.ts:1:6]
  1 │ enum Foo {}
@@ -12316,8 +12415,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ╰── It can not be redeclared here
    ╰────
 
+  × Identifier `Foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-let-babel-7/input.ts:1:6]
+ 1 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── `Foo` has already been declared here
+ 2 │ let Foo;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+   ╰────
+
   × Identifier `X` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-type/input.ts:1:6]
+ 1 │ enum X {}
+   ·      ┬
+   ·      ╰── `X` has already been declared here
+ 2 │ type X = number;
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-type-babel-7/input.ts:1:6]
  1 │ enum X {}
    ·      ┬
    ·      ╰── `X` has already been declared here
@@ -12337,7 +12456,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Identifier `Foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-var-babel-7/input.ts:1:6]
+ 1 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── `Foo` has already been declared here
+ 2 │ let Foo;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-function-enum/input.ts:1:10]
+ 1 │ function Foo() {}
+   ·          ─┬─
+   ·           ╰── `Foo` has already been declared here
+ 2 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-function-enum-babel-7/input.ts:1:10]
  1 │ function Foo() {}
    ·          ─┬─
    ·           ╰── `Foo` has already been declared here
@@ -12366,8 +12505,28 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ╰── It can not be redeclared here
    ╰────
 
+  × Identifier `X` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-enum-babel-7/input.ts:1:11]
+ 1 │ interface X {}
+   ·           ┬
+   ·           ╰── `X` has already been declared here
+ 2 │ enum X {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
   × Identifier `Foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-let-enum/input.ts:1:5]
+ 1 │ let Foo;
+   ·     ─┬─
+   ·      ╰── `Foo` has already been declared here
+ 2 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-let-enum-babel-7/input.ts:1:5]
  1 │ let Foo;
    ·     ─┬─
    ·      ╰── `Foo` has already been declared here
@@ -12388,6 +12547,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
   × Identifier `A` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-type-enum/input.ts:1:6]
+ 1 │ type A = number;
+   ·      ┬
+   ·      ╰── `A` has already been declared here
+ 2 │ enum A {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `A` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-type-enum-babel-7/input.ts:1:6]
  1 │ type A = number;
    ·      ┬
    ·      ╰── `A` has already been declared here
@@ -12418,6 +12587,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
   × Identifier `Foo` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-var-enum/input.ts:1:5]
+ 1 │ let Foo;
+   ·     ─┬─
+   ·      ╰── `Foo` has already been declared here
+ 2 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-var-enum-babel-7/input.ts:1:5]
  1 │ let Foo;
    ·     ─┬─
    ·      ╰── `Foo` has already been declared here
@@ -12513,6 +12692,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/new-without-arguments-missing-semicolon-babel-7/input.ts:1:9]
+ 1 │ new A<T> if (0);
+   ·         ▲
+   ╰────
+  help: Try insert a semicolon here
+
   × Identifier expected. 'if' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-invalid-type-only-keyword/input.ts:1:7]
  1 │ const if = {};
@@ -12569,6 +12755,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ─────────
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-error/input.ts:1:21]
+ 1 │ type Foo = intrinsic["foo"];
+   ·                     ▲
+ 2 │ 
+   ╰────
+  help: Try insert a semicolon here
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-3/input.ts:1:19]
  1 │ let x: `foo-${bar + baz}`;
@@ -12623,6 +12817,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ────────
    ╰────
 
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-4-babel-7/input.ts:1:12]
+ 1 │ type T33 = readonly Array<string>;  // Error
+   ·            ────────
+   ╰────
+
   × Expected `,` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-invalid-label-1/input.ts:1:14]
  1 │ type T = [x.y: A];
@@ -12632,6 +12832,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
   × Expected `,` but found `:`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-invalid-label-2/input.ts:1:15]
+ 1 │ type T = [x<y>: A];
+   ·               ┬
+   ·               ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `:`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-invalid-label-2-babel-7/input.ts:1:15]
  1 │ type T = [x<y>: A];
    ·               ┬
    ·               ╰── `,` expected

@@ -82,6 +82,7 @@ declare_oxc_lint!(
     /// <a aria-label="oxc linter documentation">click here</a>
     /// ```
     AnchorAmbiguousText,
+    jsx_a11y,
     restriction,
 );
 
@@ -131,7 +132,7 @@ impl Rule for AnchorAmbiguousText {
 fn normalize_str(text: &str) -> CompactStr {
     // `to_lowercase` is disallowed. however we need to remove certain chars later which requires converting to a String
     // the overhead of going &str -> cow string -> string is greater than just using to_lowercase
-    #[allow(clippy::disallowed_methods)]
+    #[expect(clippy::disallowed_methods)]
     let mut normalized_str = text.to_lowercase();
     normalized_str.retain(|c| {
         c != ','
@@ -307,6 +308,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(AnchorAmbiguousText::NAME, AnchorAmbiguousText::CATEGORY, pass, fail)
+    Tester::new(AnchorAmbiguousText::NAME, AnchorAmbiguousText::PLUGIN, pass, fail)
         .test_and_snapshot();
 }
