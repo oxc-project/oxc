@@ -15,9 +15,8 @@ use oxc::{
     diagnostics::OxcDiagnostic,
     span::SourceType,
     transformer::{
-        DecoratorOptions, EnvOptions, HelperLoaderMode, HelperLoaderOptions,
-        InjectGlobalVariablesConfig, InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig,
-        RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
+        InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
     },
     CompilerInterface,
 };
@@ -134,6 +133,9 @@ pub struct TransformOptions {
     /// Inject Plugin
     #[napi(ts_type = "Record<string, string | [string, string]>")]
     pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
+
+    /// Decorator plugin
+    pub decorator: Option<DecoratorOptions>,
 }
 
 impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
@@ -152,7 +154,10 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .typescript
                 .map(oxc::transformer::TypeScriptOptions::from)
                 .unwrap_or_default(),
-            decorator: DecoratorOptions::default(),
+            decorator: options
+                .decorator
+                .map(oxc::transformer::DecoratorOptions::from)
+                .unwrap_or_default(),
             jsx: match options.jsx {
                 Some(Either::A(s)) => {
                     if s == "preserve" {
@@ -259,6 +264,25 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
                 }
             }),
         }
+    }
+}
+
+#[napi(object)]
+#[derive(Default)]
+pub struct DecoratorOptions {
+    /// Enables experimental support for decorators, which is a version of decorators that predates the TC39 standardization process.
+    ///
+    /// Decorators are a language feature which hasn’t yet been fully ratified into the JavaScript specification.
+    /// This means that the implementation version in TypeScript may differ from the implementation in JavaScript when it it decided by TC39.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#experimentalDecorators
+    /// @default false
+    pub legacy: Option<bool>,
+}
+
+impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
+    fn from(options: DecoratorOptions) -> Self {
+        oxc::transformer::DecoratorOptions { legacy: options.legacy.unwrap_or_default() }
     }
 }
 
