@@ -17,6 +17,73 @@ use crate::ast::*;
 /// Constant value that will be serialized as `null` in JSON.
 pub(crate) const NULL: () = ();
 
+impl Program<'_> {
+    /// Serialize AST to JSON.
+    //
+    // Should not panic if everything is working correctly.
+    // Serializing into a `Vec<u8>` should be infallible.
+    #[expect(clippy::missing_panics_doc)]
+    pub fn to_json(&self) -> String {
+        let buf = Vec::new();
+        let ser = self.to_json_into_writer(buf).unwrap();
+        let buf = ser.into_inner();
+        // SAFETY: `serde_json` outputs valid UTF-8.
+        // `serde_json::to_string` also uses `from_utf8_unchecked`.
+        // https://github.com/serde-rs/json/blob/1174c5f57db44c26460951b525c6ede50984b655/src/ser.rs#L2209-L2219
+        unsafe { String::from_utf8_unchecked(buf) }
+    }
+
+    /// Serialize AST into a "black hole" writer.
+    ///
+    /// Only useful for testing, to make sure serialization completes successfully.
+    /// Should be faster than [`Program::to_json`], as does not actually produce any output.
+    ///
+    /// # Errors
+    /// Returns `Err` if serialization fails.
+    #[doc(hidden)]
+    pub fn test_to_json(&self) -> Result<(), serde_json::Error> {
+        struct BlackHole;
+
+        #[expect(clippy::inline_always)]
+        impl Write for BlackHole {
+            #[inline(always)]
+            fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
+                Ok(buf.len())
+            }
+
+            #[inline(always)]
+            fn flush(&mut self) -> Result<(), std::io::Error> {
+                Ok(())
+            }
+        }
+
+        self.to_json_into_writer(BlackHole).map(|_| ())
+    }
+
+    /// Serialize AST into the provided writer.
+    fn to_json_into_writer<W: Write>(
+        &self,
+        writer: W,
+    ) -> Result<serde_json::Serializer<W, EcmaFormatter>, serde_json::Error> {
+        let mut ser = serde_json::Serializer::with_formatter(writer, EcmaFormatter);
+        self.serialize(&mut ser)?;
+        Ok(ser)
+    }
+}
+
+/// `serde_json` formatter which uses `ryu_js` to serialize `f64`.
+pub struct EcmaFormatter;
+
+impl serde_json::ser::Formatter for EcmaFormatter {
+    fn write_f64<W>(&mut self, writer: &mut W, value: f64) -> std::io::Result<()>
+    where
+        W: ?Sized + std::io::Write,
+    {
+        use oxc_syntax::number::ToJsString;
+        writer.write_all(value.to_js_string().as_bytes())
+    }
+}
+
 // --------------------
 // Literals
 // --------------------
@@ -81,72 +148,9 @@ impl Serialize for RegExpPattern<'_> {
     }
 }
 
-pub struct EcmaFormatter;
-
-/// Serialize f64 with `ryu_js`
-impl serde_json::ser::Formatter for EcmaFormatter {
-    fn write_f64<W>(&mut self, writer: &mut W, value: f64) -> std::io::Result<()>
-    where
-        W: ?Sized + std::io::Write,
-    {
-        use oxc_syntax::number::ToJsString;
-        writer.write_all(value.to_js_string().as_bytes())
-    }
-}
-
-impl Program<'_> {
-    /// Serialize AST to JSON.
-    //
-    // Should not panic if everything is working correctly.
-    // Serializing into a `Vec<u8>` should be infallible.
-    #[expect(clippy::missing_panics_doc)]
-    pub fn to_json(&self) -> String {
-        let buf = Vec::new();
-        let ser = self.to_json_into_writer(buf).unwrap();
-        let buf = ser.into_inner();
-        // SAFETY: `serde_json` outputs valid UTF-8.
-        // `serde_json::to_string` also uses `from_utf8_unchecked`.
-        // https://github.com/serde-rs/json/blob/1174c5f57db44c26460951b525c6ede50984b655/src/ser.rs#L2209-L2219
-        unsafe { String::from_utf8_unchecked(buf) }
-    }
-
-    /// Serialize AST into a "black hole" writer.
-    ///
-    /// Only useful for testing, to make sure serialization completes successfully.
-    /// Should be faster than [`Program::to_json`], as does not actually produce any output.
-    ///
-    /// # Errors
-    /// Returns `Err` if serialization fails.
-    #[doc(hidden)]
-    pub fn test_to_json(&self) -> Result<(), serde_json::Error> {
-        struct BlackHole;
-
-        #[expect(clippy::inline_always)]
-        impl Write for BlackHole {
-            #[inline(always)]
-            fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
-                Ok(buf.len())
-            }
-
-            #[inline(always)]
-            fn flush(&mut self) -> Result<(), std::io::Error> {
-                Ok(())
-            }
-        }
-
-        self.to_json_into_writer(BlackHole).map(|_| ())
-    }
-
-    /// Serialize AST into the provided writer.
-    fn to_json_into_writer<W: Write>(
-        &self,
-        writer: W,
-    ) -> Result<serde_json::Serializer<W, EcmaFormatter>, serde_json::Error> {
-        let mut ser = serde_json::Serializer::with_formatter(writer, EcmaFormatter);
-        self.serialize(&mut ser)?;
-        Ok(ser)
-    }
-}
+// --------------------
+// Various
+// --------------------
 
 /// Serialize `ArrayExpressionElement::Elision` variant as `null`.
 impl Serialize for Elision {
@@ -205,6 +209,7 @@ impl<E: Serialize, R: Serialize> Serialize for ElementsAndRest<'_, E, R> {
     }
 }
 
+/// Wrap an `Option<Vec<T>>` so that it's serialized as an empty array (`[]`) if the `Option` is `None`.
 pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'b Option<ArenaVec<'a, T>>);
 
 impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
@@ -266,6 +271,48 @@ struct DirectiveAsStatement<'a, 'b> {
     expression: &'b StringLiteral<'a>,
 }
 
+/// Serializer for `ArrowFunctionExpression`'s `body` field.
+///
+/// Serializes as either an expression (if `expression` property is set),
+/// or a `BlockStatement` (if it's not).
+pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
+
+impl Serialize for ArrowFunctionExpressionBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(expression) = self.0.get_expression() {
+            expression.serialize(serializer)
+        } else {
+            self.0.body.serialize(serializer)
+        }
+    }
+}
+
+/// Serializer for `AssignmentTargetPropertyIdentifier`'s `init` field
+/// (which is renamed to `value` in ESTree AST).
+pub struct AssignmentTargetPropertyIdentifierValue<'a>(
+    pub &'a AssignmentTargetPropertyIdentifier<'a>,
+);
+
+impl Serialize for AssignmentTargetPropertyIdentifierValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(init) = &self.0.init {
+            let mut map = serializer.serialize_map(None)?;
+            map.serialize_entry("type", "AssignmentPattern")?;
+            map.serialize_entry("start", &self.0.span.start)?;
+            map.serialize_entry("end", &self.0.span.end)?;
+            map.serialize_entry("left", &self.0.binding)?;
+            map.serialize_entry("right", init)?;
+            map.end()
+        } else {
+            self.0.binding.serialize(serializer)
+        }
+    }
+}
+
+// --------------------
+// JSX
+// --------------------
+
 impl Serialize for JSXElementName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
@@ -292,38 +339,6 @@ impl Serialize for JSXMemberExpressionObject<'_> {
             Self::ThisExpression(expr) => {
                 JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
             }
-        }
-    }
-}
-
-pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
-
-impl Serialize for ArrowFunctionExpressionBody<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        if let Some(expression) = self.0.get_expression() {
-            expression.serialize(serializer)
-        } else {
-            self.0.body.serialize(serializer)
-        }
-    }
-}
-
-pub struct AssignmentTargetPropertyIdentifierValue<'a>(
-    pub &'a AssignmentTargetPropertyIdentifier<'a>,
-);
-
-impl Serialize for AssignmentTargetPropertyIdentifierValue<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        if let Some(init) = &self.0.init {
-            let mut map = serializer.serialize_map(None)?;
-            map.serialize_entry("type", "AssignmentPattern")?;
-            map.serialize_entry("start", &self.0.span.start)?;
-            map.serialize_entry("end", &self.0.span.end)?;
-            map.serialize_entry("left", &self.0.binding)?;
-            map.serialize_entry("right", init)?;
-            map.end()
-        } else {
-            self.0.binding.serialize(serializer)
         }
     }
 }
