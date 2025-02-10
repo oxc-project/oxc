@@ -364,9 +364,12 @@ fn test_unary_expressions() {
     test_with_global_variables("+Infinity", vec!["Infinity".to_string()], false);
     test_with_global_variables("+NaN", vec!["NaN".to_string()], false);
     test_with_global_variables("+undefined", vec!["undefined".to_string()], false); // NaN
+    test("+[]", false); // 0
+    test("+[foo()]", true);
     test("+foo()", true);
     test("+foo", true); // foo can be Symbol or BigInt
     test("+Symbol()", true);
+    test("+{}", false); // NaN
     test("+{ valueOf() { return Symbol() } }", true);
 
     test("-0", false);
@@ -377,9 +380,12 @@ fn test_unary_expressions() {
     test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
     test_with_global_variables("-NaN", vec!["NaN".to_string()], false);
     test_with_global_variables("-undefined", vec!["undefined".to_string()], false); // NaN
+    test("-[]", false); // -0
+    test("-[foo()]", true);
     test("-foo()", true);
     test("-foo", true); // foo can be Symbol
     test("-Symbol()", true);
+    test("-{}", false); // NaN
     test("-{ valueOf() { return Symbol() } }", true);
 
     test("~0", false);

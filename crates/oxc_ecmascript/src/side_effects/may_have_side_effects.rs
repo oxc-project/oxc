@@ -82,6 +82,12 @@ pub trait MayHaveSideEffects {
                         !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
                             && self.is_global_reference(ident))
                     }
+                    Expression::ArrayExpression(arr) => {
+                        self.array_expression_may_have_side_effects(arr)
+                    }
+                    // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
+                    // ToPrimitive for an object returns `"[object Object]"`
+                    Expression::ObjectExpression(obj) => !obj.properties.is_empty(),
                     // ToNumber throws an error when the argument is Symbol / BigInt / an object that
                     // returns Symbol or BigInt from ToPrimitive
                     _ => true,
@@ -98,6 +104,12 @@ pub trait MayHaveSideEffects {
                         !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
                             && self.is_global_reference(ident))
                     }
+                    Expression::ArrayExpression(arr) => {
+                        self.array_expression_may_have_side_effects(arr)
+                    }
+                    // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
+                    // ToPrimitive for an object returns `"[object Object]"`
+                    Expression::ObjectExpression(obj) => !obj.properties.is_empty(),
                     // ToNumber throws an error when the argument is Symbol an object that
                     // returns Symbol from ToPrimitive
                     _ => true,
