@@ -181,7 +181,7 @@ declare_oxc_lint!(
     style,
 );
 
-fn is_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     if let Some(export_decl_ancestor) = nth_outermost_paren_parent(node, ctx, 2) {
         if let AstKind::ExportNamedDeclaration(_) = export_decl_ancestor.kind() {
             return true;
@@ -225,7 +225,6 @@ impl Rule for FuncStyle {
                     let Some(parent) = semantic.nodes().parent_node(node.id()) else {
                         return;
                     };
-                    let is_export = is_export_name_decl(node, ctx);
                     match func.r#type {
                         FunctionType::FunctionDeclaration => {
                             // There are two situations to diagnostic
@@ -236,41 +235,34 @@ impl Rule for FuncStyle {
                             //
                             // 2) For cases where the parent node is ExportNamedDeclaration,
                             // we just need to check if the self.named_exports value is expression
-                            //
                             if !is_decl_style {
-                                let temp_jus = match parent.kind() {
+                                let should_diagnostic = match parent.kind() {
                                     AstKind::ExportDefaultDeclaration(_) => false,
                                     AstKind::ExportNamedDeclaration(_) => {
                                         self.named_exports.is_none()
                                     }
                                     _ => true,
                                 };
-                                if temp_jus {
+                                if should_diagnostic {
                                     ctx.diagnostic(func_style_diagnostic(func.span, self.style));
                                 }
                             }
 
-                            if let Some(name_export_style) = self.named_exports {
-                                if matches!(
-                                    name_export_style,
-                                    NamedExports::Override(Style::Expression)
-                                ) && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
-                                {
+                            if let Some(NamedExports::Override(Style::Expression)) = self.named_exports {
+                                if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
                                     ctx.diagnostic(func_style_diagnostic(func.span, self.style));
                                 }
                             }
                         }
                         FunctionType::FunctionExpression => {
+                            let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
                             if let AstKind::VariableDeclarator(decl) = parent.kind() {
-                                if is_decl_style && (self.named_exports.is_none() || !is_export) {
+                                if is_decl_style && (self.named_exports.is_none() || !is_ancestor_export) {
                                     ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                                 }
 
-                                if let Some(name_export_style) = self.named_exports {
-                                    if NamedExports::Override(Style::Declaration)
-                                        == name_export_style
-                                        && is_export
-                                    {
+                                if let Some(NamedExports::Override(Style::Declaration)) = self.named_exports {
+                                    if is_ancestor_export {
                                         ctx.diagnostic(func_style_diagnostic(
                                             decl.span, self.style,
                                         ));
@@ -300,22 +292,21 @@ impl Rule for FuncStyle {
             }
         }
 
-        // step 2
+        // step 2 
+        // We deal with arrow functions that do not contain this and super
         for node in arrow_func_nodes {
             if !arrow_func_ancestor_records.contains(&node.id()) {
                 let Some(parent) = semantic.nodes().parent_node(node.id()) else {
                     return;
                 };
-                let is_export = is_export_name_decl(node, ctx);
                 if let AstKind::VariableDeclarator(decl) = parent.kind() {
-                    if is_decl_style && (self.named_exports.is_none() || !is_export) {
+                    let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
+                    if is_decl_style && (self.named_exports.is_none() || !is_ancestor_export) {
                         ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                     }
 
-                    if let Some(name_export_style) = self.named_exports {
-                        if NamedExports::Override(Style::Declaration) == name_export_style
-                            && is_export
-                        {
+                    if let Some(NamedExports::Override(Style::Declaration)) = self.named_exports {
+                        if is_ancestor_export {
                             ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                         }
                     }
