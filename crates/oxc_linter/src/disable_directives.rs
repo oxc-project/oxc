@@ -84,7 +84,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
         self.intervals.insert(Interval { start, stop, val });
     }
 
-    #[allow(clippy::cast_possible_truncation)] // for `as u32`
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
     fn build_impl(&mut self, source_text: &'a str, comments: &[Comment]) {
         let source_len = source_text.len() as u32;
         // This algorithm iterates through the comments and builds all intervals

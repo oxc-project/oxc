@@ -30,13 +30,23 @@ declare_oxc_lint!(
     /// ECMAScript specification treats \8 and \9 in string literals as a legacy feature
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// <!-- prettier-ignore-start -->
+    ///
     /// ```javascript
-    /// incorrect:
-    /// "\8"
-    /// "\9"
-    /// correct:
-    /// "8"
-    /// "\\9"
+    /// let x = "\8"
+    /// let y = "\9"
+    /// ```
+    ///
+    /// <!-- prettier-ignore-end -->
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```javascript
+    /// let x = "8"
+    /// let y = "\\9"
     /// ```
     NoNonoctalDecimalEscape,
     eslint,
@@ -83,7 +93,7 @@ fn quick_test(s: &str) -> bool {
     false
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn check_string(ctx: &LintContext<'_>, string: &str) {
     lazy_static! {
         static ref NONOCTAL_REGEX: Regex =

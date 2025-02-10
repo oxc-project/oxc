@@ -47,7 +47,7 @@ impl Derive for DeriveGetSpan {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(clippy::match_same_arms)]
+            #![expect(clippy::match_same_arms)]
 
             ///@@line_break
             use oxc_span::{Span, GetSpan};
@@ -91,7 +91,7 @@ impl Derive for DeriveGetSpanMut {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(clippy::match_same_arms)]
+            #![expect(clippy::match_same_arms)]
 
             ///@@line_break
             use oxc_span::{Span, GetSpanMut};

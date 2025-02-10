@@ -1,4 +1,4 @@
-#![allow(clippy::cast_possible_truncation)]
+#![expect(clippy::cast_possible_truncation)]
 use std::{ffi::OsStr, path::Component, sync::Arc};
 
 use cow_utils::CowUtils;
@@ -27,10 +27,8 @@ pub struct NoCycle {
     /// ignore type only imports
     ignore_types: bool,
     /// ignore external modules
-    #[allow(unused)]
     ignore_external: bool,
     /// Allow cyclic dependency if there is at least one dynamic import in the chain
-    #[allow(unused)]
     allow_unsafe_dynamic_cyclic_dependency: bool,
 }
 

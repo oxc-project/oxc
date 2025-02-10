@@ -41,7 +41,7 @@ impl Rule for NoIrregularWhitespace {
     }
 }
 
-#[allow(clippy::unicode_not_nfc, clippy::invisible_characters)]
+#[expect(clippy::unicode_not_nfc, clippy::invisible_characters)]
 #[test]
 fn test() {
     use crate::tester::Tester;

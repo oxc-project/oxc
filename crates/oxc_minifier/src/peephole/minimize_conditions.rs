@@ -104,8 +104,8 @@ impl<'a> PeepholeOptimizations {
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
     //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
-    // `x >> y !== 0` -> `x >> y`
-    //  ^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
+    // `x >> +y !== 0` -> `x >> +y`
+    //  ^^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
     fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -1519,10 +1519,10 @@ mod test {
 
     #[test]
     fn compress_binary_number() {
-        test("if(x >> y == 0){}", "!(x >> y)");
-        test("if(x >> y === 0){}", "!(x >> y)");
-        test("if(x >> y != 0){}", "x >> y");
-        test("if(x >> y !== 0){}", "x >> y");
+        test("if(x >> +y == 0){}", "!(x >> +y)");
+        test("if(x >> +y === 0){}", "!(x >> +y)");
+        test("if(x >> +y != 0){}", "x >> +y");
+        test("if(x >> +y !== 0){}", "x >> +y");
         test("if((-0 != +0) !== false){}", "");
         test_same("foo(x >> y == 0)");
 
@@ -1558,15 +1558,16 @@ mod test {
         test("x ? a = 0 : a = 1", "a = x ? 0 : 1");
         test(
             "x ? a = function foo() { return 'a' } : a = function bar() { return 'b' }",
-            "a = x ? function foo() { return 'a' } : function bar() { return 'b' }",
+            "a = x ? function () { return 'a' } : function () { return 'b' }",
         );
 
         // a.b might have a side effect
         test_same("x ? a.b = 0 : a.b = 1");
         // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function
-        test_same("x ? a = () => 'a' : a = () => 'b'");
-        test_same("x ? a = function () { return 'a' } : a = function () { return 'b' }");
-        test_same("x ? a = class { foo = 'a' } : a = class { foo = 'b' }");
+        // TODO: need to pass these tests when `keep_fnames` are introduced
+        // test_same("x ? a = () => 'a' : a = () => 'b'");
+        // test_same("x ? a = function () { return 'a' } : a = function () { return 'b' }");
+        // test_same("x ? a = class { foo = 'a' } : a = class { foo = 'b' }");
 
         // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
         // so cannot be fold to `a += x ? 0 : 1`

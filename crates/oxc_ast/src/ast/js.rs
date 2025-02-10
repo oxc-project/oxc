@@ -1,4 +1,4 @@
-#![allow(missing_docs)] // FIXME
+#![expect(missing_docs)] // FIXME
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -353,6 +353,7 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "Property")]
 pub struct ObjectProperty<'a> {
     pub span: Span,
     pub kind: PropertyKind,
@@ -630,6 +631,7 @@ pub struct UpdateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(prefix = true), add_ts = "prefix: true")]
 pub struct UnaryExpression<'a> {
     pub span: Span,
     pub operator: UnaryOperator,
@@ -1399,6 +1401,7 @@ pub struct CatchClause<'a> {
 pub struct CatchParameter<'a> {
     pub span: Span,
     /// The bound error
+    #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
 }
 
@@ -1475,6 +1478,11 @@ pub struct ObjectPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(
+    rename = "Property",
+    add_fields(kind = "\"init\"", method = false),
+    add_ts = "kind: \"init\"; method: false"
+)]
 pub struct BindingProperty<'a> {
     pub span: Span,
     pub key: PropertyKey<'a>,
@@ -1557,7 +1565,11 @@ pub struct BindingRestElement<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // https://github.com/estree/estree/blob/master/es5.md#patterns
 // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/cd61c555bfc93e985b313263a42ed78074570d08/types/estree/index.d.ts#L411
-#[estree(add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest")]
+#[estree(
+    add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest",
+    add_fields(expression = false),
+    add_ts = "expression: false"
+)]
 pub struct Function<'a> {
     pub span: Span,
     pub r#type: FunctionType,
@@ -1695,9 +1707,11 @@ pub enum FormalParameterKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "BlockStatement")]
 pub struct FunctionBody<'a> {
     pub span: Span,
     pub directives: Vec<'a, Directive<'a>>,
+    #[estree(rename = "body")]
     pub statements: Vec<'a, Statement<'a>>,
 }
 

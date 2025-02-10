@@ -214,7 +214,7 @@ impl Serialize for ObjectPropertyKind<'_> {
 impl Serialize for ObjectProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectProperty")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("kind", &self.kind)?;
@@ -507,6 +507,7 @@ impl Serialize for UnaryExpression<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("argument", &self.argument)?;
+        map.serialize_entry("prefix", &true)?;
         map.end()
     }
 }
@@ -1221,7 +1222,9 @@ impl Serialize for CatchParameter<'_> {
         map.serialize_entry("type", "CatchParameter")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("pattern", &self.pattern)?;
+        self.pattern.kind.serialize(FlatMapSerializer(&mut map))?;
+        map.serialize_entry("typeAnnotation", &self.pattern.type_annotation)?;
+        map.serialize_entry("optional", &self.pattern.optional)?;
         map.end()
     }
 }
@@ -1286,13 +1289,15 @@ impl Serialize for ObjectPattern<'_> {
 impl Serialize for BindingProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "BindingProperty")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
         map.serialize_entry("computed", &self.computed)?;
+        map.serialize_entry("kind", &"init")?;
+        map.serialize_entry("method", &false)?;
         map.end()
     }
 }
@@ -1334,6 +1339,7 @@ impl Serialize for Function<'_> {
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
         map.serialize_entry("body", &self.body)?;
+        map.serialize_entry("expression", &false)?;
         map.end()
     }
 }
@@ -1399,11 +1405,11 @@ impl Serialize for FormalParameterKind {
 impl Serialize for FunctionBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "FunctionBody")?;
+        map.serialize_entry("type", "BlockStatement")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("directives", &self.directives)?;
-        map.serialize_entry("statements", &self.statements)?;
+        map.serialize_entry("body", &self.statements)?;
         map.end()
     }
 }

@@ -262,7 +262,7 @@ impl<'a> SemanticBuilder<'a> {
             // Check that estimated counts accurately (unless in release mode)
             #[cfg(debug_assertions)]
             if let Some(stats) = check_stats {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 let actual_stats = Stats::new(
                     self.nodes.len() as u32,
                     self.scope.len() as u32,
@@ -344,7 +344,6 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[inline]
-    #[allow(clippy::unnecessary_wraps)]
     fn retrieve_recorded_ast_node(&mut self) -> Option<NodeId> {
         if self.cfg.is_some() {
             Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
@@ -2074,7 +2073,6 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::Class(_) => {

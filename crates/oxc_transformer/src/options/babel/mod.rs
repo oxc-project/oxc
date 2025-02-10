@@ -69,7 +69,7 @@ enum PluginPresetEntry {
     String(String),
     Vec1([String; 1]),
     Tuple(String, serde_json::Value),
-    Triple(String, serde_json::Value, #[allow(unused)] String),
+    Triple(String, serde_json::Value, #[expect(unused)] String),
 }
 
 impl PluginPresetEntry {

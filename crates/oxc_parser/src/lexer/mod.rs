@@ -285,7 +285,7 @@ impl<'a> Lexer<'a> {
     /// Peek the next byte, and advance the current position if it matches
     /// the given ASCII char.
     // `#[inline(always)]` to make sure the `assert!` gets optimized out.
-    #[allow(clippy::inline_always)]
+    #[expect(clippy::inline_always)]
     #[inline(always)]
     fn next_ascii_byte_eq(&mut self, b: u8) -> bool {
         // TODO: can be replaced by `std::ascii:Char` once stabilized.

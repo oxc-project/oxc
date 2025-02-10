@@ -115,7 +115,7 @@ impl<'a> LogicalAssignmentOperators<'a, '_> {
                 self.convert_computed_member_expression(computed_expr, ctx)
             }
             // TODO
-            #[allow(clippy::match_same_arms)]
+            #[expect(clippy::match_same_arms)]
             AssignmentTarget::PrivateFieldExpression(_) => return,
             // All other are TypeScript syntax.
 

@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 
 use crate::{array, group, indent, ir::Doc, softline, text, Format, Prettier};
 
-#[allow(clippy::enum_variant_names)]
+#[expect(clippy::enum_variant_names)]
 pub enum MemberExpressionLike<'a, 'b> {
     ComputedMemberExpression(&'b ComputedMemberExpression<'a>),
     StaticMemberExpression(&'b StaticMemberExpression<'a>),

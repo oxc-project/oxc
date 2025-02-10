@@ -1,4 +1,4 @@
-#![allow(missing_docs)] // FIXME
+#![expect(missing_docs)] // FIXME
 use oxc_span::Atom;
 use oxc_syntax::scope::ScopeId;
 
@@ -172,7 +172,6 @@ impl<'a> AstKind<'a> {
 }
 
 impl AstKind<'_> {
-    #[allow(clippy::match_same_arms)]
     /// Get the AST kind name with minimal details. Particularly useful for
     /// when debugging an iteration over an AST.
     ///

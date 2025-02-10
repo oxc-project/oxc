@@ -57,7 +57,7 @@ impl Rule for NoNewStatics {
             return;
         };
 
-        if ident.name != "Promise" || !ctx.semantic().is_reference_to_global_variable(ident) {
+        if ident.name != "Promise" || !ctx.is_reference_to_global_variable(ident) {
             return;
         }
 

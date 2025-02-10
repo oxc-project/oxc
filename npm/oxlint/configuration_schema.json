@@ -351,11 +351,33 @@
         "files"
       ],
       "properties": {
+        "env": {
+          "description": "Environments enable and disable collections of global variables.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/OxlintEnv"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "files": {
           "description": "A list of glob patterns to override.\n\n## Example `[ \"*.test.ts\", \"*.spec.ts\" ]`",
           "allOf": [
             {
               "$ref": "#/definitions/GlobSet"
+            }
+          ]
+        },
+        "globals": {
+          "description": "Enabled or disabled specific global variables.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/OxlintGlobals"
+            },
+            {
+              "type": "null"
             }
           ]
         },

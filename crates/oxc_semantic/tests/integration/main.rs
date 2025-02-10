@@ -1,4 +1,4 @@
-#![allow(clippy::missing_panics_doc)]
+#![expect(clippy::missing_panics_doc)]
 
 pub mod cfg;
 pub mod classes;

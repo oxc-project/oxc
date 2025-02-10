@@ -56,7 +56,7 @@ impl Rule for NoUnescapedEntities {
                     continue;
                 }
                 if let Some(escapes) = DEFAULTS.get(&char) {
-                    #[allow(clippy::cast_possible_truncation)]
+                    #[expect(clippy::cast_possible_truncation)]
                     ctx.diagnostic(no_unescaped_entities_diagnostic(
                         Span::new(
                             jsx_text.span.start + i as u32,

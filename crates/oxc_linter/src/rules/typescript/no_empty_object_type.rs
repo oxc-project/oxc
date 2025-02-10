@@ -23,7 +23,7 @@ fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyObjectType(Box<NoEmptyObjectTypeConfig>);
 
-#[allow(clippy::struct_field_names)]
+#[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyObjectTypeConfig {
     /** Whether to allow empty interfaces. */

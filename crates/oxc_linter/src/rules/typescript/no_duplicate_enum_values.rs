@@ -87,7 +87,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateEnumValues {
-    #[allow(clippy::float_cmp)]
+    #[expect(clippy::float_cmp)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSEnumDeclaration(enum_body) = node.kind() else {
             return;

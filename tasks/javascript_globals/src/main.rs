@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, clippy::print_stderr)]
+#![expect(clippy::print_stdout, clippy::print_stderr)]
 use lazy_static::lazy_static;
 use oxc_tasks_common::agent;
 use rustc_hash::FxHashMap;
@@ -65,6 +65,9 @@ lazy_static! {
             (String::from("WeakRef"), false),
         ]);
     };
+    static ref NEW_GLOBALS_2025: FxHashMap<String, bool> = {
+        return FxHashMap::from_iter([(String::from("Iterator"), false)]);
+    };
 }
 
 fn main() {
@@ -105,6 +108,12 @@ fn main() {
         map
     };
 
+    let new_globals_2015_2017_2020_2021_2025 = {
+        let mut map = new_globals_2015_2017_2020_2021.clone();
+        map.extend(NEW_GLOBALS_2025.clone());
+        map
+    };
+
     let envs_preset: Vec<Env> = [
         // Language
         ("builtin", &globals["builtin"]), // oxc uses builtin instead of es5 of ESLint
@@ -119,6 +128,7 @@ fn main() {
         ("es2022", &new_globals_2015_2017_2020_2021),
         ("es2023", &new_globals_2015_2017_2020_2021),
         ("es2024", &new_globals_2015_2017_2020_2021),
+        ("es2025", &new_globals_2015_2017_2020_2021_2025),
         // Platforms
         ("browser", &globals["browser"]),
         ("node", &globals["node"]),

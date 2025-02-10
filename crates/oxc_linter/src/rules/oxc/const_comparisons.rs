@@ -348,7 +348,7 @@ fn left_side_is_useless(left_cmp_op: CmpOp, ordering: Ordering) -> bool {
             CmpOp::Le | CmpOp::Ge => true,
         }
     } else {
-        #[allow(clippy::match_same_arms)]
+        #[expect(clippy::match_same_arms)]
         match (left_cmp_op.direction(), ordering) {
             (CmpOpDirection::Lesser, Ordering::Less) => false,
             (CmpOpDirection::Lesser, Ordering::Equal) => false,
@@ -361,7 +361,7 @@ fn left_side_is_useless(left_cmp_op: CmpOp, ordering: Ordering) -> bool {
 }
 
 fn comparison_is_possible(left_cmp_direction: CmpOpDirection, ordering: Ordering) -> bool {
-    #[allow(clippy::match_same_arms)]
+    #[expect(clippy::match_same_arms)]
     match (left_cmp_direction, ordering) {
         (CmpOpDirection::Lesser, Ordering::Less | Ordering::Equal) => false,
         (CmpOpDirection::Lesser, Ordering::Greater) => true,

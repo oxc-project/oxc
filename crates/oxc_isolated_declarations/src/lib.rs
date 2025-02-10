@@ -166,7 +166,6 @@ impl<'a> IsolatedDeclarations<'a> {
         }))
     }
 
-    #[allow(clippy::missing_panics_doc)]
     fn transform_statements_on_demand(
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,

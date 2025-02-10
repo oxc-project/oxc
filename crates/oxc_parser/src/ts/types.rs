@@ -1327,7 +1327,6 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            #[allow(clippy::unnecessary_fallible_conversions)]
             if let Ok(kind) = ModifierKind::try_from(self.cur_kind()) {
                 let modifier = Modifier { kind, span: self.cur_token().span() };
                 flags.set(kind.into(), true);

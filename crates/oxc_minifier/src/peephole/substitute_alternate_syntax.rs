@@ -104,6 +104,7 @@ impl<'a> PeepholeOptimizations {
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
             Expression::BinaryExpression(e) => Self::try_fold_loose_equals_undefined(e, ctx)
                 .or_else(|| Self::try_compress_typeof_undefined(e, ctx)),
+            Expression::UnaryExpression(e) => Self::try_remove_unary_plus(e, ctx),
             Expression::NewExpression(e) => Self::get_fold_constructor_name(&e.callee, ctx)
                 .and_then(|name| {
                     Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
@@ -198,6 +199,78 @@ impl<'a> PeepholeOptimizations {
         };
         let right = ctx.ast.void_0(expr.right.span());
         Some(ctx.ast.expression_binary(expr.span, unary_expr.unbox().argument, new_eq_op, right))
+    }
+
+    /// Remove unary `+` if `ToNumber` conversion is done by the parent expression
+    ///
+    /// - `1 - +b` => `1 - b` (for other operators as well)
+    /// - `+a - 1` => `a - 1` (for other operators as well)
+    fn try_remove_unary_plus(
+        expr: &mut UnaryExpression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if expr.operator != UnaryOperator::UnaryPlus {
+            return None;
+        }
+
+        let parent_expression = ctx.ancestors().next()?;
+        let parent_expression_does_to_number_conversion = match parent_expression {
+            Ancestor::BinaryExpressionLeft(e) => {
+                Self::is_binary_operator_that_does_number_conversion(*e.operator())
+                    && ValueType::from(e.right()).is_number()
+            }
+            Ancestor::BinaryExpressionRight(e) => {
+                Self::is_binary_operator_that_does_number_conversion(*e.operator())
+                    && ValueType::from(e.left()).is_number()
+            }
+            _ => false,
+        };
+        if !parent_expression_does_to_number_conversion {
+            return None;
+        }
+
+        Some(ctx.ast.move_expression(&mut expr.argument))
+    }
+
+    /// For `+a - n` => `a - n` (assuming n is a number)
+    ///
+    /// Before compression the evaluation is:
+    /// 1. `a_2 = ToNumber(a)`
+    /// 2. `a_3 = ToNumeric(a_2)`
+    /// 3. `n_2 = ToNumeric(n)` (no-op since n is a number)
+    /// 4. If the type of `a_3` is not number, throw an error
+    /// 5. Calculate the result of the binary operation
+    ///
+    /// After compression, step 1 is removed. The difference we need to care is
+    /// the difference with `ToNumber(a)` and `ToNumeric(a)` because `ToNumeric(a_2)` is a no-op.
+    ///
+    /// - When `a` is an object and `ToPrimitive(a, NUMBER)` returns a BigInt,
+    ///   - `ToNumeric(a)` will return that value. But the binary operation will throw an error in step 4.
+    ///   - `ToNumber(a)` will throw an error.
+    /// - When `a` is an object and `ToPrimitive(a, NUMBER)` returns a value other than BigInt,
+    ///   `ToNumeric(a)` and `ToNumber(a)` works the same. Because the step 2 in `ToNumeric` is always `false`.
+    /// - When `a` is BigInt,
+    ///   - `ToNumeric(a)` will return that value. But the binary operation will throw an error in step 4.
+    ///   - `ToNumber(a)` will throw an error.
+    /// - When `a` is not a object nor a BigInt, `ToNumeric(a)` and `ToNumber(a)` works the same.
+    ///   Because the step 2 in `ToNumeric` is always `false`.
+    ///
+    /// Thus, removing `+` is fine.
+    fn is_binary_operator_that_does_number_conversion(operator: BinaryOperator) -> bool {
+        matches!(
+            operator,
+            BinaryOperator::Exponential
+                | BinaryOperator::Multiplication
+                | BinaryOperator::Division
+                | BinaryOperator::Remainder
+                | BinaryOperator::Subtraction
+                | BinaryOperator::ShiftLeft
+                | BinaryOperator::ShiftRight
+                | BinaryOperator::ShiftRightZeroFill
+                | BinaryOperator::BitwiseAnd
+                | BinaryOperator::BitwiseXOR
+                | BinaryOperator::BitwiseOR
+        )
     }
 
     /// `a || (b || c);` -> `(a || b) || c;`
@@ -724,7 +797,6 @@ impl<'a> PeepholeOptimizations {
     }
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>
-    #[allow(clippy::cast_lossless)]
     fn try_compress_property_key(
         &mut self,
         key: &mut PropertyKey<'a>,
@@ -892,6 +964,7 @@ impl<'a> LatePeepholeOptimizations {
         if let Expression::NewExpression(e) = expr {
             Self::try_compress_typed_array_constructor(e, ctx);
         }
+        Self::remove_name_from_expressions(expr, ctx);
 
         if let Some(folded_expr) = match expr {
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
@@ -1004,12 +1077,36 @@ impl<'a> LatePeepholeOptimizations {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
-                        || ctx.symbols().get_resolved_references(ident.symbol_id()).count() == 0
+                        || !ctx.symbols().symbol_is_used(ident.symbol_id())
                     {
                         catch.param = None;
                     }
                 };
             }
+        }
+    }
+
+    /// Remove name from function / class expressions if it is not used.
+    ///
+    /// - `var a = function f() {}` -> `var a = function () {}`
+    /// - `var a = class C {}` -> `var a = class {}`
+    ///
+    /// This compression is not safe if the code relies on `Function::name`.
+    fn remove_name_from_expressions(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+        match expr {
+            Expression::FunctionExpression(func) => {
+                if func.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
+                {
+                    func.id = None;
+                }
+            }
+            Expression::ClassExpression(class) => {
+                if class.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
+                {
+                    class.id = None;
+                }
+            }
+            _ => {}
         }
     }
 
@@ -1187,7 +1284,7 @@ mod test {
         test("x = new Object()", "x = ({})");
         test("x = Object()", "x = ({})");
 
-        test_same("x = (function f(){function Object(){this.x=4}return new Object();})();");
+        test_same("x = (function (){function Object(){this.x=4}return new Object();})();");
 
         test("x = new window.Object", "x = ({})");
         test("x = new window.Object()", "x = ({})");
@@ -1197,8 +1294,8 @@ mod test {
         test("x = window.Object?.()", "x = Object?.()");
 
         test(
-            "x = (function f(){function Object(){this.x=4};return new window.Object;})();",
-            "x = (function f(){function Object(){this.x=4}return {};})();",
+            "x = (function (){function Object(){this.x=4};return new window.Object;})();",
+            "x = (function (){function Object(){this.x=4}return {};})();",
         );
     }
 
@@ -1481,6 +1578,17 @@ mod test {
     }
 
     #[test]
+    fn test_remove_unary_plus() {
+        test("v = 1 - +foo", "v = 1 - foo");
+        test("v = +foo - 1", "v = foo - 1");
+        test_same("v = 1n - +foo");
+        test_same("v = +foo - 1n");
+        test_same("v = +foo - bar");
+        test_same("v = foo - +bar");
+        test_same("v = 1 + +foo"); // cannot compress into `1 + foo` because `foo` can be a string
+    }
+
+    #[test]
     fn test_fold_loose_equals_undefined() {
         test_same("foo != null");
         test("foo != undefined", "foo != null");
@@ -1614,6 +1722,14 @@ mod test {
             run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
             run(code, None)
         );
+    }
+
+    #[test]
+    fn test_remove_name_from_expressions() {
+        test("var a = function f() {}", "var a = function () {}");
+        test_same("var a = function f() { return f; }");
+        test("var a = class C {}", "var a = class {}");
+        test_same("var a = class C { foo() { return C } }");
     }
 
     #[test]

@@ -1,4 +1,4 @@
-#![allow(clippy::disallowed_methods)]
+#![expect(clippy::disallowed_methods)]
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, Visit};
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};

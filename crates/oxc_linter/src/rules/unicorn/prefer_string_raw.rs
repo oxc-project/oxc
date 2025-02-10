@@ -67,7 +67,7 @@ fn unescape_backslash(input: &str, quote: char) -> String {
 }
 
 impl Rule for PreferStringRaw {
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::StringLiteral(string_literal) = node.kind() else {
             return;

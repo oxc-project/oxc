@@ -231,7 +231,7 @@ fn generate_output(
         //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
         //!@@line_break
-        #![allow(unused_variables, clippy::semicolon_if_nothing_returned)]
+        #![expect(unused_variables, clippy::semicolon_if_nothing_returned)]
 
         ///@@line_break
         use std::cell::Cell;

@@ -40,7 +40,7 @@ impl From<IsolatedDeclarationsOptions> for oxc::isolated_declarations::IsolatedD
 }
 
 /// TypeScript Isolated Declarations for Standalone DTS Emit
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 #[napi]
 pub fn isolated_declaration(
     filename: String,

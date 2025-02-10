@@ -1,7 +1,5 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-#![allow(clippy::missing_errors_doc)]
-
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;

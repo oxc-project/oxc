@@ -1,7 +1,8 @@
-#![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
+#![expect(rustdoc::private_intra_doc_links)] // useful for intellisense
 
 use std::{ops::Deref, path::Path, rc::Rc};
 
+use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
@@ -10,6 +11,7 @@ use oxc_span::{GetSpan, Span};
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
+    config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
@@ -148,12 +150,49 @@ impl<'a> LintContext<'a> {
         &self.parent.config.globals
     }
 
+    /// Checks if the provided identifier is a reference to a global variable.
+    pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
+        let name = ident.name.as_str();
+        self.scopes().root_unresolved_references().contains_key(name)
+            && !self.globals().get(name).is_some_and(|value| *value == GlobalValue::Off)
+    }
+
+    /// Checks if the provided identifier is a reference to a global variable.
+    pub fn get_global_variable_value(&self, name: &str) -> Option<GlobalValue> {
+        if !self.scopes().root_unresolved_references().contains_key(name) {
+            return None;
+        }
+
+        if let Some(value) = self.globals().get(name) {
+            return Some(*value);
+        }
+
+        self.get_env_global_entry(name)
+    }
+
     /// Runtime environments turned on/off by the user.
     ///
     /// Examples of environments are `builtin`, `browser`, `node`, etc.
     #[inline]
     pub fn env(&self) -> &OxlintEnv {
         &self.parent.config.env
+    }
+
+    fn get_env_global_entry(&self, var: &str) -> Option<GlobalValue> {
+        // builtin is always readonly
+        if GLOBALS["builtin"].contains_key(var) {
+            return Some(GlobalValue::Readonly);
+        }
+
+        for env in self.env().iter() {
+            if let Some(env) = GLOBALS.get(env) {
+                if let Some(value) = env.get(var) {
+                    return Some(GlobalValue::from(*value));
+                };
+            }
+        }
+
+        None
     }
 
     /// Checks if a given variable named is defined as a global variable in the current environment.
@@ -284,7 +323,7 @@ impl<'a> LintContext<'a> {
     /// returns something that can turn into a [`RuleFix`].
     ///
     /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
-    #[allow(clippy::missing_panics_doc)] // only panics in debug mode
+    #[cfg_attr(debug_assertions, expect(clippy::missing_panics_doc))] // Only panics in debug mode
     pub fn diagnostic_with_fix_of_kind<C, F>(
         &self,
         diagnostic: OxcDiagnostic,

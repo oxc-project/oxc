@@ -11,7 +11,7 @@ homepage = "https://oxc.rs"
 keywords = ["JavaScript", "TypeScript", "linter", "minifier", "parser"]
 license = "MIT"
 repository = "https://github.com/oxc-project/oxc"
-rust-version = "1.80" # Support last 5 minor versions.
+rust-version = "1.81.0" # Support last 4 minor versions.
 description = "A collection of JavaScript tools written in Rust."
 
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>

@@ -19,7 +19,6 @@ fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessRename(Box<NoUselessRenameConfig>);
 
-#[allow(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessRenameConfig {
     ignore_destructuring: bool,

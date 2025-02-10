@@ -46,7 +46,7 @@ pub fn as_endpoint_registration<'a, 'n>(
 ///
 /// This will yield a lot of false positives if not called on the results of
 /// [`as_endpoint_registration`].
-#[allow(clippy::similar_names)]
+#[expect(clippy::similar_names)]
 pub fn is_endpoint_handler(maybe_handler: &Expression<'_>) -> bool {
     let params = match maybe_handler {
         Expression::FunctionExpression(f) => &f.params,

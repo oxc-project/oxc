@@ -41,7 +41,7 @@ impl Utf8ToUtf16 {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn build_table(&mut self, source_text: &str) {
         // Translation from UTF-8 byte offset to UTF-16 char offset:
         //

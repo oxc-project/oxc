@@ -23,6 +23,8 @@ The compressor is responsible for rewriting statements and expressions for minim
 - [Properties of the global object defined in the ECMAScript spec](https://tc39.es/ecma262/multipage/global-object.html#sec-global-object) behaves the same as in the spec
   - Examples of properties: `Infinity`, `parseInt`, `Object`, `Promise.resolve`
   - Examples that breaks this assumption: `globalThis.Object = class MyObject {}`
+- The code does not rely on the `name` property of `Function` or `Class`
+  - Examples that breaks this assumption: `function fn() {}; console.log(f.name === 'fn')`
 - [`document.all`](https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-IsHTMLDDA-internal-slot) is not used or behaves as a normal object
   - Examples that breaks this assumption: `console.log(typeof document.all === 'undefined')`
 - TDZ violation does not happen

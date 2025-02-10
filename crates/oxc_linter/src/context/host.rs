@@ -106,7 +106,7 @@ impl<'a> ContextHost<'a> {
 
     /// Set the linter configuration for this context.
     #[inline]
-    #[allow(dead_code)] // will be used in up-stack PR
+    #[expect(dead_code)] // will be used in up-stack PR
     pub fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
         let plugins = config.plugins;
         self.config = Arc::clone(config);

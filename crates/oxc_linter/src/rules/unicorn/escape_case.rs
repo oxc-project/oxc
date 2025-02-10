@@ -28,20 +28,25 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    ///
+    /// <!-- prettier-ignore-start -->
+    ///
     /// ```javascript
-    /// const foo = '\xa9';
-    /// const foo = '\ud834';
-    /// const foo = '\u{1d306}';
-    /// const foo = '\ca';
+    /// const foo = "\xa9";
+    /// const foo = "\ud834";
+    /// const foo = "\u{1d306}";
+    /// const foo = "\ca";
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// const foo = '\xA9';
-    /// const foo = '\uD834';
-    /// const foo = '\u{1D306}';
-    /// const foo = '\cA';
+    /// const foo = "\xA9";
+    /// const foo = "\uD834";
+    /// const foo = "\u{1D306}";
+    /// const foo = "\cA";
     /// ```
+    ///
+    /// <!-- prettier-ignore-end -->
     EscapeCase,
     unicorn,
     pedantic,

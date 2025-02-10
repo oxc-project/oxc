@@ -427,7 +427,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 }
 
                 let is_development = options.development;
-                #[allow(clippy::single_match_else, clippy::cast_possible_truncation)]
+                #[expect(clippy::single_match_else, clippy::cast_possible_truncation)]
                 let (jsx_runtime_importer, source_len) = match options.import_source.as_ref() {
                     Some(import_source) => {
                         let mut import_source = &**import_source;

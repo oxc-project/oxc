@@ -80,19 +80,15 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
         }
     } else {
         // No custom definition. Generate one.
-        match type_def {
-            TypeDef::Struct(struct_def) => {
-                let ts_def = generate_ts_type_def_for_struct(struct_def, schema);
-                if let Some(ts_def) = ts_def {
-                    write!(code, "{ts_def};\n\n").unwrap();
-                }
-            }
-            TypeDef::Enum(enum_def) => {
-                let ts_def = generate_ts_type_def_for_enum(enum_def, schema);
-                write!(code, "{ts_def};\n\n").unwrap();
-            }
+        let ts_def = match type_def {
+            TypeDef::Struct(struct_def) => generate_ts_type_def_for_struct(struct_def, schema),
+            TypeDef::Enum(enum_def) => generate_ts_type_def_for_enum(enum_def, schema),
             _ => unreachable!(),
         };
+
+        if let Some(ts_def) = ts_def {
+            write!(code, "{ts_def};\n\n").unwrap();
+        }
     };
 
     // Add additional custom TS def if provided via `#[estree(add_ts_def = "...")]` attribute
@@ -224,7 +220,8 @@ fn generate_ts_type_def_for_struct_field<'s>(
             }
         }
 
-        if field_type_name.contains('|') {
+        // need `type` instead of `interface` when flattening BindingPattern
+        if field_type_name.contains('|') || field_type_name == "BindingPattern" {
             *output_as_type = true;
         }
         extends.push(field_type_name);
@@ -236,7 +233,12 @@ fn generate_ts_type_def_for_struct_field<'s>(
 }
 
 /// Generate Typescript type definition for an enum.
-fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> String {
+fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<String> {
+    // If enum marked with `#[estree(ts_alias = "...")]`, then it needs no type def
+    if enum_def.estree.ts_alias.is_some() {
+        return None;
+    }
+
     let own_variants_type_names = enum_def.variants.iter().map(|variant| {
         if let Some(variant_type) = variant.field_type(schema) {
             ts_type_name(variant_type, schema)
@@ -251,7 +253,7 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> String 
     let union = own_variants_type_names.chain(inherits_type_names).join(" | ");
 
     let enum_name = enum_def.name();
-    format!("export type {enum_name} = {union};")
+    Some(format!("export type {enum_name} = {union};"))
 }
 
 /// Get TS type name for a type.
@@ -264,7 +266,13 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
                 Cow::Borrowed(struct_def.name())
             }
         }
-        TypeDef::Enum(enum_def) => Cow::Borrowed(enum_def.name()),
+        TypeDef::Enum(enum_def) => {
+            if let Some(ts_alias) = &enum_def.estree.ts_alias {
+                Cow::Borrowed(ts_alias)
+            } else {
+                Cow::Borrowed(enum_def.name())
+            }
+        }
         TypeDef::Primitive(primitive_def) => Cow::Borrowed(match primitive_def.name() {
             #[rustfmt::skip]
             "u8" | "u16" | "u32" | "u64" | "u128" | "usize"

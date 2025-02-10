@@ -97,7 +97,7 @@ impl TryFrom<i64> for AllowWarnDeny {
         if value < 0 {
             return Err(invalid_int_severity("a negative number"));
         }
-        #[allow(clippy::cast_sign_loss)]
+        #[expect(clippy::cast_sign_loss)]
         Self::try_from(value as u64)
     }
 }

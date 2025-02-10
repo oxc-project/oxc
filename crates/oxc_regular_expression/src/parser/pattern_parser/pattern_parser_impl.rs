@@ -1677,7 +1677,7 @@ impl<'a> PatternParser<'a> {
     //   { DecimalDigits[~Sep] , DecimalDigits[~Sep] }
     // ```
     /// Returns: ((min, max), greedy)
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn consume_quantifier(&mut self) -> Result<Option<((u64, Option<u64>), bool)>> {
         const MAX_QUANTIFIER: u64 = 9_007_199_254_740_991; // 2^53 - 1
         let is_greedy = |reader: &mut Reader| !reader.eat('?');
@@ -1754,7 +1754,7 @@ impl<'a> PatternParser<'a> {
         if let Some(index) = self.consume_decimal_digits()? {
             // \0 is CharacterEscape, not DecimalEscape
             if index != 0 {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 return Ok(Some(index as u32));
             }
 
@@ -1778,7 +1778,7 @@ impl<'a> PatternParser<'a> {
         let mut value: u64 = 0;
         while let Some(cp) = self.reader.peek().filter(|&cp| character::is_decimal_digit(cp)) {
             // `- '0' as u32`: convert code point to digit
-            #[allow(clippy::cast_lossless)]
+            #[expect(clippy::cast_lossless)]
             let d = (cp - '0' as u32) as u64;
 
             // To prevent panic on overflow cases like `\999999999999999999999`, `a{999999999999999999999}`

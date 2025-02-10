@@ -1,4 +1,4 @@
-#![allow(missing_docs)] // fixme
+#![expect(missing_docs)] // fixme
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_span::ContentEq;

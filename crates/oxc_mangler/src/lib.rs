@@ -201,8 +201,9 @@ impl Mangler {
         let allocator = Allocator::default();
 
         // All symbols with their assigned slots. Keyed by symbol id.
+        // TODO: Use `iter::repeat_n` once our MSRV reaches 1.82.0.
         let mut slots: Vec<'_, Slot> =
-            Vec::from_iter_in(iter::repeat_n(0, symbol_table.len()), &allocator);
+            Vec::from_iter_in(iter::repeat(0).take(symbol_table.len()), &allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];

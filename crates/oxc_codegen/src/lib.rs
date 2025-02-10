@@ -693,7 +693,7 @@ impl<'a> Codegen<'a> {
 
     // `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
     fn get_minified_number(num: f64, buffer: &mut ryu_js::Buffer) -> Cow<'_, str> {
         use cow_utils::CowUtils;
 

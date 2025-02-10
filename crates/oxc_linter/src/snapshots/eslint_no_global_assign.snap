@@ -29,11 +29,32 @@ source: crates/oxc_linter/src/tester.rs
    ·      ╰── Read-only global 'Object' should not be modified.
    ╰────
 
+  ⚠ eslint(no-global-assign): Read-only global 'top' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ top = 0;
+   · ─┬─
+   ·  ╰── Read-only global 'top' should not be modified.
+   ╰────
+
+  ⚠ eslint(no-global-assign): Read-only global 'require' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ require = 0;
+   · ───┬───
+   ·    ╰── Read-only global 'require' should not be modified.
+   ╰────
+
   ⚠ eslint(no-global-assign): Read-only global 'Object' should not be modified.
    ╭─[no_global_assign.tsx:1:16]
  1 │ function f() { Object = 1; }
    ·                ───┬──
    ·                   ╰── Read-only global 'Object' should not be modified.
+   ╰────
+
+  ⚠ eslint(no-global-assign): Read-only global 'a' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ a = 1
+   · ┬
+   · ╰── Read-only global 'a' should not be modified.
    ╰────
 
   ⚠ eslint(no-global-assign): Read-only global 'Array' should not be modified.

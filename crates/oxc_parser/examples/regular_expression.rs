@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, clippy::cast_possible_truncation)]
+#![expect(clippy::print_stdout)]
 use std::{env, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;

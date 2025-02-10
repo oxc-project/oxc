@@ -13,13 +13,13 @@ pub struct ESTreeStruct {
     pub add_fields: Vec<(String, String)>,
     /// Additional fields to add to TS type definition
     pub add_ts: Option<String>,
-    /// Custom TS type definition. Does not include `export`.
-    /// Empty string if type should not have a TS type definition.
-    pub custom_ts_def: Option<String>,
     /// TS alias.
     /// e.g. `#[estree(ts_alias = "null")]` means this type won't have a type def generated,
     /// and any struct / enum referencing it will substitute `null` as the type.
     pub ts_alias: Option<String>,
+    /// Custom TS type definition. Does not include `export`.
+    /// Empty string if type should not have a TS type definition.
+    pub custom_ts_def: Option<String>,
     /// Additional custom TS type definition to add along with the generated one.
     /// Does not include `export`.
     pub add_ts_def: Option<String>,
@@ -32,6 +32,10 @@ pub struct ESTreeEnum {
     pub no_rename_variants: bool,
     /// `true` if serializer is implemented manually and should not be generated
     pub custom_serialize: bool,
+    /// TS alias.
+    /// e.g. `#[estree(ts_alias = "null")]` means this type won't have a type def generated,
+    /// and any struct / enum referencing it will substitute `null` as the type.
+    pub ts_alias: Option<String>,
     /// Custom TS type definition. Does not include `export`.
     /// Empty string if type should not have a TS type definition.
     pub custom_ts_def: Option<String>,

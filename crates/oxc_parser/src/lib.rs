@@ -483,7 +483,7 @@ impl<'a> ParserImpl<'a> {
         Ok(expr)
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn parse_program(&mut self) -> Result<Program<'a>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();

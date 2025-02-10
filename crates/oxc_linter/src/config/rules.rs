@@ -58,7 +58,6 @@ pub struct ESLintRule {
 }
 
 impl OxlintRules {
-    #[allow(clippy::option_if_let_else, clippy::print_stderr)]
     pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
@@ -187,7 +186,7 @@ impl JsonSchema for OxlintRules {
     }
 
     fn json_schema(gen: &mut SchemaGenerator) -> Schema {
-        #[allow(unused)]
+        #[expect(unused)]
         #[derive(Debug, Clone, JsonSchema)]
         #[serde(untagged)]
         enum DummyRule {
@@ -195,7 +194,7 @@ impl JsonSchema for OxlintRules {
             ToggleAndConfig(Vec<serde_json::Value>),
         }
 
-        #[allow(unused)]
+        #[expect(unused)]
         #[derive(Debug, JsonSchema)]
         #[schemars(
             description = "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
@@ -354,7 +353,7 @@ impl ESLintRule {
 }
 
 #[cfg(test)]
-#[allow(clippy::default_trait_access)]
+#[expect(clippy::default_trait_access)]
 mod test {
     use serde::Deserialize;
     use serde_json::{json, Value};

@@ -290,7 +290,7 @@ fn is_line_after_element_empty(p: &Prettier<'_>, index: u32) -> bool {
         let current_idx = current_idx?;
         match p.source_text[current_idx as usize..].chars().next() {
             Some(',') => Some(current_idx),
-            #[allow(clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_possible_truncation)]
             Some(c) => skip_to_comma(p, skip_comment(p, current_idx + c.len_utf8() as u32)),
             None => None,
         }

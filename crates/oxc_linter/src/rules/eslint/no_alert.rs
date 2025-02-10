@@ -75,7 +75,7 @@ fn is_global_this_ref_or_global_window<'a>(
         return false;
     };
 
-    if ctx.semantic().is_reference_to_global_variable(ident)
+    if ctx.is_reference_to_global_variable(ident)
         && (expr.is_specific_id(GLOBAL_WINDOW) || (expr.is_specific_id(GLOBAL_THIS)))
     {
         return !is_shadowed(scope_id, ident.name.as_str(), ctx);

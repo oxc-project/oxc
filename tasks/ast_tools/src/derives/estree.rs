@@ -128,6 +128,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("custom_serialize") => enum_def.estree.custom_serialize = true,
             AttrPart::Tag("no_ts_def") => enum_def.estree.custom_ts_def = Some(String::new()),
             AttrPart::String("custom_ts_def", value) => enum_def.estree.custom_ts_def = Some(value),
+            AttrPart::String("ts_alias", value) => enum_def.estree.ts_alias = Some(value),
             AttrPart::String("add_ts_def", value) => {
                 enum_def.estree.add_ts_def = Some(value);
             }

@@ -50,7 +50,7 @@ pub fn print_import_declaration<'a>(p: &mut Prettier<'a>, decl: &ImportDeclarati
     array!(p, parts)
 }
 
-#[allow(clippy::enum_variant_names)]
+#[expect(clippy::enum_variant_names)]
 pub enum ExportDeclarationLike<'a, 'b> {
     ExportAllDeclaration(&'b ExportAllDeclaration<'a>),
     ExportNamedDeclaration(&'b ExportNamedDeclaration<'a>),

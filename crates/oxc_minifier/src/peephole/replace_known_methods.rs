@@ -477,7 +477,7 @@ impl<'a> PeepholeOptimizations {
                     arg_val.round()
                 }
             }
-            #[allow(clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_possible_truncation)]
             "fround" if arg_val.fract() == 0f64 || arg_val.is_nan() || arg_val.is_infinite() => {
                 f64::from(arg_val as f32)
             }
@@ -825,7 +825,6 @@ impl<'a> PeepholeOptimizations {
             "NEGATIVE_INFINITY" => num(span, f64::NEG_INFINITY),
             "NaN" => num(span, f64::NAN),
             "MAX_SAFE_INTEGER" => {
-                #[allow(clippy::cast_precision_loss)]
                 if self.target < ESTarget::ES2016 {
                     num(span, 2.0f64.powf(53.0) - 1.0)
                 } else {
@@ -834,7 +833,6 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             "MIN_SAFE_INTEGER" => {
-                #[allow(clippy::cast_precision_loss)]
                 if self.target < ESTarget::ES2016 {
                     num(span, -(2.0f64.powf(53.0) - 1.0))
                 } else {
@@ -1816,11 +1814,11 @@ mod test {
     #[test]
     fn test_fold_pow() {
         test("Math.pow(2, 3)", "2 ** 3");
-        test("Math.pow(a, 3)", "+(a) ** 3");
-        test("Math.pow(2, b)", "2 ** +b");
-        test("Math.pow(a, b)", "+(a) ** +b");
-        test("Math.pow(2n, 3n)", "+(2n) ** +3n"); // errors both before and after
-        test("Math.pow(a + b, c)", "+(a + b) ** +c");
+        test("Math.pow(a, 3)", "a ** 3");
+        test("Math.pow(2, b)", "2 ** b");
+        test("Math.pow(a, b)", "a ** +b");
+        test("Math.pow(2n, 3n)", "2n ** +3n"); // errors both before and after
+        test("Math.pow(a + b, c)", "(a + b) ** +c");
         test_same("Math.pow()");
         test_same("Math.pow(1)");
         test_same("Math.pow(...a, 1)");

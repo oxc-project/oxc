@@ -1158,10 +1158,15 @@ mod test {
         fold("x = typeof [1]", "x = \"object\"");
         fold("x = typeof [1,[]]", "x = \"object\"");
         fold("x = typeof {}", "x = \"object\"");
+        test("var foo; NOOP(x = typeof { foo })", "var foo; NOOP(x = \"object\")");
         fold("x = typeof function() {}", "x = 'function'");
+        fold("x = typeof (() => {})", "x = 'function'");
+        fold("x = typeof class{}", "x = \"function\"");
+        fold_same("x = typeof foo"); // no sideeffect, but we don't know the result
 
         fold_same("x = typeof[1,[foo()]]");
         fold_same("x = typeof{bathwater:baby()}");
+        fold_same("x = typeof class { static { foo() } }");
     }
 
     #[test]
@@ -1204,6 +1209,16 @@ mod test {
         fold("a=~0xffffffff", "a=0");
         fold("a=~~0xffffffff", "a=-1");
         fold("a=~.5", "a=-1");
+
+        fold("a=+[]", "a=0");
+        fold_same("a=+[...foo]");
+        fold("a=+[,]", "a=0");
+        fold("a=+[0]", "a=0");
+        fold("a=+['0x10']", "a=16");
+        fold("a=+[[]]", "a=0");
+        fold("a=+[0, 1]", "a=NaN");
+        test_same("var foo; NOOP(a=+[0, ...foo])"); // can be either `a=0` or `a=NaN` (also `...foo` may have a side effect)
+        test("var foo; NOOP(a=+[0, ...[foo ? 'foo': ''], 1])", "var foo; NOOP(a=NaN)");
     }
 
     #[test]
@@ -1660,8 +1675,8 @@ mod test {
 
     #[test]
     fn test_fold_left() {
-        fold_same("(+x - 1) + 2"); // not yet
-        fold("(+x & 1) & 2", "+x & 0");
+        fold("(+x - 1) + 2", "x - 1 + 2"); // not yet
+        fold("(+x & 1) & 2", "x & 0");
     }
 
     #[test]

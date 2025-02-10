@@ -164,6 +164,8 @@ pub enum Helper {
     ReadOnlyError,
     WriteOnlyError,
     CheckInRHS,
+    Decorate,
+    DecorateParam,
 }
 
 impl Helper {
@@ -193,6 +195,8 @@ impl Helper {
             Self::ReadOnlyError => "readOnlyError",
             Self::WriteOnlyError => "writeOnlyError",
             Self::CheckInRHS => "checkInRHS",
+            Self::Decorate => "decorate",
+            Self::DecorateParam => "decorateParam",
         }
     }
 }

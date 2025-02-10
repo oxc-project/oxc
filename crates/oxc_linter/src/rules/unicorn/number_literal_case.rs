@@ -95,7 +95,7 @@ impl Rule for NumberLiteralCase {
     }
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiagnostic, String)> {
     if number_literal.starts_with("0B") || number_literal.starts_with("0O") {
         return Some((

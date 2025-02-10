@@ -90,7 +90,7 @@ enum MethodKind {
 }
 
 fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
-    #[allow(clippy::match_same_arms)]
+    #[expect(clippy::match_same_arms)]
     match key {
         PropertyKey::StaticIdentifier(_) => MethodKind::Normal,
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,

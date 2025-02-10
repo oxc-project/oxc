@@ -334,10 +334,9 @@ impl<'a, 'b> PeepholeOptimizations {
                     ctx.ast.expression_sequence(template_lit.span, expressions),
                 ))
             }
-            Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
+            Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
                 Some(ctx.ast.statement_empty(stmt.span))
             }
-            Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(stmt.span)),
             // `typeof x` -> ``
             Expression::UnaryExpression(unary_expr)
                 if unary_expr.operator.is_typeof()
@@ -648,6 +647,7 @@ mod test {
         test("{x==3}", "x == 3");
         test("{`hello ${foo}`}", "`hello ${foo}`");
         test("{ (function(){x++}) }", "");
+        test("{ (function foo(){x++; foo()}) }", "");
         test("function f(){return;}", "function f(){}");
         test("function f(){return 3;}", "function f(){return 3}");
         test("function f(){if(x)return; x=3; return; }", "function f(){if(x)return; x=3; }");

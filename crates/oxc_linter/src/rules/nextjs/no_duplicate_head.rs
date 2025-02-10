@@ -87,7 +87,6 @@ impl Rule for NoDuplicateHead {
             }
 
             let node_id = reference.node_id();
-            #[allow(clippy::unnecessary_unwrap)]
             if first_node_id.is_none() {
                 // First `<Head>` found
                 first_node_id = Some(node_id);

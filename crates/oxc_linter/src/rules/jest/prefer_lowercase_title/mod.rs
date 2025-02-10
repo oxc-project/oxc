@@ -281,7 +281,7 @@ impl PreferLowercaseTitle {
             cow_utils::CowUtils::cow_to_ascii_lowercase(literal)
         };
 
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         let replacement_len = replacement.len() as u32;
 
         ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {

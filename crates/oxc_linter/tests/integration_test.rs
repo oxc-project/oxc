@@ -12,7 +12,7 @@ declare_oxc_lint_test!(
 );
 
 struct TestRule2 {
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     dummy_field: u8,
 }
 

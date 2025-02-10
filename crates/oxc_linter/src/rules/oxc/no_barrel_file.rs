@@ -59,7 +59,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoBarrelFile {
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn from_configuration(value: serde_json::Value) -> Self {
         Self {
             threshold: value

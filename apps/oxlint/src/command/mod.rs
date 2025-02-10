@@ -32,7 +32,7 @@ pub struct MiscOptions {
     pub print_config: bool,
 }
 
-#[allow(clippy::ptr_arg)]
+#[expect(clippy::ptr_arg)]
 fn validate_paths(paths: &Vec<PathBuf>) -> bool {
     if paths.is_empty() {
         true

@@ -59,7 +59,7 @@ impl Rule for SymbolDescription {
 
         if ident.name == "Symbol"
             && call_expr.arguments.len() == 0
-            && ctx.semantic().is_reference_to_global_variable(ident)
+            && ctx.is_reference_to_global_variable(ident)
         {
             ctx.diagnostic(symbol_description_diagnostic(call_expr.span));
         }

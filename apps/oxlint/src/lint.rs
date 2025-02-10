@@ -756,6 +756,12 @@ mod test {
     }
 
     #[test]
+    fn test_overrides_envs_and_global() {
+        let args = &["-c", ".oxlintrc.json", "."];
+        Tester::new().with_cwd("fixtures/overrides_env_globals".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_ignore_patterns() {
         let args = &["-c", "./test/eslintrc.json", "--ignore-pattern", "*.ts", "."];
 

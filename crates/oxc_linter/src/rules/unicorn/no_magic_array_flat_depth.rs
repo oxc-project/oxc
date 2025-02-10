@@ -85,7 +85,7 @@ impl Rule for NoMagicArrayFlatDepth {
 }
 
 // gets the opening `(` and closing `)` of the argument
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn get_call_expression_parentheses_pos<'a>(
     call_expr: &CallExpression<'a>,
     ctx: &LintContext<'a>,

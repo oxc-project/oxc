@@ -167,7 +167,7 @@ impl Generator for AstKindGenerator {
         }
 
         let output = quote! {
-            #![allow(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
+            #![expect(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
 
             ///@@line_break
             use std::ptr;

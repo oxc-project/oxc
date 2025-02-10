@@ -46,7 +46,6 @@ declare_oxc_lint!(
     fix
 );
 
-#[allow(clippy::similar_names)]
 impl Rule for DoubleComparisons {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::LogicalExpression(logical_expr) = node.kind() else {

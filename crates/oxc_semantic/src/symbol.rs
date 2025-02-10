@@ -297,6 +297,11 @@ impl SymbolTable {
         }
     }
 
+    /// Get whether a symbol is used (i.e. read or written after declaration).
+    pub fn symbol_is_used(&self, symbol_id: SymbolId) -> bool {
+        self.get_resolved_references(symbol_id).count() > 0
+    }
+
     /// Add a reference to a symbol.
     pub fn add_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
         self.inner.with_dependent_mut(|_allocator, inner| {

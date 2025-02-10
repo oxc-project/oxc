@@ -1429,6 +1429,7 @@ impl GenExpr for PrivateFieldExpression<'_> {
 
 impl GenExpr for CallExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let is_statement = p.start_of_stmt == p.code_len();
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
         if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
@@ -1439,6 +1440,8 @@ impl GenExpr for CallExpression<'_> {
             p.print_annotation_comments(self.span.start);
             if is_export_default {
                 p.start_of_default_export = p.code_len();
+            } else if is_statement {
+                p.start_of_stmt = p.code_len();
             }
             p.add_source_mapping(self.span);
             self.callee.print_expr(p, Precedence::Postfix, Context::empty());

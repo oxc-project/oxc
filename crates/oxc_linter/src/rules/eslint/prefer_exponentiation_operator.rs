@@ -53,9 +53,7 @@ impl Rule for PreferExponentiationOperator {
 
         match member_expor_obj {
             Expression::Identifier(ident) => {
-                if ident.name.as_str() == "Math"
-                    && ctx.semantic().is_reference_to_global_variable(ident)
-                {
+                if ident.name.as_str() == "Math" && ctx.is_reference_to_global_variable(ident) {
                     ctx.diagnostic(prefer_exponentian_operator_diagnostic(call_expr.span));
                 }
             }
@@ -70,7 +68,7 @@ impl Rule for PreferExponentiationOperator {
 
                 if let Expression::Identifier(ident) = member_expr.object().without_parentheses() {
                     if GLOBAL_OBJECT_NAMES.contains(ident.name.as_str())
-                        && ctx.semantic().is_reference_to_global_variable(ident)
+                        && ctx.is_reference_to_global_variable(ident)
                     {
                         ctx.diagnostic(prefer_exponentian_operator_diagnostic(call_expr.span));
                     }

@@ -23,19 +23,19 @@ pub trait ConformanceTest {
     fn name(&self) -> &'static str;
 
     #[must_use]
-    #[allow(dead_code, unused_variables)]
+    #[expect(unused_variables)]
     fn run_once(&self, semantic: &Semantic<'_>) -> TestResult {
         TestResult::Pass
     }
 
     #[must_use]
-    #[allow(unused_variables)]
+    #[expect(unused_variables)]
     fn run_on_node<'a>(&self, node: &AstNode<'a>, semantic: &Semantic<'a>) -> TestResult {
         TestResult::Pass
     }
 
     #[must_use]
-    #[allow(unused_variables)]
+    #[expect(unused_variables)]
     fn run_on_symbol(&self, symbol_id: SymbolId, semantic: &Semantic<'_>) -> TestResult {
         TestResult::Pass
     }
@@ -115,7 +115,7 @@ impl SemanticConformance {
         diagnostics
     }
 
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     fn record_results(
         &self,
         diagnostics: &mut Vec<OxcDiagnostic>,

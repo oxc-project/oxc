@@ -4,11 +4,14 @@ use oxc_ast::ast::*;
 ///
 /// This trait assumes the following:
 /// - `.toString()`, `.valueOf()`, and `[Symbol.toPrimitive]()` are side-effect free.
+///   - This is mainly to assume `ToPrimitive` is side-effect free.
+///   - Note that the builtin `Array::toString` has a side-effect when a value contains a Symbol as `ToString(Symbol)` throws an error. Maybe we should revisit this assumption and remove it.
+///     - For example, `"" == [Symbol()]` returns an error, but this trait returns `false`.
 /// - Errors thrown when creating a String or an Array that exceeds the maximum length does not happen.
 /// - TDZ errors does not happen.
 ///
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
-pub trait MayHaveSideEffects {
+pub trait MayHaveSideEffects: Sized {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool;
 
     fn expression_may_have_side_effects(&self, e: &Expression<'_>) -> bool {
@@ -60,26 +63,112 @@ pub trait MayHaveSideEffects {
     }
 
     fn unary_expression_may_have_side_effects(&self, e: &UnaryExpression<'_>) -> bool {
-        /// A "simple" operator is one whose children are expressions, has no direct side-effects.
-        fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
-            operator != UnaryOperator::Delete
+        match e.operator {
+            UnaryOperator::Delete => true,
+            UnaryOperator::Void | UnaryOperator::LogicalNot => {
+                self.expression_may_have_side_effects(&e.argument)
+            }
+            UnaryOperator::Typeof => {
+                if matches!(&e.argument, Expression::Identifier(_)) {
+                    false
+                } else {
+                    self.expression_may_have_side_effects(&e.argument)
+                }
+            }
+            UnaryOperator::UnaryPlus => {
+                // ToNumber throws an error when the argument is Symbol / BigInt / an object that
+                // returns Symbol or BigInt from ToPrimitive
+                maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
+                    self,
+                    &e.argument,
+                ) || self.expression_may_have_side_effects(&e.argument)
+            }
+            UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
+                // ToNumeric throws an error when the argument is Symbol / an object that
+                // returns Symbol from ToPrimitive
+                maybe_symbol_or_to_primitive_may_return_symbol(self, &e.argument)
+                    || self.expression_may_have_side_effects(&e.argument)
+            }
         }
-        if e.operator == UnaryOperator::Typeof && matches!(&e.argument, Expression::Identifier(_)) {
-            return false;
-        }
-        if is_simple_unary_operator(e.operator) {
-            return self.expression_may_have_side_effects(&e.argument);
-        }
-        true
     }
 
     fn binary_expression_may_have_side_effects(&self, e: &BinaryExpression<'_>) -> bool {
-        // `instanceof` and `in` can throw `TypeError`
-        if matches!(e.operator, BinaryOperator::In | BinaryOperator::Instanceof) {
-            return true;
+        match e.operator {
+            BinaryOperator::Equality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::GreaterEqualThan => {
+                self.expression_may_have_side_effects(&e.left)
+                    || self.expression_may_have_side_effects(&e.right)
+            }
+            BinaryOperator::In | BinaryOperator::Instanceof => {
+                // instanceof and in can throw `TypeError`
+                true
+            }
+            BinaryOperator::Addition => {
+                if is_string_or_to_primitive_returns_string(&e.left)
+                    || is_string_or_to_primitive_returns_string(&e.right)
+                {
+                    let other_side = if is_string_or_to_primitive_returns_string(&e.left) {
+                        &e.right
+                    } else {
+                        &e.left
+                    };
+                    maybe_symbol_or_to_primitive_may_return_symbol(self, other_side)
+                        || self.expression_may_have_side_effects(&e.left)
+                        || self.expression_may_have_side_effects(&e.right)
+                } else if e.left.is_number() || e.right.is_number() {
+                    let other_side = if e.left.is_number() { &e.right } else { &e.left };
+                    !matches!(
+                        other_side,
+                        Expression::NullLiteral(_)
+                            | Expression::NumericLiteral(_)
+                            | Expression::BooleanLiteral(_)
+                    )
+                } else {
+                    !(e.left.is_big_int_literal() && e.right.is_big_int_literal())
+                }
+            }
+            BinaryOperator::Subtraction
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::ShiftLeft
+            | BinaryOperator::BitwiseOR
+            | BinaryOperator::ShiftRight
+            | BinaryOperator::BitwiseXOR
+            | BinaryOperator::BitwiseAnd
+            | BinaryOperator::Exponential
+            | BinaryOperator::ShiftRightZeroFill => {
+                if e.left.is_big_int_literal() || e.right.is_big_int_literal() {
+                    if let (Expression::BigIntLiteral(_), Expression::BigIntLiteral(right)) =
+                        (&e.left, &e.right)
+                    {
+                        match e.operator {
+                            BinaryOperator::Exponential => right.is_negative(),
+                            BinaryOperator::Division | BinaryOperator::Remainder => right.is_zero(),
+                            BinaryOperator::ShiftRightZeroFill => true,
+                            _ => false,
+                        }
+                    } else {
+                        true
+                    }
+                } else if !(maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
+                    self, &e.left,
+                ) || maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
+                    self, &e.right,
+                )) {
+                    self.expression_may_have_side_effects(&e.left)
+                        || self.expression_may_have_side_effects(&e.right)
+                } else {
+                    true
+                }
+            }
         }
-        self.expression_may_have_side_effects(&e.left)
-            || self.expression_may_have_side_effects(&e.right)
     }
 
     fn logical_expression_may_have_side_effects(&self, e: &LogicalExpression<'_>) -> bool {
@@ -169,4 +258,104 @@ pub trait MayHaveSideEffects {
             ClassElement::TSIndexSignature(_) => false,
         }
     }
+}
+
+fn is_string_or_to_primitive_returns_string(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::ArrayExpression(_) => true,
+        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
+        // ToPrimitive for an object returns `"[object Object]"`
+        Expression::ObjectExpression(obj) => {
+            !maybe_object_with_to_primitive_related_properties_overridden(obj)
+        }
+        _ => false,
+    }
+}
+
+/// Whether the given expression may be a `Symbol` or converted to a `Symbol` when passed to `toPrimitive`.
+fn maybe_symbol_or_to_primitive_may_return_symbol(
+    m: &impl MayHaveSideEffects,
+    expr: &Expression<'_>,
+) -> bool {
+    match expr {
+        Expression::Identifier(ident) => {
+            !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
+                && m.is_global_reference(ident))
+        }
+        Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::ArrayExpression(_) => false,
+        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
+        // ToPrimitive for an object returns `"[object Object]"`
+        Expression::ObjectExpression(obj) => {
+            maybe_object_with_to_primitive_related_properties_overridden(obj)
+        }
+        _ => true,
+    }
+}
+
+/// Whether the given expression may be a `Symbol`/`BigInt` or converted to a `Symbol`/`BigInt` when passed to `toPrimitive`.
+fn maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
+    m: &impl MayHaveSideEffects,
+    expr: &Expression<'_>,
+) -> bool {
+    match expr {
+        Expression::Identifier(ident) => {
+            !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
+                && m.is_global_reference(ident))
+        }
+        Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::ArrayExpression(_) => false,
+        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
+        // ToPrimitive for an object returns `"[object Object]"`
+        Expression::ObjectExpression(obj) => {
+            maybe_object_with_to_primitive_related_properties_overridden(obj)
+        }
+        _ => true,
+    }
+}
+
+fn maybe_object_with_to_primitive_related_properties_overridden(
+    obj: &ObjectExpression<'_>,
+) -> bool {
+    obj.properties.iter().any(|prop| match prop {
+        ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
+            PropertyKey::StaticIdentifier(id) => {
+                matches!(id.name.as_str(), "toString" | "valueOf")
+            }
+            PropertyKey::PrivateIdentifier(_) => false,
+            PropertyKey::StringLiteral(str) => {
+                matches!(str.value.as_str(), "toString" | "valueOf")
+            }
+            PropertyKey::TemplateLiteral(temp) => {
+                !temp.is_no_substitution_template()
+                    || temp
+                        .quasi()
+                        .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf"))
+            }
+            _ => true,
+        },
+        ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
+            Expression::ObjectExpression(obj) => {
+                maybe_object_with_to_primitive_related_properties_overridden(obj)
+            }
+            Expression::ArrayExpression(_)
+            | Expression::StringLiteral(_)
+            | Expression::TemplateLiteral(_) => false,
+            _ => true,
+        },
+    })
 }

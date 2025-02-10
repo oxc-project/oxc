@@ -145,7 +145,43 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
             Expression::SequenceExpression(s) => {
                 s.expressions.last().and_then(|e| self.eval_to_number(e))
             }
+            // If the object is empty, `toString` / `valueOf` / `Symbol.toPrimitive` is not overridden.
+            // (assuming that those methods in Object.prototype are not modified)
+            // In that case, `ToPrimitive` returns `"[object Object]"`
             Expression::ObjectExpression(e) if e.properties.is_empty() => Some(f64::NAN),
+            // `ToPrimitive` for RegExp object returns `"/regexp/"`
+            Expression::RegExpLiteral(_) => Some(f64::NAN),
+            Expression::ArrayExpression(arr) => {
+                // If the array is empty, `ToPrimitive` returns `""`
+                if arr.elements.is_empty() {
+                    return Some(0.0);
+                }
+                if arr.elements.len() == 1 {
+                    let first_element = arr.elements.first().unwrap();
+                    return match first_element {
+                        ArrayExpressionElement::SpreadElement(_) => None,
+                        // `ToPrimitive` returns `""` for `[,]`
+                        ArrayExpressionElement::Elision(_) => Some(0.0),
+                        match_expression!(ArrayExpressionElement) => {
+                            self.eval_to_number(first_element.to_expression())
+                        }
+                    };
+                }
+
+                let non_spread_element_count = arr
+                    .elements
+                    .iter()
+                    .filter(|e| !matches!(e, ArrayExpressionElement::SpreadElement(_)))
+                    .count();
+                // If the array has at least 2 elements, `ToPrimitive` returns a string containing
+                // `,` which is not included in `StringNumericLiteral`
+                // So `ToNumber` returns `NaN`
+                if non_spread_element_count >= 2 {
+                    Some(f64::NAN)
+                } else {
+                    None
+                }
+            }
             expr => {
                 use crate::ToNumber;
                 expr.to_number()
@@ -359,12 +395,21 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
         match expr.operator {
             UnaryOperator::Typeof => {
                 let s = match &expr.argument {
-                    Expression::ObjectExpression(_) | Expression::ArrayExpression(_)
-                        if expr.argument.is_literal_value(true) =>
-                    {
+                    Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
+                        if self.expression_may_have_side_effects(&expr.argument) {
+                            return None;
+                        }
                         "object"
                     }
-                    Expression::FunctionExpression(_) => "function",
+                    Expression::ClassExpression(_) => {
+                        if self.expression_may_have_side_effects(&expr.argument) {
+                            return None;
+                        }
+                        "function"
+                    }
+                    Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
+                        "function"
+                    }
                     Expression::StringLiteral(_) => "string",
                     Expression::NumericLiteral(_) => "number",
                     Expression::BooleanLiteral(_) => "boolean",
@@ -487,7 +532,9 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
         if px.is_string() && py.is_string() {
             let left_string = self.get_side_free_string_value(x)?;
             let right_string = self.get_side_free_string_value(y)?;
-            return Some(ConstantValue::Boolean(left_string.cmp(&right_string) == Ordering::Less));
+            return Some(ConstantValue::Boolean(
+                left_string.encode_utf16().cmp(right_string.encode_utf16()) == Ordering::Less,
+            ));
         }
 
         let left_num = self.get_side_free_number_value(x)?;

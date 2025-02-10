@@ -426,7 +426,7 @@ enum Direction {
 
 // Skips whitespace and commas in a given direction and
 // returns the next character if found.
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn skip_to_next_char(s: &str, start: u32, direction: &Direction) -> Option<u32> {
     // span is a half-open interval: [start, end)
     // so we should return in that way.

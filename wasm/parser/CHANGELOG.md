@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-- 8cf9766 semantic, syntax, wasm: Remove `#![allow(non_snake_case)]` (#7863) (overlookmotel)
+- 8cf9766 semantic, syntax, wasm: Remove `#![expect(non_snake_case)]` (#7863) (overlookmotel)
 
 ## [0.35.0] - 2024-11-04
 

@@ -1,4 +1,7 @@
-use oxc_ast::ast::{BinaryExpression, ConditionalExpression, Expression, LogicalExpression};
+use oxc_ast::ast::{
+    AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
+    LogicalExpression,
+};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 /// JavaScript Language Type
@@ -50,26 +53,32 @@ impl ValueType {
     }
 }
 
-/// `get_known_value_type`
-///
-/// Evaluate  and attempt to determine which primitive value type it could resolve to.
-/// Without proper type information some assumptions had to be made for operations that could
-/// result in a BigInt or a Number. If there is not enough information available to determine one
-/// or the other then we assume Number in order to maintain historical behavior of the compiler and
-/// avoid breaking projects that relied on this behavior.
 impl<'a> From<&Expression<'a>> for ValueType {
+    /// Based on `get_known_value_type` in closure compiler
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/NodeUtil.java#L1517>
+    ///
+    /// Evaluate the expression and attempt to determine which ValueType it could resolve to.
+    /// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
+    /// To detect those cases, use [`crate::side_effects::MayHaveSideEffects::expression_may_have_side_effects`].
     fn from(expr: &Expression<'a>) -> Self {
-        // TODO: complete this
         match expr {
             Expression::BigIntLiteral(_) => Self::BigInt,
-            Expression::BooleanLiteral(_) => Self::Boolean,
+            Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => Self::Boolean,
             Expression::NullLiteral(_) => Self::Null,
             Expression::NumericLiteral(_) => Self::Number,
             Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => Self::String,
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)
             | Expression::RegExpLiteral(_)
-            | Expression::FunctionExpression(_) => Self::Object,
+            | Expression::FunctionExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::ClassExpression(_) => Self::Object,
+            Expression::MetaProperty(meta_prop) => {
+                match (meta_prop.meta.name.as_str(), meta_prop.property.name.as_str()) {
+                    ("import", "meta") => Self::Object,
+                    _ => Self::Undetermined,
+                }
+            }
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Self::Undefined,
                 "NaN" | "Infinity" => Self::Number,
@@ -77,25 +86,31 @@ impl<'a> From<&Expression<'a>> for ValueType {
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Void => Self::Undefined,
-                UnaryOperator::UnaryNegation => {
+                UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
                     let argument_ty = Self::from(&unary_expr.argument);
-                    if argument_ty == Self::BigInt {
-                        return Self::BigInt;
+                    match argument_ty {
+                        Self::BigInt => Self::BigInt,
+                        // non-object values other than BigInt are converted to number by `ToNumber`
+                        Self::Number
+                        | Self::Boolean
+                        | Self::String
+                        | Self::Null
+                        | Self::Undefined => Self::Number,
+                        Self::Undetermined | Self::Object => Self::Undetermined,
                     }
-                    Self::Number
                 }
                 UnaryOperator::UnaryPlus => Self::Number,
                 UnaryOperator::LogicalNot | UnaryOperator::Delete => Self::Boolean,
                 UnaryOperator::Typeof => Self::String,
-                UnaryOperator::BitwiseNot => Self::Undetermined,
             },
             Expression::BinaryExpression(e) => Self::from(&**e),
             Expression::SequenceExpression(e) => {
                 e.expressions.last().map_or(ValueType::Undetermined, Self::from)
             }
-            Expression::AssignmentExpression(e) => Self::from(&e.right),
+            Expression::AssignmentExpression(e) => Self::from(&**e),
             Expression::ConditionalExpression(e) => Self::from(&**e),
             Expression::LogicalExpression(e) => Self::from(&**e),
+            Expression::ParenthesizedExpression(e) => Self::from(&e.expression),
             _ => Self::Undetermined,
         }
     }
@@ -132,8 +147,23 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
             | BinaryOperator::ShiftRight
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd
-            | BinaryOperator::Exponential
-            | BinaryOperator::ShiftRightZeroFill => Self::Number,
+            | BinaryOperator::Exponential => {
+                let left = Self::from(&e.left);
+                let right = Self::from(&e.right);
+                if left.is_bigint() || right.is_bigint() {
+                    Self::BigInt
+                } else if !(left.is_object() || left.is_undetermined())
+                    || !(right.is_object() || right.is_undetermined())
+                {
+                    // non-object values other than BigInt are converted to number by `ToNumber`
+                    // if either operand is a number, the result is always a number
+                    // because if the other operand is a bigint, an error is thrown
+                    Self::Number
+                } else {
+                    Self::Undetermined
+                }
+            }
+            BinaryOperator::ShiftRightZeroFill => Self::Number,
             BinaryOperator::Instanceof
             | BinaryOperator::In
             | BinaryOperator::Equality
@@ -144,6 +174,45 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterThan
             | BinaryOperator::GreaterEqualThan => Self::Boolean,
+        }
+    }
+}
+
+impl<'a> From<&AssignmentExpression<'a>> for ValueType {
+    fn from(e: &AssignmentExpression<'a>) -> Self {
+        match e.operator {
+            AssignmentOperator::Assign => Self::from(&e.right),
+            AssignmentOperator::Addition => {
+                let right = Self::from(&e.right);
+                if right.is_string() {
+                    Self::String
+                } else {
+                    Self::Undetermined
+                }
+            }
+            AssignmentOperator::Subtraction
+            | AssignmentOperator::Multiplication
+            | AssignmentOperator::Division
+            | AssignmentOperator::Remainder
+            | AssignmentOperator::ShiftLeft
+            | AssignmentOperator::BitwiseOR
+            | AssignmentOperator::ShiftRight
+            | AssignmentOperator::BitwiseXOR
+            | AssignmentOperator::BitwiseAnd
+            | AssignmentOperator::Exponential => {
+                let right = Self::from(&e.right);
+                if right.is_bigint() {
+                    Self::BigInt
+                } else if !(right.is_object() || right.is_undetermined()) {
+                    Self::Number
+                } else {
+                    Self::Undetermined
+                }
+            }
+            AssignmentOperator::ShiftRightZeroFill => Self::Number,
+            AssignmentOperator::LogicalAnd
+            | AssignmentOperator::LogicalOr
+            | AssignmentOperator::LogicalNullish => Self::Undetermined,
         }
     }
 }

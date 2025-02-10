@@ -23,7 +23,7 @@ impl Derive for DeriveGetAddress {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(clippy::match_same_arms)]
+            #![expect(clippy::match_same_arms)]
 
             ///@@line_break
             use oxc_allocator::{Address, GetAddress};

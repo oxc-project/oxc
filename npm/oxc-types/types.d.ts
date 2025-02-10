@@ -90,7 +90,7 @@ export interface ObjectExpression extends Span {
 export type ObjectPropertyKind = ObjectProperty | SpreadElement;
 
 export interface ObjectProperty extends Span {
-  type: 'ObjectProperty';
+  type: 'Property';
   kind: PropertyKind;
   key: PropertyKey;
   value: Expression;
@@ -192,6 +192,7 @@ export interface UnaryExpression extends Span {
   type: 'UnaryExpression';
   operator: UnaryOperator;
   argument: Expression;
+  prefix: true;
 }
 
 export interface BinaryExpression extends Span {
@@ -482,10 +483,12 @@ export interface CatchClause extends Span {
   body: BlockStatement;
 }
 
-export interface CatchParameter extends Span {
-  type: 'CatchParameter';
-  pattern: BindingPattern;
-}
+export type CatchParameter =
+  & ({
+    type: 'CatchParameter';
+  })
+  & Span
+  & BindingPattern;
 
 export interface DebuggerStatement extends Span {
   type: 'DebuggerStatement';
@@ -512,11 +515,13 @@ export interface ObjectPattern extends Span {
 }
 
 export interface BindingProperty extends Span {
-  type: 'BindingProperty';
+  type: 'Property';
   key: PropertyKey;
   value: BindingPattern;
   shorthand: boolean;
   computed: boolean;
+  kind: 'init';
+  method: false;
 }
 
 export interface ArrayPattern extends Span {
@@ -540,6 +545,7 @@ export interface Function extends Span {
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
   body: FunctionBody | null;
+  expression: false;
 }
 
 export type ParamPattern = FormalParameter | FormalParameterRest;
@@ -576,9 +582,9 @@ export type FormalParameter =
 export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
 
 export interface FunctionBody extends Span {
-  type: 'FunctionBody';
+  type: 'BlockStatement';
   directives: Array<Directive>;
-  statements: Array<Statement>;
+  body: Array<Statement>;
 }
 
 export interface ArrowFunctionExpression extends Span {

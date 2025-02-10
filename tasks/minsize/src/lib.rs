@@ -1,4 +1,5 @@
-#![allow(clippy::print_stdout, clippy::print_stderr)]
+#![expect(clippy::print_stdout)]
+
 use std::{
     fs::{self, File},
     io::{self, Write},

@@ -138,9 +138,6 @@ fn parse_fix(s: &str) -> proc_macro2::TokenStream {
         }
         "fix" => return quote! { RuleFixMeta::Fixable(FixKind::SafeFix) },
         "suggestion" => return quote! { RuleFixMeta::Fixable(FixKind::Suggestion) },
-        // "fix-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Fix.union(FixKind::Dangerous)) },
-        // "suggestion" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion) },
-        // "suggestion-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion.union(FixKind::Dangerous)) },
         "conditional" => {
             panic!("Invalid fix capabilities: missing a fix kind. Did you mean 'fix-conditional'?")
         }
