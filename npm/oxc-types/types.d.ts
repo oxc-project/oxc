@@ -1280,7 +1280,7 @@ export type TSModuleDeclarationBody = TSModuleDeclaration | TSModuleBlock;
 
 export interface TSModuleBlock extends Span {
   type: 'TSModuleBlock';
-  body: Array<Statement>;
+  body: Array<Directive | Statement>;
 }
 
 export interface TSTypeLiteral extends Span {

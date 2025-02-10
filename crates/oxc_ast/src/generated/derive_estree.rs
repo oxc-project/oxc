@@ -3043,6 +3043,20 @@ impl Serialize for TSModuleDeclarationBody<'_> {
     }
 }
 
+impl Serialize for TSModuleBlock<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "TSModuleBlock")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.body },
+        )?;
+        map.end()
+    }
+}
+
 impl Serialize for TSTypeLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;

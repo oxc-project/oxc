@@ -222,55 +222,6 @@ impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
     }
 }
 
-/// Serialize `TSModuleBlock` to be ESTree compatible, with `body` and `directives` fields combined,
-/// and directives output as `StringLiteral` expression statements
-impl Serialize for TSModuleBlock<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerTSModuleBlock {
-            span: self.span,
-            body: DirectivesAndStatements { directives: &self.directives, body: &self.body },
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "TSModuleBlock")]
-struct SerTSModuleBlock<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    body: DirectivesAndStatements<'a, 'b>,
-}
-
-struct DirectivesAndStatements<'a, 'b> {
-    directives: &'b [Directive<'a>],
-    body: &'b [Statement<'a>],
-}
-
-impl Serialize for DirectivesAndStatements<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut seq = serializer.serialize_seq(Some(self.directives.len() + self.body.len()))?;
-        for directive in self.directives {
-            seq.serialize_element(&DirectiveAsStatement {
-                span: directive.span,
-                expression: &directive.expression,
-            })?;
-        }
-        for stmt in self.body {
-            seq.serialize_element(stmt)?;
-        }
-        seq.end()
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ExpressionStatement")]
-struct DirectiveAsStatement<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    expression: &'b StringLiteral<'a>,
-}
-
 /// Serializer for `ArrowFunctionExpression`'s `body` field.
 ///
 /// Serializes as either an expression (if `expression` property is set),
