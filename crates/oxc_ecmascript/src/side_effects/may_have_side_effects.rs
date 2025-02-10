@@ -268,7 +268,9 @@ fn is_string_or_to_primitive_returns_string(expr: &Expression<'_>) -> bool {
         | Expression::ArrayExpression(_) => true,
         // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
         // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => obj.properties.is_empty(),
+        Expression::ObjectExpression(obj) => {
+            !maybe_object_with_to_primitive_related_properties_overridden(obj)
+        }
         _ => false,
     }
 }
@@ -293,7 +295,9 @@ fn maybe_symbol_or_to_primitive_may_return_symbol(
         | Expression::ArrayExpression(_) => false,
         // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
         // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => !obj.properties.is_empty(),
+        Expression::ObjectExpression(obj) => {
+            maybe_object_with_to_primitive_related_properties_overridden(obj)
+        }
         _ => true,
     }
 }
@@ -317,7 +321,41 @@ fn maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
         | Expression::ArrayExpression(_) => false,
         // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
         // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => !obj.properties.is_empty(),
+        Expression::ObjectExpression(obj) => {
+            maybe_object_with_to_primitive_related_properties_overridden(obj)
+        }
         _ => true,
     }
+}
+
+fn maybe_object_with_to_primitive_related_properties_overridden(
+    obj: &ObjectExpression<'_>,
+) -> bool {
+    obj.properties.iter().any(|prop| match prop {
+        ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
+            PropertyKey::StaticIdentifier(id) => {
+                matches!(id.name.as_str(), "toString" | "valueOf")
+            }
+            PropertyKey::PrivateIdentifier(_) => false,
+            PropertyKey::StringLiteral(str) => {
+                matches!(str.value.as_str(), "toString" | "valueOf")
+            }
+            PropertyKey::TemplateLiteral(temp) => {
+                !temp.is_no_substitution_template()
+                    || temp
+                        .quasi()
+                        .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf"))
+            }
+            _ => true,
+        },
+        ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
+            Expression::ObjectExpression(obj) => {
+                maybe_object_with_to_primitive_related_properties_overridden(obj)
+            }
+            Expression::ArrayExpression(_)
+            | Expression::StringLiteral(_)
+            | Expression::TemplateLiteral(_) => false,
+            _ => true,
+        },
+    })
 }

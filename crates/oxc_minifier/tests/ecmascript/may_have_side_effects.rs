@@ -602,3 +602,26 @@ fn test_side_effectful_expressions() {
     test("a[0]", true);
     test("a?.b", true);
 }
+
+#[test]
+fn test_object_with_to_primitive_related_properties_overridden() {
+    test("+{}", false);
+    test("+{ foo: 0 }", false);
+    test("+{ toString() { return Symbol() } }", true);
+    test("+{ valueOf() { return Symbol() } }", true);
+    test("+{ 'toString'() { return Symbol() } }", true);
+    test("+{ 'valueOf'() { return Symbol() } }", true);
+    test("+{ ['toString']() { return Symbol() } }", true);
+    test("+{ ['valueOf']() { return Symbol() } }", true);
+    test("+{ [`toString`]() { return Symbol() } }", true);
+    test("+{ [`valueOf`]() { return Symbol() } }", true);
+    test("+{ [Symbol.toPrimitive]() { return Symbol() } }", true);
+    test("+{ ...foo }", true); // foo can include toString / valueOf / Symbol.toPrimitive
+    test("+{ ...[] }", false);
+    test("+{ ...'foo' }", false);
+    test("+{ ...`foo` }", false);
+    test("+{ ...`foo${foo}` }", false);
+    test("+{ ...{ toString() { return Symbol() } } }", true);
+    test("+{ ...{ valueOf() { return Symbol() } } }", true);
+    test("+{ ...{ [Symbol.toPrimitive]() { return Symbol() } } }", true);
+}
