@@ -60,17 +60,50 @@ pub trait MayHaveSideEffects {
     }
 
     fn unary_expression_may_have_side_effects(&self, e: &UnaryExpression<'_>) -> bool {
-        /// A "simple" operator is one whose children are expressions, has no direct side-effects.
-        fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
-            operator != UnaryOperator::Delete
+        match e.operator {
+            UnaryOperator::Delete => true,
+            UnaryOperator::Void | UnaryOperator::LogicalNot => {
+                self.expression_may_have_side_effects(&e.argument)
+            }
+            UnaryOperator::Typeof => {
+                if matches!(&e.argument, Expression::Identifier(_)) {
+                    false
+                } else {
+                    self.expression_may_have_side_effects(&e.argument)
+                }
+            }
+            UnaryOperator::UnaryPlus => {
+                match &e.argument {
+                    Expression::NumericLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::BooleanLiteral(_)
+                    | Expression::StringLiteral(_) => false,
+                    Expression::Identifier(ident) => {
+                        !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
+                            && self.is_global_reference(ident))
+                    }
+                    // ToNumber throws an error when the argument is Symbol / BigInt / an object that
+                    // returns Symbol or BigInt from ToPrimitive
+                    _ => true,
+                }
+            }
+            UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
+                match &e.argument {
+                    Expression::BigIntLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::BooleanLiteral(_)
+                    | Expression::StringLiteral(_) => false,
+                    Expression::Identifier(ident) => {
+                        !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
+                            && self.is_global_reference(ident))
+                    }
+                    // ToNumber throws an error when the argument is Symbol an object that
+                    // returns Symbol from ToPrimitive
+                    _ => true,
+                }
+            }
         }
-        if e.operator == UnaryOperator::Typeof && matches!(&e.argument, Expression::Identifier(_)) {
-            return false;
-        }
-        if is_simple_unary_operator(e.operator) {
-            return self.expression_may_have_side_effects(&e.argument);
-        }
-        true
     }
 
     fn binary_expression_may_have_side_effects(&self, e: &BinaryExpression<'_>) -> bool {

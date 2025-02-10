@@ -120,9 +120,9 @@ fn closure_compiler_tests() {
     test("undefined", false);
     test("void 0", false);
     test("void foo()", true);
-    test("-Infinity", false);
-    test("Infinity", false);
-    test("NaN", false);
+    test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("NaN", vec!["NaN".to_string()], false);
     // test("({}||[]).foo = 2;", false);
     // test("(true ? {} : []).foo = 2;", false);
     // test("({},[]).foo = 2;", false);
@@ -344,21 +344,48 @@ fn test_simple_expressions() {
 
 #[test]
 fn test_unary_expressions() {
-    test("+'foo'", false);
-    test("+foo()", true);
-    test("-'foo'", false);
-    test("-foo()", true);
+    test("delete 'foo'", true);
+    test("delete foo()", true);
+
+    test("void 'foo'", false);
+    test("void foo()", true);
     test("!'foo'", false);
     test("!foo()", true);
-    test("~'foo'", false);
-    test("~foo()", true);
+
     test("typeof 'foo'", false);
     test_with_global_variables("typeof a", vec!["a".to_string()], false);
     test("typeof foo()", true);
-    test("void 'foo'", false);
-    test("void foo()", true);
-    test("delete 'foo'", true);
-    test("delete foo()", true);
+
+    test("+0", false);
+    test("+0n", true);
+    test("+null", false); // 0
+    test("+true", false); // 1
+    test("+'foo'", false); // NaN
+    test_with_global_variables("+Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("+NaN", vec!["NaN".to_string()], false);
+    test_with_global_variables("+undefined", vec!["undefined".to_string()], false); // NaN
+    test("+foo()", true);
+    test("+foo", true); // foo can be Symbol or BigInt
+    test("+Symbol()", true);
+    test("+{ valueOf() { return Symbol() } }", true);
+
+    test("-0", false);
+    test("-0n", false);
+    test("-null", false); // -0
+    test("-true", false); // -1
+    test("-'foo'", false); // -NaN
+    test_with_global_variables("-Infinity", vec!["Infinity".to_string()], false);
+    test_with_global_variables("-NaN", vec!["NaN".to_string()], false);
+    test_with_global_variables("-undefined", vec!["undefined".to_string()], false); // NaN
+    test("-foo()", true);
+    test("-foo", true); // foo can be Symbol
+    test("-Symbol()", true);
+    test("-{ valueOf() { return Symbol() } }", true);
+
+    test("~0", false);
+    test("~'foo'", false);
+    test("~foo()", true);
+    test("~foo", true);
 }
 
 #[test]
@@ -476,12 +503,6 @@ fn tests() {
     test("'' + { toString() { console.log('sideeffect') } }", false);
     test("'' + { valueOf() { console.log('sideeffect') } }", false);
     test("'' + { [s]() { console.log('sideeffect') } }", false); // assuming s is Symbol.toPrimitive
-
-    // FIXME: actually these have a side effect, but it's ignored now
-    test("+s", false); // assuming s is a Symbol
-    test("+b", false); // assuming b is a BitInt
-    test("+{ valueOf() { return Symbol() } }", false);
-    test("~s", false); // assuming s is a Symbol
 
     // FIXME: actually these have a side effect, but it's ignored now
     // same for -, *, /, %, **, <<, >>
