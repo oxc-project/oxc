@@ -99,6 +99,11 @@ fn process_estree(old: &mut serde_json::Value, new: &mut serde_json::Value) {
     match new {
         serde_json::Value::Object(new) => {
             if let serde_json::Value::Object(old) = old {
+                // ignore bigint value https://github.com/oxc-project/acorn-test262/blob/ccd386837e02a92036b948239c67abf864cdd785/index.mjs#L56-L59
+                if old.get("type").is_some_and(|t| t == "Literal" && old.get("bigint").is_some()) {
+                    old.remove("value");
+                }
+
                 // remove extra keys which exists only on oxc
                 let keys_to_remove: Vec<String> =
                     new.keys().filter(|key| !old.contains_key(*key)).cloned().collect();
