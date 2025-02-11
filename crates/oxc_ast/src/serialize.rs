@@ -274,6 +274,22 @@ pub fn import_expression_options<'a>(
     arguments.first()
 }
 
+/// Serializer for `ImportDeclaration` and `ExportNamedDeclaration`'s `with_clause` field
+/// (which is renamed to `attributes` in ESTree AST).
+// https://github.com/estree/estree/blob/master/es2025.md#importdeclaration
+// https://github.com/estree/estree/blob/master/es2025.md#exportnameddeclaration
+pub struct ImportExportWithClause<'a>(pub &'a Option<ArenaBox<'a, WithClause<'a>>>);
+
+impl Serialize for ImportExportWithClause<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(with_clause) = &self.0 {
+            with_clause.with_entries.serialize(serializer)
+        } else {
+            [(); 0].serialize(serializer)
+        }
+    }
+}
+
 // --------------------
 // JSX
 // --------------------

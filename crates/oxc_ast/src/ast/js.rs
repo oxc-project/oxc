@@ -2266,6 +2266,7 @@ pub struct ImportDeclaration<'a> {
     pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
     #[ts]
+    #[estree(rename = "attributes", via = crate::serialize::ImportExportWithClause(&self.with_clause), ts_type = "Array<ImportAttribute>")]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
     #[ts]
@@ -2402,6 +2403,7 @@ pub struct ExportNamedDeclaration<'a> {
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
     #[ts]
+    #[estree(rename = "attributes", via = crate::serialize::ImportExportWithClause(&self.with_clause), ts_type = "Array<ImportAttribute>")]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 

@@ -2,7 +2,7 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 43974/44293 (99.28%)
+Positive Passed: 44129/44293 (99.63%)
 tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-u.js
 serde_json error: unexpected end of hex escape at line 316 column 33
 
@@ -15,7 +15,6 @@ serde_json error: unexpected end of hex escape at line 245 column 33
 tasks/coverage/test262/test/built-ins/JSON/stringify/value-string-escape-unicode.js
 serde_json error: unexpected end of hex escape at line 62 column 33
 
-Mismatch: tasks/coverage/test262/test/built-ins/Proxy/preventExtensions/trap-is-undefined-target-is-proxy.js
 tasks/coverage/test262/test/built-ins/RegExp/dotall/with-dotall-unicode.js
 serde_json error: unexpected end of hex escape at line 804 column 39
 
@@ -189,12 +188,10 @@ Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lh
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/class/scope-name-lex-open-heritage.js
 Mismatch: tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-await-ident.js
-Mismatch: tasks/coverage/test262/test/language/expressions/dynamic-import/reuse-namespace-object-from-import.js
 Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-name-var-open-non-strict.js
 Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-name-var-open-strict.js
 Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-name-var-open-non-strict.js
 Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-name-var-open-strict.js
-Mismatch: tasks/coverage/test262/test/language/expressions/import.meta/distinct-for-each-module.js
 Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-accessor-shadowed.js
 Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-accessor.js
 Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-field-shadowed.js
@@ -211,23 +208,6 @@ Mismatch: tasks/coverage/test262/test/language/expressions/postfix-increment/tar
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-decrement/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-increment/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/template-literal/tv-line-terminator-sequence.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-extensibility-array.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-extensibility-object.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-idempotency.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-value-array.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-value-boolean.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-value-null.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-value-number.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-value-object.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-value-string.js
-Mismatch: tasks/coverage/test262/test/language/import/import-attributes/json-via-namespace.js
-Mismatch: tasks/coverage/test262/test/language/import/import-defer/errors/get-other-while-dep-evaluating/main.js
-Mismatch: tasks/coverage/test262/test/language/import/import-defer/errors/get-other-while-dep-evaluating-async/main.js
-Mismatch: tasks/coverage/test262/test/language/import/import-defer/errors/get-other-while-evaluating/main.js
-Mismatch: tasks/coverage/test262/test/language/import/import-defer/errors/get-other-while-evaluating-async/main.js
-Mismatch: tasks/coverage/test262/test/language/import/import-defer/syntax/valid-default-binding-named-defer.js
 tasks/coverage/test262/test/language/literals/regexp/named-groups/invalid-lone-surrogate-groupname.js
 serde_json error: unexpected end of hex escape at line 64 column 40
 
@@ -240,36 +220,12 @@ serde_json error: unexpected end of hex escape at line 125 column 33
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 serde_json error: unexpected end of hex escape at line 67 column 37
 
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-cls-anon.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-cls-name-meth.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-cls-named.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-cls-anon.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-cls-name-meth.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-cls-named.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-fn-anon.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-fn-named.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-gen-anon.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-gen-named.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-export-dflt-expr-in.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-gtbndng-indirect-trlng-comma.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-gtbndng-indirect-update-as.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-gtbndng-indirect-update-dflt.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-gtbndng-indirect-update.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-rqstd-abrupt.js
 Mismatch: tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
 Mismatch: tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
 Mismatch: tasks/coverage/test262/test/language/module-code/eval-self-once.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-binding-index.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-binding-string.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-from-binding-string.js
 Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-from-star-string.js
 Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-from-star.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-from-string-binding.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-from-string-string.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-from-string.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-import-string-binding.js
 Mismatch: tasks/coverage/test262/test/language/module-code/export-star-as-dflt.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/allow-nlt-before-with.js
 Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-empty.js
 Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-key-identifiername.js
 Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-key-string-double.js
@@ -279,119 +235,8 @@ Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/imp
 Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-trlng-comma.js
 Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-double.js
 Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-single.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-bndng-cls.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-bndng-const.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-bndng-fun.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-bndng-gen.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-bndng-let.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-bndng-var.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-err-ambiguous-as.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-err-ambiguous.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-err-circular-as.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-err-circular.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-err-dflt-thru-star-as.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-err-dflt-thru-star.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-err-not-found-as.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-err-not-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-iee-cycle.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-star-cycle.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-iee-trlng-comma.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-cls.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-const.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-cls.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-expr.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-fun-anon.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-fun-named.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-gen-anon.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-gen-named.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-named.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-dflt-star.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-fun.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-gen.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-let.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-trlng-comma.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-bndng-var.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous-as.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-as.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-dflt.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-as.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-dflt.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-err-not-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-id-name.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-iee-cycle.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-named-star-cycle.js
 Mismatch: tasks/coverage/test262/test/language/module-code/instn-once.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-resolve-empty-export.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-resolve-empty-import.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-resolve-err-syntax-1.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-resolve-err-syntax-2.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-resolve-order-depth.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-resolve-order-src.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-same-global.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-ambiguous.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-as-props-dflt-skip.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-binding.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-equality.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-err-not-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-id-name.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-iee-cycle.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-props-circular.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-props-dflt-keep-indirect.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-props-dflt-keep-local.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-props-dflt-skip.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-props-nrml.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-star-star-cycle.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-uniq-env-rec.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/Symbol.iterator.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/Symbol.toStringTag.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/define-own-property.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/delete-exported-init.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/delete-exported-uninit.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/delete-non-exported.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/enumerate-binding-uninit.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-nested-namespace-dflt-skip.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-nested-namespace-props-nrml.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-own-property-str-found-init.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-own-property-str-found-uninit.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-own-property-str-not-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-own-property-sym.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-prototype-of.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-found-init.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-found-uninit.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-initialize.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-not-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-str-update.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-sym-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/get-sym-not-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-str-found-init.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-str-found-uninit.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-str-not-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-sym-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/has-property-sym-not-found.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/is-extensible.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/object-hasOwnProperty-binding-uninit.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/object-keys-binding-uninit.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/object-propertyIsEnumerable-binding-uninit.js
 Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/own-property-keys-binding-types.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/own-property-keys-sort.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/prevent-extensions.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/set-prototype-of-null.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/set-prototype-of.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/set.js
-Mismatch: tasks/coverage/test262/test/language/module-code/source-phase-import/import-source-binding-name.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/async-module-does-not-block-sibling-modules.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/dfs-invariant.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-async-import-async-resolution-ticks.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-graphs-does-not-hang.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-body.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-tick.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-import-resolution.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-import-unwrapped.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-self-import-async-resolution-ticks.js
-Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/module-sync-import-async-resolution-ticks.js
-Mismatch: tasks/coverage/test262/test/language/module-code/verify-dfs.js
 Mismatch: tasks/coverage/test262/test/language/statements/class/scope-name-lex-open-heritage.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-in/head-lhs-cover.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-async-parens.js

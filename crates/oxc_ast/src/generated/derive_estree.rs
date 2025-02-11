@@ -1696,7 +1696,10 @@ impl Serialize for ImportDeclaration<'_> {
         map.serialize_entry("specifiers", &crate::serialize::OptionVecDefault(&self.specifiers))?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("phase", &self.phase)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
+        map.serialize_entry(
+            "attributes",
+            &crate::serialize::ImportExportWithClause(&self.with_clause),
+        )?;
         map.serialize_entry("importKind", &self.import_kind)?;
         map.end()
     }
@@ -1799,7 +1802,10 @@ impl Serialize for ExportNamedDeclaration<'_> {
         map.serialize_entry("specifiers", &self.specifiers)?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("exportKind", &self.export_kind)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
+        map.serialize_entry(
+            "attributes",
+            &crate::serialize::ImportExportWithClause(&self.with_clause),
+        )?;
         map.end()
     }
 }
