@@ -129,6 +129,7 @@ mod eslint {
     pub mod no_undef;
     pub mod no_undefined;
     pub mod no_unexpected_multiline;
+    pub mod no_unneeded_ternary;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -553,6 +554,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_params,
     eslint::new_cap,
     eslint::no_useless_call,
+    eslint::no_unneeded_ternary,
     eslint::no_extra_label,
     eslint::no_multi_assign,
     eslint::no_nested_ternary,
