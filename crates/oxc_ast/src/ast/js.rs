@@ -1713,10 +1713,7 @@ pub struct FormalParameter<'a> {
     pub span: Span,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
-    #[estree(
-        flatten,
-        ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
-    )]
+    #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
     #[ts]
     pub accessibility: Option<TSAccessibility>,

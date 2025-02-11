@@ -583,7 +583,7 @@ export type FormalParameter =
     override: boolean;
   })
   & Span
-  & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
+  & BindingPattern;
 
 export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
 
