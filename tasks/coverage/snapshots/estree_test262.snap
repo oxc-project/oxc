@@ -2,7 +2,7 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 44156/44293 (99.69%)
+Positive Passed: 44162/44293 (99.70%)
 tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-u.js
 serde_json error: unexpected end of hex escape at line 316 column 33
 
@@ -186,12 +186,7 @@ serde_json error: unexpected end of hex escape at line 184 column 33
 
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js
-Mismatch: tasks/coverage/test262/test/language/expressions/class/scope-name-lex-open-heritage.js
 Mismatch: tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-await-ident.js
-Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-name-var-open-non-strict.js
-Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-name-var-open-strict.js
-Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-name-var-open-non-strict.js
-Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-name-var-open-strict.js
 Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-rhs-non-object.js
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-decrement/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-increment/target-cover-id.js
@@ -210,7 +205,6 @@ serde_json error: unexpected end of hex escape at line 125 column 33
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 serde_json error: unexpected end of hex escape at line 67 column 37
 
-Mismatch: tasks/coverage/test262/test/language/statements/class/scope-name-lex-open-heritage.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-in/head-lhs-cover.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-async-parens.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-cover.js

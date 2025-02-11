@@ -199,6 +199,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_parenthesized_expression(&mut self, span: Span) -> Result<Expression<'a>> {
         self.expect(Kind::LParen)?;
+        let expr_span = self.start_span();
         let mut expressions = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(
                 Kind::RParen,
@@ -207,26 +208,24 @@ impl<'a> ParserImpl<'a> {
                 Self::parse_assignment_expression_or_higher,
             )
         })?;
-        self.expect(Kind::RParen)?;
-
-        let paren_span = self.end_span(span);
 
         if expressions.is_empty() {
-            return Err(diagnostics::empty_parenthesized_expression(paren_span));
+            self.expect(Kind::RParen)?;
+            return Err(diagnostics::empty_parenthesized_expression(self.end_span(span)));
         }
+
+        let expr_span = self.end_span(expr_span);
+        self.expect(Kind::RParen)?;
 
         // ParenthesizedExpression is from acorn --preserveParens
         let expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
-            self.ast.expression_sequence(
-                Span::new(paren_span.start + 1, paren_span.end - 1),
-                expressions,
-            )
+            self.ast.expression_sequence(expr_span, expressions)
         };
 
         Ok(if self.options.preserve_parens {
-            self.ast.expression_parenthesized(paren_span, expression)
+            self.ast.expression_parenthesized(self.end_span(span), expression)
         } else {
             expression
         })
