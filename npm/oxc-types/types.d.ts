@@ -204,8 +204,8 @@ export interface BinaryExpression extends Span {
 export interface PrivateInExpression extends Span {
   type: 'BinaryExpression';
   left: PrivateIdentifier;
-  operator: BinaryOperator;
   right: Expression;
+  operator: 'in';
 }
 
 export interface LogicalExpression extends Span {

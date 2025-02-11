@@ -187,12 +187,11 @@ const _: () = {
     assert!(offset_of!(BinaryExpression, operator) == 24);
     assert!(offset_of!(BinaryExpression, right) == 32);
 
-    assert!(size_of::<PrivateInExpression>() == 56);
+    assert!(size_of::<PrivateInExpression>() == 48);
     assert!(align_of::<PrivateInExpression>() == 8);
     assert!(offset_of!(PrivateInExpression, span) == 0);
     assert!(offset_of!(PrivateInExpression, left) == 8);
-    assert!(offset_of!(PrivateInExpression, operator) == 32);
-    assert!(offset_of!(PrivateInExpression, right) == 40);
+    assert!(offset_of!(PrivateInExpression, right) == 32);
 
     assert!(size_of::<LogicalExpression>() == 48);
     assert!(align_of::<LogicalExpression>() == 8);
@@ -1765,12 +1764,11 @@ const _: () = {
     assert!(offset_of!(BinaryExpression, operator) == 16);
     assert!(offset_of!(BinaryExpression, right) == 20);
 
-    assert!(size_of::<PrivateInExpression>() == 36);
+    assert!(size_of::<PrivateInExpression>() == 32);
     assert!(align_of::<PrivateInExpression>() == 4);
     assert!(offset_of!(PrivateInExpression, span) == 0);
     assert!(offset_of!(PrivateInExpression, left) == 8);
-    assert!(offset_of!(PrivateInExpression, operator) == 24);
-    assert!(offset_of!(PrivateInExpression, right) == 28);
+    assert!(offset_of!(PrivateInExpression, right) == 24);
 
     assert!(size_of::<LogicalExpression>() == 28);
     assert!(align_of::<LogicalExpression>() == 4);

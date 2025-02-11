@@ -534,8 +534,8 @@ impl Serialize for PrivateInExpression<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("right", &self.right)?;
+        map.serialize_entry("operator", &"in")?;
         map.end()
     }
 }

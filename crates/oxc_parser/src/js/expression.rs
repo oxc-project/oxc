@@ -6,7 +6,6 @@ use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
-    operator::BinaryOperator,
     precedence::Precedence,
 };
 
@@ -987,7 +986,7 @@ impl<'a> ParserImpl<'a> {
             if let Expression::PrivateInExpression(private_in_expr) = right {
                 return Err(diagnostics::private_in_private(private_in_expr.span));
             }
-            self.ast.expression_private_in(self.end_span(lhs_span), left, BinaryOperator::In, right)
+            self.ast.expression_private_in(self.end_span(lhs_span), left, right)
         } else {
             self.parse_unary_expression_or_higher(lhs_span)?
         };

@@ -668,11 +668,10 @@ pub struct BinaryExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "BinaryExpression")]
+#[estree(rename = "BinaryExpression", add_fields(operator = "\"in\""), add_ts = "operator: \"in\"")]
 pub struct PrivateInExpression<'a> {
     pub span: Span,
     pub left: PrivateIdentifier<'a>,
-    pub operator: BinaryOperator, // BinaryOperator::In
     pub right: Expression<'a>,
 }
 

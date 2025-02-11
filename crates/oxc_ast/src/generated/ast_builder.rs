@@ -843,19 +843,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn expression_private_in(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::PrivateInExpression(
-            self.alloc_private_in_expression(span, left, operator, right),
-        )
+        Expression::PrivateInExpression(self.alloc_private_in_expression(span, left, right))
     }
 
     /// Build an [`Expression::JSXElement`].
@@ -2128,17 +2124,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn private_in_expression(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> PrivateInExpression<'a> {
-        PrivateInExpression { span, left, operator, right }
+        PrivateInExpression { span, left, right }
     }
 
     /// Build a [`PrivateInExpression`], and store it in the memory arena.
@@ -2148,17 +2142,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn alloc_private_in_expression(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Box<'a, PrivateInExpression<'a>> {
-        Box::new_in(self.private_in_expression(span, left, operator, right), self.allocator)
+        Box::new_in(self.private_in_expression(span, left, right), self.allocator)
     }
 
     /// Build a [`LogicalExpression`].
