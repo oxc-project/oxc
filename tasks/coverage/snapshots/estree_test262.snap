@@ -2,7 +2,7 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 44146/44293 (99.67%)
+Positive Passed: 44156/44293 (99.69%)
 tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-u.js
 serde_json error: unexpected end of hex escape at line 316 column 33
 
@@ -192,17 +192,7 @@ Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-name-v
 Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-name-var-open-strict.js
 Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-name-var-open-non-strict.js
 Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-name-var-open-strict.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-accessor-shadowed.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-accessor.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-field-shadowed.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-field.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-method-shadowed.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-presence-method.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-rhs-await-absent.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-rhs-await-present.js
 Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-rhs-non-object.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-rhs-unresolvable.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-rhs-yield-present.js
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-decrement/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-increment/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-decrement/target-cover-id.js

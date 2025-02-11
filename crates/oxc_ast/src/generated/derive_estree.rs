@@ -530,7 +530,7 @@ impl Serialize for BinaryExpression<'_> {
 impl Serialize for PrivateInExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "PrivateInExpression")?;
+        map.serialize_entry("type", "BinaryExpression")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;

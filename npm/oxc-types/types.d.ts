@@ -202,7 +202,7 @@ export interface BinaryExpression extends Span {
 }
 
 export interface PrivateInExpression extends Span {
-  type: 'PrivateInExpression';
+  type: 'BinaryExpression';
   left: PrivateIdentifier;
   operator: BinaryOperator;
   right: Expression;
