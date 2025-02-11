@@ -4,7 +4,8 @@
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
     "build": "napi build --no-dts-cache --platform --js bindings.js --release",
-    "test": "vitest --typecheck run ./test"
+    "test": "vitest --typecheck run ./test",
+    "bench": "node bench.mjs"
   },
   "napi": {
     "binaryName": "parser",
@@ -22,5 +23,8 @@
   },
   "dependencies": {
     "@oxc-project/types": "workspace:^"
+  },
+  "devDependencies": {
+    "tinybench": "^3.1.1"
   }
 }
