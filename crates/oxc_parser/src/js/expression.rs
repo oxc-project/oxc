@@ -983,7 +983,10 @@ impl<'a> ParserImpl<'a> {
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
             let left = self.parse_private_identifier();
             self.expect(Kind::In)?;
-            let right = self.parse_unary_expression_or_higher(lhs_span)?;
+            let right = self.parse_binary_expression_or_higher(Precedence::Lowest)?;
+            if let Expression::PrivateInExpression(private_in_expr) = right {
+                return Err(diagnostics::private_in_private(private_in_expr.span));
+            }
             self.ast.expression_private_in(self.end_span(lhs_span), left, BinaryOperator::In, right)
         } else {
             self.parse_unary_expression_or_higher(lhs_span)?

@@ -8407,11 +8407,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean `export { "吾道一以貫之。" as "忠恕。" } from 'some-module'`?
 
-  × Unexpected token
+  × Unexpected right-hand side of private-in expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-1/input.js:5:11]
  4 │   method() {
  5 │     #a in #b in c
-   ·           ──
+   ·           ───────
  6 │   }
    ╰────
 

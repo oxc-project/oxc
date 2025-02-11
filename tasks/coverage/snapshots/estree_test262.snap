@@ -2,7 +2,7 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 44162/44293 (99.70%)
+Positive Passed: 44163/44293 (99.71%)
 tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-u.js
 serde_json error: unexpected end of hex escape at line 316 column 33
 
@@ -187,7 +187,6 @@ serde_json error: unexpected end of hex escape at line 184 column 33
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-await-ident.js
-Mismatch: tasks/coverage/test262/test/language/expressions/in/private-field-rhs-non-object.js
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-decrement/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-increment/target-cover-id.js
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-decrement/target-cover-id.js

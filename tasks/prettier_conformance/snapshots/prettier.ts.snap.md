@@ -301,7 +301,7 @@ ts compatibility: 199/568 (35.04%)
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 26.83% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 7.69% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
-| typescript/private-fields-in-in/basic.ts | 💥 | 68.75% |
+| typescript/private-fields-in-in/basic.ts | 💥 | 70.97% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 58.33% |
 | typescript/satisfies-operators/argument-expansion.ts | 💥💥 | 80.00% |
