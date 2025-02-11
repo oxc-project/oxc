@@ -201,6 +201,17 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.substitute_exit_expression(expr, ctx);
     }
 
+    fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.is_prev_function_changed() {
+            return;
+        }
+        if expr.operator.is_not()
+            && Self::try_fold_expr_in_boolean_context(&mut expr.argument, Ctx(ctx))
+        {
+            self.mark_current_function_as_changed();
+        }
+    }
+
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_prev_function_changed() {
             return;

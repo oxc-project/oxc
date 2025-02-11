@@ -1028,9 +1028,9 @@ fn test_ignored1() {
 #[test]
 #[ignore]
 fn test_ignored2() {
-    test("y(x && false)", "y(x && false);");
-    test("y(x || false)", "y(x || false);");
-    test("y(!(x && false))", "y(!(x && false));");
+    test("y(x && false)", "y(x && !1);");
+    test("y(x || false)", "y(x || !1);");
+    test("y(!(x && false))", "y(!(x && !1));");
     test("y(!(x || false))", "y(!x);");
     test("if (x && false) y", "x;");
     test("if (x || false) y", "x && y;");
@@ -1038,8 +1038,8 @@ fn test_ignored2() {
     test("if (x || false) y; else z", "x ? y : z;");
     test("y(x && false ? y : z)", "y((x, z));");
     test("y(x || false ? y : z)", "y(x ? y : z);");
-    test("while (false) x()", "for (; false; ) x();");
-    test("for (; false; ) x()", "for (; false; ) x();");
+    test("while (false) x()", "for (; !1; ) x();");
+    test("for (; false; ) x()", "for (; !1; ) x();");
     test("y(x && '')", "y(x && '');");
     test("y(x || '')", "y(x || '');");
     test("y(!(x && ''))", "y(!(x && false));");

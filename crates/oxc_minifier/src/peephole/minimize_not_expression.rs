@@ -21,6 +21,7 @@ impl<'a> PeepholeOptimizations {
         if !expr.operator.is_not() {
             return None;
         }
+        Self::try_fold_expr_in_boolean_context(&mut expr.argument, ctx);
         match &mut expr.argument {
             // `!!true` -> `true`
             // `!!false` -> `false`

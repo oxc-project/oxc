@@ -762,7 +762,7 @@ mod test {
         test_same("for(; !(x<=NaN) ;) a=b");
 
         // NOT forces a boolean context
-        test("x = !(y() && true)", "x = !(y() && !0)"); // FIXME: this can be `!y()`
+        test("x = !(y() && true)", "x = !y()");
 
         // This will be further optimized by PeepholeFoldConstants.
         test("x = !true", "x = !1");
