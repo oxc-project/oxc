@@ -2444,6 +2444,7 @@ pub struct ExportAllDeclaration<'a> {
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
     #[ts]
+    #[estree(rename = "attributes", via = crate::serialize::ImportExportWithClause(&self.with_clause), ts_type = "Array<ImportAttribute>")]
     pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
     #[ts]
     pub export_kind: ImportOrExportKind, // `export type *`

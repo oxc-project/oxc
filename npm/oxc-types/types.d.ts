@@ -768,7 +768,7 @@ export interface ExportAllDeclaration extends Span {
   type: 'ExportAllDeclaration';
   exported: ModuleExportName | null;
   source: StringLiteral;
-  withClause: WithClause | null;
+  attributes: Array<ImportAttribute>;
   exportKind: ImportOrExportKind;
 }
 

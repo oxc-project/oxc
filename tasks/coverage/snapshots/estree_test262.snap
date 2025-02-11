@@ -2,7 +2,7 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 44129/44293 (99.63%)
+Positive Passed: 44146/44293 (99.67%)
 tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-u.js
 serde_json error: unexpected end of hex escape at line 316 column 33
 
@@ -220,23 +220,6 @@ serde_json error: unexpected end of hex escape at line 125 column 33
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 serde_json error: unexpected end of hex escape at line 67 column 37
 
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
-Mismatch: tasks/coverage/test262/test/language/module-code/eval-self-once.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-from-star-string.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-expname-from-star.js
-Mismatch: tasks/coverage/test262/test/language/module-code/export-star-as-dflt.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-empty.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-key-identifiername.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-key-string-double.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-key-string-single.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-many.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-newlines.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-trlng-comma.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-double.js
-Mismatch: tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-single.js
-Mismatch: tasks/coverage/test262/test/language/module-code/instn-once.js
-Mismatch: tasks/coverage/test262/test/language/module-code/namespace/internals/own-property-keys-binding-types.js
 Mismatch: tasks/coverage/test262/test/language/statements/class/scope-name-lex-open-heritage.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-in/head-lhs-cover.js
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-async-parens.js

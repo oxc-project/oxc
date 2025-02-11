@@ -1830,7 +1830,10 @@ impl Serialize for ExportAllDeclaration<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("exported", &self.exported)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
+        map.serialize_entry(
+            "attributes",
+            &crate::serialize::ImportExportWithClause(&self.with_clause),
+        )?;
         map.serialize_entry("exportKind", &self.export_kind)?;
         map.end()
     }
