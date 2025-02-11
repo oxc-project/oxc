@@ -818,7 +818,7 @@ export interface RegExpLiteral extends Span {
   type: 'Literal';
   regex: RegExp;
   raw: string | null;
-  value: {} | null;
+  value: null;
 }
 
 export interface RegExp {

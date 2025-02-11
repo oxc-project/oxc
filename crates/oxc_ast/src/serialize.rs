@@ -133,16 +133,6 @@ impl Serialize for RegExpLiteralRegex<'_> {
     }
 }
 
-/// A placeholder for `RegExpLiteral`'s `value` field.
-pub struct EmptyObject;
-
-impl Serialize for EmptyObject {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let map = serializer.serialize_map(None)?;
-        map.end()
-    }
-}
-
 impl Serialize for RegExpFlags {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&self.to_string())

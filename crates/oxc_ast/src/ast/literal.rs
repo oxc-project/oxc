@@ -128,8 +128,8 @@ pub struct BigIntLiteral<'a> {
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
 #[estree(
     rename = "Literal",
-    add_fields(value = crate::serialize::EmptyObject),
-    add_ts = "value: {} | null",
+    add_fields(value = crate::serialize::NULL),
+    add_ts = "value: null",
 )]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code

@@ -40,7 +40,7 @@ submodules:
   just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git acbc09a87016778c1551ab5e7162fdd0e70b6663
   just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git d85767abfd83880cea17cea70f9913e9c4496dcc
   just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 37fd1774d13ef68abcc03775ceef0a91f87a57d7
-  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 4547a9eb14583f32371383348f736129ce59695f
+  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 bd99d40ed634cc045aac70c6aa8f8b41af988331
   just update-transformer-fixtures
 
 # Install git pre-commit to format files
