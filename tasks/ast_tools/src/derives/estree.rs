@@ -36,17 +36,24 @@ impl Derive for DeriveESTree {
 
     /// Register that accept `#[estree]` attr on structs, enums, struct fields, or enum variants.
     /// Allow attr on structs and enums which don't derive this trait.
+    /// Also accept `#[ts]` attr on struct fields and enum variants.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[(
-            "estree",
-            attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
-        )]
+        &[
+            (
+                "estree",
+                attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
+            ),
+            ("ts", attr_positions!(StructField | EnumVariant)),
+        ]
     }
 
-    /// Parse `#[estree]` attr.
-    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
-        // No need to check attr name is `estree`, because that's the only attribute this derive handles
-        parse_estree_attr(location, part)
+    /// Parse `#[estree]` and `#[ts]` attrs.
+    fn parse_attr(&self, attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
+        match attr_name {
+            "estree" => parse_estree_attr(location, part),
+            "ts" => parse_ts_attr(location, &part),
+            _ => unreachable!(),
+        }
     }
 
     fn prelude(&self) -> TokenStream {
@@ -177,6 +184,26 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             }
             _ => return Err(()),
         },
+        _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
+/// Parse `#[ts]` attr on struct field or enum variant.
+fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
+    if !matches!(part, AttrPart::None) {
+        return Err(());
+    }
+
+    // Location can only be `StructField` or `EnumVariant`
+    match location {
+        AttrLocation::StructField(struct_def, field_index) => {
+            struct_def.fields[field_index].estree.is_ts = true;
+        }
+        AttrLocation::EnumVariant(enum_def, variant_index) => {
+            enum_def.variants[variant_index].estree.is_ts = true;
+        }
         _ => unreachable!(),
     }
 
