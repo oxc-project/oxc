@@ -1595,6 +1595,10 @@ fn test_ignored4() {
     test("x = class y {}", "x = class {};");
     test("x = class y { foo() { return y } }", "x = class y { foo() { return y; }};");
     test("x = class y { foo() { if (0) return y } }", "x = class { foo() { }};");
+}
+
+#[test]
+fn test_remove_dead_expr() {
     test("null", "");
     test("void 0", "");
     test("void 0", "");
@@ -1623,6 +1627,11 @@ fn test_ignored4() {
     test("delete x", "delete x;");
     test("typeof x", "");
     test("typeof x()", "x();");
+}
+
+#[test]
+#[ignore]
+fn test_remove_dead_expr_ignore() {
     test("typeof (0, x)", "x;");
     test("typeof (0 || x)", "x;");
     test("typeof (1 && x)", "x;");

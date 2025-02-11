@@ -11,6 +11,7 @@ mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
 mod remove_dead_code;
+mod remove_unused_expression;
 mod replace_known_methods;
 mod statement_fusion;
 mod substitute_alternate_syntax;
