@@ -40,6 +40,7 @@ mod eslint {
     pub mod for_direction;
     pub mod func_names;
     pub mod getter_return;
+    pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
     pub mod init_declarations;
     pub mod max_classes_per_file;
@@ -544,6 +545,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::for_direction,
     eslint::func_names,
     eslint::getter_return,
+    eslint::grouped_accessor_pairs,
     eslint::guard_for_in,
     eslint::init_declarations,
     eslint::max_classes_per_file,
