@@ -9,7 +9,7 @@ use serde_json::Value;
 use crate::{ast_util::nth_outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn func_style_diagnostic(span: Span, style: Style) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected a function {}", style.as_str()))
+    OxcDiagnostic::warn(format!("Expected a function {}.", style.as_str()))
         .with_help("Enforce the consistent use of either `function` declarations or expressions assigned to variables")
         .with_label(span)
 }
@@ -38,17 +38,19 @@ impl Style {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone)]
 enum NamedExports {
     #[default]
     Ignore,
-    Override(Style),
+    Expression,
+    Declaration,
 }
 
 impl NamedExports {
     pub fn from(raw: &str) -> Self {
         match raw {
-            "expression" | "declaration" => Self::Override(Style::from(raw)),
+            "expression" => Self::Expression,
+            "declaration" => Self::Declaration,
             _ => Self::Ignore,
         }
     }
@@ -179,6 +181,7 @@ declare_oxc_lint!(
     FuncStyle,
     eslint,
     style,
+    pending
 );
 
 fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
@@ -248,9 +251,7 @@ impl Rule for FuncStyle {
                                 }
                             }
 
-                            if let Some(NamedExports::Override(Style::Expression)) =
-                                self.named_exports
-                            {
+                            if let Some(NamedExports::Expression) = self.named_exports {
                                 if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
                                     ctx.diagnostic(func_style_diagnostic(func.span, self.style));
                                 }
@@ -265,9 +266,7 @@ impl Rule for FuncStyle {
                                     ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                                 }
 
-                                if let Some(NamedExports::Override(Style::Declaration)) =
-                                    self.named_exports
-                                {
+                                if let Some(NamedExports::Declaration) = self.named_exports {
                                     if is_ancestor_export {
                                         ctx.diagnostic(func_style_diagnostic(
                                             decl.span, self.style,
@@ -311,7 +310,7 @@ impl Rule for FuncStyle {
                         ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                     }
 
-                    if let Some(NamedExports::Override(Style::Declaration)) = self.named_exports {
+                    if let Some(NamedExports::Declaration) = self.named_exports {
                         if is_ancestor_export {
                             ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                         }
