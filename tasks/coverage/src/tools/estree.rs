@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 use serde_json::Value;
 
 use oxc::{
-    allocator::Allocator, ast::utf8_to_utf16::Utf8ToUtf16, parser::Parser, span::SourceType,
+    allocator::Allocator, ast::utf8_to_utf16::Utf8ToUtf16, diagnostics::OxcDiagnostic,
+    parser::Parser, span::SourceType,
 };
 
 use crate::{
@@ -33,10 +34,6 @@ impl Case for EstreeTest262Case {
         self.base.test_result()
     }
 
-    fn skip_test_case(&self) -> bool {
-        self.base.should_fail() || self.base.skip_test_case()
-    }
-
     fn run(&mut self) {
         let acorn_path = Path::new("./tasks/coverage/acorn-test262")
             .join(self.path().strip_prefix("test262").unwrap())
@@ -54,9 +51,11 @@ impl Case for EstreeTest262Case {
         let allocator = Allocator::new();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let mut program = ret.program;
-        // Ignore empty AST or parse errors
-        if program.is_empty() || ret.panicked || !ret.errors.is_empty() {
-            self.base.set_result(TestResult::Passed);
+
+        if ret.panicked || !ret.errors.is_empty() {
+            let error =
+                ret.errors.first().map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
+            self.base.set_result(TestResult::ParseError(error, ret.panicked));
             return;
         }
 
