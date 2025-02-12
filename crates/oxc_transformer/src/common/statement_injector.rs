@@ -12,7 +12,7 @@
 //! self.ctx.statement_injector.insert_many_after(address, statements);
 //! ```
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 use rustc_hash::FxHashMap;
 
@@ -34,6 +34,14 @@ impl<'a, 'ctx> StatementInjector<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for StatementInjector<'a, '_> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.ctx.statement_injector.set_current_statement_address(stmt);
+    }
+
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.ctx.statement_injector.set_current_statement_address(stmt);
+    }
+
     fn exit_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
@@ -57,6 +65,7 @@ struct AdjacentStatement<'a> {
 
 /// Store for statements to be added to the statements.
 pub struct StatementInjectorStore<'a> {
+    current_statement_address: Cell<Address>,
     insertions: RefCell<FxHashMap<Address, Vec<AdjacentStatement<'a>>>>,
 }
 
@@ -64,7 +73,10 @@ pub struct StatementInjectorStore<'a> {
 impl StatementInjectorStore<'_> {
     /// Create new `StatementInjectorStore`.
     pub fn new() -> Self {
-        Self { insertions: RefCell::new(FxHashMap::default()) }
+        Self {
+            current_statement_address: Cell::new(Address::DUMMY),
+            insertions: RefCell::new(FxHashMap::default()),
+        }
     }
 }
 
@@ -148,6 +160,44 @@ impl<'a> StatementInjectorStore<'a> {
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::After }),
         );
     }
+
+    /// Add a statement to be inserted immediately before the current statement.
+    #[expect(unused)]
+    #[inline]
+    pub fn insert_before_current_statement(&self, stmt: Statement<'a>) {
+        debug_assert_ne!(self.current_statement_address.get(), Address::DUMMY);
+        self.insert_before_address(self.current_statement_address.get(), stmt);
+    }
+
+    /// Add a statement to be inserted immediately after the current statement.
+    #[expect(unused)]
+    #[inline]
+    pub fn insert_after_current_statement(&self, stmt: Statement<'a>) {
+        debug_assert_ne!(self.current_statement_address.get(), Address::DUMMY);
+        self.insert_after_address(self.current_statement_address.get(), stmt);
+    }
+
+    /// Add multiple statements to be inserted immediately before the current statement.
+    #[expect(unused)]
+    #[inline]
+    pub fn insert_many_before_current_statement<S>(&self, stmts: S)
+    where
+        S: IntoIterator<Item = Statement<'a>>,
+    {
+        debug_assert_ne!(self.current_statement_address.get(), Address::DUMMY);
+        self.insert_many_before_address(self.current_statement_address.get(), stmts);
+    }
+
+    /// Add multiple statements to be inserted immediately after the current statement.
+    #[expect(unused)]
+    #[inline]
+    pub fn insert_many_after_current_statement<S>(&self, stmts: S)
+    where
+        S: IntoIterator<Item = Statement<'a>>,
+    {
+        debug_assert_ne!(self.current_statement_address.get(), Address::DUMMY);
+        self.insert_many_after_address(self.current_statement_address.get(), stmts);
+    }
 }
 
 // Internal methods
@@ -167,6 +217,7 @@ impl<'a> StatementInjectorStore<'a> {
             .iter()
             .filter_map(|s| insertions.get(&s.address()).map(Vec::len))
             .sum::<usize>();
+
         if new_statement_count == 0 {
             return;
         }
@@ -194,5 +245,10 @@ impl<'a> StatementInjectorStore<'a> {
         }
 
         *statements = new_statements;
+    }
+
+    #[inline]
+    fn set_current_statement_address(&self, stmt: &Statement<'a>) {
+        self.current_statement_address.set(stmt.address());
     }
 }

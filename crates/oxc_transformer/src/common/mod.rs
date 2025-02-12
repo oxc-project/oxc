@@ -65,6 +65,16 @@ impl<'a> Traverse<'a> for Common<'a, '_> {
         self.statement_injector.exit_statements(stmts, ctx);
     }
 
+    #[inline]
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.statement_injector.enter_statement(stmt, ctx);
+    }
+
+    #[inline]
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.statement_injector.exit_statement(stmt, ctx);
+    }
+
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.arrow_function_converter.enter_function(func, ctx);
     }

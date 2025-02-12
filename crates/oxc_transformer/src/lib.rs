@@ -530,6 +530,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.exit_statement(stmt, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_statement(stmt, ctx);
         }
@@ -549,6 +550,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.enter_statement(stmt, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }
