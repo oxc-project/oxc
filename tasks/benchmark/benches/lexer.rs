@@ -9,8 +9,6 @@ use oxc_parser::{
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles};
 
-// Dummy comment to force running benchmarks on CI. TODO: Remove this comment.
-
 fn bench_lexer(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("lexer");
 
