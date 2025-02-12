@@ -132,7 +132,7 @@ impl<'a> Lexer<'a> {
         source_text: &'a str,
         source_type: SourceType,
     ) -> Self {
-        let unique = UniquePromise::new_for_benchmarks();
+        let unique = UniquePromise::new_for_tests_and_benchmarks();
         Self::new(allocator, source_text, source_type, unique)
     }
 

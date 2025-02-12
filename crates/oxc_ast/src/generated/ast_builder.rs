@@ -8780,24 +8780,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::BigIntLiteral(self.alloc_big_int_literal(span, raw, base))
     }
 
-    /// Build a [`TSLiteral::RegExpLiteral`].
-    ///
-    /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
-    /// * `raw`: The regular expression as it appears in source code
-    #[inline]
-    pub fn ts_literal_reg_exp_literal(
-        self,
-        span: Span,
-        regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
-    ) -> TSLiteral<'a> {
-        TSLiteral::RegExpLiteral(self.alloc_reg_exp_literal(span, regex, raw))
-    }
-
     /// Build a [`TSLiteral::StringLiteral`].
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
@@ -9258,24 +9240,6 @@ impl<'a> AstBuilder<'a> {
             label,
             optional,
         ))
-    }
-
-    /// Build a [`TSType::TSQualifiedName`].
-    ///
-    /// This node contains a [`TSQualifiedName`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `left`
-    /// * `right`
-    #[inline]
-    pub fn ts_type_qualified_name(
-        self,
-        span: Span,
-        left: TSTypeName<'a>,
-        right: IdentifierName<'a>,
-    ) -> TSType<'a> {
-        TSType::TSQualifiedName(self.alloc_ts_qualified_name(span, left, right))
     }
 
     /// Build a [`TSType::TSTemplateLiteralType`].

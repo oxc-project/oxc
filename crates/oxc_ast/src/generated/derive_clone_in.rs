@@ -3006,7 +3006,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSLiteral<'_> {
             Self::NullLiteral(it) => TSLiteral::NullLiteral(CloneIn::clone_in(it, allocator)),
             Self::NumericLiteral(it) => TSLiteral::NumericLiteral(CloneIn::clone_in(it, allocator)),
             Self::BigIntLiteral(it) => TSLiteral::BigIntLiteral(CloneIn::clone_in(it, allocator)),
-            Self::RegExpLiteral(it) => TSLiteral::RegExpLiteral(CloneIn::clone_in(it, allocator)),
             Self::StringLiteral(it) => TSLiteral::StringLiteral(CloneIn::clone_in(it, allocator)),
             Self::TemplateLiteral(it) => {
                 TSLiteral::TemplateLiteral(CloneIn::clone_in(it, allocator))
@@ -3064,7 +3063,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSType<'_> {
             Self::TSNamedTupleMember(it) => {
                 TSType::TSNamedTupleMember(CloneIn::clone_in(it, allocator))
             }
-            Self::TSQualifiedName(it) => TSType::TSQualifiedName(CloneIn::clone_in(it, allocator)),
             Self::TSTemplateLiteralType(it) => {
                 TSType::TSTemplateLiteralType(CloneIn::clone_in(it, allocator))
             }
@@ -3298,9 +3296,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTupleElement<'_> {
             }
             Self::TSNamedTupleMember(it) => {
                 TSTupleElement::TSNamedTupleMember(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSQualifiedName(it) => {
-                TSTupleElement::TSQualifiedName(CloneIn::clone_in(it, allocator))
             }
             Self::TSTemplateLiteralType(it) => {
                 TSTupleElement::TSTemplateLiteralType(CloneIn::clone_in(it, allocator))

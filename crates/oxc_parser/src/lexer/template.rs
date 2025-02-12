@@ -96,7 +96,7 @@ impl<'a> Lexer<'a> {
     ) -> Kind {
         // Create arena string to hold modified template literal, containing up to before `\r`.
         // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
-        let str = self.template_literal_create_string(pos);
+        let mut str = self.template_literal_create_string(pos);
 
         // Skip `\r`.
         // SAFETY: Caller guarantees byte at `pos` is `\r`, so `pos + 1` is a UTF-8 char boundary.
@@ -114,12 +114,22 @@ impl<'a> Lexer<'a> {
         // Start next chunk after `\r`
         let chunk_start = pos;
 
-        // If next char is `\n`, start next search after it.
-        // `\n` is first char of next chunk, so it'll get added to `str` when chunk is pushed.
+        // Either `\r` alone or `\r\n` needs to be converted to `\n`.
         // SAFETY: Have checked not at EOF.
         if pos.read() == b'\n' {
-            // SAFETY: `\n` is ASCII, so advancing past it leaves `pos` on a UTF-8 char boundary
+            // We have `\r\n`.
+            // Start next search after the `\n`.
+            // `chunk_start` is before the `\n`, so no need to push an `\n` to `str` here.
+            // The `\n` is first char of next chunk, so it'll get pushed to `str` later on
+            // when that next chunk is pushed.
+            // SAFETY: `\n` is ASCII, so advancing past it leaves `pos` on a UTF-8 char boundary.
             pos = pos.add(1);
+        } else {
+            // We have a lone `\r`.
+            // Convert it to `\n` by pushing an `\n` to `str`.
+            // `chunk_start` is *after* the `\r`, so the `\r` is not included in next chunk,
+            // so it will not also get included in `str` when that next chunk is pushed.
+            str.push('\n');
         }
 
         self.template_literal_escaped(str, pos, chunk_start, true, substitute, tail)
@@ -252,13 +262,26 @@ impl<'a> Lexer<'a> {
                             chunk_start = pos.add(1);
 
                             if chunk_start.addr() < self.source.end_addr() {
-                                // If next char is `\n`, start next search after it.
-                                // NB: `byte_search!` macro already advances `pos` by 1, so only advance
-                                // by 1 here, so that in total we skip 2 bytes for `\r\n`.
-                                // No need to push `\n` to `str`, as it's 1st char of next chunk,
-                                // and will be added to `str` when next chunk is pushed.
+                                // Either `\r` alone or `\r\n` needs to be converted to `\n`.
+                                // SAFETY: Have checked not at EOF.
                                 if chunk_start.read() == b'\n' {
+                                    // We have `\r\n`.
+                                    // Start next search after the `\n`.
+                                    // `chunk_start` is before the `\n`, so no need to push an `\n`
+                                    // to `str` here. The `\n` is first char of next chunk, so it'll get
+                                    // pushed to `str` later on when that next chunk is pushed.
+                                    // Note: `byte_search!` macro already advances `pos` by 1, so only
+                                    // advance by 1 here, so that in total we skip 2 bytes for `\r\n`.
                                     pos = chunk_start;
+                                } else {
+                                    // We have a lone `\r`.
+                                    // Convert it to `\n` by pushing an `\n` to `str`.
+                                    // `chunk_start` is *after* the `\r`, so the `\r` is not included in
+                                    // next chunk, so it will not also get included in `str` when that
+                                    // next chunk is pushed.
+                                    // Note: `byte_search!` macro already advances `pos` by 1,
+                                    // which steps past the `\r`, so don't advance `pos` here.
+                                    str.push('\n');
                                 }
                             } else {
                                 // This is last byte in file. Continue to `handle_eof`.
@@ -337,5 +360,92 @@ impl<'a> Lexer<'a> {
             }
             _ => raw,
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+    use oxc_span::SourceType;
+
+    use super::super::{Kind, Lexer, UniquePromise};
+
+    #[test]
+    fn template_literal_linebreaks() {
+        // Note: These cases don't include all `\n`s because that requires no unescaping
+        let escapes = [
+            // 1 return
+            ("\r", "\n"),
+            ("\r\n", "\n"),
+            // 2 returns
+            ("\r\r", "\n\n"),
+            ("\r\r\n", "\n\n"),
+            ("\r\n\r", "\n\n"),
+            ("\r\n\n", "\n\n"),
+            ("\n\r", "\n\n"),
+            ("\n\r\n", "\n\n"),
+            ("\r\n\r\n", "\n\n"),
+            // 3 returns
+            ("\r\r\r", "\n\n\n"),
+            ("\n\r\r", "\n\n\n"),
+            ("\n\n\r", "\n\n\n"),
+            ("\r\n\r\r", "\n\n\n"),
+            ("\r\r\n\r", "\n\n\n"),
+            ("\r\r\r\n", "\n\n\n"),
+            ("\r\n\r\n\r", "\n\n\n"),
+            ("\r\r\n\r\n", "\n\n\n"),
+            ("\r\n\r\n\r\n", "\n\n\n"),
+        ];
+
+        #[expect(clippy::items_after_statements, clippy::needless_pass_by_value)]
+        fn run_test(source_text: String, expected_escaped: String, is_only_part: bool) {
+            let allocator = Allocator::default();
+            let unique = UniquePromise::new_for_tests_and_benchmarks();
+            let mut lexer = Lexer::new(&allocator, &source_text, SourceType::default(), unique);
+            let token = lexer.next_token();
+            assert_eq!(
+                token.kind,
+                if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }
+            );
+            let escaped = lexer.escaped_templates[&0];
+            assert_eq!(escaped, Some(expected_escaped.as_str()));
+        }
+
+        for (source_fragment, escaped_fragment) in escapes {
+            run_test(format!("`{source_fragment}`"), escaped_fragment.to_string(), true);
+            run_test(format!("`{source_fragment}${{x}}`"), escaped_fragment.to_string(), false);
+            run_test(format!("`{source_fragment}abc`"), format!("{escaped_fragment}abc"), true);
+            run_test(
+                format!("`{source_fragment}abc${{x}}`"),
+                format!("{escaped_fragment}abc"),
+                false,
+            );
+            run_test(format!("`abc{source_fragment}`"), format!("abc{escaped_fragment}"), true);
+            run_test(
+                format!("`abc{source_fragment}${{x}}`"),
+                format!("abc{escaped_fragment}"),
+                false,
+            );
+            run_test(
+                format!("`abc{source_fragment}def{source_fragment}ghi`"),
+                format!("abc{escaped_fragment}def{escaped_fragment}ghi"),
+                true,
+            );
+            run_test(
+                format!("`abc{source_fragment}def{source_fragment}ghi${{x}}`"),
+                format!("abc{escaped_fragment}def{escaped_fragment}ghi"),
+                false,
+            );
+            run_test(
+                format!("`{source_fragment}abc{source_fragment}def{source_fragment}`"),
+                format!("{escaped_fragment}abc{escaped_fragment}def{escaped_fragment}"),
+                true,
+            );
+            run_test(
+                format!("`{source_fragment}abc{source_fragment}def{source_fragment}${{x}}`"),
+                format!("{escaped_fragment}abc{escaped_fragment}def{escaped_fragment}"),
+                false,
+            );
+        }
     }
 }

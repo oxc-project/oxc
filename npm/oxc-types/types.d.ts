@@ -958,7 +958,6 @@ export type TSLiteral =
   | NullLiteral
   | NumericLiteral
   | BigIntLiteral
-  | RegExpLiteral
   | StringLiteral
   | TemplateLiteral
   | UnaryExpression;
@@ -988,7 +987,6 @@ export type TSType =
   | TSLiteralType
   | TSMappedType
   | TSNamedTupleMember
-  | TSQualifiedName
   | TSTemplateLiteralType
   | TSThisType
   | TSTupleType
