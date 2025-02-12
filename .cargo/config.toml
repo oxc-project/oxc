@@ -36,7 +36,10 @@ rustflags = ["-C", "target-feature=+crt-static"]
 # Use Hybrid CRT to reduce the size of the binary (Coming by default with Windows 10 and later versions).
 [target.'cfg(target_os = "windows")']
 rustflags = [
-  "-C", "link-args=/FORCE",
-  "-C", "link-args=/NODEFAULTLIB:libucrt.lib",
-  "-C", "link-args=/DEFAULTLIB:ucrt.lib"
+  "-C",
+  "link-args=/FORCE",
+  "-C",
+  "link-args=/NODEFAULTLIB:libucrt.lib",
+  "-C",
+  "link-args=/DEFAULTLIB:ucrt.lib",
 ]
