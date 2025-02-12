@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.50.0] - 2025-02-12
+
+- d9189f1 ast: [**BREAKING**] Remove `PrivateInExpression::operator` field (#9041) (overlookmotel)
+
+### Bug Fixes
+
+- 22d93be ast: Estree compat `AssignmentTargetPropertyIdentifier` (#9006) (hi-ogawa)
+- cd2e199 ast/estree: Fix serializing `RegExpLiteral` (#9043) (overlookmotel)
+- f705c64 ast/estree: Serialize `PrivateInExpression` as `BinaryExpression` (#9033) (hi-ogawa)
+- 2948804 ast/estree: Fix `ExportAllDeclaration` attributes (#9032) (hi-ogawa)
+- 2371dd4 ast/estree: Fix serializing import and export `attributes` (#9030) (hi-ogawa)
+- 2b47299 ast/estree: Fix serializing `RegExpLiteral` flags (#9027) (overlookmotel)
+- e75e1d2 ast/estree: Fix serializing `PrivateFieldExpression` (#9025) (overlookmotel)
+- fcb5490 ast/estree: Fix serializing `ImportExpression`s (#9024) (overlookmotel)
+- cac5545 ast/estree: Fix serializing `BigInt`s (#9022) (overlookmotel)
+- 9427007 ast/estree: Use `#[estree(append_to)]` for `TSModuleBlock` (#9020) (overlookmotel)
+
+### Documentation
+
+- 11829bf ast: Improve and reformat doc comments (#9017) (overlookmotel)
+
+### Refactor
+
+- cb3240c ast/estree: Remove redundant `ts_type` (#9037) (hi-ogawa)
+- eef8874 ast/estree: Re-arrange and comment custom serialization code (#9019) (overlookmotel)
+- 8db4727 ast/estree: Remove serialization wrapper (#9018) (overlookmotel)
+
+### Styling
+
+- 50a87c2 ast: Reformat `#[estree]` attribute (#9016) (overlookmotel)
+
 ## [0.49.0] - 2025-02-10
 
 - bbb075d ast: [**BREAKING**] Name `AstBuilder` enum builders after variant name not type name (#8890) (overlookmotel)
