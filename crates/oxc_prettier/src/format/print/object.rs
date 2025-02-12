@@ -62,19 +62,13 @@ impl<'a> ObjectLike<'a, '_> {
                 let parent_kind = p.parent_kind();
                 // `f(a, { <- THIS -> })` should not break
                 !matches!(parent_kind, AstKind::FormalParameter(_))
-                    && (obj_pattern.properties.iter().any(|prop| {
+                    && obj_pattern.properties.iter().any(|prop| {
                         matches!(
                             prop.value.kind,
                             BindingPatternKind::ObjectPattern(_)
                                 | BindingPatternKind::ArrayPattern(_)
                         )
-                    }) || obj_pattern.rest.as_ref().is_some_and(|rest| {
-                        matches!(
-                            rest.argument.kind,
-                            BindingPatternKind::ObjectPattern(_)
-                                | BindingPatternKind::ArrayPattern(_)
-                        )
-                    }))
+                    })
             }
             ObjectLike::ObjectAssignmentTarget(obj_target) => false,
             ObjectLike::TSInterfaceBody(_) | ObjectLike::TSEnumDeclaration(_) => true,
