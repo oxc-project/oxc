@@ -44,8 +44,8 @@ impl Case for EstreeTest262Case {
             self.base.set_result(TestResult::Passed);
             return;
         };
-        // FIXME: `called `Result::unwrap()` on an `Err` value: Error("unexpected end of hex escape", line: 307, column: 33)`
-        let mut acorn_json = match serde_json::from_str::<serde_json::Value>(&acorn_file) {
+
+        let mut acorn_json = match deserialize_json(&acorn_file) {
             Err(e) => {
                 self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
                 return;
@@ -68,7 +68,13 @@ impl Case for EstreeTest262Case {
         // Convert spans to UTF16
         Utf8ToUtf16::new().convert(&mut program);
 
-        let mut oxc_json = serde_json::from_str::<serde_json::Value>(&program.to_json()).unwrap();
+        let mut oxc_json = match deserialize_json(&program.to_json()) {
+            Err(e) => {
+                self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
+                return;
+            }
+            Ok(oxc_json) => oxc_json,
+        };
 
         process_estree(&mut acorn_json, &mut oxc_json);
 
@@ -93,6 +99,21 @@ impl Case for EstreeTest262Case {
             self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
         }
     }
+}
+
+/// Deserialize JSON string to `serde_json::Value`.
+///
+/// Identical to `serde_json::from_str::<serde_json::Value>(json)`,
+/// except with no limit on how deeply nested the JSON can be.
+fn deserialize_json(json: &str) -> Result<serde_json::Value, serde_json::Error> {
+    use serde::Deserialize;
+
+    let s = serde_json::de::StrRead::new(json);
+    let mut deserializer = serde_json::Deserializer::new(s);
+    deserializer.disable_recursion_limit();
+    let value = serde_json::Value::deserialize(&mut deserializer)?;
+    deserializer.end()?;
+    Ok(value)
 }
 
 fn process_estree(old: &mut serde_json::Value, new: &mut serde_json::Value) {

@@ -2,7 +2,7 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 44244/44293 (99.89%)
+Positive Passed: 44248/44293 (99.90%)
 tasks/coverage/test262/test/annexB/built-ins/RegExp/prototype/compile/pattern-string-u.js
 serde_json error: unexpected end of hex escape at line 316 column 33
 
@@ -38,15 +38,6 @@ serde_json error: unexpected end of hex escape at line 508 column 44
 
 tasks/coverage/test262/test/built-ins/RegExp/prototype/Symbol.replace/coerce-unicode.js
 serde_json error: unexpected end of hex escape at line 232 column 32
-
-tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T2.js
-serde_json error: recursion limit exceeded at line 509 column 263
-
-tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T3.js
-serde_json error: recursion limit exceeded at line 509 column 263
-
-tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T4.js
-serde_json error: recursion limit exceeded at line 509 column 263
 
 tasks/coverage/test262/test/built-ins/RegExp/prototype/exec/u-captured-value.js
 serde_json error: unexpected end of hex escape at line 298 column 29
@@ -128,7 +119,4 @@ Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-async-
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-cover.js
 tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
 serde_json error: unexpected end of hex escape at line 25 column 30
-
-tasks/coverage/test262/test/language/statements/function/S13.2.1_A1_T1.js
-serde_json error: recursion limit exceeded at line 551 column 263
 
