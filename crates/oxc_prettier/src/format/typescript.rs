@@ -305,7 +305,6 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
             TSLiteral::NullLiteral(v) => v.format(p),
             TSLiteral::NumericLiteral(v) => v.format(p),
             TSLiteral::BigIntLiteral(v) => v.format(p),
-            TSLiteral::RegExpLiteral(v) => v.format(p),
             TSLiteral::StringLiteral(v) => v.format(p),
             TSLiteral::TemplateLiteral(v) => v.format(p),
             TSLiteral::UnaryExpression(v) => v.format(p),

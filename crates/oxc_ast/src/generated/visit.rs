@@ -3200,7 +3200,6 @@ pub mod walk {
             TSLiteral::NullLiteral(it) => visitor.visit_null_literal(it),
             TSLiteral::NumericLiteral(it) => visitor.visit_numeric_literal(it),
             TSLiteral::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
-            TSLiteral::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
             TSLiteral::StringLiteral(it) => visitor.visit_string_literal(it),
             TSLiteral::TemplateLiteral(it) => visitor.visit_template_literal(it),
             TSLiteral::UnaryExpression(it) => visitor.visit_unary_expression(it),

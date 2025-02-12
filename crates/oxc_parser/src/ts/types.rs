@@ -966,7 +966,6 @@ impl<'a> ParserImpl<'a> {
                 Expression::NullLiteral(literal) => TSLiteral::NullLiteral(literal),
                 Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
                 Expression::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
-                Expression::RegExpLiteral(literal) => TSLiteral::RegExpLiteral(literal),
                 Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
                 Expression::TemplateLiteral(literal) => TSLiteral::TemplateLiteral(literal),
                 _ => return Err(self.unexpected()),

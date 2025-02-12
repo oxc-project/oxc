@@ -2335,7 +2335,6 @@ impl Serialize for TSLiteral<'_> {
             TSLiteral::NullLiteral(it) => it.serialize(serializer),
             TSLiteral::NumericLiteral(it) => it.serialize(serializer),
             TSLiteral::BigIntLiteral(it) => it.serialize(serializer),
-            TSLiteral::RegExpLiteral(it) => it.serialize(serializer),
             TSLiteral::StringLiteral(it) => it.serialize(serializer),
             TSLiteral::TemplateLiteral(it) => it.serialize(serializer),
             TSLiteral::UnaryExpression(it) => it.serialize(serializer),

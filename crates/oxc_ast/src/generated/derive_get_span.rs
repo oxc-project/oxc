@@ -1515,7 +1515,6 @@ impl GetSpan for TSLiteral<'_> {
             Self::NullLiteral(it) => GetSpan::span(&**it),
             Self::NumericLiteral(it) => GetSpan::span(&**it),
             Self::BigIntLiteral(it) => GetSpan::span(&**it),
-            Self::RegExpLiteral(it) => GetSpan::span(&**it),
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::UnaryExpression(it) => GetSpan::span(&**it),

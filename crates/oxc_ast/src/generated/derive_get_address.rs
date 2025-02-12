@@ -617,7 +617,6 @@ impl GetAddress for TSLiteral<'_> {
             Self::NullLiteral(it) => GetAddress::address(it),
             Self::NumericLiteral(it) => GetAddress::address(it),
             Self::BigIntLiteral(it) => GetAddress::address(it),
-            Self::RegExpLiteral(it) => GetAddress::address(it),
             Self::StringLiteral(it) => GetAddress::address(it),
             Self::TemplateLiteral(it) => GetAddress::address(it),
             Self::UnaryExpression(it) => GetAddress::address(it),

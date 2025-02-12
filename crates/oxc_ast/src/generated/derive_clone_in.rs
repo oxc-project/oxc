@@ -3006,7 +3006,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSLiteral<'_> {
             Self::NullLiteral(it) => TSLiteral::NullLiteral(CloneIn::clone_in(it, allocator)),
             Self::NumericLiteral(it) => TSLiteral::NumericLiteral(CloneIn::clone_in(it, allocator)),
             Self::BigIntLiteral(it) => TSLiteral::BigIntLiteral(CloneIn::clone_in(it, allocator)),
-            Self::RegExpLiteral(it) => TSLiteral::RegExpLiteral(CloneIn::clone_in(it, allocator)),
             Self::StringLiteral(it) => TSLiteral::StringLiteral(CloneIn::clone_in(it, allocator)),
             Self::TemplateLiteral(it) => {
                 TSLiteral::TemplateLiteral(CloneIn::clone_in(it, allocator))

@@ -3341,7 +3341,6 @@ impl Gen for TSLiteral<'_> {
             Self::NullLiteral(decl) => decl.print(p, ctx),
             Self::NumericLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
             Self::BigIntLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
-            Self::RegExpLiteral(decl) => decl.print(p, ctx),
             Self::StringLiteral(decl) => decl.print(p, ctx),
             Self::TemplateLiteral(decl) => decl.print(p, ctx),
             Self::UnaryExpression(decl) => decl.print_expr(p, Precedence::Comma, ctx),

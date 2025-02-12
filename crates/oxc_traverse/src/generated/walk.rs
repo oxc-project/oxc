@@ -3783,9 +3783,6 @@ unsafe fn walk_ts_literal<'a, Tr: Traverse<'a>>(
         TSLiteral::BigIntLiteral(node) => {
             walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSLiteral::RegExpLiteral(node) => {
-            walk_reg_exp_literal(traverser, (&mut **node) as *mut _, ctx)
-        }
         TSLiteral::StringLiteral(node) => {
             walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
         }

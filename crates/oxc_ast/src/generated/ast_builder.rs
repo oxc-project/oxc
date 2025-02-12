@@ -8780,24 +8780,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::BigIntLiteral(self.alloc_big_int_literal(span, raw, base))
     }
 
-    /// Build a [`TSLiteral::RegExpLiteral`].
-    ///
-    /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
-    /// * `raw`: The regular expression as it appears in source code
-    #[inline]
-    pub fn ts_literal_reg_exp_literal(
-        self,
-        span: Span,
-        regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
-    ) -> TSLiteral<'a> {
-        TSLiteral::RegExpLiteral(self.alloc_reg_exp_literal(span, regex, raw))
-    }
-
     /// Build a [`TSLiteral::StringLiteral`].
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.

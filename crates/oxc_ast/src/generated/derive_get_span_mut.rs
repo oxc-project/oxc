@@ -1515,7 +1515,6 @@ impl GetSpanMut for TSLiteral<'_> {
             Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),

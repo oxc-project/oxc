@@ -958,7 +958,6 @@ export type TSLiteral =
   | NullLiteral
   | NumericLiteral
   | BigIntLiteral
-  | RegExpLiteral
   | StringLiteral
   | TemplateLiteral
   | UnaryExpression;

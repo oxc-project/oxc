@@ -162,7 +162,6 @@ pub enum TSLiteral<'a> {
     NullLiteral(Box<'a, NullLiteral>) = 1,
     NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
     BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
-    RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
     StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
     UnaryExpression(Box<'a, UnaryExpression<'a>>) = 7,

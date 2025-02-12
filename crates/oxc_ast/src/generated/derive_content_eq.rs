@@ -1765,7 +1765,6 @@ impl ContentEq for TSLiteral<'_> {
             (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
             (Self::NumericLiteral(a), Self::NumericLiteral(b)) => a.content_eq(b),
             (Self::BigIntLiteral(a), Self::BigIntLiteral(b)) => a.content_eq(b),
-            (Self::RegExpLiteral(a), Self::RegExpLiteral(b)) => a.content_eq(b),
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::UnaryExpression(a), Self::UnaryExpression(b)) => a.content_eq(b),
