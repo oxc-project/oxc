@@ -43,7 +43,7 @@ impl<'a> ObjectLike<'a, '_> {
     fn separator(&self, p: &Prettier) -> Doc<'a> {
         if self.is_ts_type() {
             let semi = if p.options.semi { ";" } else { "" };
-            return if_break!(p, text!(semi), text!(","), None);
+            return if_break!(p, text!(semi), text!(";"), None);
         }
         text!(",")
     }
@@ -112,13 +112,15 @@ impl<'a> ObjectLike<'a, '_> {
         let next_separator_fn =
             |p: &Prettier<'a>, ts_signature: Option<&TSSignature>, span: Span| match (
                 ts_signature.is_some_and(|ts_signature| {
+                    // TODO: has_comment(ts_signature, CommentCheckFlags::PrettierIgnore),
+                    let type_has_comment = false;
                     matches!(
                         ts_signature,
                         TSSignature::TSPropertySignature(_)
                             | TSSignature::TSMethodSignature(_)
                             | TSSignature::TSConstructSignatureDeclaration(_)
                             | TSSignature::TSCallSignatureDeclaration(_)
-                    ) // TODO: && has_comment(ts_signature, CommentCheckFlags::PrettierIgnore),
+                    ) && type_has_comment
                 }),
                 p.is_next_line_empty(span),
             ) {
@@ -221,6 +223,8 @@ impl<'a> ObjectLike<'a, '_> {
                 true
             }
             ObjectLike::TSTypeLiteral(obj) => {
+                // TODO: && has_comment(last, CommentCheckFlags::PrettierIgnore)
+                let last_has_comment = false;
                 if obj.members.last().is_some_and(|last| {
                     matches!(
                         last,
@@ -228,7 +232,7 @@ impl<'a> ObjectLike<'a, '_> {
                             | TSSignature::TSCallSignatureDeclaration(_)
                             | TSSignature::TSMethodSignature(_)
                             | TSSignature::TSConstructSignatureDeclaration(_)
-                    ) // TODO: && has_comment(last, CommentCheckFlags::PrettierIgnore)
+                    ) && last_has_comment
                 }) {
                     return false;
                 }
@@ -236,13 +240,15 @@ impl<'a> ObjectLike<'a, '_> {
             }
             ObjectLike::TSInterfaceBody(obj) => {
                 if obj.body.last().is_some_and(|last| {
+                    // TODO: && has_comment(last, CommentCheckFlags::PrettierIgnore)
+                    let last_has_comment = false;
                     matches!(
                         last,
                         TSSignature::TSPropertySignature(_)
                             | TSSignature::TSCallSignatureDeclaration(_)
                             | TSSignature::TSMethodSignature(_)
                             | TSSignature::TSConstructSignatureDeclaration(_)
-                    ) // TODO: && has_comment(last, CommentCheckFlags::PrettierIgnore)
+                    ) && last_has_comment
                 }) {
                     return false;
                 }
