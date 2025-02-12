@@ -203,9 +203,7 @@ impl<'a> PeepholeOptimizations {
 
         // "a ? b || c : c" => "(a && b) || c"
         if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent {
-            if logical_expr.operator == LogicalOperator::Or
-                && ctx.expr_eq(&logical_expr.right, &expr.alternate)
-            {
+            if logical_expr.operator.is_or() && ctx.expr_eq(&logical_expr.right, &expr.alternate) {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
                     Self::join_with_left_associative_op(
@@ -609,13 +607,13 @@ mod test {
         test("(x ? true : y) && y()", "(x || y) && y();");
         test("(x ? y : false) && y()", "(x && y) && y()");
         test("var x; (x && true) && y()", "var x; x && y()");
-        test("var x; (x && false) && y()", "var x; x && !1");
+        test("var x; (x && false) && y()", "var x");
         test("(x && true) && y()", "x && y()");
-        test("(x && false) && y()", "x && !1");
+        test("(x && false) && y()", "x");
         test("var x; (x || true) && y()", "var x; y()");
         test("var x; (x || false) && y()", "var x; x && y()");
 
-        test("(x || true) && y()", "x || !0, y()");
+        test("(x || true) && y()", "x, y()");
         test("(x || false) && y()", "x && y()");
 
         test("let x = foo ? true : false", "let x = !!foo");

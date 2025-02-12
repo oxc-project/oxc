@@ -668,20 +668,18 @@ fn js_parser_test() {
         "function _() { if (a) return; if (b) return c; }",
         "function _() { if (!a && b) return c; }",
     );
-    test("function _() { if (a) return; if (b) return; }", "function _() { a || !b }");
+    test("function _() { if (a) return; if (b) return; }", "function _() { a || b }");
     test("if (a) throw c; if (b) throw d;", "if (a) throw c;if (b) throw d;");
     test("if (a) throw c; if (b) throw c;", "if (a || b) throw c;");
     test("while (x) { if (a) break; if (b) break; }", "for (; x && !(a || b); ) ;");
-    // FIXME: remove `!` from `!b`
-    test("while (x) { if (a) continue; if (b) continue; }", "for (; x; ) a || !b;");
+    test("while (x) { if (a) continue; if (b) continue; }", "for (; x; ) a || b;");
     test(
         "while (x) { debugger; if (a) break; if (b) break; }",
         "for (; x; ) { debugger; if (a || b) break;}",
     );
-    // FIXME: remove `!` from `!b`
     test(
         "while (x) { debugger; if (a) continue; if (b) continue; }",
-        "for (; x; ) { debugger; a || !b; }",
+        "for (; x; ) { debugger; a || b; }",
     );
     test(
         "x: while (x) y: while (y) { if (a) break x; if (b) break y; }",
@@ -1026,224 +1024,77 @@ fn test_ignored1() {
 }
 
 #[test]
-#[ignore]
-fn test_ignored2() {
-    test("y(x && false)", "y(x && !1);");
-    test("y(x || false)", "y(x || !1);");
-    test("y(!(x && false))", "y(!(x && !1));");
-    test("y(!(x || false))", "y(!x);");
-    test("if (x && false) y", "x;");
-    test("if (x || false) y", "x && y;");
-    test("if (x && false) y; else z", "x, z;");
-    test("if (x || false) y; else z", "x ? y : z;");
-    test("y(x && false ? y : z)", "y((x, z));");
-    test("y(x || false ? y : z)", "y(x ? y : z);");
-    test("while (false) x()", "for (; !1; ) x();");
-    test("for (; false; ) x()", "for (; !1; ) x();");
-    test("y(x && '')", "y(x && '');");
-    test("y(x || '')", "y(x || '');");
-    test("y(!(x && ''))", "y(!(x && false));");
-    test("y(!(x || ''))", "y(!x);");
-    test("if (x && '') y", "x;");
-    test("if (x || '') y", "x && y;");
-    test("if (x && '') y; else z", "x, z;");
-    test("if (x || '') y; else z", "x ? y : z;");
-    test("y(x && '' ? y : z)", "y((x, z));");
-    test("y(x || '' ? y : z)", "y(x ? y : z);");
-    test("while ('') x()", "for (; false; ) x();");
-    test("for (; ''; ) x()", "for (; false; ) x();");
-    test("y(x && 0)", "y(x && 0);");
-    test("y(x || 0)", "y(x || 0);");
-    test("y(!(x && 0))", "y(!(x && false));");
-    test("y(!(x || 0))", "y(!x);");
-    test("if (x && 0) y", "x;");
-    test("if (x || 0) y", "x && y;");
-    test("if (x && 0) y; else z", "x, z;");
-    test("if (x || 0) y; else z", "x ? y : z;");
-    test("y(x && 0 ? y : z)", "y((x, z));");
-    test("y(x || 0 ? y : z)", "y(x ? y : z);");
-    test("while (0) x()", "for (; false; ) x();");
-    test("for (; 0; ) x()", "for (; false; ) x();");
-    test("y(x && 0n)", "y(x && 0n);");
-    test("y(x || 0n)", "y(x || 0n);");
-    test("y(!(x && 0n))", "y(!(x && false));");
-    test("y(!(x || 0n))", "y(!x);");
-    test("if (x && 0n) y", "x;");
-    test("if (x || 0n) y", "x && y;");
-    test("if (x && 0n) y; else z", "x, z;");
-    test("if (x || 0n) y; else z", "x ? y : z;");
-    test("y(x && 0n ? y : z)", "y((x, z));");
-    test("y(x || 0n ? y : z)", "y(x ? y : z);");
-    test("while (0n) x()", "for (; false; ) x();");
-    test("for (; 0n; ) x()", "for (; false; ) x();");
-    test("y(x && null)", "y(x && null);");
-    test("y(x || null)", "y(x || null);");
-    test("y(!(x && null))", "y(!(x && false));");
-    test("y(!(x || null))", "y(!x);");
-    test("if (x && null) y", "x;");
-    test("if (x || null) y", "x && y;");
-    test("if (x && null) y; else z", "x, z;");
-    test("if (x || null) y; else z", "x ? y : z;");
-    test("y(x && null ? y : z)", "y((x, z));");
-    test("y(x || null ? y : z)", "y(x ? y : z);");
-    test("while (null) x()", "for (; false; ) x();");
-    test("for (; null; ) x()", "for (; false; ) x();");
-    test("y(x && void 0)", "y(x && void 0);");
-    test("y(x || void 0)", "y(x || void 0);");
-    test("y(!(x && void 0))", "y(!(x && false));");
-    test("y(!(x || void 0))", "y(!x);");
-    test("if (x && void 0) y", "x;");
-    test("if (x || void 0) y", "x && y;");
-    test("if (x && void 0) y; else z", "x, z;");
-    test("if (x || void 0) y; else z", "x ? y : z;");
-    test("y(x && void 0 ? y : z)", "y((x, z));");
-    test("y(x || void 0 ? y : z)", "y(x ? y : z);");
-    test("while (void 0) x()", "for (; false; ) x();");
-    test("for (; void 0; ) x()", "for (; false; ) x();");
-    test("y(x && true)", "y(x && true);");
-    test("y(x || true)", "y(x || true);");
-    test("y(!(x && true))", "y(!x);");
-    test("y(!(x || true))", "y(!(x || true));");
-    test("if (x && true) y", "x && y;");
-    test("if (x || true) y", "x, y;");
-    test("if (x && true) y; else z", "x ? y : z;");
-    test("if (x || true) y; else z", "x, y;");
-    test("y(x && true ? y : z)", "y(x ? y : z);");
-    test("y(x || true ? y : z)", "y((x, y));");
-    test("while (true) x()", "for (;;) x();");
-    test("for (; true; ) x()", "for (;;) x();");
-    test("y(x && ' ')", "y(x && ' ');");
-    test("y(x || ' ')", "y(x || ' ');");
-    test("y(!(x && ' '))", "y(!x);");
-    test("y(!(x || ' '))", "y(!(x || true));");
-    test("if (x && ' ') y", "x && y;");
-    test("if (x || ' ') y", "x, y;");
-    test("if (x && ' ') y; else z", "x ? y : z;");
-    test("if (x || ' ') y; else z", "x, y;");
-    test("y(x && ' ' ? y : z)", "y(x ? y : z);");
-    test("y(x || ' ' ? y : z)", "y((x, y));");
-    test("while (' ') x()", "for (;;) x();");
-    test("for (; ' '; ) x()", "for (;;) x();");
-    test("y(x && 1)", "y(x && 1);");
-    test("y(x || 1)", "y(x || 1);");
-    test("y(!(x && 1))", "y(!x);");
-    test("y(!(x || 1))", "y(!(x || true));");
-    test("if (x && 1) y", "x && y;");
-    test("if (x || 1) y", "x, y;");
-    test("if (x && 1) y; else z", "x ? y : z;");
-    test("if (x || 1) y; else z", "x, y;");
-    test("y(x && 1 ? y : z)", "y(x ? y : z);");
-    test("y(x || 1 ? y : z)", "y((x, y));");
-    test("while (1) x()", "for (;;) x();");
-    test("for (; 1; ) x()", "for (;;) x();");
-    test("y(x && 1n)", "y(x && 1n);");
-    test("y(x || 1n)", "y(x || 1n);");
-    test("y(!(x && 1n))", "y(!x);");
-    test("y(!(x || 1n))", "y(!(x || true));");
-    test("if (x && 1n) y", "x && y;");
-    test("if (x || 1n) y", "x, y;");
-    test("if (x && 1n) y; else z", "x ? y : z;");
-    test("if (x || 1n) y; else z", "x, y;");
-    test("y(x && 1n ? y : z)", "y(x ? y : z);");
-    test("y(x || 1n ? y : z)", "y((x, y));");
-    test("while (1n) x()", "for (;;) x();");
-    test("for (; 1n; ) x()", "for (;;) x();");
-    test("y(x && /./)", "y(x && /./);");
-    test("y(x || /./)", "y(x || /./);");
-    test("y(!(x && /./))", "y(!x);");
-    test("y(!(x || /./))", "y(!(x || true));");
-    test("if (x && /./) y", "x && y;");
-    test("if (x || /./) y", "x, y;");
-    test("if (x && /./) y; else z", "x ? y : z;");
-    test("if (x || /./) y; else z", "x, y;");
-    test("y(x && /./ ? y : z)", "y(x ? y : z);");
-    test("y(x || /./ ? y : z)", "y((x, y));");
-    test("while (/./) x()", "for (;;) x();");
-    test("for (; /./; ) x()", "for (;;) x();");
-    test("y(x && (() => {}))", "y(x && (() => {}));");
-    test("y(x || (() => {}))", "y(x || (() => {}));");
-    test("y(!(x && (() => {})))", "y(!x);");
-    test("y(!(x || (() => {})))", "y(!(x || true));");
-    test("if (x && (() => {})) y", "x && y;");
-    test("if (x || (() => {})) y", "x, y;");
-    test("if (x && (() => {})) y; else z", "x ? y : z;");
-    test("if (x || (() => {})) y; else z", "x, y;");
-    test("y(x && (() => {}) ? y : z)", "y(x ? y : z);");
-    test("y(x || (() => {}) ? y : z)", "y((x, y));");
-    test("while ((() => {})) x()", "for (;;) x();");
-    test("for (; (() => {}); ) x()", "for (;;) x();");
-    test("y(x && function() {})", "y(x && function() {});");
-    test("y(x || function() {})", "y(x || function() {});");
-    test("y(!(x && function() {}))", "y(!x);");
-    test("y(!(x || function() {}))", "y(!(x || true));");
-    test("if (x && function() {}) y", "x && y;");
-    test("if (x || function() {}) y", "x, y;");
-    test("if (x && function() {}) y; else z", "x ? y : z;");
-    test("if (x || function() {}) y; else z", "x, y;");
-    test("y(x && function() {} ? y : z)", "y(x ? y : z);");
-    test("y(x || function() {} ? y : z)", "y((x, y));");
-    test("while (function() {}) x()", "for (;;) x();");
-    test("for (; function() {}; ) x()", "for (;;) x();");
-    test("y(x && [1, 2])", "y(x && [1, 2]);");
-    test("y(x || [1, 2])", "y(x || [1, 2]);");
-    test("y(!(x && [1, 2]))", "y(!x);");
-    test("y(!(x || [1, 2]))", "y(!(x || true));");
-    test("if (x && [1, 2]) y", "x && y;");
-    test("if (x || [1, 2]) y", "x, y;");
-    test("if (x && [1, 2]) y; else z", "x ? y : z;");
-    test("if (x || [1, 2]) y; else z", "x, y;");
-    test("y(x && [1, 2] ? y : z)", "y(x ? y : z);");
-    test("y(x || [1, 2] ? y : z)", "y((x, y));");
-    test("while ([1, 2]) x()", "for (;;) x();");
-    test("for (; [1, 2]; ) x()", "for (;;) x();");
-    test("y(x && { a: 0 })", "y(x && { a: 0 });");
-    test("y(x || { a: 0 })", "y(x || { a: 0 });");
-    test("y(!(x && { a: 0 }))", "y(!x);");
-    test("y(!(x || { a: 0 }))", "y(!(x || true));");
-    test("if (x && { a: 0 }) y", "x && y;");
-    test("if (x || { a: 0 }) y", "x, y;");
-    test("if (x && { a: 0 }) y; else z", "x ? y : z;");
-    test("if (x || { a: 0 }) y; else z", "x, y;");
-    test("y(x && { a: 0 } ? y : z)", "y(x ? y : z);");
-    test("y(x || { a: 0 } ? y : z)", "y((x, y));");
-    test("while ({ a: 0 }) x()", "for (;;) x();");
-    test("for (; { a: 0 }; ) x()", "for (;;) x();");
-    test("y(x && void foo())", "y(x && void foo());");
-    test("y(x || void foo())", "y(x || void foo());");
-    test("y(!(x && void foo()))", "y(!(x && void foo()));");
-    test("y(!(x || void foo()))", "y(!(x || void foo()));");
-    test("if (x || void foo()) y", "(x || void foo()) && y;");
-    test("if (x || void foo()) y; else z", "x || void foo() ? y : z;");
-    test("y(x || void foo() ? y : z)", "y(x || void foo() ? y : z);");
-    test("while (void foo()) x()", "for (; void foo(); ) x();");
-    test("for (; void foo(); ) x()", "for (; void foo(); ) x();");
-    test("y(x && typeof foo())", "y(x && typeof foo());");
-    test("y(x || typeof foo())", "y(x || typeof foo());");
-    test("y(!(x || typeof foo()))", "y(!(x || typeof foo()));");
-    test("y(!(x && typeof foo()))", "y(!(x && typeof foo()));");
-    test("if (x && typeof foo()) y", "x && typeof foo() && y;");
-    test("if (x && typeof foo()) y; else z", "x && typeof foo() ? y : z;");
-    test("y(x && typeof foo() ? y : z)", "y(x && typeof foo() ? y : z);");
-    test("while (typeof foo()) x()", "for (; typeof foo(); ) x();");
-    test("for (; typeof foo(); ) x()", "for (; typeof foo(); ) x();");
-    test("y(x && [foo()])", "y(x && [foo()]);");
-    test("y(x || [foo()])", "y(x || [foo()]);");
-    test("y(!(x || [foo()]))", "y(!(x || [foo()]));");
-    test("y(!(x && [foo()]))", "y(!(x && [foo()]));");
-    test("if (x && [foo()]) y", "x && [foo()] && y;");
-    test("if (x && [foo()]) y; else z", "x && [foo()] ? y : z;");
-    test("y(x && [foo()] ? y : z)", "y(x && [foo()] ? y : z);");
-    test("while ([foo()]) x()", "for (; [foo()]; ) x();");
-    test("for (; [foo()]; ) x()", "for (; [foo()]; ) x();");
-    test("y(x && { [foo()]: 0 })", "y(x && { [foo()]: 0 });");
-    test("y(x || { [foo()]: 0 })", "y(x || { [foo()]: 0 });");
-    test("y(!(x || { [foo()]: 0 }))", "y(!(x || { [foo()]: 0 }));");
-    test("y(!(x && { [foo()]: 0 }))", "y(!(x && { [foo()]: 0 }));");
-    test("if (x && { [foo()]: 0 }) y", "x && { [foo()]: 0 } && y;");
-    test("if (x && { [foo()]: 0 }) y; else z", "x && { [foo()]: 0 } ? y : z;");
-    test("y(x && { [foo()]: 0 } ? y : z)", "y(x && { [foo()]: 0 } ? y : z);");
-    test("while ({ [foo()]: 0 }) x()", "for (; { [foo()]: 0 }; ) x();");
-    test("for (; { [foo()]: 0 }; ) x()", "for (; { [foo()]: 0 }; ) x();");
+fn test_mangle_boolean_with_side_effects() {
+    let falsy_no_side_effects = ["!1", "\"\"", "0", "0n", "null", "void 0"];
+    for value in falsy_no_side_effects {
+        test(&format!("y(x && {value})"), &format!("y(x && {value});"));
+        test(&format!("y(x || {value})"), &format!("y(x || {value});"));
+        test(&format!("y(!(x && {value}))"), &format!("y(!(x && {value}));"));
+        test(&format!("y(!(x || {value}))"), "y(!x);");
+        test(&format!("if (x && {value}) y"), "x;");
+        test(&format!("if (x || {value}) y"), "x && y;");
+        test(&format!("if (x && {value}) y; else z"), "x, z;");
+        test(&format!("if (x || {value}) y; else z"), "x ? y : z;");
+        test(&format!("y(x && {value} ? y : z)"), "y((x, z));");
+        test(&format!("y(x || {value} ? y : z)"), "y(x ? y : z);");
+        test(&format!("while ({value}) x()"), "");
+        test(&format!("for (; {value}; ) x()"), "");
+    }
+
+    let truthy_no_side_effects = [
+        "!0",
+        "\" \"",
+        "1",
+        "1n",
+        "/./",
+        "(() => {\n})",
+        "function() {\n}",
+        "[1, 2]",
+        // FIXME:
+        //"{ a: 0 }"
+    ];
+    for value in truthy_no_side_effects {
+        test(&format!("y(x && {value})"), &format!("y(x && {value});"));
+        test(&format!("y(x || {value})"), &format!("y(x || {value});"));
+        test(&format!("y(!(x && {value}))"), "y(!x);");
+        test(&format!("y(!(x || {value}))"), &format!("y(!(x || {value}));"));
+        test(&format!("if (x && {value}) y"), "x && y;");
+        test(&format!("if (x || {value}) y"), "x, y;");
+        test(&format!("if (x && {value}) y; else z"), "x ? y : z;");
+        test(&format!("if (x || {value}) y; else z"), "x, y;");
+        test(&format!("y(x && {value} ? y : z)"), "y(x ? y : z);");
+        test(&format!("y(x || {value} ? y : z)"), "y((x, y));");
+        test(&format!("while ({value}) x()"), "for (; ; ) x();");
+        test(&format!("for (; {value}; ) x()"), "for (; ; ) x();");
+    }
+
+    let falsy_has_side_effects = ["void foo()"];
+    for value in falsy_has_side_effects {
+        test(&format!("y(x && {value})"), &format!("y(x && {value});"));
+        test(&format!("y(x || {value})"), &format!("y(x || {value});"));
+        test(&format!("y(!(x && {value}))"), &format!("y(!(x && {value}));"));
+        test(&format!("y(!(x || {value}))"), &format!("y(!(x || {value}));"));
+        test(&format!("if (x || {value}) y"), &format!("(x || {value}) && y;"));
+        test(&format!("if (x || {value}) y; else z"), &format!("x || {value} ? y : z;"));
+        test(&format!("y(x || {value} ? y : z)"), &format!("y(x || {value} ? y : z);"));
+        // FIXME: keeps `foo()`
+        // test(&format!("while ({value}) x()"), &format!("for (; {value}; ) x();"));
+        // test(&format!("for (; {value}; ) x()"), &format!("for (; {value}; ) x();"));
+    }
+
+    let truthy_has_side_effects = ["typeof foo()", "[foo()]", "{ [foo()]: 0 }"];
+    for value in truthy_has_side_effects {
+        test(&format!("y(x && {value})"), &format!("y(x && {value});"));
+        test(&format!("y(x || {value})"), &format!("y(x || {value});"));
+        test(&format!("y(!(x || {value}))"), &format!("y(!(x || {value}));"));
+        test(&format!("y(!(x && {value}))"), &format!("y(!(x && {value}));"));
+        test(&format!("if (x && {value}) y"), &format!("x && {value} && y;"));
+        test(&format!("if (x && {value}) y; else z"), &format!("x && {value} ? y : z;"));
+        test(&format!("y(x && {value} ? y : z)"), &format!("y(x && {value} ? y : z);"));
+        // FIXME
+        // test(&format!("while ({value}) x()"), &format!("for (; {value}; ) x();"));
+        // test(&format!("for (; {value}; ) x()"), &format!("for (; {value}; ) x();"));
+    }
 }
 
 #[test]

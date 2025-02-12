@@ -83,6 +83,6 @@ mod test {
         test("!!!!delete x.y", "delete x.y");
         test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
         test("!(a === 1 ? void 0 : a.b)", "a !== 1 && a.b;");
-        test("!(a, b)", "a, !b");
+        test("!(a, b)", "a, b");
     }
 }

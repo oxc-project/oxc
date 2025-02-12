@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(lval) = left_val {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
-            if if lval { op == LogicalOperator::Or } else { op == LogicalOperator::And } {
+            if if lval { op.is_or() } else { op.is_and() } {
                 return Some(ctx.ast.move_expression(&mut logical_expr.left));
             } else if !ctx.expression_may_have_side_effects(left) {
                 let parent = ctx.ancestry.parent();
@@ -134,8 +134,8 @@ impl<'a> PeepholeOptimizations {
                     if !ctx.expression_may_have_side_effects(&left_child.right) {
                         // a || false || b => a || b
                         // a && true && b => a && b
-                        if !right_boolean && left_child_op == LogicalOperator::Or
-                            || right_boolean && left_child_op == LogicalOperator::And
+                        if !right_boolean && left_child_op.is_or()
+                            || right_boolean && left_child_op.is_and()
                         {
                             let left = ctx.ast.move_expression(&mut left_child.left);
                             let right = ctx.ast.move_expression(&mut logical_expr.right);

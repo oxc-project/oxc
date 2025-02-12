@@ -24,36 +24,60 @@ impl<'a> PeepholeOptimizations {
             | Expression::ArrowFunctionExpression(_)
             | Expression::MetaProperty(_) => true,
             Expression::Identifier(ident) => ctx.symbols().has_binding(ident.reference_id()),
-            Expression::ArrayExpression(_) => Self::try_fold_array_expression(e, ctx),
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
-                UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                    *e = ctx.ast.move_expression(&mut unary_expr.argument);
-                    Self::remove_unused_expression(e, ctx)
-                }
-                UnaryOperator::Typeof => {
-                    if unary_expr.argument.is_identifier_reference() {
-                        true
-                    } else {
-                        *e = ctx.ast.move_expression(&mut unary_expr.argument);
-                        Self::remove_unused_expression(e, ctx)
-                    }
-                }
-                _ => false,
-            },
+            Expression::ArrayExpression(_) => Self::fold_array_expression(e, ctx),
+            Expression::UnaryExpression(_) => Self::fold_unary_expression(e, ctx),
             Expression::NewExpression(e) => Self::fold_new_constructor(e, ctx),
+            Expression::LogicalExpression(_) => Self::fold_logical_expression(e, ctx),
+            Expression::SequenceExpression(_) => Self::fold_sequence_expression(e, ctx),
             // TODO
             // Expression::TemplateLiteral(_)
             // | Expression::ObjectExpression(_)
-            // | Expression::ConditionalExpression(_)
-            // | Expression::BinaryExpression(_) => {
+            // | Expression::ConditionalExpression(_) => {
             // false
             // }
             _ => false,
         }
     }
 
+    fn fold_unary_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::UnaryExpression(unary_expr) = e else { return false };
+        match unary_expr.operator {
+            UnaryOperator::Void | UnaryOperator::LogicalNot => {
+                *e = ctx.ast.move_expression(&mut unary_expr.argument);
+                Self::remove_unused_expression(e, ctx)
+            }
+            UnaryOperator::Typeof => {
+                if unary_expr.argument.is_identifier_reference() {
+                    true
+                } else {
+                    *e = ctx.ast.move_expression(&mut unary_expr.argument);
+                    Self::remove_unused_expression(e, ctx)
+                }
+            }
+            _ => false,
+        }
+    }
+
+    fn fold_sequence_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::SequenceExpression(sequence_expr) = e else { return false };
+        sequence_expr.expressions.retain_mut(|e| !Self::remove_unused_expression(e, ctx));
+        sequence_expr.expressions.is_empty()
+    }
+
+    fn fold_logical_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::LogicalExpression(logical_expr) = e else { return false };
+        if !logical_expr.operator.is_coalesce() {
+            Self::try_fold_expr_in_boolean_context(&mut logical_expr.left, ctx);
+        }
+        if Self::remove_unused_expression(&mut logical_expr.right, ctx) {
+            Self::remove_unused_expression(&mut logical_expr.left, ctx);
+            *e = ctx.ast.move_expression(&mut logical_expr.left);
+        }
+        false
+    }
+
     // `([1,2,3, foo()])` -> `foo()`
-    fn try_fold_array_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_array_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::ArrayExpression(array_expr) = e else {
             return false;
         };

@@ -65,7 +65,7 @@ impl<'a> PeepholeOptimizations {
                 return true;
             }
             // "if (!!a && !!b)" => "if (a && b)"
-            Expression::LogicalExpression(e) if e.operator == LogicalOperator::And => {
+            Expression::LogicalExpression(e) if e.operator.is_and() => {
                 Self::try_fold_expr_in_boolean_context(&mut e.left, ctx);
                 Self::try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"

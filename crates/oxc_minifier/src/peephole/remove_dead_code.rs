@@ -338,27 +338,26 @@ impl<'a, 'b> PeepholeOptimizations {
             return None;
         }
 
-        match ctx.get_boolean_value(&expr.test) {
-            Some(v) => {
-                if ctx.expression_may_have_side_effects(&expr.test) {
-                    let mut exprs = ctx.ast.vec_with_capacity(2);
-                    exprs.push(ctx.ast.move_expression(&mut expr.test));
-                    exprs.push(ctx.ast.move_expression(if v {
+        ctx.get_boolean_value(&expr.test).map(|v| {
+            if ctx.expression_may_have_side_effects(&expr.test) {
+                // "(a, true) ? b : c" => "a, b"
+                let exprs = ctx.ast.vec_from_iter([
+                    {
+                        let mut test = ctx.ast.move_expression(&mut expr.test);
+                        Self::remove_unused_expression(&mut test, ctx);
+                        test
+                    },
+                    ctx.ast.move_expression(if v {
                         &mut expr.consequent
                     } else {
                         &mut expr.alternate
-                    }));
-                    Some(ctx.ast.expression_sequence(expr.span, exprs))
-                } else {
-                    Some(ctx.ast.move_expression(if v {
-                        &mut expr.consequent
-                    } else {
-                        &mut expr.alternate
-                    }))
-                }
+                    }),
+                ]);
+                ctx.ast.expression_sequence(expr.span, exprs)
+            } else {
+                ctx.ast.move_expression(if v { &mut expr.consequent } else { &mut expr.alternate })
             }
-            None => None,
-        }
+        })
     }
 
     fn try_fold_sequence_expression(
@@ -574,7 +573,7 @@ mod test {
         test("true ? foo() : bar()", "foo()");
         test("false ? foo() : bar()", "bar()");
         test_same("foo() ? bar() : baz()");
-        test("foo && false ? foo() : bar()", "(foo && !1, bar());");
+        test("foo && false ? foo() : bar()", "(foo, bar());");
     }
 
     #[test]

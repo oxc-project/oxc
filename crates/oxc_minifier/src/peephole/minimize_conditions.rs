@@ -743,9 +743,7 @@ mod test {
 
     #[test]
     fn test_fold_logical_op_string_compare() {
-        // side-effects
-        // There is two way to parse two &&'s and both are correct.
-        test("if (foo() && false) z()", "foo() && !1");
+        test("if (foo() && false) z()", "foo()");
     }
 
     #[test]

@@ -45,7 +45,8 @@ impl<'a> PeepholeOptimizations {
                 || if_stmt.alternate.as_ref().is_some_and(Self::is_statement_empty)
             {
                 // "if (a) {}" => "a;"
-                let expr = ctx.ast.move_expression(&mut if_stmt.test);
+                let mut expr = ctx.ast.move_expression(&mut if_stmt.test);
+                Self::remove_unused_expression(&mut expr, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
                 let (op, e) = match &mut if_stmt.test {
