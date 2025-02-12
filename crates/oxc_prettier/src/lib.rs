@@ -99,10 +99,9 @@ impl<'a> Prettier<'a> {
         (len >= 3).then(|| self.stack[len - 3])
     }
 
-    #[expect(unused)]
-    fn nth_parent_kind(&self, n: usize) -> Option<AstKind<'a>> {
+    fn parent_parent_parent_kind(&self) -> Option<AstKind<'a>> {
         let len = self.stack.len();
-        (len > n).then(|| self.stack[len - n - 1])
+        (len >= 4).then(|| self.stack[len - 4])
     }
 
     fn find_ancestor(&self, predicate: impl Fn(AstKind<'a>) -> bool) -> Option<AstKind<'a>> {
