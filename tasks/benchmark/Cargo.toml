@@ -86,25 +86,21 @@ serde_json = { workspace = true, optional = true }
 
 [features]
 default = [
-  "dep:oxc_allocator",
-  "dep:oxc_ast",
-  "dep:oxc_codegen",
-  "dep:oxc_isolated_declarations",
-  "dep:oxc_linter",
-  "dep:oxc_minifier",
-  "dep:oxc_mangler",
-  "dep:oxc_parser",
-  "dep:oxc_prettier",
-  "dep:oxc_semantic",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-  "dep:oxc_transformer",
+  "lexer",
+  "parser",
+  "transformer",
+  "semantic",
+  "minifier",
+  "codegen",
+  "linter",
+  "prettier",
+  "isolated_declarations",
 ]
 codspeed = ["criterion2/codspeed"]
 codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
 
 # Features for running each benchmark separately with minimum dependencies that benchmark needs.
-# e.g. `cargo build --release -p oxc_benchmark --bench parser --no-default-features --features parser`
+# e.g. `cargo bench -p oxc_benchmark --bench parser --no-default-features --features parser`
 lexer = ["dep:oxc_allocator", "dep:oxc_ast", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
 parser = ["dep:oxc_allocator", "dep:oxc_ast", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
 transformer = [
