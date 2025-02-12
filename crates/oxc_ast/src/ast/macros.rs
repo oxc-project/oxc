@@ -563,8 +563,6 @@ macro_rules! inherit_variants {
                 /// Inherited from [`TSType`]
                 TSNeverKeyword(Box<'a, TSNeverKeyword>) = 4,
                 /// Inherited from [`TSType`]
-                TSNullKeyword(Box<'a, TSNullKeyword>) = 5,
-                /// Inherited from [`TSType`]
                 TSNumberKeyword(Box<'a, TSNumberKeyword>) = 6,
                 /// Inherited from [`TSType`]
                 TSObjectKeyword(Box<'a, TSObjectKeyword>) = 7,
@@ -652,7 +650,6 @@ macro_rules! inherit_variants {
                 TSBooleanKeyword,
                 TSIntrinsicKeyword,
                 TSNeverKeyword,
-                TSNullKeyword,
                 TSNumberKeyword,
                 TSObjectKeyword,
                 TSStringKeyword,

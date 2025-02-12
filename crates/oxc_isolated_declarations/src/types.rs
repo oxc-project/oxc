@@ -196,7 +196,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 SPAN,
                 TSLiteral::StringLiteral(lit.clone_in(self.ast.allocator)),
             )),
-            Expression::NullLiteral(lit) => Some(self.ast.ts_type_null_keyword(lit.span)),
+            Expression::NullLiteral(_) => {
+                Some(self.ast.ts_type_literal_type(SPAN, self.ast.ts_literal_null_literal(SPAN)))
+            }
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Some(self.ast.ts_type_undefined_keyword(ident.span)),
                 _ => None,

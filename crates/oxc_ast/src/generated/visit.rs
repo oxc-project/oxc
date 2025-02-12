@@ -891,11 +891,6 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_null_keyword(&mut self, it: &TSNullKeyword) {
-        walk_ts_null_keyword(self, it);
-    }
-
-    #[inline]
     fn visit_ts_undefined_keyword(&mut self, it: &TSUndefinedKeyword) {
         walk_ts_undefined_keyword(self, it);
     }
@@ -3215,7 +3210,6 @@ pub mod walk {
             TSType::TSBooleanKeyword(it) => visitor.visit_ts_boolean_keyword(it),
             TSType::TSIntrinsicKeyword(it) => visitor.visit_ts_intrinsic_keyword(it),
             TSType::TSNeverKeyword(it) => visitor.visit_ts_never_keyword(it),
-            TSType::TSNullKeyword(it) => visitor.visit_ts_null_keyword(it),
             TSType::TSNumberKeyword(it) => visitor.visit_ts_number_keyword(it),
             TSType::TSObjectKeyword(it) => visitor.visit_ts_object_keyword(it),
             TSType::TSStringKeyword(it) => visitor.visit_ts_string_keyword(it),
@@ -3420,14 +3414,6 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_unknown_keyword<'a, V: Visit<'a>>(visitor: &mut V, it: &TSUnknownKeyword) {
         let kind = AstKind::TSUnknownKeyword(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_span(&it.span);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_ts_null_keyword<'a, V: Visit<'a>>(visitor: &mut V, it: &TSNullKeyword) {
-        let kind = AstKind::TSNullKeyword(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.leave_node(kind);

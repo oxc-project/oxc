@@ -1033,10 +1033,6 @@ const _: () = {
     assert!(align_of::<TSUnknownKeyword>() == 8);
     assert!(offset_of!(TSUnknownKeyword, span) == 0);
 
-    assert!(size_of::<TSNullKeyword>() == 8);
-    assert!(align_of::<TSNullKeyword>() == 8);
-    assert!(offset_of!(TSNullKeyword, span) == 0);
-
     assert!(size_of::<TSUndefinedKeyword>() == 8);
     assert!(align_of::<TSUndefinedKeyword>() == 8);
     assert!(offset_of!(TSUndefinedKeyword, span) == 0);
@@ -2609,10 +2605,6 @@ const _: () = {
     assert!(size_of::<TSUnknownKeyword>() == 8);
     assert!(align_of::<TSUnknownKeyword>() == 4);
     assert!(offset_of!(TSUnknownKeyword, span) == 0);
-
-    assert!(size_of::<TSNullKeyword>() == 8);
-    assert!(align_of::<TSNullKeyword>() == 4);
-    assert!(offset_of!(TSNullKeyword, span) == 0);
 
     assert!(size_of::<TSUndefinedKeyword>() == 8);
     assert!(align_of::<TSUndefinedKeyword>() == 4);

@@ -41,7 +41,7 @@ impl<'a> AstKind<'a> {
     #[rustfmt::skip]
     pub fn is_type(self) -> bool {
         matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSIntrinsicKeyword(_)
-                | Self::TSNeverKeyword(_) | Self::TSNullKeyword(_) | Self::TSNumberKeyword(_) | Self::TSObjectKeyword(_)
+                | Self::TSNeverKeyword(_) | Self::TSNumberKeyword(_) | Self::TSObjectKeyword(_)
                 | Self::TSStringKeyword(_) | Self::TSSymbolKeyword(_) | Self::TSUndefinedKeyword(_) | Self::TSUnknownKeyword(_)
                 | Self::TSVoidKeyword(_) | Self::TSIndexedAccessType(_) | Self::TSInferType(_) | Self::TSIntersectionType(_)
                 | Self::TSLiteralType(_) | Self::TSMethodSignature(_) | Self::TSTemplateLiteralType(_) | Self::TSThisType(_)
@@ -352,7 +352,6 @@ impl AstKind<'_> {
             Self::TSIntersectionType(_) => "TSIntersectionType".into(),
             Self::TSLiteralType(_) => "TSLiteralType".into(),
             Self::TSMethodSignature(_) => "TSMethodSignature".into(),
-            Self::TSNullKeyword(_) => "TSNullKeyword".into(),
             Self::TSTypeLiteral(_) => "TSTypeLiteral".into(),
             Self::TSTypeReference(t) => format!("TSTypeReference({})", t.type_name).into(),
             Self::TSUnionType(_) => "TSUnionType".into(),

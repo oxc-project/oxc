@@ -3819,9 +3819,6 @@ unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::TSNeverKeyword(node) => {
             walk_ts_never_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSType::TSNullKeyword(node) => {
-            walk_ts_null_keyword(traverser, (&mut **node) as *mut _, ctx)
-        }
         TSType::TSNumberKeyword(node) => {
             walk_ts_number_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -4162,7 +4159,6 @@ unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         | TSTupleElement::TSBooleanKeyword(_)
         | TSTupleElement::TSIntrinsicKeyword(_)
         | TSTupleElement::TSNeverKeyword(_)
-        | TSTupleElement::TSNullKeyword(_)
         | TSTupleElement::TSNumberKeyword(_)
         | TSTupleElement::TSObjectKeyword(_)
         | TSTupleElement::TSStringKeyword(_)
@@ -4260,15 +4256,6 @@ unsafe fn walk_ts_unknown_keyword<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_ts_unknown_keyword(&mut *node, ctx);
     traverser.exit_ts_unknown_keyword(&mut *node, ctx);
-}
-
-unsafe fn walk_ts_null_keyword<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut TSNullKeyword,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_ts_null_keyword(&mut *node, ctx);
-    traverser.exit_ts_null_keyword(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_undefined_keyword<'a, Tr: Traverse<'a>>(

@@ -140,44 +140,43 @@ pub enum AstType {
     TSNeverKeyword = 124,
     TSIntrinsicKeyword = 125,
     TSUnknownKeyword = 126,
-    TSNullKeyword = 127,
-    TSUndefinedKeyword = 128,
-    TSVoidKeyword = 129,
-    TSSymbolKeyword = 130,
-    TSThisType = 131,
-    TSObjectKeyword = 132,
-    TSBigIntKeyword = 133,
-    TSTypeReference = 134,
-    TSTypeName = 135,
-    TSQualifiedName = 136,
-    TSTypeParameterInstantiation = 137,
-    TSTypeParameter = 138,
-    TSTypeParameterDeclaration = 139,
-    TSTypeAliasDeclaration = 140,
-    TSClassImplements = 141,
-    TSInterfaceDeclaration = 142,
-    TSPropertySignature = 143,
-    TSMethodSignature = 144,
-    TSConstructSignatureDeclaration = 145,
-    TSInterfaceHeritage = 146,
-    TSModuleDeclaration = 147,
-    TSModuleBlock = 148,
-    TSTypeLiteral = 149,
-    TSInferType = 150,
-    TSTypeQuery = 151,
-    TSImportType = 152,
-    TSMappedType = 153,
-    TSTemplateLiteralType = 154,
-    TSAsExpression = 155,
-    TSSatisfiesExpression = 156,
-    TSTypeAssertion = 157,
-    TSImportEqualsDeclaration = 158,
-    TSModuleReference = 159,
-    TSExternalModuleReference = 160,
-    TSNonNullExpression = 161,
-    Decorator = 162,
-    TSExportAssignment = 163,
-    TSInstantiationExpression = 164,
+    TSUndefinedKeyword = 127,
+    TSVoidKeyword = 128,
+    TSSymbolKeyword = 129,
+    TSThisType = 130,
+    TSObjectKeyword = 131,
+    TSBigIntKeyword = 132,
+    TSTypeReference = 133,
+    TSTypeName = 134,
+    TSQualifiedName = 135,
+    TSTypeParameterInstantiation = 136,
+    TSTypeParameter = 137,
+    TSTypeParameterDeclaration = 138,
+    TSTypeAliasDeclaration = 139,
+    TSClassImplements = 140,
+    TSInterfaceDeclaration = 141,
+    TSPropertySignature = 142,
+    TSMethodSignature = 143,
+    TSConstructSignatureDeclaration = 144,
+    TSInterfaceHeritage = 145,
+    TSModuleDeclaration = 146,
+    TSModuleBlock = 147,
+    TSTypeLiteral = 148,
+    TSInferType = 149,
+    TSTypeQuery = 150,
+    TSImportType = 151,
+    TSMappedType = 152,
+    TSTemplateLiteralType = 153,
+    TSAsExpression = 154,
+    TSSatisfiesExpression = 155,
+    TSTypeAssertion = 156,
+    TSImportEqualsDeclaration = 157,
+    TSModuleReference = 158,
+    TSExternalModuleReference = 159,
+    TSNonNullExpression = 160,
+    Decorator = 161,
+    TSExportAssignment = 162,
+    TSInstantiationExpression = 163,
 }
 
 /// Untyped AST Node Kind
@@ -319,7 +318,6 @@ pub enum AstKind<'a> {
     TSNeverKeyword(&'a TSNeverKeyword) = AstType::TSNeverKeyword as u8,
     TSIntrinsicKeyword(&'a TSIntrinsicKeyword) = AstType::TSIntrinsicKeyword as u8,
     TSUnknownKeyword(&'a TSUnknownKeyword) = AstType::TSUnknownKeyword as u8,
-    TSNullKeyword(&'a TSNullKeyword) = AstType::TSNullKeyword as u8,
     TSUndefinedKeyword(&'a TSUndefinedKeyword) = AstType::TSUndefinedKeyword as u8,
     TSVoidKeyword(&'a TSVoidKeyword) = AstType::TSVoidKeyword as u8,
     TSSymbolKeyword(&'a TSSymbolKeyword) = AstType::TSSymbolKeyword as u8,
@@ -507,7 +505,6 @@ impl GetSpan for AstKind<'_> {
             Self::TSNeverKeyword(it) => it.span(),
             Self::TSIntrinsicKeyword(it) => it.span(),
             Self::TSUnknownKeyword(it) => it.span(),
-            Self::TSNullKeyword(it) => it.span(),
             Self::TSUndefinedKeyword(it) => it.span(),
             Self::TSVoidKeyword(it) => it.span(),
             Self::TSSymbolKeyword(it) => it.span(),
@@ -1687,15 +1684,6 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_unknown_keyword(self) -> Option<&'a TSUnknownKeyword> {
         if let Self::TSUnknownKeyword(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_ts_null_keyword(self) -> Option<&'a TSNullKeyword> {
-        if let Self::TSNullKeyword(v) = self {
             Some(v)
         } else {
             None

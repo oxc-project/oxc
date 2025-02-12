@@ -2351,7 +2351,6 @@ impl Serialize for TSType<'_> {
             TSType::TSBooleanKeyword(it) => it.serialize(serializer),
             TSType::TSIntrinsicKeyword(it) => it.serialize(serializer),
             TSType::TSNeverKeyword(it) => it.serialize(serializer),
-            TSType::TSNullKeyword(it) => it.serialize(serializer),
             TSType::TSNumberKeyword(it) => it.serialize(serializer),
             TSType::TSObjectKeyword(it) => it.serialize(serializer),
             TSType::TSStringKeyword(it) => it.serialize(serializer),
@@ -2542,7 +2541,6 @@ impl Serialize for TSTupleElement<'_> {
             TSTupleElement::TSBooleanKeyword(it) => it.serialize(serializer),
             TSTupleElement::TSIntrinsicKeyword(it) => it.serialize(serializer),
             TSTupleElement::TSNeverKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSNullKeyword(it) => it.serialize(serializer),
             TSTupleElement::TSNumberKeyword(it) => it.serialize(serializer),
             TSTupleElement::TSObjectKeyword(it) => it.serialize(serializer),
             TSTupleElement::TSStringKeyword(it) => it.serialize(serializer),
@@ -2643,16 +2641,6 @@ impl Serialize for TSUnknownKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "TSUnknownKeyword")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.end()
-    }
-}
-
-impl Serialize for TSNullKeyword {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "TSNullKeyword")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.end()

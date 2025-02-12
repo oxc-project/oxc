@@ -393,7 +393,6 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         | TSType::TSSymbolKeyword(_)
         | TSType::TSUnknownKeyword(_)
         | TSType::TSVoidKeyword(_)
-        | TSType::TSNullKeyword(_)
         | TSType::TSArrayType(_)
         | TSType::TSUndefinedKeyword(_)
         | TSType::TSQualifiedName(_)
@@ -448,7 +447,6 @@ fn get_ts_element_type_span(ts_type: &TSType) -> Option<Span> {
         TSType::TSSymbolKeyword(t) => Some(t.span),
         TSType::TSUnknownKeyword(t) => Some(t.span),
         TSType::TSVoidKeyword(t) => Some(t.span),
-        TSType::TSNullKeyword(t) => Some(t.span),
         TSType::TSThisType(t) => Some(t.span),
         TSType::TSUndefinedKeyword(t) => Some(t.span),
 

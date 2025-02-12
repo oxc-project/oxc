@@ -969,7 +969,6 @@ export type TSType =
   | TSBooleanKeyword
   | TSIntrinsicKeyword
   | TSNeverKeyword
-  | TSNullKeyword
   | TSNumberKeyword
   | TSObjectKeyword
   | TSStringKeyword
@@ -1095,10 +1094,6 @@ export interface TSIntrinsicKeyword extends Span {
 
 export interface TSUnknownKeyword extends Span {
   type: 'TSUnknownKeyword';
-}
-
-export interface TSNullKeyword extends Span {
-  type: 'TSNullKeyword';
 }
 
 export interface TSUndefinedKeyword extends Span {

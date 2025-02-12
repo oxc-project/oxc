@@ -189,7 +189,6 @@ pub enum TSType<'a> {
     TSBooleanKeyword(Box<'a, TSBooleanKeyword>) = 2,
     TSIntrinsicKeyword(Box<'a, TSIntrinsicKeyword>) = 3,
     TSNeverKeyword(Box<'a, TSNeverKeyword>) = 4,
-    TSNullKeyword(Box<'a, TSNullKeyword>) = 5,
     TSNumberKeyword(Box<'a, TSNumberKeyword>) = 6,
     TSObjectKeyword(Box<'a, TSObjectKeyword>) = 7,
     TSStringKeyword(Box<'a, TSStringKeyword>) = 8,
@@ -235,7 +234,6 @@ macro_rules! match_ts_type {
             | $ty::TSBooleanKeyword(_)
             | $ty::TSIntrinsicKeyword(_)
             | $ty::TSNeverKeyword(_)
-            | $ty::TSNullKeyword(_)
             | $ty::TSNumberKeyword(_)
             | $ty::TSObjectKeyword(_)
             | $ty::TSStringKeyword(_)
@@ -634,24 +632,6 @@ pub struct TSIntrinsicKeyword {
 pub struct TSUnknownKeyword {
     pub span: Span,
 }
-
-/// TypeScript `null` Keyword
-///
-/// ## Example
-/// ```ts
-/// type Foo = string | null;
-/// //                  ^^^^
-/// ```
-///
-/// ## Reference
-/// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#null-and-undefined)
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-pub struct TSNullKeyword {
-    pub span: Span,
-}
-
 /// TypeScript `undefined` Keyword
 ///
 /// ## Example

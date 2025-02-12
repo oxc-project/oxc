@@ -1782,7 +1782,6 @@ impl ContentEq for TSType<'_> {
             (Self::TSBooleanKeyword(a), Self::TSBooleanKeyword(b)) => a.content_eq(b),
             (Self::TSIntrinsicKeyword(a), Self::TSIntrinsicKeyword(b)) => a.content_eq(b),
             (Self::TSNeverKeyword(a), Self::TSNeverKeyword(b)) => a.content_eq(b),
-            (Self::TSNullKeyword(a), Self::TSNullKeyword(b)) => a.content_eq(b),
             (Self::TSNumberKeyword(a), Self::TSNumberKeyword(b)) => a.content_eq(b),
             (Self::TSObjectKeyword(a), Self::TSObjectKeyword(b)) => a.content_eq(b),
             (Self::TSStringKeyword(a), Self::TSStringKeyword(b)) => a.content_eq(b),
@@ -1909,7 +1908,6 @@ impl ContentEq for TSTupleElement<'_> {
             (Self::TSBooleanKeyword(a), Self::TSBooleanKeyword(b)) => a.content_eq(b),
             (Self::TSIntrinsicKeyword(a), Self::TSIntrinsicKeyword(b)) => a.content_eq(b),
             (Self::TSNeverKeyword(a), Self::TSNeverKeyword(b)) => a.content_eq(b),
-            (Self::TSNullKeyword(a), Self::TSNullKeyword(b)) => a.content_eq(b),
             (Self::TSNumberKeyword(a), Self::TSNumberKeyword(b)) => a.content_eq(b),
             (Self::TSObjectKeyword(a), Self::TSObjectKeyword(b)) => a.content_eq(b),
             (Self::TSStringKeyword(a), Self::TSStringKeyword(b)) => a.content_eq(b),
@@ -1984,12 +1982,6 @@ impl ContentEq for TSIntrinsicKeyword {
 }
 
 impl ContentEq for TSUnknownKeyword {
-    fn content_eq(&self, _: &Self) -> bool {
-        true
-    }
-}
-
-impl ContentEq for TSNullKeyword {
     fn content_eq(&self, _: &Self) -> bool {
         true
     }

@@ -47,7 +47,6 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSBooleanKeyword(v) => v.format(p),
             TSType::TSIntrinsicKeyword(v) => v.format(p),
             TSType::TSNeverKeyword(v) => v.format(p),
-            TSType::TSNullKeyword(v) => v.format(p),
             TSType::TSNumberKeyword(v) => v.format(p),
             TSType::TSObjectKeyword(v) => v.format(p),
             TSType::TSStringKeyword(v) => v.format(p),
@@ -111,12 +110,6 @@ impl<'a> Format<'a> for TSIntrinsicKeyword {
 impl<'a> Format<'a> for TSNeverKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         text!("never")
-    }
-}
-
-impl<'a> Format<'a> for TSNullKeyword {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        text!("null")
     }
 }
 
@@ -849,7 +842,6 @@ impl<'a> Format<'a> for TSTupleElement<'a> {
             TSTupleElement::TSBooleanKeyword(it) => it.format(p),
             TSTupleElement::TSIntrinsicKeyword(it) => it.format(p),
             TSTupleElement::TSNeverKeyword(it) => it.format(p),
-            TSTupleElement::TSNullKeyword(it) => it.format(p),
             TSTupleElement::TSNumberKeyword(it) => it.format(p),
             TSTupleElement::TSObjectKeyword(it) => it.format(p),
             TSTupleElement::TSStringKeyword(it) => it.format(p),

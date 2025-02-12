@@ -3031,7 +3031,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSType<'_> {
                 TSType::TSIntrinsicKeyword(CloneIn::clone_in(it, allocator))
             }
             Self::TSNeverKeyword(it) => TSType::TSNeverKeyword(CloneIn::clone_in(it, allocator)),
-            Self::TSNullKeyword(it) => TSType::TSNullKeyword(CloneIn::clone_in(it, allocator)),
             Self::TSNumberKeyword(it) => TSType::TSNumberKeyword(CloneIn::clone_in(it, allocator)),
             Self::TSObjectKeyword(it) => TSType::TSObjectKeyword(CloneIn::clone_in(it, allocator)),
             Self::TSStringKeyword(it) => TSType::TSStringKeyword(CloneIn::clone_in(it, allocator)),
@@ -3246,9 +3245,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTupleElement<'_> {
             Self::TSNeverKeyword(it) => {
                 TSTupleElement::TSNeverKeyword(CloneIn::clone_in(it, allocator))
             }
-            Self::TSNullKeyword(it) => {
-                TSTupleElement::TSNullKeyword(CloneIn::clone_in(it, allocator))
-            }
             Self::TSNumberKeyword(it) => {
                 TSTupleElement::TSNumberKeyword(CloneIn::clone_in(it, allocator))
             }
@@ -3383,13 +3379,6 @@ impl<'alloc> CloneIn<'alloc> for TSUnknownKeyword {
     type Cloned = TSUnknownKeyword;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         TSUnknownKeyword { span: CloneIn::clone_in(&self.span, allocator) }
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for TSNullKeyword {
-    type Cloned = TSNullKeyword;
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        TSNullKeyword { span: CloneIn::clone_in(&self.span, allocator) }
     }
 }
 

@@ -477,7 +477,6 @@ fn is_definitely_non_error_type(ty: &TSType) -> bool {
         TSType::TSNumberKeyword(_)
         | TSType::TSStringKeyword(_)
         | TSType::TSBooleanKeyword(_)
-        | TSType::TSNullKeyword(_)
         | TSType::TSUndefinedKeyword(_) => true,
         TSType::TSUnionType(union) => union.types.iter().all(is_definitely_non_error_type),
         TSType::TSIntersectionType(intersect) => {

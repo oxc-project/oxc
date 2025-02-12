@@ -1531,7 +1531,6 @@ impl GetSpan for TSType<'_> {
             Self::TSBooleanKeyword(it) => GetSpan::span(&**it),
             Self::TSIntrinsicKeyword(it) => GetSpan::span(&**it),
             Self::TSNeverKeyword(it) => GetSpan::span(&**it),
-            Self::TSNullKeyword(it) => GetSpan::span(&**it),
             Self::TSNumberKeyword(it) => GetSpan::span(&**it),
             Self::TSObjectKeyword(it) => GetSpan::span(&**it),
             Self::TSStringKeyword(it) => GetSpan::span(&**it),
@@ -1655,7 +1654,6 @@ impl GetSpan for TSTupleElement<'_> {
             Self::TSBooleanKeyword(it) => GetSpan::span(&**it),
             Self::TSIntrinsicKeyword(it) => GetSpan::span(&**it),
             Self::TSNeverKeyword(it) => GetSpan::span(&**it),
-            Self::TSNullKeyword(it) => GetSpan::span(&**it),
             Self::TSNumberKeyword(it) => GetSpan::span(&**it),
             Self::TSObjectKeyword(it) => GetSpan::span(&**it),
             Self::TSStringKeyword(it) => GetSpan::span(&**it),
@@ -1735,13 +1733,6 @@ impl GetSpan for TSIntrinsicKeyword {
 }
 
 impl GetSpan for TSUnknownKeyword {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl GetSpan for TSNullKeyword {
     #[inline]
     fn span(&self) -> Span {
         self.span

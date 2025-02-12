@@ -437,10 +437,6 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 self.ast.ts_type_never_keyword(self.end_span(span))
             }
-            Kind::Null => {
-                self.bump_any();
-                self.ast.ts_type_null_keyword(self.end_span(span))
-            }
             Kind::Number => {
                 self.bump_any();
                 self.ast.ts_type_number_keyword(self.end_span(span))

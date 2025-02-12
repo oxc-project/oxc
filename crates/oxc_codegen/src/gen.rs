@@ -3048,7 +3048,6 @@ impl Gen for TSType<'_> {
             Self::TSBooleanKeyword(_) => p.print_str("boolean"),
             Self::TSIntrinsicKeyword(_) => p.print_str("intrinsic"),
             Self::TSNeverKeyword(_) => p.print_str("never"),
-            Self::TSNullKeyword(_) => p.print_str("null"),
             Self::TSNumberKeyword(_) => p.print_str("number"),
             Self::TSObjectKeyword(_) => p.print_str("object"),
             Self::TSStringKeyword(_) => p.print_str("string"),

@@ -8910,17 +8910,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSNeverKeyword(self.alloc_ts_never_keyword(span))
     }
 
-    /// Build a [`TSType::TSNullKeyword`].
-    ///
-    /// This node contains a [`TSNullKeyword`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    #[inline]
-    pub fn ts_type_null_keyword(self, span: Span) -> TSType<'a> {
-        TSType::TSNullKeyword(self.alloc_ts_null_keyword(span))
-    }
-
     /// Build a [`TSType::TSNumberKeyword`].
     ///
     /// This node contains a [`TSNumberKeyword`] that will be stored in the memory arena.
@@ -10121,28 +10110,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_ts_unknown_keyword(self, span: Span) -> Box<'a, TSUnknownKeyword> {
         Box::new_in(self.ts_unknown_keyword(span), self.allocator)
-    }
-
-    /// Build a [`TSNullKeyword`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_null_keyword`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    #[inline]
-    pub fn ts_null_keyword(self, span: Span) -> TSNullKeyword {
-        TSNullKeyword { span }
-    }
-
-    /// Build a [`TSNullKeyword`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_null_keyword`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    #[inline]
-    pub fn alloc_ts_null_keyword(self, span: Span) -> Box<'a, TSNullKeyword> {
-        Box::new_in(self.ts_null_keyword(span), self.allocator)
     }
 
     /// Build a [`TSUndefinedKeyword`].

@@ -1531,7 +1531,6 @@ impl GetSpanMut for TSType<'_> {
             Self::TSBooleanKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSIntrinsicKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSNeverKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNullKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSNumberKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSObjectKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSStringKeyword(it) => GetSpanMut::span_mut(&mut **it),
@@ -1655,7 +1654,6 @@ impl GetSpanMut for TSTupleElement<'_> {
             Self::TSBooleanKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSIntrinsicKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSNeverKeyword(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNullKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSNumberKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSObjectKeyword(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSStringKeyword(it) => GetSpanMut::span_mut(&mut **it),
@@ -1735,13 +1733,6 @@ impl GetSpanMut for TSIntrinsicKeyword {
 }
 
 impl GetSpanMut for TSUnknownKeyword {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for TSNullKeyword {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

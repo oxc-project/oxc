@@ -152,7 +152,6 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
         TSType::TSBigIntKeyword(_) => is_init_bigint(init),
         TSType::TSBooleanKeyword(_) => is_init_boolean(init),
         TSType::TSNumberKeyword(_) => is_init_number(init),
-        TSType::TSNullKeyword(_) => is_init_null(init),
         TSType::TSSymbolKeyword(_) => {
             if is_chain_call_expression_with_name(init, "Symbol") {
                 return true;
