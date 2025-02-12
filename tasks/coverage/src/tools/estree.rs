@@ -1,6 +1,8 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use serde_json::Value;
+
 use oxc::{
     allocator::Allocator, ast::utf8_to_utf16::Utf8ToUtf16, parser::Parser, span::SourceType,
 };
@@ -40,26 +42,19 @@ impl Case for EstreeTest262Case {
             .join(self.path().strip_prefix("test262").unwrap())
             .with_extension("json");
         let Ok(acorn_file) = std::fs::read_to_string(acorn_path) else {
-            // JSON file not found.
+            // JSON file not found
             self.base.set_result(TestResult::Passed);
             return;
         };
 
-        let mut acorn_json = match deserialize_json(&acorn_file) {
-            Err(e) => {
-                self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
-                return;
-            }
-            Ok(acorn_json) => acorn_json,
-        };
-
+        // Parse
         let source_text = self.base.code();
         let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
         let allocator = Allocator::new();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        // Ignore empty AST or parse errors.
         let mut program = ret.program;
+        // Ignore empty AST or parse errors
         if program.is_empty() || ret.panicked || !ret.errors.is_empty() {
             self.base.set_result(TestResult::Passed);
             return;
@@ -68,36 +63,46 @@ impl Case for EstreeTest262Case {
         // Convert spans to UTF16
         Utf8ToUtf16::new().convert(&mut program);
 
-        let mut oxc_json = match deserialize_json(&program.to_json()) {
+        // Remove extra properties from Oxc AST where there is no corresponding property in Acorn AST
+        let acorn_json_value = match deserialize_json(&acorn_file) {
+            Err(e) => {
+                self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
+                return;
+            }
+            Ok(acorn_json) => acorn_json,
+        };
+        let mut oxc_json_value = match deserialize_json(&program.to_json()) {
             Err(e) => {
                 self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
                 return;
             }
             Ok(oxc_json) => oxc_json,
         };
+        remove_extra_properties_from_oxc_ast(&mut oxc_json_value, &acorn_json_value);
 
-        process_estree(&mut acorn_json, &mut oxc_json);
-
-        let acorn_json = serde_json::to_string_pretty(&acorn_json).unwrap();
-        let oxc_json = serde_json::to_string_pretty(&oxc_json).unwrap();
+        // Compare JSON between Acorn and Oxc
+        let acorn_json = serde_json::to_string_pretty(&acorn_json_value).unwrap();
+        let oxc_json = serde_json::to_string_pretty(&oxc_json_value).unwrap();
 
         if acorn_json == oxc_json {
             self.base.set_result(TestResult::Passed);
-        } else {
-            let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
-                .join(self.path().strip_prefix("test262").unwrap())
-                .with_extension("diff");
-            std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
-            write!(
-                std::fs::File::create(diff_path).unwrap(),
-                "{}",
-                similar::TextDiff::from_lines(&acorn_json, &oxc_json)
-                    .unified_diff()
-                    .missing_newline_hint(false)
-            )
-            .unwrap();
-            self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
+            return;
         }
+
+        // Mismatch found
+        let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
+            .join(self.path().strip_prefix("test262").unwrap())
+            .with_extension("diff");
+        std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
+        write!(
+            std::fs::File::create(diff_path).unwrap(),
+            "{}",
+            similar::TextDiff::from_lines(&acorn_json, &oxc_json)
+                .unified_diff()
+                .missing_newline_hint(false)
+        )
+        .unwrap();
+        self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
     }
 }
 
@@ -105,39 +110,36 @@ impl Case for EstreeTest262Case {
 ///
 /// Identical to `serde_json::from_str::<serde_json::Value>(json)`,
 /// except with no limit on how deeply nested the JSON can be.
-fn deserialize_json(json: &str) -> Result<serde_json::Value, serde_json::Error> {
+fn deserialize_json(json: &str) -> Result<Value, serde_json::Error> {
     use serde::Deserialize;
 
     let s = serde_json::de::StrRead::new(json);
     let mut deserializer = serde_json::Deserializer::new(s);
     deserializer.disable_recursion_limit();
-    let value = serde_json::Value::deserialize(&mut deserializer)?;
+    let value = Value::deserialize(&mut deserializer)?;
     deserializer.end()?;
     Ok(value)
 }
 
-fn process_estree(old: &mut serde_json::Value, new: &mut serde_json::Value) {
-    match new {
-        serde_json::Value::Object(new) => {
-            if let serde_json::Value::Object(old) = old {
-                // remove extra keys which exists only on oxc
-                let keys_to_remove: Vec<String> =
-                    new.keys().filter(|key| !old.contains_key(*key)).cloned().collect();
-                for key in keys_to_remove {
-                    new.remove(&key);
+/// Remove extra properties from Oxc AST where there is no corresponding property in Acorn AST.
+///
+/// Intention is to ignore extra properties in Oxc AST which are Typescript-related extensions to AST,
+/// and don't appear in Acorn AST.
+fn remove_extra_properties_from_oxc_ast(oxc: &mut Value, acorn: &Value) {
+    match (oxc, acorn) {
+        (Value::Object(oxc), Value::Object(acorn)) => {
+            oxc.retain(|key, oxc_value| {
+                if let Some(acorn_value) = acorn.get(key) {
+                    remove_extra_properties_from_oxc_ast(oxc_value, acorn_value);
+                    true
+                } else {
+                    false
                 }
-                for (key, value) in new {
-                    if let Some(old_value) = old.get_mut(key) {
-                        process_estree(old_value, value);
-                    }
-                }
-            }
+            });
         }
-        serde_json::Value::Array(new) => {
-            if let serde_json::Value::Array(old) = old {
-                for i in 0..old.len().min(new.len()) {
-                    process_estree(&mut old[i], &mut new[i]);
-                }
+        (Value::Array(oxc), Value::Array(acorn)) => {
+            for (oxc_value, acorn_value) in oxc.iter_mut().zip(acorn) {
+                remove_extra_properties_from_oxc_ast(oxc_value, acorn_value);
             }
         }
         _ => {}
