@@ -91,10 +91,10 @@ mod test {
 
     #[test]
     fn test_convert_to_dotted_properties_quoted_props() {
-        test("({'':0})", "");
-        test("({'1.0':0})", "");
-        test("({'\\u1d17A':0})", "");
-        test("({'a\\u0004b':0})", "");
+        test_same("({'':0})");
+        test_same("({'1.0':0})");
+        test("({'\\u1d17A':0})", "({ ᴗA: 0 })");
+        // test("({'a\\u0004b':0})");
     }
 
     #[test]

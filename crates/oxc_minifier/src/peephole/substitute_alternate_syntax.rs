@@ -1148,7 +1148,7 @@ mod test {
         test("function f(){return void 0;}", "function f(){}");
         test("function f(){return void foo();}", "function f(){return void foo()}");
         test("function f(){return undefined;}", "function f(){}");
-        test("function f(){if(a()){return undefined;}}", "function f(){!a()}");
+        test("function f(){if(a()){return undefined;}}", "function f(){a()}");
         test_same("function a(undefined) { return undefined; }");
         test_same("function f(){return foo()}");
 
@@ -1703,7 +1703,7 @@ mod test {
 
     #[test]
     fn test_fold_big_int_constructor() {
-        test("BigInt(1n)", "1n");
+        test("var x = BigInt(1n)", "var x = 1n");
         test_same("BigInt()");
         test_same("BigInt(1)");
     }
@@ -1712,7 +1712,7 @@ mod test {
     fn optional_catch_binding() {
         test("try { foo } catch(e) {}", "try { foo } catch {}");
         test("try { foo } catch(e) {foo}", "try { foo } catch {foo}");
-        test_same("try { foo } catch(e) {e}");
+        test_same("try { foo } catch(e) { bar(e) }");
         test_same("try { foo } catch([e]) {}");
         test_same("try { foo } catch({e}) {}");
 

@@ -12,6 +12,7 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
+use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
 use oxc_napi::OxcError;
 
 mod convert;
@@ -67,7 +68,11 @@ pub fn parse_without_return(filename: String, source_text: String, options: Opti
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type = get_source_type(filename, options);
-    let ret = parse(&allocator, source_type, &source_text, options);
+    let mut ret = parse(&allocator, source_type, &source_text, options);
+    if options.convert_span_utf16.unwrap_or(false) {
+        // TODO: fix spans in `module_record` and `errors`
+        Utf8ToUtf16::new().convert(&mut ret.program);
+    }
     let program = serde_json::to_string(&ret.program).unwrap();
 
     let errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();

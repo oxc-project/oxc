@@ -10,10 +10,10 @@ use crate::{
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
-    Codegen, Generator, Result, TYPESCRIPT_DEFINITIONS_PATH,
+    Codegen, Generator, TYPESCRIPT_DEFINITIONS_PATH,
 };
 
-use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
+use super::define_generator;
 
 /// Generator for TypeScript type definitions.
 pub struct TypescriptGenerator;
@@ -21,32 +21,6 @@ pub struct TypescriptGenerator;
 define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
-    /// Register that accept `#[ts]` attr on struct fields and enum variants.
-    fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[("ts", attr_positions!(StructField | EnumVariant))]
-    }
-
-    /// Parse `#[ts]` on struct field or enum variant.
-    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
-        // No need to check attr name is `ts`, because that's the only attribute this derive handles.
-        if !matches!(part, AttrPart::None) {
-            return Err(());
-        }
-
-        // Location can only be `StructField` or `EnumVariant`
-        match location {
-            AttrLocation::StructField(struct_def, field_index) => {
-                struct_def.fields[field_index].estree.is_ts = true;
-            }
-            AttrLocation::EnumVariant(enum_def, variant_index) => {
-                enum_def.variants[variant_index].estree.is_ts = true;
-            }
-            _ => unreachable!(),
-        }
-
-        Ok(())
-    }
-
     /// Generate Typescript type definitions for all AST types.
     fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
         let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
@@ -165,9 +139,18 @@ fn generate_ts_type_def_for_struct_field<'s>(
     schema: &'s Schema,
 ) {
     let field_type_name = if let Some(append_field_index) = field.estree.append_field_index {
-        let appended_field = struct_def.fields[append_field_index].type_def(schema);
-        let appended_field = appended_field.as_option().unwrap();
-        let appended_type_name = ts_type_name(appended_field.inner_type(schema), schema);
+        let appended_field = &struct_def.fields[append_field_index];
+        let appended_type = appended_field.type_def(schema);
+        let appended_type = match appended_type {
+            TypeDef::Option(option_def) => option_def.inner_type(schema),
+            TypeDef::Vec(vec_def) => vec_def.inner_type(schema),
+            _ => panic!(
+                "Appended field must be `Option<T>` or `Vec<T>`: `{}::{}`",
+                struct_def.name(),
+                appended_field.name()
+            ),
+        };
+        let appended_type_name = ts_type_name(appended_type, schema);
 
         let field_type = field.type_def(schema);
         let (vec_def, is_option) = match field_type {

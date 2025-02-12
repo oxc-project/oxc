@@ -762,7 +762,7 @@ mod test {
         test_same("for(; !(x<=NaN) ;) a=b");
 
         // NOT forces a boolean context
-        test("x = !(y() && true)", "x = !(y() && !0)"); // FIXME: this can be `!y()`
+        test("x = !(y() && true)", "x = !y()");
 
         // This will be further optimized by PeepholeFoldConstants.
         test("x = !true", "x = !1");
@@ -1498,29 +1498,29 @@ mod test {
     fn compress_binary_boolean() {
         test("a instanceof b === true", "a instanceof b");
         test("a instanceof b == true", "a instanceof b");
-        test("a instanceof b === false", "!(a instanceof b)");
-        test("a instanceof b == false", "!(a instanceof b)");
+        test("a instanceof b === false", "a instanceof b");
+        test("a instanceof b == false", "a instanceof b");
 
-        test("a instanceof b !== true", "!(a instanceof b)");
-        test("a instanceof b != true", "!(a instanceof b)");
+        test("a instanceof b !== true", "a instanceof b");
+        test("a instanceof b != true", "a instanceof b");
         test("a instanceof b !== false", "a instanceof b");
         test("a instanceof b != false", "a instanceof b");
 
         test("delete x === true", "delete x");
         test("delete x == true", "delete x");
-        test("delete x === false", "!(delete x)");
-        test("delete x == false", "!(delete x)");
+        test("delete x === false", "delete x");
+        test("delete x == false", "delete x");
 
-        test("delete x !== true", "!(delete x)");
-        test("delete x != true", "!(delete x)");
+        test("delete x !== true", "delete x");
+        test("delete x != true", "delete x");
         test("delete x !== false", "delete x");
         test("delete x != false", "delete x");
     }
 
     #[test]
     fn compress_binary_number() {
-        test("if(x >> +y == 0){}", "!(x >> +y)");
-        test("if(x >> +y === 0){}", "!(x >> +y)");
+        test("if(x >> +y == 0){}", "x >> +y");
+        test("if(x >> +y === 0){}", "x >> +y");
         test("if(x >> +y != 0){}", "x >> +y");
         test("if(x >> +y !== 0){}", "x >> +y");
         test("if((-0 != +0) !== false){}", "");

@@ -24,6 +24,10 @@ pub struct ParserOptions {
     ///
     /// Default: true
     pub preserve_parens: Option<bool>,
+
+    /// Default: false
+    /// @experimental Only for internal usage on Rolldown and Vite.
+    pub convert_span_utf16: Option<bool>,
 }
 
 #[napi]

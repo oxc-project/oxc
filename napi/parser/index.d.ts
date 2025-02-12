@@ -198,6 +198,11 @@ export interface ParserOptions {
    * Default: true
    */
   preserveParens?: boolean
+  /**
+   * Default: false
+   * @experimental Only for internal usage on Rolldown and Vite.
+   */
+  convertSpanUtf16?: boolean
 }
 
 /** Parse synchronously. */

@@ -3772,8 +3772,6 @@ impl<'a, 't> GetAddress for BinaryExpressionWithoutRight<'a, 't> {
 
 pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_SPAN: usize = offset_of!(PrivateInExpression, span);
 pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_LEFT: usize = offset_of!(PrivateInExpression, left);
-pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_OPERATOR: usize =
-    offset_of!(PrivateInExpression, operator);
 pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_RIGHT: usize = offset_of!(PrivateInExpression, right);
 
 #[repr(transparent)]
@@ -3787,14 +3785,6 @@ impl<'a, 't> PrivateInExpressionWithoutLeft<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn operator(self) -> &'t BinaryOperator {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_OPERATOR)
-                as *const BinaryOperator)
-        }
     }
 
     #[inline]
@@ -3831,14 +3821,6 @@ impl<'a, 't> PrivateInExpressionWithoutRight<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_LEFT)
                 as *const PrivateIdentifier<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn operator(self) -> &'t BinaryOperator {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_OPERATOR)
-                as *const BinaryOperator)
         }
     }
 }

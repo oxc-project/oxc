@@ -11,6 +11,7 @@ mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
 mod remove_dead_code;
+mod remove_unused_expression;
 mod replace_known_methods;
 mod statement_fusion;
 mod substitute_alternate_syntax;
@@ -199,6 +200,17 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.remove_dead_code_exit_expression(expr, ctx);
         self.replace_known_methods_exit_expression(expr, ctx);
         self.substitute_exit_expression(expr, ctx);
+    }
+
+    fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.is_prev_function_changed() {
+            return;
+        }
+        if expr.operator.is_not()
+            && Self::try_fold_expr_in_boolean_context(&mut expr.argument, Ctx(ctx))
+        {
+            self.mark_current_function_as_changed();
+        }
     }
 
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {

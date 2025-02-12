@@ -4,7 +4,7 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_str, Type};
+use syn::{parse_str, Expr};
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
@@ -36,17 +36,24 @@ impl Derive for DeriveESTree {
 
     /// Register that accept `#[estree]` attr on structs, enums, struct fields, or enum variants.
     /// Allow attr on structs and enums which don't derive this trait.
+    /// Also accept `#[ts]` attr on struct fields and enum variants.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[(
-            "estree",
-            attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
-        )]
+        &[
+            (
+                "estree",
+                attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
+            ),
+            ("ts", attr_positions!(StructField | EnumVariant)),
+        ]
     }
 
-    /// Parse `#[estree]` attr.
-    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
-        // No need to check attr name is `estree`, because that's the only attribute this derive handles
-        parse_estree_attr(location, part)
+    /// Parse `#[estree]` and `#[ts]` attrs.
+    fn parse_attr(&self, attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
+        match attr_name {
+            "estree" => parse_estree_attr(location, part),
+            "ts" => parse_ts_attr(location, &part),
+            _ => unreachable!(),
+        }
     }
 
     fn prelude(&self) -> TokenStream {
@@ -61,7 +68,7 @@ impl Derive for DeriveESTree {
             };
 
             ///@@line_break
-            use oxc_estree::ser::AppendTo;
+            use oxc_estree::ser::{AppendTo, AppendToConcat};
         }
     }
 
@@ -183,12 +190,32 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
     Ok(())
 }
 
+/// Parse `#[ts]` attr on struct field or enum variant.
+fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
+    if !matches!(part, AttrPart::None) {
+        return Err(());
+    }
+
+    // Location can only be `StructField` or `EnumVariant`
+    match location {
+        AttrLocation::StructField(struct_def, field_index) => {
+            struct_def.fields[field_index].estree.is_ts = true;
+        }
+        AttrLocation::EnumVariant(enum_def, variant_index) => {
+            enum_def.variants[variant_index].estree.is_ts = true;
+        }
+        _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
 /// Generate body of `serialize` method for a struct.
 fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
     if let Some(via_str) = struct_def.estree.via.as_deref() {
-        let via_ty = parse_str::<Type>(via_str).unwrap();
+        let via_expr = parse_str::<Expr>(via_str).unwrap();
         return quote! {
-            #via_ty::from(self).serialize(serializer)
+            #via_expr.serialize(serializer)
         };
     }
 
@@ -297,13 +324,19 @@ impl<'s> StructSerializerGenerator<'s> {
 
         let mut value = quote!( #self_path.#field_name_ident );
         if let Some(via_str) = field.estree.via.as_deref() {
-            let via_ty = parse_str::<Type>(via_str).unwrap();
-            value = quote!( #via_ty::from(&#value) );
+            let via_expr = parse_str::<Expr>(via_str).unwrap();
+            value = quote!( #via_expr );
         } else if let Some(append_field_index) = field.estree.append_field_index {
-            let append_from_ident = struct_def.fields[append_field_index].ident();
-            value = quote! {
-                AppendTo { array: &#value, after: &#self_path.#append_from_ident }
+            let append_field = &struct_def.fields[append_field_index];
+            let append_from_ident = append_field.ident();
+            let wrapper = if append_field.type_def(self.schema).is_option() {
+                quote! { AppendTo }
+            } else {
+                quote! { AppendToConcat }
             };
+            value = quote! {
+                #wrapper { array: &#value, after: &#self_path.#append_from_ident  }
+            }
         }
 
         self.stmts.extend(quote! {

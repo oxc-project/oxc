@@ -197,11 +197,7 @@ fn js_parser_test() {
         "while (x) { debugger; if (y) { if (1) break; z() } }",
         "for (; x; ) { debugger; if (y) break; }",
     );
-    // FIXME: remove `!` from `!y`
-    test(
-        "while (x) { debugger; if (y) { if (1) continue; z() } }",
-        "for (; x; ) { debugger; !y; }",
-    );
+    test("while (x) { debugger; if (y) { if (1) continue; z() } }", "for (; x; ) { debugger; y; }");
     test(
         "while (x) { debugger; if (1) { if (1) break; z() } }",
         "for (; x; ) { debugger; break; }",
@@ -666,14 +662,12 @@ fn js_parser_test() {
     );
     test(
         "function _() { if (a) return c; if (b) return; }",
-        // FIXME: remove `!` from `!b`
-        "function _() { if (a) return c; !b; }",
+        "function _() { if (a) return c; b; }",
     );
     test(
         "function _() { if (a) return; if (b) return c; }",
         "function _() { if (!a && b) return c; }",
     );
-    // FIXME: remove `!` from `!b`
     test("function _() { if (a) return; if (b) return; }", "function _() { a || !b }");
     test("if (a) throw c; if (b) throw d;", "if (a) throw c;if (b) throw d;");
     test("if (a) throw c; if (b) throw c;", "if (a || b) throw c;");
@@ -1034,9 +1028,9 @@ fn test_ignored1() {
 #[test]
 #[ignore]
 fn test_ignored2() {
-    test("y(x && false)", "y(x && false);");
-    test("y(x || false)", "y(x || false);");
-    test("y(!(x && false))", "y(!(x && false));");
+    test("y(x && false)", "y(x && !1);");
+    test("y(x || false)", "y(x || !1);");
+    test("y(!(x && false))", "y(!(x && !1));");
     test("y(!(x || false))", "y(!x);");
     test("if (x && false) y", "x;");
     test("if (x || false) y", "x && y;");
@@ -1044,8 +1038,8 @@ fn test_ignored2() {
     test("if (x || false) y; else z", "x ? y : z;");
     test("y(x && false ? y : z)", "y((x, z));");
     test("y(x || false ? y : z)", "y(x ? y : z);");
-    test("while (false) x()", "for (; false; ) x();");
-    test("for (; false; ) x()", "for (; false; ) x();");
+    test("while (false) x()", "for (; !1; ) x();");
+    test("for (; false; ) x()", "for (; !1; ) x();");
     test("y(x && '')", "y(x && '');");
     test("y(x || '')", "y(x || '');");
     test("y(!(x && ''))", "y(!(x && false));");
@@ -1601,6 +1595,10 @@ fn test_ignored4() {
     test("x = class y {}", "x = class {};");
     test("x = class y { foo() { return y } }", "x = class y { foo() { return y; }};");
     test("x = class y { foo() { if (0) return y } }", "x = class { foo() { }};");
+}
+
+#[test]
+fn test_remove_dead_expr() {
     test("null", "");
     test("void 0", "");
     test("void 0", "");
@@ -1629,6 +1627,11 @@ fn test_ignored4() {
     test("delete x", "delete x;");
     test("typeof x", "");
     test("typeof x()", "x();");
+}
+
+#[test]
+#[ignore]
+fn test_remove_dead_expr_ignore() {
     test("typeof (0, x)", "x;");
     test("typeof (0 || x)", "x;");
     test("typeof (1 && x)", "x;");

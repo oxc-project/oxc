@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { assert, describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
 
@@ -26,6 +26,85 @@ describe('parse', () => {
     });
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
   });
+
+  it('`BigIntLiteral` has `value` as `BigInt`', () => {
+    const ret = parseSync('test.js', '123_456n');
+    expect(ret.errors.length).toBe(0);
+    expect(ret.program.body.length).toBe(1);
+    expect(ret.program.body[0]).toEqual({
+      type: 'ExpressionStatement',
+      start: 0,
+      end: 8,
+      expression: {
+        type: 'Literal',
+        start: 0,
+        end: 8,
+        value: 123456n,
+        raw: '123_456n',
+        bigint: '123456',
+      },
+    });
+  });
+
+  describe('`RegExpLiteral`', () => {
+    it('has `value` as `RegExp` when valid regexp', () => {
+      const ret = parseSync('test.js', '/abc/gu');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.body[0]).toEqual({
+        type: 'ExpressionStatement',
+        start: 0,
+        end: 7,
+        expression: {
+          type: 'Literal',
+          start: 0,
+          end: 7,
+          value: /abc/gu,
+          raw: '/abc/gu',
+          regex: {
+            pattern: 'abc',
+            flags: 'gu',
+          },
+        },
+      });
+    });
+
+    it('has `value` as `null` when invalid regexp', () => {
+      const ret = parseSync('test.js', '/+/');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.body[0]).toEqual({
+        type: 'ExpressionStatement',
+        start: 0,
+        end: 3,
+        expression: {
+          type: 'Literal',
+          start: 0,
+          end: 3,
+          value: null,
+          raw: '/+/',
+          regex: {
+            pattern: '+',
+            flags: '',
+          },
+        },
+      });
+    });
+  });
+});
+
+it('utf16 span', async () => {
+  const code = "'🤨'";
+  {
+    const ret = await parseAsync('test.js', code);
+    expect(ret.program.end).toMatchInlineSnapshot(`6`);
+  }
+  {
+    const ret = await parseAsync('test.js', code, {
+      convertSpanUtf16: true,
+    });
+    expect(ret.program.end).toMatchInlineSnapshot(`4`);
+  }
 });
 
 describe('error', () => {

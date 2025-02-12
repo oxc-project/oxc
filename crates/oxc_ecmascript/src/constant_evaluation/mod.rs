@@ -1,12 +1,14 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
-use num_traits::{ToPrimitive, Zero};
+use num_traits::{FromPrimitive, ToPrimitive, Zero};
 
-use oxc_ast::ast::*;
+use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
+use oxc_ast::{ast::*, AstBuilder};
 
 use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber};
 
+mod equality_comparison;
 mod is_literal_value;
 mod value;
 mod value_type;
@@ -15,6 +17,8 @@ pub use value::ConstantValue;
 pub use value_type::ValueType;
 
 pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
+    fn ast(&self) -> AstBuilder<'a>;
+
     fn resolve_binding(&self, ident: &IdentifierReference<'a>) -> Option<ConstantValue<'a>> {
         match ident.name.as_str() {
             "undefined" if self.is_global_reference(ident) => Some(ConstantValue::Undefined),
@@ -374,7 +378,31 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 }
                 None
             }
-            _ => None,
+            BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::Equality
+            | BinaryOperator::Inequality => {
+                if self.expression_may_have_side_effects(left)
+                    || self.expression_may_have_side_effects(right)
+                {
+                    return None;
+                }
+                let value = match operator {
+                    BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
+                        strict_equality_comparison(self, left, right)?
+                    }
+                    BinaryOperator::Equality | BinaryOperator::Inequality => {
+                        abstract_equality_comparison(self, left, right)?
+                    }
+                    _ => unreachable!(),
+                };
+                Some(ConstantValue::Boolean(match operator {
+                    BinaryOperator::StrictEquality | BinaryOperator::Equality => value,
+                    BinaryOperator::StrictInequality | BinaryOperator::Inequality => !value,
+                    _ => unreachable!(),
+                }))
+            }
+            BinaryOperator::In => None,
         }
     }
 
@@ -511,40 +539,144 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
         }
     }
 
-    /// <https://tc39.es/ecma262/#sec-abstract-relational-comparison>
+    /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islessthan>
     fn is_less_than(&self, x: &Expression<'a>, y: &Expression<'a>) -> Option<ConstantValue<'a>> {
-        // a. Let px be ? ToPrimitive(x, number).
-        // b. Let py be ? ToPrimitive(y, number).
-        let px = ValueType::from(x);
-
-        // `.toString()` method is called and compared.
-        // TODO: bigint is handled very differently in the spec
-        if px.is_object() || px.is_undetermined() || px.is_bigint() {
+        if self.expression_may_have_side_effects(x) || self.expression_may_have_side_effects(y) {
             return None;
         }
 
+        // a. Let px be ? ToPrimitive(x, NUMBER).
+        // b. Let py be ? ToPrimitive(y, NUMBER).
+        let px = ValueType::from(x);
         let py = ValueType::from(y);
 
-        if py.is_object() || py.is_undetermined() || py.is_bigint() {
+        // If the operands are not primitives, `ToPrimitive` is *not* a noop.
+        if px.is_undetermined() || px.is_object() || py.is_undetermined() || py.is_object() {
             return None;
         }
 
+        // 3. If px is a String and py is a String, then
         if px.is_string() && py.is_string() {
-            let left_string = self.get_side_free_string_value(x)?;
-            let right_string = self.get_side_free_string_value(y)?;
+            let left_string = x.to_js_string()?;
+            let right_string = y.to_js_string()?;
             return Some(ConstantValue::Boolean(
                 left_string.encode_utf16().cmp(right_string.encode_utf16()) == Ordering::Less,
             ));
         }
 
-        let left_num = self.get_side_free_number_value(x)?;
-        if left_num.is_nan() {
+        // a. If px is a BigInt and py is a String, then
+        if px.is_bigint() && py.is_string() {
+            use crate::StringToBigInt;
+            let ny = y.to_js_string()?.as_ref().string_to_big_int();
+            let Some(ny) = ny else { return Some(ConstantValue::Undefined) };
+            return Some(ConstantValue::Boolean(x.to_big_int()? < ny));
+        }
+        // b. If px is a String and py is a BigInt, then
+        if px.is_string() && py.is_bigint() {
+            use crate::StringToBigInt;
+            let nx = x.to_js_string()?.as_ref().string_to_big_int();
+            let Some(nx) = nx else { return Some(ConstantValue::Undefined) };
+            return Some(ConstantValue::Boolean(nx < y.to_big_int()?));
+        }
+
+        // Both operands are primitives here.
+        // ToNumeric returns a BigInt if the operand is a BigInt. Otherwise, it returns a Number.
+        let nx_is_number = !px.is_bigint();
+        let ny_is_number = !py.is_bigint();
+
+        // f. If SameType(nx, ny) is true, then
+        //   i. If nx is a Number, then
+        if nx_is_number && ny_is_number {
+            let left_num = self.eval_to_number(x)?;
+            if left_num.is_nan() {
+                return Some(ConstantValue::Undefined);
+            }
+            let right_num = self.eval_to_number(y)?;
+            if right_num.is_nan() {
+                return Some(ConstantValue::Undefined);
+            }
+            return Some(ConstantValue::Boolean(left_num < right_num));
+        }
+        //   ii. Else,
+        if px.is_bigint() && py.is_bigint() {
+            return Some(ConstantValue::Boolean(x.to_big_int()? < y.to_big_int()?));
+        }
+
+        let nx = self.eval_to_number(x);
+        let ny = self.eval_to_number(y);
+
+        // h. If nx or ny is NaN, return undefined.
+        if nx_is_number && nx.is_some_and(f64::is_nan)
+            || ny_is_number && ny.is_some_and(f64::is_nan)
+        {
             return Some(ConstantValue::Undefined);
         }
-        let right_num = self.get_side_free_number_value(y)?;
-        if right_num.is_nan() {
-            return Some(ConstantValue::Undefined);
+
+        // i. If nx is -∞𝔽 or ny is +∞𝔽, return true.
+        if nx_is_number && nx.is_some_and(|n| n == f64::NEG_INFINITY)
+            || ny_is_number && ny.is_some_and(|n| n == f64::INFINITY)
+        {
+            return Some(ConstantValue::Boolean(true));
         }
-        Some(ConstantValue::Boolean(left_num < right_num))
+        // j. If nx is +∞𝔽 or ny is -∞𝔽, return false.
+        if nx_is_number && nx.is_some_and(|n| n == f64::INFINITY)
+            || ny_is_number && ny.is_some_and(|n| n == f64::NEG_INFINITY)
+        {
+            return Some(ConstantValue::Boolean(false));
+        }
+
+        // k. If ℝ(nx) < ℝ(ny), return true; otherwise return false.
+        if px.is_bigint() {
+            let nx = x.to_big_int()?;
+            let ny = self.eval_to_number(y)?;
+            return compare_bigint_and_f64(&nx, ny)
+                .map(|ord| ConstantValue::Boolean(ord == Ordering::Less));
+        }
+        if py.is_bigint() {
+            let ny = y.to_big_int()?;
+            let nx = self.eval_to_number(x)?;
+            return compare_bigint_and_f64(&ny, nx)
+                .map(|ord| ConstantValue::Boolean(ord.reverse() == Ordering::Less));
+        }
+
+        None
+    }
+}
+
+fn compare_bigint_and_f64(x: &BigInt, y: f64) -> Option<Ordering> {
+    let ny = BigInt::from_f64(y)?;
+
+    let raw_ord = x.cmp(&ny);
+    if raw_ord == Ordering::Equal {
+        let fract_ord = 0.0f64.partial_cmp(&y.fract()).expect("both should be finite");
+        Some(fract_ord)
+    } else {
+        Some(raw_ord)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::compare_bigint_and_f64;
+    use num_bigint::BigInt;
+    use std::cmp::Ordering;
+
+    #[test]
+    fn test_compare_bigint_and_f64() {
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(1), f64::NAN), None);
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(1), f64::INFINITY), None);
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(1), f64::NEG_INFINITY), None);
+
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(1), 0.0), Some(Ordering::Greater));
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(0), 0.0), Some(Ordering::Equal));
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(-1), 0.0), Some(Ordering::Less));
+
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(1), 0.9), Some(Ordering::Greater));
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(1), 1.0), Some(Ordering::Equal));
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(1), 1.1), Some(Ordering::Less));
+
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(-1), -1.1), Some(Ordering::Greater));
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(-1), -1.0), Some(Ordering::Equal));
+        assert_eq!(compare_bigint_and_f64(&BigInt::from(-1), -0.9), Some(Ordering::Less));
     }
 }

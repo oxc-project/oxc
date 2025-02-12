@@ -448,7 +448,6 @@ impl ContentEq for BinaryExpression<'_> {
 impl ContentEq for PrivateInExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.left, &other.left)
-            && ContentEq::content_eq(&self.operator, &other.operator)
             && ContentEq::content_eq(&self.right, &other.right)
     }
 }

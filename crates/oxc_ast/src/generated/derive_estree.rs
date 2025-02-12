@@ -5,7 +5,7 @@
 
 use serde::{__private::ser::FlatMapSerializer, ser::SerializeMap, Serialize, Serializer};
 
-use oxc_estree::ser::AppendTo;
+use oxc_estree::ser::{AppendTo, AppendToConcat};
 
 use crate::ast::js::*;
 use crate::ast::jsx::*;
@@ -20,8 +20,10 @@ impl Serialize for Program<'_> {
         map.serialize_entry("end", &self.span.end)?;
         self.source_type.serialize(FlatMapSerializer(&mut map))?;
         map.serialize_entry("hashbang", &self.hashbang)?;
-        map.serialize_entry("directives", &self.directives)?;
-        map.serialize_entry("body", &self.body)?;
+        map.serialize_entry(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.body },
+        )?;
         map.end()
     }
 }
@@ -379,7 +381,7 @@ impl Serialize for PrivateFieldExpression<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("object", &self.object)?;
-        map.serialize_entry("field", &self.field)?;
+        map.serialize_entry("property", &self.field)?;
         map.serialize_entry("optional", &self.optional)?;
         map.serialize_entry("computed", &false)?;
         map.end()
@@ -528,12 +530,12 @@ impl Serialize for BinaryExpression<'_> {
 impl Serialize for PrivateInExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "PrivateInExpression")?;
+        map.serialize_entry("type", "BinaryExpression")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
-        map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("right", &self.right)?;
+        map.serialize_entry("operator", &"in")?;
         map.end()
     }
 }
@@ -623,7 +625,7 @@ impl Serialize for AssignmentTargetPattern<'_> {
 impl Serialize for ArrayAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ArrayAssignmentTarget")?;
+        map.serialize_entry("type", "ArrayPattern")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("elements", &AppendTo { array: &self.elements, after: &self.rest })?;
@@ -634,7 +636,7 @@ impl Serialize for ArrayAssignmentTarget<'_> {
 impl Serialize for ObjectAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "ObjectAssignmentTarget")?;
+        map.serialize_entry("type", "ObjectPattern")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry(
@@ -682,11 +684,11 @@ impl Serialize for AssignmentTargetMaybeDefault<'_> {
 impl Serialize for AssignmentTargetWithDefault<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetWithDefault")?;
+        map.serialize_entry("type", "AssignmentPattern")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("binding", &self.binding)?;
-        map.serialize_entry("init", &self.init)?;
+        map.serialize_entry("left", &self.binding)?;
+        map.serialize_entry("right", &self.init)?;
         map.end()
     }
 }
@@ -707,11 +709,18 @@ impl Serialize for AssignmentTargetProperty<'_> {
 impl Serialize for AssignmentTargetPropertyIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetPropertyIdentifier")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("binding", &self.binding)?;
-        map.serialize_entry("init", &self.init)?;
+        map.serialize_entry("key", &self.binding)?;
+        map.serialize_entry(
+            "value",
+            &crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
+        )?;
+        map.serialize_entry("kind", &"init")?;
+        map.serialize_entry("method", &false)?;
+        map.serialize_entry("shorthand", &true)?;
+        map.serialize_entry("computed", &false)?;
         map.end()
     }
 }
@@ -719,12 +728,15 @@ impl Serialize for AssignmentTargetPropertyIdentifier<'_> {
 impl Serialize for AssignmentTargetPropertyProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "AssignmentTargetPropertyProperty")?;
+        map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("name", &self.name)?;
-        map.serialize_entry("binding", &self.binding)?;
+        map.serialize_entry("key", &self.name)?;
+        map.serialize_entry("value", &self.binding)?;
         map.serialize_entry("computed", &self.computed)?;
+        map.serialize_entry("kind", &"init")?;
+        map.serialize_entry("method", &false)?;
+        map.serialize_entry("shorthand", &false)?;
         map.end()
     }
 }
@@ -837,7 +849,7 @@ impl Serialize for Statement<'_> {
 impl Serialize for Directive<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Directive")?;
+        map.serialize_entry("type", "ExpressionStatement")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("expression", &self.expression)?;
@@ -1408,8 +1420,10 @@ impl Serialize for FunctionBody<'_> {
         map.serialize_entry("type", "BlockStatement")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("directives", &self.directives)?;
-        map.serialize_entry("body", &self.statements)?;
+        map.serialize_entry(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.statements },
+        )?;
         map.end()
     }
 }
@@ -1425,7 +1439,7 @@ impl Serialize for ArrowFunctionExpression<'_> {
         map.serialize_entry("typeParameters", &self.type_parameters)?;
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
-        map.serialize_entry("body", &self.body)?;
+        map.serialize_entry("body", &crate::serialize::ArrowFunctionExpressionBody(self))?;
         map.serialize_entry("generator", &false)?;
         map.serialize_entry("id", &crate::serialize::NULL)?;
         map.end()
@@ -1665,8 +1679,10 @@ impl Serialize for ImportExpression<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("arguments", &self.arguments)?;
-        map.serialize_entry("phase", &self.phase)?;
+        map.serialize_entry(
+            "options",
+            &crate::serialize::import_expression_options(&self.arguments),
+        )?;
         map.end()
     }
 }
@@ -1677,13 +1693,13 @@ impl Serialize for ImportDeclaration<'_> {
         map.serialize_entry("type", "ImportDeclaration")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry(
-            "specifiers",
-            &crate::serialize::OptionVecDefault::from(&self.specifiers),
-        )?;
+        map.serialize_entry("specifiers", &crate::serialize::OptionVecDefault(&self.specifiers))?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("phase", &self.phase)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
+        map.serialize_entry(
+            "attributes",
+            &crate::serialize::ImportExportWithClause(&self.with_clause),
+        )?;
         map.serialize_entry("importKind", &self.import_kind)?;
         map.end()
     }
@@ -1786,7 +1802,10 @@ impl Serialize for ExportNamedDeclaration<'_> {
         map.serialize_entry("specifiers", &self.specifiers)?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("exportKind", &self.export_kind)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
+        map.serialize_entry(
+            "attributes",
+            &crate::serialize::ImportExportWithClause(&self.with_clause),
+        )?;
         map.end()
     }
 }
@@ -1811,7 +1830,10 @@ impl Serialize for ExportAllDeclaration<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("exported", &self.exported)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry("withClause", &self.with_clause)?;
+        map.serialize_entry(
+            "attributes",
+            &crate::serialize::ImportExportWithClause(&self.with_clause),
+        )?;
         map.serialize_entry("exportKind", &self.export_kind)?;
         map.end()
     }
@@ -1959,9 +1981,9 @@ impl Serialize for RegExpLiteral<'_> {
         map.serialize_entry("type", "Literal")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("regex", &self.regex)?;
+        map.serialize_entry("regex", &crate::serialize::RegExpLiteralRegex(self))?;
         map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &crate::serialize::EmptyObject)?;
+        map.serialize_entry("value", &crate::serialize::NULL)?;
         map.end()
     }
 }
@@ -3029,6 +3051,20 @@ impl Serialize for TSModuleDeclarationBody<'_> {
             TSModuleDeclarationBody::TSModuleDeclaration(it) => it.serialize(serializer),
             TSModuleDeclarationBody::TSModuleBlock(it) => it.serialize(serializer),
         }
+    }
+}
+
+impl Serialize for TSModuleBlock<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "TSModuleBlock")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry(
+            "body",
+            &AppendToConcat { array: &self.directives, after: &self.body },
+        )?;
+        map.end()
     }
 }
 

@@ -30,7 +30,7 @@ pub struct Group<'a> {
 
 #[derive(Debug)]
 pub struct Fill<'a> {
-    pub contents: Vec<'a, Doc<'a>>,
+    pub parts: Vec<'a, Doc<'a>>,
 }
 
 #[derive(Debug)]
@@ -56,29 +56,29 @@ pub struct IndentIfBreak<'a> {
 // Printer utils
 impl<'a> Fill<'a> {
     pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
-        let content = if self.contents.len() > 0 { Some(self.contents.remove(0)) } else { None };
-        let whitespace = if self.contents.len() > 0 { Some(self.contents.remove(0)) } else { None };
+        let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
+        let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
         (content, whitespace)
     }
 
     pub fn dequeue(&mut self) -> Option<Doc<'a>> {
-        if self.contents.len() > 0 {
-            Some(self.contents.remove(0))
+        if self.parts.len() > 0 {
+            Some(self.parts.remove(0))
         } else {
             None
         }
     }
 
     pub fn enqueue(&mut self, doc: Doc<'a>) {
-        self.contents.insert(0, doc);
+        self.parts.insert(0, doc);
     }
 
     pub fn parts(&self) -> &[Doc<'a>] {
-        &self.contents
+        &self.parts
     }
 
     pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
-        self.contents
+        self.parts
     }
 }
 

@@ -560,6 +560,7 @@ impl<'a> PeepholeOptimizations {
                         .try_minimize_if(&mut if_stmt, ctx)
                         .unwrap_or_else(|| Statement::IfStatement(ctx.ast.alloc(if_stmt)));
                     result.push(if_stmt);
+                    self.mark_current_function_as_changed();
                     return ControlFlow::Break(());
                 }
             }

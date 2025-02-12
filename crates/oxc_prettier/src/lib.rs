@@ -74,6 +74,7 @@ impl<'a> Prettier<'a> {
     }
 
     pub fn doc(mut self, program: &Program<'a>) -> Doc<'a> {
+        self.source_text = program.source_text;
         program.format(&mut self)
     }
 

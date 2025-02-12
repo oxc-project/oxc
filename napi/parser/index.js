@@ -12,7 +12,26 @@ function wrap(result) {
   let program, module, comments, errors, magicString;
   return {
     get program() {
-      if (!program) program = JSON.parse(result.program);
+      if (!program) {
+        program = JSON.parse(result.program, function(key, value) {
+          // Set `value` field of `Literal`s for `BigInt`s and `RegExp`s.
+          // This is not possible to do on Rust side, as neither can be represented correctly in JSON.
+          if (value === null && key === 'value' && Object.hasOwn(this, 'type') && this.type === 'Literal') {
+            if (Object.hasOwn(this, 'bigint')) {
+              return BigInt(this.bigint);
+            }
+            if (Object.hasOwn(this, 'regex')) {
+              const { regex } = this;
+              try {
+                return RegExp(regex.pattern, regex.flags);
+              } catch (_err) {
+                // Invalid regexp, or valid regexp using syntax not supported by this version of NodeJS
+              }
+            }
+          }
+          return value;
+        });
+      }
       return program;
     },
     get module() {

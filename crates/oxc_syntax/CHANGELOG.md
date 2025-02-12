@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.49.0] - 2025-02-10
+
+- b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)
+
+### Bug Fixes
+
+- 7e6a537 ast: Include `directives` in `body` (#8981) (hi-ogawa)
+
+### Refactor
+
+- cbb4e9c ast: Generated `Serialize` impls flatten struct fields (#8904) (overlookmotel)
+- 6628e1d ast: Move `#[estree(skip)]` to types (#8877) (overlookmotel)
+- 3407d47 ast: Move `#[clone_in(default)]` to types (#8876) (overlookmotel)
+- caa651c ast: `#[content_eq(skip)]` attr (#8875) (overlookmotel)
+- abfe5bf ast: Shorten generated code for numbers (#8864) (overlookmotel)
+- f69de07 ast: Remove unneeded lint attrs from generated code (#8862) (overlookmotel)
+- 768ad4f syntax: Add `#[ast]` attr to semantic ID types (#8867) (overlookmotel)
+
+### Styling
+
+- a4a8e7d all: Replace `#[allow]` with `#[expect]` (#8930) (overlookmotel)
+
 ## [0.48.2] - 2025-02-02
 
 ### Bug Fixes

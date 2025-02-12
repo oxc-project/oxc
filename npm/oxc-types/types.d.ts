@@ -5,8 +5,7 @@ export interface Program extends Span {
   type: 'Program';
   sourceType: ModuleKind;
   hashbang: Hashbang | null;
-  directives: Array<Directive>;
-  body: Array<Statement>;
+  body: Array<Directive | Statement>;
 }
 
 export type Expression =
@@ -148,7 +147,7 @@ export interface StaticMemberExpression extends Span {
 export interface PrivateFieldExpression extends Span {
   type: 'MemberExpression';
   object: Expression;
-  field: PrivateIdentifier;
+  property: PrivateIdentifier;
   optional: boolean;
   computed: false;
 }
@@ -203,10 +202,10 @@ export interface BinaryExpression extends Span {
 }
 
 export interface PrivateInExpression extends Span {
-  type: 'PrivateInExpression';
+  type: 'BinaryExpression';
   left: PrivateIdentifier;
-  operator: BinaryOperator;
   right: Expression;
+  operator: 'in';
 }
 
 export interface LogicalExpression extends Span {
@@ -244,12 +243,12 @@ export type SimpleAssignmentTarget =
 export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTarget;
 
 export interface ArrayAssignmentTarget extends Span {
-  type: 'ArrayAssignmentTarget';
+  type: 'ArrayPattern';
   elements: Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>;
 }
 
 export interface ObjectAssignmentTarget extends Span {
-  type: 'ObjectAssignmentTarget';
+  type: 'ObjectPattern';
   properties: Array<AssignmentTargetProperty | AssignmentTargetRest>;
 }
 
@@ -261,24 +260,31 @@ export interface AssignmentTargetRest extends Span {
 export type AssignmentTargetMaybeDefault = AssignmentTargetWithDefault | AssignmentTarget;
 
 export interface AssignmentTargetWithDefault extends Span {
-  type: 'AssignmentTargetWithDefault';
-  binding: AssignmentTarget;
-  init: Expression;
+  type: 'AssignmentPattern';
+  left: AssignmentTarget;
+  right: Expression;
 }
 
 export type AssignmentTargetProperty = AssignmentTargetPropertyIdentifier | AssignmentTargetPropertyProperty;
 
 export interface AssignmentTargetPropertyIdentifier extends Span {
-  type: 'AssignmentTargetPropertyIdentifier';
-  binding: IdentifierReference;
-  init: Expression | null;
+  type: 'Property';
+  key: IdentifierReference;
+  value: IdentifierReference | AssignmentTargetWithDefault;
+  kind: 'init';
+  method: false;
+  shorthand: false;
+  computed: false;
 }
 
 export interface AssignmentTargetPropertyProperty extends Span {
-  type: 'AssignmentTargetPropertyProperty';
-  name: PropertyKey;
-  binding: AssignmentTargetMaybeDefault;
+  type: 'Property';
+  key: PropertyKey;
+  value: AssignmentTargetMaybeDefault;
   computed: boolean;
+  kind: 'init';
+  method: false;
+  shorthand: false;
 }
 
 export interface SequenceExpression extends Span {
@@ -330,7 +336,7 @@ export type Statement =
   | ModuleDeclaration;
 
 export interface Directive extends Span {
-  type: 'Directive';
+  type: 'ExpressionStatement';
   expression: StringLiteral;
   directive: string;
 }
@@ -577,14 +583,13 @@ export type FormalParameter =
     override: boolean;
   })
   & Span
-  & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
+  & BindingPattern;
 
 export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
 
 export interface FunctionBody extends Span {
   type: 'BlockStatement';
-  directives: Array<Directive>;
-  body: Array<Statement>;
+  body: Array<Directive | Statement>;
 }
 
 export interface ArrowFunctionExpression extends Span {
@@ -594,7 +599,7 @@ export interface ArrowFunctionExpression extends Span {
   typeParameters: TSTypeParameterDeclaration | null;
   params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
-  body: FunctionBody;
+  body: FunctionBody | Expression;
   generator: false;
   id: null;
 }
@@ -697,8 +702,7 @@ export interface AccessorProperty extends Span {
 export interface ImportExpression extends Span {
   type: 'ImportExpression';
   source: Expression;
-  arguments: Array<Expression>;
-  phase: ImportPhase | null;
+  options: Expression | null;
 }
 
 export interface ImportDeclaration extends Span {
@@ -706,7 +710,7 @@ export interface ImportDeclaration extends Span {
   specifiers: Array<ImportDeclarationSpecifier>;
   source: StringLiteral;
   phase: ImportPhase | null;
-  withClause: WithClause | null;
+  attributes: Array<ImportAttribute>;
   importKind: ImportOrExportKind;
 }
 
@@ -751,7 +755,7 @@ export interface ExportNamedDeclaration extends Span {
   specifiers: Array<ExportSpecifier>;
   source: StringLiteral | null;
   exportKind: ImportOrExportKind;
-  withClause: WithClause | null;
+  attributes: Array<ImportAttribute>;
 }
 
 export interface ExportDefaultDeclaration extends Span {
@@ -764,7 +768,7 @@ export interface ExportAllDeclaration extends Span {
   type: 'ExportAllDeclaration';
   exported: ModuleExportName | null;
   source: StringLiteral;
-  withClause: WithClause | null;
+  attributes: Array<ImportAttribute>;
   exportKind: ImportOrExportKind;
 }
 
@@ -814,7 +818,7 @@ export interface RegExpLiteral extends Span {
   type: 'Literal';
   regex: RegExp;
   raw: string | null;
-  value: {} | null;
+  value: null;
 }
 
 export interface RegExp {
@@ -1275,7 +1279,7 @@ export type TSModuleDeclarationBody = TSModuleDeclaration | TSModuleBlock;
 
 export interface TSModuleBlock extends Span {
   type: 'TSModuleBlock';
-  body: Array<Statement>;
+  body: Array<Directive | Statement>;
 }
 
 export interface TSTypeLiteral extends Span {

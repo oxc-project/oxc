@@ -804,7 +804,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for PrivateInExpression<'_> {
         PrivateInExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             left: CloneIn::clone_in(&self.left, allocator),
-            operator: CloneIn::clone_in(&self.operator, allocator),
             right: CloneIn::clone_in(&self.right, allocator),
         }
     }

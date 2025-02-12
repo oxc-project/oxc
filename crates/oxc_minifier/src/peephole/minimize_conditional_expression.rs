@@ -641,7 +641,7 @@ mod test {
         // test("/* @__PURE__ */ a() ? b : b", "b");
         test("a ? b : b", "a, b");
         test("a ? true : false", "a");
-        test("a ? false : true", "!a");
+        test("a ? false : true", "a");
         test("a ? a : b", "a || b");
         test("a ? b : a", "a && b");
         test("a ? b ? c : d : d", "a && b ? c : d");

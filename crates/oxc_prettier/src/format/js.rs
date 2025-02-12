@@ -1087,7 +1087,7 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
         wrap!(p, self, PrivateInExpression, {
             let left_doc = self.left.format(p);
             let right_doc = self.right.format(p);
-            array!(p, [left_doc, text!(" "), text!(self.operator.as_str()), text!(" "), right_doc])
+            array!(p, [left_doc, text!(" "), text!("in"), text!(" "), right_doc])
         })
     }
 }

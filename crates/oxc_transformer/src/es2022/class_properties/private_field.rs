@@ -1858,7 +1858,7 @@ impl<'a> ClassProperties<'a, '_> {
         private_field: ArenaBox<'a, PrivateInExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let PrivateInExpression { left, right, span, .. } = private_field.unbox();
+        let PrivateInExpression { left, right, span } = private_field.unbox();
 
         let ResolvedPrivateProp { class_bindings, prop_binding, is_method, is_static, .. } =
             self.classes_stack.find_private_prop(&left);

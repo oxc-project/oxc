@@ -21,6 +21,7 @@ impl<'a> PeepholeOptimizations {
         if !expr.operator.is_not() {
             return None;
         }
+        Self::try_fold_expr_in_boolean_context(&mut expr.argument, ctx);
         match &mut expr.argument {
             // `!!true` -> `true`
             // `!!false` -> `false`
@@ -59,12 +60,12 @@ mod test {
 
     #[test]
     fn minimize_duplicate_nots() {
-        // test("!x", "x"); // TODO: in ExpressionStatement
+        test("!x", "x");
         test("!!x", "x");
-        test("!!!x", "!x");
+        test("!!!x", "x");
         test("!!!!x", "x");
-        test("!!!(x && y)", "!(x && y)");
-        test_same("var k = () => { !!x; }");
+        test("!!!(x && y)", "x && y");
+        test("var k = () => { !!x; }", "var k = () => { x }");
 
         test_same("var k = !!x;");
         test_same("function k () { return !!x; }");
@@ -75,13 +76,13 @@ mod test {
     #[test]
     fn minimize_nots_with_binary_expressions() {
         test("!(x === undefined)", "x !== void 0");
-        test("!(typeof(x) === 'undefined')", "!(typeof x > 'u')");
+        test("!(typeof(x) === 'undefined')", "typeof x > 'u'");
         test("!(x === void 0)", "x !== void 0");
         test("!!delete x.y", "delete x.y");
-        test("!!!delete x.y", "!delete x.y");
+        test("!!!delete x.y", "delete x.y");
         test("!!!!delete x.y", "delete x.y");
         test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
-        test_same("!(a === 1 ? void 0 : a.b)"); // FIXME: can be compressed to `a === 1 || !a.b`
+        test("!(a === 1 ? void 0 : a.b)", "a !== 1 && a.b;");
         test("!(a, b)", "a, !b");
     }
 }

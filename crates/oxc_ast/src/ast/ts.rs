@@ -1205,11 +1205,11 @@ pub enum TSModuleDeclarationBody<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize)]
 pub struct TSModuleBlock<'a> {
     pub span: Span,
-    #[estree(skip)]
+    #[estree(rename = "body")]
     pub directives: Vec<'a, Directive<'a>>,
+    #[estree(append_to = "directives")]
     pub body: Vec<'a, Statement<'a>>,
 }
 
