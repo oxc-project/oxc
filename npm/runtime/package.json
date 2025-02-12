@@ -1,6 +1,6 @@
 {
   "name": "@oxc-project/runtime",
-  "version": "0.49.0",
+  "version": "0.50.0",
   "description": "Oxc's modular runtime helpers",
   "license": "MIT",
   "repository": {
@@ -298,6 +298,15 @@
       "./helpers/decorate.js"
     ],
     "./helpers/esm/decorate": "./helpers/esm/decorate.js",
+    "./helpers/decorateParam": [
+      {
+        "node": "./helpers/decorateParam.js",
+        "import": "./helpers/esm/decorateParam.js",
+        "default": "./helpers/decorateParam.js"
+      },
+      "./helpers/decorateParam.js"
+    ],
+    "./helpers/esm/decorateParam": "./helpers/esm/decorateParam.js",
     "./helpers/defaults": [
       {
         "node": "./helpers/defaults.js",
