@@ -1,4 +1,4 @@
-js compatibility: 251/641 (39.16%)
+js compatibility: 252/641 (39.31%)
 
 # Failed
 
@@ -91,7 +91,6 @@ js compatibility: 251/641 (39.16%)
 | js/classes/method.js | 💥 | 71.43% |
 | js/classes/property.js | 💥 | 81.25% |
 | js/classes-private-fields/optional-chaining.js | 💥💥 | 50.00% |
-| js/classes-private-fields/private_fields.js | 💥💥 | 94.96% |
 | js/classes-private-fields/with_comments.js | 💥💥 | 40.00% |
 | js/comments/15661.js | 💥💥 | 22.00% |
 | js/comments/16398.js | 💥💥 | 60.00% |
@@ -164,7 +163,7 @@ js compatibility: 251/641 (39.16%)
 | js/conditional/new-ternary-spec.js | 💥💥 | 33.16% |
 | js/conditional/no-confusing-arrow.js | 💥💥 | 40.00% |
 | js/conditional/postfix-ternary-regressions.js | 💥💥 | 52.77% |
-| js/destructuring/destructuring.js | 💥 | 77.78% |
+| js/destructuring/destructuring.js | 💥 | 89.66% |
 | js/destructuring-ignore/ignore.js | 💥💥💥 | 27.59% |
 | js/directives/escaped.js | 💥 | 69.84% |
 | js/directives/issue-7346.js | 💥 | 25.00% |

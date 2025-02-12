@@ -54,52 +54,29 @@ impl<'a> ObjectLike<'a, '_> {
                 self.total_len() != 0
                     && misc::has_new_line_in_range(p.source_text, obj.span.start, obj.span.end)
             }
-            ObjectLike::ObjectPattern(obj_pattern) => {
-                let parent_kind = p.parent_kind();
-                !matches!(
-                    parent_kind,
-                    AstKind::Function(_)
-                        | AstKind::ArrowFunctionExpression(_)
-                        | AstKind::ObjectProperty(_)
-                        | AstKind::MethodDefinition(_)
-                        | AstKind::AssignmentPattern(_)
-                        | AstKind::CatchClause(_)
-                ) && (obj_pattern.properties.iter().any(|prop| {
-                    matches!(
-                        prop.value.kind,
-                        BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_)
-                    )
-                }) || obj_pattern.rest.as_ref().is_some_and(|rest| {
-                    matches!(
-                        rest.argument.kind,
-                        BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_)
-                    )
-                }))
-            }
-            ObjectLike::ObjectAssignmentTarget(obj_target) => {
-                let parent_kind = p.parent_kind();
-                !matches!(
-                    parent_kind,
-                    AstKind::Function(_)
-                        | AstKind::ArrowFunctionExpression(_)
-                        | AstKind::ObjectProperty(_)
-                        | AstKind::MethodDefinition(_)
-                        | AstKind::AssignmentPattern(_)
-                        | AstKind::CatchClause(_)
-                ) && (obj_target.properties.iter().any(|prop| match prop {
-                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
-                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
-                        prop.binding.is_assignment_target_pattern()
-                    }
-                }) || obj_target
-                    .rest
-                    .as_ref()
-                    .is_some_and(|rest| rest.target.is_assignment_target_pattern()))
-            }
             ObjectLike::TSTypeLiteral(obj) => {
                 self.total_len() != 0
                     && misc::has_new_line_in_range(p.source_text, obj.span.start, obj.span.end)
             }
+            ObjectLike::ObjectPattern(obj_pattern) => {
+                let parent_kind = p.parent_kind();
+                // `f(a, { <- THIS -> })` should not break
+                !matches!(parent_kind, AstKind::FormalParameter(_))
+                    && (obj_pattern.properties.iter().any(|prop| {
+                        matches!(
+                            prop.value.kind,
+                            BindingPatternKind::ObjectPattern(_)
+                                | BindingPatternKind::ArrayPattern(_)
+                        )
+                    }) || obj_pattern.rest.as_ref().is_some_and(|rest| {
+                        matches!(
+                            rest.argument.kind,
+                            BindingPatternKind::ObjectPattern(_)
+                                | BindingPatternKind::ArrayPattern(_)
+                        )
+                    }))
+            }
+            ObjectLike::ObjectAssignmentTarget(obj_target) => false,
             ObjectLike::TSInterfaceBody(_) | ObjectLike::TSEnumDeclaration(_) => true,
         }
     }
