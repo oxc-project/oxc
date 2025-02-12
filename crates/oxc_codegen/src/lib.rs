@@ -16,7 +16,8 @@ mod sourcemap_builder;
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
-    BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
+    BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
+    Statement, StringLiteral,
 };
 use oxc_data_structures::stack::Stack;
 use oxc_semantic::SymbolTable;
@@ -589,6 +590,12 @@ impl<'a> Codegen<'a> {
                 self.need_space_before_dot = self.code_len();
             }
         }
+    }
+
+    fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
+        self.add_source_mapping(s.span);
+        let s = s.value.as_str();
+        self.print_quoted_utf16(s, allow_backtick);
     }
 
     fn print_quoted_utf16(&mut self, s: &str, allow_backtick: bool) {
