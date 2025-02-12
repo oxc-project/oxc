@@ -3389,7 +3389,6 @@ pub mod walk_mut {
             TSType::TSLiteralType(it) => visitor.visit_ts_literal_type(it),
             TSType::TSMappedType(it) => visitor.visit_ts_mapped_type(it),
             TSType::TSNamedTupleMember(it) => visitor.visit_ts_named_tuple_member(it),
-            TSType::TSQualifiedName(it) => visitor.visit_ts_qualified_name(it),
             TSType::TSTemplateLiteralType(it) => visitor.visit_ts_template_literal_type(it),
             TSType::TSThisType(it) => visitor.visit_ts_this_type(it),
             TSType::TSTupleType(it) => visitor.visit_ts_tuple_type(it),

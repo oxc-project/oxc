@@ -9260,24 +9260,6 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build a [`TSType::TSQualifiedName`].
-    ///
-    /// This node contains a [`TSQualifiedName`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `left`
-    /// * `right`
-    #[inline]
-    pub fn ts_type_qualified_name(
-        self,
-        span: Span,
-        left: TSTypeName<'a>,
-        right: IdentifierName<'a>,
-    ) -> TSType<'a> {
-        TSType::TSQualifiedName(self.alloc_ts_qualified_name(span, left, right))
-    }
-
     /// Build a [`TSType::TSTemplateLiteralType`].
     ///
     /// This node contains a [`TSTemplateLiteralType`] that will be stored in the memory arena.

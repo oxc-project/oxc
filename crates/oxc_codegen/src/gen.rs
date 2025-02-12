@@ -3042,7 +3042,6 @@ impl Gen for TSType<'_> {
             Self::TSNamedTupleMember(ty) => ty.print(p, ctx),
             Self::TSLiteralType(ty) => ty.literal.print(p, ctx),
             Self::TSImportType(ty) => ty.print(p, ctx),
-            Self::TSQualifiedName(ty) => ty.print(p, ctx),
             Self::TSAnyKeyword(_) => p.print_str("any"),
             Self::TSBigIntKeyword(_) => p.print_str("bigint"),
             Self::TSBooleanKeyword(_) => p.print_str("boolean"),

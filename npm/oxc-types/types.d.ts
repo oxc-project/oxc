@@ -988,7 +988,6 @@ export type TSType =
   | TSLiteralType
   | TSMappedType
   | TSNamedTupleMember
-  | TSQualifiedName
   | TSTemplateLiteralType
   | TSThisType
   | TSTupleType
