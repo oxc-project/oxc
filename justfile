@@ -126,6 +126,12 @@ codecov:
 benchmark:
   cargo benchmark
 
+# Run the benchmarks for a single component.
+# e.g. `just benchmark-one parser`.
+# See `tasks/benchmark`.
+benchmark-one *args:
+  cargo benchmark --bench {{args}} --no-default-features --features {{args}}
+
 # Automatically DRY up Cargo.toml manifests in a workspace.
 autoinherit:
   cargo binstall cargo-autoinherit
