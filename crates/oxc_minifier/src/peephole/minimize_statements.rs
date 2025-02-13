@@ -473,7 +473,7 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
                     // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
                     // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                    if_stmt.test = Self::join_with_left_associative_op(
+                    if_stmt.test = self.join_with_left_associative_op(
                         if_stmt.test.span(),
                         LogicalOperator::Or,
                         ctx.ast.move_expression(&mut prev_if_stmt.test),
@@ -545,8 +545,8 @@ impl<'a> PeepholeOptimizations {
                     let span =
                         if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
                     let test = ctx.ast.move_expression(&mut if_stmt.test);
-                    let mut test = Self::minimize_not(test.span(), test, ctx);
-                    Self::try_fold_expr_in_boolean_context(&mut test, ctx);
+                    let mut test = self.minimize_not(test.span(), test, ctx);
+                    self.try_fold_expr_in_boolean_context(&mut test, ctx);
                     let consequent = if body.len() == 1 {
                         body.remove(0)
                     } else {

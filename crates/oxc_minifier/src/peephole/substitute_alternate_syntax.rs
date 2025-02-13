@@ -114,7 +114,7 @@ impl<'a> PeepholeOptimizations {
                 .and_then(|name| {
                     Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
                 })
-                .or_else(|| Self::try_fold_simple_function_call(e, ctx)),
+                .or_else(|| self.try_fold_simple_function_call(e, ctx)),
             _ => None,
         } {
             *expr = folded_expr;
@@ -547,6 +547,7 @@ impl<'a> PeepholeOptimizations {
     /// `String()` -> `''`
     /// `BigInt(1)` -> `1`
     fn try_fold_simple_function_call(
+        &self,
         call_expr: &mut CallExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -576,9 +577,9 @@ impl<'a> PeepholeOptimizations {
                 None => Some(ctx.ast.expression_boolean_literal(span, false)),
                 Some(arg) => {
                     let mut arg = ctx.ast.move_expression(arg);
-                    Self::try_fold_expr_in_boolean_context(&mut arg, ctx);
+                    self.try_fold_expr_in_boolean_context(&mut arg, ctx);
                     let arg = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, arg);
-                    Some(Self::minimize_not(span, arg, ctx))
+                    Some(self.minimize_not(span, arg, ctx))
                 }
             },
             "String" => {

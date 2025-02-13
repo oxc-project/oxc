@@ -7,6 +7,7 @@ mod minimize_exit_points;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
 mod minimize_if_statement;
+mod minimize_logical_expression;
 mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
@@ -152,7 +153,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             return;
         }
         let ctx = Ctx(ctx);
-        Self::try_fold_stmt_in_boolean_context(stmt, ctx);
+        self.try_fold_stmt_in_boolean_context(stmt, ctx);
         self.remove_dead_code_exit_statement(stmt, ctx);
         if let Statement::IfStatement(if_stmt) = stmt {
             if let Some(folded_stmt) = self.try_minimize_if(if_stmt, ctx) {
@@ -207,7 +208,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             return;
         }
         if expr.operator.is_not()
-            && Self::try_fold_expr_in_boolean_context(&mut expr.argument, Ctx(ctx))
+            && self.try_fold_expr_in_boolean_context(&mut expr.argument, Ctx(ctx))
         {
             self.mark_current_function_as_changed();
         }
