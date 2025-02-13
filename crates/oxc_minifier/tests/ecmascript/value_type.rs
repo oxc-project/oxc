@@ -1,6 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{IdentifierReference, Statement};
 use oxc_ecmascript::{
+    builtins::GetBuiltin,
     constant_evaluation::{DetermineValueType, ValueType},
     is_global_reference::IsGlobalReference,
 };
@@ -15,11 +16,17 @@ impl IsGlobalReference for GlobalReferenceChecker {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
+impl GetBuiltin for GlobalReferenceChecker {}
 
 fn test(source_text: &str, expected: ValueType) {
     test_with_global_variables(
         source_text,
-        vec!["undefined".to_string(), "NaN".to_string(), "Infinity".to_string()],
+        vec![
+            "undefined".to_string(),
+            "NaN".to_string(),
+            "Infinity".to_string(),
+            "Math".to_string(),
+        ],
         expected,
     );
 }

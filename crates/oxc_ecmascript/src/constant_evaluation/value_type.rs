@@ -5,7 +5,8 @@ use oxc_ast::ast::{
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{
-    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
+    builtins::GetBuiltin, is_global_reference::IsGlobalReference, to_numeric::ToNumeric,
+    to_primitive::ToPrimitive,
 };
 
 /// JavaScript Language Type
@@ -69,6 +70,10 @@ pub trait DetermineValueType {
 
 impl DetermineValueType for Expression<'_> {
     fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        if let Some(builtin) = self.get_builtin(expr) {
+            return builtin.value_type();
+        }
+
         match self {
             Expression::BigIntLiteral(_) => ValueType::BigInt,
             Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => {

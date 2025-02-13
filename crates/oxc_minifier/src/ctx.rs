@@ -2,7 +2,8 @@ use std::ops::Deref;
 
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::constant_evaluation::{
-    ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
+    ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, GetBuiltin,
+    binary_operation_evaluate_value,
 };
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_semantic::{IsGlobalReference, Scoping};
@@ -24,6 +25,8 @@ impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
         Some(ident.is_global_reference(self.0.scoping()))
     }
 }
+
+impl GetBuiltin for Ctx<'_, '_> {}
 
 impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
     fn ast(&self) -> AstBuilder<'a> {

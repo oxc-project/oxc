@@ -27,6 +27,7 @@ mod to_string;
 // other
 mod to_integer_index;
 
+pub mod builtins;
 pub mod constant_evaluation;
 pub mod is_global_reference;
 pub mod side_effects;

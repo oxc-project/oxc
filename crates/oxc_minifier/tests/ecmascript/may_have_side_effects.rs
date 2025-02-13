@@ -1,6 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{IdentifierReference, Statement};
-use oxc_ecmascript::{is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects};
+use oxc_ecmascript::{
+    builtins::GetBuiltin, is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -12,6 +14,7 @@ impl IsGlobalReference for GlobalReferenceChecker {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
+impl GetBuiltin for GlobalReferenceChecker {}
 
 fn test(source_text: &str, expected: bool) {
     test_with_global_variables(source_text, vec![], expected);

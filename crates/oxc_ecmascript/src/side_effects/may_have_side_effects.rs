@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ToBigInt, ToIntegerIndex, constant_evaluation::DetermineValueType,
+    ToBigInt, ToIntegerIndex, builtins::GetBuiltin, constant_evaluation::DetermineValueType,
     is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
 };
 
@@ -22,6 +22,10 @@ pub trait MayHaveSideEffects {
 
 impl MayHaveSideEffects for Expression<'_> {
     fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        if self.get_builtin(is_global_reference).is_some() {
+            return false;
+        }
+
         match self {
             Expression::Identifier(ident) => ident.may_have_side_effects(is_global_reference),
             Expression::NumericLiteral(_)
@@ -50,6 +54,8 @@ impl MayHaveSideEffects for Expression<'_> {
                 e.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
             }
             Expression::BinaryExpression(e) => e.may_have_side_effects(is_global_reference),
+            // TODO: accessing `knownvalue.foo` does not have a side effect
+            // TODO: call / new expressions
             Expression::ObjectExpression(object_expr) => object_expr
                 .properties
                 .iter()
@@ -393,6 +399,14 @@ impl MayHaveSideEffects for ClassElement<'_> {
                 !e.decorators.is_empty() || e.key.may_have_side_effects(is_global_reference)
             }
             ClassElement::TSIndexSignature(_) => false,
+        }
+    }
+
+    fn call_expression_may_have_side_effects(&self, e: &CallExpression<'_>) -> bool {
+        if let Some(builtin) = self.get_builtin(&e.callee) {
+            builtin.may_have_side_effects_on_call(&e.arguments)
+        } else {
+            true
         }
     }
 }
