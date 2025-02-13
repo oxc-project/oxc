@@ -942,6 +942,7 @@ mod test {
 
     #[test]
     fn js_typeof() {
+        fold("x = typeof 1n", "x = \"bigint\"");
         fold("x = typeof 1", "x = \"number\"");
         fold("x = typeof 'foo'", "x = \"string\"");
         fold("x = typeof true", "x = \"boolean\"");
@@ -953,6 +954,7 @@ mod test {
         fold("x = typeof [1]", "x = \"object\"");
         fold("x = typeof [1,[]]", "x = \"object\"");
         fold("x = typeof {}", "x = \"object\"");
+        test("var a, b; NOOP(x = typeof (a === b))", "var a, b; NOOP(x = \"boolean\")");
         test("var foo; NOOP(x = typeof { foo })", "var foo; NOOP(x = \"object\")");
         fold("x = typeof function() {}", "x = 'function'");
         fold("x = typeof (() => {})", "x = 'function'");

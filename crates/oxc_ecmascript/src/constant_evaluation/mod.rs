@@ -424,42 +424,31 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
     fn eval_unary_expression(&self, expr: &UnaryExpression<'a>) -> Option<ConstantValue<'a>> {
         match expr.operator {
             UnaryOperator::Typeof => {
-                let s = match &expr.argument {
-                    Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
-                        if self.expression_may_have_side_effects(&expr.argument) {
-                            return None;
+                if self.expression_may_have_side_effects(&expr.argument) {
+                    return None;
+                }
+                let arg_ty = self.expression_value_type(&expr.argument);
+                let s = match arg_ty {
+                    ValueType::BigInt => "bigint",
+                    ValueType::Number => "number",
+                    ValueType::String => "string",
+                    ValueType::Boolean => "boolean",
+                    ValueType::Undefined => "undefined",
+                    ValueType::Null => "object",
+                    _ => match &expr.argument {
+                        Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
+                            "object"
                         }
-                        "object"
-                    }
-                    Expression::ClassExpression(_) => {
-                        if self.expression_may_have_side_effects(&expr.argument) {
-                            return None;
-                        }
-                        "function"
-                    }
-                    Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
-                        "function"
-                    }
-                    Expression::StringLiteral(_) => "string",
-                    Expression::NumericLiteral(_) => "number",
-                    Expression::BooleanLiteral(_) => "boolean",
-                    Expression::NullLiteral(_) => "object",
-                    Expression::UnaryExpression(e) if e.operator == UnaryOperator::Void => {
-                        "undefined"
-                    }
-                    Expression::BigIntLiteral(_) => "bigint",
-                    Expression::Identifier(ident) => match ident.name.as_str() {
-                        "undefined" if self.is_global_reference(ident) => "undefined",
-                        "NaN" | "Infinity" if self.is_global_reference(ident) => "number",
+                        Expression::ClassExpression(_)
+                        | Expression::FunctionExpression(_)
+                        | Expression::ArrowFunctionExpression(_) => "function",
                         _ => return None,
                     },
-                    _ => return None,
                 };
                 Some(ConstantValue::String(Cow::Borrowed(s)))
             }
-            UnaryOperator::Void => (expr.argument.is_literal()
-                || !self.expression_may_have_side_effects(&expr.argument))
-            .then_some(ConstantValue::Undefined),
+            UnaryOperator::Void => (!self.expression_may_have_side_effects(&expr.argument))
+                .then_some(ConstantValue::Undefined),
             UnaryOperator::LogicalNot => self
                 .get_side_free_boolean_value(&expr.argument)
                 .map(|b| !b)
