@@ -25,6 +25,7 @@
     "@oxc-project/types": "workspace:^"
   },
   "devDependencies": {
-    "tinybench": "^3.1.1"
+    "tinybench": "^3.1.1",
+    "vitest": "catalog:"
   }
 }

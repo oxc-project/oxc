@@ -70,7 +70,11 @@ importers:
         specifier: ^5.4.5
         version: 5.7.3
 
-  napi/minify: {}
+  napi/minify:
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 3.0.5(@types/node@22.13.1)(terser@5.38.1)
 
   napi/parser:
     dependencies:
@@ -81,8 +85,15 @@ importers:
       tinybench:
         specifier: ^3.1.1
         version: 3.1.1
+      vitest:
+        specifier: 'catalog:'
+        version: 3.0.5(@types/node@22.13.1)(terser@5.38.1)
 
-  napi/transform: {}
+  napi/transform:
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 3.0.5(@types/node@22.13.1)(terser@5.38.1)
 
   npm/oxc-minify: {}
 
@@ -111,8 +122,6 @@ importers:
         version: link:../oxc-types
 
   npm/runtime: {}
-
-  npm/wasm-web: {}
 
   tasks/benchmark/codspeed:
     devDependencies:

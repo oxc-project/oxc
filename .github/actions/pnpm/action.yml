@@ -1,4 +1,11 @@
 name: pnpm
+description: Install pnpm and dependencies
+
+inputs:
+  extra-args:
+    description: "Extra arguments to pass to pnpm install"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -11,5 +18,5 @@ runs:
         registry-url: "https://registry.npmjs.org"
         cache: pnpm
 
-    - run: pnpm install --frozen-lockfile
+    - run: pnpm install --frozen-lockfile ${{ inputs.extra-args }}
       shell: bash

@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - 02-13-ci_use_napi_cross_build
     paths:
       - npm/oxc-minify/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
 
