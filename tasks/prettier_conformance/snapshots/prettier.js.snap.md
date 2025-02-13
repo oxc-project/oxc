@@ -1,4 +1,4 @@
-js compatibility: 252/641 (39.31%)
+js compatibility: 251/643 (39.04%)
 
 # Failed
 
@@ -51,17 +51,18 @@ js compatibility: 252/641 (39.31%)
 | js/assignment-comments/string.js | 💥 | 52.11% |
 | js/async/inline-await.js | 💥 | 25.00% |
 | js/async/nested.js | 💥 | 0.00% |
-| js/binary-expressions/arrow.js | 💥 | 55.32% |
-| js/binary-expressions/call.js | 💥 | 76.79% |
-| js/binary-expressions/comment.js | 💥 | 34.48% |
-| js/binary-expressions/if.js | 💥 | 92.31% |
-| js/binary-expressions/in_instanceof.js | 💥 | 98.63% |
-| js/binary-expressions/inline-jsx.js | 💥 | 33.33% |
-| js/binary-expressions/inline-object-array.js | 💥 | 48.24% |
-| js/binary-expressions/jsx_parent.js | 💥 | 33.33% |
-| js/binary-expressions/short-right.js | 💥 | 68.75% |
-| js/binary-expressions/test.js | 💥 | 82.46% |
-| js/binary-expressions/unary.js | 💥 | 75.00% |
+| js/binary-expressions/arrow.js | 💥💥 | 53.19% |
+| js/binary-expressions/call.js | 💥💥 | 54.46% |
+| js/binary-expressions/comment.js | 💥💥 | 29.63% |
+| js/binary-expressions/if.js | 💥💥 | 82.05% |
+| js/binary-expressions/in_instanceof.js | 💥💥 | 98.63% |
+| js/binary-expressions/inline-jsx.js | 💥💥 | 33.33% |
+| js/binary-expressions/inline-object-array.js | 💥💥 | 46.73% |
+| js/binary-expressions/jsx_parent.js | 💥💥 | 31.82% |
+| js/binary-expressions/return.js | 💥✨ | 35.00% |
+| js/binary-expressions/short-right.js | 💥💥 | 50.50% |
+| js/binary-expressions/test.js | 💥💥 | 63.16% |
+| js/binary-expressions/unary.js | 💥💥 | 62.50% |
 | js/break-calls/break.js | 💥 | 71.74% |
 | js/break-calls/parent.js | 💥 | 0.00% |
 | js/break-calls/react.js | 💥 | 52.92% |
@@ -267,6 +268,7 @@ js compatibility: 252/641 (39.31%)
 | js/non-strict/keywords.js | 💥 | 76.92% |
 | js/nullish-coalescing/nullish_coalesing_operator.js | 💥 | 80.00% |
 | js/numeric-separators/number.js | 💥 | 66.67% |
+| js/object-multiline/multiline.js | 💥💥 | 60.26% |
 | js/object-prop-break-in/comment.js | 💥 | 90.91% |
 | js/object-prop-break-in/short-keys.js | 💥 | 60.00% |
 | js/object-property-comment/after-key.js | 💥 | 71.43% |
@@ -392,4 +394,5 @@ js compatibility: 252/641 (39.31%)
 | jsx/spread/attribute.js | 💥 | 30.19% |
 | jsx/spread/child.js | 💥 | 26.67% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 14.79% |
-| jsx/text-wrap/test.js | 💥 | 38.05% |
+| jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
+| jsx/text-wrap/test.js | 💥 | 38.12% |
