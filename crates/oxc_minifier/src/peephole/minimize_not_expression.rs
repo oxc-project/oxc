@@ -7,21 +7,27 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_not(span: Span, expr: Expression<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
+    pub fn minimize_not(
+        &self,
+        span: Span,
+        expr: Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Expression<'a> {
         let mut unary = ctx.ast.unary_expression(span, UnaryOperator::LogicalNot, expr);
-        Self::try_minimize_not(&mut unary, ctx)
+        self.try_minimize_not(&mut unary, ctx)
             .unwrap_or_else(|| Expression::UnaryExpression(ctx.ast.alloc(unary)))
     }
 
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
     pub fn try_minimize_not(
+        &self,
         expr: &mut UnaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !expr.operator.is_not() {
             return None;
         }
-        Self::try_fold_expr_in_boolean_context(&mut expr.argument, ctx);
+        self.try_fold_expr_in_boolean_context(&mut expr.argument, ctx);
         match &mut expr.argument {
             // `!!true` -> `true`
             // `!!false` -> `false`

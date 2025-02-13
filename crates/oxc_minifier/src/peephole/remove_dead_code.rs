@@ -37,7 +37,7 @@ impl<'a, 'b> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) {
         if let Some(folded_expr) = match expr {
-            Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
+            Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
             Expression::SequenceExpression(sequence_expression) => {
                 Self::try_fold_sequence_expression(sequence_expression, ctx)
             }
@@ -296,7 +296,7 @@ impl<'a, 'b> PeepholeOptimizations {
             }
         }
 
-        if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
+        if self.remove_unused_expression(&mut expr_stmt.expression, ctx) {
             *stmt = ctx.ast.statement_empty(expr_stmt.span);
             self.mark_current_function_as_changed();
         }
@@ -327,6 +327,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
+        &self,
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -344,7 +345,7 @@ impl<'a, 'b> PeepholeOptimizations {
                 let exprs = ctx.ast.vec_from_iter([
                     {
                         let mut test = ctx.ast.move_expression(&mut expr.test);
-                        Self::remove_unused_expression(&mut test, ctx);
+                        self.remove_unused_expression(&mut test, ctx);
                         test
                     },
                     ctx.ast.move_expression(if v {

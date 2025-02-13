@@ -11,7 +11,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
-    pub fn remove_unused_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    pub fn remove_unused_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         match e {
             Expression::NullLiteral(_)
             | Expression::BooleanLiteral(_)
@@ -25,10 +25,10 @@ impl<'a> PeepholeOptimizations {
             | Expression::MetaProperty(_) => true,
             Expression::Identifier(ident) => ctx.symbols().has_binding(ident.reference_id()),
             Expression::ArrayExpression(_) => Self::fold_array_expression(e, ctx),
-            Expression::UnaryExpression(_) => Self::fold_unary_expression(e, ctx),
+            Expression::UnaryExpression(_) => self.fold_unary_expression(e, ctx),
             Expression::NewExpression(e) => Self::fold_new_constructor(e, ctx),
-            Expression::LogicalExpression(_) => Self::fold_logical_expression(e, ctx),
-            Expression::SequenceExpression(_) => Self::fold_sequence_expression(e, ctx),
+            Expression::LogicalExpression(_) => self.fold_logical_expression(e, ctx),
+            Expression::SequenceExpression(_) => self.fold_sequence_expression(e, ctx),
             // TODO
             // Expression::TemplateLiteral(_)
             // | Expression::ObjectExpression(_)
@@ -39,38 +39,38 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn fold_unary_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_unary_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
                 *e = ctx.ast.move_expression(&mut unary_expr.argument);
-                Self::remove_unused_expression(e, ctx)
+                self.remove_unused_expression(e, ctx)
             }
             UnaryOperator::Typeof => {
                 if unary_expr.argument.is_identifier_reference() {
                     true
                 } else {
                     *e = ctx.ast.move_expression(&mut unary_expr.argument);
-                    Self::remove_unused_expression(e, ctx)
+                    self.remove_unused_expression(e, ctx)
                 }
             }
             _ => false,
         }
     }
 
-    fn fold_sequence_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_sequence_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::SequenceExpression(sequence_expr) = e else { return false };
-        sequence_expr.expressions.retain_mut(|e| !Self::remove_unused_expression(e, ctx));
+        sequence_expr.expressions.retain_mut(|e| !self.remove_unused_expression(e, ctx));
         sequence_expr.expressions.is_empty()
     }
 
-    fn fold_logical_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_logical_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::LogicalExpression(logical_expr) = e else { return false };
         if !logical_expr.operator.is_coalesce() {
-            Self::try_fold_expr_in_boolean_context(&mut logical_expr.left, ctx);
+            self.try_fold_expr_in_boolean_context(&mut logical_expr.left, ctx);
         }
-        if Self::remove_unused_expression(&mut logical_expr.right, ctx) {
-            Self::remove_unused_expression(&mut logical_expr.left, ctx);
+        if self.remove_unused_expression(&mut logical_expr.right, ctx) {
+            self.remove_unused_expression(&mut logical_expr.left, ctx);
             *e = ctx.ast.move_expression(&mut logical_expr.left);
         }
         false

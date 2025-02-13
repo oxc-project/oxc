@@ -27,7 +27,7 @@ impl<'a> PeepholeOptimizations {
                 };
                 let a = ctx.ast.move_expression(e);
                 let b = ctx.ast.move_expression(&mut expr_stmt.expression);
-                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                let expr = self.join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(Statement::ExpressionStatement(alternate_expr_stmt)) =
                 &mut if_stmt.alternate
@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
             {
                 // "if (a) {}" => "a;"
                 let mut expr = ctx.ast.move_expression(&mut if_stmt.test);
-                Self::remove_unused_expression(&mut expr, ctx);
+                self.remove_unused_expression(&mut expr, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(Statement::ExpressionStatement(expr_stmt)) = &mut if_stmt.alternate {
                 let (op, e) = match &mut if_stmt.test {
@@ -59,7 +59,7 @@ impl<'a> PeepholeOptimizations {
                 };
                 let a = ctx.ast.move_expression(e);
                 let b = ctx.ast.move_expression(&mut expr_stmt.expression);
-                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                let expr = self.join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
                 return Some(ctx.ast.statement_expression(if_stmt.span, expr));
             } else if let Some(stmt) = &mut if_stmt.alternate {
                 // "yes" is missing and "no" is not missing (and is not an expression)
@@ -73,7 +73,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     // "if (a) {} else return b;" => "if (!a) return b;"
                     _ => {
-                        if_stmt.test = Self::minimize_not(
+                        if_stmt.test = self.minimize_not(
                             if_stmt.test.span(),
                             ctx.ast.move_expression(&mut if_stmt.test),
                             ctx,
@@ -105,7 +105,7 @@ impl<'a> PeepholeOptimizations {
                         // "if (a) if (b) return c;" => "if (a && b) return c;"
                         let a = ctx.ast.move_expression(&mut if_stmt.test);
                         let b = ctx.ast.move_expression(&mut if2_stmt.test);
-                        if_stmt.test = Self::join_with_left_associative_op(
+                        if_stmt.test = self.join_with_left_associative_op(
                             if_stmt.test.span(),
                             LogicalOperator::And,
                             a,
