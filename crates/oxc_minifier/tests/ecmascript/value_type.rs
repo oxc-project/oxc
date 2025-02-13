@@ -1,19 +1,46 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Statement;
-use oxc_ecmascript::constant_evaluation::ValueType;
+use oxc_ast::ast::{IdentifierReference, Statement};
+use oxc_ecmascript::{
+    constant_evaluation::{DetermineValueType, ValueType},
+    is_global_reference::IsGlobalReference,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+struct ValueTypeCalculator {
+    global_variable_names: Vec<String>,
+}
+impl IsGlobalReference for ValueTypeCalculator {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
+        self.global_variable_names.iter().any(|name| name == ident.name.as_str())
+    }
+}
+impl DetermineValueType for ValueTypeCalculator {}
+
 fn test(source_text: &str, expected: ValueType) {
+    test_with_global_variables(
+        source_text,
+        vec!["undefined".to_string(), "NaN".to_string(), "Infinity".to_string()],
+        expected,
+    );
+}
+
+fn test_with_global_variables(
+    source_text: &str,
+    global_variable_names: Vec<String>,
+    expected: ValueType,
+) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
+    let value_type_caclculator = ValueTypeCalculator { global_variable_names };
+
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
-    let result = ValueType::from(&stmt.expression);
+    let result = value_type_caclculator.expression_value_type(&stmt.expression);
     assert_eq!(result, expected, "{source_text}");
 }
 
@@ -39,8 +66,11 @@ fn literal_tests() {
 #[test]
 fn identifier_tests() {
     test("undefined", ValueType::Undefined);
+    test_with_global_variables("undefined", vec![], ValueType::Undetermined);
     test("NaN", ValueType::Number);
+    test_with_global_variables("NaN", vec![], ValueType::Undetermined);
     test("Infinity", ValueType::Number);
+    test_with_global_variables("Infinity", vec![], ValueType::Undetermined);
     test("foo", ValueType::Undetermined);
 }
 

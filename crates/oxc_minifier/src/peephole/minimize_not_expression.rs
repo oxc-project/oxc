@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::ValueType;
+use oxc_ecmascript::constant_evaluation::DetermineValueType;
 use oxc_span::GetSpan;
 
 use crate::ctx::Ctx;
@@ -32,7 +32,7 @@ impl<'a> PeepholeOptimizations {
             // `!!true` -> `true`
             // `!!false` -> `false`
             Expression::UnaryExpression(e)
-                if e.operator.is_not() && ValueType::from(&e.argument).is_boolean() =>
+                if e.operator.is_not() && ctx.expression_value_type(&e.argument).is_boolean() =>
             {
                 Some(ctx.ast.move_expression(&mut e.argument))
             }

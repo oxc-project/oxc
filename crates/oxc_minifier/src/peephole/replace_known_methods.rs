@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use oxc_allocator::IntoIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ValueType},
+    constant_evaluation::{ConstantEvaluation, DetermineValueType},
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
     StringSubstring, ToInt32,
 };
@@ -379,7 +379,7 @@ impl<'a> PeepholeOptimizations {
         let first_arg = first_arg.to_expression_mut(); // checked above
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
-            if ValueType::from(&*expr).is_number() {
+            if ctx.expression_value_type(&*expr).is_number() {
                 ctx.ast.move_expression(expr)
             } else {
                 ctx.ast.expression_unary(

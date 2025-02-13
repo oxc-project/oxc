@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::{constant_evaluation::ValueType, ToInt32};
+use oxc_ecmascript::{constant_evaluation::DetermineValueType, ToInt32};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -100,12 +100,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `typeof foo === 'number'` -> `typeof foo == 'number'`
-    //  ^^^^^^^^^^ `ValueType::from(&e.left).is_string()` is `true`.
+    //  ^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_string()` is `true`.
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
-    //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
+    //  ^^^^^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_boolean()` is `true`.
     // `x >> +y !== 0` -> `x >> +y`
-    //  ^^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
+    //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
     fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -113,8 +113,8 @@ impl<'a> PeepholeOptimizations {
         if !e.operator.is_equality() {
             return None;
         }
-        let left = ValueType::from(&e.left);
-        let right = ValueType::from(&e.right);
+        let left = ctx.expression_value_type(&e.left);
+        let right = ctx.expression_value_type(&e.right);
         if left.is_undetermined() || right.is_undetermined() {
             return None;
         }

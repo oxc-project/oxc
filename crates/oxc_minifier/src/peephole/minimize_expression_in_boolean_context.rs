@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ValueType};
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, DetermineValueType};
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
@@ -53,7 +53,7 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(e)
                 if e.operator.is_equality()
                     && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
-                    && ValueType::from(&e.left).is_number() =>
+                    && ctx.expression_value_type(&e.left).is_number() =>
             {
                 let argument = ctx.ast.move_expression(&mut e.left);
                 *expr = if matches!(

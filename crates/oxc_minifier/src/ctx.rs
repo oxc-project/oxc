@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::{IsGlobalReference, SymbolTable};
@@ -19,15 +19,19 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
     }
 }
 
-impl<'a> ConstantEvaluation<'a> for Ctx<'a, '_> {
-    fn ast(&self) -> AstBuilder<'a> {
-        self.ast
+impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
+        ident.is_global_reference(self.0.symbols())
     }
 }
 
-impl MayHaveSideEffects for Ctx<'_, '_> {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
-        ident.is_global_reference(self.0.symbols())
+impl MayHaveSideEffects for Ctx<'_, '_> {}
+
+impl DetermineValueType for Ctx<'_, '_> {}
+
+impl<'a> ConstantEvaluation<'a> for Ctx<'a, '_> {
+    fn ast(&self) -> AstBuilder<'a> {
+        self.ast
     }
 }
 

@@ -22,6 +22,8 @@ mod to_integer_or_infinity;
 mod to_number;
 mod to_string;
 
+pub mod is_global_reference;
+
 #[cfg(feature = "constant_evaluation")]
 pub mod constant_evaluation;
 

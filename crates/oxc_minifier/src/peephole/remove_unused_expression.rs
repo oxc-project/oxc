@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{IsLiteralValue, ValueType},
+    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
@@ -162,7 +162,7 @@ impl<'a> PeepholeOptimizations {
                 0 => true,
                 1 => {
                     let Some(arg) = e.arguments[0].as_expression() else { return false };
-                    let ty = ValueType::from(arg);
+                    let ty = ctx.expression_value_type(arg);
                     matches!(
                         ty,
                         ValueType::Null

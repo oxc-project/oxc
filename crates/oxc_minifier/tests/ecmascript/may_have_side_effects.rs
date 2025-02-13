@@ -1,17 +1,18 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{IdentifierReference, Statement};
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_ecmascript::{is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 struct SideEffectChecker {
     global_variable_names: Vec<String>,
 }
-impl MayHaveSideEffects for SideEffectChecker {
+impl IsGlobalReference for SideEffectChecker {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
         self.global_variable_names.iter().any(|name| name == ident.name.as_str())
     }
 }
+impl MayHaveSideEffects for SideEffectChecker {}
 
 fn test(source_text: &str, expected: bool) {
     test_with_global_variables(source_text, vec![], expected);

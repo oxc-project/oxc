@@ -14,9 +14,9 @@ mod value;
 mod value_type;
 pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
-pub use value_type::ValueType;
+pub use value_type::{DetermineValueType, ValueType};
 
-pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
+pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
     fn ast(&self) -> AstBuilder<'a>;
 
     fn resolve_binding(&self, ident: &IdentifierReference<'a>) -> Option<ConstantValue<'a>> {
@@ -246,8 +246,8 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 {
                     return None;
                 }
-                let left_type = ValueType::from(left);
-                let right_type = ValueType::from(right);
+                let left_type = self.expression_value_type(left);
+                let right_type = self.expression_value_type(right);
                 if left_type.is_string() || right_type.is_string() {
                     let lval = self.eval_expression(left)?;
                     let rval = self.eval_expression(right)?;
@@ -331,7 +331,9 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 })
             }
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
-                if ValueType::from(left).is_bigint() && ValueType::from(right).is_bigint() {
+                if self.expression_value_type(left).is_bigint()
+                    && self.expression_value_type(right).is_bigint()
+                {
                     let left_val = self.get_side_free_bigint_value(left)?;
                     let right_val = self.get_side_free_bigint_value(right)?;
                     let result_val: BigInt = match operator {
@@ -367,12 +369,12 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                     if matches!(name, "Object" | "Number" | "Boolean" | "String")
                         && self.is_global_reference(right_ident)
                     {
-                        let left_ty = ValueType::from(left);
+                        let left_ty = self.expression_value_type(left);
                         if left_ty.is_undetermined() {
                             return None;
                         }
                         return Some(ConstantValue::Boolean(
-                            name == "Object" && ValueType::from(left).is_object(),
+                            name == "Object" && self.expression_value_type(left).is_object(),
                         ));
                     }
                 }
@@ -465,7 +467,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
             UnaryOperator::UnaryPlus => {
                 self.get_side_free_number_value(&expr.argument).map(ConstantValue::Number)
             }
-            UnaryOperator::UnaryNegation => match ValueType::from(&expr.argument) {
+            UnaryOperator::UnaryNegation => match self.expression_value_type(&expr.argument) {
                 ValueType::BigInt => self
                     .get_side_free_bigint_value(&expr.argument)
                     .map(|v| -v)
@@ -478,7 +480,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 ValueType::Null => Some(ConstantValue::Number(-0.0)),
                 _ => None,
             },
-            UnaryOperator::BitwiseNot => match ValueType::from(&expr.argument) {
+            UnaryOperator::BitwiseNot => match self.expression_value_type(&expr.argument) {
                 ValueType::BigInt => self
                     .get_side_free_bigint_value(&expr.argument)
                     .map(|v| !v)
@@ -547,8 +549,8 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
 
         // a. Let px be ? ToPrimitive(x, NUMBER).
         // b. Let py be ? ToPrimitive(y, NUMBER).
-        let px = ValueType::from(x);
-        let py = ValueType::from(y);
+        let px = self.expression_value_type(x);
+        let py = self.expression_value_type(y);
 
         // If the operands are not primitives, `ToPrimitive` is *not* a noop.
         if px.is_undetermined() || px.is_object() || py.is_undetermined() || py.is_object() {

@@ -1,5 +1,7 @@
 use oxc_ast::ast::*;
 
+use crate::is_global_reference::IsGlobalReference;
+
 /// Returns true if subtree changes application state.
 ///
 /// This trait assumes the following:
@@ -11,9 +13,7 @@ use oxc_ast::ast::*;
 /// - TDZ errors does not happen.
 ///
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
-pub trait MayHaveSideEffects: Sized {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool;
-
+pub trait MayHaveSideEffects: Sized + IsGlobalReference {
     fn expression_may_have_side_effects(&self, e: &Expression<'_>) -> bool {
         match e {
             Expression::Identifier(ident) => match ident.name.as_str() {

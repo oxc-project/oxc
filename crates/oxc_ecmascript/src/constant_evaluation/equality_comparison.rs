@@ -8,8 +8,8 @@ pub(super) fn abstract_equality_comparison<'a>(
     left_expr: &Expression<'a>,
     right_expr: &Expression<'a>,
 ) -> Option<bool> {
-    let left = ValueType::from(left_expr);
-    let right = ValueType::from(right_expr);
+    let left = c.expression_value_type(left_expr);
+    let right = c.expression_value_type(right_expr);
     if left != ValueType::Undetermined && right != ValueType::Undetermined {
         if left == right {
             return strict_equality_comparison(c, left_expr, right_expr);
@@ -83,8 +83,8 @@ pub(super) fn strict_equality_comparison<'a>(
     left_expr: &Expression<'a>,
     right_expr: &Expression<'a>,
 ) -> Option<bool> {
-    let left = ValueType::from(left_expr);
-    let right = ValueType::from(right_expr);
+    let left = c.expression_value_type(left_expr);
+    let right = c.expression_value_type(right_expr);
     if !left.is_undetermined() && !right.is_undetermined() {
         // Strict equality can only be true for values of the same type.
         if left != right {
