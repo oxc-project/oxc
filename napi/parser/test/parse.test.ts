@@ -105,6 +105,22 @@ it('utf16 span', async () => {
     });
     expect(ret.program.end).toMatchInlineSnapshot(`4`);
   }
+  {
+    const code = `// ∞`;
+    const ret = await parseAsync('test.js', code, {
+      convertSpanUtf16: true,
+    });
+    expect(ret.comments).toMatchInlineSnapshot(`
+      [
+        {
+          "end": 4,
+          "start": 0,
+          "type": "Line",
+          "value": " ∞",
+        },
+      ]
+    `);
+  }
 });
 
 describe('error', () => {

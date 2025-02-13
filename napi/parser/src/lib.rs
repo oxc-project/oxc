@@ -69,15 +69,9 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
     let allocator = Allocator::default();
     let source_type = get_source_type(filename, options);
     let mut ret = parse(&allocator, source_type, &source_text, options);
-    if options.convert_span_utf16.unwrap_or(false) {
-        // TODO: fix spans in `module_record` and `errors`
-        Utf8ToUtf16::new().convert(&mut ret.program);
-    }
-    let program = serde_json::to_string(&ret.program).unwrap();
-
     let errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
 
-    let comments = ret
+    let mut comments = ret
         .program
         .comments
         .iter()
@@ -93,6 +87,18 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         .collect::<Vec<Comment>>();
 
     let module = EcmaScriptModule::from(&ret.module_record);
+
+    if options.convert_span_utf16.unwrap_or(false) {
+        // TODO: fix spans in `module_record` and `errors`
+        let mut converter = Utf8ToUtf16::new();
+        converter.convert(&mut ret.program);
+        for comment in &mut comments {
+            comment.start = converter.convert_offset(comment.start);
+            comment.end = converter.convert_offset(comment.end);
+        }
+    }
+    let program = serde_json::to_string(&ret.program).unwrap();
+
     ParseResult { source_text, program, module, comments, errors }
 }
 
