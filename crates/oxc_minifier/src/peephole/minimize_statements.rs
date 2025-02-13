@@ -448,8 +448,12 @@ impl<'a> PeepholeOptimizations {
                     if let Some(Statement::IfStatement(if_stmt)) = result.last_mut() {
                         if if_stmt.consequent.is_jump_statement() {
                             if let Some(stmt) = if_stmt.alternate.take() {
-                                result.push(stmt);
-                                self.mark_current_function_as_changed();
+                                if let Statement::BlockStatement(block_stmt) = stmt {
+                                    self.handle_block(result, block_stmt);
+                                } else {
+                                    result.push(stmt);
+                                    self.mark_current_function_as_changed();
+                                }
                                 continue;
                             }
                         }

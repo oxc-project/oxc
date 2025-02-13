@@ -49,8 +49,11 @@ impl<'a> PeepholeOptimizations {
             };
 
             if let Some(test) = &mut for_stmt.test {
-                let e = ctx.ast.move_expression(test);
-                *test = ctx.ast.expression_logical(test.span(), e, LogicalOperator::And, expr);
+                let left = ctx.ast.move_expression(test);
+                let mut logical_expr =
+                    ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
+                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
+                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
             } else {
                 for_stmt.test = Some(expr);
             }
@@ -83,8 +86,11 @@ impl<'a> PeepholeOptimizations {
             let expr = ctx.ast.move_expression(&mut if_stmt.test);
 
             if let Some(test) = &mut for_stmt.test {
-                let e = ctx.ast.move_expression(test);
-                *test = ctx.ast.expression_logical(test.span(), e, LogicalOperator::And, expr);
+                let left = ctx.ast.move_expression(test);
+                let mut logical_expr =
+                    ctx.ast.logical_expression(test.span(), left, LogicalOperator::And, expr);
+                *test = Self::try_fold_and_or(&mut logical_expr, ctx)
+                    .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logical_expr)));
             } else {
                 for_stmt.test = Some(expr);
             }
