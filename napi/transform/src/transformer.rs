@@ -60,7 +60,7 @@ pub struct TransformResult {
     /// Example:
     ///
     /// ```text
-    /// { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+    /// { "_objectSpread": "@oxc-project/runtime/helpers/objectSpread2" }
     /// ```
     #[napi(ts_type = "Record<string, string>")]
     pub helpers_used: FxHashMap<String, String>,
@@ -464,7 +464,7 @@ pub enum HelperMode {
     /// Example:
     ///
     /// ```js
-    /// import helperName from "@babel/runtime/helpers/helperName";
+    /// import helperName from "@oxc-project/runtime/helpers/helperName";
     /// helperName(...arguments);
     /// ```
     #[default]

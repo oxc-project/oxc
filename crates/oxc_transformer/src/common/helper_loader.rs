@@ -22,12 +22,12 @@
 //!
 //! ### Runtime ([`HelperLoaderMode::Runtime`])
 //!
-//! Uses `@babel/runtime` as a dependency, importing helper functions from the runtime.
+//! Uses `@oxc-project/runtime` as a dependency, importing helper functions from the runtime.
 //!
 //! Generated code example:
 //!
 //! ```js
-//! import helperName from "@babel/runtime/helpers/helperName";
+//! import helperName from "@oxc-project/runtime/helpers/helperName";
 //! helperName(...arguments);
 //! ```
 //!
@@ -110,7 +110,7 @@ pub enum HelperLoaderMode {
     ///
     /// Example output:
     /// ```js
-    /// import helperName from "@babel/runtime/helpers/helperName";
+    /// import helperName from "@oxc-project/runtime/helpers/helperName";
     /// helperName(...arguments);
     /// ```
     #[default]
@@ -122,7 +122,7 @@ pub enum HelperLoaderMode {
 pub struct HelperLoaderOptions {
     #[serde(default = "default_as_module_name")]
     /// The module name to import helper functions from.
-    /// Default: `@babel/runtime`
+    /// Default: `@oxc-project/runtime`
     pub module_name: Cow<'static, str>,
     pub mode: HelperLoaderMode,
 }
@@ -134,7 +134,7 @@ impl Default for HelperLoaderOptions {
 }
 
 fn default_as_module_name() -> Cow<'static, str> {
-    Cow::Borrowed("@babel/runtime")
+    Cow::Borrowed("@oxc-project/runtime")
 }
 
 /// Available helpers.
