@@ -12,7 +12,7 @@ use super::{PeepholeOptimizations, State};
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_expression(
-        &self,
+        &mut self,
         expr: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -62,7 +62,7 @@ impl<'a> PeepholeOptimizations {
     // associative. For example, the "+" operator is not associative for
     // floating-point numbers.
     pub fn join_with_left_associative_op(
-        &self,
+        &mut self,
         span: Span,
         op: LogicalOperator,
         a: Expression<'a>,

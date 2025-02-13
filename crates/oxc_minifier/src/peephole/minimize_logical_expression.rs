@@ -8,11 +8,11 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn minimize_logical_expression(
-        &self,
+        &mut self,
         e: &mut LogicalExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        Self::try_compress_is_null_or_undefined(e, ctx)
+        self.try_compress_is_null_or_undefined(e, ctx)
             .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx))
     }
 
@@ -29,6 +29,7 @@ impl<'a> PeepholeOptimizations {
     /// - `document.all === null || document.all === undefined` is `false`
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
+        &mut self,
         expr: &mut LogicalExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -38,7 +39,7 @@ impl<'a> PeepholeOptimizations {
             LogicalOperator::And => (BinaryOperator::StrictInequality, BinaryOperator::Inequality),
             LogicalOperator::Coalesce => return None,
         };
-        if let Some(new_expr) = Self::try_compress_is_null_or_undefined_for_left_and_right(
+        if let Some(new_expr) = self.try_compress_is_null_or_undefined_for_left_and_right(
             &mut expr.left,
             &mut expr.right,
             expr.span,
@@ -54,7 +55,7 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let new_span = Span::new(left.right.span().start, expr.span.end);
-        Self::try_compress_is_null_or_undefined_for_left_and_right(
+        self.try_compress_is_null_or_undefined_for_left_and_right(
             &mut left.right,
             &mut expr.right,
             new_span,
@@ -72,6 +73,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_compress_is_null_or_undefined_for_left_and_right(
+        &mut self,
         left: &mut Expression<'a>,
         right: &mut Expression<'a>,
         span: Span,
@@ -135,6 +137,7 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
+        self.removed_references.insert(right_id.reference_id());
         let null_expr_span = match left_value {
             LeftPairValueResult::Null(span) => span,
             LeftPairValueResult::Undefined => right_value.unwrap(),

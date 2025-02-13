@@ -8,7 +8,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn minimize_not(
-        &self,
+        &mut self,
         span: Span,
         expr: Expression<'a>,
         ctx: Ctx<'a, '_>,
@@ -20,7 +20,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
     pub fn try_minimize_not(
-        &self,
+        &mut self,
         expr: &mut UnaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {

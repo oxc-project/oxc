@@ -10,7 +10,7 @@ use super::{PeepholeOptimizations, State};
 impl<'a> PeepholeOptimizations {
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
     pub fn try_minimize_if(
-        &self,
+        &mut self,
         if_stmt: &mut IfStatement<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,

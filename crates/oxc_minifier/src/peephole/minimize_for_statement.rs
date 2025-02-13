@@ -8,7 +8,7 @@ use super::{PeepholeOptimizations, State};
 impl<'a> PeepholeOptimizations {
     /// `mangleFor`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9801>
     pub fn minimize_for_statement(
-        &self,
+        &mut self,
         for_stmt: &mut ForStatement<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,

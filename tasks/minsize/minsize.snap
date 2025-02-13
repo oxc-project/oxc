@@ -1,7 +1,7 @@
            | Oxc        | ESBuild    | Oxc        | ESBuild    |
 Original   | minified   | minified   | gzip       | gzip       | Fixture
 -------------------------------------------------------------------------------------
-72.14 kB   | 23.49 kB   | 23.70 kB   | 8.47 kB    | 8.54 kB    | react.development.js
+72.14 kB   | 23.48 kB   | 23.70 kB   | 8.48 kB    | 8.54 kB    | react.development.js
 
 173.90 kB  | 59.52 kB   | 59.82 kB   | 19.18 kB   | 19.33 kB   | moment.js 
 
@@ -21,7 +21,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 3.20 MB    | 1.01 MB    | 1.01 MB    | 324.14 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.28 MB    | 2.31 MB    | 466.11 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.28 MB    | 2.31 MB    | 465.80 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.35 MB    | 3.49 MB    | 860.94 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.35 MB    | 3.49 MB    | 859.39 kB  | 915.50 kB  | typescript.js
 

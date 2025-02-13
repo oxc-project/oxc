@@ -17,7 +17,7 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 impl<'a, 'b> PeepholeOptimizations {
     pub fn remove_dead_code_exit_statement(
-        &self,
+        &mut self,
         stmt: &mut Statement<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -38,7 +38,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     pub fn remove_dead_code_exit_expression(
-        &self,
+        &mut self,
         expr: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -244,7 +244,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_for(
-        &self,
+        &mut self,
         for_stmt: &mut ForStatement<'a>,
         state: &mut State,
         ctx: Ctx<'a, 'b>,
@@ -335,7 +335,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_expression_stmt(
-        &self,
+        &mut self,
         stmt: &mut Statement<'a>,
         state: &mut State,
         ctx: Ctx<'a, 'b>,
@@ -390,7 +390,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
-        &self,
+        &mut self,
         expr: &mut ConditionalExpression<'a>,
         state: &mut State,
         ctx: Ctx<'a, 'b>,
@@ -442,7 +442,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_sequence_expression(
-        &self,
+        &mut self,
         sequence_expr: &mut SequenceExpression<'a>,
         state: &mut State,
         ctx: Ctx<'a, 'b>,

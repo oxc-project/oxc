@@ -31,7 +31,7 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(
-        &self,
+        &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -285,7 +285,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn minimize_statement(
-        &self,
+        &mut self,
         stmt: Statement<'a>,
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
@@ -421,7 +421,7 @@ impl<'a> PeepholeOptimizations {
 
     #[expect(clippy::cast_possible_truncation)]
     fn handle_if_statement(
-        &self,
+        &mut self,
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
         mut if_stmt: Box<'a, IfStatement<'a>>,

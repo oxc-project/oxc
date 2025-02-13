@@ -7,7 +7,7 @@ use crate::ctx::Ctx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn try_fold_stmt_in_boolean_context(&self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
+    pub fn try_fold_stmt_in_boolean_context(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
         let expr = match stmt {
             Statement::IfStatement(s) => Some(&mut s.test),
             Statement::WhileStatement(s) => Some(&mut s.test),
@@ -25,7 +25,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `SimplifyBooleanExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
     pub fn try_fold_expr_in_boolean_context(
-        &self,
+        &mut self,
         expr: &mut Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> bool {

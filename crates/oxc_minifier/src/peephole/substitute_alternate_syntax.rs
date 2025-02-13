@@ -178,7 +178,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_exit_expression(
-        &self,
+        &mut self,
         expr: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -215,6 +215,24 @@ impl<'a> PeepholeOptimizations {
                     Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
                 })
                 .or_else(|| self.try_fold_simple_function_call(e, ctx)),
+            Expression::AssignmentExpression(e) => {
+                if let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) =
+                    e.left.as_simple_assignment_target()
+                {
+                    let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
+                    let no_read = symbol_id.is_some_and(|symbol_id| {
+                        ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.is_read())
+                    });
+                    if no_read {
+                        self.remove_all_references_in_assignment_target(&e.left);
+                        Some(ctx.ast.move_expression(&mut e.right))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            }
             _ => None,
         } {
             *expr = folded_expr;
@@ -659,7 +677,7 @@ impl<'a> PeepholeOptimizations {
     /// `String()` -> `''`
     /// `BigInt(1)` -> `1`
     fn try_fold_simple_function_call(
-        &self,
+        &mut self,
         call_expr: &mut CallExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {

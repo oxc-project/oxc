@@ -19,6 +19,7 @@ mod replace_known_methods;
 mod statement_fusion;
 mod substitute_alternate_syntax;
 
+use oxc_semantic::ReferenceId;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
@@ -27,7 +28,7 @@ use oxc_data_structures::stack::NonEmptyStack;
 use oxc_syntax::{es_target::ESTarget, scope::ScopeId};
 use oxc_traverse::{ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
 
-use crate::{ctx::Ctx, options::CompressOptionsKeepNames};
+use crate::{collect_references::CollectReferences, ctx::Ctx, options::CompressOptionsKeepNames};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -50,6 +51,8 @@ pub struct PeepholeOptimizations {
     /// Track the current function as a stack.
     current_function:
         NonEmptyStack<(ScopeId, /* prev changed */ bool, /* current changed */ bool)>,
+
+    removed_references: FxHashSet<ReferenceId>,
 }
 
 impl<'a> PeepholeOptimizations {
@@ -61,6 +64,7 @@ impl<'a> PeepholeOptimizations {
             prev_functions_changed: FxHashSet::default(),
             functions_changed: FxHashSet::default(),
             current_function: NonEmptyStack::new((ScopeId::new(0), true, false)),
+            removed_references: FxHashSet::default(),
         }
     }
 
@@ -110,6 +114,20 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    fn remove_all_references_in_expr(&mut self, expr: &Expression<'a>) {
+        let mut collector = CollectReferences::new();
+        for ref_id in collector.collect_in_expr(expr) {
+            self.removed_references.insert(ref_id);
+        }
+    }
+
+    fn remove_all_references_in_assignment_target(&mut self, target: &AssignmentTarget<'a>) {
+        let mut collector = CollectReferences::new();
+        for ref_id in collector.collect_in_assignment_target(target) {
+            self.removed_references.insert(ref_id);
+        }
+    }
+
     pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
         pair: (&'x A, &'x A),
         check_a: F,
@@ -142,8 +160,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.enter_program_or_function(program.scope_id());
     }
 
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.exit_program_or_function();
+        for ref_id in self.removed_references.drain() {
+            ctx.scoping_mut().delete_reference(ref_id);
+        }
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {

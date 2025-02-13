@@ -7,7 +7,7 @@ use oxc_index::{Idx, IndexVec};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     node::NodeId,
-    reference::{Reference, ReferenceId},
+    reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -302,6 +302,10 @@ impl Scoping {
 
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
         self.references.push(reference)
+    }
+
+    pub fn delete_reference(&mut self, reference_id: ReferenceId) {
+        self.references[reference_id] = Reference::new(NodeId::DUMMY, ReferenceFlags::empty());
     }
 
     /// Get a resolved or unresolved reference.

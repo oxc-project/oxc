@@ -7,7 +7,7 @@ use oxc_ecmascript::{
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::ctx::Ctx;
+use crate::{ctx::Ctx, collect_references::CollectReferences};
 
 use super::{PeepholeOptimizations, State};
 
@@ -16,7 +16,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
     pub fn fold_constants_exit_expression(
-        &self,
+        &mut self,
         expr: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -29,6 +29,7 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
 
+        let mut collect_refs = CollectReferences::new();
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
                 .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),
@@ -40,6 +41,12 @@ impl<'a> PeepholeOptimizations {
             Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
             _ => None,
         } {
+            let before_refs = collect_refs.collect_in_expr(expr);
+            let after_refs = collect_refs.collect_in_expr(&folded_expr);
+            let removed_refs = before_refs.difference(&after_refs);
+            for ref_id in removed_refs.copied() {
+                self.removed_references.insert(ref_id);
+            }
             *expr = folded_expr;
             state.changed = true;
         };

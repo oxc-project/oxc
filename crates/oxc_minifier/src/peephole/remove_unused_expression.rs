@@ -17,7 +17,7 @@ use super::{PeepholeOptimizations, State};
 impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
     pub fn remove_unused_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -38,7 +38,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_unary_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -64,7 +64,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_sequence_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -81,7 +81,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_logical_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -123,7 +123,7 @@ impl<'a> PeepholeOptimizations {
                             None
                         };
                         if let Some((name, id)) = name_and_id {
-                            if Self::inject_optional_chaining_if_matched(
+                            if self.inject_optional_chaining_if_matched(
                                 &name,
                                 id,
                                 logical_right,
@@ -186,7 +186,7 @@ impl<'a> PeepholeOptimizations {
 
     // `([1,2,3, foo()])` -> `foo()`
     fn fold_array_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -241,7 +241,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_new_constructor(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -310,7 +310,7 @@ impl<'a> PeepholeOptimizations {
 
     // "`${1}2${foo()}3`" -> "`${foo()}`"
     fn fold_template_literal(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -395,7 +395,7 @@ impl<'a> PeepholeOptimizations {
 
     // `({ 1: 1, [foo()]: bar() })` -> `foo(), bar()`
     fn fold_object_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -471,7 +471,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_conditional_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -525,7 +525,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_binary_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -627,7 +627,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_call_expression(
-        &self,
+        &mut self,
         e: &mut Expression<'a>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
@@ -694,7 +694,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn fold_arguments_into_needed_expressions(
-        &self,
+        &mut self,
         args: &mut Vec<'a, Argument<'a>>,
         state: &mut State,
         ctx: Ctx<'a, '_>,
