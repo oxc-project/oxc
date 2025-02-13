@@ -22,7 +22,7 @@ fn grouped_accessor_pairs_diagnostic(span: Span, msg: String) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 enum PairOrder {
     #[default]
     AnyOrder,
@@ -169,46 +169,12 @@ impl Rule for GroupedAccessorPairs {
                     if obj_prop.kind == PropertyKind::Init {
                         continue;
                     }
-
-                    let key_name = obj_prop
-                        .key
-                        .name()
-                        .unwrap_or_else(|| {
-                            Cow::Borrowed(
-                                obj_prop
-                                    .key
-                                    .as_expression()
-                                    .unwrap()
-                                    .span()
-                                    .source_text(ctx.source_text()),
-                            )
-                        })
-                        .to_string();
-
-                    let is_literal = if matches!(
-                        obj_prop.key,
-                        PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_)
-                    ) {
-                        false
-                    } else {
-                        matches!(
-                            obj_prop.key.as_expression().unwrap(),
-                            Expression::BooleanLiteral(_)
-                                | Expression::NullLiteral(_)
-                                | Expression::StringLiteral(_)
-                                | Expression::RegExpLiteral(_)
-                                | Expression::BigIntLiteral(_)
-                                | Expression::NumericLiteral(_)
-                                | Expression::TemplateLiteral(_)
-                        )
-                    };
-
+                    let (key_name, is_literal) = get_key_name_and_check_literal(ctx, &obj_prop.key);
                     let should_pre = if is_literal { false } else { obj_prop.computed };
-
                     prop_map.entry((key_name, should_pre)).or_default().push((idx, obj_prop));
                 }
 
-                for ((key, _), val) in prop_map {
+                for ((key, should_pre), val) in prop_map {
                     if val.len() == 2 {
                         let (first, first_node) = val[0];
                         let (second, second_node) = val[1];
@@ -221,29 +187,25 @@ impl Rule for GroupedAccessorPairs {
                             (second, first)
                         };
                         let latter = if first < second { second_node } else { first_node };
+                        let (left_key, right_key) = if should_pre {
+                            if getter_idx > setter_idx {
+                                ("getter", "setter")
+                            } else {
+                                ("setter", "getter")
+                            }
+                        } else {
+                            (key.as_str(), key.as_str())
+                        };
 
-                        match self.pair_order {
-                            PairOrder::GetBeforeSet if getter_idx > setter_idx => {
-                                ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-                                    Span::new(latter.span.start, latter.key.span().end),
-                                    format!("Expected {key} to be before {key}."),
-                                ));
-                            }
-                            PairOrder::SetBeforeGet if setter_idx > getter_idx => {
-                                ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-                                    Span::new(latter.span.start, latter.key.span().end),
-                                    format!("Expected {key} to be before {key}."),
-                                ));
-                            }
-                            _ => {
-                                if getter_idx.abs_diff(setter_idx) > 1 {
-                                    ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-                                        Span::new(latter.span.start, latter.key.span().end),
-                                        format!("Accessor pair {key} and {key} should be grouped."),
-                                    ));
-                                }
-                            }
-                        }
+                        report(
+                            ctx,
+                            self.pair_order,
+                            left_key,
+                            right_key,
+                            Span::new(latter.span.start, latter.key.span().end),
+                            getter_idx,
+                            setter_idx,
+                        );
                     }
                 }
             }
@@ -264,48 +226,16 @@ impl Rule for GroupedAccessorPairs {
                     ) {
                         continue;
                     }
-
-                    let key_name = method_define
-                        .key
-                        .name()
-                        .unwrap_or_else(|| {
-                            Cow::Borrowed(
-                                method_define
-                                    .key
-                                    .as_expression()
-                                    .unwrap()
-                                    .span()
-                                    .source_text(ctx.source_text()),
-                            )
-                        })
-                        .to_string();
-                    let is_literal = if matches!(
-                        method_define.key,
-                        PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_)
-                    ) {
-                        false
-                    } else {
-                        matches!(
-                            method_define.key.as_expression().unwrap(),
-                            Expression::BooleanLiteral(_)
-                                | Expression::NullLiteral(_)
-                                | Expression::StringLiteral(_)
-                                | Expression::RegExpLiteral(_)
-                                | Expression::BigIntLiteral(_)
-                                | Expression::NumericLiteral(_)
-                                | Expression::TemplateLiteral(_)
-                        )
-                    };
-
+                    let (key_name, is_literal) =
+                        get_key_name_and_check_literal(ctx, &method_define.key);
                     let should_pre = if is_literal { false } else { method_define.computed };
-
                     prop_map
                         .entry((key_name, should_pre, method_define.r#static))
                         .or_default()
                         .push((idx, method_define));
                 }
 
-                for ((key, ..), val) in prop_map {
+                for ((key, should_pre, _), val) in prop_map {
                     if val.len() == 2 {
                         let (first, first_node) = val[0];
                         let (second, second_node) = val[1];
@@ -319,34 +249,90 @@ impl Rule for GroupedAccessorPairs {
                                 (second, first)
                             };
                         let latter = if first < second { second_node } else { first_node };
-
-                        match self.pair_order {
-                            PairOrder::GetBeforeSet if getter_idx > setter_idx => {
-                                ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-                                    Span::new(latter.span.start, latter.key.span().end),
-                                    format!("Expected {key} to be before {key}."),
-                                ));
+                        let (left_key, right_key) = if should_pre {
+                            if getter_idx > setter_idx {
+                                ("getter", "setter")
+                            } else {
+                                ("setter", "getter")
                             }
-                            PairOrder::SetBeforeGet if setter_idx > getter_idx => {
-                                ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-                                    Span::new(latter.span.start, latter.key.span().end),
-                                    format!("Expected {key} to be before {key}."),
-                                ));
-                            }
-                            _ => {
-                                if getter_idx.abs_diff(setter_idx) > 1 {
-                                    ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-                                        Span::new(latter.span.start, latter.key.span().end),
-                                        format!("Accessor pair {key} and {key} should be grouped."),
-                                    ));
-                                }
-                            }
-                        }
+                        } else {
+                            (key.as_str(), key.as_str())
+                        };
+                        report(
+                            ctx,
+                            self.pair_order,
+                            left_key,
+                            right_key,
+                            Span::new(latter.span.start, latter.key.span().end),
+                            getter_idx,
+                            setter_idx,
+                        );
                     }
                 }
             }
             _ => {}
         }
+    }
+}
+
+fn get_key_name_and_check_literal<'a>(
+    ctx: &LintContext<'a>,
+    prop_key: &PropertyKey<'a>,
+) -> (String, bool) {
+    let key_name = prop_key
+        .name()
+        .unwrap_or_else(|| {
+            Cow::Borrowed(prop_key.as_expression().unwrap().span().source_text(ctx.source_text()))
+        })
+        .to_string();
+    let is_literal =
+        if matches!(prop_key, PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_))
+        {
+            false
+        } else {
+            matches!(
+                prop_key.as_expression().unwrap(),
+                Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::StringLiteral(_)
+                    | Expression::RegExpLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::TemplateLiteral(_)
+            )
+        };
+    (key_name, is_literal)
+}
+
+fn report(
+    ctx: &LintContext,
+    pair_order: PairOrder,
+    left_key: &str,
+    right_key: &str,
+    span: Span,
+    getter_idx: usize,
+    setter_idx: usize,
+) {
+    if getter_idx.abs_diff(setter_idx) > 1 {
+        ctx.diagnostic(grouped_accessor_pairs_diagnostic(
+            span,
+            format!("Accessor pair {left_key} and {right_key} should be grouped."),
+        ));
+    }
+    match pair_order {
+        PairOrder::GetBeforeSet if getter_idx > setter_idx => {
+            ctx.diagnostic(grouped_accessor_pairs_diagnostic(
+                span,
+                format!("Expected {left_key} to be before {right_key}."),
+            ));
+        }
+        PairOrder::SetBeforeGet if setter_idx > getter_idx => {
+            ctx.diagnostic(grouped_accessor_pairs_diagnostic(
+                span,
+                format!("Expected {left_key} to be before {right_key}."),
+            ));
+        }
+        _ => {}
     }
 }
 

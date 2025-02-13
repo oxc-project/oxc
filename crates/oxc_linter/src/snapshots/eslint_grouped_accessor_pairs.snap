@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair a and a should be grouped.
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair setter and getter should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:22]
  1 │ ({ get [a](){}, b:1, set [a](foo){} })
    ·                      ──────
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair a and a should be grouped.
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair setter and getter should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:36]
  1 │ class A { static get [a](){} b(){} static set [a](foo){} }
    ·                                    ─────────────
@@ -85,7 +85,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Expected a to be before a.
+  ⚠ eslint(grouped-accessor-pairs): Expected setter to be before getter.
    ╭─[grouped_accessor_pairs.tsx:1:17]
  1 │ ({ get [a](){}, set [a](foo){} })
    ·                 ──────
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Expected abc to be before abc.
+  ⚠ eslint(grouped-accessor-pairs): Expected getter to be before setter.
    ╭─[grouped_accessor_pairs.tsx:1:35]
  1 │ class A { static set [abc](foo){} static get [abc](){} }
    ·                                   ───────────────
@@ -148,6 +148,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair a and a should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:21]
+ 1 │ ({ get a(){}, b: 1, set a(foo){} })
+   ·                     ─────
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
   ⚠ eslint(grouped-accessor-pairs): Expected a to be before a.
    ╭─[grouped_accessor_pairs.tsx:1:21]
  1 │ ({ get a(){}, b: 1, set a(foo){} })
@@ -159,6 +166,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[grouped_accessor_pairs.tsx:1:21]
  1 │ ({ get a(){}, b: 1, set a(foo){} })
    ·                     ─────
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair a and a should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:30]
+ 1 │ class A { set a(foo){} b(){} get a(){} }
+   ·                              ─────
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
@@ -225,14 +239,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Expected a+b to be before a+b.
+  ⚠ eslint(grouped-accessor-pairs): Expected getter to be before setter.
    ╭─[grouped_accessor_pairs.tsx:1:27]
  1 │ (class { set [a+b](foo){} get [a+b](){} })
    ·                           ────────
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Expected f(a) to be before f(a).
+  ⚠ eslint(grouped-accessor-pairs): Expected getter to be before setter.
    ╭─[grouped_accessor_pairs.tsx:1:23]
  1 │ ({ set [f(a)](foo){}, get [f(a)](){} })
    ·                       ─────────
@@ -274,7 +288,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair a and a should be grouped.
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter and setter should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:45]
  1 │ ({ get a(){}, set [a](foo){}, set a(bar){}, get [a](){} })
    ·                                             ──────
@@ -288,6 +302,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair b and b should be grouped.
+   ╭─[grouped_accessor_pairs.tsx:1:31]
+ 1 │ ({ a(){}, set b(foo){}, ...c, get b(){}, set c(bar){}, get c(){} })
+   ·                               ─────
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
+
   ⚠ eslint(grouped-accessor-pairs): Expected b to be before b.
    ╭─[grouped_accessor_pairs.tsx:1:31]
  1 │ ({ a(){}, set b(foo){}, ...c, get b(){}, set c(bar){}, get c(){} })
@@ -295,14 +316,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Expected a to be before a.
+  ⚠ eslint(grouped-accessor-pairs): Expected getter to be before setter.
    ╭─[grouped_accessor_pairs.tsx:1:20]
  1 │ ({ set [a](foo){}, get [a](){}, set [-a](bar){}, get [-a](){} })
    ·                    ──────
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Expected -a to be before -a.
+  ⚠ eslint(grouped-accessor-pairs): Expected getter to be before setter.
    ╭─[grouped_accessor_pairs.tsx:1:50]
  1 │ ({ set [a](foo){}, get [a](){}, set [-a](bar){}, get [-a](){} })
    ·                                                  ───────
@@ -351,14 +372,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair a-b and a-b should be grouped.
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair setter and getter should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:55]
  1 │ (class { set [a+b](foo){} get [a-b](){} get [a+b](){} set [a-b](bar){} })
    ·                                                       ────────
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair a+b and a+b should be grouped.
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter and setter should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:41]
  1 │ (class { set [a+b](foo){} get [a-b](){} get [a+b](){} set [a-b](bar){} })
    ·                                         ────────
@@ -386,7 +407,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Require grouped accessor pairs in object literals and classes
 
-  ⚠ eslint(grouped-accessor-pairs): Accessor pair a and a should be grouped.
+  ⚠ eslint(grouped-accessor-pairs): Accessor pair getter and setter should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:34]
  1 │ ({ set [a](foo){}, set a(bar){}, get [a](){} })
    ·                                  ──────
