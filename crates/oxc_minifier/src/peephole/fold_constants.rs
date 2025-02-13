@@ -303,12 +303,16 @@ impl<'a> PeepholeOptimizations {
             return Some(ctx.value_to_expr(e.span, v));
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
+
         // a + 'b' + 'c' -> a + 'bc'
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
-            if let Expression::StringLiteral(left_str) = &left_binary_expr.right {
-                if let Expression::StringLiteral(right_str) = &e.right {
-                    let span = Span::new(left_str.span.start, right_str.span.end);
-                    let value = left_str.value.to_string() + right_str.value.as_str();
+            if ValueType::from(&left_binary_expr.right).is_string() {
+                if let (Some(left_str), Some(right_str)) = (
+                    ctx.get_side_free_string_value(&left_binary_expr.right),
+                    ctx.get_side_free_string_value(&e.right),
+                ) {
+                    let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
+                    let value = left_str.into_owned() + &right_str;
                     let right = ctx.ast.expression_string_literal(span, value, None);
                     let left = ctx.ast.move_expression(&mut left_binary_expr.left);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
@@ -1337,20 +1341,20 @@ mod test {
         fold("x = foo() + 'a' + 'b' + 'cd' + bar()", "x = foo()+'abcd'+bar()");
         fold("x = foo() + 2 + 'b'", "x = foo()+2+\"b\""); // don't fold!
 
-        // fold("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
+        fold("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
         fold("x = '' + null", "x = 'null'");
         fold("x = true + '' + false", "x = 'truefalse'");
         // fold("x = '' + []", "x = ''");
-        // fold("x = foo() + 'a' + 1 + 1", "x = foo() + 'a11'");
+        fold("x = foo() + 'a' + 1 + 1", "x = foo() + 'a11'");
         fold("x = 1 + 1 + 'a'", "x = '2a'");
         fold("x = 1 + 1 + 'a'", "x = '2a'");
         fold("x = 'a' + (1 + 1)", "x = 'a2'");
         // fold("x = '_' + p1 + '_' + ('' + p2)", "x = '_' + p1 + '_' + p2");
-        // fold("x = 'a' + ('_' + 1 + 1)", "x = 'a_11'");
-        // fold("x = 'a' + ('_' + 1) + 1", "x = 'a_11'");
+        fold("x = 'a' + ('_' + 1 + 1)", "x = 'a_11'");
+        fold("x = 'a' + ('_' + 1) + 1", "x = 'a_11'");
         // fold("x = 1 + (p1 + '_') + ('' + p2)", "x = 1 + (p1 + '_') + p2");
         // fold("x = 1 + p1 + '_' + ('' + p2)", "x = 1 + p1 + '_' + p2");
-        // fold("x = 1 + 'a' + p1", "x = '1a' + p1");
+        fold("x = 1 + 'a' + p1", "x = '1a' + p1");
         // fold("x = (p1 + (p2 + 'a')) + 'b'", "x = (p1 + (p2 + 'ab'))");
         // fold("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
         // fold("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + (p1 + 'c')");

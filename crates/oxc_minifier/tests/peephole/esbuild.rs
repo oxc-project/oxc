@@ -309,10 +309,10 @@ fn js_parser_test() {
     test("a = b + {}", "a = b + {};");
     test("a = {toString:()=>1} + 0", "a = { toString: () => 1 } + 0;");
     test("a = 0 + {toString:()=>1}", "a = 0 + { toString: () => 1 };");
-    // test("a = '' + `${b}`", "a = `${b}`;");
-    // test("a = `${b}` + ''", "a = `${b}`;");
-    // test("a = '' + typeof b", "a = typeof b;");
-    // test("a = typeof b + ''", "a = typeof b;");
+    test("a = '' + `${b}`", "a = `${b}`;");
+    test("a = `${b}` + ''", "a = `${b}`;");
+    test("a = '' + typeof b", "a = typeof b;");
+    test("a = typeof b + ''", "a = typeof b;");
     // test("a = [] + `${b}`", "a = `${b}`;");
     // test("a = `${b}` + []", "a = `${b}`;");
     // test("a = [] + typeof b", "a = typeof b;");
