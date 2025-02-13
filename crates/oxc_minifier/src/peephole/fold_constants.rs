@@ -1641,7 +1641,6 @@ mod test {
         fold("+(void unknown())", "+void unknown()");
     }
 
-    // TODO: All big ints are rare and difficult to handle.
     mod bigint {
         use super::{
             fold, fold_same, MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT,
@@ -1666,8 +1665,8 @@ mod test {
             fold("x = 3n ^ 1n", "x = 2n");
             fold("x = 3n ^ 3n", "x = 0n");
 
-            // test("x = -1n & 0n", "x = 0n");
-            // test("x = 0n & -1n", "x = 0n");
+            fold("x = -1n & 0n", "x = 0n");
+            fold("x = 0n & -1n", "x = 0n");
             fold("x = 1n & 4n", "x = 0n");
             fold("x = 2n & 3n", "x = 2n");
 

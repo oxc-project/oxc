@@ -331,7 +331,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
                 })
             }
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
-                if left.is_big_int_literal() && right.is_big_int_literal() {
+                if ValueType::from(left).is_bigint() && ValueType::from(right).is_bigint() {
                     let left_val = self.get_side_free_bigint_value(left)?;
                     let right_val = self.get_side_free_bigint_value(right)?;
                     let result_val: BigInt = match operator {
