@@ -90,8 +90,13 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
 
     if options.convert_span_utf16.unwrap_or(false) {
         // TODO: fix spans in `module_record` and `errors`
+
+        // Empty `comments` so comment spans don't get converted twice
+        ret.program.comments.clear();
+
         let mut converter = Utf8ToUtf16::new();
         converter.convert(&mut ret.program);
+
         for comment in &mut comments {
             comment.start = converter.convert_offset(comment.start);
             comment.end = converter.convert_offset(comment.end);
