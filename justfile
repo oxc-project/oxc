@@ -39,7 +39,7 @@ submodules:
   just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262.git bc5c14176e2b11a78859571eb693f028c8822458
   just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git acbc09a87016778c1551ab5e7162fdd0e70b6663
   just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git d85767abfd83880cea17cea70f9913e9c4496dcc
-  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 37fd1774d13ef68abcc03775ceef0a91f87a57d7
+  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 7584432401a47a26943dd7a9ca9a8e032ead7285
   just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 dcb070006436b9f7783626c0741d5693953035c6
   just update-transformer-fixtures
 

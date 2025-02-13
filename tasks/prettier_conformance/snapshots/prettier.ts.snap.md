@@ -1,4 +1,4 @@
-ts compatibility: 201/568 (35.39%)
+ts compatibility: 201/573 (35.08%)
 
 # Failed
 
@@ -50,7 +50,8 @@ ts compatibility: 201/568 (35.39%)
 | jsx/spread/attribute.js | 💥 | 30.19% |
 | jsx/spread/child.js | 💥 | 26.67% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 14.79% |
-| jsx/text-wrap/test.js | 💥 | 38.05% |
+| jsx/text-wrap/issue-16897.js | 💥 | 56.00% |
+| jsx/text-wrap/test.js | 💥 | 38.12% |
 | typescript/ambient/ambient.ts | 💥 | 88.24% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 61.54% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 38.46% |
@@ -103,6 +104,8 @@ ts compatibility: 201/568 (35.39%)
 | typescript/comments/15707.ts | 💥 | 22.22% |
 | typescript/comments/16065-2.ts | 💥 | 46.51% |
 | typescript/comments/16065.ts | 💥 | 77.78% |
+| typescript/comments/16207.ts | 💥 | 40.00% |
+| typescript/comments/16889.ts | 💥 | 59.77% |
 | typescript/comments/abstract_class.ts | 💥 | 54.55% |
 | typescript/comments/abstract_methods.ts | 💥 | 25.00% |
 | typescript/comments/after_jsx_generic.tsx | 💥 | 10.81% |
@@ -262,7 +265,8 @@ ts compatibility: 201/568 (35.39%)
 | typescript/interface2/comments-declare.ts | 💥 | 50.00% |
 | typescript/interface2/comments.ts | 💥 | 59.02% |
 | typescript/interface2/break/break.ts | 💥💥💥 | 50.67% |
-| typescript/intersection/type-arguments.ts | 💥💥 | 16.00% |
+| typescript/intersection/intersection-parens.ts | 💥💥💥 | 43.01% |
+| typescript/intersection/type-arguments.ts | 💥💥💥 | 16.00% |
 | typescript/intersection/consistent-with-flow/comment.ts | 💥 | 0.00% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 32.56% |
 | typescript/key-remapping-in-mapped-types/key-remapping.ts | 💥 | 25.00% |
@@ -293,6 +297,7 @@ ts compatibility: 201/568 (35.39%)
 | typescript/non-null/braces.ts | 💥 | 54.55% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/non-null/parens.ts | 💥 | 61.22% |
+| typescript/object-multiline/multiline.ts | 💥💥 | 61.49% |
 | typescript/optional-method/optional-method.ts | 💥 | 84.21% |
 | typescript/optional-type/complex.ts | 💥 | 0.00% |
 | typescript/prettier-ignore/issue-14238.ts | 💥 | 0.00% |
