@@ -3,7 +3,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::StringCharAt;
+use oxc_ecmascript::{StringCharAt, StringCharAtResult};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::keyword::RESERVED_KEYWORDS;
@@ -152,7 +152,7 @@ impl Rule for PreferStringRaw {
         let raw = ctx.source_range(string_literal.span);
 
         let last_char_index = raw.len() - 2;
-        if raw.char_at(Some(last_char_index as f64)) == Some('\\') {
+        if raw.char_at(Some(last_char_index as f64)) == StringCharAtResult::Value('\\') {
             return;
         }
 
@@ -160,7 +160,7 @@ impl Rule for PreferStringRaw {
             return;
         }
 
-        let Some(quote) = raw.char_at(Some(0.0)) else {
+        let StringCharAtResult::Value(quote) = raw.char_at(Some(0.0)) else {
             return;
         };
 

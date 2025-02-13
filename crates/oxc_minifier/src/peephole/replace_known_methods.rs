@@ -5,7 +5,8 @@ use oxc_allocator::IntoIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
-    StringCharAt, StringCharCodeAt, StringIndexOf, StringLastIndexOf, StringSubstring, ToInt32,
+    StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
+    StringSubstring, ToInt32,
 };
 use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
@@ -174,21 +175,18 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
-        let char_at_index: Option<f64> = match args.first() {
-            Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
-            Some(Argument::UnaryExpression(unary_expr))
-                if unary_expr.operator == UnaryOperator::UnaryNegation =>
-            {
-                let Expression::NumericLiteral(numeric_lit) = &unary_expr.argument else {
-                    return None;
-                };
-                Some(-(numeric_lit.value))
+        let char_at_index = match args.first() {
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(ctx.get_side_free_number_value(arg.to_expression())?)
             }
             None => None,
-            _ => return None,
         };
-        let result =
-            &s.value.as_str().char_at(char_at_index).map_or(String::new(), |v| v.to_string());
+        let result = match s.value.as_str().char_at(char_at_index) {
+            StringCharAtResult::Value(c) => &c.to_string(),
+            StringCharAtResult::InvalidChar(_) => return None,
+            StringCharAtResult::OutOfRange => "",
+        };
         Some(ctx.ast.expression_string_literal(span, result, None))
     }
 
@@ -201,17 +199,13 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<Expression<'a>> {
         let Expression::StringLiteral(s) = object else { return None };
         let char_at_index = match args.first() {
-            None => Some(0.0),
-            Some(Argument::SpreadElement(_)) => None,
-            Some(e) => ctx.get_side_free_number_value(e.to_expression()),
-        }?;
-        let value = if (0.0..65536.0).contains(&char_at_index) {
-            s.value.as_str().char_code_at(Some(char_at_index))? as f64
-        } else if char_at_index.is_nan() || char_at_index.is_infinite() {
-            return None;
-        } else {
-            f64::NAN
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(ctx.get_side_free_number_value(arg.to_expression())?)
+            }
+            None => None,
         };
+        let value = s.value.as_str().char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
         Some(ctx.ast.expression_numeric_literal(span, value, None, NumberBase::Decimal))
     }
 
@@ -1121,12 +1115,13 @@ mod test {
         test("x = 'abcde'.charAt(5)", "x = ''");
         test("x = 'abcde'.charAt(-1)", "x = ''");
         test("x = 'abcde'.charAt()", "x = 'a'");
+        test_same("x = 'abcde'.charAt(...foo)");
         test_same("x = 'abcde'.charAt(0, ++z)");
         test_same("x = 'abcde'.charAt(y)");
-        test_same("x = 'abcde'.charAt(null)"); // or x = 'a'
-        test_same("x = 'abcde'.charAt(!0)"); // or x = 'b'
-                                             // test("x = '\\ud834\udd1e'.charAt(0)", "x = '\\ud834'");
-                                             // test("x = '\\ud834\udd1e'.charAt(1)", "x = '\\udd1e'");
+        test("x = 'abcde'.charAt(null)", "x = 'a'");
+        test("x = 'abcde'.charAt(!0)", "x = 'b'");
+        test_same("x = '\\ud834\\udd1e'.charAt(0)"); // or x = '\\ud834'
+        test_same("x = '\\ud834\\udd1e'.charAt(1)"); // or x = '\\udd1e'
 
         // Template strings
         test("x = `abcdef`.charAt(0)", "x = 'a'");
@@ -1141,15 +1136,16 @@ mod test {
         test("x = 'abcde'.charCodeAt(2)", "x = 99");
         test("x = 'abcde'.charCodeAt(3)", "x = 100");
         test("x = 'abcde'.charCodeAt(4)", "x = 101");
-        test_same("x = 'abcde'.charCodeAt(5)");
+        test("x = 'abcde'.charCodeAt(5)", "x = NaN");
         test("x = 'abcde'.charCodeAt(-1)", "x = NaN");
+        test_same("x = 'abcde'.charCodeAt(...foo)");
         test_same("x = 'abcde'.charCodeAt(y)");
         test("x = 'abcde'.charCodeAt()", "x = 97");
         test("x = 'abcde'.charCodeAt(0, ++z)", "x = 97");
         test("x = 'abcde'.charCodeAt(null)", "x = 97");
         test("x = 'abcde'.charCodeAt(true)", "x = 98");
-        // test("x = '\\ud834\udd1e'.charCodeAt(0)", "x = 55348");
-        // test("x = '\\ud834\udd1e'.charCodeAt(1)", "x = 56606");
+        test("x = '\\ud834\\udd1e'.charCodeAt(0)", "x = 55348");
+        test("x = '\\ud834\\udd1e'.charCodeAt(1)", "x = 56606");
         test("x = `abcdef`.charCodeAt(0)", "x = 97");
         test_same("x = `abcdef ${abc}`.charCodeAt(0)");
     }
