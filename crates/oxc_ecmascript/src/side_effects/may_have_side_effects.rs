@@ -21,7 +21,7 @@ pub trait MayHaveSideEffects: Sized + IsGlobalReference {
                 // Reading global variables may have a side effect.
                 // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
                 // NOTE: we ignore TDZ errors
-                _ => self.is_global_reference(ident),
+                _ => self.is_global_reference(ident) != Some(false),
             },
             Expression::NumericLiteral(_)
             | Expression::BooleanLiteral(_)
@@ -283,7 +283,7 @@ fn maybe_symbol_or_to_primitive_may_return_symbol(
     match expr {
         Expression::Identifier(ident) => {
             !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
-                && m.is_global_reference(ident))
+                && m.is_global_reference(ident) == Some(true))
         }
         Expression::StringLiteral(_)
         | Expression::TemplateLiteral(_)
@@ -310,7 +310,7 @@ fn maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
     match expr {
         Expression::Identifier(ident) => {
             !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
-                && m.is_global_reference(ident))
+                && m.is_global_reference(ident) == Some(true))
         }
         Expression::StringLiteral(_)
         | Expression::TemplateLiteral(_)

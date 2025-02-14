@@ -21,9 +21,9 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
 
     fn resolve_binding(&self, ident: &IdentifierReference<'a>) -> Option<ConstantValue<'a>> {
         match ident.name.as_str() {
-            "undefined" if self.is_global_reference(ident) => Some(ConstantValue::Undefined),
-            "NaN" if self.is_global_reference(ident) => Some(ConstantValue::Number(f64::NAN)),
-            "Infinity" if self.is_global_reference(ident) => {
+            "undefined" if self.is_global_reference(ident)? => Some(ConstantValue::Undefined),
+            "NaN" if self.is_global_reference(ident)? => Some(ConstantValue::Number(f64::NAN)),
+            "Infinity" if self.is_global_reference(ident)? => {
                 Some(ConstantValue::Number(f64::INFINITY))
             }
             _ => None,
@@ -71,8 +71,8 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
     fn get_boolean_value(&self, expr: &Expression<'a>) -> Option<bool> {
         match expr {
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" | "NaN" if self.is_global_reference(ident) => Some(false),
-                "Infinity" if self.is_global_reference(ident) => Some(true),
+                "undefined" | "NaN" if self.is_global_reference(ident)? => Some(false),
+                "Infinity" if self.is_global_reference(ident)? => Some(true),
                 _ => None,
             },
             Expression::LogicalExpression(logical_expr) => {
@@ -131,8 +131,8 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
     fn eval_to_number(&self, expr: &Expression<'a>) -> Option<f64> {
         match expr {
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" | "NaN" if self.is_global_reference(ident) => Some(f64::NAN),
-                "Infinity" if self.is_global_reference(ident) => Some(f64::INFINITY),
+                "undefined" | "NaN" if self.is_global_reference(ident)? => Some(f64::NAN),
+                "Infinity" if self.is_global_reference(ident)? => Some(f64::INFINITY),
                 _ => None,
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
@@ -367,7 +367,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
                 if let Expression::Identifier(right_ident) = right {
                     let name = right_ident.name.as_str();
                     if matches!(name, "Object" | "Number" | "Boolean" | "String")
-                        && self.is_global_reference(right_ident)
+                        && self.is_global_reference(right_ident) == Some(true)
                     {
                         let left_ty = self.expression_value_type(left);
                         if left_ty.is_undetermined() {

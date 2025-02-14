@@ -84,7 +84,7 @@ pub trait DetermineValueType: IsGlobalReference {
                 }
             }
             Expression::Identifier(ident) => {
-                if self.is_global_reference(ident) {
+                if self.is_global_reference(ident) == Some(true) {
                     match ident.name.as_str() {
                         "undefined" => ValueType::Undefined,
                         "NaN" | "Infinity" => ValueType::Number,

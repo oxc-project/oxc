@@ -20,8 +20,8 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
 }
 
 impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
-        ident.is_global_reference(self.0.symbols())
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+        Some(ident.is_global_reference(self.0.symbols()))
     }
 }
 
