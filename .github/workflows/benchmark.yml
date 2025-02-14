@@ -130,9 +130,9 @@ jobs:
         run: |
           cargo build --release -p oxc_benchmark --bench linter \
             --no-default-features --features linter --features codspeed
-          mkdir -p target/codspeed/oxc_benchmark
-          mv target/release/deps/linter-* target/codspeed/oxc_benchmark
-          rm target/codspeed/oxc_benchmark/*.d
+          mkdir -p target/codspeed/instrumentation/oxc_benchmark
+          mv target/release/deps/linter-* target/codspeed/instrumentation/oxc_benchmark
+          rm target/codspeed/instrumentation/oxc_benchmark/*.d
 
       - name: Upload Binary
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
