@@ -27,8 +27,3 @@ oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
-
-[features]
-default = []
-side_effects = []
-constant_evaluation = ["side_effects"]

@@ -23,12 +23,8 @@ mod to_number;
 mod to_primitive;
 mod to_string;
 
-pub mod is_global_reference;
-
-#[cfg(feature = "constant_evaluation")]
 pub mod constant_evaluation;
-
-#[cfg(feature = "side_effects")]
+pub mod is_global_reference;
 pub mod side_effects;
 
 pub use self::{
