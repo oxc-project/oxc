@@ -465,7 +465,9 @@ pub trait VisitMutModuleRecord {
         self.visit_span(&mut name_span.span);
     }
 
-    fn visit_span(&mut self, _span: &mut Span) {}
+    #[expect(unused_variables)]
+    #[inline(always)]
+    fn visit_span(&mut self, span: &mut Span) {}
 }
 
 #[cfg(test)]
