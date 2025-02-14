@@ -169,25 +169,34 @@ impl Rule for GroupedAccessorPairs {
                     if obj_prop.kind == PropertyKind::Init {
                         continue;
                     }
+                    // get the Key name of the Object and verify that it is Literal
+                    // we need to consider the following two cases:
+                    // 1) var foo = { get a() {}, set [a](v) {} }
+                    // in the above example, both a and [a] should not be treated as a pair,
+                    // although call get_key_name_and_check_literal method gets the key name 'a'
+                    // because the set access property is computed and its key is not Literal
+                    // 2) var foo = { get a() {}, set ['a'](v) {} }
+                    // in this example, a and ['a'] should be treated as a pair
+                    // although the set access property is computed, but its key is Literal
                     let (key_name, is_literal) = get_key_name_and_check_literal(ctx, &obj_prop.key);
-                    let should_pre = if is_literal { false } else { obj_prop.computed };
-                    prop_map.entry((key_name, should_pre)).or_default().push((idx, obj_prop));
+                    let is_computed = if is_literal { false } else { obj_prop.computed };
+                    prop_map.entry((key_name, is_computed)).or_default().push((idx, obj_prop));
                 }
 
-                for ((key, should_pre), val) in prop_map {
+                for ((key, is_computed), val) in prop_map {
                     if val.len() == 2 {
-                        let (first, first_node) = val[0];
-                        let (second, second_node) = val[1];
+                        let (first_idx, first_node) = val[0];
+                        let (second_idx, second_node) = val[1];
                         if first_node.kind == second_node.kind {
                             continue;
                         }
                         let (getter_idx, setter_idx) = if first_node.kind == PropertyKind::Get {
-                            (first, second)
+                            (first_idx, second_idx)
                         } else {
-                            (second, first)
+                            (second_idx, first_idx)
                         };
-                        let latter = if first < second { second_node } else { first_node };
-                        let (left_key, right_key) = if should_pre {
+                        let latter = if first_idx < second_idx { second_node } else { first_node };
+                        let (left_key, right_key) = if is_computed {
                             if getter_idx > setter_idx {
                                 ("getter", "setter")
                             } else {
@@ -228,28 +237,28 @@ impl Rule for GroupedAccessorPairs {
                     }
                     let (key_name, is_literal) =
                         get_key_name_and_check_literal(ctx, &method_define.key);
-                    let should_pre = if is_literal { false } else { method_define.computed };
+                    let is_computed = if is_literal { false } else { method_define.computed };
                     prop_map
-                        .entry((key_name, should_pre, method_define.r#static))
+                        .entry((key_name, is_computed, method_define.r#static))
                         .or_default()
                         .push((idx, method_define));
                 }
 
-                for ((key, should_pre, _), val) in prop_map {
+                for ((key, is_computed, _), val) in prop_map {
                     if val.len() == 2 {
-                        let (first, first_node) = val[0];
-                        let (second, second_node) = val[1];
+                        let (first_idx, first_node) = val[0];
+                        let (second_idx, second_node) = val[1];
                         if first_node.kind == second_node.kind {
                             continue;
                         }
                         let (getter_idx, setter_idx) =
                             if first_node.kind == MethodDefinitionKind::Get {
-                                (first, second)
+                                (first_idx, second_idx)
                             } else {
-                                (second, first)
+                                (second_idx, first_idx)
                             };
-                        let latter = if first < second { second_node } else { first_node };
-                        let (left_key, right_key) = if should_pre {
+                        let latter = if first_idx < second_idx { second_node } else { first_node };
+                        let (left_key, right_key) = if is_computed {
                             if getter_idx > setter_idx {
                                 ("getter", "setter")
                             } else {
@@ -483,7 +492,18 @@ fn test() {
     			})", None),
     ("class A { static set a(foo){} b(){} static get
     			 a(){}
-    			}", None)
+    			}", None),
+    (
+        "const foo = {
+            set [false](value) {
+                this.val = value;
+            },
+            get 'false'() {
+                return this.val;
+            },
+        }",
+        Some(serde_json::json!(["getBeforeSet"]))
+    )
         ];
 
     Tester::new(GroupedAccessorPairs::NAME, GroupedAccessorPairs::PLUGIN, pass, fail)

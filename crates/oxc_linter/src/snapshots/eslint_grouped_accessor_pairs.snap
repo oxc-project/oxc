@@ -486,3 +486,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     }
    ╰────
   help: Require grouped accessor pairs in object literals and classes
+
+  ⚠ eslint(grouped-accessor-pairs): Expected false to be before false.
+   ╭─[grouped_accessor_pairs.tsx:5:13]
+ 4 │             },
+ 5 │             get 'false'() {
+   ·             ───────────
+ 6 │                 return this.val;
+   ╰────
+  help: Require grouped accessor pairs in object literals and classes
