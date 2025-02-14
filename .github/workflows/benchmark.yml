@@ -162,12 +162,12 @@ jobs:
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: benchmark-linter
-          path: ./target/codspeed/oxc_benchmark
+          path: ./target/codspeed/instrumentation/oxc_benchmark
 
       - name: Fix permission loss
         run: |
-          ls ./target/codspeed/oxc_benchmark
-          chmod +x ./target/codspeed/oxc_benchmark/*
+          ls ./target/codspeed/instrumentation/oxc_benchmark
+          chmod +x ./target/codspeed/instrumentation/oxc_benchmark/*
 
       - name: Install codspeed
         uses: taiki-e/install-action@297054b27414ad8086f67963ce1033c02fe309c3 # v2.48.11
