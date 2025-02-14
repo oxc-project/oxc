@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::is_global_reference::IsGlobalReference;
+use crate::{is_global_reference::IsGlobalReference, to_primitive::ToPrimitive};
 
 /// Returns true if subtree changes application state.
 ///
@@ -84,15 +84,14 @@ impl MayHaveSideEffects for UnaryExpression<'_> {
             UnaryOperator::UnaryPlus => {
                 // ToNumber throws an error when the argument is Symbol / BigInt / an object that
                 // returns Symbol or BigInt from ToPrimitive
-                maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
-                    is_global_reference,
-                    &self.argument,
-                ) || self.argument.may_have_side_effects(is_global_reference)
+                self.argument.to_primitive_returns_symbol_or_bigint(is_global_reference)
+                    != Some(false)
+                    || self.argument.may_have_side_effects(is_global_reference)
             }
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
                 // ToNumeric throws an error when the argument is Symbol / an object that
                 // returns Symbol from ToPrimitive
-                maybe_symbol_or_to_primitive_may_return_symbol(is_global_reference, &self.argument)
+                self.argument.to_primitive_returns_symbol(is_global_reference) != Some(false)
                     || self.argument.may_have_side_effects(is_global_reference)
             }
         }
@@ -118,15 +117,15 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
                 true
             }
             BinaryOperator::Addition => {
-                if is_string_or_to_primitive_returns_string(&self.left)
-                    || is_string_or_to_primitive_returns_string(&self.right)
+                if self.left.to_primitive_returns_string() == Some(true)
+                    || self.right.to_primitive_returns_string() == Some(true)
                 {
-                    let other_side = if is_string_or_to_primitive_returns_string(&self.left) {
+                    let other_side = if self.left.to_primitive_returns_string() == Some(true) {
                         &self.right
                     } else {
                         &self.left
                     };
-                    maybe_symbol_or_to_primitive_may_return_symbol(is_global_reference, other_side)
+                    other_side.to_primitive_returns_symbol(is_global_reference) != Some(false)
                         || self.left.may_have_side_effects(is_global_reference)
                         || self.right.may_have_side_effects(is_global_reference)
                 } else if self.left.is_number() || self.right.is_number() {
@@ -165,13 +164,11 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
                     } else {
                         true
                     }
-                } else if !(maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
-                    is_global_reference,
-                    &self.left,
-                ) || maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
-                    is_global_reference,
-                    &self.right,
-                )) {
+                } else if self.left.to_primitive_returns_symbol_or_bigint(is_global_reference)
+                    == Some(false)
+                    && self.right.to_primitive_returns_symbol_or_bigint(is_global_reference)
+                        == Some(false)
+                {
                     self.left.may_have_side_effects(is_global_reference)
                         || self.right.may_have_side_effects(is_global_reference)
                 } else {
@@ -275,104 +272,4 @@ impl MayHaveSideEffects for ClassElement<'_> {
             ClassElement::TSIndexSignature(_) => false,
         }
     }
-}
-
-fn is_string_or_to_primitive_returns_string(expr: &Expression<'_>) -> bool {
-    match expr {
-        Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::ArrayExpression(_) => true,
-        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-        // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => {
-            !maybe_object_with_to_primitive_related_properties_overridden(obj)
-        }
-        _ => false,
-    }
-}
-
-/// Whether the given expression may be a `Symbol` or converted to a `Symbol` when passed to `toPrimitive`.
-fn maybe_symbol_or_to_primitive_may_return_symbol(
-    is_global_reference: &impl IsGlobalReference,
-    expr: &Expression<'_>,
-) -> bool {
-    match expr {
-        Expression::Identifier(ident) => {
-            !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
-                && is_global_reference.is_global_reference(ident) == Some(true))
-        }
-        Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::ArrayExpression(_) => false,
-        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-        // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => {
-            maybe_object_with_to_primitive_related_properties_overridden(obj)
-        }
-        _ => true,
-    }
-}
-
-/// Whether the given expression may be a `Symbol`/`BigInt` or converted to a `Symbol`/`BigInt` when passed to `toPrimitive`.
-fn maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
-    is_global_reference: &impl IsGlobalReference,
-    expr: &Expression<'_>,
-) -> bool {
-    match expr {
-        Expression::Identifier(ident) => {
-            !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
-                && is_global_reference.is_global_reference(ident) == Some(true))
-        }
-        Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::ArrayExpression(_) => false,
-        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-        // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => {
-            maybe_object_with_to_primitive_related_properties_overridden(obj)
-        }
-        _ => true,
-    }
-}
-
-fn maybe_object_with_to_primitive_related_properties_overridden(
-    obj: &ObjectExpression<'_>,
-) -> bool {
-    obj.properties.iter().any(|prop| match prop {
-        ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
-            PropertyKey::StaticIdentifier(id) => {
-                matches!(id.name.as_str(), "toString" | "valueOf")
-            }
-            PropertyKey::PrivateIdentifier(_) => false,
-            PropertyKey::StringLiteral(str) => {
-                matches!(str.value.as_str(), "toString" | "valueOf")
-            }
-            PropertyKey::TemplateLiteral(temp) => {
-                !temp.is_no_substitution_template()
-                    || temp
-                        .quasi()
-                        .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf"))
-            }
-            _ => true,
-        },
-        ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
-            Expression::ObjectExpression(obj) => {
-                maybe_object_with_to_primitive_related_properties_overridden(obj)
-            }
-            Expression::ArrayExpression(_)
-            | Expression::StringLiteral(_)
-            | Expression::TemplateLiteral(_) => false,
-            _ => true,
-        },
-    })
 }

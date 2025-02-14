@@ -20,6 +20,7 @@ mod to_boolean;
 mod to_int_32;
 mod to_integer_or_infinity;
 mod to_number;
+mod to_primitive;
 mod to_string;
 
 pub mod is_global_reference;
