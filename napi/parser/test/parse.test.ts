@@ -93,21 +93,19 @@ describe('parse', () => {
   });
 });
 
-it('utf16 span', async () => {
-  const code = "'🤨'";
-  {
-    const ret = await parseAsync('test.js', code);
-    expect(ret.program.end).toMatchInlineSnapshot(`6`);
-  }
-  {
-    const ret = await parseAsync('test.js', code, {
+describe('UTF-16 span', () => {
+  it('basic', async () => {
+    const code = "'🤨'";
+    const utf8 = await parseAsync('test.js', code);
+    expect(utf8.program.end).toMatchInlineSnapshot(`6`);
+    const utf16 = await parseAsync('test.js', code, {
       convertSpanUtf16: true,
     });
-    expect(ret.program.end).toMatchInlineSnapshot(`4`);
-  }
-  {
-    const code = `// ∞`;
-    const ret = await parseAsync('test.js', code, {
+    expect(utf16.program.end).toMatchInlineSnapshot(`4`);
+  });
+
+  it('comment', async () => {
+    const ret = await parseAsync('test.js', `// ∞`, {
       convertSpanUtf16: true,
     });
     expect(ret.comments).toMatchInlineSnapshot(`
@@ -120,8 +118,9 @@ it('utf16 span', async () => {
         },
       ]
     `);
-  }
-  {
+  });
+
+  it('module record', async () => {
     const ret = await parseAsync('test.js', `"🤨";import x from "x"; export { x };import("y");import.meta.z`, {
       convertSpanUtf16: true,
     });
@@ -204,8 +203,9 @@ it('utf16 span', async () => {
         ],
       }
     `);
-  }
-  {
+  });
+
+  it('error', async () => {
     const ret = await parseAsync('test.js', `"🤨";asdf asdf`, {
       convertSpanUtf16: true,
     });
@@ -224,7 +224,7 @@ it('utf16 span', async () => {
         },
       ]
     `);
-  }
+  });
 });
 
 describe('error', () => {
