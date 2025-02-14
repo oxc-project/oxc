@@ -891,8 +891,8 @@ impl AssignmentTargetMaybeDefault<'_> {
     ///
     /// ## Example
     ///
-    /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)
-    /// - returns `b` when called on `a: b` in `({a: b} = obj)
+    /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)`
+    /// - returns `b` when called on `a: b` in `({a: b} = obj)`
     pub fn identifier(&self) -> Option<&IdentifierReference<'_>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),

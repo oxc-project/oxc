@@ -925,8 +925,18 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 )]
 pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
+    /// The property key
+    /// ```
+    /// ({ prop: renamed } = obj)
+    ///    ^^^^
+    /// ```
     #[estree(rename = "key")]
     pub name: PropertyKey<'a>,
+    /// The binding part of the property
+    /// ```
+    /// ({ prop: renamed } = obj)
+    ///          ^^^^^^^
+    /// ```
     #[estree(rename = "value")]
     pub binding: AssignmentTargetMaybeDefault<'a>,
     /// Property was declared with a computed key

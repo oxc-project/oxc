@@ -2641,8 +2641,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn assignment_target_property_assignment_target_property_property(
@@ -2699,8 +2699,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn assignment_target_property_property(
@@ -2719,8 +2719,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn alloc_assignment_target_property_property(
