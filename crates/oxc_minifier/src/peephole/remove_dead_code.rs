@@ -340,7 +340,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
 
         ctx.get_boolean_value(&expr.test).map(|v| {
-            if ctx.expression_may_have_side_effects(&expr.test) {
+            if expr.test.may_have_side_effects(&ctx) {
                 // "(a, true) ? b : c" => "a, b"
                 let exprs = ctx.ast.vec_from_iter([
                     {
@@ -377,9 +377,7 @@ impl<'a, 'b> PeepholeOptimizations {
         let (should_fold, new_len) = sequence_expr.expressions.iter().enumerate().fold(
             (false, 0),
             |(mut should_fold, mut new_len), (i, expr)| {
-                if i == sequence_expr.expressions.len() - 1
-                    || ctx.expression_may_have_side_effects(expr)
-                {
+                if i == sequence_expr.expressions.len() - 1 || expr.may_have_side_effects(&ctx) {
                     new_len += 1;
                 } else {
                     should_fold = true;
@@ -396,7 +394,7 @@ impl<'a, 'b> PeepholeOptimizations {
             let mut new_exprs = ctx.ast.vec_with_capacity(new_len);
             let len = sequence_expr.expressions.len();
             for (i, expr) in sequence_expr.expressions.iter_mut().enumerate() {
-                if i == len - 1 || ctx.expression_may_have_side_effects(expr) {
+                if i == len - 1 || expr.may_have_side_effects(&ctx) {
                     new_exprs.push(ctx.ast.move_expression(expr));
                 }
             }

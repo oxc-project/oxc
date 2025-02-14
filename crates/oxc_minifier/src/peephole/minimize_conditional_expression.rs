@@ -247,8 +247,8 @@ impl<'a> PeepholeOptimizations {
                 // we can improve compression by allowing side effects on one side if the other side is
                 // an identifier that is not modified after it is declared.
                 // but for now, we only perform compression if neither side has side effects.
-                && !(ctx.expression_may_have_side_effects(&expr.test)
-                    || ctx.expression_may_have_side_effects(&consequent.callee))
+                && !(expr.test.may_have_side_effects(&ctx)
+                    || consequent.callee.may_have_side_effects(&ctx))
                 && ctx.expr_eq(&consequent.callee, &alternate.callee)
                 && consequent
                     .arguments

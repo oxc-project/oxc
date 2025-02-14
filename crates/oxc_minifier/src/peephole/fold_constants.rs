@@ -106,7 +106,7 @@ impl<'a> PeepholeOptimizations {
             // (FALSE && x) => FALSE
             if if lval { op.is_or() } else { op.is_and() } {
                 return Some(ctx.ast.move_expression(&mut logical_expr.left));
-            } else if !ctx.expression_may_have_side_effects(left) {
+            } else if !left.may_have_side_effects(&ctx) {
                 let parent = ctx.ancestry.parent();
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
                 if parent.is_tagged_template_expression()
@@ -131,7 +131,7 @@ impl<'a> PeepholeOptimizations {
                 let left_child_right_boolean = ctx.get_boolean_value(&left_child.right);
                 let left_child_op = left_child.operator;
                 if let Some(right_boolean) = left_child_right_boolean {
-                    if !ctx.expression_may_have_side_effects(&left_child.right) {
+                    if !left_child.right.may_have_side_effects(&ctx) {
                         // a || false || b => a || b
                         // a && true && b => a && b
                         if !right_boolean && left_child_op.is_or()
@@ -164,7 +164,7 @@ impl<'a> PeepholeOptimizations {
         let left_val = ctx.expression_value_type(left);
         match left_val {
             ValueType::Null | ValueType::Undefined => {
-                Some(if ctx.expression_may_have_side_effects(left) {
+                Some(if left.may_have_side_effects(&ctx) {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions = ctx.ast.vec_from_array([
                         ctx.ast.move_expression(&mut logical_expr.left),

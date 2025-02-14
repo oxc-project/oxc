@@ -574,7 +574,7 @@ impl<'a> PeepholeOptimizations {
                                 && var_decl.declarations[0]
                                     .init
                                     .as_ref()
-                                    .is_some_and(|init| ctx.expression_may_have_side_effects(init))
+                                    .is_some_and(|init| init.may_have_side_effects(&ctx))
                         } else {
                             // the spec does not allow multiple declarations though
                             true

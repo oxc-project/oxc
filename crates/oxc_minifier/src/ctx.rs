@@ -1,10 +1,7 @@
 use std::ops::Deref;
 
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
-    side_effects::MayHaveSideEffects,
-};
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_semantic::{IsGlobalReference, SymbolTable};
 use oxc_traverse::TraverseCtx;
 
@@ -24,8 +21,6 @@ impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
         Some(ident.is_global_reference(self.0.symbols()))
     }
 }
-
-impl MayHaveSideEffects for Ctx<'_, '_> {}
 
 impl DetermineValueType for Ctx<'_, '_> {}
 

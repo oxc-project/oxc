@@ -16,7 +16,7 @@ pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
 
-pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
+pub trait ConstantEvaluation<'a>: DetermineValueType {
     fn ast(&self) -> AstBuilder<'a>;
 
     fn resolve_binding(&self, ident: &IdentifierReference<'a>) -> Option<ConstantValue<'a>> {
@@ -36,7 +36,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
         // and there are only a very few cases where we can compute a number value, but there could
         // also be side effects. e.g. `void doSomething()` has value NaN, regardless of the behavior
         // of `doSomething()`
-        if value.is_some() && self.expression_may_have_side_effects(expr) {
+        if value.is_some() && expr.may_have_side_effects(self) {
             None
         } else {
             value
@@ -45,7 +45,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
 
     fn get_side_free_string_value(&self, expr: &Expression<'a>) -> Option<Cow<'a, str>> {
         let value = expr.to_js_string();
-        if value.is_some() && !self.expression_may_have_side_effects(expr) {
+        if value.is_some() && !expr.may_have_side_effects(self) {
             return value;
         }
         None
@@ -53,7 +53,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
 
     fn get_side_free_boolean_value(&self, expr: &Expression<'a>) -> Option<bool> {
         let value = self.get_boolean_value(expr);
-        if value.is_some() && !self.expression_may_have_side_effects(expr) {
+        if value.is_some() && !expr.may_have_side_effects(self) {
             return value;
         }
         None
@@ -61,7 +61,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
 
     fn get_side_free_bigint_value(&self, expr: &Expression<'a>) -> Option<BigInt> {
         let value = expr.to_big_int();
-        if value.is_some() && self.expression_may_have_side_effects(expr) {
+        if value.is_some() && expr.may_have_side_effects(self) {
             None
         } else {
             value
@@ -241,9 +241,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
     ) -> Option<ConstantValue<'a>> {
         match operator {
             BinaryOperator::Addition => {
-                if self.expression_may_have_side_effects(left)
-                    || self.expression_may_have_side_effects(right)
-                {
+                if left.may_have_side_effects(self) || right.may_have_side_effects(self) {
                     return None;
                 }
                 let left_type = self.expression_value_type(left);
@@ -361,7 +359,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
                 None
             }
             BinaryOperator::Instanceof => {
-                if self.expression_may_have_side_effects(left) {
+                if left.may_have_side_effects(self) {
                     return None;
                 }
                 if let Expression::Identifier(right_ident) = right {
@@ -384,9 +382,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
             | BinaryOperator::StrictInequality
             | BinaryOperator::Equality
             | BinaryOperator::Inequality => {
-                if self.expression_may_have_side_effects(left)
-                    || self.expression_may_have_side_effects(right)
-                {
+                if left.may_have_side_effects(self) || right.may_have_side_effects(self) {
                     return None;
                 }
                 let value = match operator {
@@ -424,7 +420,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
     fn eval_unary_expression(&self, expr: &UnaryExpression<'a>) -> Option<ConstantValue<'a>> {
         match expr.operator {
             UnaryOperator::Typeof => {
-                if self.expression_may_have_side_effects(&expr.argument) {
+                if expr.argument.may_have_side_effects(self) {
                     return None;
                 }
                 let arg_ty = self.expression_value_type(&expr.argument);
@@ -447,8 +443,9 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
                 };
                 Some(ConstantValue::String(Cow::Borrowed(s)))
             }
-            UnaryOperator::Void => (!self.expression_may_have_side_effects(&expr.argument))
-                .then_some(ConstantValue::Undefined),
+            UnaryOperator::Void => {
+                (!expr.argument.may_have_side_effects(self)).then_some(ConstantValue::Undefined)
+            }
             UnaryOperator::LogicalNot => self
                 .get_side_free_boolean_value(&expr.argument)
                 .map(|b| !b)
@@ -493,7 +490,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
                 if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
                 } else {
-                    if self.expression_may_have_side_effects(&expr.object) {
+                    if expr.object.may_have_side_effects(self) {
                         return None;
                     }
                     if let Expression::ArrayExpression(arr) = &expr.object {
@@ -516,7 +513,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
                 if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
                 } else {
-                    if self.expression_may_have_side_effects(&expr.object) {
+                    if expr.object.may_have_side_effects(self) {
                         return None;
                     }
                     if let Expression::ArrayExpression(arr) = &expr.object {
@@ -532,7 +529,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects + DetermineValueType {
 
     /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islessthan>
     fn is_less_than(&self, x: &Expression<'a>, y: &Expression<'a>) -> Option<ConstantValue<'a>> {
-        if self.expression_may_have_side_effects(x) || self.expression_may_have_side_effects(y) {
+        if x.may_have_side_effects(self) || y.may_have_side_effects(self) {
             return None;
         }
 

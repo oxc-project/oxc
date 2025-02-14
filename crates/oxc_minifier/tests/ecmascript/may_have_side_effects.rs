@@ -4,15 +4,14 @@ use oxc_ecmascript::{is_global_reference::IsGlobalReference, side_effects::MayHa
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-struct SideEffectChecker {
+struct GlobalReferenceChecker {
     global_variable_names: Vec<String>,
 }
-impl IsGlobalReference for SideEffectChecker {
+impl IsGlobalReference for GlobalReferenceChecker {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
-impl MayHaveSideEffects for SideEffectChecker {}
 
 fn test(source_text: &str, expected: bool) {
     test_with_global_variables(source_text, vec![], expected);
@@ -28,13 +27,13 @@ fn test_with_global_variables(
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
-    let side_effect_checker = SideEffectChecker { global_variable_names };
+    let global_reference_checker = GlobalReferenceChecker { global_variable_names };
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
     assert_eq!(
-        side_effect_checker.expression_may_have_side_effects(&stmt.expression),
+        stmt.expression.may_have_side_effects(&global_reference_checker),
         expected,
         "{source_text}"
     );

@@ -60,7 +60,7 @@ impl ValueType {
 ///
 /// Evaluate the expression and attempt to determine which ValueType it could resolve to.
 /// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
-/// To detect those cases, use [`crate::side_effects::MayHaveSideEffects::expression_may_have_side_effects`].
+/// To detect those cases, use [`crate::side_effects::MayHaveSideEffects`].
 pub trait DetermineValueType: IsGlobalReference {
     fn expression_value_type(&self, expr: &Expression<'_>) -> ValueType {
         match expr {

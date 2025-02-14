@@ -1,6 +1,6 @@
 use oxc_ast::ast::IdentifierReference;
 
-pub trait IsGlobalReference {
+pub trait IsGlobalReference: Sized {
     /// Whether the reference is a global reference.
     ///
     /// - None means it is unknown.

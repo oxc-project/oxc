@@ -170,7 +170,7 @@ impl<'a> PeepholeOptimizations {
                             | ValueType::Boolean
                             | ValueType::Number
                             | ValueType::String
-                    ) && !ctx.expression_may_have_side_effects(arg)
+                    ) && !arg.may_have_side_effects(&ctx)
                 }
                 _ => false,
             },
