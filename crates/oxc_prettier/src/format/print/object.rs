@@ -48,15 +48,28 @@ impl<'a> ObjectLike<'a, '_> {
         text!(",")
     }
 
+
     fn should_break(&self, p: &mut Prettier) -> bool {
         match self {
-            ObjectLike::ObjectExpression(obj) => {
-                self.total_len() != 0
-                    && misc::has_new_line_in_range(p.source_text, obj.span.start, obj.span.end)
+            ObjectLike::ObjectExpression(obj_expr) => {
+                p.options.object_wrap.is_preserve()
+                    && obj_expr.properties.first().is_some_and(|first_prop| {
+                        misc::has_new_line_in_range(
+                            p.source_text,
+                            obj_expr.span.start,
+                            first_prop.span().start,
+                        )
+                    })
             }
             ObjectLike::TSTypeLiteral(obj) => {
-                self.total_len() != 0
-                    && misc::has_new_line_in_range(p.source_text, obj.span.start, obj.span.end)
+                p.options.object_wrap.is_preserve()
+                    && obj.members.first().is_some_and(|first_prop| {
+                        misc::has_new_line_in_range(
+                            p.source_text,
+                            obj.span.start,
+                            first_prop.span().start,
+                        )
+                    })
             }
             ObjectLike::ObjectPattern(obj_pattern) => {
                 let parent_kind = p.parent_kind();
