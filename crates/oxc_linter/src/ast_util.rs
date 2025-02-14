@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{BindingIdentifier, *},
     AstKind,
 };
-use oxc_ecmascript::ToBoolean;
+use oxc_ecmascript::{is_global_reference::WithoutGlobalReferenceInformation, ToBoolean};
 use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
@@ -30,7 +30,7 @@ pub fn is_static_boolean<'a>(expr: &Expression<'a>, semantic: &Semantic<'a>) -> 
 fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
     match expr {
         expr if expr.is_literal() => {
-            let boolean_value = expr.to_boolean();
+            let boolean_value = expr.to_boolean(&WithoutGlobalReferenceInformation {});
             (op == LogicalOperator::Or && boolean_value == Some(true))
                 || (op == LogicalOperator::And && boolean_value == Some(false))
         }

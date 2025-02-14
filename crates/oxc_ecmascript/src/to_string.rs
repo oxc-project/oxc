@@ -114,12 +114,12 @@ impl<'a> ToJsString<'a> for NullLiteral {
 }
 
 impl<'a> ToJsString<'a> for UnaryExpression<'a> {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
         match self.operator {
             UnaryOperator::Void => Some(Cow::Borrowed("undefined")),
             UnaryOperator::LogicalNot => self
                 .argument
-                .to_boolean()
+                .to_boolean(is_global_reference)
                 .map(|boolean| Cow::Borrowed(if boolean { "false" } else { "true" })),
             _ => None,
         }

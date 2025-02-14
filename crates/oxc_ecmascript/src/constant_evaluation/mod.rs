@@ -124,7 +124,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
                     _ => None,
                 }
             }
-            expr => expr.to_boolean(),
+            expr => expr.to_boolean(self),
         }
     }
 

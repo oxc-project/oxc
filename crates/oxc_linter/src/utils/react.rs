@@ -8,7 +8,7 @@ use oxc_ast::{
     },
     match_member_expression, AstKind,
 };
-use oxc_ecmascript::ToBoolean;
+use oxc_ecmascript::{is_global_reference::WithoutGlobalReferenceInformation, ToBoolean};
 use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};
@@ -82,7 +82,7 @@ pub fn is_hidden_from_screen_reader<'a>(
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
             if let Some(expr) = container.expression.as_expression() {
-                expr.to_boolean().unwrap_or(false)
+                expr.to_boolean(&WithoutGlobalReferenceInformation {}).unwrap_or(false)
             } else {
                 false
             }
