@@ -205,6 +205,26 @@ it('utf16 span', async () => {
       }
     `);
   }
+  {
+    const ret = await parseAsync('test.js', `"🤨";asdf asdf`, {
+      convertSpanUtf16: true,
+    });
+    expect(ret.errors).toMatchInlineSnapshot(`
+      [
+        {
+          "helpMessage": "Try insert a semicolon here",
+          "labels": [
+            {
+              "end": 9,
+              "start": 9,
+            },
+          ],
+          "message": "Expected a semicolon or an implicit semicolon after a statement, but found none",
+          "severity": "Error",
+        },
+      ]
+    `);
+  }
 });
 
 describe('error', () => {
