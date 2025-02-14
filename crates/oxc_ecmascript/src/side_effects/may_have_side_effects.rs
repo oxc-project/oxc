@@ -117,10 +117,12 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
                 true
             }
             BinaryOperator::Addition => {
-                if self.left.to_primitive_returns_string() == Some(true)
-                    || self.right.to_primitive_returns_string() == Some(true)
+                if self.left.to_primitive_returns_string(is_global_reference) == Some(true)
+                    || self.right.to_primitive_returns_string(is_global_reference) == Some(true)
                 {
-                    let other_side = if self.left.to_primitive_returns_string() == Some(true) {
+                    let other_side = if self.left.to_primitive_returns_string(is_global_reference)
+                        == Some(true)
+                    {
                         &self.right
                     } else {
                         &self.left
