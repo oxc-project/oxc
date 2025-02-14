@@ -162,7 +162,7 @@ impl<'a> PeepholeOptimizations {
                 0 => true,
                 1 => {
                     let Some(arg) = e.arguments[0].as_expression() else { return false };
-                    let ty = ctx.expression_value_type(arg);
+                    let ty = arg.value_type(&ctx);
                     matches!(
                         ty,
                         ValueType::Null

@@ -7,15 +7,14 @@ use oxc_ecmascript::{
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-struct ValueTypeCalculator {
+struct GlobalReferenceChecker {
     global_variable_names: Vec<String>,
 }
-impl IsGlobalReference for ValueTypeCalculator {
+impl IsGlobalReference for GlobalReferenceChecker {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
-impl DetermineValueType for ValueTypeCalculator {}
 
 fn test(source_text: &str, expected: ValueType) {
     test_with_global_variables(
@@ -35,12 +34,12 @@ fn test_with_global_variables(
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
-    let value_type_caclculator = ValueTypeCalculator { global_variable_names };
+    let global_reference_checker = GlobalReferenceChecker { global_variable_names };
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
-    let result = value_type_caclculator.expression_value_type(&stmt.expression);
+    let result = stmt.expression.value_type(&global_reference_checker);
     assert_eq!(result, expected, "{source_text}");
 }
 

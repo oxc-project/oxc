@@ -113,8 +113,8 @@ impl<'a> PeepholeOptimizations {
         if !e.operator.is_equality() {
             return None;
         }
-        let left = ctx.expression_value_type(&e.left);
-        let right = ctx.expression_value_type(&e.right);
+        let left = e.left.value_type(&ctx);
+        let right = e.right.value_type(&ctx);
         if left.is_undetermined() || right.is_undetermined() {
             return None;
         }

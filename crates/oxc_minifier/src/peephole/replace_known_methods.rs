@@ -379,7 +379,7 @@ impl<'a> PeepholeOptimizations {
         let first_arg = first_arg.to_expression_mut(); // checked above
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
-            if ctx.expression_value_type(&*expr).is_number() {
+            if expr.value_type(&ctx).is_number() {
                 ctx.ast.move_expression(expr)
             } else {
                 ctx.ast.expression_unary(

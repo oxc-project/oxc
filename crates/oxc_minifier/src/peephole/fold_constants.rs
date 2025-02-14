@@ -83,7 +83,7 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let object = member_expr.object();
-        let ty = ctx.expression_value_type(object);
+        let ty = object.value_type(&ctx);
         (ty.is_null() || ty.is_undefined())
             .then(|| ctx.value_to_expr(chain_expr.span, ConstantValue::Undefined))
     }
@@ -161,7 +161,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<Expression<'a>> {
         debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
         let left = &logical_expr.left;
-        let left_val = ctx.expression_value_type(left);
+        let left_val = left.value_type(&ctx);
         match left_val {
             ValueType::Null | ValueType::Undefined => {
                 Some(if left.may_have_side_effects(&ctx) {
@@ -306,7 +306,7 @@ impl<'a> PeepholeOptimizations {
 
         // a + 'b' + 'c' -> a + 'bc'
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
-            if ctx.expression_value_type(&left_binary_expr.right).is_string() {
+            if left_binary_expr.right.value_type(&ctx).is_string() {
                 if let (Some(left_str), Some(right_str)) = (
                     ctx.get_side_free_string_value(&left_binary_expr.right),
                     ctx.get_side_free_string_value(&e.right),
@@ -321,12 +321,9 @@ impl<'a> PeepholeOptimizations {
         }
 
         // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
-        if e.left.is_specific_string_literal("") && ctx.expression_value_type(&e.right).is_string()
-        {
+        if e.left.is_specific_string_literal("") && e.right.value_type(&ctx).is_string() {
             return Some(ctx.ast.move_expression(&mut e.right));
-        } else if e.right.is_specific_string_literal("")
-            && ctx.expression_value_type(&e.left).is_string()
-        {
+        } else if e.right.is_specific_string_literal("") && e.left.value_type(&ctx).is_string() {
             return Some(ctx.ast.move_expression(&mut e.left));
         }
 
@@ -444,7 +441,7 @@ impl<'a> PeepholeOptimizations {
         // `typeof a !== 'b'` -> `true``
         if let Expression::UnaryExpression(left) = &bin_expr.left {
             if left.operator.is_typeof() && bin_expr.operator.is_equality() {
-                let right_ty = ctx.expression_value_type(&bin_expr.right);
+                let right_ty = bin_expr.right.value_type(&ctx);
 
                 if !right_ty.is_undetermined() && right_ty != ValueType::String {
                     return Some(ctx.ast.expression_boolean_literal(

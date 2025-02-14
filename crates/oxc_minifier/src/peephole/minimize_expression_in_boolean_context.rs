@@ -53,7 +53,7 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(e)
                 if e.operator.is_equality()
                     && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
-                    && ctx.expression_value_type(&e.left).is_number() =>
+                    && e.left.value_type(&ctx).is_number() =>
             {
                 let argument = ctx.ast.move_expression(&mut e.left);
                 *expr = if matches!(

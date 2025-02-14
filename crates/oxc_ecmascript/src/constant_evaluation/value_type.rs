@@ -61,9 +61,13 @@ impl ValueType {
 /// Evaluate the expression and attempt to determine which ValueType it could resolve to.
 /// This function ignores the cases that throws an error, e.g. `foo * 0` can throw an error when `foo` is a bigint.
 /// To detect those cases, use [`crate::side_effects::MayHaveSideEffects`].
-pub trait DetermineValueType: IsGlobalReference {
-    fn expression_value_type(&self, expr: &Expression<'_>) -> ValueType {
-        match expr {
+pub trait DetermineValueType {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType;
+}
+
+impl DetermineValueType for Expression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self {
             Expression::BigIntLiteral(_) => ValueType::BigInt,
             Expression::BooleanLiteral(_) | Expression::PrivateInExpression(_) => {
                 ValueType::Boolean
@@ -84,7 +88,7 @@ pub trait DetermineValueType: IsGlobalReference {
                 }
             }
             Expression::Identifier(ident) => {
-                if self.is_global_reference(ident) == Some(true) {
+                if is_global_reference.is_global_reference(ident) == Some(true) {
                     match ident.name.as_str() {
                         "undefined" => ValueType::Undefined,
                         "NaN" | "Infinity" => ValueType::Number,
@@ -97,7 +101,7 @@ pub trait DetermineValueType: IsGlobalReference {
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Void => ValueType::Undefined,
                 UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
-                    let argument_ty = self.expression_value_type(&unary_expr.argument);
+                    let argument_ty = unary_expr.argument.value_type(is_global_reference);
                     match argument_ty {
                         ValueType::BigInt => ValueType::BigInt,
                         // non-object values other than BigInt are converted to number by `ToNumber`
@@ -113,24 +117,26 @@ pub trait DetermineValueType: IsGlobalReference {
                 UnaryOperator::LogicalNot | UnaryOperator::Delete => ValueType::Boolean,
                 UnaryOperator::Typeof => ValueType::String,
             },
-            Expression::BinaryExpression(e) => self.binary_expression_value_type(e),
+            Expression::BinaryExpression(e) => e.value_type(is_global_reference),
             Expression::SequenceExpression(e) => e
                 .expressions
                 .last()
-                .map_or(ValueType::Undetermined, |e| self.expression_value_type(e)),
-            Expression::AssignmentExpression(e) => self.assignment_expression_value_type(e),
-            Expression::ConditionalExpression(e) => self.conditional_expression_value_type(e),
-            Expression::LogicalExpression(e) => self.logical_expression_value_type(e),
-            Expression::ParenthesizedExpression(e) => self.expression_value_type(&e.expression),
+                .map_or(ValueType::Undetermined, |e| e.value_type(is_global_reference)),
+            Expression::AssignmentExpression(e) => e.value_type(is_global_reference),
+            Expression::ConditionalExpression(e) => e.value_type(is_global_reference),
+            Expression::LogicalExpression(e) => e.value_type(is_global_reference),
+            Expression::ParenthesizedExpression(e) => e.expression.value_type(is_global_reference),
             _ => ValueType::Undetermined,
         }
     }
+}
 
-    fn binary_expression_value_type(&self, e: &BinaryExpression<'_>) -> ValueType {
-        match e.operator {
+impl DetermineValueType for BinaryExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self.operator {
             BinaryOperator::Addition => {
-                let left = self.expression_value_type(&e.left);
-                let right = self.expression_value_type(&e.right);
+                let left = self.left.value_type(is_global_reference);
+                let right = self.right.value_type(is_global_reference);
                 if left == ValueType::Boolean
                     && matches!(right, ValueType::Undefined | ValueType::Null | ValueType::Number)
                 {
@@ -157,8 +163,8 @@ pub trait DetermineValueType: IsGlobalReference {
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd
             | BinaryOperator::Exponential => {
-                let left = self.expression_value_type(&e.left);
-                let right = self.expression_value_type(&e.right);
+                let left = self.left.value_type(is_global_reference);
+                let right = self.right.value_type(is_global_reference);
                 if left.is_bigint() || right.is_bigint() {
                     ValueType::BigInt
                 } else if !(left.is_object() || left.is_undetermined())
@@ -180,17 +186,19 @@ pub trait DetermineValueType: IsGlobalReference {
             | BinaryOperator::StrictEquality
             | BinaryOperator::StrictInequality
             | BinaryOperator::LessThan
-            | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterThan
+            | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterEqualThan => ValueType::Boolean,
         }
     }
+}
 
-    fn assignment_expression_value_type(&self, e: &AssignmentExpression<'_>) -> ValueType {
-        match e.operator {
-            AssignmentOperator::Assign => self.expression_value_type(&e.right),
+impl DetermineValueType for AssignmentExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self.operator {
+            AssignmentOperator::Assign => self.right.value_type(is_global_reference),
             AssignmentOperator::Addition => {
-                let right = self.expression_value_type(&e.right);
+                let right = self.right.value_type(is_global_reference);
                 if right.is_string() {
                     ValueType::String
                 } else {
@@ -207,7 +215,7 @@ pub trait DetermineValueType: IsGlobalReference {
             | AssignmentOperator::BitwiseXOR
             | AssignmentOperator::BitwiseAnd
             | AssignmentOperator::Exponential => {
-                let right = self.expression_value_type(&e.right);
+                let right = self.right.value_type(is_global_reference);
                 if right.is_bigint() {
                     ValueType::BigInt
                 } else if !(right.is_object() || right.is_undetermined()) {
@@ -222,25 +230,29 @@ pub trait DetermineValueType: IsGlobalReference {
             | AssignmentOperator::LogicalNullish => ValueType::Undetermined,
         }
     }
+}
 
-    fn conditional_expression_value_type(&self, e: &ConditionalExpression<'_>) -> ValueType {
-        let left = self.expression_value_type(&e.consequent);
+impl DetermineValueType for ConditionalExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        let left = self.consequent.value_type(is_global_reference);
         if left.is_undetermined() {
             return ValueType::Undetermined;
         }
-        let right = self.expression_value_type(&e.alternate);
+        let right = self.alternate.value_type(is_global_reference);
         if left == right {
             return left;
         }
         ValueType::Undetermined
     }
+}
 
-    fn logical_expression_value_type(&self, e: &LogicalExpression<'_>) -> ValueType {
-        let left = self.expression_value_type(&e.left);
+impl DetermineValueType for LogicalExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        let left = self.left.value_type(is_global_reference);
         if !left.is_boolean() {
             return ValueType::Undetermined;
         }
-        let right = self.expression_value_type(&e.right);
+        let right = self.right.value_type(is_global_reference);
         if left == right {
             return left;
         }

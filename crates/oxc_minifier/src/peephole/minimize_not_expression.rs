@@ -32,7 +32,7 @@ impl<'a> PeepholeOptimizations {
             // `!!true` -> `true`
             // `!!false` -> `false`
             Expression::UnaryExpression(e)
-                if e.operator.is_not() && ctx.expression_value_type(&e.argument).is_boolean() =>
+                if e.operator.is_not() && e.argument.value_type(&ctx).is_boolean() =>
             {
                 Some(ctx.ast.move_expression(&mut e.argument))
             }

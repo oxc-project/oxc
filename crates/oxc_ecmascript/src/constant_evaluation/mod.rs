@@ -6,7 +6,10 @@ use num_traits::{FromPrimitive, ToPrimitive, Zero};
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 use oxc_ast::{ast::*, AstBuilder};
 
-use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber};
+use crate::{
+    is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects, ToBigInt, ToBoolean,
+    ToInt32, ToJsString, ToNumber,
+};
 
 mod equality_comparison;
 mod is_literal_value;
@@ -16,7 +19,7 @@ pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
 
-pub trait ConstantEvaluation<'a>: DetermineValueType {
+pub trait ConstantEvaluation<'a>: IsGlobalReference {
     fn ast(&self) -> AstBuilder<'a>;
 
     fn resolve_binding(&self, ident: &IdentifierReference<'a>) -> Option<ConstantValue<'a>> {
@@ -244,8 +247,8 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
                 if left.may_have_side_effects(self) || right.may_have_side_effects(self) {
                     return None;
                 }
-                let left_type = self.expression_value_type(left);
-                let right_type = self.expression_value_type(right);
+                let left_type = left.value_type(self);
+                let right_type = right.value_type(self);
                 if left_type.is_string() || right_type.is_string() {
                     let lval = self.eval_expression(left)?;
                     let rval = self.eval_expression(right)?;
@@ -329,9 +332,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
                 })
             }
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
-                if self.expression_value_type(left).is_bigint()
-                    && self.expression_value_type(right).is_bigint()
-                {
+                if left.value_type(self).is_bigint() && right.value_type(self).is_bigint() {
                     let left_val = self.get_side_free_bigint_value(left)?;
                     let right_val = self.get_side_free_bigint_value(right)?;
                     let result_val: BigInt = match operator {
@@ -367,12 +368,12 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
                     if matches!(name, "Object" | "Number" | "Boolean" | "String")
                         && self.is_global_reference(right_ident) == Some(true)
                     {
-                        let left_ty = self.expression_value_type(left);
+                        let left_ty = left.value_type(self);
                         if left_ty.is_undetermined() {
                             return None;
                         }
                         return Some(ConstantValue::Boolean(
-                            name == "Object" && self.expression_value_type(left).is_object(),
+                            name == "Object" && left.value_type(self).is_object(),
                         ));
                     }
                 }
@@ -423,7 +424,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
                 if expr.argument.may_have_side_effects(self) {
                     return None;
                 }
-                let arg_ty = self.expression_value_type(&expr.argument);
+                let arg_ty = expr.argument.value_type(self);
                 let s = match arg_ty {
                     ValueType::BigInt => "bigint",
                     ValueType::Number => "number",
@@ -453,7 +454,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
             UnaryOperator::UnaryPlus => {
                 self.get_side_free_number_value(&expr.argument).map(ConstantValue::Number)
             }
-            UnaryOperator::UnaryNegation => match self.expression_value_type(&expr.argument) {
+            UnaryOperator::UnaryNegation => match expr.argument.value_type(self) {
                 ValueType::BigInt => self
                     .get_side_free_bigint_value(&expr.argument)
                     .map(|v| -v)
@@ -466,7 +467,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
                 ValueType::Null => Some(ConstantValue::Number(-0.0)),
                 _ => None,
             },
-            UnaryOperator::BitwiseNot => match self.expression_value_type(&expr.argument) {
+            UnaryOperator::BitwiseNot => match expr.argument.value_type(self) {
                 ValueType::BigInt => self
                     .get_side_free_bigint_value(&expr.argument)
                     .map(|v| !v)
@@ -535,8 +536,8 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
 
         // a. Let px be ? ToPrimitive(x, NUMBER).
         // b. Let py be ? ToPrimitive(y, NUMBER).
-        let px = self.expression_value_type(x);
-        let py = self.expression_value_type(y);
+        let px = x.value_type(self);
+        let py = y.value_type(self);
 
         // If the operands are not primitives, `ToPrimitive` is *not* a noop.
         if px.is_undetermined() || px.is_object() || py.is_undetermined() || py.is_object() {

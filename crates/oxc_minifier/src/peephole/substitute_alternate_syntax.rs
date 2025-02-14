@@ -248,11 +248,11 @@ impl<'a> PeepholeOptimizations {
         let parent_expression_does_to_number_conversion = match parent_expression {
             Ancestor::BinaryExpressionLeft(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
-                    && ctx.expression_value_type(e.right()).is_number()
+                    && e.right().value_type(&ctx).is_number()
             }
             Ancestor::BinaryExpressionRight(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
-                    && ctx.expression_value_type(e.left()).is_number()
+                    && e.left().value_type(&ctx).is_number()
             }
             _ => false,
         };
@@ -772,7 +772,7 @@ impl<'a> PeepholeOptimizations {
                 arguments_len == 0
                     || (arguments_len >= 1
                         && e.arguments[0].as_expression().is_some_and(|first_argument| {
-                            let ty = ctx.expression_value_type(first_argument);
+                            let ty = first_argument.value_type(&ctx);
                             !ty.is_undetermined() && !ty.is_object()
                         }))
             }

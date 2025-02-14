@@ -1,6 +1,6 @@
 use oxc_ast::ast::{Expression, NumberBase};
 
-use super::{ConstantEvaluation, ValueType};
+use super::{ConstantEvaluation, DetermineValueType, ValueType};
 
 /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
 pub(super) fn abstract_equality_comparison<'a>(
@@ -8,8 +8,8 @@ pub(super) fn abstract_equality_comparison<'a>(
     left_expr: &Expression<'a>,
     right_expr: &Expression<'a>,
 ) -> Option<bool> {
-    let left = c.expression_value_type(left_expr);
-    let right = c.expression_value_type(right_expr);
+    let left = left_expr.value_type(c);
+    let right = right_expr.value_type(c);
     if left != ValueType::Undetermined && right != ValueType::Undetermined {
         if left == right {
             return strict_equality_comparison(c, left_expr, right_expr);
@@ -83,8 +83,8 @@ pub(super) fn strict_equality_comparison<'a>(
     left_expr: &Expression<'a>,
     right_expr: &Expression<'a>,
 ) -> Option<bool> {
-    let left = c.expression_value_type(left_expr);
-    let right = c.expression_value_type(right_expr);
+    let left = left_expr.value_type(c);
+    let right = right_expr.value_type(c);
     if !left.is_undetermined() && !right.is_undetermined() {
         // Strict equality can only be true for values of the same type.
         if left != right {
