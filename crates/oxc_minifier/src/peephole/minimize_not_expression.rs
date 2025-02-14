@@ -46,12 +46,13 @@ impl<'a> PeepholeOptimizations {
             }
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
-                if let Some(e) = sequence_expr.expressions.pop() {
-                    let e = ctx.ast.expression_unary(e.span(), UnaryOperator::LogicalNot, e);
-                    let expressions = ctx.ast.vec_from_iter(
-                        sequence_expr.expressions.drain(..).chain(std::iter::once(e)),
+                if let Some(last_expr) = sequence_expr.expressions.last_mut() {
+                    *last_expr = self.minimize_not(
+                        last_expr.span(),
+                        ctx.ast.move_expression(last_expr),
+                        ctx,
                     );
-                    return Some(ctx.ast.expression_sequence(sequence_expr.span, expressions));
+                    return Some(ctx.ast.move_expression(&mut expr.argument));
                 }
                 None
             }
