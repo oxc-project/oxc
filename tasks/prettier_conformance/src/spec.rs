@@ -9,7 +9,9 @@ use oxc_ast::{
     VisitMut,
 };
 use oxc_parser::Parser;
-use oxc_prettier::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, ObjectWrap, TrailingComma};
+use oxc_prettier::{
+    ArrowParens, EndOfLine, ObjectWrap, PrettierOptions, QuoteProps, TrailingComma,
+};
 use oxc_span::{GetSpan, SourceType};
 
 /// Vec<(key, value)>
