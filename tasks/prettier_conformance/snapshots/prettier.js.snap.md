@@ -1,4 +1,4 @@
-js compatibility: 251/643 (39.04%)
+js compatibility: 252/643 (39.19%)
 
 # Failed
 
@@ -42,7 +42,7 @@ js compatibility: 251/643 (39.04%)
 | js/assignment/issue-6922.js | 💥 | 68.00% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
 | js/assignment/issue-7961.js | 💥 | 83.33% |
-| js/assignment/lone-arg.js | 💥 | 51.16% |
+| js/assignment/lone-arg.js | 💥 | 61.54% |
 | js/assignment-comments/call.js | 💥 | 66.67% |
 | js/assignment-comments/call2.js | 💥 | 0.00% |
 | js/assignment-comments/function.js | 💥 | 28.21% |
@@ -268,7 +268,6 @@ js compatibility: 251/643 (39.04%)
 | js/non-strict/keywords.js | 💥 | 76.92% |
 | js/nullish-coalescing/nullish_coalesing_operator.js | 💥 | 80.00% |
 | js/numeric-separators/number.js | 💥 | 66.67% |
-| js/object-multiline/multiline.js | 💥💥 | 60.26% |
 | js/object-prop-break-in/comment.js | 💥 | 90.91% |
 | js/object-prop-break-in/short-keys.js | 💥 | 60.00% |
 | js/object-property-comment/after-key.js | 💥 | 71.43% |

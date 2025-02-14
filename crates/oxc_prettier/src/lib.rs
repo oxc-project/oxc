@@ -18,7 +18,9 @@ use oxc_ast::{ast::Program, AstKind};
 use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
-pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
+pub use crate::options::{
+    ArrowParens, EndOfLine, ObjectWrap, PrettierOptions, QuoteProps, TrailingComma,
+};
 use crate::{format::Format, ir::Doc, printer::Printer};
 
 type GroupId = u32;

@@ -1,4 +1,4 @@
-ts compatibility: 201/573 (35.08%)
+ts compatibility: 202/573 (35.25%)
 
 # Failed
 
@@ -297,7 +297,6 @@ ts compatibility: 201/573 (35.08%)
 | typescript/non-null/braces.ts | 💥 | 54.55% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/non-null/parens.ts | 💥 | 61.22% |
-| typescript/object-multiline/multiline.ts | 💥💥 | 61.49% |
 | typescript/optional-method/optional-method.ts | 💥 | 84.21% |
 | typescript/optional-type/complex.ts | 💥 | 0.00% |
 | typescript/prettier-ignore/issue-14238.ts | 💥 | 0.00% |
