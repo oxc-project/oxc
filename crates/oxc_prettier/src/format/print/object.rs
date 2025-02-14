@@ -48,7 +48,6 @@ impl<'a> ObjectLike<'a, '_> {
         text!(",")
     }
 
-
     fn should_break(&self, p: &mut Prettier) -> bool {
         match self {
             ObjectLike::ObjectExpression(obj_expr) => {
