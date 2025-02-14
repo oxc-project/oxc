@@ -106,7 +106,7 @@ pub struct StringLiteral<'a> {
         value = crate::serialize::NULL,
         bigint = crate::serialize::bigint_literal_bigint(self),
     ),
-    add_ts = "value: null, bigint: string",
+    add_ts = "value: BigInt, bigint: string",
 )]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
@@ -129,7 +129,7 @@ pub struct BigIntLiteral<'a> {
 #[estree(
     rename = "Literal",
     add_fields(value = crate::serialize::NULL),
-    add_ts = "value: null",
+    add_ts = "value: RegExp | null",
 )]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code

@@ -810,7 +810,7 @@ export interface StringLiteral extends Span {
 export interface BigIntLiteral extends Span {
   type: 'Literal';
   raw: string | null;
-  value: null;
+  value: BigInt;
   bigint: string;
 }
 
@@ -818,7 +818,7 @@ export interface RegExpLiteral extends Span {
   type: 'Literal';
   regex: RegExp;
   raw: string | null;
-  value: null;
+  value: RegExp | null;
 }
 
 export interface RegExp {
