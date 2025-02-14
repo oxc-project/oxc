@@ -230,6 +230,18 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.substitute_object_property(prop, ctx);
     }
 
+    fn exit_assignment_target_property(
+        &mut self,
+        node: &mut AssignmentTargetProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.is_prev_function_changed() {
+            return;
+        }
+        let ctx = Ctx(ctx);
+        self.substitute_assignment_target_property(node, ctx);
+    }
+
     fn exit_assignment_target_property_property(
         &mut self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,

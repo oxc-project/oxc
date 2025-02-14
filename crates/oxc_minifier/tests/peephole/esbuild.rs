@@ -43,8 +43,8 @@ fn js_parser_test() {
     test("x = { '-2147483648': y }", "x = { '-2147483648': y };");
     test("x = { '-2147483649': y }", "x = { '-2147483649': y };");
     test("x.x; y['y']", "x.x, y.y;");
-    // test("({y: y, 'z': z} = x)", "({ y, z } = x);");
-    // test("var {y: y, 'z': z} = x", "var { y, z } = x;");
+    test("({y: y, 'z': z} = x)", "({ y, z } = x);");
+    test("var {y: y, 'z': z} = x", "var { y, z } = x;");
     test("x = {y: 1, 'z': 2}", "x = { y: 1, z: 2 };");
     test("x = {y() {}, 'z'() {}}", "x = { y() {}, z() {} };");
     test("x = {get y() {}, set 'z'(z) {}}", "x = { get y() {}, set z(z) {} };");

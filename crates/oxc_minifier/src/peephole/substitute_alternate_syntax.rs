@@ -33,6 +33,38 @@ impl<'a> PeepholeOptimizations {
         self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
     }
 
+    pub fn substitute_assignment_target_property(
+        &mut self,
+        prop: &mut AssignmentTargetProperty<'a>,
+        ctx: Ctx<'a, '_>,
+    ) {
+        self.try_compress_assignment_target_property(prop, ctx);
+    }
+
+    pub fn try_compress_assignment_target_property(
+        &mut self,
+        prop: &mut AssignmentTargetProperty<'a>,
+        ctx: Ctx<'a, '_>,
+    ) {
+        // `a: a` -> `a`
+        if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(assign_target_prop_prop) =
+            prop
+        {
+            let Some(prop_name) = assign_target_prop_prop.name.static_name() else { return };
+            let Some(binding_identifier) = assign_target_prop_prop.binding.identifier() else {
+                return;
+            };
+            if prop_name == binding_identifier.name {
+                *prop = ctx.ast.assignment_target_property_assignment_target_property_identifier(
+                    assign_target_prop_prop.span,
+                    ctx.ast.identifier_reference(assign_target_prop_prop.span, prop_name),
+                    None,
+                );
+                self.mark_current_function_as_changed();
+            }
+        }
+    }
+
     pub fn substitute_binding_property(
         &mut self,
         prop: &mut BindingProperty<'a>,
@@ -1739,5 +1771,15 @@ mod test {
         test_same("v = x == null && y");
         test_same("v = x != null || y");
         test("void (x == null && y)", "x ?? y");
+    }
+
+    #[test]
+    fn test_compress_destructuring_assignment_target() {
+        test_same("var {y} = x");
+        test_same("var {y, z} = x");
+        test_same("var {y: z, z: y} = x");
+        test("var {y: y} = x", "var {y} = x");
+        test("var {y: z, 'z': y} = x", "var {y: z, z: y} = x");
+        test("var {y: y, 'z': z} = x", "var {y, z} = x");
     }
 }
