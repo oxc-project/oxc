@@ -9,7 +9,7 @@ use oxc_ast::{
     VisitMut,
 };
 use oxc_parser::Parser;
-use oxc_prettier::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
+use oxc_prettier::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, ObjectWrap, TrailingComma};
 use oxc_span::{GetSpan, SourceType};
 
 /// Vec<(key, value)>
@@ -138,6 +138,10 @@ impl VisitMut<'_> for SpecParser {
                                 "quoteProps" => {
                                     options.quote_props =
                                         QuoteProps::from_str(literal.value.as_str()).unwrap();
+                                }
+                                "objectWrap" => {
+                                    options.object_wrap =
+                                        ObjectWrap::from_str(literal.value.as_str()).unwrap();
                                 }
                                 "arrowParens" => {
                                     options.arrow_parens =
