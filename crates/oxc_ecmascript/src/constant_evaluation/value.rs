@@ -76,7 +76,7 @@ impl<'a> ToJsString<'a> for ConstantValue<'a> {
 }
 
 impl<'a> ToNumber<'a> for ConstantValue<'a> {
-    fn to_number(&self) -> Option<f64> {
+    fn to_number(&self, _is_global_reference: &impl IsGlobalReference) -> Option<f64> {
         use crate::StringToNumber;
         match self {
             Self::Number(n) => Some(*n),

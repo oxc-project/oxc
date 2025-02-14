@@ -188,7 +188,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
             }
             expr => {
                 use crate::ToNumber;
-                expr.to_number()
+                expr.to_number(self)
             }
         }
     }
@@ -256,8 +256,8 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
                 if left_type.is_number() || right_type.is_number() {
                     let lval = self.eval_expression(left)?;
                     let rval = self.eval_expression(right)?;
-                    let lnum = lval.to_number()?;
-                    let rnum = rval.to_number()?;
+                    let lnum = lval.to_number(self)?;
+                    let rnum = rval.to_number(self)?;
                     return Some(ConstantValue::Number(lnum + rnum));
                 }
                 None

@@ -635,7 +635,7 @@ impl<'a> PeepholeOptimizations {
                 span,
                 match arg {
                     None => 0.0,
-                    Some(arg) => arg.to_number()?,
+                    Some(arg) => arg.to_number(&ctx)?,
                 },
                 None,
                 NumberBase::Decimal,
