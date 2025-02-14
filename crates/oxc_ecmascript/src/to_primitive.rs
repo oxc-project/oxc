@@ -5,107 +5,76 @@ use crate::{
     is_global_reference::IsGlobalReference,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ToPrimitiveResult {
+    Undefined,
+    Null,
+    Number,
+    BigInt,
+    String,
+    Boolean,
+    #[expect(dead_code)]
+    Symbol,
+    Undetermined,
+}
+
+impl ToPrimitiveResult {
+    pub fn is_string(self) -> Option<bool> {
+        match self {
+            Self::Undetermined => None,
+            Self::String => Some(true),
+            _ => Some(false),
+        }
+    }
+
+    pub fn is_symbol(self) -> Option<bool> {
+        match self {
+            Self::Undetermined => None,
+            Self::Symbol => Some(true),
+            _ => Some(false),
+        }
+    }
+
+    pub fn is_symbol_or_bigint(self) -> Option<bool> {
+        match self {
+            Self::Undetermined => None,
+            Self::BigInt | Self::Symbol => Some(true),
+            _ => Some(false),
+        }
+    }
+}
+
 /// `ToPrimitive`
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-toprimitive>
 pub trait ToPrimitive<'a> {
-    fn to_primitive_returns_string(
-        &self,
-        is_global_reference: &impl IsGlobalReference,
-    ) -> Option<bool>;
-    fn to_primitive_returns_symbol(
-        &self,
-        is_global_reference: &impl IsGlobalReference,
-    ) -> Option<bool>;
-    fn to_primitive_returns_symbol_or_bigint(
-        &self,
-        is_global_reference: &impl IsGlobalReference,
-    ) -> Option<bool>;
+    fn to_primitive(&self, is_global_reference: &impl IsGlobalReference) -> ToPrimitiveResult;
 }
 
 impl ToPrimitive<'_> for Expression<'_> {
-    fn to_primitive_returns_string(
-        &self,
-        is_global_reference: &impl IsGlobalReference,
-    ) -> Option<bool> {
+    fn to_primitive(&self, is_global_reference: &impl IsGlobalReference) -> ToPrimitiveResult {
         match self.value_type(is_global_reference) {
-            ValueType::String => Some(true),
-            ValueType::Number
-            | ValueType::BigInt
-            | ValueType::Boolean
-            | ValueType::Null
-            | ValueType::Undefined => Some(false),
+            ValueType::Undefined => ToPrimitiveResult::Undefined,
+            ValueType::Null => ToPrimitiveResult::Null,
+            ValueType::Number => ToPrimitiveResult::Number,
+            ValueType::BigInt => ToPrimitiveResult::BigInt,
+            ValueType::String => ToPrimitiveResult::String,
+            ValueType::Boolean => ToPrimitiveResult::Boolean,
             ValueType::Object | ValueType::Undetermined => {
                 match self {
-                    Expression::RegExpLiteral(_) | Expression::ArrayExpression(_) => Some(true),
+                    Expression::RegExpLiteral(_) | Expression::ArrayExpression(_) => {
+                        ToPrimitiveResult::String
+                    }
                     // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
                     // ToPrimitive for an object returns `"[object Object]"`
                     Expression::ObjectExpression(obj) => {
                         if maybe_object_with_to_primitive_related_properties_overridden(obj) {
-                            None
+                            ToPrimitiveResult::Undetermined
                         } else {
-                            Some(true)
+                            ToPrimitiveResult::String
                         }
                     }
-                    _ => None,
-                }
-            }
-        }
-    }
-
-    fn to_primitive_returns_symbol(
-        &self,
-        is_global_reference: &impl IsGlobalReference,
-    ) -> Option<bool> {
-        match self.value_type(is_global_reference) {
-            ValueType::String
-            | ValueType::Number
-            | ValueType::BigInt
-            | ValueType::Boolean
-            | ValueType::Null
-            | ValueType::Undefined => Some(false),
-            ValueType::Object | ValueType::Undetermined => {
-                match self {
-                    Expression::RegExpLiteral(_) | Expression::ArrayExpression(_) => Some(false),
-                    // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-                    // ToPrimitive for an object returns `"[object Object]"`
-                    Expression::ObjectExpression(obj) => {
-                        if maybe_object_with_to_primitive_related_properties_overridden(obj) {
-                            None
-                        } else {
-                            Some(false)
-                        }
-                    }
-                    _ => None,
-                }
-            }
-        }
-    }
-
-    fn to_primitive_returns_symbol_or_bigint(
-        &self,
-        is_global_reference: &impl IsGlobalReference,
-    ) -> Option<bool> {
-        match self.value_type(is_global_reference) {
-            ValueType::String
-            | ValueType::Number
-            | ValueType::Boolean
-            | ValueType::Null
-            | ValueType::Undefined => Some(false),
-            ValueType::BigInt => Some(true),
-            ValueType::Object | ValueType::Undetermined => {
-                match self {
-                    Expression::RegExpLiteral(_) | Expression::ArrayExpression(_) => Some(false),
-                    // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-                    // ToPrimitive for an object returns `"[object Object]"`
-                    Expression::ObjectExpression(obj) => {
-                        if maybe_object_with_to_primitive_related_properties_overridden(obj) {
-                            None
-                        } else {
-                            Some(false)
-                        }
-                    }
-                    _ => None,
+                    _ => ToPrimitiveResult::Undetermined,
                 }
             }
         }

@@ -84,14 +84,13 @@ impl MayHaveSideEffects for UnaryExpression<'_> {
             UnaryOperator::UnaryPlus => {
                 // ToNumber throws an error when the argument is Symbol / BigInt / an object that
                 // returns Symbol or BigInt from ToPrimitive
-                self.argument.to_primitive_returns_symbol_or_bigint(is_global_reference)
-                    != Some(false)
+                self.argument.to_primitive(is_global_reference).is_symbol_or_bigint() != Some(false)
                     || self.argument.may_have_side_effects(is_global_reference)
             }
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
                 // ToNumeric throws an error when the argument is Symbol / an object that
                 // returns Symbol from ToPrimitive
-                self.argument.to_primitive_returns_symbol(is_global_reference) != Some(false)
+                self.argument.to_primitive(is_global_reference).is_symbol() != Some(false)
                     || self.argument.may_have_side_effects(is_global_reference)
             }
         }
@@ -117,17 +116,16 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
                 true
             }
             BinaryOperator::Addition => {
-                if self.left.to_primitive_returns_string(is_global_reference) == Some(true)
-                    || self.right.to_primitive_returns_string(is_global_reference) == Some(true)
+                if self.left.to_primitive(is_global_reference).is_string() == Some(true)
+                    || self.right.to_primitive(is_global_reference).is_string() == Some(true)
                 {
-                    let other_side = if self.left.to_primitive_returns_string(is_global_reference)
-                        == Some(true)
-                    {
-                        &self.right
-                    } else {
-                        &self.left
-                    };
-                    other_side.to_primitive_returns_symbol(is_global_reference) != Some(false)
+                    let other_side =
+                        if self.left.to_primitive(is_global_reference).is_string() == Some(true) {
+                            &self.right
+                        } else {
+                            &self.left
+                        };
+                    other_side.to_primitive(is_global_reference).is_symbol() != Some(false)
                         || self.left.may_have_side_effects(is_global_reference)
                         || self.right.may_have_side_effects(is_global_reference)
                 } else if self.left.is_number() || self.right.is_number() {
@@ -166,9 +164,9 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
                     } else {
                         true
                     }
-                } else if self.left.to_primitive_returns_symbol_or_bigint(is_global_reference)
+                } else if self.left.to_primitive(is_global_reference).is_symbol_or_bigint()
                     == Some(false)
-                    && self.right.to_primitive_returns_symbol_or_bigint(is_global_reference)
+                    && self.right.to_primitive(is_global_reference).is_symbol_or_bigint()
                         == Some(false)
                 {
                     self.left.may_have_side_effects(is_global_reference)
