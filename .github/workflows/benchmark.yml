@@ -139,7 +139,7 @@ jobs:
         with:
           if-no-files-found: error
           name: benchmark-linter
-          path: ./target/codspeed/oxc_benchmark
+          path: ./target/codspeed/instrumentation/oxc_benchmark
           retention-days: 1
 
   # Run linter benchmarks. Each fixture in a separate job.
