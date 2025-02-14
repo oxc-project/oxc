@@ -387,6 +387,87 @@ pub struct DynamicImport {
     pub module_request: Span,
 }
 
+#[expect(missing_docs)]
+pub trait VisitMutModuleRecord {
+    fn visit_module_record(&mut self, module_record: &mut ModuleRecord) {
+        module_record.requested_modules.values_mut().for_each(|e| {
+            e.iter_mut().for_each(|e| self.visit_requested_module(e));
+        });
+        module_record.import_entries.iter_mut().for_each(|e| self.visit_import_entry(e));
+        module_record.local_export_entries.iter_mut().for_each(|e| self.visit_export_entry(e));
+        module_record.indirect_export_entries.iter_mut().for_each(|e| self.visit_export_entry(e));
+        module_record.star_export_entries.iter_mut().for_each(|e| self.visit_export_entry(e));
+        module_record.dynamic_imports.iter_mut().for_each(|e| self.visit_dynamic_import(e));
+        module_record.import_metas.iter_mut().for_each(|e| self.visit_span(e));
+    }
+
+    fn visit_requested_module(&mut self, requested_module: &mut RequestedModule) {
+        self.visit_span(&mut requested_module.span);
+        self.visit_span(&mut requested_module.statement_span);
+    }
+
+    fn visit_import_entry(&mut self, import_entry: &mut ImportEntry) {
+        self.visit_span(&mut import_entry.statement_span);
+        self.visit_name_span(&mut import_entry.module_request);
+        self.visit_name_span(&mut import_entry.local_name);
+        self.visit_import_import_name(&mut import_entry.import_name);
+    }
+
+    fn visit_import_import_name(&mut self, import_import_name: &mut ImportImportName) {
+        match import_import_name {
+            ImportImportName::Name(name_span) => self.visit_name_span(name_span),
+            ImportImportName::NamespaceObject => {}
+            ImportImportName::Default(span) => self.visit_span(span),
+        }
+    }
+
+    fn visit_export_entry(&mut self, export_entry: &mut ExportEntry) {
+        self.visit_span(&mut export_entry.statement_span);
+        self.visit_span(&mut export_entry.span);
+        if let Some(module_request) = &mut export_entry.module_request {
+            self.visit_name_span(module_request);
+        }
+        self.visit_export_import_name(&mut export_entry.import_name);
+        self.visit_export_export_name(&mut export_entry.export_name);
+        self.visit_export_local_name(&mut export_entry.local_name);
+    }
+
+    fn visit_export_import_name(&mut self, export_import_name: &mut ExportImportName) {
+        match export_import_name {
+            ExportImportName::Name(name_span) => self.visit_name_span(name_span),
+            ExportImportName::All | ExportImportName::AllButDefault | ExportImportName::Null => {}
+        }
+    }
+
+    fn visit_export_export_name(&mut self, export_export_name: &mut ExportExportName) {
+        match export_export_name {
+            ExportExportName::Name(name_span) => self.visit_name_span(name_span),
+            ExportExportName::Default(span) => self.visit_span(span),
+            ExportExportName::Null => {}
+        }
+    }
+
+    fn visit_export_local_name(&mut self, export_local_name: &mut ExportLocalName) {
+        match export_local_name {
+            ExportLocalName::Name(name_span) | ExportLocalName::Default(name_span) => {
+                self.visit_name_span(name_span);
+            }
+            ExportLocalName::Null => {}
+        }
+    }
+
+    fn visit_dynamic_import(&mut self, dynamic_import: &mut DynamicImport) {
+        self.visit_span(&mut dynamic_import.module_request);
+        self.visit_span(&mut dynamic_import.span);
+    }
+
+    fn visit_name_span(&mut self, name_span: &mut NameSpan) {
+        self.visit_span(&mut name_span.span);
+    }
+
+    fn visit_span(&mut self, _span: &mut Span) {}
+}
+
 #[cfg(test)]
 mod test {
     use oxc_span::Span;

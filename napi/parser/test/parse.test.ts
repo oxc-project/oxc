@@ -121,6 +121,90 @@ it('utf16 span', async () => {
       ]
     `);
   }
+  {
+    const ret = await parseAsync('test.js', `"🤨";import x from "x"; export { x };import("y");import.meta.z`, {
+      convertSpanUtf16: true,
+    });
+    expect(ret.module).toMatchInlineSnapshot(`
+      {
+        "dynamicImports": [
+          {
+            "end": 48,
+            "moduleRequest": {
+              "end": 47,
+              "start": 44,
+            },
+            "start": 37,
+          },
+        ],
+        "hasModuleSyntax": true,
+        "importMetas": [
+          {
+            "end": 60,
+            "start": 49,
+          },
+        ],
+        "staticExports": [
+          {
+            "end": 23,
+            "entries": [
+              {
+                "end": 34,
+                "exportName": {
+                  "end": 34,
+                  "kind": "Name",
+                  "name": "x",
+                  "start": 33,
+                },
+                "importName": {
+                  "end": 13,
+                  "kind": "Name",
+                  "name": "x",
+                  "start": 12,
+                },
+                "localName": {
+                  "kind": "None",
+                },
+                "moduleRequest": {
+                  "end": 22,
+                  "start": 19,
+                  "value": "x",
+                },
+                "start": 33,
+              },
+            ],
+            "start": 5,
+          },
+        ],
+        "staticImports": [
+          {
+            "end": 23,
+            "entries": [
+              {
+                "importName": {
+                  "end": 13,
+                  "kind": "Default",
+                  "start": 12,
+                },
+                "isType": false,
+                "localName": {
+                  "end": 13,
+                  "start": 12,
+                  "value": "x",
+                },
+              },
+            ],
+            "moduleRequest": {
+              "end": 22,
+              "start": 19,
+              "value": "x",
+            },
+            "start": 5,
+          },
+        ],
+      }
+    `);
+  }
 });
 
 describe('error', () => {

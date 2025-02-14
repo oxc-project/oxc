@@ -1,6 +1,7 @@
 //! Convert UTF-8 span offsets to UTF-16.
 
 use oxc_span::Span;
+use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
 
 use crate::{ast::Program, visit::VisitMut};
 
@@ -39,6 +40,11 @@ impl Utf8ToUtf16 {
         for comment in &mut program.comments {
             self.convert_span(&mut comment.span);
         }
+    }
+
+    /// Convert spans in ModuleRecord to UTF-16
+    pub fn convert_module_record(&mut self, module_record: &mut ModuleRecord<'_>) {
+        self.visit_module_record(module_record);
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -97,6 +103,12 @@ impl Utf8ToUtf16 {
 }
 
 impl VisitMut<'_> for Utf8ToUtf16 {
+    fn visit_span(&mut self, span: &mut Span) {
+        self.convert_span(span);
+    }
+}
+
+impl VisitMutModuleRecord for Utf8ToUtf16 {
     fn visit_span(&mut self, span: &mut Span) {
         self.convert_span(span);
     }

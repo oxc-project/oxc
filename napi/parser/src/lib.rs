@@ -86,16 +86,15 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         })
         .collect::<Vec<Comment>>();
 
-    let module = EcmaScriptModule::from(&ret.module_record);
-
     if options.convert_span_utf16.unwrap_or(false) {
-        // TODO: fix spans in `module_record` and `errors`
+        // TODO: fix spans in `errors`
 
         // Empty `comments` so comment spans don't get converted twice
         ret.program.comments.clear();
 
         let mut converter = Utf8ToUtf16::new();
         converter.convert(&mut ret.program);
+        converter.convert_module_record(&mut ret.module_record);
 
         for comment in &mut comments {
             comment.start = converter.convert_offset(comment.start);
@@ -103,7 +102,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         }
     }
     let program = serde_json::to_string(&ret.program).unwrap();
-
+    let module = EcmaScriptModule::from(&ret.module_record);
     ParseResult { source_text, program, module, comments, errors }
 }
 
