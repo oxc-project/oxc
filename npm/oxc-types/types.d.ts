@@ -273,7 +273,7 @@ export interface AssignmentTargetPropertyIdentifier extends Span {
   value: IdentifierReference | AssignmentTargetWithDefault;
   kind: 'init';
   method: false;
-  shorthand: false;
+  shorthand: true;
   computed: false;
 }
 

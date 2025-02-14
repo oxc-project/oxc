@@ -898,7 +898,7 @@ pub enum AssignmentTargetProperty<'a> {
 #[estree(
     rename = "Property",
     add_fields(kind = "\"init\"", method = false, shorthand = true, computed = false),
-    add_ts = "kind: \"init\"; method: false; shorthand: false; computed: false"
+    add_ts = "kind: \"init\"; method: false; shorthand: true; computed: false"
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
