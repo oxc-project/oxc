@@ -22,7 +22,7 @@ jobs:
       contents: write
       actions: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           token: ${{ secrets.OXC_BOT_PAT }} # required for git tag push
           persist-credentials: true
