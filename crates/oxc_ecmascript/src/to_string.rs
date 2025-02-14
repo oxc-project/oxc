@@ -3,7 +3,10 @@ use std::borrow::Cow;
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{array_join::ArrayJoin, is_global_reference::IsGlobalReference, ToBoolean};
+use crate::{
+    array_join::ArrayJoin, is_global_reference::IsGlobalReference,
+    to_primitive::maybe_object_with_to_primitive_related_properties_overridden, ToBoolean,
+};
 
 /// `ToString`
 ///
@@ -132,6 +135,10 @@ impl<'a> ToJsString<'a> for ArrayExpression<'a> {
 
 impl<'a> ToJsString<'a> for ObjectExpression<'a> {
     fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
-        Some(Cow::Borrowed("[object Object]"))
+        if maybe_object_with_to_primitive_related_properties_overridden(self) {
+            None
+        } else {
+            Some(Cow::Borrowed("[object Object]"))
+        }
     }
 }
