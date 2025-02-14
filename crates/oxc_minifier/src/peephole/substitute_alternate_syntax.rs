@@ -825,7 +825,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_template_literal(t: &TemplateLiteral, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
-        t.to_js_string().map(|val| ctx.ast.expression_string_literal(t.span(), val, None))
+        t.to_js_string(&ctx).map(|val| ctx.ast.expression_string_literal(t.span(), val, None))
     }
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>

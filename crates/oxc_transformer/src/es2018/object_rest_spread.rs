@@ -34,7 +34,9 @@ use serde::Deserialize;
 use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{BoundNames, ToJsString};
+use oxc_ecmascript::{
+    is_global_reference::WithoutGlobalReferenceInformation, BoundNames, ToJsString,
+};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
@@ -992,7 +994,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 // `let { [1], ... rest }`
                 if expr.is_literal() {
                     let span = expr.span();
-                    let s = expr.to_js_string().unwrap();
+                    let s = expr.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
                     let expr = ctx.ast.expression_string_literal(span, s, None);
                     return Some(ArrayExpressionElement::from(expr));
                 }

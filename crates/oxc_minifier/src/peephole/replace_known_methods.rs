@@ -327,7 +327,7 @@ impl<'a> PeepholeOptimizations {
                 if args.is_empty() =>
             {
                 use oxc_ecmascript::ToJsString;
-                object.to_js_string().map(|s| ctx.ast.expression_string_literal(span, s, None))
+                object.to_js_string(&ctx).map(|s| ctx.ast.expression_string_literal(span, s, None))
             }
             _ => None,
         }

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 
 use num_bigint::BigInt;
 
-use crate::{ToJsString, ToNumber};
+use crate::{is_global_reference::IsGlobalReference, ToJsString, ToNumber};
 
 #[derive(Debug, PartialEq)]
 pub enum ConstantValue<'a> {
@@ -59,7 +59,7 @@ impl<'a> ConstantValue<'a> {
 }
 
 impl<'a> ToJsString<'a> for ConstantValue<'a> {
-    fn to_js_string(&self) -> Option<Cow<'a, str>> {
+    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
         match self {
             Self::Number(n) => {
                 use oxc_syntax::number::ToJsString;

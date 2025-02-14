@@ -44,7 +44,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
     }
 
     fn get_side_free_string_value(&self, expr: &Expression<'a>) -> Option<Cow<'a, str>> {
-        let value = expr.to_js_string();
+        let value = expr.to_js_string(self);
         if value.is_some() && !expr.may_have_side_effects(self) {
             return value;
         }
@@ -60,7 +60,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
     }
 
     fn get_side_free_bigint_value(&self, expr: &Expression<'a>) -> Option<BigInt> {
-        let value = expr.to_big_int();
+        let value = expr.to_big_int(self);
         if value.is_some() && expr.may_have_side_effects(self) {
             None
         } else {
@@ -204,7 +204,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
             },
             Expression::BigIntLiteral(_) => {
                 use crate::ToBigInt;
-                expr.to_big_int()
+                expr.to_big_int(self)
             }
             _ => None,
         }
@@ -219,7 +219,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
             Expression::NullLiteral(_) => Some(ConstantValue::Null),
             Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
-            Expression::BigIntLiteral(lit) => lit.to_big_int().map(ConstantValue::BigInt),
+            Expression::BigIntLiteral(lit) => lit.to_big_int(self).map(ConstantValue::BigInt),
             Expression::StringLiteral(lit) => {
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
@@ -249,8 +249,8 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
                 if left_type.is_string() || right_type.is_string() {
                     let lval = self.eval_expression(left)?;
                     let rval = self.eval_expression(right)?;
-                    let lstr = lval.to_js_string()?;
-                    let rstr = rval.to_js_string()?;
+                    let lstr = lval.to_js_string(self)?;
+                    let rstr = rval.to_js_string(self)?;
                     return Some(ConstantValue::String(lstr + rstr));
                 }
                 if left_type.is_number() || right_type.is_number() {
@@ -545,8 +545,8 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
 
         // 3. If px is a String and py is a String, then
         if px.is_string() && py.is_string() {
-            let left_string = x.to_js_string()?;
-            let right_string = y.to_js_string()?;
+            let left_string = x.to_js_string(self)?;
+            let right_string = y.to_js_string(self)?;
             return Some(ConstantValue::Boolean(
                 left_string.encode_utf16().cmp(right_string.encode_utf16()) == Ordering::Less,
             ));
@@ -555,16 +555,16 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
         // a. If px is a BigInt and py is a String, then
         if px.is_bigint() && py.is_string() {
             use crate::StringToBigInt;
-            let ny = y.to_js_string()?.as_ref().string_to_big_int();
+            let ny = y.to_js_string(self)?.as_ref().string_to_big_int();
             let Some(ny) = ny else { return Some(ConstantValue::Undefined) };
-            return Some(ConstantValue::Boolean(x.to_big_int()? < ny));
+            return Some(ConstantValue::Boolean(x.to_big_int(self)? < ny));
         }
         // b. If px is a String and py is a BigInt, then
         if px.is_string() && py.is_bigint() {
             use crate::StringToBigInt;
-            let nx = x.to_js_string()?.as_ref().string_to_big_int();
+            let nx = x.to_js_string(self)?.as_ref().string_to_big_int();
             let Some(nx) = nx else { return Some(ConstantValue::Undefined) };
-            return Some(ConstantValue::Boolean(nx < y.to_big_int()?));
+            return Some(ConstantValue::Boolean(nx < y.to_big_int(self)?));
         }
 
         // Both operands are primitives here.
@@ -587,7 +587,7 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
         }
         //   ii. Else,
         if px.is_bigint() && py.is_bigint() {
-            return Some(ConstantValue::Boolean(x.to_big_int()? < y.to_big_int()?));
+            return Some(ConstantValue::Boolean(x.to_big_int(self)? < y.to_big_int(self)?));
         }
 
         let nx = self.eval_to_number(x);
@@ -615,13 +615,13 @@ pub trait ConstantEvaluation<'a>: DetermineValueType {
 
         // k. If ℝ(nx) < ℝ(ny), return true; otherwise return false.
         if px.is_bigint() {
-            let nx = x.to_big_int()?;
+            let nx = x.to_big_int(self)?;
             let ny = self.eval_to_number(y)?;
             return compare_bigint_and_f64(&nx, ny)
                 .map(|ord| ConstantValue::Boolean(ord == Ordering::Less));
         }
         if py.is_bigint() {
-            let ny = y.to_big_int()?;
+            let ny = y.to_big_int(self)?;
             let nx = self.eval_to_number(x)?;
             return compare_bigint_and_f64(&ny, nx)
                 .map(|ord| ConstantValue::Boolean(ord.reverse() == Ordering::Less));
