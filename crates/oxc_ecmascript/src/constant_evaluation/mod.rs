@@ -7,8 +7,8 @@ use equality_comparison::{abstract_equality_comparison, strict_equality_comparis
 use oxc_ast::{ast::*, AstBuilder};
 
 use crate::{
-    is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects, ToBigInt, ToBoolean,
-    ToInt32, ToJsString, ToNumber,
+    is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects,
+    to_numeric::ToNumeric, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber,
 };
 
 mod equality_comparison;
@@ -244,24 +244,34 @@ pub trait ConstantEvaluation<'a>: IsGlobalReference {
     ) -> Option<ConstantValue<'a>> {
         match operator {
             BinaryOperator::Addition => {
+                use crate::to_primitive::ToPrimitive;
                 if left.may_have_side_effects(self) || right.may_have_side_effects(self) {
                     return None;
                 }
-                let left_type = left.value_type(self);
-                let right_type = right.value_type(self);
-                if left_type.is_string() || right_type.is_string() {
+                let left_to_primitive = left.to_primitive(self);
+                let right_to_primitive = right.to_primitive(self);
+                if left_to_primitive.is_string() == Some(true)
+                    || right_to_primitive.is_string() == Some(true)
+                {
                     let lval = self.eval_expression(left)?;
                     let rval = self.eval_expression(right)?;
                     let lstr = lval.to_js_string(self)?;
                     let rstr = rval.to_js_string(self)?;
                     return Some(ConstantValue::String(lstr + rstr));
                 }
-                if left_type.is_number() || right_type.is_number() {
+                let left_to_numeric_type = left_to_primitive.to_numeric(self);
+                let right_to_numeric_type = right_to_primitive.to_numeric(self);
+                if left_to_numeric_type.is_number() || right_to_numeric_type.is_number() {
                     let lval = self.eval_expression(left)?;
                     let rval = self.eval_expression(right)?;
                     let lnum = lval.to_number(self)?;
                     let rnum = rval.to_number(self)?;
                     return Some(ConstantValue::Number(lnum + rnum));
+                }
+                if left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint() {
+                    let lval = self.eval_to_big_int(left)?;
+                    let rval = self.eval_to_big_int(right)?;
+                    return Some(ConstantValue::BigInt(lval + rval));
                 }
                 None
             }

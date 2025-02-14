@@ -1,6 +1,8 @@
 use oxc_ast::ast::*;
 
-use crate::{is_global_reference::IsGlobalReference, to_primitive::ToPrimitive};
+use crate::{
+    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
+};
 
 /// Returns true if subtree changes application state.
 ///
@@ -116,28 +118,26 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
                 true
             }
             BinaryOperator::Addition => {
-                if self.left.to_primitive(is_global_reference).is_string() == Some(true)
-                    || self.right.to_primitive(is_global_reference).is_string() == Some(true)
-                {
-                    let other_side =
-                        if self.left.to_primitive(is_global_reference).is_string() == Some(true) {
-                            &self.right
-                        } else {
-                            &self.left
-                        };
-                    other_side.to_primitive(is_global_reference).is_symbol() != Some(false)
+                let left = self.left.to_primitive(is_global_reference);
+                let right = self.right.to_primitive(is_global_reference);
+                if left.is_string() == Some(true) || right.is_string() == Some(true) {
+                    // If either side is a string, ToString is called for both sides.
+                    let other_side = if left.is_string() == Some(true) { right } else { left };
+                    // ToString() for Symbols throws an error.
+                    return other_side.is_symbol() != Some(false)
                         || self.left.may_have_side_effects(is_global_reference)
+                        || self.right.may_have_side_effects(is_global_reference);
+                }
+
+                let left_to_numeric_type = left.to_numeric(is_global_reference);
+                let right_to_numeric_type = right.to_numeric(is_global_reference);
+                if (left_to_numeric_type.is_number() && right_to_numeric_type.is_number())
+                    || (left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint())
+                {
+                    self.left.may_have_side_effects(is_global_reference)
                         || self.right.may_have_side_effects(is_global_reference)
-                } else if self.left.is_number() || self.right.is_number() {
-                    let other_side = if self.left.is_number() { &self.right } else { &self.left };
-                    !matches!(
-                        other_side,
-                        Expression::NullLiteral(_)
-                            | Expression::NumericLiteral(_)
-                            | Expression::BooleanLiteral(_)
-                    )
                 } else {
-                    !(self.left.is_big_int_literal() && self.right.is_big_int_literal())
+                    true
                 }
             }
             BinaryOperator::Subtraction
@@ -151,24 +151,37 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
             | BinaryOperator::BitwiseAnd
             | BinaryOperator::Exponential
             | BinaryOperator::ShiftRightZeroFill => {
-                if self.left.is_big_int_literal() || self.right.is_big_int_literal() {
-                    if let (Expression::BigIntLiteral(_), Expression::BigIntLiteral(right)) =
-                        (&self.left, &self.right)
-                    {
-                        match self.operator {
-                            BinaryOperator::Exponential => right.is_negative(),
-                            BinaryOperator::Division | BinaryOperator::Remainder => right.is_zero(),
-                            BinaryOperator::ShiftRightZeroFill => true,
-                            _ => false,
+                let left_to_numeric_type = self.left.to_numeric(is_global_reference);
+                let right_to_numeric_type = self.right.to_numeric(is_global_reference);
+                if left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint() {
+                    if self.operator == BinaryOperator::ShiftRightZeroFill {
+                        true
+                    } else if matches!(
+                        self.operator,
+                        BinaryOperator::Exponential
+                            | BinaryOperator::Division
+                            | BinaryOperator::Remainder
+                    ) {
+                        if let Expression::BigIntLiteral(right) = &self.right {
+                            match self.operator {
+                                BinaryOperator::Exponential => {
+                                    right.is_negative()
+                                        || self.left.may_have_side_effects(is_global_reference)
+                                }
+                                BinaryOperator::Division | BinaryOperator::Remainder => {
+                                    right.is_zero()
+                                        || self.left.may_have_side_effects(is_global_reference)
+                                }
+                                _ => unreachable!(),
+                            }
+                        } else {
+                            true
                         }
                     } else {
-                        true
+                        self.left.may_have_side_effects(is_global_reference)
+                            || self.right.may_have_side_effects(is_global_reference)
                     }
-                } else if self.left.to_primitive(is_global_reference).is_symbol_or_bigint()
-                    == Some(false)
-                    && self.right.to_primitive(is_global_reference).is_symbol_or_bigint()
-                        == Some(false)
-                {
+                } else if left_to_numeric_type.is_number() && right_to_numeric_type.is_number() {
                     self.left.may_have_side_effects(is_global_reference)
                         || self.right.may_have_side_effects(is_global_reference)
                 } else {

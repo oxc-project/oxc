@@ -120,16 +120,16 @@ fn binary_tests() {
     test("true + undefined", ValueType::Number);
     test("true + null", ValueType::Number);
     test("true + 0", ValueType::Number);
-    // test("undefined + true", ValueType::Number);
-    // test("null + true", ValueType::Number);
-    // test("0 + true", ValueType::Number);
+    test("undefined + true", ValueType::Number);
+    test("null + true", ValueType::Number);
+    test("0 + true", ValueType::Number);
     test("true + 0n", ValueType::Undetermined); // throws an error
-    test("({} + [])", ValueType::Undetermined);
-    test("[] + {}", ValueType::Undetermined);
+    test("({} + [])", ValueType::String); // [object Object]
+    test("[] + {}", ValueType::String); // [object Object]
 
     test("1 - 0", ValueType::Number);
     test("1n - 0n", ValueType::BigInt);
-    test("1 - 0n", ValueType::BigInt); // throws an error
+    test("1 - 0n", ValueType::Number); // throws an error
     test("foo - 1", ValueType::Number);
     test("foo - 1n", ValueType::BigInt);
     test("foo - undefined", ValueType::Number);

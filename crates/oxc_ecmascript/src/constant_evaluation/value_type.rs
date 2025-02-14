@@ -4,7 +4,9 @@ use oxc_ast::ast::{
 };
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::is_global_reference::IsGlobalReference;
+use crate::{
+    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
+};
 
 /// JavaScript Language Type
 ///
@@ -135,21 +137,19 @@ impl DetermineValueType for BinaryExpression<'_> {
     fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
         match self.operator {
             BinaryOperator::Addition => {
-                let left = self.left.value_type(is_global_reference);
-                let right = self.right.value_type(is_global_reference);
-                if left == ValueType::Boolean
-                    && matches!(right, ValueType::Undefined | ValueType::Null | ValueType::Number)
-                {
-                    return ValueType::Number;
-                }
-                if left == ValueType::String || right == ValueType::String {
+                let left = self.left.to_primitive(is_global_reference);
+                let right = self.right.to_primitive(is_global_reference);
+                if left.is_string() == Some(true) || right.is_string() == Some(true) {
                     return ValueType::String;
                 }
-                // There are some pretty weird cases for object types:
-                //   {} + [] === "0"
-                //   [] + {} === "[object Object]"
-                if left == ValueType::Object || right == ValueType::Object {
-                    return ValueType::Undetermined;
+                let left_to_numeric_type = left.to_numeric(is_global_reference);
+                let right_to_numeric_type = right.to_numeric(is_global_reference);
+                // we need to check both operands because the other operand might be undetermined and maybe a string
+                if left_to_numeric_type.is_number() && right_to_numeric_type.is_number() {
+                    return ValueType::Number;
+                }
+                if left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint() {
+                    return ValueType::BigInt;
                 }
                 ValueType::Undetermined
             }
@@ -163,17 +163,14 @@ impl DetermineValueType for BinaryExpression<'_> {
             | BinaryOperator::BitwiseXOR
             | BinaryOperator::BitwiseAnd
             | BinaryOperator::Exponential => {
-                let left = self.left.value_type(is_global_reference);
-                let right = self.right.value_type(is_global_reference);
-                if left.is_bigint() || right.is_bigint() {
-                    ValueType::BigInt
-                } else if !(left.is_object() || left.is_undetermined())
-                    || !(right.is_object() || right.is_undetermined())
-                {
-                    // non-object values other than BigInt are converted to number by `ToNumber`
-                    // if either operand is a number, the result is always a number
-                    // because if the other operand is a bigint, an error is thrown
+                let left_to_numeric_type = self.left.to_numeric(is_global_reference);
+                let right_to_numeric_type = self.right.to_numeric(is_global_reference);
+                // if either operand is a number, the result is always a number
+                // because if the other operand is a bigint, an error is thrown
+                if left_to_numeric_type.is_number() || right_to_numeric_type.is_number() {
                     ValueType::Number
+                } else if left_to_numeric_type.is_bigint() || right_to_numeric_type.is_bigint() {
+                    ValueType::BigInt
                 } else {
                     ValueType::Undetermined
                 }

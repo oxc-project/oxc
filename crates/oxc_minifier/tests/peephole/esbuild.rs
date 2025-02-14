@@ -230,7 +230,7 @@ fn js_parser_test() {
     test("while (x) { if (y) continue; var y }", "for (; x; ) if (!y) var y; ");
     test("console.log(undefined)", "console.log(void 0);");
     test("console.log(+undefined)", "console.log(NaN);");
-    test("console.log(undefined + undefined)", "console.log(void 0 + void 0);");
+    test("console.log(undefined + undefined)", "console.log(NaN);");
     test("const x = undefined", "const x = void 0;");
     test("let x = undefined", "let x;");
     test("var x = undefined", "var x = void 0;");
@@ -339,9 +339,9 @@ fn js_parser_test() {
     test("a = '' + 1n", "a = '1';");
     test("a = '' + 123n", "a = '123';");
     test("a = '' + 1_2_3n", "a = '123';");
-    // test("a = '' + 0b0n", "a = '' + 0b0n;");
-    // test("a = '' + 0o0n", "a = '' + 0o0n;");
-    // test("a = '' + 0x0n", "a = '' + 0x0n;");
+    test("a = '' + 0b0n", "a = '0';");
+    test("a = '' + 0o0n", "a = '0';");
+    test("a = '' + 0x0n", "a = '0';");
     // test("a = '' + /a\\b/ig", "a = '/a\\\\b/ig';");
     // test("a = /a\\b/ig + ''", "a = '/a\\\\b/ig';");
     // test("a = '' + ''.constructor", "a = 'function String() { [native code] }';");
