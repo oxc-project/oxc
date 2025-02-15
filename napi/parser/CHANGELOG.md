@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.51.0] - 2025-02-15
+
+### Bug Fixes
+
+- 0937a55 napi/parser: Utf16 span for errors (#9112) (hi-ogawa)
+- 15f23f1 napi/parser: Utf16 span for module record (#9093) (hi-ogawa)
+- 9edfb1d napi/parser: Fix unicode comment panic (#9084) (hi-ogawa)
+
+### Performance
+
+- af59945 napi/parser: Do not convert comment spans twice (#9087) (overlookmotel)
+
+### Testing
+
+- eaff3d9 napi/parser: Split tests for `convertSpanUtf16` (#9113) (hi-ogawa)
+
 ## [0.50.0] - 2025-02-12
 
 ### Features

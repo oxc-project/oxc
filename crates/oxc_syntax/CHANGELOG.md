@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.51.0] - 2025-02-15
+
+### Features
+
+- b5eb6e5 minifier: Improve `remove_unused_expression` (#9071) (Boshen)
+
+### Bug Fixes
+
+- 15f23f1 napi/parser: Utf16 span for module record (#9093) (hi-ogawa)
+
+### Styling
+
+- 23f53c0 syntax: Name trait method param without underscore (#9119) (overlookmotel)
+
 ## [0.49.0] - 2025-02-10
 
 - b7ff7e1 span: [**BREAKING**] Export `ContentEq` trait from root of `oxc_span` crate (#8869) (overlookmotel)

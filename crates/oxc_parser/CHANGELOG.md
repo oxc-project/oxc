@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.51.0] - 2025-02-15
+
+- 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)
+
+### Features
+
+
+### Bug Fixes
+
+- bc64c9d lexer: Fix decoding lone `\r` in template literals (#9066) (overlookmotel)
+- b8278d8 parser: Parse `let _: null` as `TSNullKeyword` (#9133) (Boshen)
+
 ## [0.50.0] - 2025-02-12
 
 - d9189f1 ast: [**BREAKING**] Remove `PrivateInExpression::operator` field (#9041) (overlookmotel)

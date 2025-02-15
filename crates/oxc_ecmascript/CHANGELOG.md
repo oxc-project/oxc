@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.51.0] - 2025-02-15
+
+### Features
+
+- 36c8640 ecmascript: Support more string concatenation (#9121) (sapphi-red)
+- 6936b08 ecmascript: Fold `typeof` with ValueType information (#9086) (sapphi-red)
+- 125d610 minifier: Fold String::charAt / String::charCodeAt more precisely (#9082) (sapphi-red)
+- 237ffba minifier: Fold bitwise binary expressions with negative BigInts (#9081) (sapphi-red)
+
+### Bug Fixes
+
+- eb7cd62 ecmascript: To_number for shadowed undefined (#9106) (sapphi-red)
+- 8cbdf00 ecmascript: To_boolean for shadowed undefined (#9105) (sapphi-red)
+- 17c745c ecmascript: To_string for object with toString (#9104) (sapphi-red)
+- cfc71f9 ecmascript: To_string for shadowed undefined (#9103) (sapphi-red)
+- 2ab2a8f ecmascript: Handle shadowed global variables in `ValueType` (#9085) (sapphi-red)
+
+### Refactor
+
+- 8bd6eef ecmascript: Merge constant evaluation logics (#9120) (sapphi-red)
+- b164072 ecmascript: Extract to_numeric (#9111) (sapphi-red)
+- fc53cdd ecmascript: Generalize ToPrimitive (#9109) (sapphi-red)
+- d951390 ecmascript: Use value_type in to_primitive (#9108) (sapphi-red)
+- 8f79012 ecmascript: Pass IsGlobalReference to DetermineValueType instead of extending it (#9107) (sapphi-red)
+- db1744c ecmascript: Remove "constant_evaluation" / "side_effects" features (#9114) (sapphi-red)
+- 329de94 ecmascript: Extract ToPrimitive (#9102) (sapphi-red)
+- d670ec7 ecmascript: Pass IsGlobalReference to MayHaveSideEffects instead of extending it (#9101) (sapphi-red)
+- f4e2d4e ecmascript: Allow IsGlobalReference to return None (#9100) (sapphi-red)
+
 ## [0.49.0] - 2025-02-10
 
 ### Features
