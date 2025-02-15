@@ -1231,9 +1231,6 @@ impl Serialize for CatchClause<'_> {
 impl Serialize for CatchParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "CatchParameter")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
         self.pattern.kind.serialize(FlatMapSerializer(&mut map))?;
         map.serialize_entry("typeAnnotation", &self.pattern.type_annotation)?;
         map.serialize_entry("optional", &self.pattern.optional)?;

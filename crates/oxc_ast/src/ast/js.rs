@@ -1440,7 +1440,9 @@ pub struct CatchClause<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(no_type, ts_alias = "BindingPattern")]
 pub struct CatchParameter<'a> {
+    #[estree(skip)]
     pub span: Span,
     /// The bound error
     #[estree(flatten)]

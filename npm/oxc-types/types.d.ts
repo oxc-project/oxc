@@ -485,16 +485,9 @@ export interface TryStatement extends Span {
 
 export interface CatchClause extends Span {
   type: 'CatchClause';
-  param: CatchParameter | null;
+  param: BindingPattern | null;
   body: BlockStatement;
 }
-
-export type CatchParameter =
-  & ({
-    type: 'CatchParameter';
-  })
-  & Span
-  & BindingPattern;
 
 export interface DebuggerStatement extends Span {
   type: 'DebuggerStatement';
