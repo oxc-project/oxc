@@ -1709,6 +1709,7 @@ pub struct FormalParameters<'a> {
 #[plural(FormalParameterList)]
 #[estree(no_type)]
 pub struct FormalParameter<'a> {
+    #[estree(skip)]
     pub span: Span,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,

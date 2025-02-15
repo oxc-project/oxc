@@ -582,7 +582,6 @@ export type FormalParameter =
     readonly: boolean;
     override: boolean;
   })
-  & Span
   & BindingPattern;
 
 export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
