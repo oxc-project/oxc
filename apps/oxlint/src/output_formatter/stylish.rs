@@ -63,9 +63,10 @@ fn format_stylish(diagnostics: &[Error]) -> String {
         };
         let max_len_width = diagnostics
             .iter()
-            .filter_map(|diagnostic| diagnostic.labels())
-            .flat_map(std::iter::Iterator::collect::<Vec<_>>)
-            .map(|label| format!("{}:{}", label.offset(), label.len()).len())
+            .map(|diagnostic| {
+                let start = Info::new(diagnostic).start;
+                format!("{}:{}", start.line, start.column).len()
+            })
             .max()
             .unwrap_or(0);
 
@@ -83,13 +84,12 @@ fn format_stylish(diagnostics: &[Error]) -> String {
                 "\u{1b}[33mwarning\u{1b}[0m"
             };
 
-            if let Some(label) = diagnostic.labels().expect("should have labels").next() {
-                let rule = diagnostic.code().map_or_else(String::new, |code| code.to_string());
-                let position = format!("{}:{}", label.offset(), label.len());
-                output.push_str(
-                    &format!("  \u{1b}[2m{position:max_len_width$}\u{1b}[0m  {severity_str}  {diagnostic}  \u{1b}[2m{rule}\u{1b}[0m\n"),
-                );
-            }
+            let info = Info::new(diagnostic);
+            let rule = diagnostic.code().map_or_else(String::new, |code| code.to_string());
+            let position = format!("{}:{}", info.start.line, info.start.column);
+            output.push_str(
+                &format!("  \u{1b}[2m{position:max_len_width$}\u{1b}[0m  {severity_str}  {diagnostic}  \u{1b}[2m{rule}\u{1b}[0m\n"),
+            );
         }
     }
 
