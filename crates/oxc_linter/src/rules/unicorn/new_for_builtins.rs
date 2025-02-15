@@ -101,9 +101,16 @@ fn is_expr_global_builtin<'a, 'b>(
 ) -> Option<&'b str> {
     match expr {
         Expression::Identifier(ident) => {
-            if !ctx.is_reference_to_global_variable(ident) {
+            if !ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str()) {
                 return None;
             }
+
+            if !ENFORCE_NEW_FOR_BUILTINS.contains(&ident.name)
+                && !DISALLOW_NEW_FOR_BUILTINS.contains(&ident.name)
+            {
+                return None;
+            }
+
             Some(ident.name.as_str())
         }
         match_member_expression!(Expression) => {
