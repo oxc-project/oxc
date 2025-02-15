@@ -70,7 +70,11 @@ importers:
         specifier: ^5.4.5
         version: 5.7.3
 
-  napi/minify: {}
+  napi/minify:
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 3.0.5(@types/node@22.13.1)(terser@5.38.1)
 
   napi/parser:
     dependencies:
@@ -78,11 +82,15 @@ importers:
         specifier: workspace:^
         version: link:../../npm/oxc-types
     devDependencies:
-      tinybench:
-        specifier: ^3.1.1
-        version: 3.1.1
+      vitest:
+        specifier: 'catalog:'
+        version: 3.0.5(@types/node@22.13.1)(terser@5.38.1)
 
-  napi/transform: {}
+  napi/transform:
+    devDependencies:
+      vitest:
+        specifier: 'catalog:'
+        version: 3.0.5(@types/node@22.13.1)(terser@5.38.1)
 
   npm/oxc-minify: {}
 
@@ -3287,10 +3295,6 @@ packages:
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
-
-  tinybench@3.1.1:
-    resolution: {integrity: sha512-74pmf47HY/bHqamcCMGris+1AtGGsqTZ3Hc/UK4QvSmRuf/9PIF9753+c8XBh7JfX2r9KeZtVjOYjd6vFpc0qQ==}
-    engines: {node: '>=18.0.0'}
 
   tinyexec@0.3.2:
     resolution: {integrity: sha512-KQQR9yN7R5+OSwaK0XQoj22pwHoTlgYqmUscPYoknOoWCWfj/5/ABTMRi69FrKU5ffPVh5QcFikpWJI/P1ocHA==}
@@ -6913,8 +6917,6 @@ snapshots:
   throttle-debounce@5.0.2: {}
 
   tinybench@2.9.0: {}
-
-  tinybench@3.1.1: {}
 
   tinyexec@0.3.2: {}
 
