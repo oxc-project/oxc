@@ -84,8 +84,8 @@ impl Rule for NoConsole {
             return;
         };
 
-        if ctx.is_reference_to_global_variable(ident)
-            && ident.name == "console"
+        if ident.name == "console"
+            && ctx.get_global_variable_value(&ident.name).is_some()
             && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
         {
             if let Some((mem_span, _)) = mem.static_property_info() {
@@ -143,49 +143,80 @@ fn remove_console<'c, 'a: 'c>(
 fn test() {
     use crate::tester::Tester;
 
+    let env = Some(serde_json::json!({ "env": {"browser": true} }));
+
     let pass = vec![
-        ("Console.info(foo)", None),
-        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["info"] }]))),
-        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["warn"] }]))),
-        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["error"] }]))),
-        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["log"] }]))),
-        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["warn", "info"] }]))),
-        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["error", "warn"] }]))),
-        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["log", "error"] }]))),
-        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["info", "log", "warn"] }]))),
-        ("var console = require('myconsole'); console.log(foo)", None),
-        ("import console from 'myconsole'; console.log(foo)", None),
+        ("Console.info(foo)", None, env.clone()),
+        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["info"] }])), env.clone()),
+        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["warn"] }])), env.clone()),
+        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["error"] }])), env.clone()),
+        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["log"] }])), env.clone()),
+        (
+            "console.info(foo)",
+            Some(serde_json::json!([{ "allow": ["warn", "info"] }])),
+            env.clone(),
+        ),
+        (
+            "console.warn(foo)",
+            Some(serde_json::json!([{ "allow": ["error", "warn"] }])),
+            env.clone(),
+        ),
+        (
+            "console.error(foo)",
+            Some(serde_json::json!([{ "allow": ["log", "error"] }])),
+            env.clone(),
+        ),
+        (
+            "console.log(foo)",
+            Some(serde_json::json!([{ "allow": ["info", "log", "warn"] }])),
+            env.clone(),
+        ),
+        ("var console = require('myconsole'); console.log(foo)", None, env.clone()),
+        ("import console from 'myconsole'; console.log(foo)", None, env.clone()),
     ];
 
     let fail = vec![
-        ("console.log()", None),
-        ("console.log(foo)", None),
-        ("console.error(foo)", None),
-        ("console.info(foo)", None),
-        ("console.warn(foo)", None),
-        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["error"] }]))),
-        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["warn"] }]))),
-        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["log"] }]))),
-        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["error"] }]))),
-        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["warn", "info"] }]))),
-        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["warn", "info", "log"] }]))),
-        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["warn", "error", "log"] }]))),
-        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["info", "log"] }]))),
+        ("console.log()", None, env.clone()),
+        ("console.log(foo)", None, env.clone()),
+        ("console.error(foo)", None, env.clone()),
+        ("console.info(foo)", None, env.clone()),
+        ("console.warn(foo)", None, env.clone()),
+        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["error"] }])), env.clone()),
+        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["warn"] }])), env.clone()),
+        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["log"] }])), env.clone()),
+        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["error"] }])), env.clone()),
+        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["warn", "info"] }])), env.clone()),
+        (
+            "console.error(foo)",
+            Some(serde_json::json!([{ "allow": ["warn", "info", "log"] }])),
+            env.clone(),
+        ),
+        (
+            "console.info(foo)",
+            Some(serde_json::json!([{ "allow": ["warn", "error", "log"] }])),
+            env.clone(),
+        ),
+        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["info", "log"] }])), env.clone()),
     ];
 
     let fix = vec![
-        ("function foo() { console.log(bar); }", "function foo() {  }", None),
-        ("function foo() { console.log(bar) }", "function foo() {  }", None),
-        ("const x = () => console.log(foo)", "const x = () => {}", None),
-        ("const x = () => { console.log(foo) }", "const x = () => {  }", None),
-        ("const x = () => { console.log(foo); }", "const x = () => {  }", None),
-        ("const x = () => { ((console.log(foo))); }", "const x = () => {  }", None),
-        ("const x = () => { console.log(foo); return 5 }", "const x = () => {  return 5 }", None),
-        ("if (foo) { console.log(foo) }", "if (foo) {  }", None),
-        ("foo ? console.log(foo) : 5", "foo ? undefined : 5", None),
-        ("(console.log(foo), 5)", "(undefined, 5)", None),
-        ("(5, console.log(foo))", "(5, undefined)", None),
-        ("const x = { foo: console.log(bar) }", "const x = { foo: undefined }", None),
+        ("function foo() { console.log(bar); }", "function foo() {  }", None, env.clone()),
+        ("function foo() { console.log(bar) }", "function foo() {  }", None, env.clone()),
+        ("const x = () => console.log(foo)", "const x = () => {}", None, env.clone()),
+        ("const x = () => { console.log(foo) }", "const x = () => {  }", None, env.clone()),
+        ("const x = () => { console.log(foo); }", "const x = () => {  }", None, env.clone()),
+        ("const x = () => { ((console.log(foo))); }", "const x = () => {  }", None, env.clone()),
+        (
+            "const x = () => { console.log(foo); return 5 }",
+            "const x = () => {  return 5 }",
+            None,
+            env.clone(),
+        ),
+        ("if (foo) { console.log(foo) }", "if (foo) {  }", None, env.clone()),
+        ("foo ? console.log(foo) : 5", "foo ? undefined : 5", None, env.clone()),
+        ("(console.log(foo), 5)", "(undefined, 5)", None, env.clone()),
+        ("(5, console.log(foo))", "(5, undefined)", None, env.clone()),
+        ("const x = { foo: console.log(bar) }", "const x = { foo: undefined }", None, env),
     ];
 
     Tester::new(NoConsole::NAME, NoConsole::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

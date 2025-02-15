@@ -1,4 +1,7 @@
 {
+  "env": {
+    "browser": true
+  },
   "rules": {
     "no-var": "error",
     "no-console": "error"

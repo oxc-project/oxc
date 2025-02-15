@@ -122,6 +122,7 @@ pub struct ExpectFix {
     expected: String,
     kind: ExpectFixKind,
     rule_config: Option<Value>,
+    eslint_config: Option<Value>,
 }
 
 impl<S: Into<String>> From<(S, S, Option<Value>)> for ExpectFix {
@@ -131,6 +132,7 @@ impl<S: Into<String>> From<(S, S, Option<Value>)> for ExpectFix {
             expected: value.1.into(),
             kind: ExpectFixKind::Any,
             rule_config: value.2,
+            eslint_config: None,
         }
     }
 }
@@ -142,20 +144,32 @@ impl<S: Into<String>> From<(S, S)> for ExpectFix {
             expected: value.1.into(),
             kind: ExpectFixKind::Any,
             rule_config: None,
+            eslint_config: None,
         }
     }
 }
-impl<S, F> From<(S, S, Option<Value>, F)> for ExpectFix
-where
-    S: Into<String>,
-    F: Into<ExpectFixKind>,
-{
+impl<S: Into<String>, F: Into<ExpectFixKind>> From<(S, S, Option<Value>, F)> for ExpectFix {
     fn from((source, expected, config, kind): (S, S, Option<Value>, F)) -> Self {
         Self {
             source: source.into(),
             expected: expected.into(),
             kind: kind.into(),
             rule_config: config,
+            eslint_config: None,
+        }
+    }
+}
+
+impl<S: Into<String>> From<(S, S, Option<Value>, Option<Value>)> for ExpectFix {
+    fn from(
+        (source, expected, config, eslint_config): (S, S, Option<Value>, Option<Value>),
+    ) -> Self {
+        Self {
+            source: source.into(),
+            expected: expected.into(),
+            kind: ExpectFixKind::Any,
+            rule_config: config,
+            eslint_config,
         }
     }
 }
@@ -418,8 +432,8 @@ impl Tester {
         };
 
         for fix in fix_test_cases {
-            let ExpectFix { source, expected, kind, rule_config: config } = fix;
-            let result = self.run(&source, config, &None, None, kind);
+            let ExpectFix { source, expected, kind, rule_config: config, eslint_config } = fix;
+            let result = self.run(&source, config, &eslint_config, None, kind);
             match result {
                 TestResult::Fixed(fixed_str) => assert_eq!(
                     expected, fixed_str,
