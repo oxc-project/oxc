@@ -864,8 +864,8 @@ impl<'a> PeepholeOptimizations {
                     NumberBase::Decimal,
                 ));
                 self.mark_current_function_as_changed();
+                return;
             }
-            return;
         }
         if *computed {
             *computed = false;
@@ -1662,7 +1662,7 @@ mod test {
             "class F { accessor  0 = _;  accessor  a = _;    accessor 1 = _;accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }"
         );
 
-        test_same("class C { ['-1']() {} }");
+        test("class C { ['-1']() {} }", "class C { '-1'() {} }");
         test_same("class C { ['prototype']() {} }");
         test_same("class C { ['__proto__']() {} }");
         test_same("class C { ['constructor']() {} }");

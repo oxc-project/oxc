@@ -122,7 +122,7 @@ fn js_parser_test() {
     // );
     test("class x { '0' = y }", "class x { 0 = y;}");
     test("class x { '123' = y }", "class x { 123 = y;}");
-    // test("class x { ['-123'] = y }", "class x { '-123' = y;}");
+    test("class x { ['-123'] = y }", "class x { '-123' = y;}");
     test("class x { '-0' = y }", "class x { '-0' = y;}");
     test("class x { '01' = y }", "class x { '01' = y;}");
     test("class x { '-01' = y }", "class x { '-01' = y;}");
@@ -130,7 +130,7 @@ fn js_parser_test() {
     test("class x { '-0x1' = y }", "class x { '-0x1' = y;}");
     test("class x { '2147483647' = y }", "class x { 2147483647 = y;}");
     test("class x { '2147483648' = y }", "class x { '2147483648' = y;}");
-    // test("class x { ['-2147483648'] = y }", "class x { '-2147483648' = y;}");
+    test("class x { ['-2147483648'] = y }", "class x { '-2147483648' = y;}");
     test("class x { ['-2147483649'] = y }", "class x { '-2147483649' = y;}");
     test("class Foo { static {} }", "class Foo {}");
     test("class Foo { static { 123 } }", "class Foo {}");
