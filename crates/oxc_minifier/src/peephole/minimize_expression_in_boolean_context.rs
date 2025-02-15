@@ -73,7 +73,7 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_expr_in_boolean_context(&mut e.left, ctx);
                 self.try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
-                if ctx.get_side_free_boolean_value(&e.right) == Some(true) {
+                if e.right.get_side_free_boolean_value(&ctx) == Some(true) {
                     *expr = ctx.ast.move_expression(&mut e.left);
                     return true;
                 }
@@ -83,7 +83,7 @@ impl<'a> PeepholeOptimizations {
                 self.try_fold_expr_in_boolean_context(&mut e.left, ctx);
                 self.try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
-                if ctx.get_side_free_boolean_value(&e.right) == Some(false) {
+                if e.right.get_side_free_boolean_value(&ctx) == Some(false) {
                     *expr = ctx.ast.move_expression(&mut e.left);
                     return true;
                 }
@@ -92,7 +92,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (a ? !!b : !!c)" => "if (a ? b : c)"
                 self.try_fold_expr_in_boolean_context(&mut e.consequent, ctx);
                 self.try_fold_expr_in_boolean_context(&mut e.alternate, ctx);
-                if let Some(boolean) = ctx.get_side_free_boolean_value(&e.consequent) {
+                if let Some(boolean) = e.consequent.get_side_free_boolean_value(&ctx) {
                     let right = ctx.ast.move_expression(&mut e.alternate);
                     let left = ctx.ast.move_expression(&mut e.test);
                     let span = e.span;
@@ -106,7 +106,7 @@ impl<'a> PeepholeOptimizations {
                     *expr = self.join_with_left_associative_op(span, op, left, right, ctx);
                     return true;
                 }
-                if let Some(boolean) = ctx.get_side_free_boolean_value(&e.alternate) {
+                if let Some(boolean) = e.alternate.get_side_free_boolean_value(&ctx) {
                     let left = ctx.ast.move_expression(&mut e.test);
                     let right = ctx.ast.move_expression(&mut e.consequent);
                     let span = e.span;

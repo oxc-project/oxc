@@ -22,13 +22,7 @@ pub trait MayHaveSideEffects {
 impl MayHaveSideEffects for Expression<'_> {
     fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
         match self {
-            Expression::Identifier(ident) => match ident.name.as_str() {
-                "NaN" | "Infinity" | "undefined" => false,
-                // Reading global variables may have a side effect.
-                // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
-                // NOTE: we ignore TDZ errors
-                _ => is_global_reference.is_global_reference(ident) != Some(false),
-            },
+            Expression::Identifier(ident) => ident.may_have_side_effects(is_global_reference),
             Expression::NumericLiteral(_)
             | Expression::BooleanLiteral(_)
             | Expression::StringLiteral(_)
@@ -64,7 +58,21 @@ impl MayHaveSideEffects for Expression<'_> {
             Expression::ArrayExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::ClassExpression(e) => e.may_have_side_effects(is_global_reference),
             // NOTE: private in can throw `TypeError`
+            Expression::StaticMemberExpression(e) => e.may_have_side_effects(is_global_reference),
+            Expression::ComputedMemberExpression(e) => e.may_have_side_effects(is_global_reference),
             _ => true,
+        }
+    }
+}
+
+impl MayHaveSideEffects for IdentifierReference<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self.name.as_str() {
+            "NaN" | "Infinity" | "undefined" => false,
+            // Reading global variables may have a side effect.
+            // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
+            // NOTE: we ignore TDZ errors
+            _ => is_global_reference.is_global_reference(self) != Some(false),
         }
     }
 }
@@ -284,5 +292,17 @@ impl MayHaveSideEffects for ClassElement<'_> {
             }
             ClassElement::TSIndexSignature(_) => false,
         }
+    }
+}
+
+impl MayHaveSideEffects for StaticMemberExpression<'_> {
+    fn may_have_side_effects(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
+        true
+    }
+}
+
+impl MayHaveSideEffects for ComputedMemberExpression<'_> {
+    fn may_have_side_effects(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
+        true
     }
 }

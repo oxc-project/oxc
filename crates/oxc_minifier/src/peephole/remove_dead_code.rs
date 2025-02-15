@@ -176,7 +176,7 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => {}
         }
 
-        if let Some(boolean) = ctx.get_side_free_boolean_value(&if_stmt.test) {
+        if let Some(boolean) = if_stmt.test.get_side_free_boolean_value(&ctx) {
             // Use "1" and "0" instead of "true" and "false" to be shorter.
             // And also prevent swapping consequent and alternate when `!0` is encourtnered.
             if let Expression::BooleanLiteral(b) = &if_stmt.test {
@@ -220,7 +220,11 @@ impl<'a, 'b> PeepholeOptimizations {
         for_stmt: &mut ForStatement<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
-        let test_boolean = for_stmt.test.as_ref().and_then(|test| ctx.get_boolean_value(test));
+        let test_boolean =
+            for_stmt.test.as_ref().and_then(|test| test.evaluate_value_to_boolean(&ctx));
+        if for_stmt.test.as_ref().is_some_and(|test| test.may_have_side_effects(&ctx)) {
+            return None;
+        }
         match test_boolean {
             Some(false) => match &mut for_stmt.init {
                 Some(ForStatementInit::VariableDeclaration(var_init)) => {
@@ -339,7 +343,7 @@ impl<'a, 'b> PeepholeOptimizations {
             return None;
         }
 
-        ctx.get_boolean_value(&expr.test).map(|v| {
+        expr.test.evaluate_value_to_boolean(&ctx).map(|v| {
             if expr.test.may_have_side_effects(&ctx) {
                 // "(a, true) ? b : c" => "a, b"
                 let exprs = ctx.ast.vec_from_iter([

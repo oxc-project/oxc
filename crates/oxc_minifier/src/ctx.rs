@@ -1,7 +1,9 @@
 use std::ops::Deref;
 
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
+use oxc_ecmascript::constant_evaluation::{
+    binary_operation_evaluate_value, ConstantEvaluation, ConstantEvaluationCtx, ConstantValue,
+};
 use oxc_semantic::{IsGlobalReference, SymbolTable};
 use oxc_traverse::TraverseCtx;
 
@@ -22,7 +24,7 @@ impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
     }
 }
 
-impl<'a> ConstantEvaluation<'a> for Ctx<'a, '_> {
+impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
     fn ast(&self) -> AstBuilder<'a> {
         self.ast
     }
@@ -42,7 +44,16 @@ impl<'a> Ctx<'a, '_> {
     }
 
     pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
-        self.eval_binary_expression(e).map(|v| self.value_to_expr(e.span, v))
+        e.evaluate_value(&self).map(|v| self.value_to_expr(e.span, v))
+    }
+
+    pub fn eval_binary_operation(
+        self,
+        operator: BinaryOperator,
+        left: &Expression<'a>,
+        right: &Expression<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        binary_operation_evaluate_value(operator, left, right, &self)
     }
 
     pub fn value_to_expr(self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {

@@ -141,11 +141,11 @@ impl<'a> PeepholeOptimizations {
         let Expression::StringLiteral(s) = object else { return None };
         let start_idx = args.first().and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
-            _ => ctx.get_side_free_number_value(arg.to_expression()),
+            _ => arg.to_expression().get_side_free_number_value(&ctx),
         });
         let end_idx = args.get(1).and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
-            _ => ctx.get_side_free_number_value(arg.to_expression()),
+            _ => arg.to_expression().get_side_free_number_value(&ctx),
         });
         #[expect(clippy::cast_precision_loss)]
         if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
@@ -178,7 +178,7 @@ impl<'a> PeepholeOptimizations {
         let char_at_index = match args.first() {
             Some(Argument::SpreadElement(_)) => return None,
             Some(arg @ match_expression!(Argument)) => {
-                Some(ctx.get_side_free_number_value(arg.to_expression())?)
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
             }
             None => None,
         };
@@ -201,7 +201,7 @@ impl<'a> PeepholeOptimizations {
         let char_at_index = match args.first() {
             Some(Argument::SpreadElement(_)) => return None,
             Some(arg @ match_expression!(Argument)) => {
-                Some(ctx.get_side_free_number_value(arg.to_expression())?)
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
             }
             None => None,
         };
@@ -224,14 +224,14 @@ impl<'a> PeepholeOptimizations {
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                ctx.get_side_free_string_value(search_value.to_expression())?
+                search_value.to_expression().get_side_free_string_value(&ctx)?
             }
         };
         let replace_value = args.get(1).unwrap();
         let replace_value = match replace_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                ctx.get_side_free_string_value(replace_value.to_expression())?
+                replace_value.to_expression().get_side_free_string_value(&ctx)?
             }
         };
         if replace_value.contains('$') {
@@ -259,7 +259,7 @@ impl<'a> PeepholeOptimizations {
         let mut s = String::with_capacity(args.len());
         for arg in args {
             let expr = arg.as_expression()?;
-            let v = ctx.get_side_free_number_value(expr)?;
+            let v = expr.get_side_free_number_value(&ctx)?;
             let v = v.to_int_32() as u16 as u32;
             let c = char::try_from(v).ok()?;
             s.push(c);
@@ -414,7 +414,7 @@ impl<'a> PeepholeOptimizations {
         {
             return None;
         }
-        let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
+        let arg_val = arguments[0].to_expression().get_side_free_number_value(&ctx)?;
         if arg_val == f64::INFINITY || arg_val.is_nan() || arg_val == 0.0 {
             return Some(ctx.ast.expression_numeric_literal(
                 span,
@@ -453,7 +453,7 @@ impl<'a> PeepholeOptimizations {
         {
             return None;
         }
-        let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
+        let arg_val = arguments[0].to_expression().get_side_free_number_value(&ctx)?;
         let result = match name {
             "abs" => arg_val.abs(),
             "ceil" => arg_val.ceil(),
@@ -498,7 +498,7 @@ impl<'a> PeepholeOptimizations {
         }
         let numbers = arguments
             .iter()
-            .map(|arg| arg.as_expression().map(|e| ctx.get_side_free_number_value(e))?)
+            .map(|arg| arg.as_expression().map(|e| e.get_side_free_number_value(&ctx))?)
             .collect::<Option<Vec<_>>>()?;
         let result = if numbers.iter().any(|n| n.is_nan()) {
             f64::NAN

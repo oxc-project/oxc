@@ -40,6 +40,43 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 let number = unary.argument.to_number(is_global_reference)?;
                 Some(if number == 0.0 { 1.0 } else { 0.0 })
             }
+            // If the object is empty, `toString` / `valueOf` / `Symbol.toPrimitive` is not overridden.
+            // (assuming that those methods in Object.prototype are not modified)
+            // In that case, `ToPrimitive` returns `"[object Object]"`
+            Expression::ObjectExpression(e) if e.properties.is_empty() => Some(f64::NAN),
+            // `ToPrimitive` for RegExp object returns `"/regexp/"`
+            Expression::RegExpLiteral(_) => Some(f64::NAN),
+            Expression::ArrayExpression(arr) => {
+                // If the array is empty, `ToPrimitive` returns `""`
+                if arr.elements.is_empty() {
+                    return Some(0.0);
+                }
+                if arr.elements.len() == 1 {
+                    let first_element = arr.elements.first().unwrap();
+                    return match first_element {
+                        ArrayExpressionElement::SpreadElement(_) => None,
+                        // `ToPrimitive` returns `""` for `[,]`
+                        ArrayExpressionElement::Elision(_) => Some(0.0),
+                        match_expression!(ArrayExpressionElement) => {
+                            first_element.to_expression().to_number(is_global_reference)
+                        }
+                    };
+                }
+
+                let non_spread_element_count = arr
+                    .elements
+                    .iter()
+                    .filter(|e| !matches!(e, ArrayExpressionElement::SpreadElement(_)))
+                    .count();
+                // If the array has at least 2 elements, `ToPrimitive` returns a string containing
+                // `,` which is not included in `StringNumericLiteral`
+                // So `ToNumber` returns `NaN`
+                if non_spread_element_count >= 2 {
+                    Some(f64::NAN)
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }

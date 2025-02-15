@@ -44,7 +44,7 @@ impl<'a> PeepholeOptimizations {
             }
             // Do not fold big int.
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => None,
-            _ => ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v)),
+            _ => e.evaluate_value(&ctx).map(|v| ctx.value_to_expr(e.span, v)),
         }
     }
 
@@ -53,7 +53,7 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
-        ctx.eval_static_member_expression(e).map(|value| ctx.value_to_expr(e.span, value))
+        e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
     }
 
     fn try_fold_computed_member_expr(
@@ -61,7 +61,7 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
-        ctx.eval_computed_member_expression(e).map(|value| ctx.value_to_expr(e.span, value))
+        e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
     }
 
     fn try_fold_logical_expr(
@@ -99,7 +99,7 @@ impl<'a> PeepholeOptimizations {
         debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
 
         let left = &logical_expr.left;
-        let left_val = ctx.get_boolean_value(left);
+        let left_val = left.evaluate_value_to_boolean(&ctx);
 
         if let Some(lval) = left_val {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
@@ -128,7 +128,7 @@ impl<'a> PeepholeOptimizations {
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
             if left_child.operator == logical_expr.operator {
-                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right);
+                let left_child_right_boolean = left_child.right.evaluate_value_to_boolean(&ctx);
                 let left_child_op = left_child.operator;
                 if let Some(right_boolean) = left_child_right_boolean {
                     if !left_child.right.may_have_side_effects(&ctx) {
@@ -254,7 +254,7 @@ impl<'a> PeepholeOptimizations {
                 .and_then(|_| ctx.eval_binary(e)),
             BinaryOperator::ShiftLeft => {
                 if let Some((left, right)) = Self::extract_numeric_values(e) {
-                    let result = ctx.eval_binary_expression(e)?.into_number()?;
+                    let result = e.evaluate_value(&ctx)?.into_number()?;
                     let left_len = Self::approximate_printed_int_char_count(left);
                     let right_len = Self::approximate_printed_int_char_count(right);
                     let result_len = Self::approximate_printed_int_char_count(result);
@@ -266,7 +266,7 @@ impl<'a> PeepholeOptimizations {
             }
             BinaryOperator::ShiftRightZeroFill => {
                 if let Some((left, right)) = Self::extract_numeric_values(e) {
-                    let result = ctx.eval_binary_expression(e)?.into_number()?;
+                    let result = e.evaluate_value(&ctx)?.into_number()?;
                     let left_len = Self::approximate_printed_int_char_count(left);
                     let right_len = Self::approximate_printed_int_char_count(right);
                     let result_len = Self::approximate_printed_int_char_count(result);
@@ -299,7 +299,7 @@ impl<'a> PeepholeOptimizations {
 
     // Simplified version of `tryFoldAdd` from closure compiler.
     fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
-        if let Some(v) = ctx.eval_binary_expression(e) {
+        if let Some(v) = e.evaluate_value(&ctx) {
             return Some(ctx.value_to_expr(e.span, v));
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
@@ -308,8 +308,8 @@ impl<'a> PeepholeOptimizations {
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
             if left_binary_expr.right.value_type(&ctx).is_string() {
                 if let (Some(left_str), Some(right_str)) = (
-                    ctx.get_side_free_string_value(&left_binary_expr.right),
-                    ctx.get_side_free_string_value(&e.right),
+                    left_binary_expr.right.get_side_free_string_value(&ctx),
+                    e.right.get_side_free_string_value(&ctx),
                 ) {
                     let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
                     let value = left_str.into_owned() + &right_str;
@@ -392,7 +392,7 @@ impl<'a> PeepholeOptimizations {
             // `Number("1")` -> `+"1"` -> `1`
             Expression::StringLiteral(n) => {
                 let argument = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
-                if let Some(n) = ctx.eval_to_number(&argument) {
+                if let Some(n) = argument.evaluate_value_to_number(&ctx) {
                     n
                 } else {
                     return Some(ctx.ast.expression_unary(
