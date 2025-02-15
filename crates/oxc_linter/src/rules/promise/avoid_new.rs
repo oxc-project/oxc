@@ -53,7 +53,9 @@ impl Rule for AvoidNew {
             return;
         };
 
-        if ident.name == "Promise" && ctx.is_reference_to_global_variable(ident) {
+        if ident.name == "Promise"
+            && ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+        {
             ctx.diagnostic(avoid_new_promise_diagnostic(expr.span));
         }
     }
@@ -70,6 +72,7 @@ fn test() {
         "new Horse()",
         "new PromiseLikeThing()",
         "new Promise.resolve()",
+        "var Promise = a; new Promise()",
     ];
 
     let fail = vec![
