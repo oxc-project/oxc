@@ -168,7 +168,10 @@ impl NoConstantBinaryExpression {
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
-                        && ctx.is_reference_to_global_variable(ident);
+                        && ctx
+                            .scopes()
+                            .root_unresolved_references()
+                            .contains_key(ident.name.as_str());
                 }
                 false
             }
@@ -291,13 +294,16 @@ impl NoConstantBinaryExpression {
             },
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    if ident.name == "String"
-                        || ident.name == "Number" && ctx.is_reference_to_global_variable(ident)
+                    let unresolved_references = ctx.scopes().root_unresolved_references();
+                    if (ident.name == "String" || ident.name == "Number")
+                        && unresolved_references.contains_key(ident.name.as_str())
                     {
                         return true;
                     }
 
-                    if ident.name == "Boolean" && ctx.is_reference_to_global_variable(ident) {
+                    if ident.name == "Boolean"
+                        && unresolved_references.contains_key(ident.name.as_str())
+                    {
                         return call_expr
                             .arguments
                             .iter()
@@ -339,7 +345,10 @@ impl NoConstantBinaryExpression {
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ctx.env_contains_var(ident.name.as_str())
-                        && ctx.is_reference_to_global_variable(ident);
+                        && ctx
+                            .scopes()
+                            .root_unresolved_references()
+                            .contains_key(ident.name.as_str());
                 }
                 false
             }
