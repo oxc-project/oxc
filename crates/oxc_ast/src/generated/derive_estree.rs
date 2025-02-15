@@ -355,7 +355,7 @@ impl Serialize for ComputedMemberExpression<'_> {
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("property", &self.expression)?;
         map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("computed", &true)?;
+        map.serialize_entry("computed", &crate::serialize::True(self))?;
         map.end()
     }
 }
@@ -369,7 +369,7 @@ impl Serialize for StaticMemberExpression<'_> {
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("property", &self.property)?;
         map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("computed", &false)?;
+        map.serialize_entry("computed", &crate::serialize::False(self))?;
         map.end()
     }
 }
@@ -383,7 +383,7 @@ impl Serialize for PrivateFieldExpression<'_> {
         map.serialize_entry("object", &self.object)?;
         map.serialize_entry("property", &self.field)?;
         map.serialize_entry("optional", &self.optional)?;
-        map.serialize_entry("computed", &false)?;
+        map.serialize_entry("computed", &crate::serialize::False(self))?;
         map.end()
     }
 }
@@ -509,7 +509,7 @@ impl Serialize for UnaryExpression<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("argument", &self.argument)?;
-        map.serialize_entry("prefix", &true)?;
+        map.serialize_entry("prefix", &crate::serialize::True(self))?;
         map.end()
     }
 }
@@ -535,7 +535,7 @@ impl Serialize for PrivateInExpression<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("right", &self.right)?;
-        map.serialize_entry("operator", &"in")?;
+        map.serialize_entry("operator", &crate::serialize::In(self))?;
         map.end()
     }
 }
@@ -717,10 +717,10 @@ impl Serialize for AssignmentTargetPropertyIdentifier<'_> {
             "value",
             &crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
         )?;
-        map.serialize_entry("kind", &"init")?;
-        map.serialize_entry("method", &false)?;
-        map.serialize_entry("shorthand", &true)?;
-        map.serialize_entry("computed", &false)?;
+        map.serialize_entry("kind", &crate::serialize::Init(self))?;
+        map.serialize_entry("method", &crate::serialize::False(self))?;
+        map.serialize_entry("shorthand", &crate::serialize::True(self))?;
+        map.serialize_entry("computed", &crate::serialize::False(self))?;
         map.end()
     }
 }
@@ -734,9 +734,9 @@ impl Serialize for AssignmentTargetPropertyProperty<'_> {
         map.serialize_entry("key", &self.name)?;
         map.serialize_entry("value", &self.binding)?;
         map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("kind", &"init")?;
-        map.serialize_entry("method", &false)?;
-        map.serialize_entry("shorthand", &false)?;
+        map.serialize_entry("kind", &crate::serialize::Init(self))?;
+        map.serialize_entry("method", &crate::serialize::False(self))?;
+        map.serialize_entry("shorthand", &crate::serialize::False(self))?;
         map.end()
     }
 }
@@ -1308,8 +1308,8 @@ impl Serialize for BindingProperty<'_> {
         map.serialize_entry("value", &self.value)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
         map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("kind", &"init")?;
-        map.serialize_entry("method", &false)?;
+        map.serialize_entry("kind", &crate::serialize::Init(self))?;
+        map.serialize_entry("method", &crate::serialize::False(self))?;
         map.end()
     }
 }
@@ -1351,7 +1351,7 @@ impl Serialize for Function<'_> {
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
         map.serialize_entry("body", &self.body)?;
-        map.serialize_entry("expression", &false)?;
+        map.serialize_entry("expression", &crate::serialize::False(self))?;
         map.end()
     }
 }
@@ -1440,8 +1440,8 @@ impl Serialize for ArrowFunctionExpression<'_> {
         map.serialize_entry("params", &self.params)?;
         map.serialize_entry("returnType", &self.return_type)?;
         map.serialize_entry("body", &crate::serialize::ArrowFunctionExpressionBody(self))?;
-        map.serialize_entry("generator", &false)?;
-        map.serialize_entry("id", &crate::serialize::NULL)?;
+        map.serialize_entry("generator", &crate::serialize::False(self))?;
+        map.serialize_entry("id", &crate::serialize::Null(self))?;
         map.end()
     }
 }
@@ -1921,7 +1921,7 @@ impl Serialize for BooleanLiteral {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("value", &self.value)?;
-        map.serialize_entry("raw", &crate::serialize::boolean_literal_raw(self))?;
+        map.serialize_entry("raw", &crate::serialize::BooleanLiteralRaw(self))?;
         map.end()
     }
 }
@@ -1932,8 +1932,8 @@ impl Serialize for NullLiteral {
         map.serialize_entry("type", "Literal")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("value", &crate::serialize::NULL)?;
-        map.serialize_entry("raw", &crate::serialize::null_literal_raw(self))?;
+        map.serialize_entry("value", &crate::serialize::Null(self))?;
+        map.serialize_entry("raw", &crate::serialize::NullLiteralRaw(self))?;
         map.end()
     }
 }
@@ -1969,8 +1969,8 @@ impl Serialize for BigIntLiteral<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &crate::serialize::NULL)?;
-        map.serialize_entry("bigint", &crate::serialize::bigint_literal_bigint(self))?;
+        map.serialize_entry("value", &crate::serialize::Null(self))?;
+        map.serialize_entry("bigint", &crate::serialize::BigIntLiteralBigint(self))?;
         map.end()
     }
 }
@@ -1983,7 +1983,7 @@ impl Serialize for RegExpLiteral<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("regex", &crate::serialize::RegExpLiteralRegex(self))?;
         map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &crate::serialize::NULL)?;
+        map.serialize_entry("value", &crate::serialize::Null(self))?;
         map.end()
     }
 }

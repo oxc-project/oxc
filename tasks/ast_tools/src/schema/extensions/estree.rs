@@ -9,7 +9,8 @@ pub struct ESTreeStruct {
     /// `true` if serializer is implemented manually and should not be generated
     pub custom_serialize: bool,
     /// Additional fields to add to struct in ESTree AST.
-    /// `(name, value)` where `value` is a string which should be parsed as a Rust expression.
+    /// `(name, converter)` where `name` is the name of the field, and `converter` is name of
+    /// a converter type in the same crate, accessible as `crate::serialize::<converter>`.
     pub add_fields: Vec<(String, String)>,
     /// Additional fields to add to TS type definition
     pub add_ts: Option<String>,

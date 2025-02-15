@@ -1,4 +1,4 @@
-use std::{borrow::Cow, io::Write};
+use std::io::Write;
 
 use cow_utils::CowUtils;
 use serde::{
@@ -10,9 +10,6 @@ use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_span::Span;
 
 use crate::ast::*;
-
-/// Constant value that will be serialized as `null` in JSON.
-pub(crate) const NULL: () = ();
 
 impl Program<'_> {
     /// Serialize AST to JSON.
@@ -82,38 +79,98 @@ impl serde_json::ser::Formatter for EcmaFormatter {
 }
 
 // --------------------
+// Basic types
+// --------------------
+
+/// Serialized as `null`.
+pub struct Null<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> Serialize for Null<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        ().serialize(serializer)
+    }
+}
+
+/// Serialized as `true`.
+pub struct True<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> Serialize for True<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        true.serialize(serializer)
+    }
+}
+
+/// Serialized as `false`.
+pub struct False<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> Serialize for False<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        false.serialize(serializer)
+    }
+}
+
+/// Serialized as `"in"`.
+pub struct In<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> Serialize for In<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        "in".serialize(serializer)
+    }
+}
+
+/// Serialized as `"init"`.
+pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> Serialize for Init<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        "init".serialize(serializer)
+    }
+}
+
+// --------------------
 // Literals
 // --------------------
 
-/// Get `raw` field of `BooleanLiteral`.
-pub fn boolean_literal_raw(lit: &BooleanLiteral) -> Option<&str> {
-    if lit.span.is_unspanned() {
-        None
-    } else if lit.value {
-        Some("true")
-    } else {
-        Some("false")
+/// Serializer for `raw` field of `BooleanLiteral`.
+pub struct BooleanLiteralRaw<'b>(pub &'b BooleanLiteral);
+
+impl Serialize for BooleanLiteralRaw<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let raw = if self.0.span.is_unspanned() {
+            None
+        } else if self.0.value {
+            Some("true")
+        } else {
+            Some("false")
+        };
+        raw.serialize(serializer)
     }
 }
 
-/// Get `raw` field of `NullLiteral`.
-pub fn null_literal_raw(lit: &NullLiteral) -> Option<&str> {
-    if lit.span.is_unspanned() {
-        None
-    } else {
-        Some("null")
+/// Serializer for `raw` field of `NullLiteral`.
+pub struct NullLiteralRaw<'b>(pub &'b NullLiteral);
+
+impl Serialize for NullLiteralRaw<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let raw = if self.0.span.is_unspanned() { None } else { Some("null") };
+        raw.serialize(serializer)
     }
 }
 
-/// Get `bigint` field of `BigIntLiteral`.
-pub fn bigint_literal_bigint<'a>(lit: &'a BigIntLiteral<'a>) -> Cow<'a, str> {
-    lit.raw.strip_suffix('n').unwrap().cow_replace('_', "")
+/// Serializer for `bigint` field of `BigIntLiteral`.
+pub struct BigIntLiteralBigint<'a, 'b>(pub &'b BigIntLiteral<'a>);
+
+impl Serialize for BigIntLiteralBigint<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let bigint = self.0.raw.strip_suffix('n').unwrap().cow_replace('_', "");
+        bigint.serialize(serializer)
+    }
 }
 
-/// Serializer for `RegExpLiteral`'s `regex` field.
-pub struct RegExpLiteralRegex<'a>(pub &'a RegExpLiteral<'a>);
+/// Serializer for `regex` field of `RegExpLiteral`.
+pub struct RegExpLiteralRegex<'a, 'b>(pub &'b RegExpLiteral<'a>);
 
-impl Serialize for RegExpLiteralRegex<'_> {
+impl Serialize for RegExpLiteralRegex<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("pattern", &self.0.regex.pattern)?;

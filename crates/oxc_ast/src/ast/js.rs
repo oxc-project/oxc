@@ -493,7 +493,7 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = true), add_ts = "computed: true")]
+#[estree(rename = "MemberExpression", add_fields(computed = True), add_ts = "computed: true")]
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -508,7 +508,7 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = false), add_ts = "computed: false")]
+#[estree(rename = "MemberExpression", add_fields(computed = False), add_ts = "computed: false")]
 pub struct StaticMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -522,7 +522,7 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = false), add_ts = "computed: false")]
+#[estree(rename = "MemberExpression", add_fields(computed = False), add_ts = "computed: false")]
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -644,7 +644,7 @@ pub struct UpdateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(prefix = true), add_ts = "prefix: true")]
+#[estree(add_fields(prefix = True), add_ts = "prefix: true")]
 pub struct UnaryExpression<'a> {
     pub span: Span,
     pub operator: UnaryOperator,
@@ -668,7 +668,7 @@ pub struct BinaryExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "BinaryExpression", add_fields(operator = "\"in\""), add_ts = "operator: \"in\"")]
+#[estree(rename = "BinaryExpression", add_fields(operator = In), add_ts = "operator: \"in\"")]
 pub struct PrivateInExpression<'a> {
     pub span: Span,
     pub left: PrivateIdentifier<'a>,
@@ -897,7 +897,7 @@ pub enum AssignmentTargetProperty<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(kind = "\"init\"", method = false, shorthand = true, computed = false),
+    add_fields(kind = Init, method = False, shorthand = True, computed = False),
     add_ts = "kind: \"init\"; method: false; shorthand: true; computed: false"
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
@@ -920,7 +920,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(kind = "\"init\"", method = false, shorthand = false),
+    add_fields(kind = Init, method = False, shorthand = False),
     add_ts = "kind: \"init\"; method: false; shorthand: false"
 )]
 pub struct AssignmentTargetPropertyProperty<'a> {
@@ -1527,7 +1527,7 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(kind = "\"init\"", method = false),
+    add_fields(kind = Init, method = False),
     add_ts = "kind: \"init\"; method: false"
 )]
 pub struct BindingProperty<'a> {
@@ -1614,7 +1614,7 @@ pub struct BindingRestElement<'a> {
 // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/cd61c555bfc93e985b313263a42ed78074570d08/types/estree/index.d.ts#L411
 #[estree(
     add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest",
-    add_fields(expression = false),
+    add_fields(expression = False),
     add_ts = "expression: false"
 )]
 pub struct Function<'a> {
@@ -1768,10 +1768,7 @@ pub struct FunctionBody<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    add_fields(generator = false, id = crate::serialize::NULL),
-    add_ts = "generator: false; id: null"
-)]
+#[estree(add_fields(generator = False, id = Null), add_ts = "generator: false; id: null")]
 pub struct ArrowFunctionExpression<'a> {
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`

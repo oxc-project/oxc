@@ -8,7 +8,7 @@ use syn::{parse_str, Expr};
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
-    utils::number_lit,
+    utils::{create_ident, number_lit},
     Result,
 };
 
@@ -233,9 +233,9 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
     };
 
     // Add any additional manually-defined fields
-    let add_fields = struct_def.estree.add_fields.iter().map(|(name, value)| {
-        let value = parse_str::<syn::Expr>(value).unwrap();
-        quote!( map.serialize_entry(#name, &#value)?; )
+    let add_fields = struct_def.estree.add_fields.iter().map(|(name, converter)| {
+        let converter = create_ident(converter);
+        quote!( map.serialize_entry(#name, &crate::serialize::#converter(self))?; )
     });
 
     let stmts = gen.stmts;

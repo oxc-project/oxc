@@ -20,11 +20,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    rename = "Literal",
-    add_fields(raw = crate::serialize::boolean_literal_raw(self)),
-    add_ts = "raw: string | null",
-)]
+#[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw), add_ts = "raw: string | null")]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
@@ -40,10 +36,7 @@ pub struct BooleanLiteral {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Literal",
-    add_fields(
-        value = crate::serialize::NULL,
-        raw = crate::serialize::null_literal_raw(self),
-    ),
+    add_fields(value = Null, raw = NullLiteralRaw),
     add_ts = "value: null, raw: \"null\" | null",
 )]
 pub struct NullLiteral {
@@ -102,10 +95,7 @@ pub struct StringLiteral<'a> {
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
 #[estree(
     rename = "Literal",
-    add_fields(
-        value = crate::serialize::NULL,
-        bigint = crate::serialize::bigint_literal_bigint(self),
-    ),
+    add_fields(value = Null, bigint = BigIntLiteralBigint),
     add_ts = "value: BigInt, bigint: string",
 )]
 pub struct BigIntLiteral<'a> {
@@ -126,11 +116,7 @@ pub struct BigIntLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(
-    rename = "Literal",
-    add_fields(value = crate::serialize::NULL),
-    add_ts = "value: RegExp | null",
-)]
+#[estree(rename = "Literal", add_fields(value = Null), add_ts = "value: RegExp | null")]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code
     pub span: Span,
