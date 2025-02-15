@@ -1,7 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use serde_json::json;
 
 use crate::{
     context::LintContext,
@@ -84,6 +83,7 @@ impl Rule for Extensions {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
 
     // const ruleTester = new RuleTester();
     // const ruleTesterWithTypeScriptImports = new RuleTester({
@@ -95,7 +95,7 @@ fn test() {
     //     },
     //   },
     // });
-    let pass = vec![
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),
         (r#"import dot from "./file.with.dot""#, None),
@@ -211,163 +211,90 @@ fn test() {
             "#,
             Some(json!(["always"])),
         ),
+
+        // Type import tests
+        (
+            r#"import type T from "./typescript-declare";"#,
+            Some(json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never"}]))
+        ),
+        (
+            r#"export type { MyType } from "./typescript-declare";"#,
+            Some(json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]))
+        )
     ];
+
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
+        (
+            r#"import a from "a/index.js""#,
+            None
+        ),
+        (
+            r#"import dot from "./file.with.dot""#,
+            Some(json!(["always"]))
+        ),
+        (
+            r#"
+                import a from "a/index.js";
+                import packageConfig from "./package";
+            "#,
+            Some(json!([{ "json": "always", "js": "never"}]))
+        ),
+        (
+            r#"
+                import lib from "./bar.js";
+                import component from "./bar.jsx";
+                import data from "./bar.json";
+            "#,
+            Some(json!(["never"]))
+        ),
+        (
+            r#"
+                import lib from "./bar.js";
+                import component from "./bar.jsx";
+                import data from "./bar.json";
+            "#,
+            Some(json!([{ "json": "always", "js": "never", "jsx": "never" }]))
+        ),
+        (
+            r#"
+                import component from "./bar.jsx";
+                import data from "./bar.json";
+            "#,
+            Some(json!([{ "json": "always", "js": "never", "jsx": "never" }]))
+        ),
+        (
+            r#"import "./bar.coffee""#,
+            Some(json!(["never", { "js": "always", "jsx": "always" }]))
+        ),
+        (
+            r#"
+                import barjs from "./bar.js";
+                import barjson from "./bar.json";
+                import barnone from "./bar";
+            "#,
+            Some(json!(["always", { "json": "always", "js": "never", "jsx": "never" }])),
+        ),
+        (
+            r#"
+                import barjs from ".";
+                import barjs2 from "..";
+            "#,
+            Some(json!(["always"]))
+        ),
+        (
+            r#"
+                import barjs from "./bar.js";
+                import barjson from "./bar.json";
+                import barnone from "./bar";
+            "#,
+            Some(json!(["never", { "json": "always", "js": "never", "jsx": "never" }]))
+        ),
+    ];
+
 
     // ruleTester.run('extensions', rule, {
     //   invalid: [
-    //     test({
-    //       code: 'import a from "a/index.js"',
-    //       errors: [{
-    //         message: 'Unexpected use of file extension "js" for "a/index.js"',
-    //         line: 1,
-    //         column: 15,
-    //       }],
-    //     }),
-    //     test({
-    //       code: 'import dot from "./file.with.dot"',
-    //       options: ['always'],
-    //       errors: [
-    //         {
-    //           message: 'Missing file extension "js" for "./file.with.dot"',
-    //           line: 1,
-    //           column: 17,
-    //         },
-    //       ],
-    //     }),
-    //     test({
-    //       code: [
-    //         'import a from "a/index.js"',
-    //         'import packageConfig from "./package"',
-    //       ].join('\n'),
-    //       options: [{ json: 'always', js: 'never' }],
-    //       settings: { 'import/resolve': { extensions: ['.js', '.json'] } },
-    //       errors: [
-    //         {
-    //           message: 'Unexpected use of file extension "js" for "a/index.js"',
-    //           line: 1,
-    //           column: 15,
-    //         },
-    //         {
-    //           message: 'Missing file extension "json" for "./package"',
-    //           line: 2,
-    //           column: 27,
-    //         },
-    //       ],
-    //     }),
-    //     test({
-    //       code: [
-    //         'import lib from "./bar.js"',
-    //         'import component from "./bar.jsx"',
-    //         'import data from "./bar.json"',
-    //       ].join('\n'),
-    //       options: ['never'],
-    //       settings: { 'import/resolve': { extensions: ['.js', '.jsx', '.json'] } },
-    //       errors: [
-    //         {
-    //           message: 'Unexpected use of file extension "js" for "./bar.js"',
-    //           line: 1,
-    //           column: 17,
-    //         },
-    //       ],
-    //     }),
-    //     test({
-    //       code: [
-    //         'import lib from "./bar.js"',
-    //         'import component from "./bar.jsx"',
-    //         'import data from "./bar.json"',
-    //       ].join('\n'),
-    //       options: [{ json: 'always', js: 'never', jsx: 'never' }],
-    //       settings: { 'import/resolve': { extensions: ['.js', '.jsx', '.json'] } },
-    //       errors: [
-    //         {
-    //           message: 'Unexpected use of file extension "js" for "./bar.js"',
-    //           line: 1,
-    //           column: 17,
-    //         },
-    //       ],
-    //     }),
     //     // extension resolve order (#583/#965)
-    //     test({
-    //       code: [
-    //         'import component from "./bar.jsx"',
-    //         'import data from "./bar.json"',
-    //       ].join('\n'),
-    //       options: [{ json: 'always', js: 'never', jsx: 'never' }],
-    //       settings: { 'import/resolve': { extensions: ['.jsx', '.json', '.js'] } },
-    //       errors: [
-    //         {
-    //           message: 'Unexpected use of file extension "jsx" for "./bar.jsx"',
-    //           line: 1,
-    //           column: 23,
-    //         },
-    //       ],
-    //     }),
-    //     test({
-    //       code: 'import "./bar.coffee"',
-    //       errors: [
-    //         {
-    //           message: 'Unexpected use of file extension "coffee" for "./bar.coffee"',
-    //           line: 1,
-    //           column: 8,
-    //         },
-    //       ],
-    //       options: ['never', { js: 'always', jsx: 'always' }],
-    //       settings: { 'import/resolve': { extensions: ['.coffee', '.js'] } },
-    //     }),
-
-    //     test({
-    //       code: [
-    //         'import barjs from "./bar.js"',
-    //         'import barjson from "./bar.json"',
-    //         'import barnone from "./bar"',
-    //       ].join('\n'),
-    //       options: ['always', { json: 'always', js: 'never', jsx: 'never' }],
-    //       settings: { 'import/resolve': { extensions: ['.js', '.jsx', '.json'] } },
-    //       errors: [
-    //         {
-    //           message: 'Unexpected use of file extension "js" for "./bar.js"',
-    //           line: 1,
-    //           column: 19,
-    //         },
-    //       ],
-    //     }),
-
-    //     test({
-    //       code: [
-    //         'import barjs from "."',
-    //         'import barjs2 from ".."',
-    //       ].join('\n'),
-    //       options: ['always'],
-    //       errors: [
-    //         {
-    //           message: 'Missing file extension "js" for "."',
-    //           line: 1,
-    //           column: 19,
-    //         },
-    //         {
-    //           message: 'Missing file extension "js" for ".."',
-    //           line: 2,
-    //           column: 20,
-    //         },
-    //       ],
-    //     }),
-
-    //     test({
-    //       code: [
-    //         'import barjs from "./bar.js"',
-    //         'import barjson from "./bar.json"',
-    //         'import barnone from "./bar"',
-    //       ].join('\n'),
-    //       options: ['never', { json: 'always', js: 'never', jsx: 'never' }],
-    //       settings: { 'import/resolve': { extensions: ['.js', '.jsx', '.json'] } },
-    //       errors: [
-    //         {
-    //           message: 'Unexpected use of file extension "js" for "./bar.js"',
-    //           line: 1,
-    //           column: 19,
-    //         },
-    //       ],
-    //     }),
 
     //     // unresolved (#271/#295)
     //     test({
@@ -718,24 +645,6 @@ fn test() {
     //     .filter((parser) => parser !== parsers.TS_OLD)
     //     .forEach((parser) => {
     //       ruleTester.run(`${parser}: extensions ignore type-only`, rule, {
-    //         valid: [
-    //           test({
-    //             code: 'import type T from "./typescript-declare";',
-    //             options: [
-    //               'always',
-    //               { ts: 'never', tsx: 'never', js: 'never', jsx: 'never' },
-    //             ],
-    //             parser,
-    //           }),
-    //           test({
-    //             code: 'export type { MyType } from "./typescript-declare";',
-    //             options: [
-    //               'always',
-    //               { ts: 'never', tsx: 'never', js: 'never', jsx: 'never' },
-    //             ],
-    //             parser,
-    //           }),
-    //         ],
     //         invalid: [
     //           test({
     //             code: 'import T from "./typescript-declare";',
@@ -817,8 +726,6 @@ fn test() {
     //       });
     //     });
     // });
-
-    let fail = vec![];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();
 }
