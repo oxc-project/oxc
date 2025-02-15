@@ -1,6 +1,6 @@
 import { writeFile } from 'fs/promises';
 import { join as pathJoin } from 'path';
-import { Bench } from 'tinybench';
+import { bench } from 'vitest';
 import { parseSync } from './index.js';
 
 // Same fixtures as used in Rust parser benchmarks
@@ -34,15 +34,8 @@ const fixtures = await Promise.all(fixtureUrls.map(async (url) => {
 }));
 
 // Run benchmarks
-const bench = new Bench();
 for (const { filename, code } of fixtures) {
-  bench.add(
-    `parser_napi[${filename}]`,
-    () => {
-      parseSync(filename, code);
-    },
-  );
+  bench(`parser_napi[${filename}]`, () => {
+    parseSync(filename, code);
+  });
 }
-
-await bench.run();
-console.table(bench.table());
