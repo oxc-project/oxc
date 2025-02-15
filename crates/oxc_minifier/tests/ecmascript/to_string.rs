@@ -49,8 +49,13 @@ fn test() {
     let object_with_to_string_string =
         object_with_to_string.to_js_string(&WithoutGlobalReferenceInformation {});
 
+    let bigint_with_separators = ast.expression_big_int_literal(SPAN, "1_0n", BigintBase::Decimal);
+    let bigint_with_separators_string =
+        bigint_with_separators.to_js_string(&WithoutGlobalReferenceInformation {});
+
     assert_eq!(shadowed_undefined_string, None);
     assert_eq!(global_undefined_string, Some("undefined".into()));
     assert_eq!(empty_object_string, Some("[object Object]".into()));
     assert_eq!(object_with_to_string_string, None);
+    assert_eq!(bigint_with_separators_string, Some("10".into()));
 }

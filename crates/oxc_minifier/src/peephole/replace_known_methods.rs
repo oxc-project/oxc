@@ -224,7 +224,7 @@ impl<'a> PeepholeOptimizations {
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                search_value.to_expression().get_side_free_string_value(&ctx)?
+                search_value.to_expression().evaluate_value(&ctx)?.into_string()?
             }
         };
         let replace_value = args.get(1).unwrap();
@@ -1054,6 +1054,7 @@ mod test {
         test("x = 'ab'.replaceAll('','x')", "x = 'xaxbx'");
 
         test("x = 'c_c_c'.replaceAll('c','x')", "x = 'x_x_x'");
+        test("x = 'acaca'.replaceAll('c',/x/)", "x = 'a/x/a/x/a'");
 
         test_same("x = 'acaca'.replaceAll(/c/,'x')"); // this should throw
         test_same("x = 'acaca'.replaceAll(/c/g,'x')"); // this will affect the global RegExp props

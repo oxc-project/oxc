@@ -1742,6 +1742,7 @@ dependencies = [
 name = "oxc_ecmascript"
 version = "0.50.0"
 dependencies = [
+ "cow-utils",
  "num-bigint",
  "num-traits",
  "oxc_ast",

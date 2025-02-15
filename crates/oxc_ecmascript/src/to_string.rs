@@ -1,11 +1,15 @@
+use cow_utils::CowUtils;
 use std::borrow::Cow;
 
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    array_join::ArrayJoin, is_global_reference::IsGlobalReference,
-    to_primitive::maybe_object_with_to_primitive_related_properties_overridden, ToBoolean,
+    array_join::ArrayJoin,
+    constant_evaluation::{DetermineValueType, ValueType},
+    is_global_reference::IsGlobalReference,
+    to_primitive::maybe_object_with_to_primitive_related_properties_overridden,
+    ToBoolean,
 };
 
 /// `ToString`
@@ -28,6 +32,7 @@ impl<'a> ToJsString<'a> for Expression<'a> {
             Expression::UnaryExpression(e) => e.to_js_string(is_global_reference),
             Expression::ArrayExpression(e) => e.to_js_string(is_global_reference),
             Expression::ObjectExpression(e) => e.to_js_string(is_global_reference),
+            Expression::RegExpLiteral(e) => e.to_js_string(is_global_reference),
             _ => None,
         }
     }
@@ -37,14 +42,14 @@ impl<'a> ToJsString<'a> for ArrayExpressionElement<'a> {
     fn to_js_string(&self, is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
         match self {
             ArrayExpressionElement::SpreadElement(_) => None,
-            ArrayExpressionElement::Elision(_) | ArrayExpressionElement::NullLiteral(_) => {
-                Some(Cow::Borrowed(""))
-            }
-            ArrayExpressionElement::Identifier(id) if id.name.as_str() == "undefined" => {
-                Some(Cow::Borrowed(""))
-            }
+            ArrayExpressionElement::Elision(_) => Some(Cow::Borrowed("")),
             expr @ match_expression!(ArrayExpressionElement) => {
-                expr.as_expression().and_then(|expr| expr.to_js_string(is_global_reference))
+                let expr = expr.as_expression()?;
+                match expr.value_type(is_global_reference) {
+                    ValueType::Undefined | ValueType::Null => Some(Cow::Borrowed("")),
+                    ValueType::Undetermined => None,
+                    _ => expr.to_js_string(is_global_reference),
+                }
             }
         }
     }
@@ -97,7 +102,9 @@ impl<'a> ToJsString<'a> for NumericLiteral<'a> {
 /// <https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-bigint.prototype.tostring>
 impl<'a> ToJsString<'a> for BigIntLiteral<'a> {
     fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
-        self.base.is_base_10().then(|| Cow::Owned(self.raw.trim_end_matches('n').to_string()))
+        self.base
+            .is_base_10()
+            .then(|| Cow::Owned(self.raw.trim_end_matches('n').cow_replace('_', "").to_string()))
     }
 }
 
@@ -139,6 +146,16 @@ impl<'a> ToJsString<'a> for ObjectExpression<'a> {
             None
         } else {
             Some(Cow::Borrowed("[object Object]"))
+        }
+    }
+}
+
+impl<'a> ToJsString<'a> for RegExpLiteral<'a> {
+    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+        if let Some(raw) = self.raw.as_ref() {
+            Some(Cow::Borrowed(raw.as_str()))
+        } else {
+            Some(Cow::Owned(self.regex.to_string()))
         }
     }
 }

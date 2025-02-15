@@ -59,6 +59,14 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
         self.evaluate_value_to(ctx, Some(ValueType::Boolean))?.to_boolean(ctx)
     }
 
+    /// Evaluate the expression to a constant value and convert it to a string.
+    fn evaluate_value_to_string(
+        &self,
+        ctx: &impl ConstantEvaluationCtx<'a>,
+    ) -> Option<Cow<'a, str>> {
+        self.evaluate_value_to(ctx, Some(ValueType::String))?.to_js_string(ctx)
+    }
+
     fn get_side_free_number_value(&self, ctx: &impl ConstantEvaluationCtx<'a>) -> Option<f64> {
         let value = self.evaluate_value_to_number(ctx)?;
         // Calculating the number value, if any, is likely to be faster than calculating side effects,
@@ -82,7 +90,7 @@ pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
         &self,
         ctx: &impl ConstantEvaluationCtx<'a>,
     ) -> Option<Cow<'a, str>> {
-        let value = self.evaluate_value_to(ctx, Some(ValueType::String))?.to_js_string(ctx)?;
+        let value = self.evaluate_value_to_string(ctx)?;
         (!self.may_have_side_effects(ctx)).then_some(value)
     }
 }
@@ -186,11 +194,9 @@ fn binary_operation_evaluate_value_to<'a>(
             if left_to_primitive.is_string() == Some(true)
                 || right_to_primitive.is_string() == Some(true)
             {
-                let lval = left.evaluate_value(ctx)?;
-                let rval = right.evaluate_value(ctx)?;
-                let lstr = lval.to_js_string(ctx)?;
-                let rstr = rval.to_js_string(ctx)?;
-                return Some(ConstantValue::String(lstr + rstr));
+                let lval = left.evaluate_value_to_string(ctx)?;
+                let rval = right.evaluate_value_to_string(ctx)?;
+                return Some(ConstantValue::String(lval + rval));
             }
             let left_to_numeric_type = left_to_primitive.to_numeric(ctx);
             let right_to_numeric_type = right_to_primitive.to_numeric(ctx);
