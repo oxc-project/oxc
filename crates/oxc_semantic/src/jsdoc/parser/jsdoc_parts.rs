@@ -30,7 +30,7 @@ impl<'a> JSDocCommentPart<'a> {
     //
     // And if the passed `Span` for miette diagnostics is multiline,
     // it will just render arrow markers which is not intuitive.
-    // (It renders a nice undeline for single line span, but not for multiline)
+    // (It renders a nice underline for single line span, but not for multiline)
     // ```
     // ╭─▶ * @kind1 COMMENT
     // │   * WILL BE ...
