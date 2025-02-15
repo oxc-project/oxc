@@ -54,7 +54,7 @@ impl Rule for NoNewNativeNonconstructor {
             return;
         };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")
-            && ctx.is_reference_to_global_variable(ident)
+            && ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str())
         {
             let start = expr.span.start;
             let end = start + 3;
