@@ -81,7 +81,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// - The following builtins accept an iterable, so it's unnecessary to convert the iterable to an array:
+    /// The following builtins accept an iterable, so it's unnecessary to
+    /// convert the iterable to an array:
     ///
     ///   - `Map` constructor
     ///   - `WeakMap` constructor
@@ -93,53 +94,46 @@ declare_oxc_lint!(
     ///   - `Promise.{all,allSettled,any,race}(…)`
     ///   - `Object.fromEntries(…)`
     ///
-    /// - `for…of` loop can iterate over any iterable object not just array, so it's unnecessary to convert the iterable to an array.
+    /// The `for…of` loop can iterate over any iterable object not just array,
+    /// so it's unnecessary to convert the iterable to an array.
     ///
-    /// - `yield*` can delegate to another iterable, so it's unnecessary to convert the iterable to an array.
+    /// The `yield*` can delegate to another iterable, so it's unnecessary to
+    /// convert the iterable to an array.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
     /// const array = [firstElement, ...[secondElement], thirdElement];
-    /// const object = {firstProperty, ...{secondProperty}, thirdProperty};
-    /// foo(firstArgument, ...[secondArgument], thirdArgument);
-    /// const object = new Foo(firstArgument, ...[secondArgument], thirdArgument);
-    /// const set = new Set([...iterable]);
-    /// async function foo() {
-    ///     const results = await Promise.all([...iterable]);
-    /// }
+    ///
+    /// await Promise.all([...iterable])
+    ///
     /// for (const foo of [...set]);
+    ///
     /// function * foo() {
     /// 	yield * [...anotherGenerator()];
     /// }
+    ///
     /// function foo(bar) {
-    /// 	return [
-    /// 		...bar.map(x => x * 2),
-    /// 	];
+    /// 	return [...bar.map(x => x * 2)];
     /// }
+    /// ```
     ///
-    /// // Pass
-    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const array = [firstElement, secondElement, thirdElement];
-    /// const object = {firstProperty, secondProperty, thirdProperty};
-    /// foo(firstArgument, secondArgument, thirdArgument);
-    /// const object = new Foo(firstArgument, secondArgument, thirdArgument);
-    /// const array = [...foo, bar];
-    /// const object = {...foo, bar};
-    /// foo(foo, ...bar);
-    /// const object = new Foo(...foo, bar);
-    /// const set = new Set(iterable);
-    /// async function foo() {
-    ///    const results = await Promise.all(iterable);
-    /// }
+    ///
+    /// await Promise.all(iterable);
+    ///
     /// for (const foo of set);
+    ///
     /// function * foo() {
     /// 	yield * anotherGenerator();
     /// }
+    ///
     /// function foo(bar) {
     /// 	return bar.map(x => x * 2);
     /// }
-    ///
     /// ```
     NoUselessSpread,
     unicorn,
