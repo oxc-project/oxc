@@ -89,7 +89,11 @@ pub struct StringLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(rename = "Literal", add_fields(value = BigIntLiteralValue, bigint = BigIntLiteralBigint))]
+#[estree(
+    rename = "Literal",
+    add_fields(value = BigIntLiteralValue, bigint = BigIntLiteralBigint),
+    field_order(span, value, raw, bigint),
+)]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -108,7 +112,11 @@ pub struct BigIntLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(rename = "Literal", add_fields(value = RegExpLiteralValue))]
+#[estree(
+    rename = "Literal",
+    add_fields(value = RegExpLiteralValue),
+    field_order(span, value, raw, regex),
+)]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code
     pub span: Span,

@@ -30,6 +30,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, directives, source_type, hashbang))]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
@@ -362,7 +363,11 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Property")]
+#[estree(
+    rename = "Property",
+    field_order(span, method, shorthand, computed, key, kind, value),
+    custom_serialize
+)]
 pub struct ObjectProperty<'a> {
     pub span: Span,
     pub kind: PropertyKind,
@@ -411,6 +416,7 @@ pub enum PropertyKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, expressions, quasis))]
 pub struct TemplateLiteral<'a> {
     pub span: Span,
     pub quasis: Vec<'a, TemplateElement<'a>>,
@@ -437,6 +443,7 @@ pub struct TaggedTemplateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, value, tail))]
 pub struct TemplateElement<'a> {
     pub span: Span,
     pub tail: bool,
@@ -493,7 +500,11 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = True))]
+#[estree(
+    rename = "MemberExpression",
+    add_fields(computed = True),
+    field_order(span, object, expression, computed, optional),
+)]
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -508,7 +519,11 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = False))]
+#[estree(
+    rename = "MemberExpression",
+    add_fields(computed = False),
+    field_order(span, object, property, computed, optional),
+)]
 pub struct StaticMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -522,7 +537,11 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = False))]
+#[estree(
+    rename = "MemberExpression",
+    add_fields(computed = False),
+    field_order(span, object, field, computed, optional),
+)]
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -644,7 +663,7 @@ pub struct UpdateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(prefix = True))]
+#[estree(add_fields(prefix = True), field_order(span, operator, prefix, argument))]
 pub struct UnaryExpression<'a> {
     pub span: Span,
     pub operator: UnaryOperator,
@@ -668,7 +687,11 @@ pub struct BinaryExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "BinaryExpression", add_fields(operator = In))]
+#[estree(
+    rename = "BinaryExpression",
+    add_fields(operator = In),
+    field_order(span, left, operator, right),
+)]
 pub struct PrivateInExpression<'a> {
     pub span: Span,
     pub left: PrivateIdentifier<'a>,
@@ -897,7 +920,8 @@ pub enum AssignmentTargetProperty<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(kind = Init, method = False, shorthand = True, computed = False),
+    add_fields(method = False, shorthand = True, computed = False, kind = Init),
+    field_order(span, method, shorthand, computed, binding, kind, init),
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
@@ -917,7 +941,11 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Property", add_fields(kind = Init, method = False, shorthand = False))]
+#[estree(
+    rename = "Property",
+    add_fields(method = False, shorthand = False, kind = Init),
+    field_order(span, method, shorthand, computed, name, binding, kind),
+)]
 pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
     /// The property key
@@ -1125,6 +1153,7 @@ pub use match_declaration;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, declarations, kind, declare))]
 pub struct VariableDeclaration<'a> {
     pub span: Span,
     pub kind: VariableDeclarationKind,
@@ -1339,6 +1368,7 @@ pub struct SwitchStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, consequent, test))]
 pub struct SwitchCase<'a> {
     pub span: Span,
     pub test: Option<Expression<'a>>,
@@ -1349,6 +1379,7 @@ pub struct SwitchCase<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, body, label))]
 pub struct LabeledStatement<'a> {
     pub span: Span,
     pub label: LabelIdentifier<'a>,
@@ -1522,7 +1553,12 @@ pub struct ObjectPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Property", add_fields(kind = Init, method = False))]
+#[estree(
+    rename = "Property",
+    add_fields(method = False, kind = Init),
+    field_order(span, method, shorthand, computed, key, kind, value),
+    custom_serialize,
+)]
 pub struct BindingProperty<'a> {
     pub span: Span,
     pub key: PropertyKey<'a>,
@@ -1608,6 +1644,10 @@ pub struct BindingRestElement<'a> {
 #[estree(
     add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest",
     add_fields(expression = False),
+    field_order(
+        r#type, span, id, expression, generator, r#async, params, body,
+        declare, type_parameters, this_param, return_type,
+    ),
 )]
 pub struct Function<'a> {
     pub span: Span,
@@ -1709,7 +1749,7 @@ pub struct FormalParameters<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // Pluralize as `FormalParameterList` to avoid naming clash with `FormalParameters`.
 #[plural(FormalParameterList)]
-#[estree(no_type)]
+#[estree(no_type, field_order(pattern, decorators, accessibility, readonly, r#override))]
 pub struct FormalParameter<'a> {
     #[estree(skip)]
     pub span: Span,
@@ -1761,7 +1801,10 @@ pub struct FunctionBody<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(generator = False, id = Null))]
+#[estree(
+    add_fields(id = Null, generator = False),
+    field_order(span, id, expression, generator, r#async, params, body, type_parameters, return_type),
+)]
 pub struct ArrowFunctionExpression<'a> {
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
@@ -1795,6 +1838,11 @@ pub struct YieldExpression<'a> {
 #[scope(flags = ScopeFlags::StrictMode)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[rustfmt::skip]
+#[estree(field_order(
+    r#type, span, id, super_class, body,
+    decorators, type_parameters, super_type_parameters, implements, r#abstract, declare,
+))]
 pub struct Class<'a> {
     pub span: Span,
     pub r#type: ClassType,
@@ -1934,6 +1982,11 @@ pub enum ClassElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[rustfmt::skip]
+#[estree(field_order(
+    r#type, span, r#static, computed, key, kind, value,
+    decorators, r#override, optional, accessibility
+))]
 pub struct MethodDefinition<'a> {
     pub span: Span,
     /// Method definition type
@@ -1973,6 +2026,11 @@ pub enum MethodDefinitionType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[rustfmt::skip]
+#[estree(field_order(
+    r#type, span, r#static, computed, key, value,
+    decorators, declare, r#override, optional, definite, readonly, type_annotation, accessibility,
+))]
 pub struct PropertyDefinition<'a> {
     pub span: Span,
     pub r#type: PropertyDefinitionType,
@@ -2193,6 +2251,11 @@ pub enum AccessorPropertyType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[rustfmt::skip]
+#[estree(field_order(
+    r#type, span, key, value, computed, r#static,
+    decorators, definite, type_annotation, accessibility,
+))]
 pub struct AccessorProperty<'a> {
     pub span: Span,
     pub r#type: AccessorPropertyType,

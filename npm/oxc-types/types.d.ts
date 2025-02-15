@@ -3,9 +3,9 @@
 
 export interface Program extends Span {
   type: 'Program';
+  body: Array<Directive | Statement>;
   sourceType: ModuleKind;
   hashbang: Hashbang | null;
-  body: Array<Directive | Statement>;
 }
 
 export type Expression =
@@ -90,12 +90,12 @@ export type ObjectPropertyKind = ObjectProperty | SpreadElement;
 
 export interface ObjectProperty extends Span {
   type: 'Property';
-  kind: PropertyKind;
-  key: PropertyKey;
-  value: Expression;
   method: boolean;
   shorthand: boolean;
   computed: boolean;
+  key: PropertyKey;
+  kind: PropertyKind;
+  value: Expression;
 }
 
 export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
@@ -104,8 +104,8 @@ export type PropertyKind = 'init' | 'get' | 'set';
 
 export interface TemplateLiteral extends Span {
   type: 'TemplateLiteral';
-  quasis: Array<TemplateElement>;
   expressions: Array<Expression>;
+  quasis: Array<TemplateElement>;
 }
 
 export interface TaggedTemplateExpression extends Span {
@@ -117,8 +117,8 @@ export interface TaggedTemplateExpression extends Span {
 
 export interface TemplateElement extends Span {
   type: 'TemplateElement';
-  tail: boolean;
   value: TemplateElementValue;
+  tail: boolean;
 }
 
 export interface TemplateElementValue {
@@ -132,24 +132,24 @@ export interface ComputedMemberExpression extends Span {
   type: 'MemberExpression';
   object: Expression;
   property: Expression;
-  optional: boolean;
   computed: true;
+  optional: boolean;
 }
 
 export interface StaticMemberExpression extends Span {
   type: 'MemberExpression';
   object: Expression;
   property: IdentifierName;
-  optional: boolean;
   computed: false;
+  optional: boolean;
 }
 
 export interface PrivateFieldExpression extends Span {
   type: 'MemberExpression';
   object: Expression;
   property: PrivateIdentifier;
-  optional: boolean;
   computed: false;
+  optional: boolean;
 }
 
 export interface CallExpression extends Span {
@@ -190,8 +190,8 @@ export interface UpdateExpression extends Span {
 export interface UnaryExpression extends Span {
   type: 'UnaryExpression';
   operator: UnaryOperator;
-  argument: Expression;
   prefix: true;
+  argument: Expression;
 }
 
 export interface BinaryExpression extends Span {
@@ -204,8 +204,8 @@ export interface BinaryExpression extends Span {
 export interface PrivateInExpression extends Span {
   type: 'BinaryExpression';
   left: PrivateIdentifier;
-  right: Expression;
   operator: 'in';
+  right: Expression;
 }
 
 export interface LogicalExpression extends Span {
@@ -269,22 +269,22 @@ export type AssignmentTargetProperty = AssignmentTargetPropertyIdentifier | Assi
 
 export interface AssignmentTargetPropertyIdentifier extends Span {
   type: 'Property';
-  key: IdentifierReference;
-  value: IdentifierReference | AssignmentTargetWithDefault;
-  kind: 'init';
   method: false;
   shorthand: true;
   computed: false;
+  key: IdentifierReference;
+  kind: 'init';
+  value: IdentifierReference | AssignmentTargetWithDefault;
 }
 
 export interface AssignmentTargetPropertyProperty extends Span {
   type: 'Property';
-  key: PropertyKey;
-  value: AssignmentTargetMaybeDefault;
-  computed: boolean;
-  kind: 'init';
   method: false;
   shorthand: false;
+  computed: boolean;
+  key: PropertyKey;
+  value: AssignmentTargetMaybeDefault;
+  kind: 'init';
 }
 
 export interface SequenceExpression extends Span {
@@ -363,8 +363,8 @@ export type Declaration =
 
 export interface VariableDeclaration extends Span {
   type: 'VariableDeclaration';
-  kind: VariableDeclarationKind;
   declarations: Array<VariableDeclarator>;
+  kind: VariableDeclarationKind;
   declare: boolean;
 }
 
@@ -461,14 +461,14 @@ export interface SwitchStatement extends Span {
 
 export interface SwitchCase extends Span {
   type: 'SwitchCase';
-  test: Expression | null;
   consequent: Array<Statement>;
+  test: Expression | null;
 }
 
 export interface LabeledStatement extends Span {
   type: 'LabeledStatement';
-  label: LabelIdentifier;
   body: Statement;
+  label: LabelIdentifier;
 }
 
 export interface ThrowStatement extends Span {
@@ -515,12 +515,12 @@ export interface ObjectPattern extends Span {
 
 export interface BindingProperty extends Span {
   type: 'Property';
-  key: PropertyKey;
-  value: BindingPattern;
+  method: false;
   shorthand: boolean;
   computed: boolean;
+  key: PropertyKey;
   kind: 'init';
-  method: false;
+  value: BindingPattern;
 }
 
 export interface ArrayPattern extends Span {
@@ -536,15 +536,15 @@ export interface BindingRestElement extends Span {
 export interface Function extends Span {
   type: FunctionType;
   id: BindingIdentifier | null;
+  expression: false;
   generator: boolean;
   async: boolean;
+  params: ParamPattern[];
+  body: FunctionBody | null;
   declare: boolean;
   typeParameters: TSTypeParameterDeclaration | null;
   thisParam: TSThisParameter | null;
-  params: ParamPattern[];
   returnType: TSTypeAnnotation | null;
-  body: FunctionBody | null;
-  expression: false;
 }
 
 export type ParamPattern = FormalParameter | FormalParameterRest;
@@ -586,14 +586,14 @@ export interface FunctionBody extends Span {
 
 export interface ArrowFunctionExpression extends Span {
   type: 'ArrowFunctionExpression';
-  expression: boolean;
-  async: boolean;
-  typeParameters: TSTypeParameterDeclaration | null;
-  params: ParamPattern[];
-  returnType: TSTypeAnnotation | null;
-  body: FunctionBody | Expression;
-  generator: false;
   id: null;
+  expression: boolean;
+  generator: false;
+  async: boolean;
+  params: ParamPattern[];
+  body: FunctionBody | Expression;
+  typeParameters: TSTypeParameterDeclaration | null;
+  returnType: TSTypeAnnotation | null;
 }
 
 export interface YieldExpression extends Span {
@@ -604,13 +604,13 @@ export interface YieldExpression extends Span {
 
 export interface Class extends Span {
   type: ClassType;
-  decorators: Array<Decorator>;
   id: BindingIdentifier | null;
-  typeParameters: TSTypeParameterDeclaration | null;
   superClass: Expression | null;
+  body: ClassBody;
+  decorators: Array<Decorator>;
+  typeParameters: TSTypeParameterDeclaration | null;
   superTypeParameters: TSTypeParameterInstantiation | null;
   implements: Array<TSClassImplements> | null;
-  body: ClassBody;
   abstract: boolean;
   declare: boolean;
 }
@@ -626,12 +626,12 @@ export type ClassElement = StaticBlock | MethodDefinition | PropertyDefinition |
 
 export interface MethodDefinition extends Span {
   type: MethodDefinitionType;
-  decorators: Array<Decorator>;
-  key: PropertyKey;
-  value: Function;
-  kind: MethodDefinitionKind;
-  computed: boolean;
   static: boolean;
+  computed: boolean;
+  key: PropertyKey;
+  kind: MethodDefinitionKind;
+  value: Function;
+  decorators: Array<Decorator>;
   override: boolean;
   optional: boolean;
   accessibility: TSAccessibility | null;
@@ -641,11 +641,11 @@ export type MethodDefinitionType = 'MethodDefinition' | 'TSAbstractMethodDefinit
 
 export interface PropertyDefinition extends Span {
   type: PropertyDefinitionType;
-  decorators: Array<Decorator>;
+  static: boolean;
+  computed: boolean;
   key: PropertyKey;
   value: Expression | null;
-  computed: boolean;
-  static: boolean;
+  decorators: Array<Decorator>;
   declare: boolean;
   override: boolean;
   optional: boolean;
@@ -681,11 +681,11 @@ export type AccessorPropertyType = 'AccessorProperty' | 'TSAbstractAccessorPrope
 
 export interface AccessorProperty extends Span {
   type: AccessorPropertyType;
-  decorators: Array<Decorator>;
   key: PropertyKey;
   value: Expression | null;
   computed: boolean;
   static: boolean;
+  decorators: Array<Decorator>;
   definite: boolean;
   typeAnnotation: TSTypeAnnotation | null;
   accessibility: TSAccessibility | null;
@@ -801,16 +801,16 @@ export interface StringLiteral extends Span {
 
 export interface BigIntLiteral extends Span {
   type: 'Literal';
-  raw: string | null;
   value: BigInt;
+  raw: string | null;
   bigint: string;
 }
 
 export interface RegExpLiteral extends Span {
   type: 'Literal';
-  regex: RegExp;
-  raw: string | null;
   value: RegExp | null;
+  raw: string | null;
+  regex: RegExp;
 }
 
 export interface RegExp {

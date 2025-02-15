@@ -319,6 +319,52 @@ impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
     }
 }
 
+/// Serialize `ObjectProperty` with fields in same order as Acorn.
+impl Serialize for ObjectProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Property")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("method", &self.method)?;
+        map.serialize_entry("shorthand", &self.shorthand)?;
+        map.serialize_entry("computed", &self.computed)?;
+        map.serialize_entry("key", &self.key)?;
+        // Acorn has `kind` field before `value` for methods and shorthand properties
+        if self.method || self.kind != PropertyKind::Init || self.shorthand {
+            map.serialize_entry("kind", &self.kind)?;
+            map.serialize_entry("value", &self.value)?;
+        } else {
+            map.serialize_entry("value", &self.value)?;
+            map.serialize_entry("kind", &self.kind)?;
+        }
+        map.end()
+    }
+}
+
+/// Serialize `BindingProperty` with fields in same order as Acorn.
+impl Serialize for BindingProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "Property")?;
+        map.serialize_entry("start", &self.span.start)?;
+        map.serialize_entry("end", &self.span.end)?;
+        map.serialize_entry("method", &crate::serialize::False(self))?;
+        map.serialize_entry("shorthand", &self.shorthand)?;
+        map.serialize_entry("computed", &self.computed)?;
+        map.serialize_entry("key", &self.key)?;
+        // Acorn has `kind` field before `value` for shorthand properties
+        if self.shorthand {
+            map.serialize_entry("kind", &crate::serialize::Init(self))?;
+            map.serialize_entry("value", &self.value)?;
+        } else {
+            map.serialize_entry("value", &self.value)?;
+            map.serialize_entry("kind", &crate::serialize::Init(self))?;
+        }
+        map.end()
+    }
+}
+
 /// Serializer for `ArrowFunctionExpression`'s `body` field.
 ///
 /// Serializes as either an expression (if `expression` property is set),
