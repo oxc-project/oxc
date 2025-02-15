@@ -121,6 +121,28 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                     struct_def.estree.add_fields.push((name, value));
                 }
             }
+            AttrPart::List("field_order", list) => {
+                // Get iterator over all field names (including added fields)
+                let all_field_names = struct_def.fields.iter().map(FieldDef::name).chain(
+                    struct_def.estree.add_fields.iter().map(|(field_name, _)| field_name.as_str()),
+                );
+
+                // Convert field names to indexes.
+                // Added fields (`#[estree(add_fields(...))]`) get indexes after the real fields.
+                let field_indices = list
+                    .into_iter()
+                    .map(|list_element| {
+                        let field_name = list_element.try_into_tag()?;
+                        let field_name = field_name.trim_start_matches("r#");
+                        all_field_names
+                            .clone()
+                            .position(|this_field_name| this_field_name == field_name)
+                            .map(|index| u8::try_from(index).map_err(|_| ()))
+                            .ok_or(())?
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                struct_def.estree.field_indices = Some(field_indices);
+            }
             AttrPart::String("custom_ts_def", value) => {
                 struct_def.estree.custom_ts_def = Some(value);
             }
@@ -239,19 +261,11 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
         quote!()
     };
 
-    // Add any additional manually-defined fields
-    let add_fields = struct_def.estree.add_fields.iter().map(|(name, converter_name)| {
-        let converter = schema.meta_by_name(converter_name);
-        let converter_path = converter.import_path_from_crate(krate, schema);
-        quote!( map.serialize_entry(#name, &#converter_path(self))?; )
-    });
-
     let stmts = gen.stmts;
     quote! {
         let mut map = serializer.serialize_map(None)?;
         #type_field
         #stmts
-        #(#add_fields)*
         map.end()
     }
 }
@@ -282,8 +296,27 @@ impl<'s> StructSerializerGenerator<'s> {
 
     /// Generate code to serialize all fields in a struct.
     fn generate_stmts_for_struct(&mut self, struct_def: &StructDef, self_path: &TokenStream) {
-        for field in &struct_def.fields {
-            self.generate_stmts_for_field(field, struct_def, self_path);
+        if let Some(field_indices) = &struct_def.estree.field_indices {
+            // Specified field order - serialize in this order
+            for &field_index in field_indices {
+                let field_index = field_index as usize;
+                if let Some(field) = struct_def.fields.get(field_index) {
+                    self.generate_stmts_for_field(field, struct_def, self_path);
+                } else {
+                    let (field_name, converter_name) =
+                        &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
+                    self.generate_stmt_for_added_field(field_name, converter_name, self_path);
+                }
+            }
+        } else {
+            // No specified field order - serialize in original order
+            for field in &struct_def.fields {
+                self.generate_stmts_for_field(field, struct_def, self_path);
+            }
+
+            for (field_name, converter_name) in &struct_def.estree.add_fields {
+                self.generate_stmt_for_added_field(field_name, converter_name, self_path);
+            }
         }
     }
 
@@ -349,6 +382,19 @@ impl<'s> StructSerializerGenerator<'s> {
 
         self.stmts.extend(quote! {
             map.serialize_entry(#field_camel_name, &#value)?;
+        });
+    }
+
+    fn generate_stmt_for_added_field(
+        &mut self,
+        field_name: &str,
+        converter_name: &str,
+        self_path: &TokenStream,
+    ) {
+        let converter = self.schema.meta_by_name(converter_name);
+        let converter_path = converter.import_path_from_crate(self.krate, self.schema);
+        self.stmts.extend(quote! {
+            map.serialize_entry(#field_name, &#converter_path(#self_path))?;
         });
     }
 }

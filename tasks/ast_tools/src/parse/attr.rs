@@ -171,7 +171,6 @@ pub enum AttrPartListElement {
 
 impl AttrPartListElement {
     /// Unwrap this [`AttrPartListElement`] if it is an [`AttrPartListElement::Tag`].
-    #[expect(dead_code)]
     pub fn try_into_tag(self) -> Result<String> {
         if let Self::Tag(name) = self {
             Ok(name)
