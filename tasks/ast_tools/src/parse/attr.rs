@@ -4,7 +4,7 @@ use bitflags::bitflags;
 
 use crate::{
     codegen::{DeriveId, GeneratorId},
-    schema::{Def, EnumDef, StructDef},
+    schema::{Def, EnumDef, MetaType, StructDef},
     Result, DERIVES, GENERATORS,
 };
 
@@ -41,8 +41,10 @@ bitflags! {
         const StructField = 1 << 4;
         /// Attribute on an enum variant
         const EnumVariant = 1 << 5;
+        /// Attribute on a meta type
+        const Meta = 1 << 6;
         /// Part of `#[ast]` attr e.g. `visit` in `#[ast(visit)]`
-        const AstAttr = 1 << 6;
+        const AstAttr = 1 << 7;
 
         /// Attribute on a struct which may or may not derive the trait
         const StructMaybeDerived = Self::Struct.bits() | Self::StructNotDerived.bits();
@@ -79,6 +81,8 @@ pub enum AttrLocation<'d> {
     /// Attribute on an enum variant.
     /// Comprises [`EnumDef`]` and variant index.
     EnumVariant(&'d mut EnumDef, usize),
+    /// Attribute on a meta type
+    Meta(&'d mut MetaType),
     /// Part of `#[ast]` attr on a struct
     StructAstAttr(&'d mut StructDef),
     /// Part of `#[ast]` attr on an enum
@@ -97,6 +101,7 @@ impl AttrLocation<'_> {
             AttrLocation::EnumVariant(enum_def, variant_index) => {
                 AttrLocation::EnumVariant(enum_def, *variant_index)
             }
+            AttrLocation::Meta(meta) => AttrLocation::Meta(meta),
             AttrLocation::StructAstAttr(struct_def) => AttrLocation::StructAstAttr(struct_def),
             AttrLocation::EnumAstAttr(enum_def) => AttrLocation::EnumAstAttr(enum_def),
         }
@@ -118,6 +123,7 @@ impl Display for AttrLocation<'_> {
             AttrLocation::EnumVariant(enum_def, variant_index) => {
                 write!(f, "{}::{}", enum_def.name(), enum_def.variants[*variant_index].name())
             }
+            AttrLocation::Meta(meta) => f.write_str(meta.name()),
         }
     }
 }

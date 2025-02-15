@@ -7,9 +7,11 @@ use serde::Serialize;
 mod defs;
 mod derives;
 mod file;
+mod meta;
 pub use defs::*;
 pub use derives::Derives;
 pub use file::File;
+pub use meta::MetaType;
 
 /// Extensions to schema for specific derives / generators
 pub mod extensions {
@@ -36,6 +38,11 @@ define_index_type! {
     pub struct FileId = u32;
 }
 
+define_index_type! {
+    /// ID of meta type
+    pub struct MetaId = u32;
+}
+
 /// Schema of all AST types.
 #[derive(Debug)]
 pub struct Schema {
@@ -43,6 +50,10 @@ pub struct Schema {
     pub types: IndexVec<TypeId, TypeDef>,
     /// Mapping from type name to [`TypeId`]
     pub type_names: FxHashMap<String, TypeId>,
+    /// Meta types
+    pub metas: IndexVec<MetaId, MetaType>,
+    /// Mapping from meta type name to [`MetaId`]
+    pub meta_names: FxHashMap<String, MetaId>,
     /// Source files
     pub files: IndexVec<FileId, File>,
 }
@@ -65,6 +76,16 @@ impl Schema {
     pub fn type_by_name_mut(&mut self, name: &str) -> &mut TypeDef {
         let type_id = self.type_names[name];
         &mut self.types[type_id]
+    }
+
+    /// Get reference to [`MetaType`] for a meta type name.
+    ///
+    /// # Panics
+    /// Panics if no type with supplied name.
+    #[expect(dead_code)]
+    pub fn meta_by_name(&self, name: &str) -> &MetaType {
+        let meta_id = self.meta_names[name];
+        &self.metas[meta_id]
     }
 }
 

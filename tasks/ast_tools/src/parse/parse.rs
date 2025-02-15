@@ -10,8 +10,8 @@ use syn::{
 use crate::{
     codegen::Codegen,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, FieldDef, File, FileId, OptionDef, PrimitiveDef, Schema,
-        StructDef, TypeDef, TypeId, VariantDef, VecDef, Visibility,
+        BoxDef, CellDef, Def, EnumDef, FieldDef, File, FileId, MetaId, MetaType, OptionDef,
+        PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef, VecDef, Visibility,
     },
     Result, DERIVES, GENERATORS,
 };
@@ -26,20 +26,25 @@ use super::{
 /// Parse [`Skeleton`]s into [`TypeDef`]s.
 pub fn parse(
     skeletons: FxIndexMap<String, Skeleton>,
+    meta_skeletons: FxIndexMap<String, Skeleton>,
     files: IndexVec<FileId, File>,
     codegen: &Codegen,
 ) -> Schema {
-    // Split `skeletons` into a `IndexSet<String>` (type names) and `IndexVec<TypeId, Skeleton>` (skeletons)
+    // Split `skeletons` into an `IndexSet<String>` (type names) and `IndexVec<TypeId, Skeleton>` (skeletons)
     let (type_names, skeletons_vec) = skeletons.into_iter().unzip();
+    // Split `meta_skeletons` into an `IndexSet<String>` (meta names) and `IndexVec<MetaId, Skeleton>` (skeletons)
+    let (meta_names, meta_skeletons_vec) = meta_skeletons.into_iter().unzip();
 
-    let parser = Parser::new(type_names, files, codegen);
-    parser.parse_all(skeletons_vec)
+    let parser = Parser::new(type_names, meta_names, files, codegen);
+    parser.parse_all(skeletons_vec, meta_skeletons_vec)
 }
 
 /// Types parser.
 struct Parser<'c> {
     /// Index hash set indexed by type ID, containing type names
     type_names: FxIndexSet<String>,
+    /// Index hash set indexed by meta ID, containing meta names
+    meta_names: FxIndexSet<String>,
     /// Source files
     files: IndexVec<FileId, File>,
     /// Reference to `CodeGen`
@@ -62,11 +67,13 @@ impl<'c> Parser<'c> {
     /// Create [`Parser`].
     fn new(
         type_names: FxIndexSet<String>,
+        meta_names: FxIndexSet<String>,
         files: IndexVec<FileId, File>,
         codegen: &'c Codegen,
     ) -> Self {
         Self {
             type_names,
+            meta_names,
             files,
             codegen,
             extra_types: vec![],
@@ -78,12 +85,28 @@ impl<'c> Parser<'c> {
     }
 
     /// Parse all [`Skeleton`]s into [`TypeDef`]s and return [`Schema`].
-    fn parse_all(mut self, skeletons: IndexVec<TypeId, Skeleton>) -> Schema {
+    fn parse_all(
+        mut self,
+        skeletons: IndexVec<TypeId, Skeleton>,
+        meta_skeletons: IndexVec<MetaId, Skeleton>,
+    ) -> Schema {
+        let metas = meta_skeletons
+            .into_iter_enumerated()
+            .map(|(meta_id, skeleton)| self.parse_meta_type(meta_id, skeleton))
+            .collect::<IndexVec<_, _>>();
+
         let mut types = skeletons
             .into_iter_enumerated()
             .map(|(type_id, skeleton)| self.parse_type(type_id, skeleton))
             .collect::<IndexVec<_, _>>();
         types.extend(self.extra_types);
+
+        let meta_names = self
+            .meta_names
+            .into_iter()
+            .enumerate()
+            .map(|(meta_id, meta_name)| (meta_name, MetaId::from_usize(meta_id)))
+            .collect();
 
         let type_names = self
             .type_names
@@ -92,7 +115,7 @@ impl<'c> Parser<'c> {
             .map(|(type_id, type_name)| (type_name, TypeId::from_usize(type_id)))
             .collect();
 
-        Schema { types, type_names, files: self.files }
+        Schema { types, type_names, metas, meta_names, files: self.files }
     }
 
     /// Get [`TypeId`] for type name.
@@ -661,6 +684,47 @@ impl<'c> Parser<'c> {
         }
 
         (derives, plural_name)
+    }
+
+    /// Parse [`Skeleton`] to yield a [`MetaType`].
+    fn parse_meta_type(&mut self, meta_id: MetaId, skeleton: Skeleton) -> MetaType {
+        let (type_name, file_id, attrs) = match skeleton {
+            Skeleton::Struct(skeleton) => (skeleton.name, skeleton.file_id, skeleton.item.attrs),
+            Skeleton::Enum(skeleton) => (skeleton.name, skeleton.file_id, skeleton.item.attrs),
+        };
+
+        let mut meta_type = MetaType::new(meta_id, type_name.to_string(), file_id);
+
+        // Process attributes
+        for attr in &attrs {
+            if !matches!(attr.style, AttrStyle::Outer) {
+                continue;
+            }
+            let Some(attr_ident) = attr.path().get_ident() else { continue };
+            let attr_name = ident_name(attr_ident);
+            if attr_name == "ast_meta" {
+                continue;
+            }
+
+            let Some((processor, positions)) = self.codegen.attr_processor(&attr_name) else {
+                continue;
+            };
+
+            // Check attribute is legal in this position
+            check_attr_position(
+                positions,
+                AttrPositions::Meta,
+                &type_name,
+                &attr_name,
+                "meta type",
+            );
+
+            let location = AttrLocation::Meta(&mut meta_type);
+            let result = process_attr(processor, &attr_name, location, &attr.meta);
+            assert!(result.is_ok(), "Invalid use of `#[{attr_name}]` on `{type_name}` meta type");
+        }
+
+        meta_type
     }
 }
 
