@@ -2295,7 +2295,6 @@ impl Serialize for TSLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             TSLiteral::BooleanLiteral(it) => it.serialize(serializer),
-            TSLiteral::NullLiteral(it) => it.serialize(serializer),
             TSLiteral::NumericLiteral(it) => it.serialize(serializer),
             TSLiteral::BigIntLiteral(it) => it.serialize(serializer),
             TSLiteral::StringLiteral(it) => it.serialize(serializer),

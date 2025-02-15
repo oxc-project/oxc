@@ -141,7 +141,6 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
     match &type_annotation.type_annotation {
         TSType::TSLiteralType(ts_literal_type) => match &ts_literal_type.literal {
             TSLiteral::BooleanLiteral(_) => is_init_boolean(init),
-            TSLiteral::NullLiteral(_) => is_init_null(init),
             TSLiteral::NumericLiteral(_) => is_init_number(init),
             TSLiteral::BigIntLiteral(_) => is_init_bigint(init),
             TSLiteral::StringLiteral(_) => is_init_string(init),

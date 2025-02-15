@@ -614,7 +614,6 @@ impl GetAddress for TSLiteral<'_> {
     fn address(&self) -> Address {
         match self {
             Self::BooleanLiteral(it) => GetAddress::address(it),
-            Self::NullLiteral(it) => GetAddress::address(it),
             Self::NumericLiteral(it) => GetAddress::address(it),
             Self::BigIntLiteral(it) => GetAddress::address(it),
             Self::StringLiteral(it) => GetAddress::address(it),

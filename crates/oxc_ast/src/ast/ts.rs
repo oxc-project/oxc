@@ -159,12 +159,11 @@ pub struct TSLiteralType<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
-    NullLiteral(Box<'a, NullLiteral>) = 1,
-    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
-    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
-    StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
-    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 7,
+    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 1,
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 2,
+    StringLiteral(Box<'a, StringLiteral<'a>>) = 3,
+    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 4,
+    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 5,
 }
 
 /// TypeScript Type

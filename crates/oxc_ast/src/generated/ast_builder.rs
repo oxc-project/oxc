@@ -8728,17 +8728,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::BooleanLiteral(self.alloc_boolean_literal(span, value))
     }
 
-    /// Build a [`TSLiteral::NullLiteral`].
-    ///
-    /// This node contains a [`NullLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    #[inline]
-    pub fn ts_literal_null_literal(self, span: Span) -> TSLiteral<'a> {
-        TSLiteral::NullLiteral(self.alloc_null_literal(span))
-    }
-
     /// Build a [`TSLiteral::NumericLiteral`].
     ///
     /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.

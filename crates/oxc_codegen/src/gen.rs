@@ -3336,7 +3336,6 @@ impl Gen for TSLiteral<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::BooleanLiteral(decl) => decl.print(p, ctx),
-            Self::NullLiteral(decl) => decl.print(p, ctx),
             Self::NumericLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
             Self::BigIntLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
             Self::StringLiteral(decl) => decl.print(p, ctx),

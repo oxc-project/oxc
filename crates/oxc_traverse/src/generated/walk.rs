@@ -3776,7 +3776,6 @@ unsafe fn walk_ts_literal<'a, Tr: Traverse<'a>>(
         TSLiteral::BooleanLiteral(node) => {
             walk_boolean_literal(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSLiteral::NullLiteral(node) => walk_null_literal(traverser, (&mut **node) as *mut _, ctx),
         TSLiteral::NumericLiteral(node) => {
             walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
         }

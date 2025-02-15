@@ -1762,7 +1762,6 @@ impl ContentEq for TSLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::BooleanLiteral(a), Self::BooleanLiteral(b)) => a.content_eq(b),
-            (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
             (Self::NumericLiteral(a), Self::NumericLiteral(b)) => a.content_eq(b),
             (Self::BigIntLiteral(a), Self::BigIntLiteral(b)) => a.content_eq(b),
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),

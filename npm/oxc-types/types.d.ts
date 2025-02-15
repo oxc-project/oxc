@@ -947,7 +947,6 @@ export interface TSLiteralType extends Span {
 
 export type TSLiteral =
   | BooleanLiteral
-  | NullLiteral
   | NumericLiteral
   | BigIntLiteral
   | StringLiteral

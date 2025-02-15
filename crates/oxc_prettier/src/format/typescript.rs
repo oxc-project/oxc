@@ -306,7 +306,6 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match &self.literal {
             TSLiteral::BooleanLiteral(v) => v.format(p),
-            TSLiteral::NullLiteral(v) => v.format(p),
             TSLiteral::NumericLiteral(v) => v.format(p),
             TSLiteral::BigIntLiteral(v) => v.format(p),
             TSLiteral::StringLiteral(v) => v.format(p),

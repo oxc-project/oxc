@@ -1512,7 +1512,6 @@ impl GetSpanMut for TSLiteral<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
