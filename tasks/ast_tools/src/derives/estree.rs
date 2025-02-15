@@ -8,7 +8,7 @@ use syn::{parse_str, Expr};
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
-    utils::{create_ident, number_lit},
+    utils::number_lit,
     Result,
 };
 
@@ -34,14 +34,17 @@ impl Derive for DeriveESTree {
         "estree".to_string()
     }
 
-    /// Register that accept `#[estree]` attr on structs, enums, struct fields, or enum variants.
+    /// Register that accept `#[estree]` attr on structs, enums, struct fields, enum variants,
+    /// or meta types.
     /// Allow attr on structs and enums which don't derive this trait.
     /// Also accept `#[ts]` attr on struct fields and enum variants.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
         &[
             (
                 "estree",
-                attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
+                attr_positions!(
+                    StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant | Meta
+                ),
             ),
             ("ts", attr_positions!(StructField | EnumVariant)),
         ]
@@ -118,7 +121,6 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                     struct_def.estree.add_fields.push((name, value));
                 }
             }
-            AttrPart::String("add_ts", value) => struct_def.estree.add_ts = Some(value),
             AttrPart::String("custom_ts_def", value) => {
                 struct_def.estree.custom_ts_def = Some(value);
             }
@@ -184,6 +186,11 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             }
             _ => return Err(()),
         },
+        // `#[estree]` attr on meta type
+        AttrLocation::Meta(meta) => match part {
+            AttrPart::String("ts_type", ts_type) => meta.estree.ts_type = Some(ts_type),
+            _ => return Err(()),
+        },
         _ => unreachable!(),
     }
 
@@ -233,9 +240,10 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
     };
 
     // Add any additional manually-defined fields
-    let add_fields = struct_def.estree.add_fields.iter().map(|(name, converter)| {
-        let converter = create_ident(converter);
-        quote!( map.serialize_entry(#name, &crate::serialize::#converter(self))?; )
+    let add_fields = struct_def.estree.add_fields.iter().map(|(name, converter_name)| {
+        let converter = schema.meta_by_name(converter_name);
+        let converter_path = converter.import_path_from_crate(krate, schema);
+        quote!( map.serialize_entry(#name, &#converter_path(self))?; )
     });
 
     let stmts = gen.stmts;

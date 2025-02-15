@@ -493,7 +493,7 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = True), add_ts = "computed: true")]
+#[estree(rename = "MemberExpression", add_fields(computed = True))]
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -508,7 +508,7 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = False), add_ts = "computed: false")]
+#[estree(rename = "MemberExpression", add_fields(computed = False))]
 pub struct StaticMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -522,7 +522,7 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = False), add_ts = "computed: false")]
+#[estree(rename = "MemberExpression", add_fields(computed = False))]
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -644,7 +644,7 @@ pub struct UpdateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(prefix = True), add_ts = "prefix: true")]
+#[estree(add_fields(prefix = True))]
 pub struct UnaryExpression<'a> {
     pub span: Span,
     pub operator: UnaryOperator,
@@ -668,7 +668,7 @@ pub struct BinaryExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "BinaryExpression", add_fields(operator = In), add_ts = "operator: \"in\"")]
+#[estree(rename = "BinaryExpression", add_fields(operator = In))]
 pub struct PrivateInExpression<'a> {
     pub span: Span,
     pub left: PrivateIdentifier<'a>,
@@ -898,7 +898,6 @@ pub enum AssignmentTargetProperty<'a> {
 #[estree(
     rename = "Property",
     add_fields(kind = Init, method = False, shorthand = True, computed = False),
-    add_ts = "kind: \"init\"; method: false; shorthand: true; computed: false"
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
@@ -918,11 +917,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    rename = "Property",
-    add_fields(kind = Init, method = False, shorthand = False),
-    add_ts = "kind: \"init\"; method: false; shorthand: false"
-)]
+#[estree(rename = "Property", add_fields(kind = Init, method = False, shorthand = False))]
 pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
     /// The property key
@@ -1525,11 +1520,7 @@ pub struct ObjectPattern<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    rename = "Property",
-    add_fields(kind = Init, method = False),
-    add_ts = "kind: \"init\"; method: false"
-)]
+#[estree(rename = "Property", add_fields(kind = Init, method = False))]
 pub struct BindingProperty<'a> {
     pub span: Span,
     pub key: PropertyKey<'a>,
@@ -1615,7 +1606,6 @@ pub struct BindingRestElement<'a> {
 #[estree(
     add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest",
     add_fields(expression = False),
-    add_ts = "expression: false"
 )]
 pub struct Function<'a> {
     pub span: Span,
@@ -1768,7 +1758,7 @@ pub struct FunctionBody<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(generator = False, id = Null), add_ts = "generator: false; id: null")]
+#[estree(add_fields(generator = False, id = Null))]
 pub struct ArrowFunctionExpression<'a> {
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`

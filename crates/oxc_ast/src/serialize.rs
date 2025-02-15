@@ -7,6 +7,7 @@ use serde::{
 };
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_ast_macros::ast_meta;
 use oxc_span::Span;
 
 use crate::ast::*;
@@ -83,6 +84,8 @@ impl serde_json::ser::Formatter for EcmaFormatter {
 // --------------------
 
 /// Serialized as `null`.
+#[ast_meta]
+#[estree(ts_type = "null")]
 pub struct Null<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> Serialize for Null<'_, T> {
@@ -92,6 +95,8 @@ impl<T> Serialize for Null<'_, T> {
 }
 
 /// Serialized as `true`.
+#[ast_meta]
+#[estree(ts_type = "true")]
 pub struct True<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> Serialize for True<'_, T> {
@@ -101,6 +106,8 @@ impl<T> Serialize for True<'_, T> {
 }
 
 /// Serialized as `false`.
+#[ast_meta]
+#[estree(ts_type = "false")]
 pub struct False<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> Serialize for False<'_, T> {
@@ -110,6 +117,8 @@ impl<T> Serialize for False<'_, T> {
 }
 
 /// Serialized as `"in"`.
+#[ast_meta]
+#[estree(ts_type = "'in'")]
 pub struct In<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> Serialize for In<'_, T> {
@@ -119,6 +128,8 @@ impl<T> Serialize for In<'_, T> {
 }
 
 /// Serialized as `"init"`.
+#[ast_meta]
+#[estree(ts_type = "'init'")]
 pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> Serialize for Init<'_, T> {
@@ -132,6 +143,8 @@ impl<T> Serialize for Init<'_, T> {
 // --------------------
 
 /// Serializer for `raw` field of `BooleanLiteral`.
+#[ast_meta]
+#[estree(ts_type = "string | null")]
 pub struct BooleanLiteralRaw<'b>(pub &'b BooleanLiteral);
 
 impl Serialize for BooleanLiteralRaw<'_> {
@@ -148,6 +161,8 @@ impl Serialize for BooleanLiteralRaw<'_> {
 }
 
 /// Serializer for `raw` field of `NullLiteral`.
+#[ast_meta]
+#[estree(ts_type = "'null' | null")]
 pub struct NullLiteralRaw<'b>(pub &'b NullLiteral);
 
 impl Serialize for NullLiteralRaw<'_> {
@@ -158,12 +173,27 @@ impl Serialize for NullLiteralRaw<'_> {
 }
 
 /// Serializer for `bigint` field of `BigIntLiteral`.
+#[ast_meta]
+#[estree(ts_type = "string")]
 pub struct BigIntLiteralBigint<'a, 'b>(pub &'b BigIntLiteral<'a>);
 
 impl Serialize for BigIntLiteralBigint<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let bigint = self.0.raw.strip_suffix('n').unwrap().cow_replace('_', "");
         bigint.serialize(serializer)
+    }
+}
+
+/// Serializer for `value` field of `BigIntLiteral`.
+///
+/// Serialized as `null` in JSON, but updated on JS side to contain a `BigInt`.
+#[ast_meta]
+#[estree(ts_type = "BigInt")]
+pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
+
+impl Serialize for BigIntLiteralValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_none()
     }
 }
 
@@ -187,6 +217,19 @@ impl Serialize for RegExpLiteralRegex<'_, '_> {
             map.serialize_entry("flags", &flags)?;
         }
         map.end()
+    }
+}
+
+/// Serializer for `value` field of `RegExpLiteral`.
+///
+/// Serialized as `null` in JSON, but updated on JS side to contain a `RegExp` if the regexp is valid.
+#[ast_meta]
+#[estree(ts_type = "RegExp | null")]
+pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral<'a>);
+
+impl Serialize for RegExpLiteralValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_none()
     }
 }
 

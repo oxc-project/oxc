@@ -1969,7 +1969,7 @@ impl Serialize for BigIntLiteral<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &crate::serialize::Null(self))?;
+        map.serialize_entry("value", &crate::serialize::BigIntLiteralValue(self))?;
         map.serialize_entry("bigint", &crate::serialize::BigIntLiteralBigint(self))?;
         map.end()
     }
@@ -1983,7 +1983,7 @@ impl Serialize for RegExpLiteral<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("regex", &crate::serialize::RegExpLiteralRegex(self))?;
         map.serialize_entry("raw", &self.raw)?;
-        map.serialize_entry("value", &crate::serialize::Null(self))?;
+        map.serialize_entry("value", &crate::serialize::RegExpLiteralValue(self))?;
         map.end()
     }
 }

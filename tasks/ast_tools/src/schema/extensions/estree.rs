@@ -10,10 +10,8 @@ pub struct ESTreeStruct {
     pub custom_serialize: bool,
     /// Additional fields to add to struct in ESTree AST.
     /// `(name, converter)` where `name` is the name of the field, and `converter` is name of
-    /// a converter type in the same crate, accessible as `crate::serialize::<converter>`.
+    /// a converter meta type.
     pub add_fields: Vec<(String, String)>,
-    /// Additional fields to add to TS type definition
-    pub add_ts: Option<String>,
     /// TS alias.
     /// e.g. `#[estree(ts_alias = "null")]` means this type won't have a type def generated,
     /// and any struct / enum referencing it will substitute `null` as the type.
@@ -63,4 +61,10 @@ pub struct ESTreeStructField {
 pub struct ESTreeEnumVariant {
     pub rename: Option<String>,
     pub is_ts: bool,
+}
+
+/// Configuration for ESTree generator on a meta type.
+#[derive(Default, Debug)]
+pub struct ESTreeMeta {
+    pub ts_type: Option<String>,
 }

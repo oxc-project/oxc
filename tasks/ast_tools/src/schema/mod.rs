@@ -82,7 +82,6 @@ impl Schema {
     ///
     /// # Panics
     /// Panics if no type with supplied name.
-    #[expect(dead_code)]
     pub fn meta_by_name(&self, name: &str) -> &MetaType {
         let meta_id = self.meta_names[name];
         &self.metas[meta_id]

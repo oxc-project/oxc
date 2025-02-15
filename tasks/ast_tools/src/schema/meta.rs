@@ -4,7 +4,7 @@ use syn::{parse_str, Ident, Path};
 
 use crate::utils::create_ident;
 
-use super::{File, FileId, MetaId, Schema};
+use super::{extensions::estree::ESTreeMeta, File, FileId, MetaId, Schema};
 
 /// Definition for a meta type.
 ///
@@ -16,12 +16,13 @@ pub struct MetaType {
     pub id: MetaId,
     pub name: String,
     pub file_id: FileId,
+    pub estree: ESTreeMeta,
 }
 
 impl MetaType {
     /// Create new [`MetaType`].
     pub fn new(id: MetaId, name: String, file_id: FileId) -> Self {
-        Self { id, name, file_id }
+        Self { id, name, file_id, estree: ESTreeMeta::default() }
     }
 
     /// Get meta type name.
@@ -44,7 +45,6 @@ impl MetaType {
     /// Get the import path for this meta type from specified crate.
     ///
     /// e.g. `crate::serialize::Null` or `oxc_ast::serialize::Null`.
-    #[expect(dead_code)]
     pub fn import_path_from_crate(&self, from_krate: &str, schema: &Schema) -> TokenStream {
         let file = self.file(schema);
 

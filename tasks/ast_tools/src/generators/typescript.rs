@@ -113,8 +113,12 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> O
         }
     }
 
-    if let Some(add_ts) = struct_def.estree.add_ts.as_deref() {
-        fields_str.push_str(&format!("\n\t{add_ts};"));
+    for (add_field_name, converter_name) in &struct_def.estree.add_fields {
+        let converter = schema.meta_by_name(converter_name);
+        let Some(add_field_ts_type) = &converter.estree.ts_type else {
+            panic!("No `ts_type` provided for ESTree converter `{}`", converter.name());
+        };
+        fields_str.push_str(&format!("\n\t{add_field_name}: {add_field_ts_type};"));
     }
 
     let ts_def = if extends.is_empty() {

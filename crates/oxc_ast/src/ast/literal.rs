@@ -20,7 +20,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw), add_ts = "raw: string | null")]
+#[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw))]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
@@ -34,11 +34,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    rename = "Literal",
-    add_fields(value = Null, raw = NullLiteralRaw),
-    add_ts = "value: null, raw: \"null\" | null",
-)]
+#[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw))]
 pub struct NullLiteral {
     /// Node location in source code
     pub span: Span,
@@ -93,11 +89,7 @@ pub struct StringLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(
-    rename = "Literal",
-    add_fields(value = Null, bigint = BigIntLiteralBigint),
-    add_ts = "value: BigInt, bigint: string",
-)]
+#[estree(rename = "Literal", add_fields(value = BigIntLiteralValue, bigint = BigIntLiteralBigint))]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -116,7 +108,7 @@ pub struct BigIntLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(rename = "Literal", add_fields(value = Null), add_ts = "value: RegExp | null")]
+#[estree(rename = "Literal", add_fields(value = RegExpLiteralValue))]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code
     pub span: Span,
