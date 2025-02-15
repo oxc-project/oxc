@@ -504,6 +504,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
+                    let type_annotation = match property.accessibility {
+                        Some(TSAccessibility::Private) => None,
+                        _ => property.type_annotation.clone_in(self.ast.allocator),
+                    };
+
                     // FIXME: missing many fields
                     let new_element = self.ast.class_element_accessor_property(
                         property.span,
@@ -514,7 +519,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.computed,
                         property.r#static,
                         property.definite,
-                        property.type_annotation.clone_in(self.ast.allocator),
+                        type_annotation,
                         property.accessibility,
                     );
                     elements.push(new_element);
