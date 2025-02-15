@@ -98,7 +98,9 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::Identifier(ident) = sibling {
-            if ident.name == "undefined" && ctx.is_reference_to_global_variable(ident) {
+            if ident.name == "undefined"
+                && ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+            {
                 ctx.diagnostic_with_fix(
                     if self.require_string_literals {
                         not_string(
