@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.11] - 2025-02-16
+
+### Bug Fixes
+
+- bcd4e49 editors/vscode: Fix `no-useless-call` warning (Boshen)
+
 ## [0.15.10] - 2025-02-06
 
 ### Features
