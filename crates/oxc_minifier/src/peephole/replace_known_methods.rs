@@ -392,7 +392,7 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             span,
-            wrap_with_unary_plus_if_needed(first_arg),
+            ctx.ast.move_expression(first_arg),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
