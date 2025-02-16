@@ -392,6 +392,7 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             span,
+            // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
             ctx.ast.move_expression(first_arg),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
