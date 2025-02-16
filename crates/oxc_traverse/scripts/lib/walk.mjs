@@ -26,14 +26,12 @@ export default function generateWalkFunctionsCode(types) {
       clippy::semicolon_if_nothing_returned,
       clippy::ptr_as_ptr,
       clippy::ref_as_ptr,
-      clippy::cast_ptr_alignment
     )]
 
-    use std::{cell::Cell, marker::PhantomData};
+    use std::{marker::PhantomData, ptr::from_mut};
 
     use oxc_allocator::Vec;
     use oxc_ast::ast::*;
-    use oxc_syntax::scope::ScopeId;
 
     use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
 
@@ -122,7 +120,7 @@ function generateWalkForStruct(type, types) {
 
     enterScopeCode = `
       let previous_scope_id = ctx.current_scope_id();
-      let current_scope_id = (*(${makeFieldCode(scopeIdField)})).get().unwrap();
+      let current_scope_id = ${makeFieldCode(scopeIdField)}.get().unwrap();
       ctx.set_current_scope_id(current_scope_id);
     `;
 
@@ -205,7 +203,7 @@ function generateWalkForStruct(type, types) {
       return `
         ${scopeCode}
         ${tagCode}
-        if let Some(field) = &mut *(${fieldCode}) {
+        if let Some(field) = &mut ${fieldCode} {
           ${retagCode}
           ${walkCode}
         }
@@ -216,18 +214,18 @@ function generateWalkForStruct(type, types) {
       let walkVecCode;
       if (field.wrappers.length === 1 && field.innerTypeName === 'Statement') {
         // Special case for `Vec<Statement>`
-        walkVecCode = `walk_statements(traverser, ${fieldCode}, ctx);`;
+        walkVecCode = `walk_statements(traverser, from_mut(&mut ${fieldCode}), ctx);`;
       } else {
         let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
           iteratorCode = '';
         if (field.wrappers.length === 2 && field.wrappers[1] === 'Option') {
-          iteratorCode = `(*(${fieldCode})).iter_mut().flatten()`;
+          iteratorCode = `${fieldCode}.iter_mut().flatten()`;
         } else {
           assert(
             field.wrappers.length === 1,
             `Cannot handle struct field with type ${field.type}`,
           );
-          iteratorCode = `&mut *(${fieldCode})`;
+          iteratorCode = `&mut ${fieldCode}`;
         }
         walkVecCode = `
           for item in ${iteratorCode} {
@@ -247,7 +245,7 @@ function generateWalkForStruct(type, types) {
       return `
         ${scopeCode}
         ${tagCode || retagCode}
-        ${fieldWalkName}(traverser, (&mut **(${fieldCode})) as *mut _, ctx);
+        ${fieldWalkName}(traverser, from_mut(&mut *(${fieldCode})), ctx);
       `;
     }
 
@@ -256,7 +254,7 @@ function generateWalkForStruct(type, types) {
     return `
       ${scopeCode}
       ${tagCode || retagCode}
-      ${fieldWalkName}(traverser, ${fieldCode}, ctx);
+      ${fieldWalkName}(traverser, from_mut(&mut ${fieldCode}), ctx);
     `;
   });
 
@@ -278,7 +276,7 @@ function generateWalkForStruct(type, types) {
 }
 
 function makeFieldCode(field) {
-  return `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
+  return `(*node).${field.name}`;
 }
 
 /**

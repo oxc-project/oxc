@@ -14,15 +14,7 @@ export default function generateAncestorsCode(types) {
   for (const type of Object.values(types)) {
     if (type.kind === 'enum') continue;
 
-    const typeSnakeName = camelToSnake(type.name),
-      typeScreamingName = typeSnakeName.toUpperCase();
-    let offsetCode = '';
-    for (const field of type.fields) {
-      const offsetVarName = `OFFSET_${typeScreamingName}_${field.name.toUpperCase()}`;
-      field.offsetVarName = offsetVarName;
-      offsetCode += `pub(crate) const ${offsetVarName}: usize = ` +
-        `offset_of!(${type.name}, ${field.rawName});\n`;
-    }
+    const typeSnakeName = camelToSnake(type.name);
 
     const variantNames = [];
     let thisAncestorTypes = '';
@@ -39,10 +31,7 @@ export default function generateAncestorsCode(types) {
           #[inline]
           pub fn ${otherField.rawName}(self) -> &'t ${otherField.rawTypeName} {
             unsafe {
-              &*(
-                (self.0 as *const u8).add(${otherField.offsetVarName})
-                as *const ${otherField.rawTypeName}
-              )
+              &*from_ref(&(*self.0).${otherField.rawName}) 
             }
           }
         `;
@@ -89,7 +78,6 @@ export default function generateAncestorsCode(types) {
 
     if (variantNames.length > 0) {
       ancestorTypes += `
-        ${offsetCode}
         ${thisAncestorTypes}
       `;
 
@@ -113,13 +101,11 @@ export default function generateAncestorsCode(types) {
 
   return `
     #![expect(
-      clippy::ptr_as_ptr,
       clippy::undocumented_unsafe_blocks,
-      clippy::cast_ptr_alignment,
       clippy::needless_lifetimes
     )]
 
-    use std::{cell::Cell, marker::PhantomData, mem::offset_of};
+    use std::{cell::Cell, marker::PhantomData, ptr::from_ref};
 
     use oxc_allocator::{Address, Box, GetAddress, Vec};
     use oxc_ast::ast::*;
