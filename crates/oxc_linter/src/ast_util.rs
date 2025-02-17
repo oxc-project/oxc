@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     ast::{BindingIdentifier, *},
     AstKind,
@@ -769,4 +771,130 @@ pub fn is_default_this_binding<'a>(
             _ => return true,
         }
     }
+}
+
+pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
+    let (key, computed) = match parent_node.kind() {
+        AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
+        AstKind::MethodDefinition(method_definition) => {
+            (&method_definition.key, method_definition.computed)
+        }
+        AstKind::ObjectProperty(property) => (&property.key, property.computed),
+        _ => return None,
+    };
+
+    if key.is_identifier() && !computed {
+        return key.name();
+    }
+
+    if matches!(key, PropertyKey::NullLiteral(_)) {
+        return Some("null".into());
+    }
+
+    match key {
+        PropertyKey::RegExpLiteral(regex) => {
+            Some(Cow::Owned(format!("/{}/{}", regex.regex.pattern, regex.regex.flags)))
+        }
+        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
+        PropertyKey::TemplateLiteral(template) => {
+            if template.expressions.len() == 0 && template.quasis.len() == 1 {
+                if let Some(cooked) = &template.quasis[0].value.cooked {
+                    return Some(Cow::Borrowed(cooked.as_str()));
+                }
+            }
+
+            None
+        }
+        _ => None,
+    }
+}
+
+/// Gets the name and kind of the given function node.
+/// @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
+pub fn get_function_name_with_kind<'a>(
+    node: &AstNode<'a>,
+    parent_node: &AstNode<'a>,
+) -> Cow<'a, str> {
+    let (name, is_async, is_generator) = match node.kind() {
+        AstKind::Function(func) => (func.name(), func.r#async, func.generator),
+        AstKind::ArrowFunctionExpression(arrow_func) => (None, arrow_func.r#async, false),
+        _ => (None, false, false),
+    };
+
+    let mut tokens: Vec<Cow<'a, str>> = vec![];
+
+    match parent_node.kind() {
+        AstKind::MethodDefinition(definition) => {
+            if !definition.computed && definition.key.is_private_identifier() {
+                tokens.push(Cow::Borrowed("private"));
+            } else if let Some(accessibility) = definition.accessibility {
+                tokens.push(Cow::Borrowed(accessibility.as_str()));
+            }
+
+            if definition.r#static {
+                tokens.push(Cow::Borrowed("static"));
+            }
+        }
+        AstKind::PropertyDefinition(definition) => {
+            if !definition.computed && definition.key.is_private_identifier() {
+                tokens.push(Cow::Borrowed("private"));
+            } else if let Some(accessibility) = definition.accessibility {
+                tokens.push(Cow::Borrowed(accessibility.as_str()));
+            }
+
+            if definition.r#static {
+                tokens.push(Cow::Borrowed("static"));
+            }
+        }
+        _ => {}
+    }
+
+    if is_async {
+        tokens.push(Cow::Borrowed("async"));
+    }
+
+    if is_generator {
+        tokens.push(Cow::Borrowed("generator"));
+    }
+
+    match parent_node.kind() {
+        AstKind::MethodDefinition(method_definition) => match method_definition.kind {
+            MethodDefinitionKind::Constructor => tokens.push(Cow::Borrowed("constructor")),
+            MethodDefinitionKind::Get => tokens.push(Cow::Borrowed("getter")),
+            MethodDefinitionKind::Set => tokens.push(Cow::Borrowed("setter")),
+            MethodDefinitionKind::Method => tokens.push(Cow::Borrowed("method")),
+        },
+        AstKind::PropertyDefinition(_) => tokens.push(Cow::Borrowed("method")),
+        _ => tokens.push(Cow::Borrowed("function")),
+    }
+
+    match parent_node.kind() {
+        AstKind::MethodDefinition(method_definition)
+            if !method_definition.computed && method_definition.key.is_private_identifier() =>
+        {
+            if let Some(name) = method_definition.key.name() {
+                tokens.push(name);
+            }
+        }
+        AstKind::PropertyDefinition(definition) => {
+            if !definition.computed && definition.key.is_private_identifier() {
+                if let Some(name) = definition.key.name() {
+                    tokens.push(name);
+                }
+            } else if let Some(static_name) = get_static_property_name(parent_node) {
+                tokens.push(static_name);
+            } else if let Some(name) = name {
+                tokens.push(Cow::Borrowed(name.as_str()));
+            }
+        }
+        _ => {
+            if let Some(static_name) = get_static_property_name(parent_node) {
+                tokens.push(static_name);
+            } else if let Some(name) = name {
+                tokens.push(Cow::Borrowed(name.as_str()));
+            }
+        }
+    }
+
+    Cow::Owned(tokens.join(" "))
 }

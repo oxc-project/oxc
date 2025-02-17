@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -6,57 +8,69 @@ use oxc_span::{GetSpan, Span};
 use serde_json::Value;
 
 use crate::{
-    ast_util::{is_function_node, iter_outer_expressions},
+    ast_util::{get_function_name_with_kind, is_function_node, iter_outer_expressions},
     context::LintContext,
     rule::Rule,
     utils::count_comment_lines,
     AstNode,
 };
 
-fn max_lines_per_function_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Function has too many lines ({count})."))
-        .with_help(format!("Maximum allowed is {max}."))
-        .with_label(span)
+fn max_lines_per_function_diagnostic(
+    name: &str,
+    count: usize,
+    max: usize,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The {name} has too many lines ({count}). Maximum allowed is {max}."
+    ))
+    .with_help("Consider splitting it into smaller functions.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct MaxLinesPerFunction {
+pub struct MaxLinesPerFunctionConfig {
     max: usize,
     skip_comments: bool,
     skip_blank_lines: bool,
     iifes: bool,
 }
 
+#[derive(Debug, Default, Clone)]
+pub struct MaxLinesPerFunction(Box<MaxLinesPerFunctionConfig>);
+
+impl Deref for MaxLinesPerFunction {
+    type Target = MaxLinesPerFunctionConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforce a maximum number of lines of code in a function
+    ///
+    /// Enforce a maximum number of lines of code in a function. This rule ensures
+    /// that functions do not exceed a specified line count, promoting smaller,
+    /// more focused functions that are easier to maintain and understand.
     ///
     /// ### Why is this bad?
+    ///
     /// Some people consider large functions a code smell. Large functions tend to
-    /// do a lot of things and can make it hard following what’s going on. Many coding
-    /// style guides dictate a limit of the number of lines that a function can
+    /// do a lot of things and can make it hard to follow what’s going on. Many coding
+    /// style guides dictate a limit to the number of lines that a function can
     /// comprise of. This rule can help enforce that style.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule with a particular max value:
     /// ```js
-    /// /*eslint max-lines-per-function: ["error", 2]*/
+    /// /* { "eslint/max-lines-per-function": ["error", 2] } */
     /// function foo() {
     ///     const x = 0;
     /// }
-    /// ```
     ///
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", 3]*/
-    /// function foo() {
-    ///     // a comment
-    ///     const x = 0;
-    /// }
-    /// ```
-    ///
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", 4]*/
+    /// /* { "eslint/max-lines-per-function": ["error", 4] } */
     /// function foo() {
     ///     // a comment followed by a blank line
     ///
@@ -66,22 +80,12 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule with a particular max value:
     /// ```js
-    /// /*eslint max-lines-per-function: ["error", 3]*/
+    /// /* { "eslint/max-lines-per-function": ["error", 3] } */
     /// function foo() {
     ///     const x = 0;
     /// }
-    /// ```
     ///
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", 4]*/
-    /// function foo() {
-    ///     // a comment
-    ///     const x = 0;
-    /// }
-    /// ```
-    ///
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", 5]*/
+    /// /* { "eslint/max-lines-per-function": ["error", 5] } */
     /// function foo() {
     ///     // a comment followed by a blank line
     ///
@@ -89,66 +93,46 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **incorrect** code for this rule with the `{ "skipBlankLines": true }` option:
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", {"max": 2, "skipBlankLines": true}]*/
-    /// function foo() {
+    /// ### Options
     ///
-    ///     const x = 0;
-    /// }
+    /// #### max
+    ///
+    /// { type: number, default: 50 }
+    ///
+    /// The `max` enforces a maximum number of lines in a function.
+    ///
+    /// #### skipBlankLines
+    ///
+    /// { type: boolean, default: false }
+    ///
+    /// The `skipBlankLines` ignore lines made up purely of whitespace.
+    ///
+    /// #### skipComments
+    ///
+    /// { type: boolean, default: false }
+    ///
+    /// The `skipComments` ignore lines containing just comments.
+    ///
+    /// #### IIFEs
+    ///
+    /// { type: boolean, default: false }
+    ///
+    /// The `IIFEs` option controls whether IIFEs are included in the line count.
+    /// By default, IIFEs are not considered, but when set to `true`, they will
+    /// be included in the line count for the function.
+    ///
+    /// Example:
+    /// ```json
+    /// "eslint/max-lines-per-function": [
+    ///   "error",
+    ///   {
+    ///     "max": 50,
+    ///     "skipBlankLines": false,
+    ///     "skipComments": false,
+    ///     "IIFEs": false
+    ///   }
+    /// ]
     /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `{ "skipBlankLines": true }` option:
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", {"max": 3, "skipBlankLines": true}]*/
-    /// function foo() {
-    ///
-    ///     const x = 0;
-    /// }
-    /// ```
-    ///
-    /// Examples of **incorrect** code for this rule with the `{ "skipComments": true }` option:
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", {"max": 2, "skipComments": true}]*/
-    /// function foo() {
-    ///     // a comment
-    ///     const x = 0;
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `{ "skipComments": true }` option:
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", {"max": 3, "skipComments": true}]*/
-    /// function foo() {
-    ///     // a comment
-    ///     const x = 0;
-    /// }
-    /// ```
-    ///
-    /// Examples of **incorrect** code for this rule with the `{ "IIFEs": true }` option:
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", {"max": 2, "IIFEs": true}]*/
-    /// (function(){
-    ///     const x = 0;
-    /// }());
-    ///
-    /// (() => {
-    ///     const x = 0;
-    /// })();
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with the `{ "IIFEs": true }` option:
-    /// ```js
-    /// /*eslint max-lines-per-function: ["error", {"max": 3, "IIFEs": true}]*/
-    /// (function(){
-    ///     const x = 0;
-    /// }());
-    ///
-    /// (() => {
-    ///     const x = 0;
-    /// })();
-    /// ```
-    ///
     MaxLinesPerFunction,
     eslint,
     pedantic
@@ -157,12 +141,17 @@ declare_oxc_lint!(
 impl Rule for MaxLinesPerFunction {
     fn from_configuration(value: Value) -> Self {
         let config = value.get(0);
-        if let Some(max) = config
+        let config = if let Some(max) = config
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
-            Self { max, skip_comments: false, skip_blank_lines: false, iifes: false }
+            MaxLinesPerFunctionConfig {
+                max,
+                skip_comments: false,
+                skip_blank_lines: false,
+                iifes: false,
+            }
         } else {
             let max = config
                 .and_then(|config| config.get("max"))
@@ -182,8 +171,10 @@ impl Rule for MaxLinesPerFunction {
                 .and_then(Value::as_bool)
                 .unwrap_or(false);
 
-            Self { max, skip_comments, skip_blank_lines, iifes }
-        }
+            MaxLinesPerFunctionConfig { max, skip_comments, skip_blank_lines, iifes }
+        };
+
+        Self(Box::new(config))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -212,7 +203,9 @@ impl Rule for MaxLinesPerFunction {
         let result_lines =
             lines_in_function.saturating_sub(blank_lines).saturating_sub(comment_lines);
         if result_lines > self.max {
-            ctx.diagnostic(max_lines_per_function_diagnostic(result_lines, self.max, span));
+            let name =
+                get_function_name_with_kind(node, ctx.nodes().parent_node(node.id()).unwrap());
+            ctx.diagnostic(max_lines_per_function_diagnostic(&name, result_lines, self.max, span));
         }
     }
 }
