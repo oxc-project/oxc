@@ -196,21 +196,19 @@ impl Rule for GroupedAccessorPairs {
                             (second_idx, first_idx)
                         };
                         let latter = if first_idx < second_idx { second_node } else { first_node };
-                        let (left_key, right_key) = if is_computed {
-                            if getter_idx > setter_idx {
-                                ("getter", "setter")
-                            } else {
-                                ("setter", "getter")
-                            }
-                        } else {
-                            (key.as_str(), key.as_str())
-                        };
-
+                        let (left_key, right_key) = get_diagnostic_access_name(
+                            &key,
+                            getter_idx,
+                            setter_idx,
+                            is_computed,
+                            false,
+                            false,
+                        );
                         report(
                             ctx,
                             self.pair_order,
-                            left_key,
-                            right_key,
+                            &left_key,
+                            &right_key,
                             Span::new(latter.span.start, latter.key.span().end),
                             getter_idx,
                             setter_idx,
@@ -221,7 +219,7 @@ impl Rule for GroupedAccessorPairs {
             AstKind::ClassBody(class_body) => {
                 let method_defines = &class_body.body;
                 let mut prop_map = FxHashMap::<
-                    (String, bool, bool),
+                    (String, bool, bool, bool),
                     Vec<(usize, &Box<MethodDefinition>)>,
                 >::default();
 
@@ -238,13 +236,17 @@ impl Rule for GroupedAccessorPairs {
                     let (key_name, is_literal) =
                         get_key_name_and_check_literal(ctx, &method_define.key);
                     let is_computed = if is_literal { false } else { method_define.computed };
+                    let is_private = matches!(method_define.key, PropertyKey::PrivateIdentifier(_));
+                    // for Class we need to focus on whether the key is static or private
+                    // 1) class foo { static set [a+b](val){} static get [a+b](){} }
+                    // 2) class foo { set #abc(val){} static get #abc(){} }
                     prop_map
-                        .entry((key_name, is_computed, method_define.r#static))
+                        .entry((key_name, is_computed, method_define.r#static, is_private))
                         .or_default()
                         .push((idx, method_define));
                 }
 
-                for ((key, is_computed, _), val) in prop_map {
+                for ((key, is_computed, is_static, is_private), val) in prop_map {
                     if val.len() == 2 {
                         let (first_idx, first_node) = val[0];
                         let (second_idx, second_node) = val[1];
@@ -258,20 +260,19 @@ impl Rule for GroupedAccessorPairs {
                                 (second_idx, first_idx)
                             };
                         let latter = if first_idx < second_idx { second_node } else { first_node };
-                        let (left_key, right_key) = if is_computed {
-                            if getter_idx > setter_idx {
-                                ("getter", "setter")
-                            } else {
-                                ("setter", "getter")
-                            }
-                        } else {
-                            (key.as_str(), key.as_str())
-                        };
+                        let (left_key, right_key) = get_diagnostic_access_name(
+                            &key,
+                            getter_idx,
+                            setter_idx,
+                            is_computed,
+                            is_static,
+                            is_private,
+                        );
                         report(
                             ctx,
                             self.pair_order,
-                            left_key,
-                            right_key,
+                            &left_key,
+                            &right_key,
                             Span::new(latter.span.start, latter.key.span().end),
                             getter_idx,
                             setter_idx,
@@ -311,6 +312,31 @@ fn get_key_name_and_check_literal<'a>(
             )
         };
     (key_name, is_literal)
+}
+
+fn get_diagnostic_access_name(
+    key: &str,
+    getter_idx: usize,
+    setter_idx: usize,
+    is_computed: bool,
+    is_static: bool,
+    is_private: bool,
+) -> (String, String) {
+    let (left_word, right_word) =
+        if getter_idx > setter_idx { ("getter", "setter") } else { ("setter", "getter") };
+    let static_prefix = if is_static { "static " } else { "" };
+    let (left_key, right_key) = if is_computed {
+        (format!("{static_prefix}{left_word}"), format!("{static_prefix}{right_word}"))
+    } else {
+        // e.g. "class foo { get #a {} set #a(val) {} }" we should get #a
+        let (real_key, private_prefix) =
+            if is_private { (format!("#{key}"), "private ") } else { (format!("'{key}'"), "") };
+        (
+            format!("{static_prefix}{private_prefix}{left_word} {real_key}"),
+            format!("{static_prefix}{private_prefix}{right_word} {real_key}"),
+        )
+    };
+    (left_key, right_key)
 }
 
 fn report(
@@ -427,7 +453,33 @@ fn test() {
     ("class A { get '#abc'(){} b(){} set #abc(foo){} }", None),
     ("class A { get #abc(){} b(){} set '#abc'(foo){} }", None),
     ("class A { set '#abc'(foo){} get #abc(){} }", Some(serde_json::json!(["getBeforeSet"]))),
-    ("class A { set #abc(foo){} get '#abc'(){} }", Some(serde_json::json!(["getBeforeSet"])))
+    ("class A { set #abc(foo){} get '#abc'(){} }", Some(serde_json::json!(["getBeforeSet"]))),
+    ("class faoo { set abc(val){} get #abc(){} }", Some(serde_json::json!(["getBeforeSet"]))),
+    (
+        "class foo {
+            static set ['#a+b'](val) {
+
+            }
+            static get ['#a+b']() {
+
+            }
+            static set ['#a+b'](val) {
+
+            }
+        }",
+        Some(serde_json::json!(["getBeforeSet"])),
+    ),
+    (
+        "class foo {
+            set [() => {}](val) {
+
+            }
+            get ['() => {}']() {
+
+            }
+        }",
+        Some(serde_json::json!(["getBeforeSet"])),
+    )
         ];
 
     let fail = vec![
@@ -486,6 +538,7 @@ fn test() {
     ("({ a(){}, set a(foo){}, get a(){} })", Some(serde_json::json!(["getBeforeSet"]))),
     ("class A { get a(){} a(){} set a(foo){} }", None),
     ("class A { get a(){} a; set a(foo){} }", None), // { "ecmaVersion": 2022 },
+    ("class faoo { static set #abc(foo){} static get #abc(){} }", Some(serde_json::json!(["getBeforeSet"]))),
     ("({ get a(){},
     			    b: 1,
     			    set a(foo){}
@@ -503,6 +556,68 @@ fn test() {
             },
         }",
         Some(serde_json::json!(["getBeforeSet"]))
+    ),
+    (
+        "const foo = {
+            get '/a/g'() {
+                return this.val;
+            },
+            set [/a/g](value) {
+                this.val = value;
+            },
+        };",
+        Some(serde_json::json!(["setBeforeGet"]))
+    ),
+    ("class foo { static set #abc(foo){} static get #abc(){} }", Some(serde_json::json!(["getBeforeSet"]))),
+    (
+        "class foo {
+            static set ['#a+b'](val) {
+
+            }
+            static get ['#a+b']() {
+
+            }
+        }",
+        Some(serde_json::json!(["getBeforeSet"])),
+    ),
+    (
+        "class foo {
+            set [() => {}](val) {
+
+            }
+            get [() => {}]() {
+
+            }
+        }",
+        Some(serde_json::json!(["getBeforeSet"])),
+    ),
+    (
+        "class foo {
+            static set [23](val) {
+
+            }
+            static get 23() {
+
+            }
+        }",
+        Some(serde_json::json!(["getBeforeSet"])),
+    ),
+    (
+        "class jj {
+            static set [23](val) {
+
+            }
+            static get 23() {
+
+            }
+            set 23(val) {
+                
+            }
+            get 23() {
+
+            }
+        }",
+        Some(serde_json::json!(["getBeforeSet"])),
     )
         ];
 
