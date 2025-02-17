@@ -32,11 +32,11 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// var foo = "a" + "b";
+    /// var a = "a" + "b";
     /// ```
     ///
     /// ```javascript
-    /// var c = `a` + 'b';
+    /// var a = `a` + 'b' + 'c';
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -44,8 +44,11 @@ declare_oxc_lint!(
     /// var a = 'foo' + bar;
     /// ```
     ///
+    /// // when the string concatenation is multiline
     /// ```javascript
-    /// var b = `a` + bar;
+    /// var a = 'a'
+    ///     + 'b'
+    ///     + 'c';
     /// ```
     NoUselessConcat,
     eslint,
