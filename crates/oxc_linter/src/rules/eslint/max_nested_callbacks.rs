@@ -13,8 +13,8 @@ use crate::{
 };
 
 fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Too many nested callbacks ({num})."))
-        .with_help(format!("Maximum allowed is {max}."))
+    OxcDiagnostic::warn(format!("Too many nested callbacks ({num}). Maximum allowed is {max}."))
+        .with_help("Reduce nesting with promises or refactoring your code.")
         .with_label(span)
 }
 
@@ -25,28 +25,27 @@ pub struct MaxNestedCallbacks {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforce a maximum depth that callbacks can be nested
+    ///
+    /// Enforce a maximum depth that callbacks can be nested. This rule helps to limit
+    /// the complexity of callback nesting, ensuring that callbacks do not become too
+    /// deeply nested, improving code readability and maintainability.
     ///
     /// ### Why is this bad?
+    ///
     /// Many JavaScript libraries use the callback pattern to manage asynchronous
     /// operations. A program of any complexity will most likely need to manage several
-    /// asynchronous operations at various levels of concurrency. A common pitfall that is
-    /// easy to fall into is nesting callbacks, which makes code more difficult to read
-    /// the deeper the callbacks are nested.
-    ///
+    /// asynchronous operations at various levels of concurrency. A common pitfall is
+    /// nesting callbacks excessively, making code harder to read and understand.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule with the `{ "max": 3 }` option:
-    ///
     /// ```js
-    /// /*eslint max-nested-callbacks: ["error", 3]*/
-    ///
     /// foo1(function() {
     ///     foo2(function() {
     ///         foo3(function() {
     ///             foo4(function() {
-    ///                 // Do something
+    ///                 // ...
     ///             });
     ///         });
     ///     });
@@ -54,10 +53,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule with the `{ "max": 3 }` option:
-    ///
     /// ```js
-    /// /*eslint max-nested-callbacks: ["error", 3]*/
-    ///
     /// foo1(handleFoo1);
     ///
     /// function handleFoo1() {
@@ -76,6 +72,27 @@ declare_oxc_lint!(
     ///     foo5();
     /// }
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### max
+    ///
+    /// `{ type: number, default: 10 }`
+    ///
+    /// The `max` enforces a maximum depth that callbacks can be nested.
+    ///
+    /// Example:
+    ///
+    /// ```json
+    /// "eslint/max-nested-callbacks": ["error", 10]
+    ///
+    /// "eslint/max-nested-callbacks": [
+    ///   "error",
+    ///   {
+    ///     max: 10
+    ///   }
+    /// ]
+    /// ```
     MaxNestedCallbacks,
     eslint,
     pedantic
@@ -88,7 +105,7 @@ impl Rule for MaxNestedCallbacks {
                 .semantic()
                 .nodes()
                 .ancestors(node.id())
-                .filter(|node| is_callback(node, ctx.semantic()))
+                .filter(|node| is_callback(node, ctx))
                 .count();
             if depth > self.max {
                 ctx.diagnostic(max_nested_callbacks_diagnostic(depth, self.max, node.span()));
