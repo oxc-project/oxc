@@ -80,6 +80,7 @@ impl<'a> PeepholeOptimizations {
                         );
                         if_stmt.consequent = ctx.ast.move_statement(stmt);
                         if_stmt.alternate = None;
+                        self.try_minimize_if(if_stmt, ctx);
                         self.mark_current_function_as_changed();
                     }
                 }
