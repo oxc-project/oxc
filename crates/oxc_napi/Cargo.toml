@@ -21,6 +21,7 @@ doctest = false
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
+ctor = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 oxc_diagnostics = { workspace = true }

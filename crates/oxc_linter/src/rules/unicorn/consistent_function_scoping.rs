@@ -21,25 +21,8 @@ fn consistent_function_scoping(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct ConsistentFunctionScoping(Box<ConsistentFunctionScopingConfig>);
-
-#[derive(Debug, Clone)]
-pub struct ConsistentFunctionScopingConfig {
+pub struct ConsistentFunctionScoping {
     check_arrow_functions: bool,
-}
-
-impl Default for ConsistentFunctionScopingConfig {
-    fn default() -> Self {
-        Self { check_arrow_functions: true }
-    }
-}
-
-impl std::ops::Deref for ConsistentFunctionScoping {
-    type Target = ConsistentFunctionScopingConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
 }
 
 declare_oxc_lint!(
@@ -51,58 +34,62 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Moving function declarations to the highest possible scope improves
-    /// readability, directly [improves
-    /// performance](https://stackoverflow.com/questions/80802/does-use-of-anonymous-functions-affect-performance/81329#81329)
-    /// and allows JavaScript engines to better [optimize your
-    /// performance](https://ponyfoo.com/articles/javascript-performance-pitfalls-v8#optimization-limit).
-    ///
+    /// readability, directly [improves performance](https://stackoverflow.com/questions/80802/does-use-of-anonymous-functions-affect-performance/81329#81329)
+    /// and allows JavaScript engines to better [optimize your performance](https://ponyfoo.com/articles/javascript-performance-pitfalls-v8#optimization-limit).
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// export function doFoo(foo) {
-    ///     // Does not capture anything from the scope, can be moved to the outer scope
-    ///	    function doBar(bar) {
-    ///	    	return bar === 'bar';
-    ///	    }
-    ///	    return doBar;
+    ///   // Does not capture anything from the scope, can be moved to the outer scope
+    ///	  function doBar(bar) {
+    ///	    return bar === 'bar';
+    ///	  }
+    ///	  return doBar;
     /// }
+    ///
     /// function doFoo(foo) {
-    /// 	const doBar = bar => {
-    /// 		return bar === 'bar';
-    /// 	};
+    ///   const doBar = bar => {
+    ///     return bar === 'bar';
+    ///   };
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// function doBar(bar) {
-    /// 	return bar === 'bar';
+    ///   return bar === 'bar';
     /// }
     ///
     /// export function doFoo(foo) {
-    /// 	return doBar;
+    ///   return doBar;
     /// }
     ///
     /// export function doFoo(foo) {
-    /// 	function doBar(bar) {
-    /// 		return bar === 'bar' && foo.doBar(bar);
-    /// 	}
-    ///
-    /// 	return doBar;
+    ///   function doBar(bar) {
+    ///     return bar === 'bar' && foo.doBar(bar);
+    ///   }
+    ///   return doBar;
     /// }
     /// ```
-    /// ## Options
+    /// ### Options
     ///
-    /// ### checkArrowFunctions
+    /// #### checkArrowFunctions
     ///
-    /// Type: `boolean`\
-    /// Default: `true`
+    /// `{ type: boolean, default: true }`
     ///
     /// Pass `"checkArrowFunctions": false` to disable linting of arrow functions.
     ///
-    /// ## Limitations
+    /// Example:
+    /// ```json
+    /// "unicorn/consistent-function-scoping": [
+    ///   "error",
+    ///   { "checkArrowFunctions": false }
+    /// ]
+    /// ```
+    ///
+    /// ### Limitations
     ///
     /// This rule does not detect or remove extraneous code blocks inside of functions:
     ///
@@ -147,17 +134,13 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentFunctionScoping {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut configuration = ConsistentFunctionScopingConfig::default();
-
-        if let Some(config) = value.get(0) {
-            if let Some(val) =
-                config.get("checkArrowFunctions").and_then(serde_json::Value::as_bool)
-            {
-                configuration.check_arrow_functions = val;
-            }
+        Self {
+            check_arrow_functions: value
+                .get(0)
+                .and_then(|val| val.get("checkArrowFunctions"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(true),
         }
-
-        Self(Box::new(configuration))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
