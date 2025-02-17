@@ -12,7 +12,6 @@ fn no_unneeded_ternary_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 fn no_unneeded_ternary_conditional_expression_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Unnecessary use of conditional expression for default assignment")
         .with_help("Remove this ternary operator and use the variable directly")
         .with_label(span)
