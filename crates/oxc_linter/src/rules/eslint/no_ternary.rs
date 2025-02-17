@@ -49,8 +49,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```javascript
-    /// let foo;
-    ///
     /// function quux() {
     ///     if (foo) {
     ///         return bar();
