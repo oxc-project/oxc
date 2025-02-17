@@ -183,6 +183,12 @@ impl Linter {
     }
 }
 
+#[doc(hidden)]
+pub mod __private {
+    #[doc(hidden)]
+    pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+}
+
 #[cfg(test)]
 mod test {
     use super::Oxlintrc;

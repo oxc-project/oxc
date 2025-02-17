@@ -102,7 +102,11 @@ impl LanguageServer for Backend {
 
         if let Some(value) = options {
             info!("initialize: {:?}", value);
-            info!("language server version: {:?}", env!("CARGO_PKG_VERSION"));
+            info!(
+                "language server version: {:?} (oxlint {:?})",
+                env!("CARGO_PKG_VERSION"),
+                oxc_linter::__private::VERSION
+            );
             *self.options.lock().await = value;
         }
 
