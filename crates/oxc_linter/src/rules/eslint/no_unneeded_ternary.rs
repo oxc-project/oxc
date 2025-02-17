@@ -77,16 +77,14 @@ impl Rule for NoUnneededTernary {
             && matches!(expr.alternate, Expression::BooleanLiteral(_))
         {
             ctx.diagnostic(no_unneeded_ternary_diagnostic(expr.span));
-        }
-
-        if let (Some(ze_test), Some(ze_cons)) =
-            (supply_identifier(&expr.test), supply_identifier(&expr.consequent))
-        {
-            if !self.default_assignment && ze_test.name == ze_cons.name {
+        } else if let (Some(test), Some(cons)) = (
+            (&expr.test.get_inner_expression().get_identifier_reference()),
+            (&expr.consequent.get_inner_expression().get_identifier_reference()),
+        ) {
+            if !self.default_assignment && test.name == cons.name {
                 ctx.diagnostic(no_unneeded_ternary_conditional_expression_diagnostic(expr.span));
             }
         }
-    }
 }
 
 fn supply_identifier<'a>(expr: &'a Expression) -> Option<&'a Box<'a, IdentifierReference<'a>>> {
