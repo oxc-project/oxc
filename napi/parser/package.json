@@ -4,7 +4,7 @@
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
     "build": "napi build --no-dts-cache --platform --js bindings.js --release",
-    "test": "vitest --typecheck run ./test",
+    "test": "vitest --typecheck run ./test && tsc",
     "bench": "vitest bench --run ./bench.bench.mjs"
   },
   "napi": {
