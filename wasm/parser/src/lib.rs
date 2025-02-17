@@ -1,6 +1,6 @@
 #![expect(clippy::needless_pass_by_value)]
 
-use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
+use oxc::{allocator::Allocator, ast::CommentKind, parser::Parser, span::SourceType};
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
@@ -31,6 +31,10 @@ pub struct ParseResult {
     pub program: JsValue,
 
     #[wasm_bindgen(readonly, skip_typescript)]
+    #[tsify(type = "Comment[]")]
+    pub comments: Vec<JsValue>,
+
+    #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Diagnostic[]")]
     pub errors: Vec<JsValue>,
 }
@@ -41,6 +45,21 @@ pub struct Diagnostic {
     pub end: usize,
     pub severity: String,
     pub message: String,
+}
+
+#[derive(Clone, Tsify, Serialize)]
+pub struct Comment {
+    pub r#type: CommentType,
+    pub value: String,
+    pub start: u32,
+    pub end: u32,
+}
+
+#[derive(Clone, Copy, Tsify, Serialize)]
+#[tsify(into_wasm_abi)]
+pub enum CommentType {
+    Line,
+    Block,
 }
 
 /// # Errors
@@ -78,6 +97,28 @@ pub fn parse_sync(
 
     let program = ret.program.serialize(&serializer)?;
 
+    let comments: Vec<JsValue> = if ret.program.comments.is_empty() {
+        vec![]
+    } else {
+        ret.program
+            .comments
+            .iter()
+            .map(|comment| {
+                Comment {
+                    r#type: match comment.kind {
+                        CommentKind::Line => CommentType::Line,
+                        CommentKind::Block => CommentType::Block,
+                    },
+                    value: comment.content_span().source_text(&source_text).to_string(),
+                    start: comment.span.start,
+                    end: comment.span.end,
+                }
+                .serialize(&serializer)
+                .unwrap()
+            })
+            .collect::<Vec<JsValue>>()
+    };
+
     let errors = if ret.errors.is_empty() {
         vec![]
     } else {
@@ -102,5 +143,5 @@ pub fn parse_sync(
             .collect::<Vec<JsValue>>()
     };
 
-    Ok(ParseResult { program, errors })
+    Ok(ParseResult { program, comments, errors })
 }
