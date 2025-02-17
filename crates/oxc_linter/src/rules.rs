@@ -45,6 +45,7 @@ mod eslint {
     pub mod guard_for_in;
     pub mod init_declarations;
     pub mod max_classes_per_file;
+    pub mod max_depth;
     pub mod max_lines;
     pub mod max_nested_callbacks;
     pub mod max_params;
@@ -554,6 +555,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::init_declarations,
     eslint::max_nested_callbacks,
     eslint::max_classes_per_file,
+    eslint::max_depth,
     eslint::max_lines,
     eslint::max_params,
     eslint::new_cap,
