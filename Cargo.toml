@@ -145,6 +145,7 @@ console_error_panic_hook = "0.1.7"
 convert_case = "0.7.1"
 cow-utils = "0.1.3"
 criterion2 = { version = "2.0.0", default-features = false }
+ctor = "0.3.4"
 encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.6", default-features = false }
@@ -202,7 +203,7 @@ walkdir = "2.5.0"
 wasm-bindgen = "0.2.100"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease"]
+ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "ctor"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

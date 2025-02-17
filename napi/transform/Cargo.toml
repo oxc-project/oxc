@@ -27,6 +27,7 @@ oxc_sourcemap = { workspace = true, features = ["napi", "rayon"] }
 
 rustc-hash = { workspace = true }
 
+ctor = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 
