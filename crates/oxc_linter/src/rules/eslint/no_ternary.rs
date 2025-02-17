@@ -77,7 +77,12 @@ impl Rule for NoTernary {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![r#""x ? y";"#, "if (true) { thing() } else { stuff() };"];
+    let pass = vec![
+        r#""x ? y";"#,
+        "if (true) { thing() } else { stuff() };",
+        "let foo; if (isBar) { foo = baz; } else { foo = qux; };",
+        "function quux() { if (foo) { return bar(); } else { return baz(); } }",
+    ];
 
     let fail = vec![
         "var foo = true ? thing : stuff;",
