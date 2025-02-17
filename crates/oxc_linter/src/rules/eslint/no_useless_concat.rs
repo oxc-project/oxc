@@ -25,11 +25,27 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// It’s unnecessary to concatenate two strings together.
+    /// It’s unnecessary to concatenate two strings together when they could
+    /// be combined into a single literal.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var foo = "a" + "b";
+    /// ```
+    ///
+    /// ```javascript
+    /// var c = `a` + 'b';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var a = 'foo' + bar;
+    /// ```
+    ///
+    /// ```javascript
+    /// var b = `a` + bar;
     /// ```
     NoUselessConcat,
     eslint,
