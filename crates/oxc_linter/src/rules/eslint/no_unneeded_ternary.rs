@@ -1,6 +1,5 @@
 use crate::{context::LintContext, rule::Rule, AstNode};
-use oxc_allocator::Box;
-use oxc_ast::{ast::Expression, ast::IdentifierReference, AstKind};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -85,13 +84,6 @@ impl Rule for NoUnneededTernary {
                 ctx.diagnostic(no_unneeded_ternary_conditional_expression_diagnostic(expr.span));
             }
         }
-}
-
-fn supply_identifier<'a>(expr: &'a Expression) -> Option<&'a Box<'a, IdentifierReference<'a>>> {
-    match expr {
-        Expression::Identifier(exp) => Some(exp),
-        Expression::ParenthesizedExpression(exp) => supply_identifier(&exp.expression),
-        _ => None,
     }
 }
 
