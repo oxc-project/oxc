@@ -26,7 +26,7 @@ pub fn print_expression_statement<'a>(
 
 fn should_print_leading_semicolon<'a>(
     p: &mut Prettier<'a>,
-    expr_statment: &ExpressionStatement<'a>,
+    expr_statement: &ExpressionStatement<'a>,
 ) -> bool {
     if p.options.semi {
         return false;
@@ -43,7 +43,7 @@ fn should_print_leading_semicolon<'a>(
         return false;
     }
 
-    expr_needs_asi_protection(p, &expr_statment.expression)
+    expr_needs_asi_protection(p, &expr_statement.expression)
 }
 
 fn expr_needs_asi_protection<'a>(p: &mut Prettier<'a>, expr: &Expression<'a>) -> bool {
