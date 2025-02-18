@@ -16,10 +16,18 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn grouped_accessor_pairs_diagnostic(span: Span, msg: String) -> OxcDiagnostic {
+fn grouped_accessor_pairs_diagnostic(
+    getter_span: Span,
+    getter_key: &str,
+    setter_span: Span,
+    setter_key: &str,
+    msg: String,
+) -> OxcDiagnostic {
+    let getter_label_span = getter_span.label(format!("{getter_key} is here"));
+    let setter_label_span = setter_span.label(format!("{setter_key} is here"));
     OxcDiagnostic::warn(msg)
         .with_help("Require grouped accessor pairs in object literals and classes")
-        .with_label(span)
+        .with_labels([getter_label_span, setter_label_span])
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
@@ -54,17 +62,6 @@ declare_oxc_lint!(
     /// it’s considered a best practice to group accessor functions for the same property.
     ///
     /// ### Examples
-    /// ```js
-    /// const o = {
-    ///     get a() {
-    ///         return this.val;
-    ///     },
-    ///     set a(value) {
-    ///         this.val = value;
-    ///     },
-    ///     b: 1
-    /// };
-    /// ```
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
@@ -92,7 +89,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// Examples of incorrect code for this rule with the "getBeforeSet" option:
+    /// Examples of **incorrect** code for this rule with the `getBeforeSet` option:
     /// ```js
     /// const foo = {
     ///     set a(value) {
@@ -104,7 +101,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// Examples of correct code for this rule with the "getBeforeSet" option:
+    /// Examples of **correct** code for this rule with the `getBeforeSet` option:
     /// ```js
     /// const foo = {
     ///     get a() {
@@ -116,7 +113,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// Examples of incorrect code for this rule with the "setBeforeGet" option:
+    /// Examples of **incorrect** code for this rule with the `setBeforeGet` option:
     /// ```js
     /// const foo = {
     ///     get a() {
@@ -128,7 +125,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// Examples of correct code for this rule with the "setBeforeGet" option:
+    /// Examples of **correct** code for this rule with the `setBeforeGet` option:
     /// ```js
     /// const foo = {
     ///     set a(value) {
@@ -142,6 +139,7 @@ declare_oxc_lint!(
     GroupedAccessorPairs,
     eslint,
     style,
+    pending,
 );
 
 impl Rule for GroupedAccessorPairs {
@@ -190,28 +188,25 @@ impl Rule for GroupedAccessorPairs {
                         if first_node.kind == second_node.kind {
                             continue;
                         }
-                        let (getter_idx, setter_idx) = if first_node.kind == PropertyKind::Get {
-                            (first_idx, second_idx)
-                        } else {
-                            (second_idx, first_idx)
-                        };
-                        let latter = if first_idx < second_idx { second_node } else { first_node };
-                        let (left_key, right_key) = get_diagnostic_access_name(
-                            &key,
-                            getter_idx,
-                            setter_idx,
-                            is_computed,
-                            false,
-                            false,
-                        );
+                        let (getter_idx, getter_node, setter_idx, setter_node) =
+                            if first_node.kind == PropertyKind::Get {
+                                (first_idx, first_node, second_idx, second_node)
+                            } else {
+                                (second_idx, second_node, first_idx, first_node)
+                            };
+                        let getter_key =
+                            get_diagnostic_access_name("getter", &key, is_computed, false, false);
+                        let setter_key =
+                            get_diagnostic_access_name("setter", &key, is_computed, false, false);
                         report(
                             ctx,
                             self.pair_order,
-                            &left_key,
-                            &right_key,
-                            Span::new(latter.span.start, latter.key.span().end),
-                            getter_idx,
-                            setter_idx,
+                            (&getter_key, &setter_key),
+                            (
+                                Span::new(getter_node.span.start, getter_node.key.span().end),
+                                Span::new(setter_node.span.start, setter_node.key.span().end),
+                            ),
+                            (getter_idx, setter_idx),
                         );
                     }
                 }
@@ -253,17 +248,22 @@ impl Rule for GroupedAccessorPairs {
                         if first_node.kind == second_node.kind {
                             continue;
                         }
-                        let (getter_idx, setter_idx) =
+                        let (getter_idx, getter_node, setter_idx, setter_node) =
                             if first_node.kind == MethodDefinitionKind::Get {
-                                (first_idx, second_idx)
+                                (first_idx, first_node, second_idx, second_node)
                             } else {
-                                (second_idx, first_idx)
+                                (second_idx, second_node, first_idx, first_node)
                             };
-                        let latter = if first_idx < second_idx { second_node } else { first_node };
-                        let (left_key, right_key) = get_diagnostic_access_name(
+                        let getter_key = get_diagnostic_access_name(
+                            "getter",
                             &key,
-                            getter_idx,
-                            setter_idx,
+                            is_computed,
+                            is_static,
+                            is_private,
+                        );
+                        let setter_key = get_diagnostic_access_name(
+                            "setter",
+                            &key,
                             is_computed,
                             is_static,
                             is_private,
@@ -271,11 +271,12 @@ impl Rule for GroupedAccessorPairs {
                         report(
                             ctx,
                             self.pair_order,
-                            &left_key,
-                            &right_key,
-                            Span::new(latter.span.start, latter.key.span().end),
-                            getter_idx,
-                            setter_idx,
+                            (&getter_key, &setter_key),
+                            (
+                                Span::new(getter_node.span.start, getter_node.key.span().end),
+                                Span::new(setter_node.span.start, setter_node.key.span().end),
+                            ),
+                            (getter_idx, setter_idx),
                         );
                     }
                 }
@@ -315,56 +316,59 @@ fn get_key_name_and_check_literal<'a>(
 }
 
 fn get_diagnostic_access_name(
-    key: &str,
-    getter_idx: usize,
-    setter_idx: usize,
+    access_word: &str,
+    base_key: &str,
     is_computed: bool,
     is_static: bool,
     is_private: bool,
-) -> (String, String) {
-    let (left_word, right_word) =
-        if getter_idx > setter_idx { ("getter", "setter") } else { ("setter", "getter") };
+) -> String {
     let static_prefix = if is_static { "static " } else { "" };
-    let (left_key, right_key) = if is_computed {
-        (format!("{static_prefix}{left_word}"), format!("{static_prefix}{right_word}"))
+    if is_computed {
+        format!("{static_prefix}{access_word}")
     } else {
         // e.g. "class foo { get #a {} set #a(val) {} }" we should get #a
-        let (real_key, private_prefix) =
-            if is_private { (format!("#{key}"), "private ") } else { (format!("'{key}'"), "") };
-        (
-            format!("{static_prefix}{private_prefix}{left_word} {real_key}"),
-            format!("{static_prefix}{private_prefix}{right_word} {real_key}"),
-        )
-    };
-    (left_key, right_key)
+        let (real_key, private_prefix) = if is_private {
+            (format!("#{base_key}"), "private ")
+        } else {
+            (format!("'{base_key}'"), "")
+        };
+        format!("{static_prefix}{private_prefix}{access_word} {real_key}")
+    }
 }
 
 fn report(
     ctx: &LintContext,
     pair_order: PairOrder,
-    left_key: &str,
-    right_key: &str,
-    span: Span,
-    getter_idx: usize,
-    setter_idx: usize,
+    (getter_key, setter_key): (&str, &str),
+    (getter_span, setter_span): (Span, Span),
+    (getter_idx, setter_idx): (usize, usize),
 ) {
     if getter_idx.abs_diff(setter_idx) > 1 {
         ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-            span,
-            format!("Accessor pair {left_key} and {right_key} should be grouped."),
+            getter_span,
+            getter_key,
+            setter_span,
+            setter_key,
+            format!("Accessor pair {getter_key} and {setter_key} should be grouped."),
         ));
     }
     match pair_order {
         PairOrder::GetBeforeSet if getter_idx > setter_idx => {
             ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-                span,
-                format!("Expected {left_key} to be before {right_key}."),
+                getter_span,
+                getter_key,
+                setter_span,
+                setter_key,
+                format!("Expected {getter_key} to be before {setter_key}."),
             ));
         }
         PairOrder::SetBeforeGet if setter_idx > getter_idx => {
             ctx.diagnostic(grouped_accessor_pairs_diagnostic(
-                span,
-                format!("Expected {left_key} to be before {right_key}."),
+                getter_span,
+                getter_key,
+                setter_span,
+                setter_key,
+                format!("Expected {setter_key} to be before {getter_key}."),
             ));
         }
         _ => {}
