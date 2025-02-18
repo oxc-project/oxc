@@ -13,6 +13,7 @@ use oxc::{
     allocator::Allocator,
     ast::{ast::Program, utf8_to_utf16::Utf8ToUtf16, Comment as OxcComment, CommentKind, Visit},
     codegen::{CodeGenerator, CodegenOptions},
+    isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
@@ -241,6 +242,19 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
+            if transform_options.isolated_declarations == Some(true) {
+                let ret =
+                    IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions::default())
+                        .build(&program);
+                if ret.errors.is_empty() {
+                    self.codegen_text = CodeGenerator::new().build(&ret.program).code;
+                } else {
+                    self.save_diagnostics(ret.errors.into_iter().collect::<Vec<_>>());
+                    self.codegen_text = String::new();
+                }
+                return Ok(());
+            }
+
             let options = transform_options
                 .target
                 .as_ref()

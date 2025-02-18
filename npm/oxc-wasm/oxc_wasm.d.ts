@@ -34,6 +34,7 @@ export interface OxcLinterOptions {}
 
 export interface OxcTransformerOptions {
     target?: string;
+    isolatedDeclarations?: boolean;
 }
 
 export interface OxcCodegenOptions {
