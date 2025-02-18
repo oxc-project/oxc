@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use oxc_ast::{
     ast::{AssignmentExpression, AssignmentTarget, Expression},
     AstKind,
@@ -5,7 +7,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
+use serde_json::Value;
 
 use crate::{
     context::LintContext,
@@ -14,10 +17,10 @@ use crate::{
     AstNode,
 };
 
-fn id_denylist_diagnostic(id: &str, span: Span) -> OxcDiagnostic {
+fn id_denylist_diagnostic(id: &CompactStr, span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help(format!("Use of `{id:?}` as an identifier is disallowed`"))
+    OxcDiagnostic::warn(format!("Identifier is restricted by denylist"))
+        .with_help(format!("Use an identifier other than '{id}' which is disallowed"))
         .with_label(span)
 }
 
@@ -133,7 +136,7 @@ pub struct IdDenylistConfig {
     id_denylist: FxHashSet<CompactStr>,
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 enum IdDenylistResult {
     IdAllowed,
     IdDenied,
@@ -148,12 +151,10 @@ fn is_id_allowed(id: &CompactStr, deny_list: &FxHashSet<CompactStr>) -> IdDenyli
 }
 
 fn check_expression_statement<'a>(
-    //  found_errors: &mut Vec<OxcDiagnostic>,
     ctx: &LintContext<'a>,
     expr: &'a Expression<'a>,
     id_denylist: &FxHashSet<CompactStr>,
 ) {
-    ///println!("helllooo2oo");
     match expr {
         Expression::FunctionExpression(_fn_expr) => return,
         Expression::ArrowFunctionExpression(_arrow_expr) => {
@@ -165,25 +166,28 @@ fn check_expression_statement<'a>(
         Expression::AssignmentExpression(assign_expr) => {
             if assign_expr.operator.is_assign() {
                 if let AssignmentTarget::AssignmentTargetIdentifier(id_ref) = &assign_expr.left {
-                    println!("helllo11111oooo");
+                    //     println!("helllo11111oooo");
                     let id_ref_name: &CompactStr = &id_ref.name.into_compact_str();
-                    let _res: IdDenylistResult = is_id_allowed(id_ref_name, id_denylist);
+                    let res: IdDenylistResult = is_id_allowed(id_ref_name, id_denylist);
+                    println!("helllo11111oooo {res:?} {id_denylist:?}");
 
-                    let diagnostic = id_denylist_diagnostic(id_ref_name, id_ref.span);
-                    ctx.diagnostic(diagnostic);
+                    if matches!(res, IdDenylistResult::IdDenied) {
+                        let diagnostic = id_denylist_diagnostic(id_ref_name, id_ref.span);
+                        ctx.diagnostic(diagnostic);
+                    }
                 };
 
-                //   found_errors.push(diagnostic);
                 return;
             } else {
                 return;
             }
         }
         Expression::Identifier(ident) => {
-            println!("helllooooo");
+            //   println!("helllooooo");
             let _res: IdDenylistResult = is_id_allowed(&ident.name.into_compact_str(), id_denylist);
 
-            let diagnostic = id_denylist_diagnostic(&ident.name, ident.span);
+            let diagnostic = id_denylist_diagnostic(&ident.name.to_compact_str(), ident.span);
+
             ctx.diagnostic(diagnostic);
             //   found_errors.push(diagnostic);
             return;
@@ -192,8 +196,6 @@ fn check_expression_statement<'a>(
             return;
         }
         _ => {
-            println!("helllooo2oo");
-
             return;
         }
     }
@@ -201,28 +203,25 @@ fn check_expression_statement<'a>(
 
 impl Rule for IdDenylist {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let options: Option<&serde_json::Value> = value.get(0);
+        // let options: Option<&serde_json::Value> = value.get(0);
 
-        let id_denylist: FxHashSet<CompactStr> = options
-            .and_then(|x| x.get("allowedNames"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
-            .unwrap_or_default();
+        let id_denylist: FxHashSet<CompactStr> = match &value {
+            //.and_then(Value::as_array);
+            Value::Array(ids) => {
+                ids.iter().filter_map(Value::as_str).map(CompactStr::from).collect()
+            }
+            _ => HashSet::default(),
+        };
+
+        //        println!("s {dd:?} {options:?} {id_denylist:?}");
 
         Self(Box::new(IdDenylistConfig { id_denylist }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        //    let mut found_errors: Vec<OxcDiagnostic> = vec![];
-
         match node.kind() {
             AstKind::ExpressionStatement(expr) => {
-                check_expression_statement(
-                    //     &mut found_errors,
-                    ctx,
-                    &expr.expression,
-                    &self.0.id_denylist,
-                );
+                check_expression_statement(ctx, &expr.expression, &self.0.id_denylist);
                 return;
             }
             _ => {
