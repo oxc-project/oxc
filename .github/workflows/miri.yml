@@ -11,6 +11,7 @@ on:
       - "crates/oxc_data_structures/**"
       - "crates/oxc_parser/**"
       - "crates/oxc_traverse/**"
+      - "crates/oxc_transformer/**"
       - ".github/workflows/miri.yml"
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - "crates/oxc_data_structures/**"
       - "crates/oxc_parser/**"
       - "crates/oxc_traverse/**"
+      - "crates/oxc_transformer/**"
       - ".github/workflows/miri.yml"
 
 concurrency:
