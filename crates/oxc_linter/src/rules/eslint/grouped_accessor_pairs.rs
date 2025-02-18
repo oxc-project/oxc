@@ -483,6 +483,18 @@ fn test() {
             }
         }",
         Some(serde_json::json!(["getBeforeSet"])),
+    ),
+    (
+        "class foo {
+            get aa() {
+
+            }
+            get aa() {}
+            set aa(val) {
+
+            }
+        }",
+        Some(serde_json::json!(["setBeforeGet"])),
     )
         ];
 
