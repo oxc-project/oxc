@@ -69,6 +69,10 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```javascript
+    /// var x = 123e34;
+    /// ```
+    ///
+    /// ```javascript
     /// var x = 0x1FFF_FFFF_FFF_FFF;
     /// ```
     NoLossOfPrecision,
