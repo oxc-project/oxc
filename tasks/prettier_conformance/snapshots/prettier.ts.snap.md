@@ -307,7 +307,7 @@ ts compatibility: 202/573 (35.25%)
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 58.33% |
 | typescript/satisfies-operators/argument-expansion.ts | 💥💥 | 86.15% |
-| typescript/satisfies-operators/assignment.ts | 💥💥 | 63.83% |
+| typescript/satisfies-operators/assignment.ts | 💥💥 | 68.09% |
 | typescript/satisfies-operators/basic.ts | 💥💥 | 87.93% |
 | typescript/satisfies-operators/comments-unstable.ts | 💥💥 | 72.73% |
 | typescript/satisfies-operators/comments.ts | 💥💥 | 0.00% |
@@ -320,7 +320,7 @@ ts compatibility: 202/573 (35.25%)
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 40.00% |
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 50.00% |
 | typescript/satisfies-operators/template-literal.ts | 💥💥 | 0.00% |
-| typescript/satisfies-operators/ternary.ts | 💥💥 | 35.56% |
+| typescript/satisfies-operators/ternary.ts | 💥💥 | 37.78% |
 | typescript/satisfies-operators/types-comments.ts | 💥💥 | 0.00% |
 | typescript/static-blocks/nested.ts | 💥 | 83.33% |
 | typescript/template-literals/as-expression.ts | 💥 | 0.00% |

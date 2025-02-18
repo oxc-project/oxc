@@ -131,7 +131,7 @@ js compatibility: 252/643 (39.19%)
 | js/comments/preserve-new-line-last.js | 💥💥 | 76.47% |
 | js/comments/return-statement.js | 💥💥 | 51.32% |
 | js/comments/single-star-jsdoc.js | 💥💥 | 12.50% |
-| js/comments/switch.js | 💥💥 | 77.14% |
+| js/comments/switch.js | 💥💥 | 80.00% |
 | js/comments/tagged-template-literal.js | 💥💥 | 53.85% |
 | js/comments/template-literal.js | 💥💥 | 43.48% |
 | js/comments/trailing-jsdocs.js | 💥💥 | 0.00% |
@@ -199,7 +199,7 @@ js compatibility: 252/643 (39.19%)
 | js/functional-composition/rxjs_pipe.js | 💥 | 45.45% |
 | js/generator/async.js | 💥 | 92.86% |
 | js/generator/function-name-starts-with-get.js | 💥 | 83.33% |
-| js/identifier/parentheses/let.js | 💥💥 | 90.45% |
+| js/identifier/parentheses/let.js | 💥💥 | 90.00% |
 | js/if/comment_before_else.js | 💥 | 66.67% |
 | js/if/else.js | 💥 | 94.44% |
 | js/if/expr_and_same_line_comments.js | 💥 | 41.98% |
@@ -262,8 +262,8 @@ js compatibility: 252/643 (39.19%)
 | js/newline/backslash_2028.js | 💥 | 0.00% |
 | js/newline/backslash_2029.js | 💥 | 0.00% |
 | js/no-semi/class.js | 💥💥 | 88.37% |
-| js/no-semi/comments.js | 💥💥 | 76.19% |
-| js/no-semi/issue2006.js | 💥✨ | 43.75% |
+| js/no-semi/comments.js | 💥💥 | 71.43% |
+| js/no-semi/issue2006.js | 💥✨ | 37.50% |
 | js/no-semi/no-semi.js | 💥💥 | 86.47% |
 | js/non-strict/keywords.js | 💥 | 76.92% |
 | js/nullish-coalescing/nullish_coalesing_operator.js | 💥 | 80.00% |
