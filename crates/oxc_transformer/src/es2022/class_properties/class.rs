@@ -448,10 +448,9 @@ impl<'a> ClassProperties<'a, '_> {
 
         if let Some(private_props) = &class_details.private_props {
             if self.private_fields_as_properties {
-                // TODO: Only call `insert_many_before` if some private *props*
-                self.ctx.statement_injector.insert_many_before(
-                    &stmt_address,
-                    private_props.iter().filter_map(|(&name, prop)| {
+                let mut private_props = private_props
+                    .iter()
+                    .filter_map(|(&name, prop)| {
                         // TODO: Output `var _C_brand = new WeakSet();` for private instance method
                         if prop.is_method() || prop.is_accessor {
                             return None;
@@ -460,15 +459,17 @@ impl<'a> ClassProperties<'a, '_> {
                         // `var _prop = _classPrivateFieldLooseKey("prop");`
                         let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
                         Some(create_variable_declaration(&prop.binding, value, ctx))
-                    }),
-                );
+                    })
+                    .peekable();
+                if private_props.peek().is_some() {
+                    self.ctx.statement_injector.insert_many_before(&stmt_address, private_props);
+                }
             } else {
-                // TODO: Only call `insert_many_before` if some private *instance* props
                 let mut weakmap_symbol_id = None;
                 let mut has_method = false;
-                self.ctx.statement_injector.insert_many_before(
-                    &stmt_address,
-                    private_props.values().filter_map(|prop| {
+                let mut private_props = private_props
+                    .values()
+                    .filter_map(|prop| {
                         if prop.is_static || (prop.is_method() && has_method) || prop.is_accessor {
                             return None;
                         }
@@ -483,8 +484,11 @@ impl<'a> ClassProperties<'a, '_> {
                             let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
                             Some(create_variable_declaration(&prop.binding, value, ctx))
                         }
-                    }),
-                );
+                    })
+                    .peekable();
+                if private_props.peek().is_some() {
+                    self.ctx.statement_injector.insert_many_before(&stmt_address, private_props);
+                }
             }
         }
 
