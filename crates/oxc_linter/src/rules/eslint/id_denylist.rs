@@ -1,4 +1,7 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{AssignmentExpression, AssignmentTarget, Expression},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
@@ -145,10 +148,12 @@ fn is_id_allowed(id: &CompactStr, deny_list: &FxHashSet<CompactStr>) -> IdDenyli
 }
 
 fn check_expression_statement<'a>(
-    found_errors: &mut Vec<OxcDiagnostic>,
+    //  found_errors: &mut Vec<OxcDiagnostic>,
+    ctx: &LintContext<'a>,
     expr: &'a Expression<'a>,
     id_denylist: &FxHashSet<CompactStr>,
 ) {
+    ///println!("helllooo2oo");
     match expr {
         Expression::FunctionExpression(_fn_expr) => return,
         Expression::ArrowFunctionExpression(_arrow_expr) => {
@@ -157,18 +162,38 @@ fn check_expression_statement<'a>(
         Expression::CallExpression(_call_expr) => {
             return;
         }
+        Expression::AssignmentExpression(assign_expr) => {
+            if assign_expr.operator.is_assign() {
+                if let AssignmentTarget::AssignmentTargetIdentifier(id_ref) = &assign_expr.left {
+                    println!("helllo11111oooo");
+                    let id_ref_name: &CompactStr = &id_ref.name.into_compact_str();
+                    let _res: IdDenylistResult = is_id_allowed(id_ref_name, id_denylist);
+
+                    let diagnostic = id_denylist_diagnostic(id_ref_name, id_ref.span);
+                    ctx.diagnostic(diagnostic);
+                };
+
+                //   found_errors.push(diagnostic);
+                return;
+            } else {
+                return;
+            }
+        }
         Expression::Identifier(ident) => {
+            println!("helllooooo");
             let _res: IdDenylistResult = is_id_allowed(&ident.name.into_compact_str(), id_denylist);
 
             let diagnostic = id_denylist_diagnostic(&ident.name, ident.span);
-
-            found_errors.push(diagnostic);
+            ctx.diagnostic(diagnostic);
+            //   found_errors.push(diagnostic);
             return;
         }
         Expression::AwaitExpression(_expr) => {
             return;
         }
         _ => {
+            println!("helllooo2oo");
+
             return;
         }
     }
@@ -188,12 +213,13 @@ impl Rule for IdDenylist {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let mut found_errors: Vec<OxcDiagnostic> = vec![];
+        //    let mut found_errors: Vec<OxcDiagnostic> = vec![];
 
         match node.kind() {
             AstKind::ExpressionStatement(expr) => {
                 check_expression_statement(
-                    &mut found_errors,
+                    //     &mut found_errors,
+                    ctx,
                     &expr.expression,
                     &self.0.id_denylist,
                 );
