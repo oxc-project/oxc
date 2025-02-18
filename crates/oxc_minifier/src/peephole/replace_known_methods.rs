@@ -739,11 +739,7 @@ impl<'a> PeepholeOptimizations {
                         SPAN,
                         false,
                         TemplateElementValue {
-                            raw: s
-                                .cow_replace("\\", "\\\\")
-                                .cow_replace("`", "\\`")
-                                .cow_replace("${", "\\${")
-                                .cow_replace("\r\n", "\\r\n")
+                            raw: Self::escape_string_for_template_literal(&s)
                                 .into_in(ctx.ast.allocator),
                             cooked: Some(cooked),
                         },
@@ -757,6 +753,20 @@ impl<'a> PeepholeOptimizations {
                 Some(ctx.ast.expression_template_literal(span, quasis, expressions))
             }
             _ => None,
+        }
+    }
+
+    pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
+        if s.contains(['\\', '`', '$', '\r']) {
+            Cow::Owned(
+                s.cow_replace("\\", "\\\\")
+                    .cow_replace("`", "\\`")
+                    .cow_replace("${", "\\${")
+                    .cow_replace("\r\n", "\\r\n")
+                    .into_owned(),
+            )
+        } else {
+            Cow::Borrowed(s)
         }
     }
 
@@ -1761,7 +1771,7 @@ mod test {
         test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
         test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
         test("x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)", "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`");
-        test("x = ''.concat(a, 1)", "x = `${a}${1}`"); // inlining 1 is not implemented yet
+        test("x = ''.concat(a, 1)", "x = `${a}1`");
 
         test("x = '\\\\s'.concat(a)", "x = `\\\\s${a}`");
         test("x = '`'.concat(a)", "x = `\\`${a}`");

@@ -2,6 +2,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
+    ToJsString,
 };
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
@@ -16,6 +17,10 @@ impl<'a> PeepholeOptimizations {
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
     pub fn fold_constants_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+        if let Expression::TemplateLiteral(t) = expr {
+            self.try_inline_values_in_template_literal(t, ctx);
+        }
+
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
                 .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),
@@ -506,6 +511,64 @@ impl<'a> PeepholeOptimizations {
             self.mark_current_function_as_changed();
         }
         None
+    }
+
+    /// Inline constant values in template literals
+    ///
+    /// - `foo${1}bar${i}` => `foo1bar${i}`
+    fn try_inline_values_in_template_literal(
+        &mut self,
+        t: &mut TemplateLiteral<'a>,
+        ctx: Ctx<'a, '_>,
+    ) {
+        let has_expr_to_inline = t
+            .expressions
+            .iter()
+            .any(|expr| !expr.may_have_side_effects(&ctx) && expr.to_js_string(&ctx).is_some());
+        if !has_expr_to_inline {
+            return;
+        }
+
+        let mut inline_exprs = Vec::new();
+        let new_exprs =
+            ctx.ast.vec_from_iter(t.expressions.drain(..).enumerate().filter_map(|(idx, expr)| {
+                if expr.may_have_side_effects(&ctx) {
+                    Some(expr)
+                } else if let Some(str) = expr.to_js_string(&ctx) {
+                    inline_exprs.push((idx, str));
+                    None
+                } else {
+                    Some(expr)
+                }
+            }));
+        t.expressions = new_exprs;
+
+        // inline the extracted inline-able expressions into quasis
+        // "current_quasis + extracted_value + next_quasis"
+        for (i, (idx, str)) in inline_exprs.into_iter().enumerate() {
+            let idx = idx - i;
+            let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
+            let quasi = &mut t.quasis[idx];
+            let new_raw = quasi.value.raw.into_string()
+                + &Self::escape_string_for_template_literal(&str)
+                + next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
+            quasi.value.raw = ctx.ast.atom(&new_raw);
+            let new_cooked = if let (Some(cooked1), Some(cooked2)) =
+                (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
+            {
+                let v =
+                    cooked1.into_string() + &str + cooked2.map(|c| c.as_str()).unwrap_or_default();
+                Some(ctx.ast.atom(&v))
+            } else {
+                None
+            };
+            quasi.value.cooked = new_cooked;
+            if next_quasi.is_some_and(|q| q.tail) {
+                quasi.tail = true;
+            }
+        }
+
+        self.mark_current_function_as_changed();
     }
 }
 
@@ -1641,6 +1704,18 @@ mod test {
     #[test]
     fn test_issue_8782() {
         fold("+(void unknown())", "+void unknown()");
+    }
+
+    #[test]
+    fn test_inline_values_in_template_literal() {
+        fold("`foo${1}`", "'foo1'");
+        fold("`foo${1}bar`", "'foo1bar'");
+        fold("`foo${1}bar${2}baz`", "'foo1bar2baz'");
+        fold("`foo${1}bar${2}baz${3}qux`", "'foo1bar2baz3qux'");
+        fold("`foo${1}${i}`", "`foo1${i}`");
+        fold("`foo${'${}'}`", "'foo${}'");
+        fold("`foo${'${}'}${i}`", "`foo\\${}${i}`");
+        fold_same("foo`foo${1}bar`");
     }
 
     mod bigint {

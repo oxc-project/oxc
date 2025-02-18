@@ -261,3 +261,25 @@ fn test_ts_conditional_types() {
         .has_number_of_references(0)
         .test();
 }
+
+#[test]
+fn test_eval() {
+    let direct_evals = ["eval('')", "function foo() { eval('') }"];
+    for code in direct_evals {
+        let tester = SemanticTester::js(code);
+        let semantic = tester.build();
+        assert!(semantic.scopes().root_flags().contains_direct_eval());
+    }
+
+    let indirect_evals = [
+        "eval?.('')",
+        "(0, eval)('')",
+        "const myEval = eval; myEval('')",
+        "const obj = { eval }; obj.eval('x + y')",
+    ];
+    for code in indirect_evals {
+        let tester = SemanticTester::js(code);
+        let semantic = tester.build();
+        assert!(!semantic.scopes().root_flags().contains_direct_eval());
+    }
+}

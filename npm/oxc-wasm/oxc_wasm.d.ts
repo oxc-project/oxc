@@ -34,6 +34,7 @@ export interface OxcLinterOptions {}
 
 export interface OxcTransformerOptions {
     target?: string;
+    isolatedDeclarations?: boolean;
 }
 
 export interface OxcCodegenOptions {
@@ -99,16 +100,6 @@ export type NodeFlags = {
 
 
 
-export type SymbolId = number;
-export type SymbolFlags = unknown;
-export type RedeclarationId = unknown;
-
-
-
-export type ScopeId = number;
-
-
-
 export type ReferenceId = number;
 export type ReferenceFlags = {
     None: 0,
@@ -117,6 +108,16 @@ export type ReferenceFlags = {
     Type: 0b100,
     Value: 0b11
 }
+
+
+
+export type ScopeId = number;
+
+
+
+export type SymbolId = number;
+export type SymbolFlags = unknown;
+export type RedeclarationId = unknown;
 
 
 export class Oxc {

@@ -65,7 +65,6 @@ static SKIP_INCLUDES: &[&str] = &[
 
 static SKIP_TEST_CASES: &[&str] = &[
     // node.js runtime error
-    "language/eval-code",
     "language/expressions/dynamic-import",
     "language/global-code/decl-func.js",
     "language/module-code",
@@ -77,12 +76,7 @@ static SKIP_TEST_CASES: &[&str] = &[
     "language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue",
 ];
 
-static SKIP_ESID: &[&str] = &[
-    // Always fail because they need to perform `eval`
-    "sec-performeval-rules-in-initializer",
-    "sec-privatefieldget",
-    "sec-privatefieldset",
-];
+static SKIP_ESID: &[&str] = &["sec-privatefieldget", "sec-privatefieldset"];
 
 pub struct Test262RuntimeCase {
     base: Test262Case,
@@ -113,13 +107,7 @@ impl Case for Test262RuntimeCase {
         let features = &self.base.meta().features;
         self.base.should_fail()
             || self.base.skip_test_case()
-            || (self
-                .base
-                .meta()
-                .esid
-                .as_ref()
-                .is_some_and(|esid| SKIP_ESID.contains(&esid.as_ref()))
-                && test262_path.contains("direct-eval"))
+            || self.base.meta().esid.as_ref().is_some_and(|esid| SKIP_ESID.contains(&esid.as_ref()))
             || base_path.contains("built-ins")
             || base_path.contains("staging")
             || base_path.contains("intl402")

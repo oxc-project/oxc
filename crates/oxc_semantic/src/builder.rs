@@ -564,8 +564,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
         // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
         let parent_id = self.scope.get_parent_id(self.current_scope_id);
+
         debug_assert!(parent_id.is_some());
         if let Some(parent_id) = parent_id {
+            if self.scope.get_flags(self.current_scope_id).contains_direct_eval() {
+                self.scope.get_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
+            }
             self.current_scope_id = parent_id;
         }
 
@@ -2068,6 +2072,11 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::YieldExpression(_) => {
                 self.set_function_node_flags(NodeFlags::HasYield);
+            }
+            AstKind::CallExpression(call_expr) => {
+                if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
+                    self.scope.get_flags_mut(self.current_scope_id).insert(ScopeFlags::DirectEval);
+                }
             }
             _ => {}
         }

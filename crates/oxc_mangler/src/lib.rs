@@ -192,6 +192,11 @@ impl Mangler {
 
         assert!(scope_tree.has_child_ids(), "child_id needs to be generated");
 
+        // TODO: implement opt-out of direct-eval in a branch of scopes.
+        if scope_tree.root_flags().contains_direct_eval() {
+            return symbol_table;
+        }
+
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
         } else {

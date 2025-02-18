@@ -38,7 +38,7 @@ impl Derive for DeriveCloneIn {
         &[("clone_in", attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField))]
     }
 
-    /// Parse `#[clone_in(default)]` on struct field.
+    /// Parse `#[clone_in(default)]` on struct, enum, or struct field.
     fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
         // No need to check attr name is `clone_in`, because that's the only attribute this derive handles.
         if !matches!(part, AttrPart::Tag("default")) {

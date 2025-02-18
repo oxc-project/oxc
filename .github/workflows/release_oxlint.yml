@@ -257,3 +257,10 @@ jobs:
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "version": "${{ needs.check.outputs.version }}" }'
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        with:
+          repo: oxc-project/oxlint-migrate
+          workflow: bump_oxlint.yml
+          token: ${{ secrets.OXC_BOT_PAT }}
+          ref: main
+          inputs: '{ "version": "${{ needs.check.outputs.version }}" }'
