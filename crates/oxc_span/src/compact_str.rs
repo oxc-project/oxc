@@ -224,11 +224,8 @@ impl fmt::Display for CompactStr {
 
 #[cfg(feature = "serialize")]
 impl Serialize for CompactStr {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.as_str())
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.as_str().serialize(serializer)
     }
 }
 
