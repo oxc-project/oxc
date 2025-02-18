@@ -282,6 +282,8 @@ fn parse_rule_key(name: &str) -> (String, String) {
 
     let (oxlint_plugin_name, rule_name) = match plugin_name {
         "@typescript-eslint" => ("typescript", rule_name),
+        // import-x has the same rules but better performance
+        "import-x" => ("import", rule_name),
         "jsx-a11y" => ("jsx_a11y", rule_name),
         "react-perf" => ("react_perf", rule_name),
         // e.g. "@next/next/google-font-display"

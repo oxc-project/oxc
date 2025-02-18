@@ -103,7 +103,8 @@ impl From<&str> for LintPlugins {
             }
             // deepscan for backwards compatibility. Those rules have been moved into oxc
             "oxc" | "deepscan" => LintPlugins::OXC,
-            "import" => LintPlugins::IMPORT,
+            // import-x has the same rules but better performance
+            "import" | "import-x" => LintPlugins::IMPORT,
             "jsdoc" => LintPlugins::JSDOC,
             "jest" => LintPlugins::JEST,
             "vitest" => LintPlugins::VITEST,

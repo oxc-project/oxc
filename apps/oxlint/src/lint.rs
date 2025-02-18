@@ -678,8 +678,12 @@ mod test {
 
     #[test]
     fn test_import_plugin_enabled_in_config() {
-        let args = &["-c", "fixtures/import/.oxlintrc.json", "fixtures/import/test.js"];
-        Tester::new().test_and_snapshot(args);
+        let args_1 = &["-c", ".oxlintrc.json", "test.js"];
+        // support import-x namespace see #8779
+        let args_2 = &["-c", ".oxlintrc-import-x.json", "test.js"];
+        Tester::new()
+            .with_cwd("fixtures/import".into())
+            .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
     #[test]
