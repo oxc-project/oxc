@@ -74,6 +74,7 @@ pub const SPAN: Span = Span::new(0, 0);
 #[ast(visit)]
 #[derive(Default, Clone, Copy, Eq, PartialOrd, Ord)]
 #[generate_derive(ESTree)]
+#[builder(skip)]
 #[content_eq(skip)]
 #[estree(no_type, flatten)]
 pub struct Span {

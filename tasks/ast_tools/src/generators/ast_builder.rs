@@ -14,9 +14,6 @@ use crate::{
 
 use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
 
-/// Types to omit builder method for.
-const BLACK_LIST: [&str; 1] = ["Span"];
-
 /// Generator for `AstBuilder`.
 pub struct AstBuilderGenerator;
 
@@ -28,20 +25,25 @@ impl Generator for AstBuilderGenerator {
         &[("builder", attr_positions!(Struct | Enum | StructField))]
     }
 
-    /// Parse `#[builder(default)]` on struct, enum, or struct field.
+    /// Parse `#[builder(default)]` on struct, enum, or struct field,
+    /// and `#[builder(skip)]` on struct or enum.
     fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
         // No need to check attr name is `builder`, because that's the only attribute that
         // this generator handles.
-        if !matches!(part, AttrPart::Tag("default")) {
-            return Err(());
-        }
-
-        match location {
-            AttrLocation::Struct(struct_def) => struct_def.builder.is_default = true,
-            AttrLocation::Enum(enum_def) => enum_def.builder.is_default = true,
-            AttrLocation::StructField(struct_def, field_index) => {
-                struct_def.fields[field_index].builder.is_default = true;
-            }
+        match part {
+            AttrPart::Tag("default") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.builder.is_default = true,
+                AttrLocation::Enum(enum_def) => enum_def.builder.is_default = true,
+                AttrLocation::StructField(struct_def, field_index) => {
+                    struct_def.fields[field_index].builder.is_default = true;
+                }
+                _ => return Err(()),
+            },
+            AttrPart::Tag("skip") => match location {
+                AttrLocation::Struct(struct_def) => struct_def.builder.skip = true,
+                AttrLocation::Enum(enum_def) => enum_def.builder.skip = true,
+                _ => return Err(()),
+            },
             _ => return Err(()),
         }
 
@@ -53,14 +55,12 @@ impl Generator for AstBuilderGenerator {
         let fns = schema
             .types
             .iter()
-            .filter(|&type_def| {
-                let has_visitor = match type_def {
-                    TypeDef::Struct(struct_def) => struct_def.visit.has_visitor(),
-                    TypeDef::Enum(enum_def) => enum_def.visit.has_visitor(),
-                    _ => false,
-                };
-                let is_blacklisted = BLACK_LIST.contains(&type_def.name());
-                has_visitor && !is_blacklisted
+            .filter(|&type_def| match type_def {
+                TypeDef::Struct(struct_def) => {
+                    !struct_def.builder.skip && struct_def.visit.has_visitor()
+                }
+                TypeDef::Enum(enum_def) => !enum_def.builder.skip && enum_def.visit.has_visitor(),
+                _ => false,
             })
             .map(|type_def| generate_builder_methods(type_def, schema))
             .collect::<TokenStream>();
