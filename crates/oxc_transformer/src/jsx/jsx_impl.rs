@@ -88,7 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
@@ -490,13 +490,15 @@ impl<'a> Traverse<'a> for JsxImpl<'a, '_> {
         self.insert_filename_var_statement(ctx);
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        *expr = match expr {
-            Expression::JSXElement(e) => self.transform_jsx(&JSXElementOrFragment::Element(e), ctx),
-            Expression::JSXFragment(e) => {
-                self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
-            }
-            _ => return,
+        if !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_)) {
+            return;
+        }
+        *expr = match ctx.ast.move_expression(expr) {
+            Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
+            Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
+            _ => unreachable!(),
         };
     }
 }
@@ -528,17 +530,30 @@ impl<'a> JsxImpl<'a, '_> {
         }
     }
 
-    fn transform_jsx<'b>(
+    fn transform_jsx_element(
         &mut self,
-        e: &JSXElementOrFragment<'a, 'b>,
+        element: ArenaBox<'a, JSXElement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let is_fragment = e.is_fragment();
-        let has_key_after_props_spread = e.has_key_after_props_spread();
+        let JSXElement { span, opening_element, closing_element, children } = element.unbox();
+        Self::delete_reference_for_closing_element(closing_element.as_deref(), ctx);
+        self.transform_jsx(span, Some(opening_element), children, ctx)
+    }
+
+    fn transform_jsx(
+        &mut self,
+        span: Span,
+        mut opening_element: Option<ArenaBox<'a, JSXOpeningElement<'a>>>,
+        mut children: ArenaVec<JSXChild<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let has_key_after_props_spread =
+            opening_element.as_ref().is_some_and(|e| Self::has_key_after_props_spread(e));
         // If has_key_after_props_spread is true, we need to fallback to `createElement` same behavior as classic runtime
         let is_classic = self.bindings.is_classic() || has_key_after_props_spread;
         let is_automatic = !is_classic;
         let is_development = self.options.development;
+        let is_element = opening_element.is_some();
 
         let mut arguments = ctx.ast.vec();
 
@@ -548,67 +563,64 @@ impl<'a> JsxImpl<'a, '_> {
         // The object properties for the second argument of `React.createElement`
         let mut properties = ctx.ast.vec();
 
-        let mut self_attr_span = None;
-        let mut source_attr_span = None;
-
-        if let JSXElementOrFragment::Element(e) = e {
-            let attributes = &e.opening_element.attributes;
-            for attribute in attributes {
+        if let Some(opening_element) = opening_element.as_mut() {
+            let attributes = &mut opening_element.attributes;
+            let attributes_len = attributes.len();
+            for attribute in attributes.drain(..) {
                 match attribute {
                     JSXAttributeItem::Attribute(attr) => {
-                        if attr.is_identifier("__self") {
-                            self_attr_span = Some(attr.name.span());
-                        } else if attr.is_identifier("__source") {
-                            source_attr_span = Some(attr.name.span());
-                        }
+                        let JSXAttribute { span, name, mut value } = attr.unbox();
+                        match &name {
+                            JSXAttributeName::Identifier(ident) if ident.name == "__self" => {
+                                self.jsx_self.report_error(name.span());
+                            }
+                            JSXAttributeName::Identifier(ident) if ident.name == "__source" => {
+                                self.jsx_source.report_error(name.span());
+                            }
+                            JSXAttributeName::Identifier(ident) if ident.name == "key" => {
+                                if value.is_none() {
+                                    self.ctx.error(diagnostics::valueless_key(name.span()));
+                                }
 
-                        if attr.is_key() {
-                            if attr.value.is_none() {
-                                self.ctx.error(diagnostics::valueless_key(attr.name.span()));
+                                // In automatic mode, extract the key before spread prop,
+                                // and add it to the third argument later.
+                                if is_automatic {
+                                    key_prop = value.take();
+                                    continue;
+                                }
                             }
-                            // In automatic mode, extract the key before spread prop,
-                            // and add it to the third argument later.
-                            if is_automatic {
-                                key_prop = attr.value.as_ref();
-                                continue;
-                            }
+                            _ => {}
                         }
 
                         // Add attribute to prop object
                         let kind = PropertyKind::Init;
-                        let key = Self::get_attribute_name(&attr.name, ctx);
-                        let value = self.transform_jsx_attribute_value(attr.value.as_ref(), ctx);
+                        let key = Self::get_attribute_name(name, ctx);
+                        let value = self.transform_jsx_attribute_value(value, ctx);
                         let object_property = ctx.ast.object_property_kind_object_property(
-                            attr.span, kind, key, value, false, false, false,
+                            span, kind, key, value, false, false, false,
                         );
                         properties.push(object_property);
                     }
                     // optimize `{...prop}` to `prop` in static mode
                     JSXAttributeItem::SpreadAttribute(spread) => {
-                        if is_classic && attributes.len() == 1 {
+                        let JSXSpreadAttribute { argument, span } = spread.unbox();
+                        if is_classic && attributes_len == 1 {
                             // deopt if spreading an object with `__proto__` key
-                            if !matches!(&spread.argument, Expression::ObjectExpression(o) if has_proto(o))
+                            if !matches!(&argument, Expression::ObjectExpression(o) if has_proto(o))
                             {
-                                arguments.push(Argument::from({
-                                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                                    unsafe { ctx.ast.copy(&spread.argument) }
-                                }));
+                                arguments.push(Argument::from(argument));
                                 continue;
                             }
                         }
 
                         // Add attribute to prop object
-                        match &spread.argument {
-                            Expression::ObjectExpression(expr) if !has_proto(expr) => {
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                properties.extend(unsafe { ctx.ast.copy(&expr.properties) });
+                        match argument {
+                            Expression::ObjectExpression(expr) if !has_proto(&expr) => {
+                                properties.extend(expr.unbox().properties);
                             }
-                            expr => {
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                let argument = unsafe { ctx.ast.copy(expr) };
-                                let object_property = ctx
-                                    .ast
-                                    .object_property_kind_spread_property(spread.span, argument);
+                            argument => {
+                                let object_property =
+                                    ctx.ast.object_property_kind_spread_property(span, argument);
                                 properties.push(object_property);
                             }
                         }
@@ -619,56 +631,45 @@ impl<'a> JsxImpl<'a, '_> {
 
         let mut need_jsxs = false;
 
-        let children = e.children();
         let mut children_len = children.len();
 
         // Append children to object properties in automatic mode
         if is_automatic {
             let mut children = ctx.ast.vec_from_iter(
-                children.iter().filter_map(|child| self.transform_jsx_child_automatic(child, ctx)),
+                children
+                    .drain(..)
+                    .filter_map(|child| self.transform_jsx_child_automatic(child, ctx)),
             );
             children_len = children.len();
             if children_len != 0 {
                 let value = if children_len == 1 {
                     children.pop().unwrap()
                 } else {
-                    let elements = ctx
-                        .ast
-                        .vec_from_iter(children.into_iter().map(ArrayExpressionElement::from));
                     need_jsxs = true;
+                    let elements = children.into_iter().map(ArrayExpressionElement::from);
+                    let elements = ctx.ast.vec_from_iter(elements);
                     ctx.ast.expression_array(SPAN, elements, None)
                 };
-                properties.push(ctx.ast.object_property_kind_object_property(
-                    SPAN,
-                    PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, "children"),
-                    value,
-                    false,
-                    false,
-                    false,
-                ));
+                let children = ctx.ast.property_key_static_identifier(SPAN, "children");
+                let kind = PropertyKind::Init;
+                let property = ctx.ast.object_property_kind_object_property(
+                    SPAN, kind, children, value, false, false, false,
+                );
+                properties.push(property);
             }
         }
 
         // React.createElement's second argument
-        if !is_fragment && is_classic {
+        if is_element && is_classic {
             if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
-                if let Some(span) = self_attr_span {
-                    self.jsx_self.report_error(span);
-                } else {
-                    properties.push(JsxSelf::get_object_property_kind_for_jsx_plugin(ctx));
-                }
+                properties.push(JsxSelf::get_object_property_kind_for_jsx_plugin(ctx));
             }
 
             if self.options.jsx_source_plugin {
-                if let Some(span) = source_attr_span {
-                    self.jsx_source.report_error(span);
-                } else {
-                    let (line, column) = self.jsx_source.get_line_column(e.span().start);
-                    properties.push(
-                        self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
-                    );
-                }
+                let (line, column) = self.jsx_source.get_line_column(span.start);
+                properties.push(
+                    self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
+                );
             }
         }
 
@@ -676,17 +677,10 @@ impl<'a> JsxImpl<'a, '_> {
         // But we have to do it here to replicate the same import order as Babel, in order to pass
         // Babel's conformance tests.
         // TODO(improve-on-babel): Change this if we can handle differing output in tests.
-        let argument_expr = match e {
-            JSXElementOrFragment::Element(e) => {
-                if let Some(closing_element) = &e.closing_element {
-                    if let Some(ident) = closing_element.name.get_identifier() {
-                        ctx.delete_reference_for_identifier(ident);
-                    }
-                }
-
-                self.transform_element_name(&e.opening_element.name, ctx)
-            }
-            JSXElementOrFragment::Fragment(_) => self.get_fragment(ctx),
+        let argument_expr = if let Some(opening_element) = opening_element {
+            self.transform_element_name(opening_element.unbox().name, ctx)
+        } else {
+            self.get_fragment(ctx)
         };
         arguments.insert(0, Argument::from(argument_expr));
 
@@ -725,51 +719,41 @@ impl<'a> JsxImpl<'a, '_> {
             }
 
             // Fragment doesn't have source and self
-            if !is_fragment {
+            if is_element {
                 // { __source: { fileName, lineNumber, columnNumber } }
                 if self.options.jsx_source_plugin {
-                    if let Some(span) = source_attr_span {
-                        self.jsx_source.report_error(span);
-                    } else {
-                        let (line, column) = self.jsx_source.get_line_column(e.span().start);
-                        let expr = self.jsx_source.get_source_object(line, column, ctx);
-                        arguments.push(Argument::from(expr));
-                    }
+                    let (line, column) = self.jsx_source.get_line_column(span.start);
+                    let expr = self.jsx_source.get_source_object(line, column, ctx);
+                    arguments.push(Argument::from(expr));
                 }
 
                 // this
                 if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
-                    if let Some(span) = self_attr_span {
-                        self.jsx_self.report_error(span);
-                    } else {
-                        arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
-                    }
+                    arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
                 }
             }
         } else {
             // React.createElement(type, arguments, ...children)
             //                                      ^^^^^^^^^^^
             arguments.extend(
-                children.iter().filter_map(|child| self.transform_jsx_child_classic(child, ctx)),
+                children.drain(..).filter_map(|child| self.transform_jsx_child_classic(child, ctx)),
             );
         }
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
-        ctx.ast.expression_call(e.span(), callee, NONE, arguments, false)
+        ctx.ast.expression_call(span, callee, NONE, arguments, false)
     }
 
     fn transform_element_name(
         &self,
-        name: &JSXElementName<'a>,
+        name: JSXElementName<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
                 ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
-            JSXElementName::IdentifierReference(ident) => {
-                Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
-            }
+            JSXElementName::IdentifierReference(ident) => Expression::Identifier(ident),
             JSXElementName::MemberExpression(member_expr) => {
                 Self::transform_jsx_member_expression(member_expr, ctx)
             }
@@ -835,25 +819,24 @@ impl<'a> JsxImpl<'a, '_> {
     }
 
     fn transform_jsx_member_expression(
-        expr: &JSXMemberExpression<'a>,
+        expr: ArenaBox<'a, JSXMemberExpression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let object = match &expr.object {
-            JSXMemberExpressionObject::IdentifierReference(ident) => {
-                Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
-            }
+        let JSXMemberExpression { span, object, property } = expr.unbox();
+        let object = match object {
+            JSXMemberExpressionObject::IdentifierReference(ident) => Expression::Identifier(ident),
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 Self::transform_jsx_member_expression(expr, ctx)
             }
             JSXMemberExpressionObject::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         };
-        let property = ctx.ast.identifier_name(expr.property.span, expr.property.name);
-        ctx.ast.member_expression_static(expr.span, object, property, false).into()
+        let property = ctx.ast.identifier_name(property.span, property.name);
+        ctx.ast.member_expression_static(span, object, property, false).into()
     }
 
     fn transform_jsx_attribute_value(
         &mut self,
-        value: Option<&JSXAttributeValue<'a>>,
+        value: Option<JSXAttributeValue<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         match value {
@@ -861,17 +844,12 @@ impl<'a> JsxImpl<'a, '_> {
                 let jsx_text = Self::decode_entities(s.value.as_str());
                 ctx.ast.expression_string_literal(s.span, jsx_text, None)
             }
-            Some(JSXAttributeValue::Element(e)) => {
-                self.transform_jsx(&JSXElementOrFragment::Element(e), ctx)
-            }
+            Some(JSXAttributeValue::Element(e)) => self.transform_jsx_element(e, ctx),
             Some(JSXAttributeValue::Fragment(e)) => {
-                self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
+                self.transform_jsx(e.span, None, e.unbox().children, ctx)
             }
-            Some(JSXAttributeValue::ExpressionContainer(c)) => match &c.expression {
-                e @ match_expression!(JSXExpression) => {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    unsafe { ctx.ast.copy(e.to_expression()) }
-                }
+            Some(JSXAttributeValue::ExpressionContainer(c)) => match c.unbox().expression {
+                jsx_expr @ match_expression!(JSXExpression) => jsx_expr.into_expression(),
                 JSXExpression::EmptyExpression(e) => {
                     ctx.ast.expression_boolean_literal(e.span, true)
                 }
@@ -882,63 +860,58 @@ impl<'a> JsxImpl<'a, '_> {
 
     fn transform_jsx_child_automatic(
         &mut self,
-        child: &JSXChild<'a>,
+        child: JSXChild<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // Align spread child behavior with esbuild.
         // Instead of Babel throwing `Spread children are not supported in React.`
         // `<>{...foo}</>` -> `jsxs(Fragment, { children: [ ...foo ] })`
         if let JSXChild::Spread(e) = child {
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            let argument = unsafe { ctx.ast.copy(&e.expression) };
-            let spread_element = ctx.ast.array_expression_element_spread_element(e.span, argument);
+            let JSXSpreadChild { span, expression } = e.unbox();
+            let spread_element = ctx.ast.array_expression_element_spread_element(span, expression);
             let elements = ctx.ast.vec1(spread_element);
-            return Some(ctx.ast.expression_array(e.span, elements, None));
+            Some(ctx.ast.expression_array(span, elements, None))
+        } else {
+            self.transform_jsx_child(child, ctx)
         }
-        self.transform_jsx_child(child, ctx)
     }
 
     fn transform_jsx_child_classic(
         &mut self,
-        child: &JSXChild<'a>,
+        child: JSXChild<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Argument<'a>> {
         // Align spread child behavior with esbuild.
         // Instead of Babel throwing `Spread children are not supported in React.`
         // `<>{...foo}</>` -> `React.createElement(React.Fragment, null, ...foo)`
         if let JSXChild::Spread(e) = child {
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            let argument = unsafe { ctx.ast.copy(&e.expression) };
-            return Some(ctx.ast.argument_spread_element(e.span, argument));
+            let JSXSpreadChild { span, expression } = e.unbox();
+            Some(ctx.ast.argument_spread_element(span, expression))
+        } else {
+            self.transform_jsx_child(child, ctx).map(Argument::from)
         }
-        self.transform_jsx_child(child, ctx).map(Argument::from)
     }
 
     fn transform_jsx_child(
         &mut self,
-        child: &JSXChild<'a>,
+        child: JSXChild<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match child {
-            JSXChild::Text(text) => Self::transform_jsx_text(text, ctx),
-            JSXChild::ExpressionContainer(e) => match &e.expression {
-                e @ match_expression!(JSXExpression) => {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    Some(unsafe { ctx.ast.copy(e.to_expression()) })
-                }
+            JSXChild::Text(text) => Self::transform_jsx_text(&text, ctx),
+            JSXChild::ExpressionContainer(e) => match e.unbox().expression {
+                jsx_expr @ match_expression!(JSXExpression) => Some(jsx_expr.into_expression()),
                 JSXExpression::EmptyExpression(_) => None,
             },
-            JSXChild::Element(e) => {
-                Some(self.transform_jsx(&JSXElementOrFragment::Element(e), ctx))
-            }
+            JSXChild::Element(e) => Some(self.transform_jsx_element(e, ctx)),
             JSXChild::Fragment(e) => {
-                Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx))
+                Some(self.transform_jsx(e.span, None, e.unbox().children, ctx))
             }
             JSXChild::Spread(_) => unreachable!(),
         }
     }
 
-    fn get_attribute_name(name: &JSXAttributeName<'a>, ctx: &TraverseCtx<'a>) -> PropertyKey<'a> {
+    fn get_attribute_name(name: JSXAttributeName<'a>, ctx: &TraverseCtx<'a>) -> PropertyKey<'a> {
         match name {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name;
@@ -1059,38 +1032,12 @@ impl<'a> JsxImpl<'a, '_> {
         buffer.push_str(&s[prev..]);
         buffer
     }
-}
-
-enum JSXElementOrFragment<'a, 'b> {
-    Element(&'b JSXElement<'a>),
-    Fragment(&'b JSXFragment<'a>),
-}
-
-impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Element(e) => e.span,
-            Self::Fragment(e) => e.span,
-        }
-    }
-
-    fn children(&self) -> &'b ArenaVec<'a, JSXChild<'a>> {
-        match self {
-            Self::Element(e) => &e.children,
-            Self::Fragment(e) => &e.children,
-        }
-    }
-
-    fn is_fragment(&self) -> bool {
-        matches!(self, Self::Fragment(_))
-    }
 
     /// The react jsx/jsxs transform falls back to `createElement` when an explicit `key` argument comes after a spread
     /// <https://github.com/microsoft/TypeScript/blob/6134091642f57c32f50e7b5604635e4d37dd19e8/src/compiler/transformers/jsx.ts#L264-L278>
-    fn has_key_after_props_spread(&self) -> bool {
-        let Self::Element(e) = self else { return false };
+    fn has_key_after_props_spread(opening_element: &JSXOpeningElement<'a>) -> bool {
         let mut spread = false;
-        for attr in &e.opening_element.attributes {
+        for attr in &opening_element.attributes {
             if matches!(attr, JSXAttributeItem::SpreadAttribute(_)) {
                 spread = true;
             } else if spread && matches!(attr, JSXAttributeItem::Attribute(a) if a.is_key()) {
@@ -1098,6 +1045,17 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
             }
         }
         false
+    }
+
+    fn delete_reference_for_closing_element(
+        element: Option<&JSXClosingElement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(element) = &element {
+            if let Some(ident) = element.name.get_identifier() {
+                ctx.delete_reference_for_identifier(ident);
+            }
+        }
     }
 }
 
