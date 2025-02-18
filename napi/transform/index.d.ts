@@ -218,6 +218,17 @@ export declare const enum Severity {
   Advice = 'Advice'
 }
 
+export interface SourceMap {
+  file?: string
+  mappings: string
+  names: Array<string>
+  sourceRoot?: string
+  sources: Array<string>
+  sourcesContent?: Array<string>
+  version: number
+  x_google_ignoreList?: Array<number>
+}
+
 /**
  * Transpile a JavaScript or TypeScript into a target ECMAScript version.
  *

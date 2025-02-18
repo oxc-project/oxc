@@ -4,7 +4,7 @@
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform",
     "build": "napi build --no-dts-cache --platform --release",
-    "test": "vitest --typecheck run ./test"
+    "test": "vitest --typecheck run ./test && tsc"
   },
   "napi": {
     "binaryName": "minify",
