@@ -19,7 +19,7 @@ use oxc_syntax::{
 use crate::{binaryish::BinaryishOperator, utils, Prettier};
 
 impl<'a> Prettier<'a> {
-    // NOTE: Why this takes `mut`...?
+    // NOTE: This `mut` is only for `should_wrap_function_for_export_default()`
     pub fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
         if matches!(kind, AstKind::Program(_)) || kind.is_statement() || kind.is_declaration() {
             return false;
@@ -504,6 +504,7 @@ impl<'a> Prettier<'a> {
             return false;
         }
 
+        // NOTE: This requires `mut self` for `need_parens()`
         let lhs = utils::get_left_side_path_name(kind);
         self.stack.push(lhs);
         let result = self.should_wrap_function_for_export_default();
