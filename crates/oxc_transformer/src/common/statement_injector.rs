@@ -41,6 +41,11 @@ impl<'a> Traverse<'a> for StatementInjector<'a, '_> {
     ) {
         self.ctx.statement_injector.insert_into_statements(statements, ctx);
     }
+
+    #[inline]
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.ctx.statement_injector.assert_no_insertions_remaining();
+    }
 }
 
 #[derive(Debug)]
@@ -194,5 +199,13 @@ impl<'a> StatementInjectorStore<'a> {
         }
 
         *statements = new_statements;
+    }
+
+    // Assertion for checking if no remaining insertions are left.
+    // `#[inline(always)]` because this is a no-op in release mode
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn assert_no_insertions_remaining(&self) {
+        debug_assert!(self.insertions.borrow().is_empty());
     }
 }
