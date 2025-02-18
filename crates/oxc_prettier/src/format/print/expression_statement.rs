@@ -67,9 +67,22 @@ fn expr_needs_asi_protection<'a>(p: &mut Prettier<'a>, expr: &Expression<'a>) ->
     let expr = p.alloc(expr);
 
     let expr_kind = AstKind::from_expression(expr);
-    if p.need_parens(expr_kind) {
+
+    // TODO: Consider this is a temporary hack or the right way to handle
+    // The current implementation is:
+    // - parent-child relationship such as `stack`, `current_node()` result are updated only by the `wrap!` macro
+    // - and the `wrap!` macro is only used with a `Format` trait for each node
+    // Therefore, at the time this code is executed, the outermost node in `stack` == the current node is `ExpressionStatement`.
+    // However, `expr_needs_asi_protection()` should be called for `.expression` of `ExpressionStatement`.
+    // That is, the code inside `need_parens()` should have that `.expression` as the current node, but it is not!
+    // To resolve this gap, manually update the `stack` then call `need_parens()`.
+    p.stack.push(expr_kind);
+    let need_parens = p.need_parens(expr_kind);
+    p.stack.pop();
+    if need_parens {
         return true;
     }
+
     if !utils::has_naked_left_side(expr_kind) {
         return false;
     }
