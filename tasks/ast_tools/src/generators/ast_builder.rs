@@ -23,12 +23,12 @@ pub struct AstBuilderGenerator;
 define_generator!(AstBuilderGenerator);
 
 impl Generator for AstBuilderGenerator {
-    /// Register that accept `#[builder]` attr on structs or enums.
+    /// Register that accept `#[builder]` attr on structs, enums, or struct fields.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[("builder", attr_positions!(Struct | Enum))]
+        &[("builder", attr_positions!(Struct | Enum | StructField))]
     }
 
-    /// Parse `#[builder(default)]` on struct or enum.
+    /// Parse `#[builder(default)]` on struct, enum, or struct field.
     fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
         // No need to check attr name is `builder`, because that's the only attribute that
         // this generator handles.
@@ -39,6 +39,9 @@ impl Generator for AstBuilderGenerator {
         match location {
             AttrLocation::Struct(struct_def) => struct_def.builder.is_default = true,
             AttrLocation::Enum(enum_def) => enum_def.builder.is_default = true,
+            AttrLocation::StructField(struct_def, field_index) => {
+                struct_def.fields[field_index].builder.is_default = true;
+            }
             _ => return Err(()),
         }
 
@@ -285,12 +288,15 @@ fn get_struct_params<'s>(
             let type_def = field.type_def(schema);
             let ty = type_def.ty(schema);
 
-            // A field is default if its innermost type is marked `#[builder(default)]`
-            let innermost_type = type_def.innermost_type(schema);
-            let is_default = match innermost_type {
-                TypeDef::Struct(inner_struct) => inner_struct.builder.is_default,
-                TypeDef::Enum(inner_enum) => inner_enum.builder.is_default,
-                _ => false,
+            // A field is default if the field is marked `#[builder(default)]`,
+            // or its innermost type is marked `#[builder(default)]`
+            let is_default = field.builder.is_default || {
+                let innermost_type = type_def.innermost_type(schema);
+                match innermost_type {
+                    TypeDef::Struct(inner_struct) => inner_struct.builder.is_default,
+                    TypeDef::Enum(inner_enum) => inner_enum.builder.is_default,
+                    _ => false,
+                }
             };
             if is_default {
                 has_default_fields = true;
@@ -322,7 +328,7 @@ fn get_struct_params<'s>(
 
             let fn_param_ty = if is_default {
                 assert!(!has_generic_param);
-                innermost_type.ty(schema)
+                type_def.innermost_type(schema).ty(schema)
             } else if let Some(generic_ident) = generic_ident {
                 let where_clause_part = quote!( #generic_ident: IntoIn<'a, #ty> );
                 let generic_ty = quote!( #generic_ident );

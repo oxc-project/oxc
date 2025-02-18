@@ -8,7 +8,7 @@ use crate::utils::{create_ident_tokens, pluralize};
 
 use super::{
     extensions::{
-        ast_builder::AstBuilderType,
+        ast_builder::{AstBuilderStructField, AstBuilderType},
         clone_in::{CloneInStructField, CloneInType},
         content_eq::{ContentEqStructField, ContentEqType},
         estree::{ESTreeStruct, ESTreeStructField},
@@ -136,6 +136,7 @@ pub struct FieldDef {
     pub type_id: TypeId,
     pub visibility: Visibility,
     pub doc_comment: Option<String>,
+    pub builder: AstBuilderStructField,
     pub visit: VisitFieldOrVariant,
     pub offset: Offset,
     pub clone_in: CloneInStructField,
@@ -156,6 +157,7 @@ impl FieldDef {
             type_id,
             visibility,
             doc_comment,
+            builder: AstBuilderStructField::default(),
             visit: VisitFieldOrVariant::default(),
             offset: Offset::default(),
             clone_in: CloneInStructField::default(),
