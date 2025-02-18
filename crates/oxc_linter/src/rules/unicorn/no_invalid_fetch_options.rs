@@ -11,7 +11,7 @@ use oxc_span::Span;
 use crate::{ast_util::is_new_expression, rule::Rule, LintContext};
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: Option<String>) -> OxcDiagnostic {
-    let method = method.unwrap_or("GET/HEAD".to_string());
+    let method = method.unwrap_or("GET/HEAD".to_string()).to_uppercase();
     let message = format!(r#""body" is not allowed when method is "{method}""#);
 
     OxcDiagnostic::warn(message).with_label(span)
@@ -141,9 +141,9 @@ fn is_invalid_fetch_options(
             match &obj_prop.value {
                 Expression::StringLiteral(value_ident) => {
                     let method = value_ident.value.as_str();
-                    method_name = method;
 
                     is_get_or_head = !is_not_get_and_head(method);
+                    method_name = method;
                 }
                 Expression::Identifier(value_ident) => {
                     let symbols = ctx.semantic().symbols();
@@ -168,6 +168,7 @@ fn is_invalid_fetch_options(
                     };
 
                     is_get_or_head = !is_not_get_and_head(&str_lit.value);
+                    method_name = &str_lit.value;
                 }
                 _ => continue,
             };
