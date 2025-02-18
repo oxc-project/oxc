@@ -9,6 +9,7 @@ use crate::utils::{create_ident, pluralize};
 
 use super::{
     extensions::{
+        ast_builder::AstBuilderType,
         clone_in::CloneInType,
         content_eq::ContentEqType,
         estree::{ESTreeEnum, ESTreeEnumVariant},
@@ -33,6 +34,7 @@ pub struct EnumDef {
     pub variants: Vec<VariantDef>,
     /// For `@inherits` inherited enum variants
     pub inherits: Vec<TypeId>,
+    pub builder: AstBuilderType,
     pub visit: VisitEnum,
     pub kind: Kind,
     pub layout: Layout,
@@ -63,6 +65,7 @@ impl EnumDef {
             generated_derives,
             variants,
             inherits,
+            builder: AstBuilderType::default(),
             visit: VisitEnum::default(),
             kind: Kind::default(),
             layout: Layout::default(),

@@ -8,6 +8,7 @@ use crate::utils::{create_ident_tokens, pluralize};
 
 use super::{
     extensions::{
+        ast_builder::AstBuilderType,
         clone_in::{CloneInStructField, CloneInType},
         content_eq::{ContentEqStructField, ContentEqType},
         estree::{ESTreeStruct, ESTreeStructField},
@@ -29,6 +30,7 @@ pub struct StructDef {
     pub file_id: FileId,
     pub generated_derives: Derives,
     pub fields: Vec<FieldDef>,
+    pub builder: AstBuilderType,
     pub visit: VisitStruct,
     pub kind: Kind,
     pub layout: Layout,
@@ -57,6 +59,7 @@ impl StructDef {
             file_id,
             generated_derives,
             fields,
+            builder: AstBuilderType::default(),
             visit: VisitStruct::default(),
             kind: Kind::default(),
             layout: Layout::default(),

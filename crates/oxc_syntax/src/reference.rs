@@ -13,6 +13,7 @@ use oxc_ast_macros::ast;
 
 #[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[builder(default)]
 #[clone_in(default)]
 #[content_eq(skip)]
 #[estree(skip)]

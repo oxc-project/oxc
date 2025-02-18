@@ -64,7 +64,18 @@ pub fn ast_meta(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// See [`macro@ast`] for further details.
 #[proc_macro_derive(
     Ast,
-    attributes(clone_in, content_eq, estree, generate_derive, plural, scope, span, ts, visit)
+    attributes(
+        builder,
+        clone_in,
+        content_eq,
+        estree,
+        generate_derive,
+        plural,
+        scope,
+        span,
+        ts,
+        visit
+    )
 )]
 pub fn ast_derive(_input: TokenStream) -> TokenStream {
     TokenStream::new()
