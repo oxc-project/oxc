@@ -8,7 +8,6 @@ use serde::{
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast_macros::ast_meta;
-use oxc_span::Span;
 
 use crate::ast::*;
 
@@ -260,49 +259,32 @@ impl Serialize for Elision {
 /// and `argument` field flattened.
 impl Serialize for FormalParameters<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted_rest = self.rest.as_ref().map(|rest| SerFormalParameterRest {
-            span: rest.span,
-            argument: &rest.argument.kind,
-            type_annotation: &rest.argument.type_annotation,
-            optional: rest.argument.optional,
-        });
-        ElementsAndRest::new(&self.items, converted_rest.as_ref()).serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "RestElement", rename_all = "camelCase")]
-struct SerFormalParameterRest<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    argument: &'b BindingPatternKind<'a>,
-    type_annotation: &'b Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    optional: bool,
-}
-
-pub struct ElementsAndRest<'b, E, R> {
-    elements: &'b [E],
-    rest: Option<&'b R>,
-}
-
-impl<'b, E, R> ElementsAndRest<'b, E, R> {
-    pub fn new(elements: &'b [E], rest: Option<&'b R>) -> Self {
-        Self { elements, rest }
-    }
-}
-
-impl<E: Serialize, R: Serialize> Serialize for ElementsAndRest<'_, E, R> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        if let Some(rest) = self.rest {
-            let mut seq = serializer.serialize_seq(Some(self.elements.len() + 1))?;
-            for element in self.elements {
-                seq.serialize_element(element)?;
-            }
-            seq.serialize_element(rest)?;
-            seq.end()
-        } else {
-            self.elements.serialize(serializer)
+        let mut seq = serializer.serialize_seq(None)?;
+        for item in &self.items {
+            seq.serialize_element(item)?;
         }
+
+        if let Some(rest) = &self.rest {
+            seq.serialize_element(&FormalParametersRest(rest))?;
+        }
+
+        seq.end()
+    }
+}
+
+struct FormalParametersRest<'a, 'b>(&'b BindingRestElement<'a>);
+
+impl Serialize for FormalParametersRest<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let rest = self.0;
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "RestElement")?;
+        map.serialize_entry("start", &rest.span.start)?;
+        map.serialize_entry("end", &rest.span.end)?;
+        map.serialize_entry("argument", &rest.argument.kind)?;
+        map.serialize_entry("type_annotation", &rest.argument.type_annotation)?;
+        map.serialize_entry("optional", &rest.argument.optional)?;
+        map.end()
     }
 }
 
