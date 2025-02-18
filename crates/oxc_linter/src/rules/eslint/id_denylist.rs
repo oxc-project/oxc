@@ -1,6 +1,8 @@
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{
     context::LintContext,
@@ -17,38 +19,180 @@ fn id_denylist_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct IdDenylist;
+pub struct IdDenylist(Box<IdDenylistConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// This rule disallows specified identifiers in assignments and function definitions.
+    ///
+    /// This rule will catch disallowed identifiers that are:
+    ///
+    ///  - variable declarations
+    ///  - function declarations
+    ///  - object properties assigned to during object creation
+    ///  - class fields
+    ///  - class methods
+    ///
+    /// It will not catch disallowed identifiers that are:
+    ///
+    ///  - function calls (so you can still use functions you do not have control over)
+    ///  - object properties (so you can still use objects you do not have control over)
     ///
     /// ### Why is this bad?
     ///
+    /// Generic names can lead to hard-to-decipher code. This rule allows you
+    /// to specify a deny list of disallowed identifier names to avoid this
+    /// practice.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
-    /// ```
+    ///
+    ///  /* id-denylist: ["error", "data", "callback"] */
+    ///
+    /// const data = { ...values };
+    ///
+    /// function callback() {
+    ///     // ...
+    /// }
+    ///
+    /// element.callback = function() {
+    ///     // ...
+    /// };
+    ///
+    /// const itemSet = {
+    ///     data: [...values]
+    /// };
+    ///
+    /// class Foo {
+    ///     data = [];
+    /// }
+    ///
+    /// class Bar {
+    ///     #data = [];
+    /// }
+    ///
+    /// class Baz {
+    ///     callback() {}
+    /// }
+    ///
+    /// class Qux {
+    ///     #callback() {}
+    /// }
     ///
     /// Examples of **correct** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
-    /// ```
+    ///
+    /// /*eslint id-denylist: ["error", "data", "callback"] */
+    ///
+    /// const encodingOptions = {...values};
+    ///
+    /// function processFileResult() {
+    ///     // ...
+    /// }
+    ///
+    /// element.successHandler = function() {
+    ///     // ...
+    /// };
+    ///
+    /// const itemSet = {
+    ///     entities: [...values]
+    /// };
+    ///
+    /// callback(); // all function calls are ignored
+    ///
+    /// foo.callback(); // all function calls are ignored
+    ///
+    /// foo.data; // all property names that are not assignments are ignored
+    ///
+    /// class Foo {
+    ///     items = [];
+    /// }
+    ///
+    /// class Bar {
+    ///     #items = [];
+    /// }
+    ///
+    /// class Baz {
+    ///     method() {}
+    /// }
+    ///
+    /// class Qux {
+    ///     #method() {}
+    /// }
     IdDenylist,
     eslint,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    restriction,
 );
 
+#[derive(Debug, Default, Clone)]
+pub struct IdDenylistConfig {
+    id_denylist: FxHashSet<CompactStr>,
+}
+
+#[derive(PartialEq)]
+enum IdDenylistResult {
+    IdAllowed,
+    IdDenied,
+}
+
+fn is_id_allowed(id: &CompactStr, deny_list: &FxHashSet<CompactStr>) -> IdDenylistResult {
+    return if deny_list.contains(id) {
+        IdDenylistResult::IdDenied
+    } else {
+        IdDenylistResult::IdAllowed
+    };
+}
+
+fn check_expression_statement<'a>(expr: &'a Expression<'a>, id_denylist: &FxHashSet<CompactStr>) {
+    match expr {
+        Expression::FunctionExpression(fn_expr) => return,
+        Expression::ArrowFunctionExpression(arrow_expr) => {
+            return;
+        }
+        Expression::CallExpression(call_expr) => {
+            return;
+        }
+        Expression::Identifier(ident) => {
+            let res: IdDenylistResult = is_id_allowed(&ident.name.into_compact_str(), id_denylist);
+
+            return;
+        }
+        Expression::AwaitExpression(expr) => {
+            return;
+        }
+        _ => {
+            return;
+        }
+    };
+
+    return;
+}
+
 impl Rule for IdDenylist {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let options: Option<&serde_json::Value> = value.get(0);
+
+        let id_denylist: FxHashSet<CompactStr> = options
+            .and_then(|x| x.get("allowedNames"))
+            .and_then(serde_json::Value::as_array)
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
+            .unwrap_or_default();
+
+        Self(Box::new(IdDenylistConfig { id_denylist }))
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::ExpressionStatement(expr) => {
+                check_expression_statement(expr, &self.0.id_denylist);
+                return;
+            }
+            _ => {
+                return;
+            }
+        }
+    }
 }
 
 #[test]
