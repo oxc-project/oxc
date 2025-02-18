@@ -1,17 +1,13 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{array, group, ir::Doc, text, Format, Prettier};
+use crate::{array, group, ir::Doc, text, ArrowParens, Format, Prettier};
 
 pub fn print_arrow_function<'a>(
     p: &mut Prettier<'a>,
     expr: &ArrowFunctionExpression<'a>,
 ) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
-
-    if !p.options.semi && p.options.arrow_parens.is_always() {
-        parts.push(text!(";"));
-    }
 
     if expr.r#async {
         parts.push(text!("async "));
@@ -44,4 +40,39 @@ pub fn print_arrow_function<'a>(
     }
 
     array!(p, parts)
+}
+
+pub fn should_print_params_without_parens<'a>(
+    p: &mut Prettier<'a>,
+    expr: &ArrowFunctionExpression<'a>,
+) -> bool {
+    fn can_print_params_without_parens<'a>(
+        p: &mut Prettier<'a>,
+        expr: &ArrowFunctionExpression<'a>,
+    ) -> bool {
+        // TODO
+        // const parameters = getFunctionParameters(node);
+        // return (
+        //   parameters.length === 1 &&
+        //   !node.typeParameters &&
+        //   !hasComment(node, CommentCheckFlags.Dangling) &&
+        //   parameters[0].type === "Identifier" &&
+        //   !parameters[0].typeAnnotation &&
+        //   !hasComment(parameters[0]) &&
+        //   !parameters[0].optional &&
+        //   !node.predicate &&
+        //   !node.returnType
+        // );
+
+        if expr.params.parameters_count() != 1 {
+            return false;
+        }
+
+        true
+    }
+
+    match p.options.arrow_parens {
+        ArrowParens::Always => false,
+        ArrowParens::Avoid => can_print_params_without_parens(p, expr),
+    }
 }

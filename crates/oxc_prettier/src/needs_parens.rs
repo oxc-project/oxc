@@ -16,11 +16,11 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-use crate::{binaryish::BinaryishOperator, Prettier};
+use crate::{binaryish::BinaryishOperator, utils, Prettier};
 
 impl<'a> Prettier<'a> {
     // NOTE: Why this takes `mut`...?
-    pub(crate) fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
+    pub fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
         if matches!(kind, AstKind::Program(_)) || kind.is_statement() || kind.is_declaration() {
             return false;
         }
@@ -500,44 +500,15 @@ impl<'a> Prettier<'a> {
             return b || !self.need_parens(self.current_kind());
         }
 
-        if !Self::has_naked_left_side(kind) || (!b && self.need_parens(self.current_kind())) {
+        if !utils::has_naked_left_side(kind) || (!b && self.need_parens(self.current_kind())) {
             return false;
         }
 
-        let lhs = Self::get_left_side_path_name(kind);
+        let lhs = utils::get_left_side_path_name(kind);
         self.stack.push(lhs);
         let result = self.should_wrap_function_for_export_default();
         self.stack.pop();
         result
-    }
-
-    fn has_naked_left_side(kind: AstKind<'a>) -> bool {
-        matches!(
-            kind,
-            AstKind::AssignmentExpression(_)
-                | AstKind::BinaryExpression(_)
-                | AstKind::LogicalExpression(_)
-                | AstKind::ConditionalExpression(_)
-                | AstKind::CallExpression(_)
-                | AstKind::MemberExpression(_)
-                | AstKind::SequenceExpression(_)
-                | AstKind::TaggedTemplateExpression(_)
-                | AstKind::TSNonNullExpression(_)
-                | AstKind::ChainExpression(_)
-        ) || matches!(kind, AstKind::UpdateExpression(e) if !e.prefix)
-    }
-
-    fn get_left_side_path_name(kind: AstKind<'a>) -> AstKind<'a> {
-        match kind {
-            AstKind::CallExpression(e) => AstKind::from_expression(&e.callee),
-            AstKind::ConditionalExpression(e) => AstKind::from_expression(&e.test),
-            AstKind::TaggedTemplateExpression(e) => AstKind::from_expression(&e.tag),
-            AstKind::AssignmentExpression(e) => AstKind::AssignmentTarget(&e.left),
-            AstKind::MemberExpression(e) => AstKind::from_expression(e.object()),
-            AstKind::BinaryExpression(e) => AstKind::from_expression(&e.left),
-            AstKind::LogicalExpression(e) => AstKind::from_expression(&e.left),
-            _ => panic!("need to handle {}", kind.debug_name()),
-        }
     }
 
     fn is_binary_cast_expression(&self, _span: Span) -> bool {
