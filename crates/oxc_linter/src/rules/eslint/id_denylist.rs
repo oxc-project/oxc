@@ -11,10 +11,10 @@ use crate::{
     AstNode,
 };
 
-fn id_denylist_diagnostic(span: Span) -> OxcDiagnostic {
+fn id_denylist_diagnostic(id: &str, span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+        .with_help(format!("Use of `{id:?}` as an identifier is disallowed`"))
         .with_label(span)
 }
 
@@ -144,29 +144,34 @@ fn is_id_allowed(id: &CompactStr, deny_list: &FxHashSet<CompactStr>) -> IdDenyli
     };
 }
 
-fn check_expression_statement<'a>(expr: &'a Expression<'a>, id_denylist: &FxHashSet<CompactStr>) {
+fn check_expression_statement<'a>(
+    found_errors: &mut Vec<OxcDiagnostic>,
+    expr: &'a Expression<'a>,
+    id_denylist: &FxHashSet<CompactStr>,
+) {
     match expr {
-        Expression::FunctionExpression(fn_expr) => return,
-        Expression::ArrowFunctionExpression(arrow_expr) => {
+        Expression::FunctionExpression(_fn_expr) => return,
+        Expression::ArrowFunctionExpression(_arrow_expr) => {
             return;
         }
-        Expression::CallExpression(call_expr) => {
+        Expression::CallExpression(_call_expr) => {
             return;
         }
         Expression::Identifier(ident) => {
-            let res: IdDenylistResult = is_id_allowed(&ident.name.into_compact_str(), id_denylist);
+            let _res: IdDenylistResult = is_id_allowed(&ident.name.into_compact_str(), id_denylist);
 
+            let diagnostic = id_denylist_diagnostic(&ident.name, ident.span);
+
+            found_errors.push(diagnostic);
             return;
         }
-        Expression::AwaitExpression(expr) => {
+        Expression::AwaitExpression(_expr) => {
             return;
         }
         _ => {
             return;
         }
-    };
-
-    return;
+    }
 }
 
 impl Rule for IdDenylist {
@@ -183,9 +188,15 @@ impl Rule for IdDenylist {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let mut found_errors: Vec<OxcDiagnostic> = vec![];
+
         match node.kind() {
             AstKind::ExpressionStatement(expr) => {
-                check_expression_statement(expr, &self.0.id_denylist);
+                check_expression_statement(
+                    &mut found_errors,
+                    &expr.expression,
+                    &self.0.id_denylist,
+                );
                 return;
             }
             _ => {
