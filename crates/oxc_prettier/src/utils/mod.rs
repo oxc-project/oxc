@@ -1,3 +1,5 @@
+mod ast;
 mod document;
 
-pub use self::document::*;
+pub use ast::*;
+pub use document::*;

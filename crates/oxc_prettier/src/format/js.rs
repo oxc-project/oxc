@@ -10,9 +10,9 @@ use crate::{
     array, dynamic_text,
     format::{
         print::{
-            array, arrow_function, assignment, binaryish, block, call_expression, class, function,
-            function_parameters, literal, member, misc, module, object, property, statement,
-            template_literal, ternary,
+            array, arrow_function, assignment, binaryish, block, call_expression, class,
+            expression_statement, function, function_parameters, literal, member, misc, module,
+            object, property, statement, template_literal, ternary,
         },
         Format,
     },
@@ -108,14 +108,7 @@ impl<'a> Format<'a> for Statement<'a> {
 impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ExpressionStatement, {
-            let mut parts = Vec::new_in(p.allocator);
-
-            parts.push(self.expression.format(p));
-            if let Some(semi) = p.semi() {
-                parts.push(semi);
-            }
-
-            array!(p, parts)
+            expression_statement::print_expression_statement(p, self)
         })
     }
 }
@@ -380,30 +373,35 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
 
 impl<'a> Format<'a> for SwitchCase<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
+        wrap!(p, self, SwitchCase, {
+            let mut parts = Vec::new_in(p.allocator);
 
-        if let Some(test) = &self.test {
-            parts.push(text!("case "));
-            parts.push(test.format(p));
-            parts.push(text!(":"));
-        } else {
-            parts.push(text!("default:"));
-        }
-
-        let len =
-            self.consequent.iter().filter(|c| !matches!(c, Statement::EmptyStatement(_))).count();
-        if len != 0 {
-            let consequent_parts =
-                statement::print_statement_sequence(p, self.consequent.as_slice());
-
-            if len == 1 && matches!(self.consequent[0], Statement::BlockStatement(_)) {
-                parts.push(array!(p, [text!(" "), array!(p, consequent_parts)]));
+            if let Some(test) = &self.test {
+                parts.push(text!("case "));
+                parts.push(test.format(p));
+                parts.push(text!(":"));
             } else {
-                parts.push(indent!(p, [hardline!(p), array!(p, consequent_parts)]));
+                parts.push(text!("default:"));
             }
-        }
 
-        array!(p, parts)
+            let len = self
+                .consequent
+                .iter()
+                .filter(|c| !matches!(c, Statement::EmptyStatement(_)))
+                .count();
+            if len != 0 {
+                let consequent_parts =
+                    statement::print_statement_sequence(p, self.consequent.as_slice());
+
+                if len == 1 && matches!(self.consequent[0], Statement::BlockStatement(_)) {
+                    parts.push(array!(p, [text!(" "), array!(p, consequent_parts)]));
+                } else {
+                    parts.push(indent!(p, [hardline!(p), array!(p, consequent_parts)]));
+                }
+            }
+
+            array!(p, parts)
+        })
     }
 }
 
