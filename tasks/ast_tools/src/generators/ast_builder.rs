@@ -145,12 +145,8 @@ fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) 
             "_with_{}",
             default_params.clone().map(|param| param.field.name()).join("_and_")
         );
-        let doc_postfix = format!(
-            " with `{}`",
-            default_params
-                .map(|param| { param.field.type_def(schema).innermost_type(schema).name() })
-                .join("` and `")
-        );
+        let doc_postfix =
+            format!(" with `{}`", default_params.map(|param| param.field.name()).join("` and `"));
         (fn_name_postfix, doc_postfix)
     } else {
         (String::new(), String::new())
