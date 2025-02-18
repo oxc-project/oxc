@@ -47,7 +47,7 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
     context::ContextHost,
-    fixer::{Fixer, Message},
+    fixer::Message,
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
 };

@@ -42,6 +42,7 @@ convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }
 globset = { workspace = true }
+indexmap = { workspace = true, features = ["rayon"]  }
 ignore = { workspace = true }
 itertools = { workspace = true }
 javascript-globals = { workspace = true }
@@ -50,16 +51,17 @@ language-tags = { workspace = true }
 lazy_static = { workspace = true }
 memchr = { workspace = true }
 nonmax = { workspace = true }
-papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 regex = { workspace = true }
 rust-lapper = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2"] }
+self_cell = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
+smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

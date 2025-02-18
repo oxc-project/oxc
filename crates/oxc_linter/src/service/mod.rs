@@ -2,15 +2,13 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-
-use rayon::prelude::ParallelIterator;
+use std::ffi::OsStr;
 use runtime::Runtime;
 
 use oxc_diagnostics::DiagnosticSender;
 
 use crate::Linter;
 
-mod module_cache;
 mod runtime;
 
 pub struct LintServiceOptions {
@@ -18,7 +16,7 @@ pub struct LintServiceOptions {
     cwd: Box<Path>,
 
     /// All paths to lint
-    paths: Vec<Box<Path>>,
+    paths: Vec<Arc<OsStr>>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references
     tsconfig: Option<PathBuf>,
@@ -28,7 +26,7 @@ pub struct LintServiceOptions {
 
 impl LintServiceOptions {
     #[must_use]
-    pub fn new<T>(cwd: T, paths: Vec<Box<Path>>) -> Self
+    pub fn new<T>(cwd: T, paths: Vec<Arc<OsStr>>) -> Self
     where
         T: Into<Box<Path>>,
     {
@@ -63,20 +61,19 @@ impl LintServiceOptions {
     }
 }
 
-#[derive(Clone)]
 pub struct LintService {
-    runtime: Arc<Runtime>,
+    runtime: Runtime,
 }
 
 impl LintService {
     pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let runtime = Arc::new(Runtime::new(linter, options));
+        let runtime = Runtime::new(linter, options);
         Self { runtime }
     }
 
     #[cfg(test)]
     pub(crate) fn from_linter(linter: Linter, options: LintServiceOptions) -> Self {
-        let runtime = Arc::new(Runtime::new(linter, options));
+        let runtime = Runtime::new(linter, options);
         Self { runtime }
     }
 
@@ -84,41 +81,21 @@ impl LintService {
         &self.runtime.linter
     }
 
-    pub fn number_of_dependencies(&self) -> usize {
-        self.runtime.number_of_dependencies()
-    }
-
     /// # Panics
-    pub fn run(&self, tx_error: &DiagnosticSender) {
-        self.runtime
-            .par_iter_paths()
-            .for_each_with(&self.runtime, |runtime, path| runtime.process_path(path, tx_error));
+    pub fn run(&mut self, tx_error: &DiagnosticSender) {
+        self.runtime.run(tx_error);
         tx_error.send(None).unwrap();
     }
 
     /// For tests
     #[cfg(test)]
     pub(crate) fn run_source<'a>(
-        &self,
+        &mut self,
         allocator: &'a oxc_allocator::Allocator,
-        source_text: &'a str,
+        source_text: &str,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<crate::Message<'a>> {
-        self.runtime
-            .par_iter_paths()
-            .flat_map(|path| {
-                let source_type = oxc_span::SourceType::from_path(path).unwrap();
-                self.runtime.init_cache_state(path);
-                self.runtime.process_source(
-                    path,
-                    allocator,
-                    source_text,
-                    source_type,
-                    check_syntax_errors,
-                    tx_error,
-                )
-            })
-            .collect::<Vec<_>>()
+        self.runtime.run_source(allocator, source_text, check_syntax_errors, tx_error)
     }
 }

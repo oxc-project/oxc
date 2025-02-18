@@ -1,6 +1,7 @@
 use std::{borrow::Cow, ops::Deref};
 
 use bitflags::bitflags;
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_span::{GetSpan, SPAN, Span};
 
 bitflags! {
@@ -275,6 +276,20 @@ impl<'a> Deref for RuleFix<'a> {
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
     pub span: Span,
+}
+
+impl<'new> CloneIn<'new> for Fix<'_> {
+    type Cloned = Fix<'new>;
+
+    fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
+        Fix {
+            content: match &self.content {
+                Cow::Borrowed(s) => Cow::Borrowed(allocator.alloc_str(s)),
+                Cow::Owned(s) => Cow::Owned(s.clone()),
+            },
+            span: self.span,
+        }
+    }
 }
 
 impl Default for Fix<'_> {
