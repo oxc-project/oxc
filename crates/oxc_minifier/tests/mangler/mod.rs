@@ -17,6 +17,13 @@ fn mangle(source_text: &str, top_level: bool) -> String {
 }
 
 #[test]
+fn direct_eval() {
+    let source_text = "function foo() { let NO_MANGLE; eval('') }";
+    let mangled = mangle(source_text, false);
+    assert_eq!(mangled, "function foo() {\n\tlet NO_MANGLE;\n\teval(\"\");\n}\n");
+}
+
+#[test]
 fn mangler() {
     let cases = [
         "function foo(a) {a}",

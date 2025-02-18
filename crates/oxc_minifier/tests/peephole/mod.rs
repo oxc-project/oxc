@@ -82,3 +82,24 @@ fn tagged_template() {
     test("foo(true && o.f)", "foo(o.f)");
     test("foo(true ? o.f : false)", "foo(o.f)");
 }
+
+#[test]
+fn eval() {
+    // Keep indirect-eval syntaxes
+    test_same("(!0 && eval)(x)");
+    test_same("(1 ? eval : 2)(x)");
+    test_same("(1 ? eval : 2)?.(x)");
+    test_same("(1, eval)(x)");
+    test_same("(1, eval)?.(x)");
+    test_same("(3, eval)(x)");
+    test_same("(4, eval)?.(x)");
+    test_same("(eval)(x)");
+    test_same("(eval)?.(x)");
+    test_same("eval(x)");
+    test_same("eval(x, y)");
+    test_same("eval(x,y)");
+    test_same("eval?.(x)");
+    test_same("eval?.(x)");
+    test_same("eval?.(x, y)");
+    test_same("eval?.(x,y)");
+}
