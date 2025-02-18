@@ -79,12 +79,12 @@ impl Rule for OperatorAssignment {
         if self.mode == Mode::Never {
             prohibit(assign_expr, self.mode, ctx);
         } else {
-            verfy(assign_expr, self.mode, ctx);
+            verify(assign_expr, self.mode, ctx);
         }
     }
 }
 
-fn verfy(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
+fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
     if expr.operator != AssignmentOperator::Assign {
         return;
     }
