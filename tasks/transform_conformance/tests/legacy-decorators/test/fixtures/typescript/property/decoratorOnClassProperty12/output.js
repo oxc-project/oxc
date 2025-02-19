@@ -3,5 +3,5 @@ class A {
 }
 babelHelpers.decorate([
     dec(),
-    __metadata("design:type", String)
+    babelHelpers.decorateMetadata("design:type", String)
 ], A.prototype, "foo", void 0);
