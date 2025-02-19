@@ -574,7 +574,7 @@ impl<'a> JsxImpl<'a, '_> {
             for attribute in attributes {
                 match attribute {
                     JSXAttributeItem::Attribute(attr) => {
-                        let JSXAttribute { span, name, mut value } = attr.unbox();
+                        let JSXAttribute { span, name, value } = attr.unbox();
                         match &name {
                             JSXAttributeName::Identifier(ident) if ident.name == "__self" => {
                                 self.jsx_self.report_error(ident.span);
@@ -585,12 +585,10 @@ impl<'a> JsxImpl<'a, '_> {
                             JSXAttributeName::Identifier(ident) if ident.name == "key" => {
                                 if value.is_none() {
                                     self.ctx.error(diagnostics::valueless_key(ident.span));
-                                }
-
-                                // In automatic mode, extract the key before spread prop,
-                                // and add it to the third argument later.
-                                if is_automatic {
-                                    key_prop = value.take();
+                                } else if is_automatic {
+                                    // In automatic mode, extract the key before spread prop,
+                                    // and add it to the third argument later.
+                                    key_prop = value;
                                     continue;
                                 }
                             }
