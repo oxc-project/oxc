@@ -21,11 +21,12 @@ use crate::{
 mod host;
 pub(crate) use host::ContextHost;
 
+/// Contains all of the state and context specific to this lint rule.
+///
+/// Includes information like the rule name, plugin name, and severity of the rule.
+/// It also has a reference to the shared linting data [`ContextHost`], which is the same for all rules.
 #[derive(Clone)]
 #[must_use]
-/// Contains all of the state and context specific to this lint rule. Includes information
-/// like the rule name, plugin name, and severity of the rule. It also has a reference to
-/// the shared linting data [`ContextHost`], which is the same for all rules.
 pub struct LintContext<'a> {
     /// Shared context independent of the rule being linted.
     parent: Rc<ContextHost<'a>>,

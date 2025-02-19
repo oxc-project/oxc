@@ -1,8 +1,9 @@
 //! Specialized comparison traits
 
 /// This trait works similarly to [PartialEq] but it gives the liberty of checking the equality of the
-/// content loosely. This would mean the implementor can skip some parts of the content while doing
-/// equality checks.
+/// content loosely.
+///
+/// This would mean the implementor can skip some parts of the content while doing equality checks.
 /// As an example, In AST types we ignore fields such as [crate::Span].
 ///
 /// One should always prefer using the [PartialEq] over this since implementations of this trait

@@ -41,7 +41,9 @@ impl OxlintRules {
     }
 }
 
-/// A fully qualified rule name, e.g. `eslint/no-console` or `react/rule-of-hooks`.
+/// A fully qualified rule name.
+///
+/// e.g. `eslint/no-console` or `react/rule-of-hooks`.
 /// Includes the plugin name, the rule name, and the configuration for the rule (if any).
 /// This does not imply the rule is known to the linter as that, only that it is configured.
 #[derive(Debug, Clone)]

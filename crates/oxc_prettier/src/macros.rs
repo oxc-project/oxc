@@ -52,6 +52,8 @@ macro_rules! dynamic_text {
     }};
 }
 
+/// `group`
+///
 /// Mark a group of items which the printer should try to fit on one line.
 /// This is the basic command to tell the printer when to break.
 /// Groups are usually nested, and the printer will try to fit everything on one line,
@@ -103,6 +105,8 @@ macro_rules! group {
     }};
 }
 
+/// `conditional_group`
+///
 /// This should be used as last resort as it triggers an exponential complexity when nested.
 /// This will try to print the first alternative, if it fit use it, otherwise go to the next one and so on.
 /// The alternatives is an array of documents going from the least expanded (most flattened) representation first to the most expanded.
@@ -129,6 +133,8 @@ macro_rules! conditional_group {
     }};
 }
 
+/// `fill`
+///
 /// This is an alternative type of group which behaves like text layout:
 /// it's going to add a break whenever the next element doesn't fit in the line anymore.
 /// The difference with `group` is that it's not going to break all the separators, just the ones that are at the end of lines.
@@ -154,6 +160,8 @@ macro_rules! fill {
     }};
 }
 
+/// `if_break`
+///
 /// Print something if the current group or the current element of fill breaks and something else if it doesn't.
 /// `group_id` can be used to check another already printed group instead of the current group.
 ///
@@ -221,6 +229,7 @@ macro_rules! join {
 }
 
 /// Specify a line break.
+///
 /// If an expression fits on one line, the line break will be replaced with a space.
 /// Line breaks always indent the next line with the current level of indentation.
 /// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#line>
@@ -262,6 +271,8 @@ macro_rules! hardline {
     }};
 }
 
+/// `literalline`
+///
 /// Specify a line break that is always included in the output and doesn't indent the next line.
 /// Also, unlike hardline, this kind of line break preserves trailing whitespace on the line it ends.
 /// This is used for template literals.
@@ -283,6 +294,8 @@ macro_rules! literalline {
     }};
 }
 
+/// `line_suffix_boundary`
+///
 /// In cases where you embed code inside of templates, comments shouldn't be able to leave the code part.
 /// `line_suffix_boundary` is an explicit marker you can use to flush the `line_suffix` buffer in addition to line breaks.
 /// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#linesuffixboundary>
@@ -316,6 +329,8 @@ macro_rules! indent {
     }};
 }
 
+/// `indent_if_break`
+///
 /// An optimized version of `if_break(indent(doc), doc, group_id)`.
 /// It doesn't make sense to apply `indent_if_break` to the current group,
 /// because "indent if the current group is broken" is the normal behavior of indent.
