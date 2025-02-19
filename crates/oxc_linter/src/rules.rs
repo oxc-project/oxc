@@ -332,6 +332,7 @@ mod unicorn {
     pub mod no_empty_file;
     pub mod no_hex_escape;
     pub mod no_instanceof_array;
+    pub mod no_invalid_fetch_options;
     pub mod no_invalid_remove_event_listener;
     pub mod no_length_as_slice_end;
     pub mod no_lonely_if;
@@ -936,6 +937,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_invalid_fetch_options,
     unicorn::no_abusive_eslint_disable,
     unicorn::no_anonymous_default_export,
     unicorn::no_array_for_each,
