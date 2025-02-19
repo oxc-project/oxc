@@ -53,10 +53,7 @@ impl Idx for SymbolId {
 
 #[cfg(feature = "serialize")]
 impl Serialize for SymbolId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_u32(self.0.get())
     }
 }
@@ -79,10 +76,7 @@ impl Idx for RedeclarationId {
 
 #[cfg(feature = "serialize")]
 impl Serialize for RedeclarationId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_u32(self.0.get())
     }
 }

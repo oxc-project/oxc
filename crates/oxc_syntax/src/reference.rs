@@ -34,10 +34,7 @@ impl Idx for ReferenceId {
 
 #[cfg(feature = "serialize")]
 impl Serialize for ReferenceId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_u32(self.0.get())
     }
 }
