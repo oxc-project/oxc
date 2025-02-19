@@ -29,12 +29,12 @@ pub enum WorkspaceCommands {
 impl WorkspaceCommands {
     pub fn command_id(&self) -> String {
         match self {
-            WorkspaceCommands::FixAll(c) => c.command_id(),
+            Self::FixAll(c) => c.command_id(),
         }
     }
     pub fn available(&self, cap: Capabilities) -> bool {
         match self {
-            WorkspaceCommands::FixAll(c) => c.available(cap),
+            Self::FixAll(c) => c.available(cap),
         }
     }
     pub async fn execute(
@@ -43,7 +43,7 @@ impl WorkspaceCommands {
         args: Vec<serde_json::Value>,
     ) -> jsonrpc::Result<Option<serde_json::Value>> {
         match self {
-            WorkspaceCommands::FixAll(c) => {
+            Self::FixAll(c) => {
                 let arg: Result<
                     <FixAllCommand as WorkspaceCommand>::CommandArgs<'_>,
                     serde_json::Error,

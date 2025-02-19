@@ -136,7 +136,7 @@ impl EnvOptions {
             }
         }
         engine_targets.insert(Engine::Es, es_target.unwrap_or(ESTarget::default()).version());
-        Ok(EnvOptions::from(engine_targets))
+        Ok(Self::from(engine_targets))
     }
 }
 

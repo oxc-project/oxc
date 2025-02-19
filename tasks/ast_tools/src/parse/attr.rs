@@ -190,7 +190,7 @@ impl AttrPartListElement {
 
     /// Unwrap this [`AttrPartListElement`] if it is an [`AttrPartListElement::List`].
     #[expect(dead_code)]
-    pub fn try_into_list(self) -> Result<(String, Vec<AttrPartListElement>)> {
+    pub fn try_into_list(self) -> Result<(String, Vec<Self>)> {
         if let Self::List(name, elements) = self {
             Ok((name, elements))
         } else {

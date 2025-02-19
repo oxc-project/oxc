@@ -192,7 +192,7 @@ impl RuleFixMeta {
                 );
                 kind
             }
-            RuleFixMeta::None | RuleFixMeta::FixPending => FixKind::None,
+            Self::None | Self::FixPending => FixKind::None,
         }
     }
 

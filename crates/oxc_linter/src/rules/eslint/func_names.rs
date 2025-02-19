@@ -61,9 +61,9 @@ impl TryFrom<&serde_json::Value> for FuncNamesConfig {
         raw.as_str().map_or_else(
             || Err(OxcDiagnostic::warn("Expecting string for eslint/func-names configuration")),
             |v| match v {
-                "always" => Ok(FuncNamesConfig::Always),
-                "as-needed" => Ok(FuncNamesConfig::AsNeeded),
-                "never" => Ok(FuncNamesConfig::Never),
+                "always" => Ok(Self::Always),
+                "as-needed" => Ok(Self::AsNeeded),
+                "never" => Ok(Self::Never),
                 _ => Err(OxcDiagnostic::warn(
                     "Expecting always, as-needed or never for eslint/func-names configuration",
                 )),

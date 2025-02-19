@@ -71,7 +71,7 @@ impl From<Capabilities> for ServerCapabilities {
             } else {
                 None
             },
-            ..ServerCapabilities::default()
+            ..Self::default()
         }
     }
 }

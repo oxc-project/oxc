@@ -136,7 +136,7 @@ impl BabelOptions {
                 presets_json = new_presets;
             }
 
-            let new_options: Self = serde_json::from_value::<BabelOptions>(new_value)
+            let new_options: Self = serde_json::from_value::<Self>(new_value)
                 .unwrap_or_else(|err| panic!("{err:?}\n{file:?}\n{content}"));
 
             if let Some(existing_options) = babel_options.as_mut() {

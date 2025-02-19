@@ -30,7 +30,7 @@ pub struct DebugDotContext<'a, 'b> {
 }
 
 impl<'a, 'b> DebugDotContext<'a, 'b> {
-    pub fn new(nodes: &'b AstNodes<'a>, verbose: bool) -> DebugDotContext<'a, 'b> {
+    pub fn new(nodes: &'b AstNodes<'a>, verbose: bool) -> Self {
         DebugDotContext { nodes, verbose }
     }
 }

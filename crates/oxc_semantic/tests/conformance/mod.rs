@@ -137,30 +137,30 @@ pub enum TestResult {
 }
 impl From<String> for TestResult {
     fn from(reason: String) -> Self {
-        TestResult::Fail(vec![OxcDiagnostic::error(Cow::Owned(reason))])
+        Self::Fail(vec![OxcDiagnostic::error(Cow::Owned(reason))])
     }
 }
 impl From<Option<String>> for TestResult {
     fn from(result: Option<String>) -> Self {
         match result {
-            Some(reason) => TestResult::Fail(vec![OxcDiagnostic::error(Cow::Owned(reason))]),
-            None => TestResult::Pass,
+            Some(reason) => Self::Fail(vec![OxcDiagnostic::error(Cow::Owned(reason))]),
+            None => Self::Pass,
         }
     }
 }
 
 impl From<OxcDiagnostic> for TestResult {
     fn from(diagnostic: OxcDiagnostic) -> Self {
-        TestResult::Fail(vec![diagnostic])
+        Self::Fail(vec![diagnostic])
     }
 }
 impl From<Vec<OxcDiagnostic>> for TestResult {
     fn from(diagnostics: Vec<OxcDiagnostic>) -> Self {
-        TestResult::Fail(diagnostics)
+        Self::Fail(diagnostics)
     }
 }
 impl FromIterator<OxcDiagnostic> for TestResult {
     fn from_iter<I: IntoIterator<Item = OxcDiagnostic>>(iter: I) -> Self {
-        TestResult::Fail(iter.into_iter().collect())
+        Self::Fail(iter.into_iter().collect())
     }
 }

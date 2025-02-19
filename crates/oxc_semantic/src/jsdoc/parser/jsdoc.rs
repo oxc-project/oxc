@@ -17,7 +17,7 @@ pub struct JSDoc<'a> {
 impl<'a> JSDoc<'a> {
     /// comment_content: Inside of /**HERE*/, not include `/**` and `*/`
     /// span: `Span` for this JSDoc comment, range for `/**HERE*/`
-    pub fn new(comment_content: &'a str, span: Span) -> JSDoc<'a> {
+    pub fn new(comment_content: &'a str, span: Span) -> Self {
         Self { raw: comment_content, cached: OnceCell::new(), span }
     }
 

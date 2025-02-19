@@ -50,7 +50,7 @@ impl OxlintGlobals {
         self.0.get(name).is_some_and(|value| *value != GlobalValue::Off)
     }
 
-    pub(crate) fn override_globals(&self, globals_to_override: &mut OxlintGlobals) {
+    pub(crate) fn override_globals(&self, globals_to_override: &mut Self) {
         for (env, supported) in self.0.clone() {
             globals_to_override.0.insert(env, supported);
         }
@@ -88,9 +88,9 @@ impl From<bool> for GlobalValue {
     #[inline]
     fn from(value: bool) -> Self {
         if value {
-            GlobalValue::Writeable
+            Self::Writeable
         } else {
-            GlobalValue::Readonly
+            Self::Readonly
         }
     }
 }
@@ -100,9 +100,9 @@ impl TryFrom<&str> for GlobalValue {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            "readonly" | "readable" => Ok(GlobalValue::Readonly),
-            "writable" | "writeable" => Ok(GlobalValue::Writeable),
-            "off" => Ok(GlobalValue::Off),
+            "readonly" | "readable" => Ok(Self::Readonly),
+            "writable" | "writeable" => Ok(Self::Writeable),
+            "off" => Ok(Self::Off),
             _ => Err("Invalid global value"),
         }
     }

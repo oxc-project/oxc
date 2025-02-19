@@ -306,7 +306,7 @@ impl NoUnusedVars {
                 ctx.diagnostic(diagnostic::param(symbol, &self.args_ignore_pattern));
             }
             AstKind::BindingRestElement(_) => {
-                if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
+                if Self::is_allowed_binding_rest_element(symbol) {
                     return;
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern));

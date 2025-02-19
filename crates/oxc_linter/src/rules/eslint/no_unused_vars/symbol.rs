@@ -283,9 +283,9 @@ impl<'a> PartialEq<ImportDeclarationSpecifier<'a>> for Symbol<'_, 'a> {
     }
 }
 
-impl<'s, 'a, T> PartialEq<&T> for Symbol<'s, 'a>
+impl<T> PartialEq<&T> for Symbol<'_, '_>
 where
-    Symbol<'s, 'a>: PartialEq<T>,
+    Self: PartialEq<T>,
 {
     fn eq(&self, other: &&T) -> bool {
         self == *other

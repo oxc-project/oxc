@@ -32,8 +32,8 @@ impl Style {
 
     pub fn as_str(&self) -> &str {
         match self {
-            Style::Expression => "expression",
-            Style::Declaration => "declaration",
+            Self::Expression => "expression",
+            Self::Declaration => "declaration",
         }
     }
 }

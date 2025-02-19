@@ -189,7 +189,7 @@ pub struct CompilerAssumptions {
 
 impl From<CompilerAssumptions> for oxc::transformer::CompilerAssumptions {
     fn from(value: CompilerAssumptions) -> Self {
-        let ops = oxc::transformer::CompilerAssumptions::default();
+        let ops = Self::default();
         Self {
             ignore_function_length: value
                 .ignore_function_length
@@ -237,8 +237,8 @@ pub struct TypeScriptOptions {
 
 impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
     fn from(options: TypeScriptOptions) -> Self {
-        let ops = oxc::transformer::TypeScriptOptions::default();
-        oxc::transformer::TypeScriptOptions {
+        let ops = Self::default();
+        Self {
             jsx_pragma: options.jsx_pragma.map(Into::into).unwrap_or(ops.jsx_pragma),
             jsx_pragma_frag: options.jsx_pragma_frag.map(Into::into).unwrap_or(ops.jsx_pragma_frag),
             only_remove_type_imports: options
@@ -291,7 +291,7 @@ pub struct DecoratorOptions {
 
 impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
     fn from(options: DecoratorOptions) -> Self {
-        oxc::transformer::DecoratorOptions {
+        Self {
             legacy: options.legacy.unwrap_or_default(),
             emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
         }
@@ -384,8 +384,8 @@ pub struct JsxOptions {
 
 impl From<JsxOptions> for oxc::transformer::JsxOptions {
     fn from(options: JsxOptions) -> Self {
-        let ops = oxc::transformer::JsxOptions::default();
-        oxc::transformer::JsxOptions {
+        let ops = Self::default();
+        Self {
             runtime: match options.runtime.as_deref() {
                 Some("classic") => JsxRuntime::Classic,
                 /* "automatic" */ _ => JsxRuntime::Automatic,
@@ -424,8 +424,8 @@ pub struct ReactRefreshOptions {
 
 impl From<ReactRefreshOptions> for oxc::transformer::ReactRefreshOptions {
     fn from(options: ReactRefreshOptions) -> Self {
-        let ops = oxc::transformer::ReactRefreshOptions::default();
-        oxc::transformer::ReactRefreshOptions {
+        let ops = Self::default();
+        Self {
             refresh_reg: options.refresh_reg.unwrap_or(ops.refresh_reg),
             refresh_sig: options.refresh_sig.unwrap_or(ops.refresh_sig),
             emit_full_signatures: options.emit_full_signatures.unwrap_or(ops.emit_full_signatures),
@@ -446,7 +446,7 @@ pub struct ArrowFunctionsOptions {
 
 impl From<ArrowFunctionsOptions> for oxc::transformer::ArrowFunctionsOptions {
     fn from(options: ArrowFunctionsOptions) -> Self {
-        oxc::transformer::ArrowFunctionsOptions { spec: options.spec.unwrap_or_default() }
+        Self { spec: options.spec.unwrap_or_default() }
     }
 }
 
@@ -458,7 +458,7 @@ pub struct Es2015Options {
 
 impl From<Es2015Options> for oxc::transformer::ES2015Options {
     fn from(options: Es2015Options) -> Self {
-        oxc::transformer::ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
+        Self { arrow_function: options.arrow_function.map(Into::into) }
     }
 }
 
@@ -495,7 +495,7 @@ impl From<Helpers> for HelperLoaderOptions {
     fn from(value: Helpers) -> Self {
         Self {
             mode: value.mode.map(HelperLoaderMode::from).unwrap_or_default(),
-            ..HelperLoaderOptions::default()
+            ..Self::default()
         }
     }
 }

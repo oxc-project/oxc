@@ -13,7 +13,7 @@ impl NodeId {
     /// Mock node id.
     ///
     /// This is used for synthetically-created AST nodes, among other things.
-    pub const DUMMY: Self = NodeId::new(0);
+    pub const DUMMY: Self = Self::new(0);
 
     /// Create `NodeId` from `u32`.
     ///

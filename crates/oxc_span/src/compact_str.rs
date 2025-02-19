@@ -140,8 +140,8 @@ impl From<CompactStr> for Cow<'_, str> {
 impl From<Cow<'_, str>> for CompactStr {
     fn from(value: Cow<'_, str>) -> Self {
         match value {
-            Cow::Borrowed(s) => CompactStr::new(s),
-            Cow::Owned(s) => CompactStr::from(s),
+            Cow::Borrowed(s) => Self::new(s),
+            Cow::Owned(s) => Self::from(s),
         }
     }
 }

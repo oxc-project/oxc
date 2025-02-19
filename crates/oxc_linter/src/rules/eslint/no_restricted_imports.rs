@@ -194,14 +194,14 @@ impl std::ops::Deref for SerdeRegexWrapper<Regex> {
 }
 
 impl<'de> Deserialize<'de> for SerdeRegexWrapper<Regex> {
-    fn deserialize<D>(d: D) -> Result<SerdeRegexWrapper<Regex>, D::Error>
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let s = <Cow<str>>::deserialize(d)?;
 
         match s.parse() {
-            Ok(regex) => Ok(SerdeRegexWrapper(regex)),
+            Ok(regex) => Ok(Self(regex)),
             Err(err) => Err(D::Error::custom(err)),
         }
     }

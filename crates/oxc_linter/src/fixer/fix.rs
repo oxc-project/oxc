@@ -339,7 +339,7 @@ impl<'a> From<Vec<Fix<'a>>> for CompositeFix<'a> {
     }
 }
 
-impl<'a> From<Vec<CompositeFix<'a>>> for CompositeFix<'a> {
+impl From<Vec<Self>> for CompositeFix<'_> {
     fn from(fixes: Vec<Self>) -> Self {
         fixes.into_iter().reduce(Self::concat).unwrap_or_default()
     }
@@ -358,7 +358,7 @@ impl GetSpan for CompositeFix<'_> {
 }
 
 impl<'a> CompositeFix<'a> {
-    pub fn push(&mut self, fix: CompositeFix<'a>) {
+    pub fn push(&mut self, fix: Self) {
         match self {
             Self::None => *self = fix,
             Self::Single(fix1) => match fix {
@@ -383,7 +383,7 @@ impl<'a> CompositeFix<'a> {
 
     #[cold]
     #[must_use]
-    pub fn concat(self, fix: CompositeFix<'a>) -> Self {
+    pub fn concat(self, fix: Self) -> Self {
         match (self, fix) {
             (Self::None, f) | (f, Self::None) => f,
             (Self::Single(fix1), Self::Single(fix2)) => Self::Multiple(vec![fix1, fix2]),

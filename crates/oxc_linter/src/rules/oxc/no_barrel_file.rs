@@ -66,7 +66,7 @@ impl Rule for NoBarrelFile {
                 .get(0)
                 .and_then(|config| config.get("threshold"))
                 .and_then(serde_json::Value::as_u64)
-                .map_or(NoBarrelFile::default().threshold, |n| n as usize),
+                .map_or(Self::default().threshold, |n| n as usize),
         }
     }
 

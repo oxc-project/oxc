@@ -361,7 +361,7 @@ struct MemberSyntaxSortOrder(Vec<ImportKind>);
 
 impl Default for MemberSyntaxSortOrder {
     fn default() -> Self {
-        MemberSyntaxSortOrder(vec![
+        Self(vec![
             ImportKind::None,
             ImportKind::All,
             ImportKind::Multiple,
@@ -426,10 +426,10 @@ impl FromStr for ImportKind {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "none" => Ok(ImportKind::None),
-            "all" => Ok(ImportKind::All),
-            "multiple" => Ok(ImportKind::Multiple),
-            "single" => Ok(ImportKind::Single),
+            "none" => Ok(Self::None),
+            "all" => Ok(Self::All),
+            "multiple" => Ok(Self::Multiple),
+            "single" => Ok(Self::Single),
             _ => Err("Invalid import kind"),
         }
     }
@@ -438,10 +438,10 @@ impl FromStr for ImportKind {
 impl Display for ImportKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ImportKind::None => write!(f, "None"),
-            ImportKind::All => write!(f, "All"),
-            ImportKind::Multiple => write!(f, "Multiple"),
-            ImportKind::Single => write!(f, "Single"),
+            Self::None => write!(f, "None"),
+            Self::All => write!(f, "All"),
+            Self::Multiple => write!(f, "Multiple"),
+            Self::Single => write!(f, "Single"),
         }
     }
 }

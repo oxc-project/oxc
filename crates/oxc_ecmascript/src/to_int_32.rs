@@ -61,9 +61,9 @@ impl ToInt32 for f64 {
             return 0;
         }
 
-        if number.is_finite() && number <= f64::from(i32::MAX) && number >= f64::from(i32::MIN) {
+        if number.is_finite() && number <= Self::from(i32::MAX) && number >= Self::from(i32::MIN) {
             let i = number as i32;
-            if f64::from(i) == number {
+            if Self::from(i) == number {
                 return i;
             }
         }

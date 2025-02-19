@@ -85,7 +85,7 @@ impl RuleTable {
         })
         .collect::<Vec<_>>();
 
-        RuleTable { total, sections, turned_on_by_default_count: 123 }
+        Self { total, sections, turned_on_by_default_count: 123 }
     }
 }
 

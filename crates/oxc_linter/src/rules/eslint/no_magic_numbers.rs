@@ -60,7 +60,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
 
     fn try_from(raw: &serde_json::Value) -> Result<Self, Self::Error> {
         if raw.is_null() {
-            return Ok(NoMagicNumbersConfig::default());
+            return Ok(Self::default());
         }
 
         raw.get(0).map_or_else(

@@ -196,7 +196,7 @@ impl Span {
     /// assert!(!span.contains_inclusive(Span::empty(0)));
     /// ```
     #[inline]
-    pub const fn contains_inclusive(self, span: Span) -> bool {
+    pub const fn contains_inclusive(self, span: Self) -> bool {
         self.start <= span.start && span.end <= self.end
     }
 
@@ -442,7 +442,7 @@ impl Span {
 }
 
 impl Index<Span> for str {
-    type Output = str;
+    type Output = Self;
 
     #[inline]
     fn index(&self, index: Span) -> &Self::Output {
@@ -472,7 +472,7 @@ impl From<Span> for SourceSpan {
 
 impl From<Span> for LabeledSpan {
     fn from(val: Span) -> Self {
-        LabeledSpan::underline(val)
+        Self::underline(val)
     }
 }
 

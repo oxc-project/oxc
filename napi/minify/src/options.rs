@@ -33,7 +33,7 @@ impl Default for CompressOptions {
 impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
     type Error = String;
     fn try_from(o: &CompressOptions) -> Result<Self, Self::Error> {
-        Ok(oxc_minifier::CompressOptions {
+        Ok(Self {
             target: o
                 .target
                 .as_ref()
@@ -78,9 +78,9 @@ impl Default for CodegenOptions {
 
 impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
     fn from(o: &CodegenOptions) -> Self {
-        oxc_codegen::CodegenOptions {
+        Self {
             minify: o.whitespace.unwrap_or(true),
-            ..oxc_codegen::CodegenOptions::default()
+            ..Self::default()
         }
     }
 }
@@ -111,7 +111,7 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
             None | Some(Either::A(true)) => Some(oxc_minifier::MangleOptions::default()),
             Some(Either::B(o)) => Some(oxc_minifier::MangleOptions::from(o)),
         };
-        Ok(oxc_minifier::MinifierOptions { compress, mangle })
+        Ok(Self { compress, mangle })
     }
 }
 

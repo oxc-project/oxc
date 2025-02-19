@@ -128,7 +128,7 @@ impl Parser {
     ) -> Result<Vec<ast::CodePoint>> {
         let mut body = vec![];
         while let Some(code_point) = self.parse_string_character(single_or_double_quote)? {
-            Parser::handle_code_point(
+            Self::handle_code_point(
                 &mut body,
                 code_point,
                 self.options.span_offset,

@@ -44,7 +44,7 @@ impl<'alloc> String<'alloc> {
     ///
     /// [`with_capacity_in`]: String::with_capacity_in
     #[inline(always)]
-    pub fn new_in(allocator: &'alloc Allocator) -> String<'alloc> {
+    pub fn new_in(allocator: &'alloc Allocator) -> Self {
         Self(ManuallyDrop::new(BumpaloString::new_in(allocator.bump())))
     }
 
@@ -63,7 +63,7 @@ impl<'alloc> String<'alloc> {
     /// [`capacity`]: String::capacity
     /// [`new_in`]: String::new_in
     #[inline(always)]
-    pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> String<'alloc> {
+    pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         Self(ManuallyDrop::new(BumpaloString::with_capacity_in(capacity, allocator.bump())))
     }
 
@@ -79,7 +79,7 @@ impl<'alloc> String<'alloc> {
     /// assert_eq!(s, "hello");
     /// ```
     #[inline(always)]
-    pub fn from_str_in(s: &str, allocator: &'alloc Allocator) -> String<'alloc> {
+    pub fn from_str_in(s: &str, allocator: &'alloc Allocator) -> Self {
         Self(ManuallyDrop::new(BumpaloString::from_str_in(s, allocator.bump())))
     }
 
@@ -87,7 +87,7 @@ impl<'alloc> String<'alloc> {
     ///
     /// # Errors
     /// Returns [`Err`] if the `Vec` does not comprise a valid UTF-8 string.
-    pub fn from_utf8(bytes: Vec<'alloc, u8>) -> Result<String<'alloc>, Utf8Error> {
+    pub fn from_utf8(bytes: Vec<'alloc, u8>) -> Result<Self, Utf8Error> {
         // Check vec comprises a valid UTF-8 string.
         from_utf8(&bytes)?;
         // SAFETY: We just checked it's a valid UTF-8 string
@@ -105,7 +105,7 @@ impl<'alloc> String<'alloc> {
     // `#[inline(always)]` because this is a no-op at runtime
     #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
     #[inline(always)]
-    pub unsafe fn from_utf8_unchecked(bytes: Vec<'alloc, u8>) -> String<'alloc> {
+    pub unsafe fn from_utf8_unchecked(bytes: Vec<'alloc, u8>) -> Self {
         // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
         // and our inner `Vec` type is `allocator_api2::vec::Vec`.
         // SAFETY: Conversion is safe because both types store data in arena in same way.
@@ -156,7 +156,7 @@ impl<'alloc> String<'alloc> {
         length: usize,
         capacity: usize,
         allocator: &'alloc Allocator,
-    ) -> String<'alloc> {
+    ) -> Self {
         // SAFETY: Safety conditions of this method are the same as `BumpaloString`'s method
         let inner = BumpaloString::from_raw_parts_in(buf, length, capacity, allocator.bump());
         Self(ManuallyDrop::new(inner))

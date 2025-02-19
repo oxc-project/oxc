@@ -93,7 +93,7 @@ declare_oxc_lint!(
 impl Rule for NoCycle {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
-        let default = NoCycle::default();
+        let default = Self::default();
         Self {
             max_depth: obj
                 .and_then(|v| v.get("maxDepth"))

@@ -499,7 +499,7 @@ impl ModuleRecord {
                         .filter_map(|export_entry| export_entry.export_name.default_export_span()),
                 )
                 .next(),
-            ..ModuleRecord::default()
+            ..Self::default()
         }
     }
 

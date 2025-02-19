@@ -76,7 +76,7 @@ pub struct Stats {
 impl Stats {
     /// Create new [`Stats`] from specified counts.
     pub fn new(nodes: u32, scopes: u32, symbols: u32, references: u32) -> Self {
-        Stats { nodes, scopes, symbols, references }
+        Self { nodes, scopes, symbols, references }
     }
 
     /// Gather [`Stats`] by visiting AST and counting nodes, scopes, symbols, and references.

@@ -314,7 +314,7 @@ pub enum ConfigBuilderError {
 impl std::fmt::Display for ConfigBuilderError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ConfigBuilderError::UnknownRules { rules } => {
+            Self::UnknownRules { rules } => {
                 write!(f, "unknown rules: ")?;
                 for rule in rules {
                     write!(f, "{}", rule.full_name())?;

@@ -37,7 +37,7 @@ impl Engine {
     ///
     /// * No matching target
     /// * Invalid version
-    pub fn parse_name_and_version(s: &str) -> Result<(Engine, Version), String> {
+    pub fn parse_name_and_version(s: &str) -> Result<(Self, Version), String> {
         let s = s.cow_to_ascii_lowercase();
         for (name, engine) in engines() {
             if let Some(v) = s.strip_prefix(name) {

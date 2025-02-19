@@ -30,14 +30,14 @@ impl BrowserslistQuery {
         };
 
         let result = match self {
-            BrowserslistQuery::Single(s) => {
+            Self::Single(s) => {
                 if s.is_empty() {
                     browserslist::resolve(&["defaults"], &options)
                 } else {
                     browserslist::resolve(&[s], &options)
                 }
             }
-            BrowserslistQuery::Multiple(s) => browserslist::resolve(s, &options),
+            Self::Multiple(s) => browserslist::resolve(s, &options),
         };
 
         let result = match result {

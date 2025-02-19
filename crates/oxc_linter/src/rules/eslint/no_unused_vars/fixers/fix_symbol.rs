@@ -4,7 +4,7 @@ use oxc_span::{CompactStr, GetSpan, Span};
 use super::Symbol;
 use crate::fixer::{Fix, RuleFix, RuleFixer};
 
-impl<'s, 'a> Symbol<'s, 'a> {
+impl<'a> Symbol<'_, 'a> {
     /// Delete a single declarator from a [`VariableDeclaration`] list with more
     /// than one declarator.
     pub(super) fn delete_from_list<T>(
@@ -15,7 +15,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     ) -> RuleFix<'a>
     where
         T: GetSpan,
-        Symbol<'s, 'a>: PartialEq<T>,
+        Self: PartialEq<T>,
     {
         let Some(own_position) = list.iter().position(|el| self == el) else {
             // Happens when the symbol is in a destructuring pattern.
@@ -182,23 +182,23 @@ impl BindingInfo {
     #[inline]
     const fn single_or_missing(found: bool) -> Self {
         if found {
-            BindingInfo::SingleDestructure
+            Self::SingleDestructure
         } else {
-            BindingInfo::NotFound
+            Self::NotFound
         }
     }
 
     fn multi_or_missing(found: Option<(Span, bool)>, is_object: bool) -> Self {
         match found {
-            Some((span, is_last)) => BindingInfo::MultiDestructure(span.span(), is_object, is_last),
-            None => BindingInfo::NotFound,
+            Some((span, is_last)) => Self::MultiDestructure(span.span(), is_object, is_last),
+            None => Self::NotFound,
         }
     }
 
     fn multi_or_single(found: Option<(Span, bool)>, is_object: bool) -> Self {
         match found {
-            Some((span, is_last)) => BindingInfo::MultiDestructure(span.span(), is_object, is_last),
-            None => BindingInfo::SingleDestructure,
+            Some((span, is_last)) => Self::MultiDestructure(span.span(), is_object, is_last),
+            None => Self::SingleDestructure,
         }
     }
 }

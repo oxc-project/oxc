@@ -59,11 +59,11 @@ impl std::str::FromStr for TestCaseName {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "fit" => Ok(TestCaseName::Fit),
-            "it" => Ok(TestCaseName::IT),
-            "test" => Ok(TestCaseName::Test),
-            "xit" => Ok(TestCaseName::Xit),
-            "xtest" => Ok(TestCaseName::Xtest),
+            "fit" => Ok(Self::Fit),
+            "it" => Ok(Self::IT),
+            "test" => Ok(Self::Test),
+            "xit" => Ok(Self::Xit),
+            "xtest" => Ok(Self::Xtest),
             _ => Err("Unknown Test case name"),
         }
     }

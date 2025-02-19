@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`
 
-#![allow(clippy::default_trait_access)]
+#![allow(clippy::default_trait_access, clippy::use_self)]
 
 use oxc_allocator::{Allocator, CloneIn};
 

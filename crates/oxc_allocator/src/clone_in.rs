@@ -67,10 +67,10 @@ where
 }
 
 impl<'alloc, T: Copy> CloneIn<'alloc> for Cell<T> {
-    type Cloned = Cell<T>;
+    type Cloned = Self;
 
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
-        Cell::new(self.get())
+        Self::new(self.get())
     }
 }
 

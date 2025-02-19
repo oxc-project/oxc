@@ -48,7 +48,7 @@ enum OneOrMany<T> {
 
 impl<T> Default for OneOrMany<T> {
     fn default() -> Self {
-        OneOrMany::Many(Vec::new())
+        Self::Many(Vec::new())
     }
 }
 

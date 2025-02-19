@@ -256,7 +256,7 @@ impl<T: PartialEq> Pair<T> {
     }
 }
 
-impl<T> AsRef<Pair<T>> for Pair<T> {
+impl<T> AsRef<Self> for Pair<T> {
     fn as_ref(&self) -> &Self {
         self
     }

@@ -295,7 +295,7 @@ impl<'a> ParserImpl<'a> {
     /// # Errors
     pub(crate) fn try_parse<T>(
         &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a>) -> Result<T>,
+        func: impl FnOnce(&mut Self) -> Result<T>,
     ) -> Option<T> {
         let checkpoint = self.checkpoint();
         let ctx = self.ctx;
@@ -309,7 +309,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
+    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut Self) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);

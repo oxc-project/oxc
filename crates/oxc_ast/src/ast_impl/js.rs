@@ -202,7 +202,7 @@ impl<'a> Expression<'a> {
     ///
     /// For getting a reference to the expression inside, use [`Expression::get_inner_expression`].
     #[must_use]
-    pub fn into_inner_expression(self) -> Expression<'a> {
+    pub fn into_inner_expression(self) -> Self {
         let mut expr = self;
         loop {
             expr = match expr {
@@ -225,7 +225,7 @@ impl<'a> Expression<'a> {
     ///
     /// For taking ownership of the expression inside, use [`Expression::into_inner_expression`].
     /// For getting a mutable reference to the expression inside, use [`Expression::get_inner_expression_mut`].
-    pub fn get_inner_expression(&self) -> &Expression<'a> {
+    pub fn get_inner_expression(&self) -> &Self {
         let mut expr = self;
         loop {
             expr = match expr {
@@ -248,7 +248,7 @@ impl<'a> Expression<'a> {
     ///
     /// For taking ownership of the expression inside, use [`Expression::into_inner_expression`].
     /// For getting an immutable reference to the expression inside, use [`Expression::get_inner_expression`].
-    pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
+    pub fn get_inner_expression_mut(&mut self) -> &mut Self {
         let mut expr = self;
         loop {
             expr = match expr {

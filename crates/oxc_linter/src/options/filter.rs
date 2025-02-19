@@ -141,11 +141,11 @@ impl LintFilterKind {
                     (LintPlugins::from(plugin), Cow::Owned(rule.to_string()))
                 }
             };
-            Ok(LintFilterKind::Rule(plugin, rule))
+            Ok(Self::Rule(plugin, rule))
         } else {
             match RuleCategory::try_from(filter.as_ref()) {
-                Ok(category) => Ok(LintFilterKind::Category(category)),
-                Err(()) => Ok(LintFilterKind::Generic(filter)),
+                Ok(category) => Ok(Self::Category(category)),
+                Err(()) => Ok(Self::Generic(filter)),
             }
         }
     }
@@ -181,7 +181,7 @@ impl TryFrom<Cow<'static, str>> for LintFilterKind {
 impl From<RuleCategory> for LintFilterKind {
     #[inline]
     fn from(category: RuleCategory) -> Self {
-        LintFilterKind::Category(category)
+        Self::Category(category)
     }
 }
 

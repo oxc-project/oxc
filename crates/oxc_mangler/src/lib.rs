@@ -198,7 +198,7 @@ impl Mangler {
         }
 
         let (exported_names, exported_symbols) = if self.options.top_level {
-            Mangler::collect_exported_symbols(program)
+            Self::collect_exported_symbols(program)
         } else {
             Default::default()
         };

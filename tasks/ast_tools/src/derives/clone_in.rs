@@ -59,7 +59,7 @@ impl Derive for DeriveCloneIn {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(clippy::default_trait_access)]
+            #![allow(clippy::default_trait_access, clippy::use_self)]
 
             ///@@line_break
             use oxc_allocator::{Allocator, CloneIn};

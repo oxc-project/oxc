@@ -30,11 +30,9 @@ impl Serialize for SourceType {
 impl Serialize for ModuleKind {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            ModuleKind::Script => serializer.serialize_unit_variant("ModuleKind", 0, "script"),
-            ModuleKind::Module => serializer.serialize_unit_variant("ModuleKind", 1, "module"),
-            ModuleKind::Unambiguous => {
-                serializer.serialize_unit_variant("ModuleKind", 2, "unambiguous")
-            }
+            Self::Script => serializer.serialize_unit_variant("ModuleKind", 0, "script"),
+            Self::Module => serializer.serialize_unit_variant("ModuleKind", 1, "module"),
+            Self::Unambiguous => serializer.serialize_unit_variant("ModuleKind", 2, "unambiguous"),
         }
     }
 }

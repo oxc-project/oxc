@@ -449,7 +449,7 @@ declare_oxc_lint!(
 
 impl Rule for NewCap {
     fn from_configuration(value: serde_json::Value) -> Self {
-        NewCap::from(&value)
+        Self::from(&value)
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {

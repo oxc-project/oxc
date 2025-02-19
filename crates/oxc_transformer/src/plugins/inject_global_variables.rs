@@ -35,8 +35,8 @@ pub struct InjectImport {
 }
 
 impl InjectImport {
-    pub fn named_specifier(source: &str, imported: Option<&str>, local: &str) -> InjectImport {
-        InjectImport {
+    pub fn named_specifier(source: &str, imported: Option<&str>, local: &str) -> Self {
+        Self {
             source: CompactStr::from(source),
             specifier: InjectImportSpecifier::Specifier {
                 imported: imported.map(CompactStr::from),
@@ -46,16 +46,16 @@ impl InjectImport {
         }
     }
 
-    pub fn namespace_specifier(source: &str, local: &str) -> InjectImport {
-        InjectImport {
+    pub fn namespace_specifier(source: &str, local: &str) -> Self {
+        Self {
             source: CompactStr::from(source),
             specifier: InjectImportSpecifier::NamespaceSpecifier { local: CompactStr::from(local) },
             replace_value: Self::replace_name(local),
         }
     }
 
-    pub fn default_specifier(source: &str, local: &str) -> InjectImport {
-        InjectImport {
+    pub fn default_specifier(source: &str, local: &str) -> Self {
+        Self {
             source: CompactStr::from(source),
             specifier: InjectImportSpecifier::DefaultSpecifier { local: CompactStr::from(local) },
             replace_value: Self::replace_name(local),

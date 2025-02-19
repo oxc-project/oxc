@@ -98,8 +98,8 @@ impl From<FixKind> for ExpectFixKind {
 impl From<ExpectFixKind> for FixKind {
     fn from(expected_kind: ExpectFixKind) -> Self {
         match expected_kind {
-            ExpectFixKind::None => FixKind::None,
-            ExpectFixKind::Any => FixKind::All,
+            ExpectFixKind::None => Self::None,
+            ExpectFixKind::Any => Self::All,
             ExpectFixKind::Specific(kind) => kind,
         }
     }

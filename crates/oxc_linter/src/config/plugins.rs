@@ -43,26 +43,26 @@ bitflags! {
 impl Default for LintPlugins {
     #[inline]
     fn default() -> Self {
-        LintPlugins::REACT | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
+        Self::REACT | Self::UNICORN | Self::TYPESCRIPT | Self::OXC
     }
 }
 
 impl From<LintPluginOptions> for LintPlugins {
     fn from(options: LintPluginOptions) -> Self {
-        let mut plugins = LintPlugins::empty();
-        plugins.set(LintPlugins::REACT, options.react);
-        plugins.set(LintPlugins::UNICORN, options.unicorn);
-        plugins.set(LintPlugins::TYPESCRIPT, options.typescript);
-        plugins.set(LintPlugins::OXC, options.oxc);
-        plugins.set(LintPlugins::IMPORT, options.import);
-        plugins.set(LintPlugins::JSDOC, options.jsdoc);
-        plugins.set(LintPlugins::JEST, options.jest);
-        plugins.set(LintPlugins::VITEST, options.vitest);
-        plugins.set(LintPlugins::JSX_A11Y, options.jsx_a11y);
-        plugins.set(LintPlugins::NEXTJS, options.nextjs);
-        plugins.set(LintPlugins::REACT_PERF, options.react_perf);
-        plugins.set(LintPlugins::PROMISE, options.promise);
-        plugins.set(LintPlugins::NODE, options.node);
+        let mut plugins = Self::empty();
+        plugins.set(Self::REACT, options.react);
+        plugins.set(Self::UNICORN, options.unicorn);
+        plugins.set(Self::TYPESCRIPT, options.typescript);
+        plugins.set(Self::OXC, options.oxc);
+        plugins.set(Self::IMPORT, options.import);
+        plugins.set(Self::JSDOC, options.jsdoc);
+        plugins.set(Self::JEST, options.jest);
+        plugins.set(Self::VITEST, options.vitest);
+        plugins.set(Self::JSX_A11Y, options.jsx_a11y);
+        plugins.set(Self::NEXTJS, options.nextjs);
+        plugins.set(Self::REACT_PERF, options.react_perf);
+        plugins.set(Self::PROMISE, options.promise);
+        plugins.set(Self::NODE, options.node);
         plugins
     }
 }
@@ -71,51 +71,51 @@ impl LintPlugins {
     /// Returns `true` if the Vitest plugin is enabled.
     #[inline]
     pub fn has_vitest(self) -> bool {
-        self.contains(LintPlugins::VITEST)
+        self.contains(Self::VITEST)
     }
 
     /// Returns `true` if the Jest plugin is enabled.
     #[inline]
     pub fn has_jest(self) -> bool {
-        self.contains(LintPlugins::JEST)
+        self.contains(Self::JEST)
     }
 
     /// Returns `true` if Jest or Vitest plugins are enabled.
     #[inline]
     pub fn has_test(self) -> bool {
-        self.intersects(LintPlugins::JEST.union(LintPlugins::VITEST))
+        self.intersects(Self::JEST.union(Self::VITEST))
     }
 
     /// Returns `true` if the import plugin is enabled.
     #[inline]
     pub fn has_import(self) -> bool {
-        self.contains(LintPlugins::IMPORT)
+        self.contains(Self::IMPORT)
     }
 }
 
 impl From<&str> for LintPlugins {
     fn from(value: &str) -> Self {
         match value {
-            "react" | "react-hooks" | "react_hooks" => LintPlugins::REACT,
-            "unicorn" => LintPlugins::UNICORN,
+            "react" | "react-hooks" | "react_hooks" => Self::REACT,
+            "unicorn" => Self::UNICORN,
             "typescript" | "typescript-eslint" | "typescript_eslint" | "@typescript-eslint" => {
-                LintPlugins::TYPESCRIPT
+                Self::TYPESCRIPT
             }
             // deepscan for backwards compatibility. Those rules have been moved into oxc
-            "oxc" | "deepscan" => LintPlugins::OXC,
+            "oxc" | "deepscan" => Self::OXC,
             // import-x has the same rules but better performance
-            "import" | "import-x" => LintPlugins::IMPORT,
-            "jsdoc" => LintPlugins::JSDOC,
-            "jest" => LintPlugins::JEST,
-            "vitest" => LintPlugins::VITEST,
-            "jsx-a11y" | "jsx_a11y" => LintPlugins::JSX_A11Y,
-            "nextjs" => LintPlugins::NEXTJS,
-            "react-perf" | "react_perf" => LintPlugins::REACT_PERF,
-            "promise" => LintPlugins::PROMISE,
-            "node" => LintPlugins::NODE,
+            "import" | "import-x" => Self::IMPORT,
+            "jsdoc" => Self::JSDOC,
+            "jest" => Self::JEST,
+            "vitest" => Self::VITEST,
+            "jsx-a11y" | "jsx_a11y" => Self::JSX_A11Y,
+            "nextjs" => Self::NEXTJS,
+            "react-perf" | "react_perf" => Self::REACT_PERF,
+            "promise" => Self::PROMISE,
+            "node" => Self::NODE,
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
-            _ => LintPlugins::empty(),
+            _ => Self::empty(),
         }
     }
 }
@@ -145,7 +145,7 @@ impl<S: AsRef<str>> FromIterator<S> for LintPlugins {
     fn from_iter<T: IntoIterator<Item = S>>(iter: T) -> Self {
         iter.into_iter()
             .map(|plugin| plugin.as_ref().into())
-            .fold(LintPlugins::empty(), LintPlugins::union)
+            .fold(Self::empty(), Self::union)
     }
 }
 

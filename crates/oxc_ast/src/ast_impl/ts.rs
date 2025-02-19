@@ -174,7 +174,7 @@ impl TSModuleDeclaration<'_> {
 impl TSModuleDeclarationKind {
     /// Returns `true` for `declare global { ... }`
     pub fn is_global(self) -> bool {
-        matches!(self, TSModuleDeclarationKind::Global)
+        matches!(self, Self::Global)
     }
 
     /// Declaration keyword as a string, identical to how it would appear in the
@@ -304,9 +304,9 @@ impl TSTypeOperatorOperator {
     /// Get the operator string as it would appear in the source code.
     pub fn to_str(self) -> &'static str {
         match self {
-            TSTypeOperatorOperator::Keyof => "keyof",
-            TSTypeOperatorOperator::Readonly => "readonly",
-            TSTypeOperatorOperator::Unique => "unique",
+            Self::Keyof => "keyof",
+            Self::Readonly => "readonly",
+            Self::Unique => "unique",
         }
     }
 }

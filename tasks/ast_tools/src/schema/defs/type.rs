@@ -21,65 +21,65 @@ impl Def for TypeDef {
     /// Get [`TypeId`] for type.
     fn id(&self) -> TypeId {
         match self {
-            TypeDef::Struct(def) => def.id(),
-            TypeDef::Enum(def) => def.id(),
-            TypeDef::Primitive(def) => def.id(),
-            TypeDef::Option(def) => def.id(),
-            TypeDef::Box(def) => def.id(),
-            TypeDef::Vec(def) => def.id(),
-            TypeDef::Cell(def) => def.id(),
+            Self::Struct(def) => def.id(),
+            Self::Enum(def) => def.id(),
+            Self::Primitive(def) => def.id(),
+            Self::Option(def) => def.id(),
+            Self::Box(def) => def.id(),
+            Self::Vec(def) => def.id(),
+            Self::Cell(def) => def.id(),
         }
     }
 
     /// Get type name.
     fn name(&self) -> &str {
         match self {
-            TypeDef::Struct(def) => def.name(),
-            TypeDef::Enum(def) => def.name(),
-            TypeDef::Primitive(def) => def.name(),
-            TypeDef::Option(def) => def.name(),
-            TypeDef::Box(def) => def.name(),
-            TypeDef::Vec(def) => def.name(),
-            TypeDef::Cell(def) => def.name(),
+            Self::Struct(def) => def.name(),
+            Self::Enum(def) => def.name(),
+            Self::Primitive(def) => def.name(),
+            Self::Option(def) => def.name(),
+            Self::Box(def) => def.name(),
+            Self::Vec(def) => def.name(),
+            Self::Cell(def) => def.name(),
         }
     }
 
     /// Get all traits which have derives generated for this type.
     fn generated_derives(&self) -> Derives {
         match self {
-            TypeDef::Struct(def) => def.generated_derives(),
-            TypeDef::Enum(def) => def.generated_derives(),
-            TypeDef::Primitive(def) => def.generated_derives(),
-            TypeDef::Option(def) => def.generated_derives(),
-            TypeDef::Box(def) => def.generated_derives(),
-            TypeDef::Vec(def) => def.generated_derives(),
-            TypeDef::Cell(def) => def.generated_derives(),
+            Self::Struct(def) => def.generated_derives(),
+            Self::Enum(def) => def.generated_derives(),
+            Self::Primitive(def) => def.generated_derives(),
+            Self::Option(def) => def.generated_derives(),
+            Self::Box(def) => def.generated_derives(),
+            Self::Vec(def) => def.generated_derives(),
+            Self::Cell(def) => def.generated_derives(),
         }
     }
 
     /// Get if type has a lifetime.
     fn has_lifetime(&self, schema: &Schema) -> bool {
         match self {
-            TypeDef::Struct(def) => def.has_lifetime(schema),
-            TypeDef::Enum(def) => def.has_lifetime(schema),
-            TypeDef::Primitive(def) => def.has_lifetime(schema),
-            TypeDef::Option(def) => def.has_lifetime(schema),
-            TypeDef::Box(def) => def.has_lifetime(schema),
-            TypeDef::Vec(def) => def.has_lifetime(schema),
-            TypeDef::Cell(def) => def.has_lifetime(schema),
+            Self::Struct(def) => def.has_lifetime(schema),
+            Self::Enum(def) => def.has_lifetime(schema),
+            Self::Primitive(def) => def.has_lifetime(schema),
+            Self::Option(def) => def.has_lifetime(schema),
+            Self::Box(def) => def.has_lifetime(schema),
+            Self::Vec(def) => def.has_lifetime(schema),
+            Self::Cell(def) => def.has_lifetime(schema),
         }
     }
 
     /// Get type signature (including anonymous lifetimes).
     fn ty_with_lifetime(&self, schema: &Schema, anon: bool) -> TokenStream {
         match self {
-            TypeDef::Struct(def) => def.ty_with_lifetime(schema, anon),
-            TypeDef::Enum(def) => def.ty_with_lifetime(schema, anon),
-            TypeDef::Primitive(def) => def.ty_with_lifetime(schema, anon),
-            TypeDef::Option(def) => def.ty_with_lifetime(schema, anon),
-            TypeDef::Box(def) => def.ty_with_lifetime(schema, anon),
-            TypeDef::Vec(def) => def.ty_with_lifetime(schema, anon),
-            TypeDef::Cell(def) => def.ty_with_lifetime(schema, anon),
+            Self::Struct(def) => def.ty_with_lifetime(schema, anon),
+            Self::Enum(def) => def.ty_with_lifetime(schema, anon),
+            Self::Primitive(def) => def.ty_with_lifetime(schema, anon),
+            Self::Option(def) => def.ty_with_lifetime(schema, anon),
+            Self::Box(def) => def.ty_with_lifetime(schema, anon),
+            Self::Vec(def) => def.ty_with_lifetime(schema, anon),
+            Self::Cell(def) => def.ty_with_lifetime(schema, anon),
         }
     }
 
@@ -93,13 +93,13 @@ impl Def for TypeDef {
     /// [`innermost_type`]: Self::innermost_type
     fn maybe_inner_type<'s>(&self, schema: &'s Schema) -> Option<&'s TypeDef> {
         match self {
-            TypeDef::Struct(def) => def.maybe_inner_type(schema),
-            TypeDef::Enum(def) => def.maybe_inner_type(schema),
-            TypeDef::Primitive(def) => def.maybe_inner_type(schema),
-            TypeDef::Option(def) => def.maybe_inner_type(schema),
-            TypeDef::Box(def) => def.maybe_inner_type(schema),
-            TypeDef::Vec(def) => def.maybe_inner_type(schema),
-            TypeDef::Cell(def) => def.maybe_inner_type(schema),
+            Self::Struct(def) => def.maybe_inner_type(schema),
+            Self::Enum(def) => def.maybe_inner_type(schema),
+            Self::Primitive(def) => def.maybe_inner_type(schema),
+            Self::Option(def) => def.maybe_inner_type(schema),
+            Self::Box(def) => def.maybe_inner_type(schema),
+            Self::Vec(def) => def.maybe_inner_type(schema),
+            Self::Cell(def) => def.maybe_inner_type(schema),
         }
     }
 }
