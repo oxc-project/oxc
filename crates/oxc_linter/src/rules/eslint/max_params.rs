@@ -38,17 +38,52 @@ impl Default for MaxParamsConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce a maximum number of parameters in function definitions
     ///
     /// ### Why is this bad?
-    /// Functions that take numerous parameters can be difficult to read and write because it requires the memorization of what each parameter is, its type, and the order they should appear in. As a result, many coders adhere to a convention that caps the number of parameters a function can take.
     ///
-    /// ### Example
+    /// Functions that take numerous parameters can be difficult to read and
+    /// write because it requires the memorization of what each parameter is,
+    /// its type, and the order they should appear in. As a result, many coders
+    /// adhere to a convention that caps the number of parameters a function
+    /// can take.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function foo (bar, baz, qux, qxx) {
     ///     doSomething();
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// By default the maximum allowed number of function parameters is three.
+    /// ```javascript
+    /// function foo (bar, baz, qux) {
+    ///     doSomething();
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// let foo = (bar, baz, qux) => {
+    ///     doSomething();
+    /// };
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// ### max
+    ///
+    /// This option is for changing the maximum number of function parameters
+    /// are allowed.
+    ///
+    /// `{ "max": number }`
+    ///
+    /// For example `{ "max": 4 }` would mean that having a function take four
+    /// parameters is allowed which overrides the default of three.
     MaxParams,
     eslint,
     style
