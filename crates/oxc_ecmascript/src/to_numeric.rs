@@ -39,15 +39,11 @@ impl ToNumeric<'_> for ToPrimitiveResult {
     fn to_numeric(&self, _is_global_reference: &impl IsGlobalReference) -> ToNumericResult {
         match self {
             // Symbol throws an error when passed to ToNumber in step 3
-            Self::Symbol | Self::Undetermined => {
-                ToNumericResult::Undetermined
-            }
+            Self::Symbol | Self::Undetermined => ToNumericResult::Undetermined,
             Self::BigInt => ToNumericResult::BigInt,
-            Self::Boolean
-            | Self::Null
-            | Self::Number
-            | Self::String
-            | Self::Undefined => ToNumericResult::Number,
+            Self::Boolean | Self::Null | Self::Number | Self::String | Self::Undefined => {
+                ToNumericResult::Number
+            }
         }
     }
 }

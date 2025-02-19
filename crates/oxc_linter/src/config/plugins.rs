@@ -143,9 +143,7 @@ impl From<LintPlugins> for &'static str {
 
 impl<S: AsRef<str>> FromIterator<S> for LintPlugins {
     fn from_iter<T: IntoIterator<Item = S>>(iter: T) -> Self {
-        iter.into_iter()
-            .map(|plugin| plugin.as_ref().into())
-            .fold(Self::empty(), Self::union)
+        iter.into_iter().map(|plugin| plugin.as_ref().into()).fold(Self::empty(), Self::union)
     }
 }
 

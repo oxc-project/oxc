@@ -293,10 +293,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// # Errors
-    pub(crate) fn try_parse<T>(
-        &mut self,
-        func: impl FnOnce(&mut Self) -> Result<T>,
-    ) -> Option<T> {
+    pub(crate) fn try_parse<T>(&mut self, func: impl FnOnce(&mut Self) -> Result<T>) -> Option<T> {
         let checkpoint = self.checkpoint();
         let ctx = self.ctx;
         let result = func(self);

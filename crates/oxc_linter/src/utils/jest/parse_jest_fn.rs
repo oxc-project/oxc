@@ -452,9 +452,7 @@ pub enum MemberExpressionElement<'a> {
 }
 
 impl<'a> MemberExpressionElement<'a> {
-    pub fn from_member_expr(
-        member_expr: &'a MemberExpression<'a>,
-    ) -> Option<(Span, Self)> {
+    pub fn from_member_expr(member_expr: &'a MemberExpression<'a>) -> Option<(Span, Self)> {
         let (span, _) = member_expr.static_property_info()?;
         match member_expr {
             MemberExpression::ComputedMemberExpression(expr) => {

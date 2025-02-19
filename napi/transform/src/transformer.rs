@@ -493,10 +493,7 @@ pub enum HelperMode {
 
 impl From<Helpers> for HelperLoaderOptions {
     fn from(value: Helpers) -> Self {
-        Self {
-            mode: value.mode.map(HelperLoaderMode::from).unwrap_or_default(),
-            ..Self::default()
-        }
+        Self { mode: value.mode.map(HelperLoaderMode::from).unwrap_or_default(), ..Self::default() }
     }
 }
 

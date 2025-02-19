@@ -361,12 +361,7 @@ struct MemberSyntaxSortOrder(Vec<ImportKind>);
 
 impl Default for MemberSyntaxSortOrder {
     fn default() -> Self {
-        Self(vec![
-            ImportKind::None,
-            ImportKind::All,
-            ImportKind::Multiple,
-            ImportKind::Single,
-        ])
+        Self(vec![ImportKind::None, ImportKind::All, ImportKind::Multiple, ImportKind::Single])
     }
 }
 

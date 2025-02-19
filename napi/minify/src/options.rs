@@ -78,10 +78,7 @@ impl Default for CodegenOptions {
 
 impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
     fn from(o: &CodegenOptions) -> Self {
-        Self {
-            minify: o.whitespace.unwrap_or(true),
-            ..Self::default()
-        }
+        Self { minify: o.whitespace.unwrap_or(true), ..Self::default() }
     }
 }
 
