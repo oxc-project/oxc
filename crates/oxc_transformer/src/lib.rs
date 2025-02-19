@@ -251,6 +251,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.enter_class(class, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class(class, ctx);
         }
@@ -419,6 +420,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         def: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_method_definition(def, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_method_definition(def, ctx);
         }
@@ -445,6 +447,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         def: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_property_definition(def, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_property_definition(def, ctx);
         }
@@ -464,6 +467,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         node: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_accessor_property(node, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_accessor_property(node, ctx);
         }

@@ -282,7 +282,10 @@ pub struct DecoratorOptions {
 
 impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
     fn from(options: DecoratorOptions) -> Self {
-        oxc::transformer::DecoratorOptions { legacy: options.legacy.unwrap_or_default() }
+        oxc::transformer::DecoratorOptions {
+            legacy: options.legacy.unwrap_or_default(),
+            emit_decorator_metadata: false,
+        }
     }
 }
 

@@ -166,6 +166,7 @@ pub enum Helper {
     CheckInRHS,
     Decorate,
     DecorateParam,
+    DecorateMetadata,
 }
 
 impl Helper {
@@ -197,6 +198,7 @@ impl Helper {
             Self::CheckInRHS => "checkInRHS",
             Self::Decorate => "decorate",
             Self::DecorateParam => "decorateParam",
+            Self::DecorateMetadata => "decorateMetadata",
         }
     }
 }

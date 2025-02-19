@@ -81,3 +81,13 @@ pub(crate) fn create_prototype_member<'a>(
     let static_member = ctx.ast.member_expression_static(SPAN, object, property, false);
     Expression::from(static_member)
 }
+
+/// `object` -> `object.a`.
+pub(crate) fn create_property_access<'a>(
+    object: Expression<'a>,
+    property: &str,
+    ctx: &mut TraverseCtx<'a>,
+) -> Expression<'a> {
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
+}

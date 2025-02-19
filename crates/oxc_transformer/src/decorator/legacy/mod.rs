@@ -43,8 +43,11 @@
 //! ## References:
 //! * TypeScript Experimental Decorators documentation: <https://www.typescriptlang.org/docs/handbook/decorators.html>
 
+mod metadata;
+
 use std::mem;
 
+use metadata::LegacyDecoratorMetadata;
 use oxc_allocator::{Address, Vec as ArenaVec};
 use oxc_ast::{ast::*, Visit, VisitMut, NONE};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
@@ -64,12 +67,14 @@ struct ClassDecoratorInfo {
 }
 
 pub struct LegacyDecorator<'a, 'ctx> {
+    emit_decorator_metadata: bool,
+    metadata: LegacyDecoratorMetadata<'a, 'ctx>,
     ctx: &'ctx TransformCtx<'a>,
 }
 
 impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+    pub fn new(emit_decorator_metadata: bool, ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { emit_decorator_metadata, metadata: LegacyDecoratorMetadata::new(ctx), ctx }
     }
 }
 
@@ -87,6 +92,46 @@ impl<'a> Traverse<'a> for LegacyDecorator<'a, '_> {
             }
             _ => {}
         };
+    }
+
+    #[inline]
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.emit_decorator_metadata {
+            self.metadata.enter_class(class, ctx);
+        }
+    }
+
+    #[inline]
+    fn enter_method_definition(
+        &mut self,
+        node: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.emit_decorator_metadata {
+            self.metadata.enter_method_definition(node, ctx);
+        }
+    }
+
+    #[inline]
+    fn enter_accessor_property(
+        &mut self,
+        node: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.emit_decorator_metadata {
+            self.metadata.enter_accessor_property(node, ctx);
+        }
+    }
+
+    #[inline]
+    fn enter_property_definition(
+        &mut self,
+        node: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.emit_decorator_metadata {
+            self.metadata.enter_property_definition(node, ctx);
+        }
     }
 }
 

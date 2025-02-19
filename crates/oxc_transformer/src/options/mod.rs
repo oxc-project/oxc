@@ -150,7 +150,13 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             .or_else(|| options.plugins.typescript.clone())
             .unwrap_or_default();
 
-        let decorator = DecoratorOptions { legacy: options.plugins.legacy_decorator };
+        let decorator = DecoratorOptions {
+            legacy: options.plugins.legacy_decorator.is_some(),
+            emit_decorator_metadata: options
+                .plugins
+                .legacy_decorator
+                .is_some_and(|o| o.emit_decorator_metadata),
+        };
 
         let jsx = if let Some(options) = &options.presets.jsx {
             options.clone()
