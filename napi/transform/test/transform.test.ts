@@ -276,4 +276,41 @@ describe('legacy decorator', () => {
       "
     `);
   });
+
+  describe('emitDecoratorMetadata', () => {
+    it('matches output', () => {
+      const code = `
+    export default @dce class C {
+      @dce
+      prop = 0;
+      method(@dce param) {}
+    }
+  `;
+      const ret = transform('test.tsx', code, {
+        decorator: {
+          legacy: true,
+          emitDecoratorMetadata: true,
+        },
+      });
+      expect(ret.code).toMatchInlineSnapshot(`
+        "import _decorateMetadata from "@oxc-project/runtime/helpers/decorateMetadata";
+        import _decorate from "@oxc-project/runtime/helpers/decorate";
+        import _decorateParam from "@oxc-project/runtime/helpers/decorateParam";
+        let C = class C {
+        	prop = 0;
+        	method(param) {}
+        };
+        _decorate([dce, _decorateMetadata("design:type", Object)], C.prototype, "prop", void 0);
+        _decorate([
+        	_decorateParam(0, dce),
+        	_decorateParam(0, _decorateMetadata("design:type", Function)),
+        	_decorateParam(0, _decorateMetadata("design:paramtypes", [Object])),
+        	_decorateParam(0, _decorateMetadata("design:returntype", void 0))
+        ], C.prototype, "method", null);
+        C = _decorate([dce], C);
+        export default C;
+        "
+      `);
+    });
+  });
 });
