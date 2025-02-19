@@ -514,7 +514,8 @@ impl Backend {
 
     async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
         if let Some(Some(_root_uri)) = self.root_uri.get() {
-            if let Some(diagnostics) = self.server_linter.read().await.run_single(&uri, content) {
+            let diagnostics = self.server_linter.read().await.run_single(&uri, content);
+            if let Some(diagnostics) = diagnostics {
                 self.client
                     .publish_diagnostics(
                         uri.clone(),
