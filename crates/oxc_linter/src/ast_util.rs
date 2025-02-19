@@ -7,7 +7,7 @@ use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, Sy
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
-use crate::LintContext;
+use crate::{utils::get_function_nearest_jsdoc_node, LintContext};
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
@@ -590,5 +590,183 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
             }
         }
         _ => false,
+    }
+}
+
+pub fn is_callee<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
+    let parent = outermost_paren_parent(node, semantic);
+    parent.is_some_and(|node | matches!(node.kind(), AstKind::CallExpression(call_expr) if call_expr.callee.span().contains_inclusive(node.kind().span())))
+}
+
+fn has_jsdoc_this_tag<'a>(semantic: &Semantic<'a>, node: &AstNode<'a>) -> bool {
+    let Some(jsdocs) = get_function_nearest_jsdoc_node(node, semantic)
+        .and_then(|node| semantic.jsdoc().get_all_by_node(node))
+    else {
+        return false;
+    };
+
+    for jsdoc in jsdocs {
+        for tag in jsdoc.tags() {
+            if tag.kind.parsed() == "this" {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+const METHOD_WHICH_HAS_THIS_ARG: [&str; 10] = [
+    "every",
+    "filter",
+    "find",
+    "findIndex",
+    "findLast",
+    "findLastIndex",
+    "flatMap",
+    "forEach",
+    "map",
+    "some",
+];
+
+pub fn is_default_this_binding<'a>(
+    semantic: &Semantic<'a>,
+    node: &AstNode<'a>,
+    cap_is_constructor: bool,
+) -> bool {
+    let is_anonymous = match node.kind() {
+        AstKind::Function(func) if cap_is_constructor => {
+            let is_constructor = func.id.as_ref().is_some_and(|id| {
+                id.name.chars().next().is_some_and(|char| char.is_ascii_uppercase())
+            });
+
+            if is_constructor || has_jsdoc_this_tag(semantic, node) {
+                return false;
+            }
+
+            func.id.is_some()
+        }
+        AstKind::StaticBlock(_) => {
+            return false;
+        }
+        _ => true,
+    };
+
+    let is_anonymous_and_cap_is_constructor = is_anonymous && cap_is_constructor;
+
+    let mut current_node = node;
+    loop {
+        let parent = semantic.nodes().parent_node(current_node.id()).unwrap();
+        match parent.kind() {
+            AstKind::ChainExpression(_)
+            | AstKind::ConditionalExpression(_)
+            | AstKind::LogicalExpression(_)
+            | AstKind::ParenthesizedExpression(_) => {
+                current_node = parent;
+            }
+            AstKind::ReturnStatement(_) => {
+                let upper_func = semantic.nodes().ancestors(parent.id()).skip(1).find(|node| {
+                    matches!(
+                        node.kind(),
+                        AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+                    )
+                });
+                if upper_func.map_or(true, |node| !is_callee(node, semantic)) {
+                    return true;
+                }
+                current_node = parent;
+            }
+            AstKind::ArrowFunctionExpression(expr) => {
+                if current_node.span() != expr.body.span || !is_callee(parent, semantic) {
+                    return true;
+                }
+                current_node = parent;
+            }
+            AstKind::ObjectProperty(obj) => {
+                return obj.value.span() != current_node.span();
+            }
+            AstKind::MethodDefinition(method) => {
+                return method.value.span != current_node.span();
+            }
+            AstKind::PropertyDefinition(def) => {
+                if let Some(expr) = &def.value {
+                    return expr.span() != current_node.span();
+                }
+                return true;
+            }
+            AstKind::AssignmentExpression(expr) => {
+                if expr.left.is_member_expression() {
+                    return false;
+                }
+
+                let is_constructor = is_anonymous_and_cap_is_constructor
+                    && expr.left.get_identifier_name().is_some_and(|name| {
+                        name.chars().next().is_some_and(|char| char.is_ascii_uppercase())
+                    });
+
+                return !is_constructor;
+            }
+            AstKind::AssignmentPattern(pattern) => {
+                let is_constructor = is_anonymous_and_cap_is_constructor
+                    && pattern.left.get_identifier_name().is_some_and(|name| {
+                        name.chars().next().is_some_and(|char| char.is_ascii_uppercase())
+                    });
+
+                return !is_constructor;
+            }
+            AstKind::VariableDeclarator(var) => {
+                let is_constructor = is_anonymous_and_cap_is_constructor
+                    && var.init.as_ref().is_some_and(|init| init.span() == current_node.span())
+                    && var.id.get_identifier_name().is_some_and(|name| {
+                        name.chars().next().is_some_and(|char| char.is_ascii_uppercase())
+                    });
+
+                return !is_constructor;
+            }
+            AstKind::MemberExpression(mem_expr) => {
+                if mem_expr.object().span() == current_node.span()
+                    && matches!(mem_expr.static_property_name(), Some("apply" | "bind" | "call"))
+                {
+                    let node = outermost_paren_parent(parent, semantic).unwrap();
+                    if let AstKind::CallExpression(call_expr) = node.kind() {
+                        if let Some(arg) =
+                            call_expr.arguments.first().and_then(|arg| arg.as_expression())
+                        {
+                            return arg.is_null_or_undefined();
+                        }
+                    }
+                }
+                return true;
+            }
+            AstKind::CallExpression(call_expr) => {
+                if call_expr.callee.is_specific_member_access("Reflect", "apply") {
+                    return call_expr.arguments.len() != 3
+                        || call_expr.arguments[0].span() != current_node.span()
+                        || call_expr.arguments[1]
+                            .as_expression()
+                            .is_some_and(Expression::is_null_or_undefined);
+                }
+                if call_expr.callee.is_specific_member_access("Array", "from") {
+                    return call_expr.arguments.len() != 3
+                        || call_expr.arguments[1].span() != current_node.span()
+                        || call_expr.arguments[2]
+                            .as_expression()
+                            .is_some_and(Expression::is_null_or_undefined);
+                }
+                if call_expr.callee.get_member_expr().is_some_and(|mem_expr| {
+                    mem_expr
+                        .static_property_name()
+                        .is_some_and(|name| METHOD_WHICH_HAS_THIS_ARG.binary_search(&name).is_ok())
+                }) {
+                    return call_expr.arguments.len() != 2
+                        || call_expr.arguments[0].span() != current_node.span()
+                        || call_expr.arguments[1]
+                            .as_expression()
+                            .is_some_and(Expression::is_null_or_undefined);
+                }
+                return true;
+            }
+            _ => return true,
+        }
     }
 }
