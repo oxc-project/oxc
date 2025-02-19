@@ -236,6 +236,8 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
         }
 
         Cow::Owned(field_type_name)
+    } else if let Some(converter_name) = &field.estree.via {
+        Cow::Borrowed(get_ts_type_for_converter(converter_name, schema))
     } else {
         get_field_type_name(field, schema)
     };
@@ -276,11 +278,20 @@ fn generate_ts_type_def_for_added_struct_field(
     fields_str: &mut String,
     schema: &Schema,
 ) {
+    let ts_type = get_ts_type_for_converter(converter_name, schema);
+    fields_str.push_str(&format!("\n\t{field_name}: {ts_type};"));
+}
+
+/// Get the TS type definition for a converter.
+///
+/// Converters are specified with `#[estree(add_fields(field_name = converter_name))]`
+/// and `#[estree(via = converter_name)]`.
+fn get_ts_type_for_converter<'s>(converter_name: &str, schema: &'s Schema) -> &'s str {
     let converter = schema.meta_by_name(converter_name);
-    let Some(add_field_ts_type) = &converter.estree.ts_type else {
+    let Some(ts_type) = &converter.estree.ts_type else {
         panic!("No `ts_type` provided for ESTree converter `{}`", converter.name());
     };
-    fields_str.push_str(&format!("\n\t{field_name}: {add_field_ts_type};"));
+    ts_type
 }
 
 /// Generate Typescript type definition for an enum.

@@ -8,7 +8,7 @@ use syn::{parse_str, Expr};
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
-    utils::number_lit,
+    utils::{create_safe_ident, number_lit},
     Result,
 };
 
@@ -363,22 +363,25 @@ impl<'s> StructSerializerGenerator<'s> {
             self.add_type_field = false;
         }
 
-        let mut value = quote!( #self_path.#field_name_ident );
-        if let Some(via_str) = field.estree.via.as_deref() {
-            let via_expr = parse_str::<Expr>(via_str).unwrap();
-            value = quote!( #via_expr );
+        let value = if let Some(converter_name) = &field.estree.via {
+            let converter = self.schema.meta_by_name(converter_name);
+            let converter_path = converter.import_path_from_crate(self.krate, self.schema);
+            quote!( #converter_path(#self_path) )
         } else if let Some(append_field_index) = field.estree.append_field_index {
             let append_field = &struct_def.fields[append_field_index];
             let append_from_ident = append_field.ident();
-            let wrapper = if append_field.type_def(self.schema).is_option() {
-                quote! { AppendTo }
+            let wrapper_name = if append_field.type_def(self.schema).is_option() {
+                "AppendTo"
             } else {
-                quote! { AppendToConcat }
+                "AppendToConcat"
             };
-            value = quote! {
-                #wrapper { array: &#value, after: &#self_path.#append_from_ident  }
+            let wrapper_ident = create_safe_ident(wrapper_name);
+            quote! {
+                #wrapper_ident { array: &#self_path.#field_name_ident, after: &#self_path.#append_from_ident  }
             }
-        }
+        } else {
+            quote!( #self_path.#field_name_ident )
+        };
 
         self.stmts.extend(quote! {
             map.serialize_entry(#field_camel_name, &#value)?;

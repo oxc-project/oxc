@@ -6,7 +6,6 @@ use serde::{
     Serialize,
 };
 
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast_macros::ast_meta;
 
 use crate::ast::*;
@@ -197,6 +196,8 @@ impl Serialize for BigIntLiteralValue<'_, '_> {
 }
 
 /// Serializer for `regex` field of `RegExpLiteral`.
+#[ast_meta]
+#[estree(ts_type = "RegExp")]
 pub struct RegExpLiteralRegex<'a, 'b>(pub &'b RegExpLiteral<'a>);
 
 impl Serialize for RegExpLiteralRegex<'_, '_> {
@@ -288,15 +289,19 @@ impl Serialize for FormalParametersRest<'_, '_> {
     }
 }
 
-/// Wrap an `Option<Vec<T>>` so that it's serialized as an empty array (`[]`) if the `Option` is `None`.
-pub struct OptionVecDefault<'a, 'b, T: Serialize>(pub &'b Option<ArenaVec<'a, T>>);
+/// Serializer for `specifiers` field of `ImportDeclaration`.
+///
+/// Serialize `specifiers` as an empty array if it's `None`.
+#[ast_meta]
+#[estree(ts_type = "Array<ImportDeclarationSpecifier>")]
+pub struct ImportDeclarationSpecifiers<'a, 'b>(pub &'b ImportDeclaration<'a>);
 
-impl<T: Serialize> Serialize for OptionVecDefault<'_, '_, T> {
+impl Serialize for ImportDeclarationSpecifiers<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        if let Some(vec) = &self.0 {
-            vec.serialize(serializer)
+        if let Some(specifiers) = &self.0.specifiers {
+            specifiers.serialize(serializer)
         } else {
-            [false; 0].serialize(serializer)
+            [(); 0].serialize(serializer)
         }
     }
 }
@@ -351,6 +356,8 @@ impl Serialize for BindingProperty<'_> {
 ///
 /// Serializes as either an expression (if `expression` property is set),
 /// or a `BlockStatement` (if it's not).
+#[ast_meta]
+#[estree(ts_type = "FunctionBody | Expression")]
 pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
 
 impl Serialize for ArrowFunctionExpressionBody<'_> {
@@ -365,6 +372,8 @@ impl Serialize for ArrowFunctionExpressionBody<'_> {
 
 /// Serializer for `AssignmentTargetPropertyIdentifier`'s `init` field
 /// (which is renamed to `value` in ESTree AST).
+#[ast_meta]
+#[estree(ts_type = "IdentifierReference | AssignmentTargetWithDefault")]
 pub struct AssignmentTargetPropertyIdentifierValue<'a>(
     pub &'a AssignmentTargetPropertyIdentifier<'a>,
 );
@@ -385,22 +394,67 @@ impl Serialize for AssignmentTargetPropertyIdentifierValue<'_> {
     }
 }
 
-/// Get `options` field of `ImportExpression` (from original `arguments` field).
-pub fn import_expression_options<'a>(
-    arguments: &'a [Expression<'a>],
-) -> Option<&'a Expression<'a>> {
-    arguments.first()
+/// Serializer for `arguments` field of `ImportExpression`
+/// (which is renamed to `options` in ESTree AST).
+///
+/// Serialize only the first expression in `arguments`, or `null` if `arguments` is empty.
+#[ast_meta]
+#[estree(ts_type = "Expression | null")]
+pub struct ImportExpressionArguments<'a>(pub &'a ImportExpression<'a>);
+
+impl Serialize for ImportExpressionArguments<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(expression) = self.0.arguments.first() {
+            expression.serialize(serializer)
+        } else {
+            ().serialize(serializer)
+        }
+    }
 }
 
-/// Serializer for `ImportDeclaration` and `ExportNamedDeclaration`'s `with_clause` field
-/// (which is renamed to `attributes` in ESTree AST).
+// Serializers for `with_clause` field of `ImportDeclaration`, `ExportNamedDeclaration`,
+// and `ExportAllDeclaration` (which are renamed to `attributes` in ESTree AST).
+//
+// Serialize only the `with_entries` field of `WithClause`, and serialize `None` as empty array (`[]`).
+//
 // https://github.com/estree/estree/blob/master/es2025.md#importdeclaration
 // https://github.com/estree/estree/blob/master/es2025.md#exportnameddeclaration
-pub struct ImportExportWithClause<'a>(pub &'a Option<ArenaBox<'a, WithClause<'a>>>);
 
-impl Serialize for ImportExportWithClause<'_> {
+#[ast_meta]
+#[estree(ts_type = "Array<ImportAttribute>")]
+pub struct ImportDeclarationWithClause<'a, 'b>(pub &'b ImportDeclaration<'a>);
+
+impl Serialize for ImportDeclarationWithClause<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        if let Some(with_clause) = &self.0 {
+        if let Some(with_clause) = &self.0.with_clause {
+            with_clause.with_entries.serialize(serializer)
+        } else {
+            [(); 0].serialize(serializer)
+        }
+    }
+}
+
+#[ast_meta]
+#[estree(ts_type = "Array<ImportAttribute>")]
+pub struct ExportNamedDeclarationWithClause<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
+
+impl Serialize for ExportNamedDeclarationWithClause<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(with_clause) = &self.0.with_clause {
+            with_clause.with_entries.serialize(serializer)
+        } else {
+            [(); 0].serialize(serializer)
+        }
+    }
+}
+
+#[ast_meta]
+#[estree(ts_type = "Array<ImportAttribute>")]
+pub struct ExportAllDeclarationWithClause<'a, 'b>(pub &'b ExportAllDeclaration<'a>);
+
+impl Serialize for ExportAllDeclarationWithClause<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer)
         } else {
             [(); 0].serialize(serializer)

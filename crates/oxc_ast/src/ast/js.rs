@@ -927,11 +927,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
     #[estree(rename = "key")]
     pub binding: IdentifierReference<'a>,
-    #[estree(
-        rename = "value",
-        via = crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
-        ts_type = "IdentifierReference | AssignmentTargetWithDefault",
-    )]
+    #[estree(rename = "value", via = AssignmentTargetPropertyIdentifierValue)]
     pub init: Option<Expression<'a>>,
 }
 
@@ -1818,7 +1814,7 @@ pub struct ArrowFunctionExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
     // ESTree: https://github.com/estree/estree/blob/master/es2015.md#arrowfunctionexpression
-    #[estree(via = crate::serialize::ArrowFunctionExpressionBody(self), ts_type = "FunctionBody | Expression")]
+    #[estree(via = ArrowFunctionExpressionBody)]
     pub body: Box<'a, FunctionBody<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -2304,11 +2300,7 @@ pub struct AccessorProperty<'a> {
 pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
-    #[estree(
-        rename = "options",
-        via = crate::serialize::import_expression_options(&self.arguments),
-        ts_type = "Expression | null"
-    )]
+    #[estree(rename = "options", via = ImportExpressionArguments)]
     pub arguments: Vec<'a, Expression<'a>>,
     #[estree(skip)]
     pub phase: Option<ImportPhase>,
@@ -2320,13 +2312,13 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    #[estree(via = crate::serialize::OptionVecDefault(&self.specifiers), ts_type = "Array<ImportDeclarationSpecifier>")]
+    #[estree(via = ImportDeclarationSpecifiers)]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
     pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
     #[ts]
-    #[estree(rename = "attributes", via = crate::serialize::ImportExportWithClause(&self.with_clause), ts_type = "Array<ImportAttribute>")]
+    #[estree(rename = "attributes", via = ImportDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
     #[ts]
@@ -2464,7 +2456,7 @@ pub struct ExportNamedDeclaration<'a> {
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
     #[ts]
-    #[estree(rename = "attributes", via = crate::serialize::ImportExportWithClause(&self.with_clause), ts_type = "Array<ImportAttribute>")]
+    #[estree(rename = "attributes", via = ExportNamedDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 
@@ -2505,7 +2497,7 @@ pub struct ExportAllDeclaration<'a> {
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
     #[ts]
-    #[estree(rename = "attributes", via = crate::serialize::ImportExportWithClause(&self.with_clause), ts_type = "Array<ImportAttribute>")]
+    #[estree(rename = "attributes", via = ExportAllDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
     #[ts]
     pub export_kind: ImportOrExportKind, // `export type *`

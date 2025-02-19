@@ -1642,10 +1642,7 @@ impl Serialize for ImportExpression<'_> {
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry(
-            "options",
-            &crate::serialize::import_expression_options(&self.arguments),
-        )?;
+        map.serialize_entry("options", &crate::serialize::ImportExpressionArguments(self))?;
         map.end()
     }
 }
@@ -1656,13 +1653,10 @@ impl Serialize for ImportDeclaration<'_> {
         map.serialize_entry("type", "ImportDeclaration")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("specifiers", &crate::serialize::OptionVecDefault(&self.specifiers))?;
+        map.serialize_entry("specifiers", &crate::serialize::ImportDeclarationSpecifiers(self))?;
         map.serialize_entry("source", &self.source)?;
         map.serialize_entry("phase", &self.phase)?;
-        map.serialize_entry(
-            "attributes",
-            &crate::serialize::ImportExportWithClause(&self.with_clause),
-        )?;
+        map.serialize_entry("attributes", &crate::serialize::ImportDeclarationWithClause(self))?;
         map.serialize_entry("importKind", &self.import_kind)?;
         map.end()
     }
@@ -1767,7 +1761,7 @@ impl Serialize for ExportNamedDeclaration<'_> {
         map.serialize_entry("exportKind", &self.export_kind)?;
         map.serialize_entry(
             "attributes",
-            &crate::serialize::ImportExportWithClause(&self.with_clause),
+            &crate::serialize::ExportNamedDeclarationWithClause(self),
         )?;
         map.end()
     }
@@ -1793,10 +1787,7 @@ impl Serialize for ExportAllDeclaration<'_> {
         map.serialize_entry("end", &self.span.end)?;
         map.serialize_entry("exported", &self.exported)?;
         map.serialize_entry("source", &self.source)?;
-        map.serialize_entry(
-            "attributes",
-            &crate::serialize::ImportExportWithClause(&self.with_clause),
-        )?;
+        map.serialize_entry("attributes", &crate::serialize::ExportAllDeclarationWithClause(self))?;
         map.serialize_entry("exportKind", &self.export_kind)?;
         map.end()
     }
