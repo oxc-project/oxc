@@ -7,13 +7,13 @@ use oxc_syntax::precedence::Precedence;
 use super::Tristate;
 use crate::{diagnostics, lexer::Kind, ParserImpl};
 
-type ArrowFunctionHead<'a> = (
-    Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    Box<'a, FormalParameters<'a>>,
-    Option<Box<'a, TSTypeAnnotation<'a>>>,
-    bool,
-    Span,
-);
+struct ArrowFunctionHead<'a> {
+    type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    params: Box<'a, FormalParameters<'a>>,
+    return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    r#async: bool,
+    span: Span,
+}
 
 impl<'a> ParserImpl<'a> {
     pub(super) fn try_parse_parenthesized_arrow_function_expression(
@@ -236,9 +236,13 @@ impl<'a> ParserImpl<'a> {
 
         self.expect(Kind::Arrow)?;
 
-        self.parse_arrow_function_body(
-            span, /* type_parameters */ None, params, /* return_type */ None, r#async,
-        )
+        self.parse_arrow_function_body(ArrowFunctionHead {
+            type_parameters: None,
+            params,
+            return_type: None,
+            r#async,
+            span,
+        })
     }
 
     fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a>> {
@@ -268,7 +272,7 @@ impl<'a> ParserImpl<'a> {
 
         self.expect(Kind::Arrow)?;
 
-        Ok((type_parameters, params, return_type, r#async, span))
+        Ok(ArrowFunctionHead { type_parameters, params, return_type, r#async, span })
     }
 
     /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
@@ -278,12 +282,10 @@ impl<'a> ParserImpl<'a> {
     ///     `AssignmentExpression`[?In, ~Yield, ?Await]
     fn parse_arrow_function_body(
         &mut self,
-        span: Span,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-        r#async: bool,
+        arrow_function_head: ArrowFunctionHead<'a>,
     ) -> Result<Expression<'a>> {
+        let ArrowFunctionHead { type_parameters, params, return_type, r#async, span } =
+            arrow_function_head;
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
@@ -315,10 +317,8 @@ impl<'a> ParserImpl<'a> {
     /// `ArrowFunction`[In, Yield, Await] :
     ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] => `ConciseBody`[?In]
     fn parse_parenthesized_arrow_function(&mut self) -> Result<Option<Expression<'a>>> {
-        let (type_parameters, params, return_type, r#async, span) =
-            self.parse_parenthesized_arrow_function_head()?;
-        self.parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
-            .map(Some)
+        let head = self.parse_parenthesized_arrow_function_head()?;
+        self.parse_arrow_function_body(head).map(Some)
     }
 
     fn parse_possible_parenthesized_arrow_function_expression(
@@ -328,12 +328,8 @@ impl<'a> ParserImpl<'a> {
         if self.state.not_parenthesized_arrow.contains(&pos) {
             return Ok(None);
         }
-        if let Some((type_parameters, params, return_type, r#async, span)) =
-            self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
-        {
-            return self
-                .parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
-                .map(Some);
+        if let Some(head) = self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head) {
+            return self.parse_arrow_function_body(head).map(Some);
         }
         self.state.not_parenthesized_arrow.insert(pos);
         Ok(None)
