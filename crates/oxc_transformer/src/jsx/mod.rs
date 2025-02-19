@@ -115,10 +115,13 @@ impl<'a> Traverse<'a> for Jsx<'a, '_> {
         }
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.enable_jsx_plugin {
-            self.implementation.exit_expression(expr, ctx);
+            self.implementation.enter_expression(expr, ctx);
         }
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.refresh_plugin {
             self.refresh.exit_expression(expr, ctx);
         }
