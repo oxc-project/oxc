@@ -13785,13 +13785,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts:1:28]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts:1:27]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                            ▲
+   ·                           ─
  2 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts:3:29]
@@ -13874,13 +13873,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction6_es5.ts:1:28]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction6_es5.ts:1:27]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                            ▲
+   ·                           ─
  2 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction7_es5.ts:3:29]
@@ -14016,13 +14014,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction6_es6.ts:1:28]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction6_es6.ts:1:27]
  1 │ var foo = async (a = await): Promise<void> => {
-   ·                            ▲
+   ·                           ─
  2 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction7_es6.ts:3:29]

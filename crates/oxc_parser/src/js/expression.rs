@@ -1076,32 +1076,47 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         lhs_span: Span,
         lhs: Expression<'a>,
+        allow_return_type_in_arrow_function: bool,
     ) -> Result<Expression<'a>> {
         if !self.eat(Kind::Question) {
             return Ok(lhs);
         }
-        let consequent = self.context(
-            Context::In,
-            Context::empty(),
-            Self::parse_assignment_expression_or_higher,
-        )?;
+        let consequent = self.context(Context::In, Context::empty(), |p| {
+            p.parse_assignment_expression_or_higher_impl(
+                /* allow_return_type_in_arrow_function */ false,
+            )
+        })?;
         self.expect(Kind::Colon)?;
-        let alternate = self.parse_assignment_expression_or_higher()?;
+        let alternate =
+            self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)?;
         Ok(self.ast.expression_conditional(self.end_span(lhs_span), lhs, consequent, alternate))
     }
 
     /// `AssignmentExpression`[In, Yield, Await] :
     pub(crate) fn parse_assignment_expression_or_higher(&mut self) -> Result<Expression<'a>> {
+        self.parse_assignment_expression_or_higher_impl(
+            /* allow_return_type_in_arrow_function */ true,
+        )
+    }
+
+    pub(crate) fn parse_assignment_expression_or_higher_impl(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Result<Expression<'a>> {
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
         }
-        // `(x) => {}`
-        if let Some(arrow_expr) = self.try_parse_parenthesized_arrow_function_expression()? {
+        // `() => {}`, `(x) => {}`
+        if let Some(arrow_expr) = self.try_parse_parenthesized_arrow_function_expression(
+            allow_return_type_in_arrow_function,
+        )? {
             return Ok(arrow_expr);
         }
         // `async x => {}`
-        if let Some(arrow_expr) = self.try_parse_async_simple_arrow_function_expression()? {
+        if let Some(arrow_expr) = self
+            .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)?
+        {
             return Ok(arrow_expr);
         }
 
@@ -1111,20 +1126,30 @@ impl<'a> ParserImpl<'a> {
 
         // `x => {}`
         if lhs.is_identifier_reference() && kind == Kind::Arrow {
-            return self.parse_simple_arrow_function_expression(span, lhs, /* async */ false);
+            return self.parse_simple_arrow_function_expression(
+                span,
+                lhs,
+                /* async */ false,
+                allow_return_type_in_arrow_function,
+            );
         }
 
         if kind.is_assignment_operator() {
-            return self.parse_assignment_expression_recursive(span, lhs);
+            return self.parse_assignment_expression_recursive(
+                span,
+                lhs,
+                allow_return_type_in_arrow_function,
+            );
         }
 
-        self.parse_conditional_expression_rest(span, lhs)
+        self.parse_conditional_expression_rest(span, lhs, allow_return_type_in_arrow_function)
     }
 
     fn parse_assignment_expression_recursive(
         &mut self,
         span: Span,
         lhs: Expression<'a>,
+        allow_return_type_in_arrow_function: bool,
     ) -> Result<Expression<'a>> {
         let operator = map_assignment_operator(self.cur_kind());
         // 13.15.5 Destructuring Assignment
@@ -1135,7 +1160,8 @@ impl<'a> ParserImpl<'a> {
         //    ArrayAssignmentPattern
         let left = AssignmentTarget::cover(lhs, self)?;
         self.bump_any();
-        let right = self.parse_assignment_expression_or_higher()?;
+        let right =
+            self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)?;
         Ok(self.ast.expression_assignment(self.end_span(span), operator, left, right))
     }
 
