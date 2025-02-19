@@ -298,6 +298,15 @@
       "./src/helpers/decorate.js"
     ],
     "./helpers/esm/decorate": "./src/helpers/esm/decorate.js",
+    "./helpers/decorateMetadata": [
+      {
+        "node": "./src/helpers/decorateMetadata.js",
+        "import": "./src/helpers/esm/decorateMetadata.js",
+        "default": "./src/helpers/decorateMetadata.js"
+      },
+      "./src/helpers/decorateMetadata.js"
+    ],
+    "./helpers/esm/decorateMetadata": "./src/helpers/esm/decorateMetadata.js",
     "./helpers/decorateParam": [
       {
         "node": "./src/helpers/decorateParam.js",
@@ -306,7 +315,6 @@
       },
       "./src/helpers/decorateParam.js"
     ],
-    "./helpers/esm/decorateParam": "./src/helpers/esm/decorateParam.js",
     "./helpers/defaults": [
       {
         "node": "./src/helpers/defaults.js",
