@@ -1,6 +1,6 @@
 commit: acbc09a8
 
-Passed: 137/221
+Passed: 133/221
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -308,11 +308,23 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (37/40)
+# babel-plugin-transform-react-jsx (33/40)
+* fragment-static-children/input.jsx
+x Output mismatch
+
+* issues/issue-6638/input.jsx
+x Output mismatch
+
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 
+* refresh/react-refresh/does-not-consider-require-like-methods-to-be-hocs/input.jsx
+x Output mismatch
+
 * refresh/react-refresh/includes-custom-hooks-into-the-signatures-when-commonjs-target-is-used/input.jsx
+x Output mismatch
+
+* refresh/react-refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
 x Output mismatch
 
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
