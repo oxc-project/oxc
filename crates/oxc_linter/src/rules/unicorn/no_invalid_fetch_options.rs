@@ -1,3 +1,6 @@
+use std::borrow::Cow;
+
+use cow_utils::CowUtils;
 use oxc_allocator::Box;
 use oxc_ast::{
     ast::{Argument, Expression, ObjectExpression, ObjectPropertyKind, PropertyKey},
@@ -10,9 +13,8 @@ use oxc_span::Span;
 
 use crate::{ast_util::is_new_expression, rule::Rule, LintContext};
 
-fn no_invalid_fetch_options_diagnostic(span: Span, method: Option<String>) -> OxcDiagnostic {
-    let method = method.unwrap_or("GET/HEAD".to_string()).to_uppercase();
-    let message = format!(r#""body" is not allowed when method is "{method}""#);
+fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
+    let message = format!("The `body` is not allowed when method is `{method}`");
 
     OxcDiagnostic::warn(message).with_label(span)
 }
@@ -22,10 +24,15 @@ pub struct NoInvalidFetchOptions;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Disallow invalid options in fetch() and new Request()
+    ///
+    /// Disallow invalid options in `fetch()` and `new Request()`. Specifically, this rule ensures that
+    /// a body is not provided when the method is `GET` or `HEAD`, as it will result in a `TypeError`.
     ///
     /// ### Why is this bad?
-    /// fetch() throws a TypeError when the method is GET or HEAD and a body is provided.
+    ///
+    /// The `fetch()` function throws a `TypeError` when the method is `GET` or `HEAD` and a body is provided.
+    /// This can lead to unexpected behavior and errors in your code. By disallowing such invalid options,
+    /// the rule ensures that requests are correctly configured and prevents unnecessary errors.
     ///
     /// ### Examples
     ///
@@ -49,78 +56,49 @@ declare_oxc_lint!(
 
 impl Rule for NoInvalidFetchOptions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+        let arg = match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                let Expression::Identifier(ident) = &call_expr.callee else {
-                    return;
-                };
-
-                if ident.name != "fetch" {
+                if !call_expr.callee.is_specific_id("fetch") || call_expr.arguments.len() < 2 {
                     return;
                 }
 
-                if call_expr.arguments.len() < 2 {
-                    return;
-                }
-
-                let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
-                    return;
-                };
-
-                let (is_invalid_options, method_name, body_span) =
-                    is_invalid_fetch_options(obj_expr, ctx);
-
-                if is_invalid_options {
-                    ctx.diagnostic(no_invalid_fetch_options_diagnostic(
-                        body_span.unwrap_or(call_expr.span),
-                        method_name,
-                    ));
-                }
+                &call_expr.arguments[1]
             }
             AstKind::NewExpression(new_expr) => {
                 if !is_new_expression(new_expr, &["Request"], Some(2), None) {
                     return;
                 }
 
-                let Some(Argument::ObjectExpression(obj_expr)) = new_expr.arguments.get(1) else {
-                    return;
-                };
-
-                let (is_invalid_options, method_name, body_span) =
-                    is_invalid_fetch_options(obj_expr, ctx);
-
-                if is_invalid_options {
-                    ctx.diagnostic(no_invalid_fetch_options_diagnostic(
-                        body_span.unwrap_or(new_expr.span),
-                        method_name,
-                    ));
-                }
+                &new_expr.arguments[1]
             }
-            _ => {}
+            _ => return,
+        };
+
+        let Argument::ObjectExpression(expr) = arg else { return };
+        let result = is_invalid_fetch_options(expr, ctx);
+
+        if let Some((method_name, body_span)) = result {
+            ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
         }
     }
 }
 
-fn is_invalid_fetch_options(
-    obj_expr: &Box<'_, ObjectExpression<'_>>,
-    ctx: &LintContext<'_>,
-) -> (bool, Option<String>, Option<Span>) {
+fn is_invalid_fetch_options<'a>(
+    obj_expr: &'a Box<'_, ObjectExpression<'_>>,
+    ctx: &'a LintContext<'_>,
+) -> Option<(Cow<'a, str>, Span)> {
     // fetch and Request method defaults to "GET"
-    let mut is_get_or_head = true;
-    let mut method_name = "GET";
-
-    let mut has_body = false;
-    let mut body_span = None;
+    let mut body_span = Span::default();
+    let mut method_name = Cow::Borrowed("GET");
 
     for property in &obj_expr.properties {
-        if ObjectPropertyKind::is_spread(property) {
-            return (false, None, None);
+        if property.is_spread() {
+            return None;
         }
 
         let ObjectPropertyKind::ObjectProperty(obj_prop) = property else {
             continue;
         };
-
         let PropertyKey::StaticIdentifier(key_ident) = &obj_prop.key else {
             continue;
         };
@@ -128,23 +106,14 @@ fn is_invalid_fetch_options(
         let key_ident_name = key_ident.name.as_str();
 
         if key_ident_name == "body" {
-            has_body = !obj_prop.value.is_null_or_undefined();
-
-            if has_body {
-                body_span = Some(key_ident.span);
+            if obj_prop.value.is_null_or_undefined() {
+                body_span.end = body_span.start;
             } else {
-                body_span = None;
+                body_span = key_ident.span;
             }
-        }
-
-        if key_ident_name == "method" {
-            match &obj_prop.value {
-                Expression::StringLiteral(value_ident) => {
-                    let method = value_ident.value.as_str();
-
-                    is_get_or_head = !is_not_get_and_head(method);
-                    method_name = method;
-                }
+        } else if key_ident_name == "method" {
+            let method = match &obj_prop.value {
+                Expression::StringLiteral(value_ident) => &value_ident.value,
                 Expression::Identifier(value_ident) => {
                     let symbols = ctx.semantic().symbols();
                     let reference_id = value_ident.reference_id();
@@ -159,30 +128,24 @@ fn is_invalid_fetch_options(
                         continue;
                     };
 
-                    let Some(init) = &declarator.init else {
+                    let Some(Expression::StringLiteral(str_lit)) = &declarator.init else {
                         continue;
                     };
 
-                    let Expression::StringLiteral(str_lit) = init else {
-                        continue;
-                    };
-
-                    is_get_or_head = !is_not_get_and_head(&str_lit.value);
-                    method_name = &str_lit.value;
+                    &str_lit.value
                 }
                 _ => continue,
             };
+
+            method_name = method.cow_to_ascii_uppercase();
         }
     }
 
-    let is_invalid_options = is_get_or_head && has_body;
-
-    (is_invalid_options, Some(method_name.to_string()), body_span)
-}
-
-fn is_not_get_and_head(method: &str) -> bool {
-    let method = method.to_uppercase();
-    method != "GET" && method != "HEAD"
+    if (method_name == "GET" || method_name == "HEAD") && !body_span.is_empty() {
+        Some((method_name, body_span))
+    } else {
+        None
+    }
 }
 
 #[test]
