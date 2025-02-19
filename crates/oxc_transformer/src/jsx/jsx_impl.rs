@@ -543,8 +543,8 @@ impl<'a> JsxImpl<'a, '_> {
     fn transform_jsx(
         &mut self,
         span: Span,
-        mut opening_element: Option<ArenaBox<'a, JSXOpeningElement<'a>>>,
-        mut children: ArenaVec<JSXChild<'a>>,
+        opening_element: Option<ArenaBox<'a, JSXOpeningElement<'a>>>,
+        children: ArenaVec<JSXChild<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let has_key_after_props_spread =
@@ -562,11 +562,16 @@ impl<'a> JsxImpl<'a, '_> {
 
         // The object properties for the second argument of `React.createElement`
         let mut properties = ctx.ast.vec();
+        let (element_name, attributes) = opening_element
+            .map(|e| {
+                let e = e.unbox();
+                (Some(e.name), Some(e.attributes))
+            })
+            .unwrap_or_default();
 
-        if let Some(opening_element) = opening_element.as_mut() {
-            let attributes = &mut opening_element.attributes;
+        if let Some(attributes) = attributes {
             let attributes_len = attributes.len();
-            for attribute in attributes.drain(..) {
+            for attribute in attributes {
                 match attribute {
                     JSXAttributeItem::Attribute(attr) => {
                         let JSXAttribute { span, name, mut value } = attr.unbox();
@@ -631,16 +636,14 @@ impl<'a> JsxImpl<'a, '_> {
 
         let mut need_jsxs = false;
 
-        let mut children_len = children.len();
-
         // Append children to object properties in automatic mode
         if is_automatic {
             let mut children = ctx.ast.vec_from_iter(
                 children
-                    .drain(..)
+                    .into_iter()
                     .filter_map(|child| self.transform_jsx_child_automatic(child, ctx)),
             );
-            children_len = children.len();
+            let children_len = children.len();
             if children_len != 0 {
                 let value = if children_len == 1 {
                     children.pop().unwrap()
@@ -657,35 +660,8 @@ impl<'a> JsxImpl<'a, '_> {
                 );
                 properties.push(property);
             }
-        }
 
-        // React.createElement's second argument
-        if is_element && is_classic {
-            if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
-                properties.push(JsxSelf::get_object_property_kind_for_jsx_plugin(ctx));
-            }
-
-            if self.options.jsx_source_plugin {
-                let (line, column) = self.jsx_source.get_line_column(span.start);
-                properties.push(
-                    self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
-                );
-            }
-        }
-
-        // It would be better to push to `arguments` earlier, rather than use `insert`.
-        // But we have to do it here to replicate the same import order as Babel, in order to pass
-        // Babel's conformance tests.
-        // TODO(improve-on-babel): Change this if we can handle differing output in tests.
-        let argument_expr = if let Some(opening_element) = opening_element {
-            self.transform_element_name(opening_element.unbox().name, ctx)
-        } else {
-            self.get_fragment(ctx)
-        };
-        arguments.insert(0, Argument::from(argument_expr));
-
-        // If runtime is automatic that means we always to add `{ .. }` as the second argument even if it's empty
-        if is_automatic || !properties.is_empty() {
+            // If runtime is automatic that means we always to add `{ .. }` as the second argument even if it's empty
             let mut object_expression = ctx.ast.expression_object(SPAN, properties, None);
             if let Some(options) = self.object_rest_spread_options {
                 ObjectRestSpread::transform_object_expression(
@@ -696,14 +672,8 @@ impl<'a> JsxImpl<'a, '_> {
                 );
             }
             arguments.push(Argument::from(object_expression));
-        } else if arguments.len() == 1 {
-            // If not and second argument doesn't exist, we should add `null` as the second argument
-            let null_expr = ctx.ast.expression_null_literal(SPAN);
-            arguments.push(Argument::from(null_expr));
-        }
 
-        // Only jsx and jsxDev will have more than 2 arguments
-        if is_automatic {
+            // Only jsx and jsxDev will have more than 2 arguments
             // key
             if key_prop.is_some() {
                 arguments.push(Argument::from(self.transform_jsx_attribute_value(key_prop, ctx)));
@@ -733,12 +703,56 @@ impl<'a> JsxImpl<'a, '_> {
                 }
             }
         } else {
+            // React.createElement's second argument
+            if is_element {
+                if self.options.jsx_self_plugin && JsxSelf::can_add_self_attribute(ctx) {
+                    properties.push(JsxSelf::get_object_property_kind_for_jsx_plugin(ctx));
+                }
+
+                if self.options.jsx_source_plugin {
+                    let (line, column) = self.jsx_source.get_line_column(span.start);
+                    properties.push(
+                        self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
+                    );
+                }
+            }
+
+            if !properties.is_empty() {
+                let mut object_expression = ctx.ast.expression_object(SPAN, properties, None);
+                if let Some(options) = self.object_rest_spread_options {
+                    ObjectRestSpread::transform_object_expression(
+                        options,
+                        &mut object_expression,
+                        self.ctx,
+                        ctx,
+                    );
+                }
+                arguments.push(Argument::from(object_expression));
+            } else if arguments.is_empty() {
+                // If not and second argument doesn't exist, we should add `null` as the second argument
+                let null_expr = ctx.ast.expression_null_literal(SPAN);
+                arguments.push(Argument::from(null_expr));
+            }
+
             // React.createElement(type, arguments, ...children)
             //                                      ^^^^^^^^^^^
             arguments.extend(
-                children.drain(..).filter_map(|child| self.transform_jsx_child_classic(child, ctx)),
+                children
+                    .into_iter()
+                    .filter_map(|child| self.transform_jsx_child_classic(child, ctx)),
             );
         }
+
+        // It would be better to push to `arguments` earlier, rather than use `insert`.
+        // But we have to do it here to replicate the same import order as Babel, in order to pass
+        // Babel's conformance tests.
+        // TODO(improve-on-babel): Change this if we can handle differing output in tests.
+        let argument_expr = if let Some(element_name) = element_name {
+            self.transform_element_name(element_name, ctx)
+        } else {
+            self.get_fragment(ctx)
+        };
+        arguments.insert(0, Argument::from(argument_expr));
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
         ctx.ast.expression_call(span, callee, NONE, arguments, false)
