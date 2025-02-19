@@ -39,11 +39,62 @@ declare_oxc_lint!(
     /// The use of bitwise operators in JavaScript is very rare and often `&` or `|` is simply a mistyped `&&` or `||`,
     /// which will lead to unexpected behavior.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var x = y | z;
     /// ```
+    ///
+    /// ```javascript
+    /// var x = y ^ z;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = y >> z;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var x = y || z;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = y && z;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = y > z;
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// ### allow
+    ///
+    /// The`allow` option permits the given list of bitwise operators to be used
+    /// as exceptions to this rule.
+    ///
+    /// `{ "allow": string[] }`
+    ///
+    /// For example `{ "allow": ["~"] }` would allow the use of the bitwise operator
+    /// `~` without restriction. Such as in the following:
+    ///
+    /// ```javascript
+    /// ~[1,2,3].indexOf(1) === -1;
+    /// ```
+    ///
+    /// ### int32Hint
+    ///
+    /// `{ "int32Hint": boolean }`
+    ///
+    /// When set to true the `int32Hint` option allows the use of bitwise OR in |0
+    /// pattern for type casting.
+    ///
+    /// For example with `{ "int32Hint": true }` the following is permitted:
+    ///
+    /// ```javascript
+    /// const b = a|0;
+    /// ``````
     NoBitwise,
     eslint,
     restriction
@@ -137,6 +188,8 @@ fn test() {
         ("a &&= b", None),
         ("a ||= b", None),
         ("a ??= b", None),
+        ("a > b", None),
+        ("a < b", None),
         ("~[1, 2, 3].indexOf(1)", Some(json!([ { "allow": ["~"] }]))),
         ("~1<<2 === -8", Some(json!([ { "allow": ["~", "<<"] }]))),
         ("a|0", Some(json!([ { "int32Hint": true}]))),
