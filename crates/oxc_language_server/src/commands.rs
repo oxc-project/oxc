@@ -89,8 +89,8 @@ impl WorkspaceCommand for FixAllCommand {
         let url = url.unwrap();
 
         let mut edits = vec![];
-        if let Some(value) = backend.diagnostics_report_map.get(&url.to_string()) {
-            for report in value.iter() {
+        if let Some(value) = backend.diagnostics_report_map.pin_owned().get(&url.to_string()) {
+            for report in value {
                 if let Some(fixed) = &report.fixed_content {
                     edits.push(TextEdit { range: fixed.range, new_text: fixed.code.clone() });
                 }

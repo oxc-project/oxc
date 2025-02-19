@@ -1800,7 +1800,6 @@ name = "oxc_language_server"
 version = "0.0.1"
 dependencies = [
  "cow-utils",
- "dashmap 6.1.0",
  "env_logger",
  "futures",
  "globset",
@@ -1813,6 +1812,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "papaya",
  "rustc-hash",
  "serde",
  "serde_json",

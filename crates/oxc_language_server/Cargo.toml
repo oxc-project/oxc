@@ -31,12 +31,12 @@ oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 
 cow-utils = { workspace = true }
-dashmap = { workspace = true }
 env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
 globset = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 log = { workspace = true }
+papaya = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
