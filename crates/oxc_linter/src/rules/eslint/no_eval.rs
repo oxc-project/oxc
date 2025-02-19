@@ -12,7 +12,7 @@ use crate::{
 };
 
 fn no_eval_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The `eval` can be harmful.").with_label(span)
+    OxcDiagnostic::warn("eval can be harmful.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
