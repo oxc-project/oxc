@@ -91,7 +91,7 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_ecmascript::PropName;
-use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_line_terminator, is_white_space_single_line},
     reference::ReferenceFlags,
@@ -577,14 +577,14 @@ impl<'a> JsxImpl<'a, '_> {
                         let JSXAttribute { span, name, mut value } = attr.unbox();
                         match &name {
                             JSXAttributeName::Identifier(ident) if ident.name == "__self" => {
-                                self.jsx_self.report_error(name.span());
+                                self.jsx_self.report_error(ident.span);
                             }
                             JSXAttributeName::Identifier(ident) if ident.name == "__source" => {
-                                self.jsx_source.report_error(name.span());
+                                self.jsx_source.report_error(ident.span);
                             }
                             JSXAttributeName::Identifier(ident) if ident.name == "key" => {
                                 if value.is_none() {
-                                    self.ctx.error(diagnostics::valueless_key(name.span()));
+                                    self.ctx.error(diagnostics::valueless_key(ident.span));
                                 }
 
                                 // In automatic mode, extract the key before spread prop,
