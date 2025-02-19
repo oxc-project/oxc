@@ -39,7 +39,8 @@ impl Default for MaxParamsConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce a maximum number of parameters in function definitions
+    /// Enforce a maximum number of parameters in function definitions which by
+    /// default is three.
     ///
     /// ### Why is this bad?
     ///
@@ -65,8 +66,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
-    /// By default the maximum allowed number of function parameters is three.
     /// ```javascript
     /// function foo (bar, baz, qux) {
     ///     doSomething();
