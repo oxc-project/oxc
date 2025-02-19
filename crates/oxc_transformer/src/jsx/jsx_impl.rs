@@ -1094,8 +1094,17 @@ fn create_static_member_expression<'a>(
     ctx.ast.member_expression_static(SPAN, object, property, false).into()
 }
 
+/// Check if an `ObjectExpression` has a property called `__proto__`.
+///
+/// Returns `true` for any of:
+/// * `{ __proto__: ... }`
+/// * `{ "__proto__": ... }`
+/// * `{ ["__proto__"]: ... }`
+///
+/// Also currently returns `true` for `{ [__proto__]: ... }`, but that's probably not correct.
+/// TODO: Fix that.
 fn has_proto(e: &ObjectExpression<'_>) -> bool {
-    e.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
+    e.properties.iter().any(|p| p.prop_name().is_some_and(|(name, _)| name == "__proto__"))
 }
 
 #[cfg(test)]
