@@ -115,6 +115,11 @@ impl<'a> Traverse<'a> for Jsx<'a, '_> {
         }
     }
 
+    // `#[inline]` because this method does nothing if JSX transform is disabled,
+    // and `exit_expression` methods this method delegates to also do nothing for most expressions.
+    // This is a very hot path, so we want the common path for "do nothing" not to incur the overhead
+    // of a function call.
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.enable_jsx_plugin {
             self.implementation.exit_expression(expr, ctx);
