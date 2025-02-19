@@ -14,7 +14,7 @@ use oxc_span::Span;
 use crate::{ast_util::is_new_expression, rule::Rule, LintContext};
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
-    let message = format!("The `body` is not allowed when method is `{method}`");
+    let message = format!(r#""body" is not allowed when method is "{method}""#);
 
     OxcDiagnostic::warn(message).with_label(span)
 }
