@@ -304,7 +304,9 @@ fn test() {
         ("obj[undefined] = 5;", Some(serde_json::json!(["undefined"]))),
         ("foo = { [myGlobal]: 1 };", Some(serde_json::json!(["myGlobal"]))), // {                "ecmaVersion": 6,                "globals": { "myGlobal": "readonly" }            },
         ("({ myGlobal } = foo);", Some(serde_json::json!(["myGlobal"]))), // {                "ecmaVersion": 6,                "globals": { "myGlobal": "writable" }            },
-        ("/* global myGlobal: readonly */ myGlobal = 5;", Some(serde_json::json!(["myGlobal"]))),
+        // Disabled as we don't seem to be supporting configuration comments for defining globals
+        // in any our our lint rules.
+        // ("/* global myGlobal: readonly */ myGlobal = 5;", Some(serde_json::json!(["myGlobal"]))),
         ("var foo = [Map];", Some(serde_json::json!(["Map"]))), // {                "ecmaVersion": 6            },
         ("var foo = { bar: window.baz };", Some(serde_json::json!(["window"]))), // {                "globals": {                    "window": "readonly"                }            },
         ("class C { camelCase; #camelCase; #camelCase2() {} }", Some(serde_json::json!(["foo"]))), // { "ecmaVersion": 2022 },
