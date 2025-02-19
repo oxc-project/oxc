@@ -39,7 +39,6 @@ oxc_syntax = { workspace = true, features = ["serialize"] }
 bitflags = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
-dashmap = { workspace = true }
 fast-glob = { workspace = true }
 globset = { workspace = true }
 ignore = { workspace = true }
@@ -49,6 +48,7 @@ language-tags = { workspace = true }
 lazy_static = { workspace = true }
 memchr = { workspace = true }
 nonmax = { workspace = true }
+papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 regex = { workspace = true }
