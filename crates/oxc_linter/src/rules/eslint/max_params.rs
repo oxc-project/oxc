@@ -77,8 +77,7 @@ declare_oxc_lint!(
     ///
     /// ### max
     ///
-    /// This option is for changing the maximum number of function parameters
-    /// are allowed.
+    /// This option is for changing the maximum allowed number of function parameters.
     ///
     /// `{ "max": number }`
     ///
