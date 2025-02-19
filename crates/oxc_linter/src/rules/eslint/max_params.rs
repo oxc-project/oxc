@@ -58,6 +58,12 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
+    /// ```javascript
+    /// let foo = (bar, baz, qux, qxx) => {
+    ///     doSomething();
+    /// };
+    /// ```
+    ///
     /// Examples of **correct** code for this rule:
     ///
     /// By default the maximum allowed number of function parameters is three.
