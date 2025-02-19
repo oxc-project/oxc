@@ -73,6 +73,7 @@ doc_markdown = "allow"
 missing_const_for_fn = "allow"
 significant_drop_in_scrutinee = "warn"
 iter_on_single_items = "warn"
+unused_peekable = "warn"
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"

@@ -73,7 +73,7 @@ impl Gen for Directive<'_> {
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
         let directive = self.directive.as_str();
 
-        let mut chars = directive.chars().peekable();
+        let mut chars = directive.chars();
         let mut quote = p.quote;
         while let Some(c) = chars.next() {
             match c {
