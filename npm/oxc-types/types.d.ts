@@ -727,12 +727,6 @@ export interface ImportNamespaceSpecifier extends Span {
   local: BindingIdentifier;
 }
 
-export interface WithClause extends Span {
-  type: 'WithClause';
-  attributesKeyword: IdentifierName;
-  withEntries: Array<ImportAttribute>;
-}
-
 export interface ImportAttribute extends Span {
   type: 'ImportAttribute';
   key: ImportAttributeKey;

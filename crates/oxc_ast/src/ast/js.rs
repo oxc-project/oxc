@@ -2416,6 +2416,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(no_ts_def)]
 pub struct WithClause<'a> {
     pub span: Span,
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
