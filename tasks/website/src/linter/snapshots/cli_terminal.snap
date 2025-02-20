@@ -81,5 +81,7 @@ Available positional items:
 
 Available options:
         --rules               list all the rules that are currently registered
+        --experimental-nested-config  Enables automatic loading of nested configuration files
+                              (experimental feature)
     -h, --help                Prints help information
     -V, --version             Prints version information
