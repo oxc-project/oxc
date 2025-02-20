@@ -182,15 +182,9 @@ impl<T: ?Sized + Debug> Debug for Box<'_, T> {
 // }
 
 #[cfg(any(feature = "serialize", test))]
-impl<T> Serialize for Box<'_, T>
-where
-    T: Serialize,
-{
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        self.deref().serialize(s)
+impl<T: Serialize> Serialize for Box<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.deref().serialize(serializer)
     }
 }
 

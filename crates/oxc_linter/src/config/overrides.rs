@@ -2,7 +2,7 @@ use std::{borrow::Cow, ops::Deref, path::Path};
 
 use nonmax::NonMaxU32;
 use schemars::{gen, schema::Schema, JsonSchema};
-use serde::{de, ser, Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 use oxc_index::{Idx, IndexVec};
 
@@ -126,20 +126,14 @@ impl GlobSet {
     }
 }
 
-impl ser::Serialize for GlobSet {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
+impl Serialize for GlobSet {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.raw.serialize(serializer)
     }
 }
 
-impl<'de> de::Deserialize<'de> for GlobSet {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
+impl<'de> Deserialize<'de> for GlobSet {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let globs = Vec::<String>::deserialize(deserializer)?;
         Self::new(globs).map_err(de::Error::custom)
     }

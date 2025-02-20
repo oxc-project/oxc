@@ -5,7 +5,7 @@ use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
     de::{self, Deserializer, Visitor},
     ser::SerializeMap,
-    Deserialize, Serialize,
+    Deserialize, Serialize, Serializer,
 };
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
@@ -206,10 +206,7 @@ impl JsonSchema for OxlintRules {
 }
 
 impl Serialize for OxlintRules {
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         let mut rules = s.serialize_map(Some(self.rules.len()))?;
 
         for rule in &self.rules {
