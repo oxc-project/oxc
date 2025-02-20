@@ -22,80 +22,58 @@ pub struct MaxDepth {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce a maximum depth that blocks can be nested
+    /// Enforce a maximum depth that blocks can be nested. This rule helps to limit the complexity
+    /// of nested blocks, improving readability and maintainability by ensuring that code does not
+    /// become too deeply nested.
     ///
     /// ### Why is this bad?
     ///
-    /// Many developers consider code difficult to read if blocks are nested beyond a
-    /// certain depth
+    /// Many developers consider code difficult to read if blocks are nested beyond a certain depth.
+    /// Excessive nesting can make it harder to follow the flow of the code, increasing cognitive load
+    /// and making maintenance more error-prone. By enforcing a maximum block depth, this rule encourages
+    /// cleaner, more readable code.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule with the default `{ "max": 4 }`
-    /// option:
+    /// Examples of **incorrect** code for this rule with the default `{ "max": 3 }` option:
     /// ```js
     /// function foo() {
-    ///     for (;;) { // Nested 1 deep
-    ///         while (true) { // Nested 2 deep
-    ///             if (true) { // Nested 3 deep
-    ///                 if (true) { // Nested 4 deep
-    ///                     if (true) { // Nested 5 deep
-    ///                     }
-    ///                 }
-    ///             }
-    ///         }
+    ///   for (;;) { // Nested 1 deep
+    ///     while (true) { // Nested 2 deep
+    ///       if (true) { // Nested 3 deep
+    ///         if (true) { // Nested 4 deep }
+    ///       }
     ///     }
+    ///   }
     /// }
     /// ```
     ///
-    /// Examples of **correct** code for this rule with the default `{ "max": 4 }` option:
+    /// Examples of **correct** code for this rule with the default `{ "max": 3 }` option:
     /// ```js
     /// function foo() {
-    ///     for (;;) { // Nested 1 deep
-    ///         while (true) { // Nested 2 deep
-    ///             if (true) { // Nested 3 deep
-    ///                 if (true) { // Nested 4 deep
-    ///                 }
-    ///             }
-    ///         }
+    ///   for (;;) { // Nested 1 deep
+    ///     while (true) { // Nested 2 deep
+    ///       if (true) { // Nested 3 deep }
     ///     }
+    ///   }
     /// }
     /// ```
     ///
     /// Note that class static blocks do not count as nested blocks, and that the depth in
     /// them is calculated separately from the enclosing context.
     ///
-    /// Examples of **incorrect** code for this rule with `{ "max": 2 }` option:
+    /// Example:
     /// ```js
     /// function foo() {
-    ///     if (true) { // Nested 1 deep
-    ///         class C {
-    ///             static {
-    ///                 if (true) { // Nested 1 deep
-    ///                     if (true) { // Nested 2 deep
-    ///                         if (true) { // Nested 3 deep
-    ///                         }
-    ///                     }
-    ///                 }
-    ///             }
+    ///   if (true) { // Nested 1 deep
+    ///     class C {
+    ///       static {
+    ///         if (true) { // Nested 1 deep
+    ///           if (true) { // Nested 2 deep }
     ///         }
+    ///       }
     ///     }
-    /// }
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with `{ "max": 2 }` option:
-    /// ```js
-    /// function foo() {
-    ///     if (true) { // Nested 1 deep
-    ///         class C {
-    ///             static {
-    ///                 if (true) { // Nested 1 deep
-    ///                     if (true) { // Nested 2 deep
-    ///                     }
-    ///                 }
-    ///             }
-    ///         }
-    ///     }
+    ///   }
     /// }
     /// ```
     ///
@@ -127,13 +105,12 @@ declare_oxc_lint!(
 
 impl Rule for MaxDepth {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if should_count(node, ctx.semantic().nodes()) {
+        if should_count(node, ctx.nodes()) {
             let depth = ctx
-                .semantic()
                 .nodes()
                 .ancestors(node.id())
                 .take_while(|node| !should_stop(node))
-                .filter(|node| should_count(node, ctx.semantic().nodes()))
+                .filter(|node| should_count(node, ctx.nodes()))
                 .count();
             if depth > self.max {
                 ctx.diagnostic(max_depth_diagnostic(depth, self.max, node.span()));
