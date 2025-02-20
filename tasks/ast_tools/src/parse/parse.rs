@@ -167,7 +167,7 @@ impl<'c> Parser<'c> {
     }
 
     /// Get type name for a [`TypeId`].
-    fn type_name(&mut self, type_id: TypeId) -> &str {
+    fn type_name(&self, type_id: TypeId) -> &str {
         &self.type_names[type_id.index()]
     }
 
@@ -516,7 +516,7 @@ impl<'c> Parser<'c> {
     ///
     /// [`Derive`]: crate::Derive
     /// [`Generator`]: crate::Generator
-    fn parse_type_attrs(&mut self, type_def: &mut TypeDef, attrs: &[Attribute]) {
+    fn parse_type_attrs(&self, type_def: &mut TypeDef, attrs: &[Attribute]) {
         for attr in attrs {
             if !matches!(attr.style, AttrStyle::Outer) {
                 continue;
@@ -600,7 +600,7 @@ impl<'c> Parser<'c> {
     ///
     /// [`Derive`]: crate::Derive
     /// [`Generator`]: crate::Generator
-    fn parse_ast_attr(&mut self, type_def: &mut TypeDef, attr: &Attribute) {
+    fn parse_ast_attr(&self, type_def: &mut TypeDef, attr: &Attribute) {
         let parts = match &attr.meta {
             Meta::Path(_) => return,
             Meta::List(meta_list) => meta_list
@@ -687,7 +687,7 @@ impl<'c> Parser<'c> {
     }
 
     /// Parse [`Skeleton`] to yield a [`MetaType`].
-    fn parse_meta_type(&mut self, meta_id: MetaId, skeleton: Skeleton) -> MetaType {
+    fn parse_meta_type(&self, meta_id: MetaId, skeleton: Skeleton) -> MetaType {
         let (type_name, file_id, attrs) = match skeleton {
             Skeleton::Struct(skeleton) => (skeleton.name, skeleton.file_id, skeleton.item.attrs),
             Skeleton::Enum(skeleton) => (skeleton.name, skeleton.file_id, skeleton.item.attrs),

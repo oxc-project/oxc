@@ -1367,7 +1367,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    fn is_binary_operator(&mut self) -> bool {
+    fn is_binary_operator(&self) -> bool {
         if self.ctx.has_in() && self.at(Kind::In) {
             return false;
         }

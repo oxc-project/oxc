@@ -1,5 +1,7 @@
 //! ECMAScript Minifier
 
+#![allow(clippy::needless_pass_by_ref_mut)]
+
 mod compressor;
 mod ctx;
 mod keep_var;

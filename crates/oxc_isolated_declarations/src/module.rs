@@ -21,7 +21,7 @@ impl<'a> IsolatedDeclarations<'a> {
         ))
     }
 
-    pub(crate) fn create_unique_name(&mut self, name: &str) -> Atom<'a> {
+    pub(crate) fn create_unique_name(&self, name: &str) -> Atom<'a> {
         let mut binding = self.ast.atom(name);
         let mut i = 1;
         while self.scope.has_reference(&binding) {
@@ -32,7 +32,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_export_default_declaration(
-        &mut self,
+        &self,
         decl: &ExportDefaultDeclaration<'a>,
     ) -> Option<(Option<Statement<'a>>, Statement<'a>)> {
         let declaration = match &decl.declaration {
@@ -69,7 +69,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn transform_export_expression(
-        &mut self,
+        &self,
         expr: &Expression<'a>,
     ) -> Option<(Option<Statement<'a>>, Expression<'a>)> {
         if matches!(expr, Expression::Identifier(_)) {
@@ -102,7 +102,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn transform_ts_export_assignment(
-        &mut self,
+        &self,
         decl: &TSExportAssignment<'a>,
     ) -> Option<(Option<Statement<'a>>, Statement<'a>)> {
         self.transform_export_expression(&decl.expression).map(|(var_decl, expr)| {

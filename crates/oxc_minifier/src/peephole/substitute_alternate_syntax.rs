@@ -1104,7 +1104,7 @@ impl<'a> LatePeepholeOptimizations {
         DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
     }
 
-    pub fn substitute_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: Ctx<'a, '_>) {
+    pub fn substitute_catch_clause(&self, catch: &mut CatchClause<'a>, ctx: Ctx<'a, '_>) {
         if self.target >= ESTarget::ES2019 {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {

@@ -13,7 +13,7 @@ use crate::{
 
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_function(
-        &mut self,
+        &self,
         func: &Function<'a>,
         declare: Option<bool>,
     ) -> Box<'a, Function<'a>> {

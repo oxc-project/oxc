@@ -425,7 +425,7 @@ impl TraverseScoping {
     ///
     /// Once this set is created, generating a UID is a relatively quick operation, rather than
     /// iterating over all symbols and unresolved references every time generate a UID.
-    fn get_uid_names(&mut self) -> FxHashSet<CompactStr> {
+    fn get_uid_names(&self) -> FxHashSet<CompactStr> {
         self.scopes
             .root_unresolved_references()
             .keys()

@@ -43,7 +43,7 @@ pub fn print_arrow_function<'a>(
 }
 
 pub fn should_print_params_without_parens<'a>(
-    p: &mut Prettier<'a>,
+    p: &Prettier<'a>,
     expr: &ArrowFunctionExpression<'a>,
 ) -> bool {
     match p.options.arrow_parens {

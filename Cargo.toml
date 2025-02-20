@@ -89,7 +89,6 @@ suspicious_operation_groupings = "warn"
 redundant_clone = "warn"
 redundant_pub_crate = "allow" # FIXME
 debug_assert_with_mut_call = "allow" # FIXME
-needless_pass_by_ref_mut = "allow" # FIXME
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"

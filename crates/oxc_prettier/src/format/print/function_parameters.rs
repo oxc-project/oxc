@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub fn should_hug_the_only_function_parameter(
-    p: &mut Prettier<'_>,
+    p: &Prettier<'_>,
     params: &FormalParameters<'_>,
 ) -> bool {
     if params.parameters_count() != 1 {

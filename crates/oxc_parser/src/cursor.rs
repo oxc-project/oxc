@@ -188,7 +188,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// # Errors
-    pub(crate) fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
+    pub(crate) fn expect_without_advance(&self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.cur_token().span();
             return Err(diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range));

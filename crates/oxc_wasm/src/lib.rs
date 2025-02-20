@@ -311,7 +311,7 @@ impl Oxc {
     }
 
     fn run_linter(
-        &mut self,
+        &self,
         run_options: &OxcRunOptions,
         path: &Path,
         program: &Program,

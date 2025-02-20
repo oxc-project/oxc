@@ -389,7 +389,7 @@ impl TestCase {
         }
     }
 
-    fn test_exec(&mut self, filtered: bool) {
+    fn test_exec(&self, filtered: bool) {
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());

@@ -300,7 +300,7 @@ pub fn print_object<'a>(p: &mut Prettier<'a>, obj: &ObjectLike<'a, '_>) -> Doc<'
     group!(p, parts, should_break, None)
 }
 
-fn should_hug_the_only_parameter(p: &mut Prettier<'_>, kind: AstKind<'_>) -> bool {
+fn should_hug_the_only_parameter(p: &Prettier<'_>, kind: AstKind<'_>) -> bool {
     match kind {
         AstKind::FormalParameters(params) => {
             function_parameters::should_hug_the_only_function_parameter(p, params)

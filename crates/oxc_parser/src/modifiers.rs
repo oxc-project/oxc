@@ -507,7 +507,7 @@ impl<'a> ParserImpl<'a> {
         self.can_follow_export_modifier()
     }
 
-    fn can_follow_export_modifier(&mut self) -> bool {
+    fn can_follow_export_modifier(&self) -> bool {
         let kind = self.cur_kind();
         kind == Kind::At
             && kind != Kind::Star
@@ -516,7 +516,7 @@ impl<'a> ParserImpl<'a> {
             && self.can_follow_modifier()
     }
 
-    fn can_follow_modifier(&mut self) -> bool {
+    fn can_follow_modifier(&self) -> bool {
         match self.cur_kind() {
             Kind::PrivateIdentifier | Kind::LBrack | Kind::LCurly | Kind::Star | Kind::Dot3 => true,
             kind => kind.is_identifier_or_keyword(),

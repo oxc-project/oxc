@@ -229,7 +229,7 @@ impl<'a> ClassPropertyLike<'a, '_> {
         }
     }
 
-    fn format_accessibility(&self, p: &mut Prettier<'a>) -> Option<Doc<'a>> {
+    fn format_accessibility(&self, p: &Prettier<'a>) -> Option<Doc<'a>> {
         match self {
             ClassPropertyLike::AccessorProperty(def) => {
                 def.accessibility.map(|v| text!(v.as_str()))

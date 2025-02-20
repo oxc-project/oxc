@@ -517,16 +517,16 @@ impl Parser {
         self.offset
     }
 
-    fn peek_nth(&mut self, n: usize) -> Option<char> {
+    fn peek_nth(&self, n: usize) -> Option<char> {
         let nth = self.index + n;
         self.chars.get(nth).copied()
     }
 
-    fn peek(&mut self) -> Option<char> {
+    fn peek(&self) -> Option<char> {
         self.peek_nth(0)
     }
 
-    fn peek2(&mut self) -> Option<char> {
+    fn peek2(&self) -> Option<char> {
         self.peek_nth(1)
     }
 }

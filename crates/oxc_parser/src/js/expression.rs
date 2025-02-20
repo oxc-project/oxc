@@ -437,7 +437,7 @@ impl<'a> ParserImpl<'a> {
     /// Elision :
     ///     ,
     ///    Elision ,
-    pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
+    pub(crate) fn parse_elision(&self) -> ArrayExpressionElement<'a> {
         self.ast.array_expression_element_elision(self.cur_token().span())
     }
 
