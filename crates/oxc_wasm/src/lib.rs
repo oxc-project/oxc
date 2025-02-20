@@ -466,8 +466,22 @@ impl Oxc {
     }
 
     fn convert_ast(&mut self, program: &mut Program) {
+        use serde::Deserialize;
+
         Utf8ToUtf16::new().convert(program);
-        self.ast = program.serialize(&self.serializer).unwrap();
+
+        // Convert:
+        // 1. `Program` to JSON string using `ESTree`.
+        // 2. JSON string to `serde_json::Value`.
+        // 3. `serde_json::Value` to `wasm_bindgen::JsValue`.
+        // TODO: There has to be a better way!
+        let json = program.to_json();
+        let s = serde_json::de::StrRead::new(&json);
+        let mut deserializer = serde_json::Deserializer::new(s);
+        let value = serde_json::Value::deserialize(&mut deserializer).unwrap();
+        deserializer.end().unwrap();
+        self.ast = value.serialize(&self.serializer).unwrap();
+
         self.comments = Self::map_comments(program.source_text, &program.comments);
     }
 

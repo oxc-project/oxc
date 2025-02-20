@@ -1,4 +1,4 @@
-//! Derive for `Serialize` impls, which serialize AST to ESTree format in JSON.
+//! Derive for `ESTree` impls, which serialize AST to ESTree format in JSON.
 
 use std::borrow::Cow;
 
@@ -8,7 +8,7 @@ use syn::{parse_str, Expr};
 
 use crate::{
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
-    utils::{create_safe_ident, number_lit},
+    utils::create_safe_ident,
     Result,
 };
 
@@ -16,7 +16,7 @@ use super::{
     attr_positions, define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum,
 };
 
-/// Derive for `Serialize` impls, which serialize AST to ESTree format in JSON.
+/// Derive for `ESTree` impls, which serialize AST to ESTree format in JSON.
 pub struct DeriveESTree;
 
 define_derive!(DeriveESTree);
@@ -61,21 +61,17 @@ impl Derive for DeriveESTree {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(unused_imports, clippy::match_same_arms)]
+            #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
             ///@@line_break
-            use serde::{
-                __private::ser::FlatMapSerializer,
-                ser::SerializeMap,
-                Serialize, Serializer
+            use oxc_estree::{
+                ser::{AppendTo, AppendToConcat},
+                ESTree, FlatStructSerializer, Serializer, StructSerializer,
             };
-
-            ///@@line_break
-            use oxc_estree::ser::{AppendTo, AppendToConcat};
         }
     }
 
-    /// Generate implementation of `Serialize` for a struct or enum.
+    /// Generate implementation of `ESTree` for a struct or enum.
     fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
         let body = match type_def {
             StructOrEnum::Struct(struct_def) => {
@@ -95,8 +91,8 @@ impl Derive for DeriveESTree {
         let ty = type_def.ty_anon(schema);
 
         quote! {
-            impl Serialize for #ty {
-                fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            impl ESTree for #ty {
+                fn serialize<S: Serializer>(&self, serializer: S) {
                     #body
                 }
             }
@@ -255,7 +251,7 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
     let type_field = if gen.add_type_field {
         let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
         quote! {
-            map.serialize_entry("type", #type_name)?;
+            state.serialize_field("type", #type_name);
         }
     } else {
         quote!()
@@ -263,10 +259,10 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
 
     let stmts = gen.stmts;
     quote! {
-        let mut map = serializer.serialize_map(None)?;
+        let mut state = serializer.serialize_struct();
         #type_field
         #stmts
-        map.end()
+        state.end();
     }
 }
 
@@ -282,7 +278,7 @@ struct StructSerializerGenerator<'s> {
     /// `true` if a `type` field should be added.
     /// `false` one already exists (or if `#[estree(no_type)]` attr on struct).
     add_type_field: bool,
-    /// Crate in which the `Serialize` impl for the type will be generated
+    /// Crate in which the `ESTree` impl for the type will be generated
     krate: &'s str,
     /// Schema
     schema: &'s Schema,
@@ -352,7 +348,7 @@ impl<'s> StructSerializerGenerator<'s> {
             );
 
             self.stmts.extend(quote! {
-                #self_path.#field_name_ident.serialize(FlatMapSerializer(&mut map))?;
+                #self_path.#field_name_ident.serialize(FlatStructSerializer(&mut state));
             });
             return;
         }
@@ -384,7 +380,7 @@ impl<'s> StructSerializerGenerator<'s> {
         };
 
         self.stmts.extend(quote! {
-            map.serialize_entry(#field_camel_name, &#value)?;
+            state.serialize_field(#field_camel_name, &#value);
         });
     }
 
@@ -397,7 +393,7 @@ impl<'s> StructSerializerGenerator<'s> {
         let converter = self.schema.meta_by_name(converter_name);
         let converter_path = converter.import_path_from_crate(self.krate, self.schema);
         self.stmts.extend(quote! {
-            map.serialize_entry(#field_name, &#converter_path(#self_path))?;
+            state.serialize_field(#field_name, &#converter_path(#self_path));
         });
     }
 }
@@ -409,11 +405,9 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     let match_branches = enum_def.all_variants(schema).map(|variant| {
         let variant_ident = variant.ident();
         if variant.is_fieldless() {
-            let enum_name = enum_def.name();
-            let discriminant = number_lit(variant.discriminant);
             let value = get_fieldless_variant_value(enum_def, variant);
             quote! {
-                #enum_ident::#variant_ident => serializer.serialize_unit_variant(#enum_name, #discriminant, #value),
+                #enum_ident::#variant_ident => #value.serialize(serializer),
             }
         } else {
             quote! {
@@ -469,7 +463,7 @@ pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
 ///
 /// If the field's type is a struct, then usually it can.
 /// But it can't in the case where that type is defined in a different crate from where
-/// the `Serialize` impl will be generated, and one of the flattened fields is not public.
+/// the `ESTree` impl will be generated, and one of the flattened fields is not public.
 pub fn can_flatten_field_inline(field: &FieldDef, krate: &str, schema: &Schema) -> bool {
     let field_type = field.type_def(schema);
     let TypeDef::Struct(struct_def) = field_type else { return false };

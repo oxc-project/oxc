@@ -29,7 +29,6 @@ oxc_sourcemap = { workspace = true, features = ["napi"] }
 
 rustc-hash = { workspace = true }
 self_cell = { workspace = true }
-serde_json = { workspace = true }
 string_wizard = { workspace = true, features = ["sourcemap", "serde"] }
 
 ctor = { workspace = true }

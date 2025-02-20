@@ -45,7 +45,7 @@ impl NumericLiteral<'_> {
             return int32_value;
         }
 
-        // NaN, Infinity if not included in our NumericLiteral, so we just serde(skip) step 2.
+        // NaN, Infinity if not included in our NumericLiteral, so we just skip step 2.
 
         // step 3
         let pos_int = num.signum() * num.abs().floor();

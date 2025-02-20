@@ -1,79 +1,25 @@
-use std::io::Write;
-
 use cow_utils::CowUtils;
-use serde::{
-    ser::{SerializeMap, SerializeSeq, Serializer},
-    Serialize,
-};
 
 use oxc_ast_macros::ast_meta;
+use oxc_estree::{
+    CompactSerializer, ESTree, PrettySerializer, SequenceSerializer, Serializer, StructSerializer,
+};
 
 use crate::ast::*;
 
 impl Program<'_> {
-    /// Serialize AST to JSON.
-    //
-    // Should not panic if everything is working correctly.
-    // Serializing into a `Vec<u8>` should be infallible.
-    #[expect(clippy::missing_panics_doc)]
+    /// Serialize AST to ESTree JSON.
     pub fn to_json(&self) -> String {
-        let buf = Vec::new();
-        let ser = self.to_json_into_writer(buf).unwrap();
-        let buf = ser.into_inner();
-        // SAFETY: `serde_json` outputs valid UTF-8.
-        // `serde_json::to_string` also uses `from_utf8_unchecked`.
-        // https://github.com/serde-rs/json/blob/1174c5f57db44c26460951b525c6ede50984b655/src/ser.rs#L2209-L2219
-        unsafe { String::from_utf8_unchecked(buf) }
+        let mut serializer = CompactSerializer::new();
+        self.serialize(&mut serializer);
+        serializer.into_string()
     }
 
-    /// Serialize AST into a "black hole" writer.
-    ///
-    /// Only useful for testing, to make sure serialization completes successfully.
-    /// Should be faster than [`Program::to_json`], as does not actually produce any output.
-    ///
-    /// # Errors
-    /// Returns `Err` if serialization fails.
-    #[doc(hidden)]
-    pub fn test_to_json(&self) -> Result<(), serde_json::Error> {
-        struct BlackHole;
-
-        #[expect(clippy::inline_always)]
-        impl Write for BlackHole {
-            #[inline(always)]
-            fn write(&mut self, buf: &[u8]) -> Result<usize, std::io::Error> {
-                Ok(buf.len())
-            }
-
-            #[inline(always)]
-            fn flush(&mut self) -> Result<(), std::io::Error> {
-                Ok(())
-            }
-        }
-
-        self.to_json_into_writer(BlackHole).map(|_| ())
-    }
-
-    /// Serialize AST into the provided writer.
-    fn to_json_into_writer<W: Write>(
-        &self,
-        writer: W,
-    ) -> Result<serde_json::Serializer<W, EcmaFormatter>, serde_json::Error> {
-        let mut ser = serde_json::Serializer::with_formatter(writer, EcmaFormatter);
-        self.serialize(&mut ser)?;
-        Ok(ser)
-    }
-}
-
-/// `serde_json` formatter which uses `ryu_js` to serialize `f64`.
-pub struct EcmaFormatter;
-
-impl serde_json::ser::Formatter for EcmaFormatter {
-    fn write_f64<W>(&mut self, writer: &mut W, value: f64) -> std::io::Result<()>
-    where
-        W: ?Sized + std::io::Write,
-    {
-        use oxc_syntax::number::ToJsString;
-        writer.write_all(value.to_js_string().as_bytes())
+    /// Serialize AST to ESTree JSON.
+    pub fn to_pretty_json(&self) -> String {
+        let mut serializer = PrettySerializer::new();
+        self.serialize(&mut serializer);
+        serializer.into_string()
     }
 }
 
@@ -86,9 +32,9 @@ impl serde_json::ser::Formatter for EcmaFormatter {
 #[estree(ts_type = "null")]
 pub struct Null<'b, T>(#[expect(dead_code)] pub &'b T);
 
-impl<T> Serialize for Null<'_, T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        ().serialize(serializer)
+impl<T> ESTree for Null<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        ().serialize(serializer);
     }
 }
 
@@ -97,9 +43,9 @@ impl<T> Serialize for Null<'_, T> {
 #[estree(ts_type = "true")]
 pub struct True<'b, T>(#[expect(dead_code)] pub &'b T);
 
-impl<T> Serialize for True<'_, T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        true.serialize(serializer)
+impl<T> ESTree for True<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        true.serialize(serializer);
     }
 }
 
@@ -108,9 +54,9 @@ impl<T> Serialize for True<'_, T> {
 #[estree(ts_type = "false")]
 pub struct False<'b, T>(#[expect(dead_code)] pub &'b T);
 
-impl<T> Serialize for False<'_, T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        false.serialize(serializer)
+impl<T> ESTree for False<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        false.serialize(serializer);
     }
 }
 
@@ -119,9 +65,9 @@ impl<T> Serialize for False<'_, T> {
 #[estree(ts_type = "'in'")]
 pub struct In<'b, T>(#[expect(dead_code)] pub &'b T);
 
-impl<T> Serialize for In<'_, T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        "in".serialize(serializer)
+impl<T> ESTree for In<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        "in".serialize(serializer);
     }
 }
 
@@ -130,9 +76,9 @@ impl<T> Serialize for In<'_, T> {
 #[estree(ts_type = "'init'")]
 pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
 
-impl<T> Serialize for Init<'_, T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        "init".serialize(serializer)
+impl<T> ESTree for Init<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        "init".serialize(serializer);
     }
 }
 
@@ -145,8 +91,9 @@ impl<T> Serialize for Init<'_, T> {
 #[estree(ts_type = "string | null")]
 pub struct BooleanLiteralRaw<'b>(pub &'b BooleanLiteral);
 
-impl Serialize for BooleanLiteralRaw<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for BooleanLiteralRaw<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        #[expect(clippy::collection_is_never_read)] // Clippy is wrong!
         let raw = if self.0.span.is_unspanned() {
             None
         } else if self.0.value {
@@ -154,7 +101,7 @@ impl Serialize for BooleanLiteralRaw<'_> {
         } else {
             Some("false")
         };
-        raw.serialize(serializer)
+        raw.serialize(serializer);
     }
 }
 
@@ -163,10 +110,11 @@ impl Serialize for BooleanLiteralRaw<'_> {
 #[estree(ts_type = "'null' | null")]
 pub struct NullLiteralRaw<'b>(pub &'b NullLiteral);
 
-impl Serialize for NullLiteralRaw<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for NullLiteralRaw<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        #[expect(clippy::collection_is_never_read)] // Clippy is wrong!
         let raw = if self.0.span.is_unspanned() { None } else { Some("null") };
-        raw.serialize(serializer)
+        raw.serialize(serializer);
     }
 }
 
@@ -175,10 +123,10 @@ impl Serialize for NullLiteralRaw<'_> {
 #[estree(ts_type = "string")]
 pub struct BigIntLiteralBigint<'a, 'b>(pub &'b BigIntLiteral<'a>);
 
-impl Serialize for BigIntLiteralBigint<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for BigIntLiteralBigint<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         let bigint = self.0.raw.strip_suffix('n').unwrap().cow_replace('_', "");
-        bigint.serialize(serializer)
+        bigint.serialize(serializer);
     }
 }
 
@@ -189,9 +137,9 @@ impl Serialize for BigIntLiteralBigint<'_, '_> {
 #[estree(ts_type = "BigInt")]
 pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
 
-impl Serialize for BigIntLiteralValue<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_none()
+impl ESTree for BigIntLiteralValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        ().serialize(serializer);
     }
 }
 
@@ -200,10 +148,10 @@ impl Serialize for BigIntLiteralValue<'_, '_> {
 #[estree(ts_type = "RegExp")]
 pub struct RegExpLiteralRegex<'a, 'b>(pub &'b RegExpLiteral<'a>);
 
-impl Serialize for RegExpLiteralRegex<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("pattern", &self.0.regex.pattern)?;
+impl ESTree for RegExpLiteralRegex<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("pattern", &self.0.regex.pattern);
 
         // If `raw` field is present, flags must be in same order as in source to match Acorn.
         // Count number of set bits in `flags` to get number of flags
@@ -212,11 +160,11 @@ impl Serialize for RegExpLiteralRegex<'_, '_> {
         if let Some(raw) = &self.0.raw {
             let flags_count = flags.bits().count_ones() as usize;
             let flags_index = raw.len() - flags_count;
-            map.serialize_entry("flags", &raw[flags_index..])?;
+            state.serialize_field("flags", &raw[flags_index..]);
         } else {
-            map.serialize_entry("flags", &flags)?;
+            state.serialize_field("flags", &flags);
         }
-        map.end()
+        state.end();
     }
 }
 
@@ -227,21 +175,21 @@ impl Serialize for RegExpLiteralRegex<'_, '_> {
 #[estree(ts_type = "RegExp | null")]
 pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral<'a>);
 
-impl Serialize for RegExpLiteralValue<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_none()
+impl ESTree for RegExpLiteralValue<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        ().serialize(serializer);
     }
 }
 
-impl Serialize for RegExpFlags {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.to_string())
+impl ESTree for RegExpFlags {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.to_string().as_str().serialize(serializer);
     }
 }
 
-impl Serialize for RegExpPattern<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.to_string())
+impl ESTree for RegExpPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.to_string().as_str().serialize(serializer);
     }
 }
 
@@ -250,42 +198,42 @@ impl Serialize for RegExpPattern<'_> {
 // --------------------
 
 /// Serialize `ArrayExpressionElement::Elision` variant as `null`.
-impl Serialize for Elision {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_none()
+impl ESTree for Elision {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        ().serialize(serializer);
     }
 }
 
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined
 /// and `argument` field flattened.
-impl Serialize for FormalParameters<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut seq = serializer.serialize_seq(None)?;
+impl ESTree for FormalParameters<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
         for item in &self.items {
-            seq.serialize_element(item)?;
+            seq.serialize_element(item);
         }
 
         if let Some(rest) = &self.rest {
-            seq.serialize_element(&FormalParametersRest(rest))?;
+            seq.serialize_element(&FormalParametersRest(rest));
         }
 
-        seq.end()
+        seq.end();
     }
 }
 
 struct FormalParametersRest<'a, 'b>(&'b BindingRestElement<'a>);
 
-impl Serialize for FormalParametersRest<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for FormalParametersRest<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         let rest = self.0;
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "RestElement")?;
-        map.serialize_entry("start", &rest.span.start)?;
-        map.serialize_entry("end", &rest.span.end)?;
-        map.serialize_entry("argument", &rest.argument.kind)?;
-        map.serialize_entry("type_annotation", &rest.argument.type_annotation)?;
-        map.serialize_entry("optional", &rest.argument.optional)?;
-        map.end()
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", "RestElement");
+        state.serialize_field("start", &rest.span.start);
+        state.serialize_field("end", &rest.span.end);
+        state.serialize_field("argument", &rest.argument.kind);
+        state.serialize_field("type_annotation", &rest.argument.type_annotation);
+        state.serialize_field("optional", &rest.argument.optional);
+        state.end();
     }
 }
 
@@ -296,59 +244,59 @@ impl Serialize for FormalParametersRest<'_, '_> {
 #[estree(ts_type = "Array<ImportDeclarationSpecifier>")]
 pub struct ImportDeclarationSpecifiers<'a, 'b>(pub &'b ImportDeclaration<'a>);
 
-impl Serialize for ImportDeclarationSpecifiers<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(specifiers) = &self.0.specifiers {
-            specifiers.serialize(serializer)
+            specifiers.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer)
+            [(); 0].serialize(serializer);
         }
     }
 }
 
 /// Serialize `ObjectProperty` with fields in same order as Acorn.
-impl Serialize for ObjectProperty<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Property")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("method", &self.method)?;
-        map.serialize_entry("shorthand", &self.shorthand)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("key", &self.key)?;
+impl ESTree for ObjectProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", "Property");
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("method", &self.method);
+        state.serialize_field("shorthand", &self.shorthand);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.key);
         // Acorn has `kind` field before `value` for methods and shorthand properties
         if self.method || self.kind != PropertyKind::Init || self.shorthand {
-            map.serialize_entry("kind", &self.kind)?;
-            map.serialize_entry("value", &self.value)?;
+            state.serialize_field("kind", &self.kind);
+            state.serialize_field("value", &self.value);
         } else {
-            map.serialize_entry("value", &self.value)?;
-            map.serialize_entry("kind", &self.kind)?;
+            state.serialize_field("value", &self.value);
+            state.serialize_field("kind", &self.kind);
         }
-        map.end()
+        state.end();
     }
 }
 
 /// Serialize `BindingProperty` with fields in same order as Acorn.
-impl Serialize for BindingProperty<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "Property")?;
-        map.serialize_entry("start", &self.span.start)?;
-        map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("method", &false)?;
-        map.serialize_entry("shorthand", &self.shorthand)?;
-        map.serialize_entry("computed", &self.computed)?;
-        map.serialize_entry("key", &self.key)?;
+impl ESTree for BindingProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", "Property");
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("method", &false);
+        state.serialize_field("shorthand", &self.shorthand);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.key);
         // Acorn has `kind` field before `value` for shorthand properties
         if self.shorthand {
-            map.serialize_entry("kind", "init")?;
-            map.serialize_entry("value", &self.value)?;
+            state.serialize_field("kind", "init");
+            state.serialize_field("value", &self.value);
         } else {
-            map.serialize_entry("value", &self.value)?;
-            map.serialize_entry("kind", "init")?;
+            state.serialize_field("value", &self.value);
+            state.serialize_field("kind", "init");
         }
-        map.end()
+        state.end();
     }
 }
 
@@ -360,12 +308,12 @@ impl Serialize for BindingProperty<'_> {
 #[estree(ts_type = "FunctionBody | Expression")]
 pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
 
-impl Serialize for ArrowFunctionExpressionBody<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ArrowFunctionExpressionBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(expression) = self.0.get_expression() {
-            expression.serialize(serializer)
+            expression.serialize(serializer);
         } else {
-            self.0.body.serialize(serializer)
+            self.0.body.serialize(serializer);
         }
     }
 }
@@ -378,18 +326,18 @@ pub struct AssignmentTargetPropertyIdentifierValue<'a>(
     pub &'a AssignmentTargetPropertyIdentifier<'a>,
 );
 
-impl Serialize for AssignmentTargetPropertyIdentifierValue<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(init) = &self.0.init {
-            let mut map = serializer.serialize_map(None)?;
-            map.serialize_entry("type", "AssignmentPattern")?;
-            map.serialize_entry("start", &self.0.span.start)?;
-            map.serialize_entry("end", &self.0.span.end)?;
-            map.serialize_entry("left", &self.0.binding)?;
-            map.serialize_entry("right", init)?;
-            map.end()
+            let mut state = serializer.serialize_struct();
+            state.serialize_field("type", "AssignmentPattern");
+            state.serialize_field("start", &self.0.span.start);
+            state.serialize_field("end", &self.0.span.end);
+            state.serialize_field("left", &self.0.binding);
+            state.serialize_field("right", init);
+            state.end();
         } else {
-            self.0.binding.serialize(serializer)
+            self.0.binding.serialize(serializer);
         }
     }
 }
@@ -402,12 +350,12 @@ impl Serialize for AssignmentTargetPropertyIdentifierValue<'_> {
 #[estree(ts_type = "Expression | null")]
 pub struct ImportExpressionArguments<'a>(pub &'a ImportExpression<'a>);
 
-impl Serialize for ImportExpressionArguments<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ImportExpressionArguments<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(expression) = self.0.arguments.first() {
-            expression.serialize(serializer)
+            expression.serialize(serializer);
         } else {
-            ().serialize(serializer)
+            ().serialize(serializer);
         }
     }
 }
@@ -424,12 +372,12 @@ impl Serialize for ImportExpressionArguments<'_> {
 #[estree(ts_type = "Array<ImportAttribute>")]
 pub struct ImportDeclarationWithClause<'a, 'b>(pub &'b ImportDeclaration<'a>);
 
-impl Serialize for ImportDeclarationWithClause<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ImportDeclarationWithClause<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
-            with_clause.with_entries.serialize(serializer)
+            with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer)
+            [(); 0].serialize(serializer);
         }
     }
 }
@@ -438,12 +386,12 @@ impl Serialize for ImportDeclarationWithClause<'_, '_> {
 #[estree(ts_type = "Array<ImportAttribute>")]
 pub struct ExportNamedDeclarationWithClause<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
 
-impl Serialize for ExportNamedDeclarationWithClause<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
-            with_clause.with_entries.serialize(serializer)
+            with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer)
+            [(); 0].serialize(serializer);
         }
     }
 }
@@ -452,12 +400,12 @@ impl Serialize for ExportNamedDeclarationWithClause<'_, '_> {
 #[estree(ts_type = "Array<ImportAttribute>")]
 pub struct ExportAllDeclarationWithClause<'a, 'b>(pub &'b ExportAllDeclaration<'a>);
 
-impl Serialize for ExportAllDeclarationWithClause<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
-            with_clause.with_entries.serialize(serializer)
+            with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer)
+            [(); 0].serialize(serializer);
         }
     }
 }
@@ -466,31 +414,31 @@ impl Serialize for ExportAllDeclarationWithClause<'_, '_> {
 // JSX
 // --------------------
 
-impl Serialize for JSXElementName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for JSXElementName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Identifier(ident) => ident.serialize(serializer),
             Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer)
+                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer);
             }
             Self::NamespacedName(name) => name.serialize(serializer),
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {
-                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
+                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer);
             }
         }
     }
 }
 
-impl Serialize for JSXMemberExpressionObject<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+impl ESTree for JSXMemberExpressionObject<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer)
+                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer);
             }
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {
-                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
+                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer);
             }
         }
     }

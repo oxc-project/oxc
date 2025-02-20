@@ -12,7 +12,9 @@ use std::{
 };
 
 #[cfg(any(feature = "serialize", test))]
-use serde::{Serialize, Serializer};
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+#[cfg(any(feature = "serialize", test))]
+use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::Allocator;
 
@@ -183,8 +185,15 @@ impl<T: ?Sized + Debug> Debug for Box<'_, T> {
 
 #[cfg(any(feature = "serialize", test))]
 impl<T: Serialize> Serialize for Box<'_, T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.deref().serialize(serializer)
+    }
+}
+
+#[cfg(any(feature = "serialize", test))]
+impl<T: ESTree> ESTree for Box<'_, T> {
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        self.deref().serialize(serializer);
     }
 }
 
@@ -238,8 +247,21 @@ mod test {
     fn box_serialize() {
         let allocator = Allocator::default();
         let b = Box::new_in("x", &allocator);
-        let b = serde_json::to_string(&b).unwrap();
-        assert_eq!(b, "\"x\"");
+        let s = serde_json::to_string(&b).unwrap();
+        assert_eq!(s, r#""x""#);
+    }
+
+    #[test]
+    fn box_serialize_estree() {
+        use oxc_estree::{CompactSerializer, ESTree};
+
+        let allocator = Allocator::default();
+        let b = Box::new_in("x", &allocator);
+
+        let mut serializer = CompactSerializer::new();
+        b.serialize(&mut serializer);
+        let s = serializer.into_string();
+        assert_eq!(s, r#""x""#);
     }
 
     #[test]

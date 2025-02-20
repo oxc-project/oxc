@@ -18,7 +18,9 @@ use std::{
 use allocator_api2::vec::Vec as InnerVec;
 use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
-use serde::{Serialize, Serializer};
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+#[cfg(any(feature = "serialize", test))]
+use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{Allocator, Box};
 
@@ -274,8 +276,15 @@ where
 
 #[cfg(any(feature = "serialize", test))]
 impl<T: Serialize> Serialize for Vec<'_, T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.as_slice().serialize(serializer)
+    }
+}
+
+#[cfg(any(feature = "serialize", test))]
+impl<T: ESTree> ESTree for Vec<'_, T> {
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        self.as_slice().serialize(serializer);
     }
 }
 
@@ -319,8 +328,22 @@ mod test {
         let allocator = Allocator::default();
         let mut v = Vec::new_in(&allocator);
         v.push("x");
-        let v = serde_json::to_string(&v).unwrap();
-        assert_eq!(v, "[\"x\"]");
+        let s = serde_json::to_string(&v).unwrap();
+        assert_eq!(s, r#"["x"]"#);
+    }
+
+    #[test]
+    fn vec_serialize_estree() {
+        use oxc_estree::{CompactSerializer, ESTree};
+
+        let allocator = Allocator::default();
+        let mut v = Vec::new_in(&allocator);
+        v.push("x");
+
+        let mut serializer = CompactSerializer::new();
+        v.serialize(&mut serializer);
+        let s = serializer.into_string();
+        assert_eq!(s, r#"["x"]"#);
     }
 
     #[test]

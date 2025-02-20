@@ -12,12 +12,16 @@ repository.workspace = true
 rust-version.workspace = true
 description.workspace = true
 
-[dependencies]
-serde = { workspace = true, optional = true }
-
 [lints]
 workspace = true
 
+[lib]
+doctest = false
+
+[dependencies]
+itoa = { workspace = true }
+ryu-js = { workspace = true, optional = true }
+
 [features]
 default = []
-serialize = ["dep:serde"]
+serialize = ["dep:ryu-js"]
