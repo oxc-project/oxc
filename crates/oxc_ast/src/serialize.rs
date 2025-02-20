@@ -336,17 +336,17 @@ impl Serialize for BindingProperty<'_> {
         map.serialize_entry("type", "Property")?;
         map.serialize_entry("start", &self.span.start)?;
         map.serialize_entry("end", &self.span.end)?;
-        map.serialize_entry("method", &crate::serialize::False(self))?;
+        map.serialize_entry("method", &false)?;
         map.serialize_entry("shorthand", &self.shorthand)?;
         map.serialize_entry("computed", &self.computed)?;
         map.serialize_entry("key", &self.key)?;
         // Acorn has `kind` field before `value` for shorthand properties
         if self.shorthand {
-            map.serialize_entry("kind", &crate::serialize::Init(self))?;
+            map.serialize_entry("kind", "init")?;
             map.serialize_entry("value", &self.value)?;
         } else {
             map.serialize_entry("value", &self.value)?;
-            map.serialize_entry("kind", &crate::serialize::Init(self))?;
+            map.serialize_entry("kind", "init")?;
         }
         map.end()
     }
