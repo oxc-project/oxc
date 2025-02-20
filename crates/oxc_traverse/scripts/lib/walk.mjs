@@ -44,7 +44,7 @@ export default function generateWalkFunctionsCode(types) {
     ///   (\`Program<'a>\`).
     /// * \`ctx\` must contain a \`TraverseAncestry<'a>\` with single \`Ancestor::None\` on its stack.
     #[inline]
-    pub(crate) unsafe fn walk_ast<'a, Tr: Traverse<'a>>(
+    pub unsafe fn walk_ast<'a, Tr: Traverse<'a>>(
       traverser: &mut Tr,
       program: *mut Program<'a>,
       ctx: &mut TraverseCtx<'a>,

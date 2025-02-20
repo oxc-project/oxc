@@ -62,7 +62,7 @@ impl Default for ScopeTree {
 }
 
 self_cell::self_cell!(
-    pub(crate) struct ScopeTreeCell {
+    pub struct ScopeTreeCell {
         owner: Allocator,
         #[covariant]
         dependent: ScopeTreeInner,
