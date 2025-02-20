@@ -117,6 +117,6 @@ mod test {
         reporter.render_error(warning);
 
         let output = reporter.finish(&DiagnosticResult::default()).unwrap();
-        assert_eq!(output.to_string(), EXPECTED_REPORT);
+        assert_eq!(output, EXPECTED_REPORT);
     }
 }

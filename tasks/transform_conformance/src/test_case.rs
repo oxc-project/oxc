@@ -245,7 +245,7 @@ impl TestCase {
         if !errors.is_empty() {
             let source = NamedSource::new(
                 path.strip_prefix(project_root).unwrap().to_string_lossy(),
-                source_text.to_string(),
+                source_text,
             );
             return Err(errors
                 .into_iter()

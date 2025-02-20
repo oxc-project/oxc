@@ -44,7 +44,7 @@ fn shadowed() {
     .unwrap();
     test_same("(function (undefined) { let x = typeof undefined })()", config.clone());
     test_same("(function (NaN) { let x = typeof NaN })()", config.clone());
-    test_same("(function (process) { let x = process.env.NODE_ENV })()", config.clone());
+    test_same("(function (process) { let x = process.env.NODE_ENV })()", config);
 }
 
 #[test]
@@ -57,7 +57,7 @@ fn dot() {
     test("process", "process", config.clone());
 
     // computed member expression
-    test("process['env'].NODE_ENV", "production", config.clone());
+    test("process['env'].NODE_ENV", "production", config);
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn dot_with_overlap() {
 
     test("import.meta.env = 0", "__foo__ = 0", config.clone());
     test("import.meta.env.NODE_ENV = 0", "__foo__.NODE_ENV = 0", config.clone());
-    test("import.meta.env.FOO = 0", "import.meta.env.FOO = 0", config.clone());
+    test("import.meta.env.FOO = 0", "import.meta.env.FOO = 0", config);
 }
 
 #[test]
@@ -86,7 +86,7 @@ fn dot_define_is_member_expr_postfix() {
     test(
         "console.log(__OBJ__.process.env.SOMEVAR)",
         "console.log({ 'process': { 'env': { 'SOMEVAR': 'foo' } } }.process.env.SOMEVAR);\n",
-        config.clone(),
+        config,
     );
 }
 
@@ -133,7 +133,7 @@ fn optional_chain() {
 
     test_same("a[b][c]", config.clone());
     test_same("a?.[b][c]", config.clone());
-    test_same("a[b]?.[c]", config.clone());
+    test_same("a[b]?.[c]", config);
 }
 
 #[test]
@@ -152,7 +152,7 @@ fn dot_define_with_destruct() {
     test(
         "const {[any]: alias} = process.env.NODE_ENV",
         "const { [any]: alias } = {\n\t'a': 1,\n\tb: 2,\n\tc: true,\n\td: { a: b }\n};",
-        config.clone(),
+        config,
     );
 
     // should filterout unused key even rhs objectExpr has SpreadElement
@@ -165,7 +165,7 @@ fn dot_define_with_destruct() {
     test(
         "const {a} = process.env.NODE_ENV",
         "const { a } = {\n\t'a': 1,\n\t...unknown\n};\n",
-        config.clone(),
+        config,
     );
 }
 
@@ -233,7 +233,7 @@ console.log(
 )
         ",
         "console.log([a = 0,b.c = 0,b['c'] = 0], [ident = 0,ident = 0,ident = 0], [dot.chain = 0,dot.chain = 0,dot.chain = 0\n]);",
-        config.clone(),
+        config,
     );
 }
 

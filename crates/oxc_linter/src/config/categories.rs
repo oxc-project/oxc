@@ -48,7 +48,7 @@ impl JsonSchema for OxlintCategories {
             properties.insert(RuleCategory::Perf.as_str().to_string(), severity.clone());
             properties.insert(RuleCategory::Style.as_str().to_string(), severity.clone());
             properties.insert(RuleCategory::Restriction.as_str().to_string(), severity.clone());
-            properties.insert(RuleCategory::Nursery.as_str().to_string(), severity.clone());
+            properties.insert(RuleCategory::Nursery.as_str().to_string(), severity);
         }
 
         {

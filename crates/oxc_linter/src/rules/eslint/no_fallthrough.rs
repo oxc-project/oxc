@@ -394,13 +394,13 @@ impl NoFallthrough {
 
         if let Some(end) = end {
             let range = start..end;
-            if is_fallthrough_comment_in_range(range.clone()) {
+            if is_fallthrough_comment_in_range(range) {
                 return Some(Span::new(start, end));
             }
         }
 
         let range = start..fall.span.start;
-        if is_fallthrough_comment_in_range(range.clone()) {
+        if is_fallthrough_comment_in_range(range) {
             Some(Span::new(start, fall.span.start))
         } else {
             None

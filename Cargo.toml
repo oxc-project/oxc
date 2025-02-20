@@ -76,6 +76,7 @@ iter_on_single_items = "warn"
 unused_peekable = "warn"
 too_long_first_doc_paragraph = "warn"
 suspicious_operation_groupings = "warn"
+redundant_clone = "warn"
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"

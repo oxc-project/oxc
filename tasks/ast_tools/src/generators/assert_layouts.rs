@@ -370,7 +370,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "u128" => {
             panic!("Cannot calculate alignment for `u128`. It differs depending on Rust version.")
         }
-        "usize" => usize_layout.clone(),
+        "usize" => usize_layout,
         "i8" => Layout::from_type::<i8>(),
         "i16" => Layout::from_type::<i16>(),
         "i32" => Layout::from_type::<i32>(),
@@ -378,10 +378,10 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "i128" => {
             panic!("Cannot calculate alignment for `i128`. It differs depending on Rust version.")
         }
-        "isize" => usize_layout.clone(),
+        "isize" => usize_layout,
         "f32" => Layout::from_type::<f32>(),
         "f64" => Layout::from_type::<f64>(),
-        "&str" => str_layout.clone(),
+        "&str" => str_layout,
         "Atom" => str_layout,
         "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
         "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
@@ -390,7 +390,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "NonZeroU128" => {
             panic!("Cannot calculate alignment for `NonZeroU128`. It differs depending on Rust version.")
         }
-        "NonZeroUsize" => non_zero_usize_layout.clone(),
+        "NonZeroUsize" => non_zero_usize_layout,
         "NonZeroI8" => Layout::from_type_with_niche_for_zero::<num::NonZeroI8>(),
         "NonZeroI16" => Layout::from_type_with_niche_for_zero::<num::NonZeroI16>(),
         "NonZeroI32" => Layout::from_type_with_niche_for_zero::<num::NonZeroI32>(),

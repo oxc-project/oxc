@@ -1012,11 +1012,11 @@ fn test() {
         ),
         (
             r#"import { AllowedObject } from "foo";"#,
-            Some(serde_json::json!(pass_disallowed_object_foo.clone())),
+            Some(serde_json::json!(pass_disallowed_object_foo)),
         ),
         (
             r#"import { 'AllowedObject' as bar } from "foo";"#,
-            Some(serde_json::json!(pass_disallowed_object_foo.clone())),
+            Some(serde_json::json!(pass_disallowed_object_foo)),
         ),
         (
             r#"import { ' ' as bar } from "foo";"#,
@@ -1058,7 +1058,7 @@ fn test() {
         ),
         (
             r#"import AllowedObject, { AllowedObjectTwo as DisallowedObject } from "foo";"#,
-            Some(pass_disallowed_object_foo.clone()),
+            Some(pass_disallowed_object_foo),
         ),
         (
             r#"import AllowedObject, { AllowedObjectTwo as DisallowedObject } from "foo";"#,

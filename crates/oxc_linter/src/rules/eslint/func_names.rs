@@ -676,7 +676,7 @@ fn test() {
         ("class C { public foo = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
         ("class C { [foo] = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
         ("class C { #foo = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
-        ("class C { foo = bar(function() {}) }", as_needed.clone()), // { "ecmaVersion": 2022 },
+        ("class C { foo = bar(function() {}) }", as_needed), // { "ecmaVersion": 2022 },
         ("class C { foo = function bar() {} }", never.clone()), // { "ecmaVersion": 2022 }
     ];
 
@@ -751,7 +751,7 @@ fn test() {
             "Foo.prototype.bar = function () {}",
             never.clone(),
         ),
-        ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never.clone()),
+        ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never),
         (
             "const restoreGracefully = function <T>(entries: T[]) { }",
             "const restoreGracefully = function  restoreGracefully<T>(entries: T[]) { }",
@@ -794,7 +794,7 @@ fn test() {
              Component.prototype.setState = function (update, callback) {
 	             return setState.call(this, update, callback);
             };",
-            always.clone(),
+            always,
         ),
     ];
 
