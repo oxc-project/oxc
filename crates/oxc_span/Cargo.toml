@@ -28,7 +28,7 @@ compact_str = { workspace = true }
 miette = { workspace = true }
 
 schemars = { workspace = true, optional = true }
-serde = { workspace = true, features = ["derive"], optional = true }
+serde = { workspace = true, optional = true }
 
 [features]
 default = []
