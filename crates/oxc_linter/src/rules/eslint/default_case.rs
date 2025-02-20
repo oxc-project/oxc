@@ -48,41 +48,41 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// switch (foo) {
-    ///     case 1:
-    ///         break;
+    ///   case 1:
+    ///     break;
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// switch (a) {
-    ///     case 1:
-    ///         /* code */
-    ///         break;
+    ///   case 1:
+    ///     /* code */
+    ///     break;
     ///
-    ///     default:
-    ///         /* code */
-    ///         break;
+    ///   default:
+    ///     /* code */
+    ///     break;
     /// }
     /// ```
     ///
     /// ```javascript
     /// switch (a) {
-    ///     case 1:
-    ///         /* code */
-    ///         break;
+    ///   case 1:
+    ///     /* code */
+    ///     break;
     ///
-    ///     // no default
+    ///   // no default
     /// }
     /// ```
     ///
     /// ```javascript
     /// switch (a) {
-    ///     case 1:
-    ///         /* code */
-    ///         break;
+    ///   case 1:
+    ///     /* code */
+    ///     break;
     ///
-    ///     // No Default
+    ///   // No Default
     /// }
     /// ```
     ///
@@ -100,11 +100,11 @@ declare_oxc_lint!(
     ///
     /// ```javascript
     /// switch(a) {
-    ///     case 1:
-    ///         /* code */
-    ///         break;
+    ///   case 1:
+    ///     /* code */
+    ///     break;
     ///
-    ///     // skip default
+    ///   // skip default
     /// }
     /// ```
     DefaultCase,
