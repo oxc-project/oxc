@@ -13,6 +13,8 @@ function wrap(result) {
   return {
     get program() {
       if (!program) {
+        // Note: This code is repeated in `wasm/parser/update-bindings.mjs`.
+        // Any changes should be applied in both places.
         program = JSON.parse(result.program, function(key, value) {
           // Set `value` field of `Literal`s for `BigInt`s and `RegExp`s.
           // This is not possible to do on Rust side, as neither can be represented correctly in JSON.
