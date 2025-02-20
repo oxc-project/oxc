@@ -7,7 +7,7 @@ use crate::{rules::RULES, RuleWithSeverity};
 
 // TODO: support `categories` et. al. in overrides.
 #[derive(Debug)]
-pub(crate) struct ResolvedLinterState {
+pub struct ResolvedLinterState {
     // TODO: Arc + Vec -> SyncVec? It would save a pointer dereference.
     pub rules: Arc<[RuleWithSeverity]>,
     pub config: Arc<LintConfig>,

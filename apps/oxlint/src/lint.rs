@@ -209,7 +209,7 @@ impl Runner for LintRunner {
 
                 if fs::write(Self::DEFAULT_OXLINTRC, configuration).is_ok() {
                     stdout
-                        .write_all("Configuration file created\n".as_bytes())
+                        .write_all(b"Configuration file created\n")
                         .or_else(Self::check_for_writer_error)
                         .unwrap();
                     stdout.flush().unwrap();

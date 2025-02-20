@@ -35,7 +35,7 @@ use super::{plugin_name_to_prefix, LintContext};
 /// - [Flyweight Pattern](https://en.wikipedia.org/wiki/Flyweight_pattern)
 #[must_use]
 #[non_exhaustive]
-pub(crate) struct ContextHost<'a> {
+pub struct ContextHost<'a> {
     /// Shared semantic information about the file being linted, which includes scopes, symbols
     /// and AST nodes. See [`Semantic`].
     pub(super) semantic: Rc<Semantic<'a>>,
@@ -106,7 +106,6 @@ impl<'a> ContextHost<'a> {
 
     /// Set the linter configuration for this context.
     #[inline]
-    #[expect(dead_code)] // will be used in up-stack PR
     pub fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
         let plugins = config.plugins;
         self.config = Arc::clone(config);

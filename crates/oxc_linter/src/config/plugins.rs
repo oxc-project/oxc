@@ -8,7 +8,7 @@ use serde::{
 
 bitflags! {
     // NOTE: may be increased to a u32 if needed
-    #[derive(Debug, Clone, Copy, PartialEq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct LintPlugins: u16 {
         /// Not really a plugin. Included for completeness.
         const ESLINT = 0;

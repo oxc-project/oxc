@@ -205,15 +205,19 @@ impl ControlFlowGraph {
 
         // if there is exactly one and it is a condition instruction we are in a loop so we
         // check the condition to infer if it is always true.
-        if let EvalConstConditionResult::Eval(true) = try_eval_const_condition(only_instruction) {
+        if matches!(
+            try_eval_const_condition(only_instruction),
+            EvalConstConditionResult::Eval(true)
+        ) {
             get_jump_target(&self.graph, node).map(|it| (it, node))
-        } else if let EvalConstConditionResult::Eval(true) = self
-            .basic_block(backedge.source())
-            .instructions()
-            .iter()
-            .exactly_one()
-            .map_or_else(|_| EvalConstConditionResult::NotFound, try_eval_const_condition)
-        {
+        } else if matches!(
+            self.basic_block(backedge.source())
+                .instructions()
+                .iter()
+                .exactly_one()
+                .map_or_else(|_| EvalConstConditionResult::NotFound, try_eval_const_condition),
+            EvalConstConditionResult::Eval(true)
+        ) {
             get_jump_target(&self.graph, node).map(|it| (node, it))
         } else {
             None

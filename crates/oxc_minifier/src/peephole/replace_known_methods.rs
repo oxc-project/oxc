@@ -464,7 +464,7 @@ impl<'a> PeepholeOptimizations {
                 // In Rust, when facing `.5`, it may follow `half-away-from-zero` instead of round to upper bound.
                 // So we need to handle it manually.
                 let frac_part = arg_val.fract();
-                let epsilon = 2f64.powf(-52f64);
+                let epsilon = 2f64.powi(-52);
                 if (frac_part.abs() - 0.5).abs() < epsilon {
                     // We should ceil it.
                     arg_val.ceil()
@@ -831,7 +831,7 @@ impl<'a> PeepholeOptimizations {
             "NaN" => num(span, f64::NAN),
             "MAX_SAFE_INTEGER" => {
                 if self.target < ESTarget::ES2016 {
-                    num(span, 2.0f64.powf(53.0) - 1.0)
+                    num(span, 2.0f64.powi(53) - 1.0)
                 } else {
                     // 2**53 - 1
                     pow_with_expr(span, 2.0, 53.0, BinaryOperator::Subtraction, 1.0)
@@ -839,7 +839,7 @@ impl<'a> PeepholeOptimizations {
             }
             "MIN_SAFE_INTEGER" => {
                 if self.target < ESTarget::ES2016 {
-                    num(span, -(2.0f64.powf(53.0) - 1.0))
+                    num(span, -(2.0f64.powi(53) - 1.0))
                 } else {
                     // -(2**53 - 1)
                     ctx.ast.expression_unary(

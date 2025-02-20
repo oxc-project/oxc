@@ -153,7 +153,7 @@ fn check_interface_declaration(
     allow_interfaces: AllowInterfaces,
     allow_with_name: &str,
 ) {
-    if let AllowInterfaces::Always = allow_interfaces {
+    if matches!(allow_interfaces, AllowInterfaces::Always) {
         return;
     };
     if interface.id.name.as_str() == allow_with_name {
@@ -190,7 +190,7 @@ fn check_type_literal(
     allow_object_types: AllowObjectTypes,
     allow_with_name: &str,
 ) {
-    if let AllowObjectTypes::Always = allow_object_types {
+    if matches!(allow_object_types, AllowObjectTypes::Always) {
         return;
     };
     let Some(parent_node) = ctx.nodes().parent_node(node_id) else {

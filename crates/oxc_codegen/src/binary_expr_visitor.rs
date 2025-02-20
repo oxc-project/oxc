@@ -12,7 +12,7 @@ use oxc_syntax::{
 use crate::{gen::GenExpr, Codegen, Context, Operator};
 
 #[derive(Clone, Copy)]
-pub(crate) enum Binaryish<'a> {
+pub enum Binaryish<'a> {
     Binary(&'a BinaryExpression<'a>),
     Logical(&'a LogicalExpression<'a>),
 }

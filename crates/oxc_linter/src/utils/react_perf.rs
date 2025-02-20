@@ -37,7 +37,7 @@ fn react_perf_reference_diagnostic(
     diagnostic.and_label(attr_span.label("And used here"))
 }
 
-pub(crate) trait ReactPerfRule: Sized + Default + fmt::Debug {
+pub trait ReactPerfRule: Sized + Default + fmt::Debug {
     const MESSAGE: &'static str;
 
     /// Check if an [`Expression`] violates a react perf rule. If it does,

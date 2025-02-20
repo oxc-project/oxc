@@ -12,7 +12,7 @@ mod rules;
 mod settings;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::ConfigStore;
-pub(crate) use config_store::ResolvedLinterState;
+pub use config_store::ResolvedLinterState;
 pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use overrides::OxlintOverrides;

@@ -3,11 +3,11 @@ use std::sync::OnceLock;
 static LOG: OnceLock<bool> = OnceLock::new();
 
 /// Disable logging.
-pub(super) fn quiet() {
+pub fn quiet() {
     LOG.set(false).expect("Failed to disable logger");
 }
 
-pub(super) fn __internal_log_enable() -> bool {
+pub fn __internal_log_enable() -> bool {
     *LOG.get_or_init(|| true)
 }
 

@@ -537,7 +537,7 @@ mod test {
 
     #[test]
     fn add_source_mapping_for_name() {
-        let output = "ac".as_bytes();
+        let output = b"ac";
         let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ab");
         builder.add_source_mapping_for_name(output, Span::new(0, 1), "a");
         builder.add_source_mapping_for_name(output, Span::new(1, 2), "c");
@@ -556,7 +556,7 @@ mod test {
 
     #[test]
     fn add_source_mapping_for_unordered_position() {
-        let output = "".as_bytes();
+        let output = b"";
         let mut builder = SourcemapBuilder::new(Path::new("x.js"), "ab");
         builder.add_source_mapping(output, 1, None);
         builder.add_source_mapping(output, 0, None);

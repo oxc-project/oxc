@@ -8,7 +8,7 @@ use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
 use crate::codegen;
 
-pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfig) {
+pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfig) {
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();

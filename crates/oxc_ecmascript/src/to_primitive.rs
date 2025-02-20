@@ -81,7 +81,7 @@ impl ToPrimitive<'_> for Expression<'_> {
     }
 }
 
-pub(crate) fn maybe_object_with_to_primitive_related_properties_overridden(
+pub fn maybe_object_with_to_primitive_related_properties_overridden(
     obj: &ObjectExpression<'_>,
 ) -> bool {
     obj.properties.iter().any(|prop| match prop {

@@ -203,4 +203,4 @@ impl<'a> TraverseAncestry<'a> {
 /// It is not `Clone` or `Copy`, so no way to obtain one except in this file.
 /// Only method which generates a `PopToken` is `push_stack`, and `pop_stack` consumes one,
 /// which guarantees you can't have more pops than pushes.
-pub(crate) struct PopToken(());
+pub struct PopToken(());

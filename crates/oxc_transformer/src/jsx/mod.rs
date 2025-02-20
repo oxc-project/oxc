@@ -11,7 +11,7 @@ mod jsx_self;
 mod jsx_source;
 mod options;
 mod refresh;
-pub(crate) use comments::update_options_with_comments;
+pub use comments::update_options_with_comments;
 use display_name::ReactDisplayName;
 use jsx_impl::JsxImpl;
 use jsx_self::JsxSelf;

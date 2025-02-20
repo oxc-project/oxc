@@ -268,7 +268,7 @@ mod parser_parse {
     ///
     /// `UniquePromise::new_for_tests_and_benchmarks` is a backdoor for tests/benchmarks, so they can
     /// create a `ParserImpl` or `Lexer`, and manipulate it directly, for testing/benchmarking purposes.
-    pub(crate) struct UniquePromise(());
+    pub struct UniquePromise(());
 
     impl UniquePromise {
         #[inline]

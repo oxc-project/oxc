@@ -19,7 +19,7 @@ use crate::{
 };
 
 mod host;
-pub(crate) use host::ContextHost;
+pub use host::ContextHost;
 
 /// Contains all of the state and context specific to this lint rule.
 ///

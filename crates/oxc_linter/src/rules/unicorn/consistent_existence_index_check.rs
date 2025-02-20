@@ -224,7 +224,7 @@ fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetRe
 
 fn is_negative_one(expression: &Expression) -> bool {
     if let Expression::UnaryExpression(unary_expression) = expression {
-        if let UnaryOperator::UnaryNegation = unary_expression.operator {
+        if unary_expression.operator == UnaryOperator::UnaryNegation {
             if let Expression::NumericLiteral(value) =
                 &unary_expression.argument.get_inner_expression()
             {

@@ -271,10 +271,10 @@ impl GetterReturn {
                             });
 
                         let does_return = return_instruction.is_some_and(|ret| {
-                            !matches! { ret.kind,
+                            !matches!( ret.kind,
                             InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
                                 if !self.allow_implicit
-                            }
+                            )
                         });
 
                         // Return true as the second argument to signify we should

@@ -13,7 +13,7 @@ type TempUnresolvedReferences<'a> = FxHashMap<Atom<'a>, Vec<ReferenceId>>;
 // to reduce allocations, so the stack grows to maximum scope depth, but never shrinks.
 // See: <https://github.com/oxc-project/oxc/issues/4169>
 // This stack abstraction uses the invariant that stack only grows to avoid bounds checks.
-pub(crate) struct UnresolvedReferencesStack<'a> {
+pub struct UnresolvedReferencesStack<'a> {
     stack: Vec<TempUnresolvedReferences<'a>>,
     /// Current scope depth.
     /// 0 is global scope. 1 is `Program`.

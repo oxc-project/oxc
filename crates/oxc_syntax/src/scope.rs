@@ -65,7 +65,7 @@ export type ScopeId = number;
 "#;
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct ScopeFlags: u16 {
         const StrictMode       = 1 << 0;
         const Top              = 1 << 1;

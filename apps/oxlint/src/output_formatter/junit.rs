@@ -53,7 +53,7 @@ fn format_junit(diagnostics: &[Error]) -> String {
             let rule = diagnostic.code().map_or_else(String::new, |code| code.to_string());
             let Info { message, start, .. } = Info::new(diagnostic);
 
-            let severity = if let Some(Severity::Error) = diagnostic.severity() {
+            let severity = if diagnostic.severity() == Some(Severity::Error) {
                 total_errors += 1;
                 error += 1;
                 "error"

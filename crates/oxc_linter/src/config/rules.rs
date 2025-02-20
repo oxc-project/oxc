@@ -23,8 +23,7 @@ type RuleSet = FxHashSet<RuleWithSeverity>;
 //   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
 // <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
 // Note: when update document comment, also update `DummyRuleMap`'s description in this file.
-#[derive(Debug, Clone, Default)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct OxlintRules {
     /// List of all configured rules
     pub(crate) rules: Vec<ESLintRule>,
@@ -46,8 +45,7 @@ impl OxlintRules {
 /// e.g. `eslint/no-console` or `react/rule-of-hooks`.
 /// Includes the plugin name, the rule name, and the configuration for the rule (if any).
 /// This does not imply the rule is known to the linter as that, only that it is configured.
-#[derive(Debug, Clone)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ESLintRule {
     /// Name of the plugin: `eslint`, `react`, etc.
     pub plugin_name: String,

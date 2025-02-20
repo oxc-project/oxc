@@ -132,7 +132,7 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        if let VariableDeclarationKind::Var = declarator.kind {
+        if declarator.kind == VariableDeclarationKind::Var {
             return;
         }
 

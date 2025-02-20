@@ -251,10 +251,10 @@ impl Rule for FuncStyle {
                                 }
                             }
 
-                            if let Some(NamedExports::Expression) = self.named_exports {
-                                if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
-                                    ctx.diagnostic(func_style_diagnostic(func.span, self.style));
-                                }
+                            if self.named_exports == Some(NamedExports::Expression)
+                                && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
+                            {
+                                ctx.diagnostic(func_style_diagnostic(func.span, self.style));
                             }
                         }
                         FunctionType::FunctionExpression => {
@@ -266,12 +266,10 @@ impl Rule for FuncStyle {
                                     ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                                 }
 
-                                if let Some(NamedExports::Declaration) = self.named_exports {
-                                    if is_ancestor_export {
-                                        ctx.diagnostic(func_style_diagnostic(
-                                            decl.span, self.style,
-                                        ));
-                                    }
+                                if self.named_exports == Some(NamedExports::Declaration)
+                                    && is_ancestor_export
+                                {
+                                    ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                                 }
                             }
                         }
@@ -310,10 +308,8 @@ impl Rule for FuncStyle {
                         ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                     }
 
-                    if let Some(NamedExports::Declaration) = self.named_exports {
-                        if is_ancestor_export {
-                            ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
-                        }
+                    if self.named_exports == Some(NamedExports::Declaration) && is_ancestor_export {
+                        ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
                     }
                 }
             }

@@ -22,7 +22,7 @@ use walkdir::WalkDir;
 
 use crate::{snap_root, workspace_root, AppArgs, Driver};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TestResult {
     ToBeRun,
     Passed,

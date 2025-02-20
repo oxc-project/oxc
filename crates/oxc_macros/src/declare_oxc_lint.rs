@@ -55,7 +55,7 @@ impl Parse for LintRuleMeta {
     }
 }
 
-pub(crate) fn rule_name_converter() -> Converter {
+pub fn rule_name_converter() -> Converter {
     Converter::new().remove_boundary(Boundary::LOWER_DIGIT).to_case(Case::Kebab)
 }
 

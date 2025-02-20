@@ -6,7 +6,7 @@ use std::{
 };
 
 #[derive(Debug, Default)]
-pub(crate) struct HtmlWriter {
+pub struct HtmlWriter {
     inner: RefCell<String>,
 }
 

@@ -330,10 +330,10 @@ pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> boo
     }
 
     if let Some(member) = call.callee.as_member_expression() {
-        matches! {
+        matches!(
             member.object().get_identifier_reference(),
             Some(ident) if ident.name.as_str() == PRAGMA
-        }
+        )
     } else {
         true
     }

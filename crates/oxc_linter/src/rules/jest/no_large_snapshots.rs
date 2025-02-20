@@ -167,7 +167,7 @@ impl Rule for NoLargeSnapshots {
         });
 
         if is_snap {
-            for node in ctx.nodes().iter().collect::<Vec<_>>() {
+            for node in ctx.nodes().iter() {
                 if let AstKind::ExpressionStatement(expr_stmt) = node.kind() {
                     self.report_in_expr_stmt(expr_stmt, ctx);
                 }

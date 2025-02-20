@@ -130,9 +130,9 @@ impl Rule for ForDirection {
                                 span.end = update.argument.span().start;
                             }
 
-                            if let UpdateOperator::Increment = update.operator {
+                            if update.operator == UpdateOperator::Increment {
                                 new_operator_str = "--";
-                            } else if let UpdateOperator::Decrement = update.operator {
+                            } else if update.operator == UpdateOperator::Decrement {
                                 new_operator_str = "++";
                             }
                         }
@@ -140,9 +140,9 @@ impl Rule for ForDirection {
                             span.start = update.left.span().end;
                             span.end = update.right.span().start;
 
-                            if let AssignmentOperator::Addition = update.operator {
+                            if update.operator == AssignmentOperator::Addition {
                                 new_operator_str = "-=";
-                            } else if let AssignmentOperator::Subtraction = update.operator {
+                            } else if update.operator == AssignmentOperator::Subtraction {
                                 new_operator_str = "+=";
                             }
                         }

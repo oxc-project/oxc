@@ -171,7 +171,7 @@ impl Rule for InitDeclarations {
                         ));
                     }
                     Mode::Never if is_initialized && !self.ignore_for_loop_init => {
-                        if let VariableDeclarationKind::Const = &v.kind {
+                        if matches!(&v.kind, VariableDeclarationKind::Const) {
                             continue;
                         }
                         ctx.diagnostic(init_declarations_diagnostic(

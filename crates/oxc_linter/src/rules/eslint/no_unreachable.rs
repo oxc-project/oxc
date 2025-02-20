@@ -157,11 +157,11 @@ impl Rule for NoUnreachable {
                 continue;
             }
 
-            if matches! {
+            if matches!(
                 node.kind(),
                 AstKind::VariableDeclaration(decl)
                     if matches!(decl.kind, VariableDeclarationKind::Var) && !decl.has_init()
-            } {
+            ) {
                 // Skip `var` declarations without any initialization,
                 // These work because of the JavaScript hoisting rules.
                 continue;

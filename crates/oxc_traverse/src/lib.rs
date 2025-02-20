@@ -75,9 +75,9 @@ pub use context::{
 
 mod generated {
     pub mod ancestor;
-    pub(super) mod scopes_collector;
+    pub mod scopes_collector;
     pub mod traverse;
-    pub(super) mod walk;
+    pub mod walk;
 }
 pub use generated::{ancestor, ancestor::Ancestor, traverse::Traverse};
 use generated::{scopes_collector, walk::walk_ast};

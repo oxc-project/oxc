@@ -1,7 +1,7 @@
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator, UpdateOperator};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) enum Operator {
+pub enum Operator {
     Binary(BinaryOperator),
     Unary(UnaryOperator),
     Update(UpdateOperator),

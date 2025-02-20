@@ -30,7 +30,7 @@ use serde::{de::Visitor, Deserialize, Serialize};
 /// You may also use `"readable"` or `false` to represent `"readonly"`, and
 /// `"writeable"` or `true` to represent `"writable"`.
 // <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
-#[derive(Debug, Default, PartialEq, Deserialize, Serialize, JsonSchema, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema, Clone)]
 pub struct OxlintGlobals(FxHashMap<String, GlobalValue>);
 
 impl Deref for OxlintGlobals {
