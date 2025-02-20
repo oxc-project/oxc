@@ -82,9 +82,9 @@ declare_oxc_lint!(
     ///
     /// ### max
     ///
-    /// This option is for changing the maximum allowed number of function parameters.
-    ///
     /// `{ "max": number }`
+    ///
+    /// This option is for changing the maximum allowed number of function parameters.
     ///
     /// For example `{ "max": 4 }` would mean that having a function take four
     /// parameters is allowed which overrides the default of three.
