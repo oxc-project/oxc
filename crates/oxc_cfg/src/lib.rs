@@ -159,6 +159,10 @@ impl ControlFlowGraph {
 
     /// Returns `None` the given node isn't the cyclic point of an infinite loop.
     /// Otherwise returns `Some(loop_start, loop_end)`.
+    ///
+    /// # Panics
+    ///
+    /// * There should only be one backedge to each basic block.
     pub fn is_infinite_loop_start<F>(
         &self,
         node: BlockNodeId,
@@ -183,7 +187,7 @@ impl ControlFlowGraph {
         // if this node doesn't have an backedge it isn't a loop starting point.
         let backedge = backedges.next()?;
 
-        debug_assert!(
+        assert!(
             backedges.next().is_none(),
             "there should only be one backedge to each basic block."
         );
