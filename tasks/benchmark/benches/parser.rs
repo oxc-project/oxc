@@ -30,9 +30,9 @@ fn bench_parser(criterion: &mut Criterion) {
     group.finish();
 }
 
-fn bench_estree(criterion: &mut Criterion) {
-    let mut group = criterion.benchmark_group("estree");
-    for file in TestFiles::complicated().files().iter().take(1) {
+fn bench_estree_ts(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("estree_ts");
+    for file in TestFiles::complicated().files().iter().skip(3).take(1) {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = file.source_text.as_str();
         let source_type = SourceType::from_path(&file.file_name).unwrap();
@@ -58,5 +58,33 @@ fn bench_estree(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_parser, bench_estree);
+fn bench_estree_js(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("estree_js");
+    for file in TestFiles::complicated().files().iter().skip(3).take(1) {
+        let id = BenchmarkId::from_parameter(&file.file_name);
+        let source_text = file.source_text.as_str();
+        let source_type = SourceType::from_path(&file.file_name).unwrap();
+        let mut allocator = Allocator::default();
+        group.bench_function(id, |b| {
+            b.iter_with_setup_wrapper(|runner| {
+                allocator.reset();
+                let mut program = Parser::new(&allocator, source_text, source_type)
+                    .with_options(ParseOptions {
+                        parse_regular_expression: true,
+                        ..ParseOptions::default()
+                    })
+                    .parse()
+                    .program;
+                runner.run(|| {
+                    Utf8ToUtf16::new().convert(&mut program);
+                    program.to_estree_js_json();
+                    program
+                });
+            });
+        });
+    }
+    group.finish();
+}
+
+criterion_group!(parser, bench_parser, bench_estree_ts, bench_estree_js);
 criterion_main!(parser);

@@ -150,6 +150,9 @@ update-transformer-fixtures:
 test-estree *args='':
   cargo run -p oxc_coverage --profile coverage -- estree {{args}}
 
+tt *args:
+  cargo run -p oxc_coverage --profile coverage -- estree --diff --filter {{args}}
+
 # Install wasm-pack
 install-wasm:
   cargo binstall wasm-pack
