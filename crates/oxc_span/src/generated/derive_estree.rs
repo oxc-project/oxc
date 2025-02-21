@@ -31,9 +31,9 @@ impl ESTree for SourceType {
 impl ESTree for ModuleKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ModuleKind::Script => "script".serialize(serializer),
-            ModuleKind::Module => "module".serialize(serializer),
-            ModuleKind::Unambiguous => "unambiguous".serialize(serializer),
+            Self::Script => "script".serialize(serializer),
+            Self::Module => "module".serialize(serializer),
+            Self::Unambiguous => "unambiguous".serialize(serializer),
         }
     }
 }

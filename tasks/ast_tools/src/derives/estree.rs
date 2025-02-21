@@ -400,18 +400,16 @@ impl<'s> StructSerializerGenerator<'s> {
 
 /// Generate body of `serialize` method for an enum.
 fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    let enum_ident = enum_def.ident();
-
     let match_branches = enum_def.all_variants(schema).map(|variant| {
         let variant_ident = variant.ident();
         if variant.is_fieldless() {
             let value = get_fieldless_variant_value(enum_def, variant);
             quote! {
-                #enum_ident::#variant_ident => #value.serialize(serializer),
+                Self::#variant_ident => #value.serialize(serializer),
             }
         } else {
             quote! {
-                #enum_ident::#variant_ident(it) => it.serialize(serializer),
+                Self::#variant_ident(it) => it.serialize(serializer),
             }
         }
     });

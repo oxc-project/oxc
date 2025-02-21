@@ -46,18 +46,18 @@ impl ESTree for Alternative<'_> {
 impl ESTree for Term<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Term::BoundaryAssertion(it) => it.serialize(serializer),
-            Term::LookAroundAssertion(it) => it.serialize(serializer),
-            Term::Quantifier(it) => it.serialize(serializer),
-            Term::Character(it) => it.serialize(serializer),
-            Term::Dot(it) => it.serialize(serializer),
-            Term::CharacterClassEscape(it) => it.serialize(serializer),
-            Term::UnicodePropertyEscape(it) => it.serialize(serializer),
-            Term::CharacterClass(it) => it.serialize(serializer),
-            Term::CapturingGroup(it) => it.serialize(serializer),
-            Term::IgnoreGroup(it) => it.serialize(serializer),
-            Term::IndexedReference(it) => it.serialize(serializer),
-            Term::NamedReference(it) => it.serialize(serializer),
+            Self::BoundaryAssertion(it) => it.serialize(serializer),
+            Self::LookAroundAssertion(it) => it.serialize(serializer),
+            Self::Quantifier(it) => it.serialize(serializer),
+            Self::Character(it) => it.serialize(serializer),
+            Self::Dot(it) => it.serialize(serializer),
+            Self::CharacterClassEscape(it) => it.serialize(serializer),
+            Self::UnicodePropertyEscape(it) => it.serialize(serializer),
+            Self::CharacterClass(it) => it.serialize(serializer),
+            Self::CapturingGroup(it) => it.serialize(serializer),
+            Self::IgnoreGroup(it) => it.serialize(serializer),
+            Self::IndexedReference(it) => it.serialize(serializer),
+            Self::NamedReference(it) => it.serialize(serializer),
         }
     }
 }
@@ -76,10 +76,10 @@ impl ESTree for BoundaryAssertion {
 impl ESTree for BoundaryAssertionKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            BoundaryAssertionKind::Start => "start".serialize(serializer),
-            BoundaryAssertionKind::End => "end".serialize(serializer),
-            BoundaryAssertionKind::Boundary => "boundary".serialize(serializer),
-            BoundaryAssertionKind::NegativeBoundary => "negativeBoundary".serialize(serializer),
+            Self::Start => "start".serialize(serializer),
+            Self::End => "end".serialize(serializer),
+            Self::Boundary => "boundary".serialize(serializer),
+            Self::NegativeBoundary => "negativeBoundary".serialize(serializer),
         }
     }
 }
@@ -99,12 +99,10 @@ impl ESTree for LookAroundAssertion<'_> {
 impl ESTree for LookAroundAssertionKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            LookAroundAssertionKind::Lookahead => "lookahead".serialize(serializer),
-            LookAroundAssertionKind::NegativeLookahead => "negativeLookahead".serialize(serializer),
-            LookAroundAssertionKind::Lookbehind => "lookbehind".serialize(serializer),
-            LookAroundAssertionKind::NegativeLookbehind => {
-                "negativeLookbehind".serialize(serializer)
-            }
+            Self::Lookahead => "lookahead".serialize(serializer),
+            Self::NegativeLookahead => "negativeLookahead".serialize(serializer),
+            Self::Lookbehind => "lookbehind".serialize(serializer),
+            Self::NegativeLookbehind => "negativeLookbehind".serialize(serializer),
         }
     }
 }
@@ -138,16 +136,16 @@ impl ESTree for Character {
 impl ESTree for CharacterKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            CharacterKind::ControlLetter => "controlLetter".serialize(serializer),
-            CharacterKind::HexadecimalEscape => "hexadecimalEscape".serialize(serializer),
-            CharacterKind::Identifier => "identifier".serialize(serializer),
-            CharacterKind::Null => "null".serialize(serializer),
-            CharacterKind::Octal1 => "octal1".serialize(serializer),
-            CharacterKind::Octal2 => "octal2".serialize(serializer),
-            CharacterKind::Octal3 => "octal3".serialize(serializer),
-            CharacterKind::SingleEscape => "singleEscape".serialize(serializer),
-            CharacterKind::Symbol => "symbol".serialize(serializer),
-            CharacterKind::UnicodeEscape => "unicodeEscape".serialize(serializer),
+            Self::ControlLetter => "controlLetter".serialize(serializer),
+            Self::HexadecimalEscape => "hexadecimalEscape".serialize(serializer),
+            Self::Identifier => "identifier".serialize(serializer),
+            Self::Null => "null".serialize(serializer),
+            Self::Octal1 => "octal1".serialize(serializer),
+            Self::Octal2 => "octal2".serialize(serializer),
+            Self::Octal3 => "octal3".serialize(serializer),
+            Self::SingleEscape => "singleEscape".serialize(serializer),
+            Self::Symbol => "symbol".serialize(serializer),
+            Self::UnicodeEscape => "unicodeEscape".serialize(serializer),
         }
     }
 }
@@ -166,12 +164,12 @@ impl ESTree for CharacterClassEscape {
 impl ESTree for CharacterClassEscapeKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            CharacterClassEscapeKind::D => "d".serialize(serializer),
-            CharacterClassEscapeKind::NegativeD => "negativeD".serialize(serializer),
-            CharacterClassEscapeKind::S => "s".serialize(serializer),
-            CharacterClassEscapeKind::NegativeS => "negativeS".serialize(serializer),
-            CharacterClassEscapeKind::W => "w".serialize(serializer),
-            CharacterClassEscapeKind::NegativeW => "negativeW".serialize(serializer),
+            Self::D => "d".serialize(serializer),
+            Self::NegativeD => "negativeD".serialize(serializer),
+            Self::S => "s".serialize(serializer),
+            Self::NegativeS => "negativeS".serialize(serializer),
+            Self::W => "w".serialize(serializer),
+            Self::NegativeW => "negativeW".serialize(serializer),
         }
     }
 }
@@ -217,9 +215,9 @@ impl ESTree for CharacterClass<'_> {
 impl ESTree for CharacterClassContentsKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            CharacterClassContentsKind::Union => "union".serialize(serializer),
-            CharacterClassContentsKind::Intersection => "intersection".serialize(serializer),
-            CharacterClassContentsKind::Subtraction => "subtraction".serialize(serializer),
+            Self::Union => "union".serialize(serializer),
+            Self::Intersection => "intersection".serialize(serializer),
+            Self::Subtraction => "subtraction".serialize(serializer),
         }
     }
 }
@@ -227,12 +225,12 @@ impl ESTree for CharacterClassContentsKind {
 impl ESTree for CharacterClassContents<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            CharacterClassContents::CharacterClassRange(it) => it.serialize(serializer),
-            CharacterClassContents::CharacterClassEscape(it) => it.serialize(serializer),
-            CharacterClassContents::UnicodePropertyEscape(it) => it.serialize(serializer),
-            CharacterClassContents::Character(it) => it.serialize(serializer),
-            CharacterClassContents::NestedCharacterClass(it) => it.serialize(serializer),
-            CharacterClassContents::ClassStringDisjunction(it) => it.serialize(serializer),
+            Self::CharacterClassRange(it) => it.serialize(serializer),
+            Self::CharacterClassEscape(it) => it.serialize(serializer),
+            Self::UnicodePropertyEscape(it) => it.serialize(serializer),
+            Self::Character(it) => it.serialize(serializer),
+            Self::NestedCharacterClass(it) => it.serialize(serializer),
+            Self::ClassStringDisjunction(it) => it.serialize(serializer),
         }
     }
 }

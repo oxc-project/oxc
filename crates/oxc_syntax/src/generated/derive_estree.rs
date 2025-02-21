@@ -13,22 +13,22 @@ use crate::operator::*;
 impl ESTree for AssignmentOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentOperator::Assign => "=".serialize(serializer),
-            AssignmentOperator::Addition => "+=".serialize(serializer),
-            AssignmentOperator::Subtraction => "-=".serialize(serializer),
-            AssignmentOperator::Multiplication => "*=".serialize(serializer),
-            AssignmentOperator::Division => "/=".serialize(serializer),
-            AssignmentOperator::Remainder => "%=".serialize(serializer),
-            AssignmentOperator::Exponential => "**=".serialize(serializer),
-            AssignmentOperator::ShiftLeft => "<<=".serialize(serializer),
-            AssignmentOperator::ShiftRight => ">>=".serialize(serializer),
-            AssignmentOperator::ShiftRightZeroFill => ">>>=".serialize(serializer),
-            AssignmentOperator::BitwiseOR => "|=".serialize(serializer),
-            AssignmentOperator::BitwiseXOR => "^=".serialize(serializer),
-            AssignmentOperator::BitwiseAnd => "&=".serialize(serializer),
-            AssignmentOperator::LogicalOr => "||=".serialize(serializer),
-            AssignmentOperator::LogicalAnd => "&&=".serialize(serializer),
-            AssignmentOperator::LogicalNullish => "??=".serialize(serializer),
+            Self::Assign => "=".serialize(serializer),
+            Self::Addition => "+=".serialize(serializer),
+            Self::Subtraction => "-=".serialize(serializer),
+            Self::Multiplication => "*=".serialize(serializer),
+            Self::Division => "/=".serialize(serializer),
+            Self::Remainder => "%=".serialize(serializer),
+            Self::Exponential => "**=".serialize(serializer),
+            Self::ShiftLeft => "<<=".serialize(serializer),
+            Self::ShiftRight => ">>=".serialize(serializer),
+            Self::ShiftRightZeroFill => ">>>=".serialize(serializer),
+            Self::BitwiseOR => "|=".serialize(serializer),
+            Self::BitwiseXOR => "^=".serialize(serializer),
+            Self::BitwiseAnd => "&=".serialize(serializer),
+            Self::LogicalOr => "||=".serialize(serializer),
+            Self::LogicalAnd => "&&=".serialize(serializer),
+            Self::LogicalNullish => "??=".serialize(serializer),
         }
     }
 }
@@ -36,28 +36,28 @@ impl ESTree for AssignmentOperator {
 impl ESTree for BinaryOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            BinaryOperator::Equality => "==".serialize(serializer),
-            BinaryOperator::Inequality => "!=".serialize(serializer),
-            BinaryOperator::StrictEquality => "===".serialize(serializer),
-            BinaryOperator::StrictInequality => "!==".serialize(serializer),
-            BinaryOperator::LessThan => "<".serialize(serializer),
-            BinaryOperator::LessEqualThan => "<=".serialize(serializer),
-            BinaryOperator::GreaterThan => ">".serialize(serializer),
-            BinaryOperator::GreaterEqualThan => ">=".serialize(serializer),
-            BinaryOperator::Addition => "+".serialize(serializer),
-            BinaryOperator::Subtraction => "-".serialize(serializer),
-            BinaryOperator::Multiplication => "*".serialize(serializer),
-            BinaryOperator::Division => "/".serialize(serializer),
-            BinaryOperator::Remainder => "%".serialize(serializer),
-            BinaryOperator::Exponential => "**".serialize(serializer),
-            BinaryOperator::ShiftLeft => "<<".serialize(serializer),
-            BinaryOperator::ShiftRight => ">>".serialize(serializer),
-            BinaryOperator::ShiftRightZeroFill => ">>>".serialize(serializer),
-            BinaryOperator::BitwiseOR => "|".serialize(serializer),
-            BinaryOperator::BitwiseXOR => "^".serialize(serializer),
-            BinaryOperator::BitwiseAnd => "&".serialize(serializer),
-            BinaryOperator::In => "in".serialize(serializer),
-            BinaryOperator::Instanceof => "instanceof".serialize(serializer),
+            Self::Equality => "==".serialize(serializer),
+            Self::Inequality => "!=".serialize(serializer),
+            Self::StrictEquality => "===".serialize(serializer),
+            Self::StrictInequality => "!==".serialize(serializer),
+            Self::LessThan => "<".serialize(serializer),
+            Self::LessEqualThan => "<=".serialize(serializer),
+            Self::GreaterThan => ">".serialize(serializer),
+            Self::GreaterEqualThan => ">=".serialize(serializer),
+            Self::Addition => "+".serialize(serializer),
+            Self::Subtraction => "-".serialize(serializer),
+            Self::Multiplication => "*".serialize(serializer),
+            Self::Division => "/".serialize(serializer),
+            Self::Remainder => "%".serialize(serializer),
+            Self::Exponential => "**".serialize(serializer),
+            Self::ShiftLeft => "<<".serialize(serializer),
+            Self::ShiftRight => ">>".serialize(serializer),
+            Self::ShiftRightZeroFill => ">>>".serialize(serializer),
+            Self::BitwiseOR => "|".serialize(serializer),
+            Self::BitwiseXOR => "^".serialize(serializer),
+            Self::BitwiseAnd => "&".serialize(serializer),
+            Self::In => "in".serialize(serializer),
+            Self::Instanceof => "instanceof".serialize(serializer),
         }
     }
 }
@@ -65,9 +65,9 @@ impl ESTree for BinaryOperator {
 impl ESTree for LogicalOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            LogicalOperator::Or => "||".serialize(serializer),
-            LogicalOperator::And => "&&".serialize(serializer),
-            LogicalOperator::Coalesce => "??".serialize(serializer),
+            Self::Or => "||".serialize(serializer),
+            Self::And => "&&".serialize(serializer),
+            Self::Coalesce => "??".serialize(serializer),
         }
     }
 }
@@ -75,13 +75,13 @@ impl ESTree for LogicalOperator {
 impl ESTree for UnaryOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            UnaryOperator::UnaryPlus => "+".serialize(serializer),
-            UnaryOperator::UnaryNegation => "-".serialize(serializer),
-            UnaryOperator::LogicalNot => "!".serialize(serializer),
-            UnaryOperator::BitwiseNot => "~".serialize(serializer),
-            UnaryOperator::Typeof => "typeof".serialize(serializer),
-            UnaryOperator::Void => "void".serialize(serializer),
-            UnaryOperator::Delete => "delete".serialize(serializer),
+            Self::UnaryPlus => "+".serialize(serializer),
+            Self::UnaryNegation => "-".serialize(serializer),
+            Self::LogicalNot => "!".serialize(serializer),
+            Self::BitwiseNot => "~".serialize(serializer),
+            Self::Typeof => "typeof".serialize(serializer),
+            Self::Void => "void".serialize(serializer),
+            Self::Delete => "delete".serialize(serializer),
         }
     }
 }
@@ -89,8 +89,8 @@ impl ESTree for UnaryOperator {
 impl ESTree for UpdateOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            UpdateOperator::Increment => "++".serialize(serializer),
-            UpdateOperator::Decrement => "--".serialize(serializer),
+            Self::Increment => "++".serialize(serializer),
+            Self::Decrement => "--".serialize(serializer),
         }
     }
 }

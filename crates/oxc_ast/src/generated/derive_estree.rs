@@ -32,48 +32,48 @@ impl ESTree for Program<'_> {
 impl ESTree for Expression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Expression::BooleanLiteral(it) => it.serialize(serializer),
-            Expression::NullLiteral(it) => it.serialize(serializer),
-            Expression::NumericLiteral(it) => it.serialize(serializer),
-            Expression::BigIntLiteral(it) => it.serialize(serializer),
-            Expression::RegExpLiteral(it) => it.serialize(serializer),
-            Expression::StringLiteral(it) => it.serialize(serializer),
-            Expression::TemplateLiteral(it) => it.serialize(serializer),
-            Expression::Identifier(it) => it.serialize(serializer),
-            Expression::MetaProperty(it) => it.serialize(serializer),
-            Expression::Super(it) => it.serialize(serializer),
-            Expression::ArrayExpression(it) => it.serialize(serializer),
-            Expression::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Expression::AssignmentExpression(it) => it.serialize(serializer),
-            Expression::AwaitExpression(it) => it.serialize(serializer),
-            Expression::BinaryExpression(it) => it.serialize(serializer),
-            Expression::CallExpression(it) => it.serialize(serializer),
-            Expression::ChainExpression(it) => it.serialize(serializer),
-            Expression::ClassExpression(it) => it.serialize(serializer),
-            Expression::ConditionalExpression(it) => it.serialize(serializer),
-            Expression::FunctionExpression(it) => it.serialize(serializer),
-            Expression::ImportExpression(it) => it.serialize(serializer),
-            Expression::LogicalExpression(it) => it.serialize(serializer),
-            Expression::NewExpression(it) => it.serialize(serializer),
-            Expression::ObjectExpression(it) => it.serialize(serializer),
-            Expression::ParenthesizedExpression(it) => it.serialize(serializer),
-            Expression::SequenceExpression(it) => it.serialize(serializer),
-            Expression::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Expression::ThisExpression(it) => it.serialize(serializer),
-            Expression::UnaryExpression(it) => it.serialize(serializer),
-            Expression::UpdateExpression(it) => it.serialize(serializer),
-            Expression::YieldExpression(it) => it.serialize(serializer),
-            Expression::PrivateInExpression(it) => it.serialize(serializer),
-            Expression::JSXElement(it) => it.serialize(serializer),
-            Expression::JSXFragment(it) => it.serialize(serializer),
-            Expression::TSAsExpression(it) => it.serialize(serializer),
-            Expression::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Expression::TSTypeAssertion(it) => it.serialize(serializer),
-            Expression::TSNonNullExpression(it) => it.serialize(serializer),
-            Expression::TSInstantiationExpression(it) => it.serialize(serializer),
-            Expression::ComputedMemberExpression(it) => it.serialize(serializer),
-            Expression::StaticMemberExpression(it) => it.serialize(serializer),
-            Expression::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -146,50 +146,50 @@ impl ESTree for ArrayExpression<'_> {
 impl ESTree for ArrayExpressionElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ArrayExpressionElement::SpreadElement(it) => it.serialize(serializer),
-            ArrayExpressionElement::Elision(it) => it.serialize(serializer),
-            ArrayExpressionElement::BooleanLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::NullLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::NumericLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::BigIntLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::RegExpLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::StringLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::TemplateLiteral(it) => it.serialize(serializer),
-            ArrayExpressionElement::Identifier(it) => it.serialize(serializer),
-            ArrayExpressionElement::MetaProperty(it) => it.serialize(serializer),
-            ArrayExpressionElement::Super(it) => it.serialize(serializer),
-            ArrayExpressionElement::ArrayExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ArrowFunctionExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::AssignmentExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::AwaitExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::BinaryExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::CallExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ChainExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ClassExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ConditionalExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::FunctionExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ImportExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::LogicalExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::NewExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ObjectExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ParenthesizedExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::SequenceExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::TaggedTemplateExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ThisExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::UnaryExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::UpdateExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::YieldExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::PrivateInExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::JSXElement(it) => it.serialize(serializer),
-            ArrayExpressionElement::JSXFragment(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSAsExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSSatisfiesExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSTypeAssertion(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSNonNullExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::TSInstantiationExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::ComputedMemberExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::StaticMemberExpression(it) => it.serialize(serializer),
-            ArrayExpressionElement::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::SpreadElement(it) => it.serialize(serializer),
+            Self::Elision(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -208,8 +208,8 @@ impl ESTree for ObjectExpression<'_> {
 impl ESTree for ObjectPropertyKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ObjectPropertyKind::ObjectProperty(it) => it.serialize(serializer),
-            ObjectPropertyKind::SpreadProperty(it) => it.serialize(serializer),
+            Self::ObjectProperty(it) => it.serialize(serializer),
+            Self::SpreadProperty(it) => it.serialize(serializer),
         }
     }
 }
@@ -217,50 +217,50 @@ impl ESTree for ObjectPropertyKind<'_> {
 impl ESTree for PropertyKey<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            PropertyKey::StaticIdentifier(it) => it.serialize(serializer),
-            PropertyKey::PrivateIdentifier(it) => it.serialize(serializer),
-            PropertyKey::BooleanLiteral(it) => it.serialize(serializer),
-            PropertyKey::NullLiteral(it) => it.serialize(serializer),
-            PropertyKey::NumericLiteral(it) => it.serialize(serializer),
-            PropertyKey::BigIntLiteral(it) => it.serialize(serializer),
-            PropertyKey::RegExpLiteral(it) => it.serialize(serializer),
-            PropertyKey::StringLiteral(it) => it.serialize(serializer),
-            PropertyKey::TemplateLiteral(it) => it.serialize(serializer),
-            PropertyKey::Identifier(it) => it.serialize(serializer),
-            PropertyKey::MetaProperty(it) => it.serialize(serializer),
-            PropertyKey::Super(it) => it.serialize(serializer),
-            PropertyKey::ArrayExpression(it) => it.serialize(serializer),
-            PropertyKey::ArrowFunctionExpression(it) => it.serialize(serializer),
-            PropertyKey::AssignmentExpression(it) => it.serialize(serializer),
-            PropertyKey::AwaitExpression(it) => it.serialize(serializer),
-            PropertyKey::BinaryExpression(it) => it.serialize(serializer),
-            PropertyKey::CallExpression(it) => it.serialize(serializer),
-            PropertyKey::ChainExpression(it) => it.serialize(serializer),
-            PropertyKey::ClassExpression(it) => it.serialize(serializer),
-            PropertyKey::ConditionalExpression(it) => it.serialize(serializer),
-            PropertyKey::FunctionExpression(it) => it.serialize(serializer),
-            PropertyKey::ImportExpression(it) => it.serialize(serializer),
-            PropertyKey::LogicalExpression(it) => it.serialize(serializer),
-            PropertyKey::NewExpression(it) => it.serialize(serializer),
-            PropertyKey::ObjectExpression(it) => it.serialize(serializer),
-            PropertyKey::ParenthesizedExpression(it) => it.serialize(serializer),
-            PropertyKey::SequenceExpression(it) => it.serialize(serializer),
-            PropertyKey::TaggedTemplateExpression(it) => it.serialize(serializer),
-            PropertyKey::ThisExpression(it) => it.serialize(serializer),
-            PropertyKey::UnaryExpression(it) => it.serialize(serializer),
-            PropertyKey::UpdateExpression(it) => it.serialize(serializer),
-            PropertyKey::YieldExpression(it) => it.serialize(serializer),
-            PropertyKey::PrivateInExpression(it) => it.serialize(serializer),
-            PropertyKey::JSXElement(it) => it.serialize(serializer),
-            PropertyKey::JSXFragment(it) => it.serialize(serializer),
-            PropertyKey::TSAsExpression(it) => it.serialize(serializer),
-            PropertyKey::TSSatisfiesExpression(it) => it.serialize(serializer),
-            PropertyKey::TSTypeAssertion(it) => it.serialize(serializer),
-            PropertyKey::TSNonNullExpression(it) => it.serialize(serializer),
-            PropertyKey::TSInstantiationExpression(it) => it.serialize(serializer),
-            PropertyKey::ComputedMemberExpression(it) => it.serialize(serializer),
-            PropertyKey::StaticMemberExpression(it) => it.serialize(serializer),
-            PropertyKey::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::StaticIdentifier(it) => it.serialize(serializer),
+            Self::PrivateIdentifier(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -268,9 +268,9 @@ impl ESTree for PropertyKey<'_> {
 impl ESTree for PropertyKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            PropertyKind::Init => "init".serialize(serializer),
-            PropertyKind::Get => "get".serialize(serializer),
-            PropertyKind::Set => "set".serialize(serializer),
+            Self::Init => "init".serialize(serializer),
+            Self::Get => "get".serialize(serializer),
+            Self::Set => "set".serialize(serializer),
         }
     }
 }
@@ -324,9 +324,9 @@ impl ESTree for TemplateElementValue<'_> {
 impl ESTree for MemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            MemberExpression::ComputedMemberExpression(it) => it.serialize(serializer),
-            MemberExpression::StaticMemberExpression(it) => it.serialize(serializer),
-            MemberExpression::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -426,49 +426,49 @@ impl ESTree for SpreadElement<'_> {
 impl ESTree for Argument<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Argument::SpreadElement(it) => it.serialize(serializer),
-            Argument::BooleanLiteral(it) => it.serialize(serializer),
-            Argument::NullLiteral(it) => it.serialize(serializer),
-            Argument::NumericLiteral(it) => it.serialize(serializer),
-            Argument::BigIntLiteral(it) => it.serialize(serializer),
-            Argument::RegExpLiteral(it) => it.serialize(serializer),
-            Argument::StringLiteral(it) => it.serialize(serializer),
-            Argument::TemplateLiteral(it) => it.serialize(serializer),
-            Argument::Identifier(it) => it.serialize(serializer),
-            Argument::MetaProperty(it) => it.serialize(serializer),
-            Argument::Super(it) => it.serialize(serializer),
-            Argument::ArrayExpression(it) => it.serialize(serializer),
-            Argument::ArrowFunctionExpression(it) => it.serialize(serializer),
-            Argument::AssignmentExpression(it) => it.serialize(serializer),
-            Argument::AwaitExpression(it) => it.serialize(serializer),
-            Argument::BinaryExpression(it) => it.serialize(serializer),
-            Argument::CallExpression(it) => it.serialize(serializer),
-            Argument::ChainExpression(it) => it.serialize(serializer),
-            Argument::ClassExpression(it) => it.serialize(serializer),
-            Argument::ConditionalExpression(it) => it.serialize(serializer),
-            Argument::FunctionExpression(it) => it.serialize(serializer),
-            Argument::ImportExpression(it) => it.serialize(serializer),
-            Argument::LogicalExpression(it) => it.serialize(serializer),
-            Argument::NewExpression(it) => it.serialize(serializer),
-            Argument::ObjectExpression(it) => it.serialize(serializer),
-            Argument::ParenthesizedExpression(it) => it.serialize(serializer),
-            Argument::SequenceExpression(it) => it.serialize(serializer),
-            Argument::TaggedTemplateExpression(it) => it.serialize(serializer),
-            Argument::ThisExpression(it) => it.serialize(serializer),
-            Argument::UnaryExpression(it) => it.serialize(serializer),
-            Argument::UpdateExpression(it) => it.serialize(serializer),
-            Argument::YieldExpression(it) => it.serialize(serializer),
-            Argument::PrivateInExpression(it) => it.serialize(serializer),
-            Argument::JSXElement(it) => it.serialize(serializer),
-            Argument::JSXFragment(it) => it.serialize(serializer),
-            Argument::TSAsExpression(it) => it.serialize(serializer),
-            Argument::TSSatisfiesExpression(it) => it.serialize(serializer),
-            Argument::TSTypeAssertion(it) => it.serialize(serializer),
-            Argument::TSNonNullExpression(it) => it.serialize(serializer),
-            Argument::TSInstantiationExpression(it) => it.serialize(serializer),
-            Argument::ComputedMemberExpression(it) => it.serialize(serializer),
-            Argument::StaticMemberExpression(it) => it.serialize(serializer),
-            Argument::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::SpreadElement(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -567,17 +567,17 @@ impl ESTree for AssignmentExpression<'_> {
 impl ESTree for AssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentTarget::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            AssignmentTarget::TSAsExpression(it) => it.serialize(serializer),
-            AssignmentTarget::TSSatisfiesExpression(it) => it.serialize(serializer),
-            AssignmentTarget::TSNonNullExpression(it) => it.serialize(serializer),
-            AssignmentTarget::TSTypeAssertion(it) => it.serialize(serializer),
-            AssignmentTarget::TSInstantiationExpression(it) => it.serialize(serializer),
-            AssignmentTarget::ComputedMemberExpression(it) => it.serialize(serializer),
-            AssignmentTarget::StaticMemberExpression(it) => it.serialize(serializer),
-            AssignmentTarget::PrivateFieldExpression(it) => it.serialize(serializer),
-            AssignmentTarget::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            AssignmentTarget::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
@@ -585,15 +585,15 @@ impl ESTree for AssignmentTarget<'_> {
 impl ESTree for SimpleAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSAsExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSSatisfiesExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSNonNullExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSTypeAssertion(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::TSInstantiationExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::ComputedMemberExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::StaticMemberExpression(it) => it.serialize(serializer),
-            SimpleAssignmentTarget::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -601,8 +601,8 @@ impl ESTree for SimpleAssignmentTarget<'_> {
 impl ESTree for AssignmentTargetPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentTargetPattern::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            AssignmentTargetPattern::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
@@ -646,22 +646,18 @@ impl ESTree for AssignmentTargetRest<'_> {
 impl ESTree for AssignmentTargetMaybeDefault<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(it) => {
-                it.serialize(serializer)
-            }
-            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(it) => {
-                it.serialize(serializer)
-            }
-            AssignmentTargetMaybeDefault::TSAsExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::TSSatisfiesExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::TSNonNullExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::TSTypeAssertion(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::TSInstantiationExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::ComputedMemberExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::StaticMemberExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::PrivateFieldExpression(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            AssignmentTargetMaybeDefault::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::AssignmentTargetWithDefault(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
@@ -681,12 +677,8 @@ impl ESTree for AssignmentTargetWithDefault<'_> {
 impl ESTree for AssignmentTargetProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(it) => {
-                it.serialize(serializer)
-            }
-            AssignmentTargetProperty::AssignmentTargetPropertyProperty(it) => {
-                it.serialize(serializer)
-            }
+            Self::AssignmentTargetPropertyIdentifier(it) => it.serialize(serializer),
+            Self::AssignmentTargetPropertyProperty(it) => it.serialize(serializer),
         }
     }
 }
@@ -772,11 +764,11 @@ impl ESTree for ChainExpression<'_> {
 impl ESTree for ChainElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ChainElement::CallExpression(it) => it.serialize(serializer),
-            ChainElement::TSNonNullExpression(it) => it.serialize(serializer),
-            ChainElement::ComputedMemberExpression(it) => it.serialize(serializer),
-            ChainElement::StaticMemberExpression(it) => it.serialize(serializer),
-            ChainElement::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -795,38 +787,38 @@ impl ESTree for ParenthesizedExpression<'_> {
 impl ESTree for Statement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Statement::BlockStatement(it) => it.serialize(serializer),
-            Statement::BreakStatement(it) => it.serialize(serializer),
-            Statement::ContinueStatement(it) => it.serialize(serializer),
-            Statement::DebuggerStatement(it) => it.serialize(serializer),
-            Statement::DoWhileStatement(it) => it.serialize(serializer),
-            Statement::EmptyStatement(it) => it.serialize(serializer),
-            Statement::ExpressionStatement(it) => it.serialize(serializer),
-            Statement::ForInStatement(it) => it.serialize(serializer),
-            Statement::ForOfStatement(it) => it.serialize(serializer),
-            Statement::ForStatement(it) => it.serialize(serializer),
-            Statement::IfStatement(it) => it.serialize(serializer),
-            Statement::LabeledStatement(it) => it.serialize(serializer),
-            Statement::ReturnStatement(it) => it.serialize(serializer),
-            Statement::SwitchStatement(it) => it.serialize(serializer),
-            Statement::ThrowStatement(it) => it.serialize(serializer),
-            Statement::TryStatement(it) => it.serialize(serializer),
-            Statement::WhileStatement(it) => it.serialize(serializer),
-            Statement::WithStatement(it) => it.serialize(serializer),
-            Statement::VariableDeclaration(it) => it.serialize(serializer),
-            Statement::FunctionDeclaration(it) => it.serialize(serializer),
-            Statement::ClassDeclaration(it) => it.serialize(serializer),
-            Statement::TSTypeAliasDeclaration(it) => it.serialize(serializer),
-            Statement::TSInterfaceDeclaration(it) => it.serialize(serializer),
-            Statement::TSEnumDeclaration(it) => it.serialize(serializer),
-            Statement::TSModuleDeclaration(it) => it.serialize(serializer),
-            Statement::TSImportEqualsDeclaration(it) => it.serialize(serializer),
-            Statement::ImportDeclaration(it) => it.serialize(serializer),
-            Statement::ExportAllDeclaration(it) => it.serialize(serializer),
-            Statement::ExportDefaultDeclaration(it) => it.serialize(serializer),
-            Statement::ExportNamedDeclaration(it) => it.serialize(serializer),
-            Statement::TSExportAssignment(it) => it.serialize(serializer),
-            Statement::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
+            Self::BlockStatement(it) => it.serialize(serializer),
+            Self::BreakStatement(it) => it.serialize(serializer),
+            Self::ContinueStatement(it) => it.serialize(serializer),
+            Self::DebuggerStatement(it) => it.serialize(serializer),
+            Self::DoWhileStatement(it) => it.serialize(serializer),
+            Self::EmptyStatement(it) => it.serialize(serializer),
+            Self::ExpressionStatement(it) => it.serialize(serializer),
+            Self::ForInStatement(it) => it.serialize(serializer),
+            Self::ForOfStatement(it) => it.serialize(serializer),
+            Self::ForStatement(it) => it.serialize(serializer),
+            Self::IfStatement(it) => it.serialize(serializer),
+            Self::LabeledStatement(it) => it.serialize(serializer),
+            Self::ReturnStatement(it) => it.serialize(serializer),
+            Self::SwitchStatement(it) => it.serialize(serializer),
+            Self::ThrowStatement(it) => it.serialize(serializer),
+            Self::TryStatement(it) => it.serialize(serializer),
+            Self::WhileStatement(it) => it.serialize(serializer),
+            Self::WithStatement(it) => it.serialize(serializer),
+            Self::VariableDeclaration(it) => it.serialize(serializer),
+            Self::FunctionDeclaration(it) => it.serialize(serializer),
+            Self::ClassDeclaration(it) => it.serialize(serializer),
+            Self::TSTypeAliasDeclaration(it) => it.serialize(serializer),
+            Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            Self::TSEnumDeclaration(it) => it.serialize(serializer),
+            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
+            Self::ImportDeclaration(it) => it.serialize(serializer),
+            Self::ExportAllDeclaration(it) => it.serialize(serializer),
+            Self::ExportDefaultDeclaration(it) => it.serialize(serializer),
+            Self::ExportNamedDeclaration(it) => it.serialize(serializer),
+            Self::TSExportAssignment(it) => it.serialize(serializer),
+            Self::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -868,14 +860,14 @@ impl ESTree for BlockStatement<'_> {
 impl ESTree for Declaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Declaration::VariableDeclaration(it) => it.serialize(serializer),
-            Declaration::FunctionDeclaration(it) => it.serialize(serializer),
-            Declaration::ClassDeclaration(it) => it.serialize(serializer),
-            Declaration::TSTypeAliasDeclaration(it) => it.serialize(serializer),
-            Declaration::TSInterfaceDeclaration(it) => it.serialize(serializer),
-            Declaration::TSEnumDeclaration(it) => it.serialize(serializer),
-            Declaration::TSModuleDeclaration(it) => it.serialize(serializer),
-            Declaration::TSImportEqualsDeclaration(it) => it.serialize(serializer),
+            Self::VariableDeclaration(it) => it.serialize(serializer),
+            Self::FunctionDeclaration(it) => it.serialize(serializer),
+            Self::ClassDeclaration(it) => it.serialize(serializer),
+            Self::TSTypeAliasDeclaration(it) => it.serialize(serializer),
+            Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            Self::TSEnumDeclaration(it) => it.serialize(serializer),
+            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -896,11 +888,11 @@ impl ESTree for VariableDeclaration<'_> {
 impl ESTree for VariableDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            VariableDeclarationKind::Var => "var".serialize(serializer),
-            VariableDeclarationKind::Const => "const".serialize(serializer),
-            VariableDeclarationKind::Let => "let".serialize(serializer),
-            VariableDeclarationKind::Using => "using".serialize(serializer),
-            VariableDeclarationKind::AwaitUsing => "await using".serialize(serializer),
+            Self::Var => "var".serialize(serializer),
+            Self::Const => "const".serialize(serializer),
+            Self::Let => "let".serialize(serializer),
+            Self::Using => "using".serialize(serializer),
+            Self::AwaitUsing => "await using".serialize(serializer),
         }
     }
 }
@@ -993,49 +985,49 @@ impl ESTree for ForStatement<'_> {
 impl ESTree for ForStatementInit<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ForStatementInit::VariableDeclaration(it) => it.serialize(serializer),
-            ForStatementInit::BooleanLiteral(it) => it.serialize(serializer),
-            ForStatementInit::NullLiteral(it) => it.serialize(serializer),
-            ForStatementInit::NumericLiteral(it) => it.serialize(serializer),
-            ForStatementInit::BigIntLiteral(it) => it.serialize(serializer),
-            ForStatementInit::RegExpLiteral(it) => it.serialize(serializer),
-            ForStatementInit::StringLiteral(it) => it.serialize(serializer),
-            ForStatementInit::TemplateLiteral(it) => it.serialize(serializer),
-            ForStatementInit::Identifier(it) => it.serialize(serializer),
-            ForStatementInit::MetaProperty(it) => it.serialize(serializer),
-            ForStatementInit::Super(it) => it.serialize(serializer),
-            ForStatementInit::ArrayExpression(it) => it.serialize(serializer),
-            ForStatementInit::ArrowFunctionExpression(it) => it.serialize(serializer),
-            ForStatementInit::AssignmentExpression(it) => it.serialize(serializer),
-            ForStatementInit::AwaitExpression(it) => it.serialize(serializer),
-            ForStatementInit::BinaryExpression(it) => it.serialize(serializer),
-            ForStatementInit::CallExpression(it) => it.serialize(serializer),
-            ForStatementInit::ChainExpression(it) => it.serialize(serializer),
-            ForStatementInit::ClassExpression(it) => it.serialize(serializer),
-            ForStatementInit::ConditionalExpression(it) => it.serialize(serializer),
-            ForStatementInit::FunctionExpression(it) => it.serialize(serializer),
-            ForStatementInit::ImportExpression(it) => it.serialize(serializer),
-            ForStatementInit::LogicalExpression(it) => it.serialize(serializer),
-            ForStatementInit::NewExpression(it) => it.serialize(serializer),
-            ForStatementInit::ObjectExpression(it) => it.serialize(serializer),
-            ForStatementInit::ParenthesizedExpression(it) => it.serialize(serializer),
-            ForStatementInit::SequenceExpression(it) => it.serialize(serializer),
-            ForStatementInit::TaggedTemplateExpression(it) => it.serialize(serializer),
-            ForStatementInit::ThisExpression(it) => it.serialize(serializer),
-            ForStatementInit::UnaryExpression(it) => it.serialize(serializer),
-            ForStatementInit::UpdateExpression(it) => it.serialize(serializer),
-            ForStatementInit::YieldExpression(it) => it.serialize(serializer),
-            ForStatementInit::PrivateInExpression(it) => it.serialize(serializer),
-            ForStatementInit::JSXElement(it) => it.serialize(serializer),
-            ForStatementInit::JSXFragment(it) => it.serialize(serializer),
-            ForStatementInit::TSAsExpression(it) => it.serialize(serializer),
-            ForStatementInit::TSSatisfiesExpression(it) => it.serialize(serializer),
-            ForStatementInit::TSTypeAssertion(it) => it.serialize(serializer),
-            ForStatementInit::TSNonNullExpression(it) => it.serialize(serializer),
-            ForStatementInit::TSInstantiationExpression(it) => it.serialize(serializer),
-            ForStatementInit::ComputedMemberExpression(it) => it.serialize(serializer),
-            ForStatementInit::StaticMemberExpression(it) => it.serialize(serializer),
-            ForStatementInit::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::VariableDeclaration(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -1056,18 +1048,18 @@ impl ESTree for ForInStatement<'_> {
 impl ESTree for ForStatementLeft<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ForStatementLeft::VariableDeclaration(it) => it.serialize(serializer),
-            ForStatementLeft::AssignmentTargetIdentifier(it) => it.serialize(serializer),
-            ForStatementLeft::TSAsExpression(it) => it.serialize(serializer),
-            ForStatementLeft::TSSatisfiesExpression(it) => it.serialize(serializer),
-            ForStatementLeft::TSNonNullExpression(it) => it.serialize(serializer),
-            ForStatementLeft::TSTypeAssertion(it) => it.serialize(serializer),
-            ForStatementLeft::TSInstantiationExpression(it) => it.serialize(serializer),
-            ForStatementLeft::ComputedMemberExpression(it) => it.serialize(serializer),
-            ForStatementLeft::StaticMemberExpression(it) => it.serialize(serializer),
-            ForStatementLeft::PrivateFieldExpression(it) => it.serialize(serializer),
-            ForStatementLeft::ArrayAssignmentTarget(it) => it.serialize(serializer),
-            ForStatementLeft::ObjectAssignmentTarget(it) => it.serialize(serializer),
+            Self::VariableDeclaration(it) => it.serialize(serializer),
+            Self::AssignmentTargetIdentifier(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::ArrayAssignmentTarget(it) => it.serialize(serializer),
+            Self::ObjectAssignmentTarget(it) => it.serialize(serializer),
         }
     }
 }
@@ -1236,10 +1228,10 @@ impl ESTree for BindingPattern<'_> {
 impl ESTree for BindingPatternKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            BindingPatternKind::BindingIdentifier(it) => it.serialize(serializer),
-            BindingPatternKind::ObjectPattern(it) => it.serialize(serializer),
-            BindingPatternKind::ArrayPattern(it) => it.serialize(serializer),
-            BindingPatternKind::AssignmentPattern(it) => it.serialize(serializer),
+            Self::BindingIdentifier(it) => it.serialize(serializer),
+            Self::ObjectPattern(it) => it.serialize(serializer),
+            Self::ArrayPattern(it) => it.serialize(serializer),
+            Self::AssignmentPattern(it) => it.serialize(serializer),
         }
     }
 }
@@ -1315,10 +1307,10 @@ impl ESTree for Function<'_> {
 impl ESTree for FunctionType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            FunctionType::FunctionDeclaration => "FunctionDeclaration".serialize(serializer),
-            FunctionType::FunctionExpression => "FunctionExpression".serialize(serializer),
-            FunctionType::TSDeclareFunction => "TSDeclareFunction".serialize(serializer),
-            FunctionType::TSEmptyBodyFunctionExpression => {
+            Self::FunctionDeclaration => "FunctionDeclaration".serialize(serializer),
+            Self::FunctionExpression => "FunctionExpression".serialize(serializer),
+            Self::TSDeclareFunction => "TSDeclareFunction".serialize(serializer),
+            Self::TSEmptyBodyFunctionExpression => {
                 "TSEmptyBodyFunctionExpression".serialize(serializer)
             }
         }
@@ -1342,14 +1334,10 @@ impl ESTree for FormalParameter<'_> {
 impl ESTree for FormalParameterKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            FormalParameterKind::FormalParameter => "FormalParameter".serialize(serializer),
-            FormalParameterKind::UniqueFormalParameters => {
-                "UniqueFormalParameters".serialize(serializer)
-            }
-            FormalParameterKind::ArrowFormalParameters => {
-                "ArrowFormalParameters".serialize(serializer)
-            }
-            FormalParameterKind::Signature => "Signature".serialize(serializer),
+            Self::FormalParameter => "FormalParameter".serialize(serializer),
+            Self::UniqueFormalParameters => "UniqueFormalParameters".serialize(serializer),
+            Self::ArrowFormalParameters => "ArrowFormalParameters".serialize(serializer),
+            Self::Signature => "Signature".serialize(serializer),
         }
     }
 }
@@ -1420,8 +1408,8 @@ impl ESTree for Class<'_> {
 impl ESTree for ClassType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ClassType::ClassDeclaration => "ClassDeclaration".serialize(serializer),
-            ClassType::ClassExpression => "ClassExpression".serialize(serializer),
+            Self::ClassDeclaration => "ClassDeclaration".serialize(serializer),
+            Self::ClassExpression => "ClassExpression".serialize(serializer),
         }
     }
 }
@@ -1440,11 +1428,11 @@ impl ESTree for ClassBody<'_> {
 impl ESTree for ClassElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ClassElement::StaticBlock(it) => it.serialize(serializer),
-            ClassElement::MethodDefinition(it) => it.serialize(serializer),
-            ClassElement::PropertyDefinition(it) => it.serialize(serializer),
-            ClassElement::AccessorProperty(it) => it.serialize(serializer),
-            ClassElement::TSIndexSignature(it) => it.serialize(serializer),
+            Self::StaticBlock(it) => it.serialize(serializer),
+            Self::MethodDefinition(it) => it.serialize(serializer),
+            Self::PropertyDefinition(it) => it.serialize(serializer),
+            Self::AccessorProperty(it) => it.serialize(serializer),
+            Self::TSIndexSignature(it) => it.serialize(serializer),
         }
     }
 }
@@ -1471,10 +1459,8 @@ impl ESTree for MethodDefinition<'_> {
 impl ESTree for MethodDefinitionType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            MethodDefinitionType::MethodDefinition => "MethodDefinition".serialize(serializer),
-            MethodDefinitionType::TSAbstractMethodDefinition => {
-                "TSAbstractMethodDefinition".serialize(serializer)
-            }
+            Self::MethodDefinition => "MethodDefinition".serialize(serializer),
+            Self::TSAbstractMethodDefinition => "TSAbstractMethodDefinition".serialize(serializer),
         }
     }
 }
@@ -1504,10 +1490,8 @@ impl ESTree for PropertyDefinition<'_> {
 impl ESTree for PropertyDefinitionType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            PropertyDefinitionType::PropertyDefinition => {
-                "PropertyDefinition".serialize(serializer)
-            }
-            PropertyDefinitionType::TSAbstractPropertyDefinition => {
+            Self::PropertyDefinition => "PropertyDefinition".serialize(serializer),
+            Self::TSAbstractPropertyDefinition => {
                 "TSAbstractPropertyDefinition".serialize(serializer)
             }
         }
@@ -1517,10 +1501,10 @@ impl ESTree for PropertyDefinitionType {
 impl ESTree for MethodDefinitionKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            MethodDefinitionKind::Constructor => "constructor".serialize(serializer),
-            MethodDefinitionKind::Method => "method".serialize(serializer),
-            MethodDefinitionKind::Get => "get".serialize(serializer),
-            MethodDefinitionKind::Set => "set".serialize(serializer),
+            Self::Constructor => "constructor".serialize(serializer),
+            Self::Method => "method".serialize(serializer),
+            Self::Get => "get".serialize(serializer),
+            Self::Set => "set".serialize(serializer),
         }
     }
 }
@@ -1550,12 +1534,12 @@ impl ESTree for StaticBlock<'_> {
 impl ESTree for ModuleDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ModuleDeclaration::ImportDeclaration(it) => it.serialize(serializer),
-            ModuleDeclaration::ExportAllDeclaration(it) => it.serialize(serializer),
-            ModuleDeclaration::ExportDefaultDeclaration(it) => it.serialize(serializer),
-            ModuleDeclaration::ExportNamedDeclaration(it) => it.serialize(serializer),
-            ModuleDeclaration::TSExportAssignment(it) => it.serialize(serializer),
-            ModuleDeclaration::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
+            Self::ImportDeclaration(it) => it.serialize(serializer),
+            Self::ExportAllDeclaration(it) => it.serialize(serializer),
+            Self::ExportDefaultDeclaration(it) => it.serialize(serializer),
+            Self::ExportNamedDeclaration(it) => it.serialize(serializer),
+            Self::TSExportAssignment(it) => it.serialize(serializer),
+            Self::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -1563,10 +1547,8 @@ impl ESTree for ModuleDeclaration<'_> {
 impl ESTree for AccessorPropertyType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            AccessorPropertyType::AccessorProperty => "AccessorProperty".serialize(serializer),
-            AccessorPropertyType::TSAbstractAccessorProperty => {
-                "TSAbstractAccessorProperty".serialize(serializer)
-            }
+            Self::AccessorProperty => "AccessorProperty".serialize(serializer),
+            Self::TSAbstractAccessorProperty => "TSAbstractAccessorProperty".serialize(serializer),
         }
     }
 }
@@ -1619,8 +1601,8 @@ impl ESTree for ImportDeclaration<'_> {
 impl ESTree for ImportPhase {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ImportPhase::Source => "source".serialize(serializer),
-            ImportPhase::Defer => "defer".serialize(serializer),
+            Self::Source => "source".serialize(serializer),
+            Self::Defer => "defer".serialize(serializer),
         }
     }
 }
@@ -1628,9 +1610,9 @@ impl ESTree for ImportPhase {
 impl ESTree for ImportDeclarationSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ImportDeclarationSpecifier::ImportSpecifier(it) => it.serialize(serializer),
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(it) => it.serialize(serializer),
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(it) => it.serialize(serializer),
+            Self::ImportSpecifier(it) => it.serialize(serializer),
+            Self::ImportDefaultSpecifier(it) => it.serialize(serializer),
+            Self::ImportNamespaceSpecifier(it) => it.serialize(serializer),
         }
     }
 }
@@ -1697,8 +1679,8 @@ impl ESTree for ImportAttribute<'_> {
 impl ESTree for ImportAttributeKey<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ImportAttributeKey::Identifier(it) => it.serialize(serializer),
-            ImportAttributeKey::StringLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -1764,51 +1746,51 @@ impl ESTree for ExportSpecifier<'_> {
 impl ESTree for ExportDefaultDeclarationKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ExportDefaultDeclarationKind::FunctionDeclaration(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ClassDeclaration(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::BooleanLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::NullLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::NumericLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::BigIntLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::RegExpLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::StringLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TemplateLiteral(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::Identifier(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::MetaProperty(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::Super(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ArrayExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ArrowFunctionExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::AssignmentExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::AwaitExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::BinaryExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::CallExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ChainExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ClassExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ConditionalExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::FunctionExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ImportExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::LogicalExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::NewExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ObjectExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ParenthesizedExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::SequenceExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TaggedTemplateExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ThisExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::UnaryExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::UpdateExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::YieldExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::PrivateInExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::JSXElement(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::JSXFragment(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSAsExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSSatisfiesExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSTypeAssertion(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSNonNullExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::TSInstantiationExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::ComputedMemberExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::StaticMemberExpression(it) => it.serialize(serializer),
-            ExportDefaultDeclarationKind::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::FunctionDeclaration(it) => it.serialize(serializer),
+            Self::ClassDeclaration(it) => it.serialize(serializer),
+            Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -1816,9 +1798,9 @@ impl ESTree for ExportDefaultDeclarationKind<'_> {
 impl ESTree for ModuleExportName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ModuleExportName::IdentifierName(it) => it.serialize(serializer),
-            ModuleExportName::IdentifierReference(it) => it.serialize(serializer),
-            ModuleExportName::StringLiteral(it) => it.serialize(serializer),
+            Self::IdentifierName(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -2015,49 +1997,49 @@ impl ESTree for JSXExpressionContainer<'_> {
 impl ESTree for JSXExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            JSXExpression::EmptyExpression(it) => it.serialize(serializer),
-            JSXExpression::BooleanLiteral(it) => it.serialize(serializer),
-            JSXExpression::NullLiteral(it) => it.serialize(serializer),
-            JSXExpression::NumericLiteral(it) => it.serialize(serializer),
-            JSXExpression::BigIntLiteral(it) => it.serialize(serializer),
-            JSXExpression::RegExpLiteral(it) => it.serialize(serializer),
-            JSXExpression::StringLiteral(it) => it.serialize(serializer),
-            JSXExpression::TemplateLiteral(it) => it.serialize(serializer),
-            JSXExpression::Identifier(it) => it.serialize(serializer),
-            JSXExpression::MetaProperty(it) => it.serialize(serializer),
-            JSXExpression::Super(it) => it.serialize(serializer),
-            JSXExpression::ArrayExpression(it) => it.serialize(serializer),
-            JSXExpression::ArrowFunctionExpression(it) => it.serialize(serializer),
-            JSXExpression::AssignmentExpression(it) => it.serialize(serializer),
-            JSXExpression::AwaitExpression(it) => it.serialize(serializer),
-            JSXExpression::BinaryExpression(it) => it.serialize(serializer),
-            JSXExpression::CallExpression(it) => it.serialize(serializer),
-            JSXExpression::ChainExpression(it) => it.serialize(serializer),
-            JSXExpression::ClassExpression(it) => it.serialize(serializer),
-            JSXExpression::ConditionalExpression(it) => it.serialize(serializer),
-            JSXExpression::FunctionExpression(it) => it.serialize(serializer),
-            JSXExpression::ImportExpression(it) => it.serialize(serializer),
-            JSXExpression::LogicalExpression(it) => it.serialize(serializer),
-            JSXExpression::NewExpression(it) => it.serialize(serializer),
-            JSXExpression::ObjectExpression(it) => it.serialize(serializer),
-            JSXExpression::ParenthesizedExpression(it) => it.serialize(serializer),
-            JSXExpression::SequenceExpression(it) => it.serialize(serializer),
-            JSXExpression::TaggedTemplateExpression(it) => it.serialize(serializer),
-            JSXExpression::ThisExpression(it) => it.serialize(serializer),
-            JSXExpression::UnaryExpression(it) => it.serialize(serializer),
-            JSXExpression::UpdateExpression(it) => it.serialize(serializer),
-            JSXExpression::YieldExpression(it) => it.serialize(serializer),
-            JSXExpression::PrivateInExpression(it) => it.serialize(serializer),
-            JSXExpression::JSXElement(it) => it.serialize(serializer),
-            JSXExpression::JSXFragment(it) => it.serialize(serializer),
-            JSXExpression::TSAsExpression(it) => it.serialize(serializer),
-            JSXExpression::TSSatisfiesExpression(it) => it.serialize(serializer),
-            JSXExpression::TSTypeAssertion(it) => it.serialize(serializer),
-            JSXExpression::TSNonNullExpression(it) => it.serialize(serializer),
-            JSXExpression::TSInstantiationExpression(it) => it.serialize(serializer),
-            JSXExpression::ComputedMemberExpression(it) => it.serialize(serializer),
-            JSXExpression::StaticMemberExpression(it) => it.serialize(serializer),
-            JSXExpression::PrivateFieldExpression(it) => it.serialize(serializer),
+            Self::EmptyExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NullLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::RegExpLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::MetaProperty(it) => it.serialize(serializer),
+            Self::Super(it) => it.serialize(serializer),
+            Self::ArrayExpression(it) => it.serialize(serializer),
+            Self::ArrowFunctionExpression(it) => it.serialize(serializer),
+            Self::AssignmentExpression(it) => it.serialize(serializer),
+            Self::AwaitExpression(it) => it.serialize(serializer),
+            Self::BinaryExpression(it) => it.serialize(serializer),
+            Self::CallExpression(it) => it.serialize(serializer),
+            Self::ChainExpression(it) => it.serialize(serializer),
+            Self::ClassExpression(it) => it.serialize(serializer),
+            Self::ConditionalExpression(it) => it.serialize(serializer),
+            Self::FunctionExpression(it) => it.serialize(serializer),
+            Self::ImportExpression(it) => it.serialize(serializer),
+            Self::LogicalExpression(it) => it.serialize(serializer),
+            Self::NewExpression(it) => it.serialize(serializer),
+            Self::ObjectExpression(it) => it.serialize(serializer),
+            Self::ParenthesizedExpression(it) => it.serialize(serializer),
+            Self::SequenceExpression(it) => it.serialize(serializer),
+            Self::TaggedTemplateExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
+            Self::UpdateExpression(it) => it.serialize(serializer),
+            Self::YieldExpression(it) => it.serialize(serializer),
+            Self::PrivateInExpression(it) => it.serialize(serializer),
+            Self::JSXElement(it) => it.serialize(serializer),
+            Self::JSXFragment(it) => it.serialize(serializer),
+            Self::TSAsExpression(it) => it.serialize(serializer),
+            Self::TSSatisfiesExpression(it) => it.serialize(serializer),
+            Self::TSTypeAssertion(it) => it.serialize(serializer),
+            Self::TSNonNullExpression(it) => it.serialize(serializer),
+            Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::ComputedMemberExpression(it) => it.serialize(serializer),
+            Self::StaticMemberExpression(it) => it.serialize(serializer),
+            Self::PrivateFieldExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -2075,8 +2057,8 @@ impl ESTree for JSXEmptyExpression {
 impl ESTree for JSXAttributeItem<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            JSXAttributeItem::Attribute(it) => it.serialize(serializer),
-            JSXAttributeItem::SpreadAttribute(it) => it.serialize(serializer),
+            Self::Attribute(it) => it.serialize(serializer),
+            Self::SpreadAttribute(it) => it.serialize(serializer),
         }
     }
 }
@@ -2107,8 +2089,8 @@ impl ESTree for JSXSpreadAttribute<'_> {
 impl ESTree for JSXAttributeName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            JSXAttributeName::Identifier(it) => it.serialize(serializer),
-            JSXAttributeName::NamespacedName(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::NamespacedName(it) => it.serialize(serializer),
         }
     }
 }
@@ -2116,10 +2098,10 @@ impl ESTree for JSXAttributeName<'_> {
 impl ESTree for JSXAttributeValue<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            JSXAttributeValue::StringLiteral(it) => it.serialize(serializer),
-            JSXAttributeValue::ExpressionContainer(it) => it.serialize(serializer),
-            JSXAttributeValue::Element(it) => it.serialize(serializer),
-            JSXAttributeValue::Fragment(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::ExpressionContainer(it) => it.serialize(serializer),
+            Self::Element(it) => it.serialize(serializer),
+            Self::Fragment(it) => it.serialize(serializer),
         }
     }
 }
@@ -2138,11 +2120,11 @@ impl ESTree for JSXIdentifier<'_> {
 impl ESTree for JSXChild<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            JSXChild::Text(it) => it.serialize(serializer),
-            JSXChild::Element(it) => it.serialize(serializer),
-            JSXChild::Fragment(it) => it.serialize(serializer),
-            JSXChild::ExpressionContainer(it) => it.serialize(serializer),
-            JSXChild::Spread(it) => it.serialize(serializer),
+            Self::Text(it) => it.serialize(serializer),
+            Self::Element(it) => it.serialize(serializer),
+            Self::Fragment(it) => it.serialize(serializer),
+            Self::ExpressionContainer(it) => it.serialize(serializer),
+            Self::Spread(it) => it.serialize(serializer),
         }
     }
 }
@@ -2209,8 +2191,8 @@ impl ESTree for TSEnumMember<'_> {
 impl ESTree for TSEnumMemberName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSEnumMemberName::Identifier(it) => it.serialize(serializer),
-            TSEnumMemberName::String(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::String(it) => it.serialize(serializer),
         }
     }
 }
@@ -2240,12 +2222,12 @@ impl ESTree for TSLiteralType<'_> {
 impl ESTree for TSLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSLiteral::BooleanLiteral(it) => it.serialize(serializer),
-            TSLiteral::NumericLiteral(it) => it.serialize(serializer),
-            TSLiteral::BigIntLiteral(it) => it.serialize(serializer),
-            TSLiteral::StringLiteral(it) => it.serialize(serializer),
-            TSLiteral::TemplateLiteral(it) => it.serialize(serializer),
-            TSLiteral::UnaryExpression(it) => it.serialize(serializer),
+            Self::BooleanLiteral(it) => it.serialize(serializer),
+            Self::NumericLiteral(it) => it.serialize(serializer),
+            Self::BigIntLiteral(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+            Self::UnaryExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -2253,43 +2235,43 @@ impl ESTree for TSLiteral<'_> {
 impl ESTree for TSType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSType::TSAnyKeyword(it) => it.serialize(serializer),
-            TSType::TSBigIntKeyword(it) => it.serialize(serializer),
-            TSType::TSBooleanKeyword(it) => it.serialize(serializer),
-            TSType::TSIntrinsicKeyword(it) => it.serialize(serializer),
-            TSType::TSNeverKeyword(it) => it.serialize(serializer),
-            TSType::TSNullKeyword(it) => it.serialize(serializer),
-            TSType::TSNumberKeyword(it) => it.serialize(serializer),
-            TSType::TSObjectKeyword(it) => it.serialize(serializer),
-            TSType::TSStringKeyword(it) => it.serialize(serializer),
-            TSType::TSSymbolKeyword(it) => it.serialize(serializer),
-            TSType::TSUndefinedKeyword(it) => it.serialize(serializer),
-            TSType::TSUnknownKeyword(it) => it.serialize(serializer),
-            TSType::TSVoidKeyword(it) => it.serialize(serializer),
-            TSType::TSArrayType(it) => it.serialize(serializer),
-            TSType::TSConditionalType(it) => it.serialize(serializer),
-            TSType::TSConstructorType(it) => it.serialize(serializer),
-            TSType::TSFunctionType(it) => it.serialize(serializer),
-            TSType::TSImportType(it) => it.serialize(serializer),
-            TSType::TSIndexedAccessType(it) => it.serialize(serializer),
-            TSType::TSInferType(it) => it.serialize(serializer),
-            TSType::TSIntersectionType(it) => it.serialize(serializer),
-            TSType::TSLiteralType(it) => it.serialize(serializer),
-            TSType::TSMappedType(it) => it.serialize(serializer),
-            TSType::TSNamedTupleMember(it) => it.serialize(serializer),
-            TSType::TSTemplateLiteralType(it) => it.serialize(serializer),
-            TSType::TSThisType(it) => it.serialize(serializer),
-            TSType::TSTupleType(it) => it.serialize(serializer),
-            TSType::TSTypeLiteral(it) => it.serialize(serializer),
-            TSType::TSTypeOperatorType(it) => it.serialize(serializer),
-            TSType::TSTypePredicate(it) => it.serialize(serializer),
-            TSType::TSTypeQuery(it) => it.serialize(serializer),
-            TSType::TSTypeReference(it) => it.serialize(serializer),
-            TSType::TSUnionType(it) => it.serialize(serializer),
-            TSType::TSParenthesizedType(it) => it.serialize(serializer),
-            TSType::JSDocNullableType(it) => it.serialize(serializer),
-            TSType::JSDocNonNullableType(it) => it.serialize(serializer),
-            TSType::JSDocUnknownType(it) => it.serialize(serializer),
+            Self::TSAnyKeyword(it) => it.serialize(serializer),
+            Self::TSBigIntKeyword(it) => it.serialize(serializer),
+            Self::TSBooleanKeyword(it) => it.serialize(serializer),
+            Self::TSIntrinsicKeyword(it) => it.serialize(serializer),
+            Self::TSNeverKeyword(it) => it.serialize(serializer),
+            Self::TSNullKeyword(it) => it.serialize(serializer),
+            Self::TSNumberKeyword(it) => it.serialize(serializer),
+            Self::TSObjectKeyword(it) => it.serialize(serializer),
+            Self::TSStringKeyword(it) => it.serialize(serializer),
+            Self::TSSymbolKeyword(it) => it.serialize(serializer),
+            Self::TSUndefinedKeyword(it) => it.serialize(serializer),
+            Self::TSUnknownKeyword(it) => it.serialize(serializer),
+            Self::TSVoidKeyword(it) => it.serialize(serializer),
+            Self::TSArrayType(it) => it.serialize(serializer),
+            Self::TSConditionalType(it) => it.serialize(serializer),
+            Self::TSConstructorType(it) => it.serialize(serializer),
+            Self::TSFunctionType(it) => it.serialize(serializer),
+            Self::TSImportType(it) => it.serialize(serializer),
+            Self::TSIndexedAccessType(it) => it.serialize(serializer),
+            Self::TSInferType(it) => it.serialize(serializer),
+            Self::TSIntersectionType(it) => it.serialize(serializer),
+            Self::TSLiteralType(it) => it.serialize(serializer),
+            Self::TSMappedType(it) => it.serialize(serializer),
+            Self::TSNamedTupleMember(it) => it.serialize(serializer),
+            Self::TSTemplateLiteralType(it) => it.serialize(serializer),
+            Self::TSThisType(it) => it.serialize(serializer),
+            Self::TSTupleType(it) => it.serialize(serializer),
+            Self::TSTypeLiteral(it) => it.serialize(serializer),
+            Self::TSTypeOperatorType(it) => it.serialize(serializer),
+            Self::TSTypePredicate(it) => it.serialize(serializer),
+            Self::TSTypeQuery(it) => it.serialize(serializer),
+            Self::TSTypeReference(it) => it.serialize(serializer),
+            Self::TSUnionType(it) => it.serialize(serializer),
+            Self::TSParenthesizedType(it) => it.serialize(serializer),
+            Self::JSDocNullableType(it) => it.serialize(serializer),
+            Self::JSDocNonNullableType(it) => it.serialize(serializer),
+            Self::JSDocUnknownType(it) => it.serialize(serializer),
         }
     }
 }
@@ -2356,9 +2338,9 @@ impl ESTree for TSTypeOperator<'_> {
 impl ESTree for TSTypeOperatorOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSTypeOperatorOperator::Keyof => "keyof".serialize(serializer),
-            TSTypeOperatorOperator::Unique => "unique".serialize(serializer),
-            TSTypeOperatorOperator::Readonly => "readonly".serialize(serializer),
+            Self::Keyof => "keyof".serialize(serializer),
+            Self::Unique => "unique".serialize(serializer),
+            Self::Readonly => "readonly".serialize(serializer),
         }
     }
 }
@@ -2435,45 +2417,45 @@ impl ESTree for TSRestType<'_> {
 impl ESTree for TSTupleElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSTupleElement::TSOptionalType(it) => it.serialize(serializer),
-            TSTupleElement::TSRestType(it) => it.serialize(serializer),
-            TSTupleElement::TSAnyKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSBigIntKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSBooleanKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSIntrinsicKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSNeverKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSNullKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSNumberKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSObjectKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSStringKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSSymbolKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSUndefinedKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSUnknownKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSVoidKeyword(it) => it.serialize(serializer),
-            TSTupleElement::TSArrayType(it) => it.serialize(serializer),
-            TSTupleElement::TSConditionalType(it) => it.serialize(serializer),
-            TSTupleElement::TSConstructorType(it) => it.serialize(serializer),
-            TSTupleElement::TSFunctionType(it) => it.serialize(serializer),
-            TSTupleElement::TSImportType(it) => it.serialize(serializer),
-            TSTupleElement::TSIndexedAccessType(it) => it.serialize(serializer),
-            TSTupleElement::TSInferType(it) => it.serialize(serializer),
-            TSTupleElement::TSIntersectionType(it) => it.serialize(serializer),
-            TSTupleElement::TSLiteralType(it) => it.serialize(serializer),
-            TSTupleElement::TSMappedType(it) => it.serialize(serializer),
-            TSTupleElement::TSNamedTupleMember(it) => it.serialize(serializer),
-            TSTupleElement::TSTemplateLiteralType(it) => it.serialize(serializer),
-            TSTupleElement::TSThisType(it) => it.serialize(serializer),
-            TSTupleElement::TSTupleType(it) => it.serialize(serializer),
-            TSTupleElement::TSTypeLiteral(it) => it.serialize(serializer),
-            TSTupleElement::TSTypeOperatorType(it) => it.serialize(serializer),
-            TSTupleElement::TSTypePredicate(it) => it.serialize(serializer),
-            TSTupleElement::TSTypeQuery(it) => it.serialize(serializer),
-            TSTupleElement::TSTypeReference(it) => it.serialize(serializer),
-            TSTupleElement::TSUnionType(it) => it.serialize(serializer),
-            TSTupleElement::TSParenthesizedType(it) => it.serialize(serializer),
-            TSTupleElement::JSDocNullableType(it) => it.serialize(serializer),
-            TSTupleElement::JSDocNonNullableType(it) => it.serialize(serializer),
-            TSTupleElement::JSDocUnknownType(it) => it.serialize(serializer),
+            Self::TSOptionalType(it) => it.serialize(serializer),
+            Self::TSRestType(it) => it.serialize(serializer),
+            Self::TSAnyKeyword(it) => it.serialize(serializer),
+            Self::TSBigIntKeyword(it) => it.serialize(serializer),
+            Self::TSBooleanKeyword(it) => it.serialize(serializer),
+            Self::TSIntrinsicKeyword(it) => it.serialize(serializer),
+            Self::TSNeverKeyword(it) => it.serialize(serializer),
+            Self::TSNullKeyword(it) => it.serialize(serializer),
+            Self::TSNumberKeyword(it) => it.serialize(serializer),
+            Self::TSObjectKeyword(it) => it.serialize(serializer),
+            Self::TSStringKeyword(it) => it.serialize(serializer),
+            Self::TSSymbolKeyword(it) => it.serialize(serializer),
+            Self::TSUndefinedKeyword(it) => it.serialize(serializer),
+            Self::TSUnknownKeyword(it) => it.serialize(serializer),
+            Self::TSVoidKeyword(it) => it.serialize(serializer),
+            Self::TSArrayType(it) => it.serialize(serializer),
+            Self::TSConditionalType(it) => it.serialize(serializer),
+            Self::TSConstructorType(it) => it.serialize(serializer),
+            Self::TSFunctionType(it) => it.serialize(serializer),
+            Self::TSImportType(it) => it.serialize(serializer),
+            Self::TSIndexedAccessType(it) => it.serialize(serializer),
+            Self::TSInferType(it) => it.serialize(serializer),
+            Self::TSIntersectionType(it) => it.serialize(serializer),
+            Self::TSLiteralType(it) => it.serialize(serializer),
+            Self::TSMappedType(it) => it.serialize(serializer),
+            Self::TSNamedTupleMember(it) => it.serialize(serializer),
+            Self::TSTemplateLiteralType(it) => it.serialize(serializer),
+            Self::TSThisType(it) => it.serialize(serializer),
+            Self::TSTupleType(it) => it.serialize(serializer),
+            Self::TSTypeLiteral(it) => it.serialize(serializer),
+            Self::TSTypeOperatorType(it) => it.serialize(serializer),
+            Self::TSTypePredicate(it) => it.serialize(serializer),
+            Self::TSTypeQuery(it) => it.serialize(serializer),
+            Self::TSTypeReference(it) => it.serialize(serializer),
+            Self::TSUnionType(it) => it.serialize(serializer),
+            Self::TSParenthesizedType(it) => it.serialize(serializer),
+            Self::JSDocNullableType(it) => it.serialize(serializer),
+            Self::JSDocNonNullableType(it) => it.serialize(serializer),
+            Self::JSDocUnknownType(it) => it.serialize(serializer),
         }
     }
 }
@@ -2633,8 +2615,8 @@ impl ESTree for TSTypeReference<'_> {
 impl ESTree for TSTypeName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSTypeName::IdentifierReference(it) => it.serialize(serializer),
-            TSTypeName::QualifiedName(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => it.serialize(serializer),
+            Self::QualifiedName(it) => it.serialize(serializer),
         }
     }
 }
@@ -2706,9 +2688,9 @@ impl ESTree for TSTypeAliasDeclaration<'_> {
 impl ESTree for TSAccessibility {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSAccessibility::Private => "private".serialize(serializer),
-            TSAccessibility::Protected => "protected".serialize(serializer),
-            TSAccessibility::Public => "public".serialize(serializer),
+            Self::Private => "private".serialize(serializer),
+            Self::Protected => "protected".serialize(serializer),
+            Self::Public => "public".serialize(serializer),
         }
     }
 }
@@ -2769,11 +2751,11 @@ impl ESTree for TSPropertySignature<'_> {
 impl ESTree for TSSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSSignature::TSIndexSignature(it) => it.serialize(serializer),
-            TSSignature::TSPropertySignature(it) => it.serialize(serializer),
-            TSSignature::TSCallSignatureDeclaration(it) => it.serialize(serializer),
-            TSSignature::TSConstructSignatureDeclaration(it) => it.serialize(serializer),
-            TSSignature::TSMethodSignature(it) => it.serialize(serializer),
+            Self::TSIndexSignature(it) => it.serialize(serializer),
+            Self::TSPropertySignature(it) => it.serialize(serializer),
+            Self::TSCallSignatureDeclaration(it) => it.serialize(serializer),
+            Self::TSConstructSignatureDeclaration(it) => it.serialize(serializer),
+            Self::TSMethodSignature(it) => it.serialize(serializer),
         }
     }
 }
@@ -2809,9 +2791,9 @@ impl ESTree for TSCallSignatureDeclaration<'_> {
 impl ESTree for TSMethodSignatureKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSMethodSignatureKind::Method => "method".serialize(serializer),
-            TSMethodSignatureKind::Get => "get".serialize(serializer),
-            TSMethodSignatureKind::Set => "set".serialize(serializer),
+            Self::Method => "method".serialize(serializer),
+            Self::Get => "get".serialize(serializer),
+            Self::Set => "set".serialize(serializer),
         }
     }
 }
@@ -2887,8 +2869,8 @@ impl ESTree for TSTypePredicate<'_> {
 impl ESTree for TSTypePredicateName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSTypePredicateName::Identifier(it) => it.serialize(serializer),
-            TSTypePredicateName::This(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::This(it) => it.serialize(serializer),
         }
     }
 }
@@ -2910,9 +2892,9 @@ impl ESTree for TSModuleDeclaration<'_> {
 impl ESTree for TSModuleDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSModuleDeclarationKind::Global => "global".serialize(serializer),
-            TSModuleDeclarationKind::Module => "module".serialize(serializer),
-            TSModuleDeclarationKind::Namespace => "namespace".serialize(serializer),
+            Self::Global => "global".serialize(serializer),
+            Self::Module => "module".serialize(serializer),
+            Self::Namespace => "namespace".serialize(serializer),
         }
     }
 }
@@ -2920,8 +2902,8 @@ impl ESTree for TSModuleDeclarationKind {
 impl ESTree for TSModuleDeclarationName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSModuleDeclarationName::Identifier(it) => it.serialize(serializer),
-            TSModuleDeclarationName::StringLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -2929,8 +2911,8 @@ impl ESTree for TSModuleDeclarationName<'_> {
 impl ESTree for TSModuleDeclarationBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSModuleDeclarationBody::TSModuleDeclaration(it) => it.serialize(serializer),
-            TSModuleDeclarationBody::TSModuleBlock(it) => it.serialize(serializer),
+            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSModuleBlock(it) => it.serialize(serializer),
         }
     }
 }
@@ -2986,9 +2968,9 @@ impl ESTree for TSTypeQuery<'_> {
 impl ESTree for TSTypeQueryExprName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSTypeQueryExprName::TSImportType(it) => it.serialize(serializer),
-            TSTypeQueryExprName::IdentifierReference(it) => it.serialize(serializer),
-            TSTypeQueryExprName::QualifiedName(it) => it.serialize(serializer),
+            Self::TSImportType(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => it.serialize(serializer),
+            Self::QualifiedName(it) => it.serialize(serializer),
         }
     }
 }
@@ -3035,8 +3017,8 @@ impl ESTree for TSImportAttribute<'_> {
 impl ESTree for TSImportAttributeName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSImportAttributeName::Identifier(it) => it.serialize(serializer),
-            TSImportAttributeName::StringLiteral(it) => it.serialize(serializer),
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::StringLiteral(it) => it.serialize(serializer),
         }
     }
 }
@@ -3087,10 +3069,10 @@ impl ESTree for TSMappedType<'_> {
 impl ESTree for TSMappedTypeModifierOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSMappedTypeModifierOperator::True => "true".serialize(serializer),
-            TSMappedTypeModifierOperator::Plus => "+".serialize(serializer),
-            TSMappedTypeModifierOperator::Minus => "-".serialize(serializer),
-            TSMappedTypeModifierOperator::None => "none".serialize(serializer),
+            Self::True => "true".serialize(serializer),
+            Self::Plus => "+".serialize(serializer),
+            Self::Minus => "-".serialize(serializer),
+            Self::None => "none".serialize(serializer),
         }
     }
 }
@@ -3159,9 +3141,9 @@ impl ESTree for TSImportEqualsDeclaration<'_> {
 impl ESTree for TSModuleReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            TSModuleReference::ExternalModuleReference(it) => it.serialize(serializer),
-            TSModuleReference::IdentifierReference(it) => it.serialize(serializer),
-            TSModuleReference::QualifiedName(it) => it.serialize(serializer),
+            Self::ExternalModuleReference(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => it.serialize(serializer),
+            Self::QualifiedName(it) => it.serialize(serializer),
         }
     }
 }
@@ -3236,8 +3218,8 @@ impl ESTree for TSInstantiationExpression<'_> {
 impl ESTree for ImportOrExportKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            ImportOrExportKind::Value => "value".serialize(serializer),
-            ImportOrExportKind::Type => "type".serialize(serializer),
+            Self::Value => "value".serialize(serializer),
+            Self::Type => "type".serialize(serializer),
         }
     }
 }
