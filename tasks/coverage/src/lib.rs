@@ -71,6 +71,7 @@ impl AppArgs {
         self.run_transformer();
         self.run_transpiler();
         self.run_minifier();
+        self.run_estree();
     }
 
     pub fn run_parser(&self) {
