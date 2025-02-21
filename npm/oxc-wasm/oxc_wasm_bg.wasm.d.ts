@@ -2,7 +2,7 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export const __wbg_oxc_free: (a: number, b: number) => void;
-export const __wbg_get_oxc_ast: (a: number) => any;
+export const __wbg_get_oxc_astJson: (a: number) => [number, number];
 export const __wbg_get_oxc_ir: (a: number) => [number, number];
 export const __wbg_get_oxc_controlFlowGraph: (a: number) => [number, number];
 export const __wbg_get_oxc_symbols: (a: number) => any;

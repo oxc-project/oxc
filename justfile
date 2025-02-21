@@ -161,6 +161,7 @@ build-wasm mode="release":
   wasm-pack build crates/oxc_wasm --no-pack --target web --scope oxc --out-dir ../../npm/oxc-wasm --{{mode}}
   cp crates/oxc_wasm/package.json npm/oxc-wasm/package.json
   rm npm/oxc-wasm/.gitignore
+  node ./crates/oxc_wasm/update-bindings.mjs
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:

@@ -2246,7 +2246,6 @@ dependencies = [
  "oxc_prettier",
  "serde",
  "serde-wasm-bindgen",
- "serde_json",
  "tsify",
  "wasm-bindgen",
 ]
