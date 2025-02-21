@@ -1,8 +1,8 @@
 /**
- * @param {import("./eslint-rules.cjs").TargetPluginMeta} pluginMeta
+ * @param {import("./eslint-rules.mjs").TargetPluginMeta} pluginMeta
  * @param {string} markdown
  */
-exports.updateGitHubIssue = async ({ issueNo }, markdown) => {
+export const updateGitHubIssue = async ({ issueNo }, markdown) => {
   const issueUrl = `https://github.com/oxc-project/oxc/issues/${issueNo}`;
 
   try {

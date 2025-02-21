@@ -1,5 +1,5 @@
-const { resolve } = require('node:path');
-const { readFile } = require('node:fs/promises');
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 const readAllImplementedRuleNames = async () => {
   const rulesFile = await readFile(
@@ -65,7 +65,7 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
  */
 
 /** @param {ReturnType<import("eslint").Linter["getRules"]>} loadedAllRules */
-exports.createRuleEntries = (loadedAllRules) => {
+export const createRuleEntries = (loadedAllRules) => {
   /** @type {RuleEntries} */
   const rulesEntry = new Map();
 
@@ -91,7 +91,7 @@ exports.createRuleEntries = (loadedAllRules) => {
 };
 
 /** @param {RuleEntries} ruleEntries */
-exports.updateImplementedStatus = async (ruleEntries) => {
+export const updateImplementedStatus = async (ruleEntries) => {
   const implementedRuleNames = await readAllImplementedRuleNames();
 
   for (const name of implementedRuleNames) {
@@ -102,7 +102,7 @@ exports.updateImplementedStatus = async (ruleEntries) => {
 };
 
 /** @param {RuleEntries} ruleEntries */
-exports.updateNotSupportedStatus = (ruleEntries) => {
+export const updateNotSupportedStatus = (ruleEntries) => {
   for (const name of NOT_SUPPORTED_RULE_NAMES) {
     const rule = ruleEntries.get(name);
     if (rule) rule.isNotSupported = true;
@@ -152,7 +152,7 @@ const getPhfSetEntries = (constName, fileContent) => {
  *
  * @param {RuleEntries} ruleEntries
  */
-exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
+export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
   ruleEntries,
 ) => {
   const typescriptCompatibleRulesFile = await readFile(
@@ -178,7 +178,7 @@ exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
  * override the status of the Vitest rules to match the Jest rules.
  * @param {RuleEntries} ruleEntries
  */
-exports.syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
+export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
   const vitestCompatibleRulesFile = await readFile(
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
@@ -202,7 +202,7 @@ exports.syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
  * We should override these to make implementation status up-to-date.
  * @param {RuleEntries} ruleEntries
  */
-exports.syncUnicornPluginStatusWithEslintPluginStatus = (ruleEntries) => {
+export const syncUnicornPluginStatusWithEslintPluginStatus = (ruleEntries) => {
   const rules = new Set(['no-negated-condition']);
 
   for (const rule of rules) {

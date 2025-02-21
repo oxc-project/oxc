@@ -1,5 +1,5 @@
 /**
- * @typedef {({ name: string } & import("./oxlint-rules.cjs").RuleEntry)} RuleEntryView
+ * @typedef {({ name: string } & import("./oxlint-rules.mjs").RuleEntry)} RuleEntryView
  * @typedef {{ isImplemented: number; isNotSupported: number; total: number }} CounterView
  */
 
@@ -88,10 +88,10 @@ ${
 
 /**
  * @param {string} pluginName
- * @param {import("./eslint-rules.cjs").TargetPluginMeta} pluginMeta
- * @param {import("./oxlint-rules.cjs").RuleEntries} ruleEntries
+ * @param {import("./eslint-rules.mjs").TargetPluginMeta} pluginMeta
+ * @param {import("./oxlint-rules.mjs").RuleEntries} ruleEntries
  */
-exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
+export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
   /** @type {Record<string, RuleEntryView[]>} */
   const views = {
     deprecated: [],

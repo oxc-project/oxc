@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "lint_rules",
-  "main": "./src/main.cjs",
+  "main": "./src/main.mjs",
   "version": "0.0.0",
   "dependencies": {
     "@next/eslint-plugin-next": "latest",

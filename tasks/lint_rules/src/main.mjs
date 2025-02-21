@@ -1,19 +1,15 @@
-const { parseArgs } = require('node:util');
-const {
-  ALL_TARGET_PLUGINS,
-  createESLintLinter,
-  loadTargetPluginRules,
-} = require('./eslint-rules.cjs');
-const {
+import { parseArgs } from 'node:util';
+import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from './eslint-rules.mjs';
+import { renderMarkdown } from './markdown-renderer.mjs';
+import {
   createRuleEntries,
-  updateNotSupportedStatus,
-  updateImplementedStatus,
-  overrideTypeScriptPluginStatusWithEslintPluginStatus: syncTypeScriptPluginStatusWithEslintPluginStatus,
-  syncVitestPluginStatusWithJestPluginStatus,
+  overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
   syncUnicornPluginStatusWithEslintPluginStatus,
-} = require('./oxlint-rules.cjs');
-const { renderMarkdown } = require('./markdown-renderer.cjs');
-const { updateGitHubIssue } = require('./result-reporter.cjs');
+  syncVitestPluginStatusWithJestPluginStatus,
+  updateImplementedStatus,
+  updateNotSupportedStatus,
+} from './oxlint-rules.mjs';
+import { updateGitHubIssue } from './result-reporter.mjs';
 
 const HELP = `
 Usage:
@@ -71,7 +67,7 @@ Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(', ')}
   //
   const results = await Promise.allSettled(
     Array.from(targetPluginNames).map((pluginName) => {
-      const pluginMeta = /** @type {import("./eslint-rules.cjs").TargetPluginMeta} */ (
+      const pluginMeta = /** @type {import("./eslint-rules.mjs").TargetPluginMeta} */ (
         ALL_TARGET_PLUGINS.get(pluginName)
       );
       const content = renderMarkdown(pluginName, pluginMeta, ruleEntries);
