@@ -164,10 +164,7 @@ fn calculate_layout_for_struct(type_id: TypeId, schema: &mut Schema) -> Layout {
             // Update niche.
             // Take the largest niche. Preference for earlier niche if 2 fields have niches of same size.
             if let Some(field_niche) = &field_layout.niche {
-                // TODO: Use `Option::is_none_or` once our MSRV reaches 1.82.0
-                if layout.niche.is_none()
-                    || field_niche.count > layout.niche.as_ref().unwrap().count
-                {
+                if layout.niche.as_ref().is_none_or(|niche| field_niche.count > niche.count) {
                     let mut niche = field_niche.clone();
                     niche.offset += offset;
                     layout.niche = Some(niche);
