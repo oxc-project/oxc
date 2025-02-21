@@ -91,6 +91,16 @@ impl Case for EstreeTest262Case {
             "test262/test/language/literals/regexp/u-surrogate-pairs-atom-char-class.js",
             "test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js",
             "test262/test/language/statements/for-of/string-astral-truncated.js",
+
+            // Infinite numbers.
+            // JSON we generate does correctly represent `Infinity` (as `1e+400`), but `serde` can't
+            // parse that, so these tests erroneously fail.
+            // NAPI binding contains a test case for `Infinity` instead.
+            "test262/test/built-ins/Array/prototype/indexOf/15.4.4.14-10-1.js",
+            "test262/test/built-ins/Array/prototype/lastIndexOf/15.4.4.15-9-1.js",
+            "test262/test/built-ins/Number/S9.3.1_A6_T1.js",
+            "test262/test/built-ins/Number/S9.3.1_A6_T2.js",
+            "test262/test/language/types/number/8.5.1.js",
         ];
 
         let path = &*self.path().to_string_lossy();
