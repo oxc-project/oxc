@@ -491,7 +491,7 @@ impl<'a> Traverse<'a> for JsxImpl<'a, '_> {
     }
 
     #[inline]
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_)) {
             return;
         }
@@ -856,10 +856,8 @@ impl<'a> JsxImpl<'a, '_> {
                 let jsx_text = Self::decode_entities(s.value.as_str());
                 ctx.ast.expression_string_literal(s.span, jsx_text, None)
             }
-            Some(JSXAttributeValue::Element(e)) => self.transform_jsx_element(e, ctx),
-            Some(JSXAttributeValue::Fragment(e)) => {
-                self.transform_jsx(e.span, None, e.unbox().children, ctx)
-            }
+            Some(JSXAttributeValue::Element(e)) => Expression::JSXElement(e),
+            Some(JSXAttributeValue::Fragment(e)) => Expression::JSXFragment(e),
             Some(JSXAttributeValue::ExpressionContainer(c)) => match c.unbox().expression {
                 jsx_expr @ match_expression!(JSXExpression) => jsx_expr.into_expression(),
                 JSXExpression::EmptyExpression(e) => {
@@ -915,10 +913,8 @@ impl<'a> JsxImpl<'a, '_> {
                 jsx_expr @ match_expression!(JSXExpression) => Some(jsx_expr.into_expression()),
                 JSXExpression::EmptyExpression(_) => None,
             },
-            JSXChild::Element(e) => Some(self.transform_jsx_element(e, ctx)),
-            JSXChild::Fragment(e) => {
-                Some(self.transform_jsx(e.span, None, e.unbox().children, ctx))
-            }
+            JSXChild::Element(e) => Some(Expression::JSXElement(e)),
+            JSXChild::Fragment(e) => Some(Expression::JSXFragment(e)),
             JSXChild::Spread(_) => unreachable!(),
         }
     }

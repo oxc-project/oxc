@@ -1,6 +1,6 @@
 commit: acbc09a8
 
-Passed: 698/1168
+Passed: 690/1168
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -2634,8 +2634,14 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-plugin-transform-react-jsx (135/145)
+# babel-plugin-transform-react-jsx (128/145)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
+x Output mismatch
+
+* autoImport/auto-import-react-source-type-module/input.js
+x Output mismatch
+
+* autoImport/react-defined/input.js
 x Output mismatch
 
 * react/should-disallow-valueless-key/input.js
@@ -2671,8 +2677,17 @@ x Output mismatch
    `----
 
 
+* react-automatic/concatenates-adjacent-string-literals/input.js
+x Output mismatch
+
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* react-automatic/handle-fragments/input.js
+x Output mismatch
+
+* react-automatic/handle-static-children/input.js
+x Output mismatch
 
 * react-automatic/should-disallow-valueless-key/input.js
 
@@ -2695,6 +2710,12 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
    :  ^^^^^^^^^^^^^^^^^^^
    `----
 
+
+* react-automatic/should-have-correct-comma-in-nested-children/input.js
+x Output mismatch
+
+* react-automatic/should-properly-handle-keys/input.js
+x Output mismatch
 
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 
@@ -2721,7 +2742,10 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 
-# babel-plugin-transform-react-jsx-development (8/11)
+# babel-plugin-transform-react-jsx-development (7/11)
+* cross-platform/auto-import-dev/input.js
+x Output mismatch
+
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
 
   ! Duplicate __self prop found.
