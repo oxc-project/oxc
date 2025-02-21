@@ -106,7 +106,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
             }
         }
     }
-    let program = ret.program.to_json();
+    let program = ret.program.to_estree_ts_json();
     let module = EcmaScriptModule::from(&ret.module_record);
     ParseResult { source_text, program, module, comments, errors }
 }

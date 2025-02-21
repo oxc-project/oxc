@@ -101,7 +101,7 @@ pub fn parse_sync(
 
     let serializer = serde_wasm_bindgen::Serializer::json_compatible();
 
-    let program_json = ret.program.to_json();
+    let program_json = ret.program.to_estree_ts_json();
 
     let comments: Vec<JsValue> = if ret.program.comments.is_empty() {
         vec![]

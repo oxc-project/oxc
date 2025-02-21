@@ -48,7 +48,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::super::CompactSerializer;
+    use super::super::CompactTSSerializer;
     use super::*;
 
     #[expect(clippy::needless_borrow)]
@@ -57,7 +57,7 @@ mod tests {
         let cases = [(&"foo", r#""foo""#), (&&"bar", r#""bar""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactSerializer::new();
+            let mut serializer = CompactTSSerializer::new();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -69,7 +69,7 @@ mod tests {
         let cases = [(&mut "foo", r#""foo""#), (&mut &mut "bar", r#""bar""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactSerializer::new();
+            let mut serializer = CompactTSSerializer::new();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -81,7 +81,7 @@ mod tests {
         let cases = [(None, "null"), (Some(123.0f64), "123")];
 
         for (input, output) in cases {
-            let mut serializer = CompactSerializer::new();
+            let mut serializer = CompactTSSerializer::new();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -94,7 +94,7 @@ mod tests {
             [(Cow::Borrowed("foo"), r#""foo""#), (Cow::Owned("bar".to_string()), r#""bar""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactSerializer::new();
+            let mut serializer = CompactTSSerializer::new();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);

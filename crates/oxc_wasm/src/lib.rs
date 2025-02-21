@@ -472,7 +472,7 @@ impl Oxc {
 
     fn convert_ast(&mut self, program: &mut Program) {
         Utf8ToUtf16::new().convert(program);
-        self.ast_json = program.to_pretty_json();
+        self.ast_json = program.to_pretty_estree_ts_json();
         self.comments = Self::map_comments(program.source_text, &program.comments);
     }
 

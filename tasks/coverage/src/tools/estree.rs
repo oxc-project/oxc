@@ -171,7 +171,7 @@ impl Case for EstreeTest262Case {
                 return;
             }
         };
-        let mut oxc_json_value = match deserialize_json(&program.to_json()) {
+        let mut oxc_json_value = match deserialize_json(&program.to_estree_ts_json()) {
             Ok(oxc_json) => oxc_json,
             Err(e) => {
                 self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));

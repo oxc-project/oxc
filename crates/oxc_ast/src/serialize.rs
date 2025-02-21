@@ -2,22 +2,23 @@ use cow_utils::CowUtils;
 
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactSerializer, ESTree, PrettySerializer, SequenceSerializer, Serializer, StructSerializer,
+    CompactTSSerializer, ESTree, PrettyTSSerializer, SequenceSerializer, Serializer,
+    StructSerializer,
 };
 
 use crate::ast::*;
 
 impl Program<'_> {
-    /// Serialize AST to ESTree JSON.
-    pub fn to_json(&self) -> String {
-        let mut serializer = CompactSerializer::new();
+    /// Serialize AST to ESTree JSON, including TypeScript fields.
+    pub fn to_estree_ts_json(&self) -> String {
+        let mut serializer = CompactTSSerializer::new();
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
-    /// Serialize AST to ESTree JSON.
-    pub fn to_pretty_json(&self) -> String {
-        let mut serializer = PrettySerializer::new();
+    /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields.
+    pub fn to_pretty_estree_ts_json(&self) -> String {
+        let mut serializer = PrettyTSSerializer::new();
         self.serialize(&mut serializer);
         serializer.into_string()
     }
