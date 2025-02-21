@@ -100,6 +100,19 @@ impl Case for EstreeTest262Case {
             "test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js",
             "test262/test/language/statements/for-of/string-astral-truncated.js",
 
+            // Hashbangs.
+            // We intentionally diverge from Acorn, by including an extra `hashbang` field on `Program`.
+            // `acorn-test262` adapts Acorn's AST to add a `hashbang: null` field to `Program`,
+            // in order to match Oxc's output.
+            // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
+            // field is (correctly) not `null` in these cases.
+            "test262/test/language/comments/hashbang/line-terminator-carriage-return.js",
+            "test262/test/language/comments/hashbang/line-terminator-line-separator.js",
+            "test262/test/language/comments/hashbang/line-terminator-paragraph-separator.js",
+            "test262/test/language/comments/hashbang/module.js",
+            "test262/test/language/comments/hashbang/not-empty.js",
+            "test262/test/language/comments/hashbang/use-strict.js",
+
             // Infinite numbers.
             // JSON we generate does correctly represent `Infinity` (as `1e+400`), but `serde` can't
             // parse that, so these tests erroneously fail.
