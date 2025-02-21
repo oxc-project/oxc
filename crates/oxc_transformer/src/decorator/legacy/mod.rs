@@ -48,7 +48,7 @@ mod metadata;
 use std::mem;
 
 use metadata::LegacyDecoratorMetadata;
-use oxc_allocator::{Address, Vec as ArenaVec};
+use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
 use oxc_ast::{ast::*, Visit, VisitMut, NONE};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
@@ -166,9 +166,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     fn transform_class(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(class) = stmt else { unreachable!() };
 
-        if let Some((_, new_stmt)) =
-            self.transform_class_impl(Address::from_ptr(class.as_ref()), class, ctx)
-        {
+        if let Some((_, new_stmt)) = self.transform_class_impl(class.address(), class, ctx) {
             *stmt = new_stmt;
         }
     }
@@ -207,7 +205,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Statement::ExportDefaultDeclaration(export) = stmt else { unreachable!() };
-        let stmt_address = Address::from_ptr(export.as_ref());
+        let stmt_address = export.address();
         let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
             return;
         };
@@ -258,7 +256,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Statement::ExportNamedDeclaration(export) = stmt else { unreachable!() };
-        let stmt_address = Address::from_ptr(export.as_ref());
+        let stmt_address = export.address();
         let Some(Declaration::ClassDeclaration(class)) = &mut export.declaration else { return };
 
         let Some((class_binding, new_stmt)) = self.transform_class_impl(stmt_address, class, ctx)
