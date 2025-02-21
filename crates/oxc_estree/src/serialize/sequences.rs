@@ -1,4 +1,4 @@
-use super::{ESTree, ESTreeSerializer, Formatter, Serializer, SerializerPrivate};
+use super::{Config, ESTree, ESTreeSerializer, Formatter, Serializer, SerializerPrivate};
 
 /// Trait for sequence serializers.
 pub trait SequenceSerializer {
@@ -12,23 +12,23 @@ pub trait SequenceSerializer {
 /// Serializer for sequences.
 ///
 /// This is returned by `ESTreeSerializer::serialize_sequence`.
-pub struct ESTreeSequenceSerializer<'s, F: Formatter> {
+pub struct ESTreeSequenceSerializer<'s, C: Config, F: Formatter> {
     /// Serializer
-    serializer: &'s mut ESTreeSerializer<F>,
+    serializer: &'s mut ESTreeSerializer<C, F>,
     /// State of sequence.
     /// Starts as `SequenceState::Empty`, transitions to `SequenceState::HasEntries` on first entry.
     state: SequenceState,
 }
 
-impl<'s, F: Formatter> ESTreeSequenceSerializer<'s, F> {
+impl<'s, C: Config, F: Formatter> ESTreeSequenceSerializer<'s, C, F> {
     /// Create new [`ESTreeSequenceSerializer`].
-    pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<F>) -> Self {
+    pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<C, F>) -> Self {
         serializer.buffer_mut().push_ascii_byte(b'[');
         Self { serializer, state: SequenceState::Empty }
     }
 }
 
-impl<F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_, F> {
+impl<C: Config, F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_, C, F> {
     /// Serialize sequence entry.
     fn serialize_element<T: ESTree + ?Sized>(&mut self, value: &T) {
         let (buffer, formatter) = self.serializer.buffer_and_formatter_mut();

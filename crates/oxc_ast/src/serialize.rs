@@ -2,12 +2,20 @@ use cow_utils::CowUtils;
 
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactTSSerializer, ESTree, PrettyTSSerializer, SequenceSerializer, Serializer,
-    StructSerializer,
+    CompactJSSerializer, CompactTSSerializer, ESTree, PrettyJSSerializer, PrettyTSSerializer,
+    SequenceSerializer, Serializer, StructSerializer,
 };
 
 use crate::ast::*;
 
+/// Main serialization methods for `Program`.
+///
+/// Note: 4 separate methods for the different serialization options, rather than 1 method
+/// with behavior controlled by flags (e.g. `fn to_estree_json(&self, with_ts: bool, pretty: bool`)
+/// to avoid bloating binary size.
+///
+/// Most consumers (and Oxc crates) will use only 1 of these methods, so we don't want to needlessly
+/// compile all 4 serializers when only 1 is used.
 impl Program<'_> {
     /// Serialize AST to ESTree JSON, including TypeScript fields.
     pub fn to_estree_ts_json(&self) -> String {
@@ -16,9 +24,23 @@ impl Program<'_> {
         serializer.into_string()
     }
 
+    /// Serialize AST to ESTree JSON, without TypeScript fields.
+    pub fn to_estree_js_json(&self) -> String {
+        let mut serializer = CompactJSSerializer::new();
+        self.serialize(&mut serializer);
+        serializer.into_string()
+    }
+
     /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields.
     pub fn to_pretty_estree_ts_json(&self) -> String {
         let mut serializer = PrettyTSSerializer::new();
+        self.serialize(&mut serializer);
+        serializer.into_string()
+    }
+
+    /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields.
+    pub fn to_pretty_estree_js_json(&self) -> String {
+        let mut serializer = PrettyJSSerializer::new();
         self.serialize(&mut serializer);
         serializer.into_string()
     }
@@ -232,8 +254,8 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_field("start", &rest.span.start);
         state.serialize_field("end", &rest.span.end);
         state.serialize_field("argument", &rest.argument.kind);
-        state.serialize_field("type_annotation", &rest.argument.type_annotation);
-        state.serialize_field("optional", &rest.argument.optional);
+        state.serialize_ts_field("type_annotation", &rest.argument.type_annotation);
+        state.serialize_ts_field("optional", &rest.argument.optional);
         state.end();
     }
 }
@@ -374,7 +396,7 @@ impl ESTree for ExportNamedDeclaration<'_> {
         state.serialize_field("declaration", &self.declaration);
         state.serialize_field("specifiers", &self.specifiers);
         state.serialize_field("source", &self.source);
-        state.serialize_field("exportKind", &self.export_kind);
+        state.serialize_ts_field("exportKind", &self.export_kind);
         if self.source.is_some() {
             state.serialize_field(
                 "attributes",
