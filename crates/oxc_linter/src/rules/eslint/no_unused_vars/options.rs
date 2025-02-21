@@ -570,9 +570,9 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                 })
             }
             Value::Null => Ok(Self::default()),
-            _ => Err(OxcDiagnostic::error(
-                "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}",
-            )),
+            _ => Err(OxcDiagnostic::error(format!(
+                        "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}"
+            ))),
         }
     }
 }

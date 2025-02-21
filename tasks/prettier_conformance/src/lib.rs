@@ -180,7 +180,7 @@ fn collect_test_files(dir: &Path, filter: Option<&String>) -> Vec<PathBuf> {
             }
         })
         .filter(|e| !IGNORE_TESTS.iter().any(|s| e.path().to_string_lossy().contains(s)))
-        .filter(|e| filter.map_or(true, |name| e.path().to_string_lossy().contains(name)))
+        .filter(|e| filter.is_none_or(|name| e.path().to_string_lossy().contains(name)))
         .map(|e| e.path().to_path_buf())
         .collect();
     test_files.sort_unstable();

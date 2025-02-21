@@ -1,4 +1,4 @@
-#![expect(clippy::missing_panics_doc)]
+#![expect(clippy::missing_panics_doc, clippy::literal_string_with_formatting_args)]
 pub mod esbuild;
 pub mod jsdoc;
 pub mod legal_comments;

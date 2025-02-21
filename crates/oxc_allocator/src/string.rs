@@ -103,7 +103,7 @@ impl<'alloc> String<'alloc> {
     /// Caller must ensure this `Vec<u8>` comprises a valid UTF-8 string.
     //
     // `#[inline(always)]` because this is a no-op at runtime
-    #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
+    #[expect(clippy::unnecessary_safety_comment)]
     #[inline(always)]
     pub unsafe fn from_utf8_unchecked(bytes: Vec<'alloc, u8>) -> String<'alloc> {
         // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
@@ -149,7 +149,7 @@ impl<'alloc> String<'alloc> {
     ///     assert_eq!(s, "hello");
     /// }
     /// ```
-    #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
+    #[expect(clippy::unnecessary_safety_comment)]
     #[inline(always)]
     pub unsafe fn from_raw_parts_in(
         buf: *mut u8,

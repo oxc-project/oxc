@@ -46,7 +46,7 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
-        let incorrect_extension = path.extension().map_or(true, |ext| ext == "json" || ext == "md");
+        let incorrect_extension = path.extension().is_none_or(|ext| ext == "json" || ext == "md");
         not_supported_directory || incorrect_extension
     }
 

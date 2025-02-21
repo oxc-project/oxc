@@ -66,7 +66,7 @@ impl<T> Box<'_, T> {
     /// # SAFETY
     /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
     /// Only purpose is for mocking types without allocating for const assertions.
-    #[expect(unsafe_code, clippy::missing_safety_doc)]
+    #[expect(unsafe_code)]
     pub const unsafe fn dangling() -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 

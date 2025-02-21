@@ -95,7 +95,7 @@ pub trait Suite<T: Case> {
                 .filter(|e| !e.file_type().is_dir())
                 .map(|e| e.path().to_owned())
                 .filter(|path| !self.skip_test_path(path))
-                .filter(|path| filter.map_or(true, |query| path.to_string_lossy().contains(query)))
+                .filter(|path| filter.is_none_or(|query| path.to_string_lossy().contains(query)))
                 .collect::<Vec<_>>()
         };
 

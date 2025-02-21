@@ -2165,8 +2165,8 @@ impl<'a> ClassProperties<'a, '_> {
         }
     }
 
-    /// * [`Helper::ReadOnlyError`]: `_readOnlyError("#method")`
-    /// * [`Helper::WriteOnlyError`]: `_writeOnlyError("#method")`
+    /// * [`Helper::ReadOnlyError`][]: `_readOnlyError("#method")`
+    /// * [`Helper::WriteOnlyError`][]: `_writeOnlyError("#method")`
     fn create_throw_error(
         &self,
         helper: Helper,

@@ -683,7 +683,7 @@ fn main() {
     let context = match body {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
-            let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
+            let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
 
             let mut state = State::new(&body);

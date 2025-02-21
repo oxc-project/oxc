@@ -1,4 +1,5 @@
 #![expect(clippy::self_named_module_files)] // for rules.rs
+#![allow(clippy::literal_string_with_formatting_args)]
 
 #[cfg(test)]
 mod tester;

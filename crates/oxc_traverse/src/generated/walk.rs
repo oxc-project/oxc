@@ -6,7 +6,8 @@
     clippy::semicolon_if_nothing_returned,
     clippy::ptr_as_ptr,
     clippy::ref_as_ptr,
-    clippy::cast_ptr_alignment
+    clippy::cast_ptr_alignment,
+    clippy::borrow_as_ptr
 )]
 
 use std::{cell::Cell, marker::PhantomData};
