@@ -1,6 +1,6 @@
 commit: acbc09a8
 
-Passed: 136/220
+Passed: 137/221
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -319,7 +319,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (1/63)
+# legacy-decorators (2/64)
 * typescript/accessor/decoratorOnClassAccessor1/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]

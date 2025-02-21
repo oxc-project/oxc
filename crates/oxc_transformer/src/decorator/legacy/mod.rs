@@ -166,7 +166,9 @@ impl<'a> LegacyDecorator<'a, '_> {
     fn transform_class(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(class) = stmt else { unreachable!() };
 
-        if let Some((_, new_stmt)) = self.transform_class_impl(class, ctx) {
+        if let Some((_, new_stmt)) =
+            self.transform_class_impl(Address::from_ptr(class.as_ref()), class, ctx)
+        {
             *stmt = new_stmt;
         }
     }
@@ -205,11 +207,15 @@ impl<'a> LegacyDecorator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Statement::ExportDefaultDeclaration(export) = stmt else { unreachable!() };
+        let stmt_address = Address::from_ptr(export.as_ref());
         let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
             return;
         };
 
-        let Some((class_binding, new_stmt)) = self.transform_class_impl(class, ctx) else { return };
+        let Some((class_binding, new_stmt)) = self.transform_class_impl(stmt_address, class, ctx)
+        else {
+            return;
+        };
         *stmt = new_stmt;
 
         // `export default Class`
@@ -252,9 +258,13 @@ impl<'a> LegacyDecorator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Statement::ExportNamedDeclaration(export) = stmt else { unreachable!() };
+        let stmt_address = Address::from_ptr(export.as_ref());
         let Some(Declaration::ClassDeclaration(class)) = &mut export.declaration else { return };
 
-        let Some((class_binding, new_stmt)) = self.transform_class_impl(class, ctx) else { return };
+        let Some((class_binding, new_stmt)) = self.transform_class_impl(stmt_address, class, ctx)
+        else {
+            return;
+        };
         *stmt = new_stmt;
 
         // `export { Class }`
@@ -264,6 +274,7 @@ impl<'a> LegacyDecorator<'a, '_> {
 
     fn transform_class_impl(
         &mut self,
+        stmt_address: Address,
         class: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(BoundIdentifier<'a>, Statement<'a>)> {
@@ -281,6 +292,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             ));
         } else if class_element_is_decorated {
             self.transform_class_declaration_without_class_decorators(
+                stmt_address,
                 class,
                 has_private_in_expression_in_decorator,
                 ctx,
@@ -452,6 +464,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Transforms a non-decorated class declaration.
     fn transform_class_declaration_without_class_decorators(
         &mut self,
+        stmt_address: Address,
         class: &mut Class<'a>,
         has_private_in_expression_in_decorator: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -471,8 +484,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         if has_private_in_expression_in_decorator {
             Self::insert_decorations_into_class_static_block(class, decoration_stmts, ctx);
         } else {
-            let address = Address::from_ptr(class);
-            self.ctx.statement_injector.insert_many_after(&address, decoration_stmts);
+            self.ctx.statement_injector.insert_many_after(&stmt_address, decoration_stmts);
         }
     }
 
