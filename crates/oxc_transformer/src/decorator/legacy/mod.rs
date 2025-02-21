@@ -166,7 +166,8 @@ impl<'a> LegacyDecorator<'a, '_> {
     fn transform_class(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(class) = stmt else { unreachable!() };
 
-        if let Some((_, new_stmt)) = self.transform_class_impl(class.address(), class, ctx) {
+        let stmt_address = class.address();
+        if let Some((_, new_stmt)) = self.transform_class_impl(class, stmt_address, ctx) {
             *stmt = new_stmt;
         }
     }
@@ -210,7 +211,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             return;
         };
 
-        let Some((class_binding, new_stmt)) = self.transform_class_impl(stmt_address, class, ctx)
+        let Some((class_binding, new_stmt)) = self.transform_class_impl(class, stmt_address, ctx)
         else {
             return;
         };
@@ -259,7 +260,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let stmt_address = export.address();
         let Some(Declaration::ClassDeclaration(class)) = &mut export.declaration else { return };
 
-        let Some((class_binding, new_stmt)) = self.transform_class_impl(stmt_address, class, ctx)
+        let Some((class_binding, new_stmt)) = self.transform_class_impl(class, stmt_address, ctx)
         else {
             return;
         };
@@ -272,8 +273,8 @@ impl<'a> LegacyDecorator<'a, '_> {
 
     fn transform_class_impl(
         &mut self,
-        stmt_address: Address,
         class: &mut Class<'a>,
+        stmt_address: Address,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(BoundIdentifier<'a>, Statement<'a>)> {
         let ClassDecoratorInfo {
@@ -290,8 +291,8 @@ impl<'a> LegacyDecorator<'a, '_> {
             ));
         } else if class_element_is_decorated {
             self.transform_class_declaration_without_class_decorators(
-                stmt_address,
                 class,
+                stmt_address,
                 has_private_in_expression_in_decorator,
                 ctx,
             );
@@ -462,8 +463,8 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Transforms a non-decorated class declaration.
     fn transform_class_declaration_without_class_decorators(
         &mut self,
-        stmt_address: Address,
         class: &mut Class<'a>,
+        stmt_address: Address,
         has_private_in_expression_in_decorator: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
