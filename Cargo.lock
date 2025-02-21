@@ -1565,6 +1565,7 @@ dependencies = [
  "allocator-api2",
  "bumpalo",
  "hashbrown 0.15.2",
+ "oxc_estree",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -1584,8 +1585,6 @@ dependencies = [
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -1751,7 +1750,8 @@ dependencies = [
 name = "oxc_estree"
 version = "0.51.0"
 dependencies = [
- "serde",
+ "itoa",
+ "ryu-js",
 ]
 
 [[package]]
@@ -1964,7 +1964,6 @@ dependencies = [
  "pico-args",
  "rustc-hash",
  "seq-macro",
- "serde_json",
 ]
 
 [[package]]
@@ -1982,7 +1981,6 @@ dependencies = [
  "oxc_sourcemap",
  "rustc-hash",
  "self_cell",
- "serde_json",
  "string_wizard",
 ]
 
@@ -2040,7 +2038,6 @@ dependencies = [
  "oxc_span",
  "phf",
  "rustc-hash",
- "serde",
  "unicode-id-start",
 ]
 
@@ -2249,6 +2246,7 @@ dependencies = [
  "oxc_prettier",
  "serde",
  "serde-wasm-bindgen",
+ "serde_json",
  "tsify",
  "wasm-bindgen",
 ]

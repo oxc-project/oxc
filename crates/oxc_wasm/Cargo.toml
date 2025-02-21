@@ -28,5 +28,6 @@ oxc_prettier = { workspace = true }
 console_error_panic_hook = { workspace = true }
 serde = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
+serde_json = { workspace = true }
 tsify = { workspace = true }
 wasm-bindgen = { workspace = true }

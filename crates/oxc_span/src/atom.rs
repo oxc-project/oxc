@@ -6,7 +6,9 @@ use std::{
 
 use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
-use serde::{Serialize, Serializer};
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{CompactStr, ContentEq};
 
@@ -208,7 +210,14 @@ impl fmt::Display for Atom<'_> {
 
 #[cfg(feature = "serialize")]
 impl Serialize for Atom<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.0.serialize(serializer)
+    fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Serialize::serialize(self.as_str(), serializer)
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl ESTree for Atom<'_> {
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        ESTree::serialize(self.as_str(), serializer);
     }
 }

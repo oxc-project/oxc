@@ -27,6 +27,24 @@ describe('parse', () => {
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
   });
 
+  it('`Infinity` is represented as `Infinity` number', () => {
+    const ret = parseSync('test.js', '1e+350');
+    expect(ret.errors.length).toBe(0);
+    expect(ret.program.body.length).toBe(1);
+    expect(ret.program.body[0]).toEqual({
+      type: 'ExpressionStatement',
+      start: 0,
+      end: 6,
+      expression: {
+        type: 'Literal',
+        start: 0,
+        end: 6,
+        value: Infinity,
+        raw: '1e+350',
+      },
+    });
+  });
+
   it('`BigIntLiteral` has `value` as `BigInt`', () => {
     const ret = parseSync('test.js', '123_456n');
     expect(ret.errors.length).toBe(0);

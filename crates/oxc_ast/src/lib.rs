@@ -22,7 +22,7 @@
 //! You can obtain an AST by parsing source code with a [`Parser`] from [`oxc_parser`].
 //!
 //! ## Cargo Features
-//! * `"serde"` enables support for serde serialization
+//! * `"serialize"` enables support for serialization to ESTree JSON
 //!
 //! [`BindingIdentifier`]: ast::BindingIdentifier
 //! [`IdentifierReference`]: ast::IdentifierReference
