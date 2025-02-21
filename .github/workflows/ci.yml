@@ -312,8 +312,6 @@ jobs:
       - if: steps.filter.outputs.src == 'true'
         run: |
           pnpm run build-dev
-          # Reset the broken `.d.ts` files
-          git add . && git reset --hard
           pnpm run test
           pnpm --filter e2e run test
           git diff --exit-code # Must commit everything

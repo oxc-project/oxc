@@ -29,7 +29,6 @@ oxc_sourcemap = { workspace = true, features = ["napi", "rayon"] }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
-ctor = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 
