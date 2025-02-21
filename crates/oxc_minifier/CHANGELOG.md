@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+### Features
+
+- dde05e3 mangler: Opt-out of direct eval (#9191) (Boshen)
+- 857f901 minifier: Inline constant values in template literals (#9201) (sapphi-red)
+
+### Bug Fixes
+
+- d2ab0fe minifier: Fix `clippy::suspicious_operation_groupings` warning (#9238) (Boshen)
+
+### Refactor
+
+- 3b1497b minifier: Improve minimize_if_statement (#9177) (Boshen)
+- 814eab6 minifier: `Math.pow(a,b)` -> `a ** (+b)` instead of `(+a) ** (+b)` (#9154) (Boshen)
+- ef856f5 oxc: Apply `clippy::needless_pass_by_ref_mut` (#9253) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
 ## [0.51.0] - 2025-02-15
 
 ### Features

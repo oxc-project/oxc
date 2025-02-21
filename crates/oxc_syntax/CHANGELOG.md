@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+### Features
+
+- 3e7b21c ast_tools: Add `#[builder(default)]` attribute for structs and enums (#9203) (overlookmotel)
+- dde05e3 mangler: Opt-out of direct eval (#9191) (Boshen)
+
+### Refactor
+
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+- 5640611 syntax: Shorten `Serialize` impls (#9248) (overlookmotel)
+
 ## [0.51.0] - 2025-02-15
 
 ### Features

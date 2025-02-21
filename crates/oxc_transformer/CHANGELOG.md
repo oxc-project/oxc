@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+### Features
+
+- 90ba283 transformer/decorator: Support emitting decorator metadata (#9057) (Dunqing)
+- 3289721 transformer/statement-injector: Add an assertion to check if it still contains statements that don't inject (#9063) (Dunqing)
+
+### Bug Fixes
+
+- c808c98 transformer: Fix `clippy::iter_on_single_items` warning (#9235) (Boshen)
+- c2101ad transformer/class-properties: Do not insert an empty iterator to `insert_many_before` (#9157) (Dunqing)
+- bad08cf transformer/decorator: Decoration disappear due to incorrect statement address (#9062) (Dunqing)
+
+### Refactor
+
+- ef856f5 oxc: Apply `clippy::needless_pass_by_ref_mut` (#9253) (Boshen)
+- 63bb214 oxc: Apply `clippy::redundant_clone` (#9252) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+- 2501c63 transformer: Do not use `&mut` when `&` ref will do (#9266) (overlookmotel)
+- 5553935 transformer: Replace `DashMap` with `RwLock<FxHashMap>` (#9221) (Boshen)
+- f216651 transformer/decorators: Pass `Class` as first argument (#9265) (overlookmotel)
+- f7d95cb transformer/decorators: Get statement address with `GetAddress::address` (#9264) (overlookmotel)
+- 7c10ae5 transformer/jsx: Do not take `None` when extracting `key` prop (#9228) (overlookmotel)
+- 45e0876 transformer/jsx: Refactor and document `has_proto` (#9227) (overlookmotel)
+- 8fe8937 transformer/jsx: Avoid `span()` method calls (#9226) (overlookmotel)
+- 25c4d69 transformer/jsx: Take ownership of `Vec` values by `into_iter` rather than `drain` (#9216) (Dunqing)
+- 558ed8b transformer/jsx: Simplify and remove all `AstBuilder::copy` usages (#9209) (Dunqing)
+
 ## [0.51.0] - 2025-02-15
 
 ### Features

@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+- 611b029 ast: [**BREAKING**] Remove `AstBuilder::copy` (#9210) (Dunqing)
+
+### Features
+
+
+### Bug Fixes
+
+- 72bab88 ast/estree: Remove unused TS type def for `WithClause` (#9250) (overlookmotel)
+
+### Documentation
+
+- d4d01c3 ast: Correct and improve docs for `get_identifier` methods on JSX types (#9225) (overlookmotel)
+- 70726e9 ast: Docs for `AstBuilder` `*_with_*` methods list extra field names, not field types (#9206) (overlookmotel)
+
+### Refactor
+
+- 97cc1c8 ast: Remove `TSLiteral::NullLiteral` (replaced by `TSNullKeyword`) (#9147) (Boshen)
+- 46b9151 ast/estree: Simplify serializer for `BindingProperty` (#9255) (overlookmotel)
+- 2e2823b ast/estree: Define custom ESTree serializers on struct fields via meta types (#9251) (overlookmotel)
+- 3236fe4 ast/estree: Simplify serializing `FormalParameters` (#9195) (overlookmotel)
+
 ## [0.51.0] - 2025-02-15
 
 - 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)
