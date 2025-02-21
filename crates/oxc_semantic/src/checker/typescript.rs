@@ -358,7 +358,7 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
                 if !a.r#type.is_abstract()
                     && !a.optional
                     && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
-                    && b.map_or(true, |b| match b {
+                    && b.is_none_or(|b| match b {
                         ClassElement::StaticBlock(_)
                         | ClassElement::PropertyDefinition(_)
                         | ClassElement::AccessorProperty(_)

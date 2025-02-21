@@ -878,7 +878,7 @@ fn is_componentish_name(name: &str) -> bool {
 }
 
 fn is_use_hook_name(name: &str) -> bool {
-    name.starts_with("use") && name.as_bytes().get(3).map_or(true, u8::is_ascii_uppercase)
+    name.starts_with("use") && name.as_bytes().get(3).is_none_or(u8::is_ascii_uppercase)
 }
 
 #[rustfmt::skip]

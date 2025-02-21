@@ -60,7 +60,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
                     continue;
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
-                    if export_decl.declaration.as_ref().map_or(true, |decl| {
+                    if export_decl.declaration.as_ref().is_none_or(|decl| {
                         decl.declare() || !matches!(decl, Declaration::TSModuleDeclaration(_))
                     }) {
                         new_stmts.push(Statement::ExportNamedDeclaration(export_decl));

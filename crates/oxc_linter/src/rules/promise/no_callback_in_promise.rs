@@ -100,7 +100,7 @@ impl Rule for NoCallbackInPromise {
         let is_not_callback = call_expr
             .callee
             .get_identifier_reference()
-            .map_or(true, |id| self.callbacks.binary_search(&id.name.as_str().into()).is_err());
+            .is_none_or(|id| self.callbacks.binary_search(&id.name.as_str().into()).is_err());
 
         if is_not_callback {
             if Self::has_promise_callback(call_expr) {

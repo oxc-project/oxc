@@ -63,7 +63,7 @@ impl Rule for NoSetState {
         };
 
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
-            || !member_expr.static_property_name().is_some_and(|str| str == "setState")
+            || member_expr.static_property_name().is_none_or(|str| str != "setState")
             || get_parent_component(node, ctx).is_none()
         {
             return;
