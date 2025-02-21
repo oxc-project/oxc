@@ -2315,9 +2315,9 @@ pub struct ImportDeclaration<'a> {
     #[estree(via = ImportDeclarationSpecifiers)]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
+    #[estree(skip)]
     pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
-    #[ts]
     #[estree(rename = "attributes", via = ImportDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
@@ -2446,6 +2446,7 @@ pub enum ImportAttributeKey<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(custom_serialize)]
 pub struct ExportNamedDeclaration<'a> {
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,
@@ -2455,7 +2456,6 @@ pub struct ExportNamedDeclaration<'a> {
     #[ts]
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
-    #[ts]
     #[estree(rename = "attributes", via = ExportNamedDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
@@ -2475,6 +2475,7 @@ pub struct ExportNamedDeclaration<'a> {
 pub struct ExportDefaultDeclaration<'a> {
     pub span: Span,
     pub declaration: ExportDefaultDeclarationKind<'a>,
+    #[estree(skip)]
     pub exported: ModuleExportName<'a>, // the `default` Keyword
 }
 
@@ -2496,7 +2497,6 @@ pub struct ExportAllDeclaration<'a> {
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
-    #[ts]
     #[estree(rename = "attributes", via = ExportAllDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
     #[ts]

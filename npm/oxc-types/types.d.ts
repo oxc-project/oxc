@@ -701,7 +701,6 @@ export interface ImportDeclaration extends Span {
   type: 'ImportDeclaration';
   specifiers: Array<ImportDeclarationSpecifier>;
   source: StringLiteral;
-  phase: ImportPhase | null;
   attributes: Array<ImportAttribute>;
   importKind: ImportOrExportKind;
 }
@@ -747,7 +746,6 @@ export interface ExportNamedDeclaration extends Span {
 export interface ExportDefaultDeclaration extends Span {
   type: 'ExportDefaultDeclaration';
   declaration: ExportDefaultDeclarationKind;
-  exported: ModuleExportName;
 }
 
 export interface ExportAllDeclaration extends Span {
