@@ -1,5 +1,8 @@
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use serde_json::Value;
 
@@ -15,11 +18,16 @@ use crate::{
 
 pub struct EstreeTest262Case {
     base: Test262Case,
+    acorn_json_path: PathBuf,
 }
 
 impl Case for EstreeTest262Case {
     fn new(path: PathBuf, code: String) -> Self {
-        Self { base: Test262Case::new(path, code) }
+        let acorn_json_path = Path::new("./tasks/coverage/acorn-test262")
+            .join(path.strip_prefix("test262").unwrap())
+            .with_extension("json");
+
+        Self { base: Test262Case::new(path, code), acorn_json_path }
     }
 
     fn code(&self) -> &str {
@@ -104,19 +112,15 @@ impl Case for EstreeTest262Case {
         ];
 
         let path = &*self.path().to_string_lossy();
-        IGNORE_PATHS.contains(&path)
+        if IGNORE_PATHS.contains(&path) {
+            return true;
+        }
+
+        // Skip tests where no Acorn JSON file
+        matches!(fs::exists(&self.acorn_json_path), Ok(false))
     }
 
     fn run(&mut self) {
-        let acorn_path = Path::new("./tasks/coverage/acorn-test262")
-            .join(self.path().strip_prefix("test262").unwrap())
-            .with_extension("json");
-        let Ok(acorn_file) = std::fs::read_to_string(acorn_path) else {
-            // JSON file not found
-            self.base.set_result(TestResult::Passed);
-            return;
-        };
-
         // Parse
         let source_text = self.base.code();
         let is_module = self.base.is_module();
@@ -136,19 +140,30 @@ impl Case for EstreeTest262Case {
         Utf8ToUtf16::new().convert(&mut program);
 
         // Remove extra properties from Oxc AST where there is no corresponding property in Acorn AST
-        let acorn_json_value = match deserialize_json(&acorn_file) {
+        let acorn_json = match fs::read_to_string(&self.acorn_json_path) {
+            Ok(acorn_json) => acorn_json,
+            Err(e) => {
+                self.base.set_result(TestResult::GenericError(
+                    "Error reading Acorn JSON",
+                    e.to_string(),
+                ));
+                return;
+            }
+        };
+
+        let acorn_json_value = match deserialize_json(&acorn_json) {
+            Ok(acorn_json) => acorn_json,
             Err(e) => {
                 self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
                 return;
             }
-            Ok(acorn_json) => acorn_json,
         };
         let mut oxc_json_value = match deserialize_json(&program.to_json()) {
+            Ok(oxc_json) => oxc_json,
             Err(e) => {
                 self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
                 return;
             }
-            Ok(oxc_json) => oxc_json,
         };
         remove_extra_properties_from_oxc_ast(&mut oxc_json_value, &acorn_json_value);
 
