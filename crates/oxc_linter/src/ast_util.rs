@@ -151,7 +151,7 @@ impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
                     .arguments
                     .iter()
                     .next()
-                    .map_or(true, |first| first.is_constant(true, semantic))
+                    .is_none_or(|first| first.is_constant(true, semantic))
             {
                 return semantic.is_reference_to_global_variable(ident);
             }
@@ -545,7 +545,7 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
                 expr.operator,
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
             ) {
-                return expr.left.get_expression().map_or(true, |expr| could_be_error(ctx, expr))
+                return expr.left.get_expression().is_none_or(|expr| could_be_error(ctx, expr))
                     || could_be_error(ctx, &expr.right);
             }
 
@@ -673,7 +673,7 @@ pub fn is_default_this_binding<'a>(
                         AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
                     )
                 });
-                if upper_func.map_or(true, |node| !is_callee(node, semantic)) {
+                if upper_func.is_none_or(|node| !is_callee(node, semantic)) {
                     return true;
                 }
                 current_node = parent;

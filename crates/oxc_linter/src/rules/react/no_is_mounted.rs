@@ -56,7 +56,7 @@ impl Rule for NoIsMounted {
         };
 
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
-            || !member_expr.static_property_name().is_some_and(|str| str == "isMounted")
+            || member_expr.static_property_name().is_none_or(|str| str != "isMounted")
         {
             return;
         }

@@ -59,7 +59,7 @@ declare_oxc_lint!(
 
 impl Rule for SwitchCaseBraces {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let always = value.get(0).map_or(true, |v| v.as_str() != Some("avoid"));
+        let always = value.get(0).is_none_or(|v| v.as_str() != Some("avoid"));
 
         Self { always_braces: always }
     }

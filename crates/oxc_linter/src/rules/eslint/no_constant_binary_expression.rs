@@ -308,7 +308,7 @@ impl NoConstantBinaryExpression {
                             .arguments
                             .iter()
                             .next()
-                            .map_or(true, |first| first.is_constant(true, ctx));
+                            .is_none_or(|first| first.is_constant(true, ctx));
                     }
                 }
                 false

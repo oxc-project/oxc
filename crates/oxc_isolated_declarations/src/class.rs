@@ -82,7 +82,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut type_annotations = None;
         let mut value = None;
 
-        if property.accessibility.map_or(true, |a| !a.is_private()) {
+        if property.accessibility.is_none_or(|a| !a.is_private()) {
             if property.type_annotation.is_some() {
                 type_annotations = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {

@@ -171,7 +171,7 @@ fn check_reduce_usage<'a>(
     // Skip non-parameter or non-first-parameter declarations.
     let first_param_symbol_id =
         params.items.first().and_then(|item| get_identifier_symbol_id(&item.pattern.kind));
-    if !first_param_symbol_id.is_some_and(|id| id == referenced_symbol_id) {
+    if first_param_symbol_id.is_none_or(|id| id != referenced_symbol_id) {
         return;
     }
 

@@ -140,10 +140,7 @@ impl Rule for NoDupeElseIf {
                 break;
             };
 
-            if !stmt
-                .alternate
-                .as_ref()
-                .is_some_and(|stmt| stmt.span() == current_node.kind().span())
+            if stmt.alternate.as_ref().is_none_or(|stmt| stmt.span() != current_node.kind().span())
             {
                 break;
             }

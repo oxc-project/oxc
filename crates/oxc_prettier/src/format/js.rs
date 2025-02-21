@@ -577,7 +577,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 }
             }
 
-            if !parent_for_loop_span.is_some_and(|span| span != self.span) {
+            if parent_for_loop_span.is_none_or(|span| span == self.span) {
                 if let Some(semi) = p.semi() {
                     parts.push(semi);
                 }

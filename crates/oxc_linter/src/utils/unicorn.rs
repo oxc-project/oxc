@@ -46,7 +46,7 @@ pub fn is_prototype_property(
     property: &str,
     object: Option<&str>,
 ) -> bool {
-    if !member_expr.static_property_name().is_some_and(|name| name == property)
+    if member_expr.static_property_name().is_none_or(|name| name != property)
         || member_expr.optional()
     {
         return false;
