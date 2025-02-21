@@ -61,12 +61,13 @@ jobs:
         with:
           workspace-copy: true
           drive-size: 8GB
+          drive-format: NTFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
 
       - name: Install Rust
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        env:
-          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
-          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
         run: |
           # This `awk` command will find the value of our Minimum Supported Rust Version and store it as `MSRV`.
@@ -84,19 +85,10 @@ jobs:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
           shared-key: windows-latest
-        env:
-          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
-          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
 
-      - name: Run
+      - run: cargo test --all-features # cargo ck # no need to `cargo ck` because it's already checked in linux
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        env:
-          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
-          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
-        run: |
-          # cargo ck # no need to check because it's already checked in linux
-          cargo test --all-features
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
