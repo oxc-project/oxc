@@ -18,8 +18,8 @@ const bindingFilename = 'oxc_parser_wasm.js';
 //
 // The getter caches the result to avoid re-parsing JSON every time `result.program` is accessed.
 //
-// Note: This code is repeated in `napi/parser/index.js`.
-// Any changes should be applied in both places.
+// Note: This code is repeated in `napi/parser/index.js` and `crates/oxc-wasm/update-bindings.mjs`.
+// Any changes should be applied in those 2 places too.
 const getterCode = `
   __program;
 

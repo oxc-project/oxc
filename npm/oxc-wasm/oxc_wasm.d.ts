@@ -70,6 +70,7 @@ export * from "@oxc-project/types";
 
 export interface Oxc {
     ast: Program;
+    astJson: string;
     ir: string;
     controlFlowGraph: string;
     symbols: any;
@@ -146,7 +147,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly __wbg_oxc_free: (a: number, b: number) => void;
-  readonly __wbg_get_oxc_ast: (a: number) => any;
+  readonly __wbg_get_oxc_astJson: (a: number) => [number, number];
   readonly __wbg_get_oxc_ir: (a: number) => [number, number];
   readonly __wbg_get_oxc_controlFlowGraph: (a: number) => [number, number];
   readonly __wbg_get_oxc_symbols: (a: number) => any;

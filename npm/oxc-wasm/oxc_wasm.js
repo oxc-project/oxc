@@ -203,6 +203,22 @@ const OxcFinalization = (typeof FinalizationRegistry === 'undefined')
     : new FinalizationRegistry(ptr => wasm.__wbg_oxc_free(ptr >>> 0, 1));
 
 export class Oxc {
+    get ast() {
+        return JSON.parse(this.astJson, function(key, value) {
+            if (value === null && key === 'value' && Object.hasOwn(this, 'type') && this.type === 'Literal') {
+                if (Object.hasOwn(this, 'bigint')) {
+                    return BigInt(this.bigint);
+                }
+                if (Object.hasOwn(this, 'regex')) {
+                    const { regex } = this;
+                    try {
+                        return RegExp(regex.pattern, regex.flags);
+                    } catch (_err) {}
+                }
+            }
+            return value;
+        });
+    }
 
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
@@ -216,11 +232,19 @@ export class Oxc {
         wasm.__wbg_oxc_free(ptr, 0);
     }
     /**
-     * @returns {any}
+     * @returns {string}
      */
-    get ast() {
-        const ret = wasm.__wbg_get_oxc_ast(this.__wbg_ptr);
-        return ret;
+    get astJson() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.__wbg_get_oxc_astJson(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * @returns {string}
