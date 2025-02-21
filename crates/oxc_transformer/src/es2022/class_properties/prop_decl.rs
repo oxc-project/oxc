@@ -25,8 +25,8 @@ impl<'a> ClassProperties<'a, '_> {
     ) {
         // Get value
         let value = match prop.value.take() {
-            Some(mut value) => {
-                self.transform_instance_initializer(&mut value, ctx);
+            Some(value) => {
+                self.transform_instance_initializer(&value, ctx);
                 value
             }
             None => ctx.ast.void_0(SPAN),
@@ -47,7 +47,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// Loose: `Object.defineProperty(this, _prop, {writable: true, value: value})`
     /// Not loose: `_classPrivateFieldInitSpec(this, _prop, value)`
     fn create_private_instance_init_assignment(
-        &mut self,
+        &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -62,7 +62,7 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `_classPrivateFieldInitSpec(this, _prop, value)`
     fn create_private_instance_init_assignment_not_loose(
-        &mut self,
+        &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -309,7 +309,7 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `Object.defineProperty(<assignee>, _prop, {writable: true, value: value})`
     fn create_private_init_assignment_loose(
-        &mut self,
+        &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
         assignee: Expression<'a>,

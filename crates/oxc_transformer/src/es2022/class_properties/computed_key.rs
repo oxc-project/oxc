@@ -79,7 +79,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// Create `let _x;` statement and insert it.
     /// Return `_x = x()` assignment, and `_x` identifier referencing same temp var.
     fn create_computed_key_temp_var(
-        &mut self,
+        &self,
         key: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (/* assignment */ Expression<'a>, /* identifier */ Expression<'a>) {

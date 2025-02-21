@@ -51,7 +51,7 @@ impl<'a> Traverse<'a> for TypeScriptModule<'a, '_> {
 impl<'a> TypeScriptModule<'a, '_> {
     /// Transform `export = expression` to `module.exports = expression`.
     fn transform_ts_export_assignment(
-        &mut self,
+        &self,
         export_assignment: &mut TSExportAssignment<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {

@@ -146,7 +146,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a, '_> {
 
 impl<'a> AsyncToGenerator<'a, '_> {
     /// Check whether the current node is inside an async function.
-    fn is_inside_async_function(ctx: &mut TraverseCtx<'a>) -> bool {
+    fn is_inside_async_function(ctx: &TraverseCtx<'a>) -> bool {
         // Early return if current scope is top because we don't need to transform top-level await expression.
         if ctx.current_scope_flags().is_top() {
             return false;
@@ -168,7 +168,7 @@ impl<'a> AsyncToGenerator<'a, '_> {
     /// Ignores top-level await expressions.
     fn transform_await_expression(
         expr: &mut AwaitExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
         if Self::is_inside_async_function(ctx) {
@@ -556,7 +556,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     }
 
     /// Infers the function name from the [`TraverseCtx::parent`].
-    fn infer_function_name_from_parent_node(ctx: &mut TraverseCtx<'a>) -> Option<Atom<'a>> {
+    fn infer_function_name_from_parent_node(ctx: &TraverseCtx<'a>) -> Option<Atom<'a>> {
         match ctx.parent() {
             // infer `foo` from `const foo = async function() {}`
             Ancestor::VariableDeclaratorInit(declarator) => {
@@ -628,7 +628,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         params: ArenaBox<'a, FormalParameters<'a>>,
         body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> ArenaBox<'a, Function<'a>> {
         let r#type = if id.is_some() {
             FunctionType::FunctionDeclaration
@@ -794,7 +794,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
     /// Creates an empty [FormalParameters] with [FormalParameterKind::FormalParameter].
     #[inline]
-    fn create_empty_params(ctx: &mut TraverseCtx<'a>) -> ArenaBox<'a, FormalParameters<'a>> {
+    fn create_empty_params(ctx: &TraverseCtx<'a>) -> ArenaBox<'a, FormalParameters<'a>> {
         ctx.ast.alloc_formal_parameters(
             SPAN,
             FormalParameterKind::FormalParameter,

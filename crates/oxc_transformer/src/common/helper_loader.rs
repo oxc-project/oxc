@@ -307,7 +307,7 @@ impl<'a> HelperLoaderStore<'a> {
     }
 
     // Construct string directly in arena without an intermediate temp allocation
-    fn get_runtime_source(&self, helper: Helper, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
+    fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         let helper_name = helper.name();
         let len = self.module_name.len() + "/helpers/".len() + helper_name.len();
         let mut source = ArenaString::with_capacity_in(len, ctx.ast.allocator);

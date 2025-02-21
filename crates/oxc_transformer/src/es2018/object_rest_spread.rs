@@ -379,7 +379,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
     }
 
     fn walk_and_replace_nested_object_target(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {

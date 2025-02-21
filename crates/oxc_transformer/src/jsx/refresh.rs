@@ -712,7 +712,7 @@ impl<'a> ReactRefresh<'a, '_> {
 
     fn handle_function_declaration(
         &mut self,
-        func: &mut Function<'a>,
+        func: &Function<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Some(id) = &func.id else {
@@ -854,7 +854,7 @@ impl<'a> ReactRefresh<'a, '_> {
     /// ```
     fn transform_arrow_function_to_block(
         arrow: &mut ArrowFunctionExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         if !arrow.expression {
             return;

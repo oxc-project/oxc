@@ -302,11 +302,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         expr
     }
 
-    fn replace_identifier_defines(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
+    fn replace_identifier_defines(&self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match expr {
             Expression::Identifier(ident) => {
                 if let Some(new_expr) = self.replace_identifier_define_impl(ident, ctx) {
@@ -334,8 +330,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_identifier_define_impl(
         &self,
-        ident: &mut oxc_allocator::Box<'_, IdentifierReference<'_>>,
-        ctx: &mut TraverseCtx<'a>,
+        ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if !ident.is_global_reference(ctx.symbols()) {
             return None;
@@ -351,7 +347,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_define_with_assignment_expr(
-        &mut self,
+        &self,
         node: &mut AssignmentExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
@@ -378,11 +374,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    fn replace_dot_defines(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
+    fn replace_dot_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         match expr {
             Expression::ChainExpression(chain) => {
                 let Some(new_expr) =
@@ -429,9 +421,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_computed_member_expr(
-        &mut self,
+        &self,
         ctx: &mut TraverseCtx<'a>,
-        member: &mut ComputedMemberExpression<'a>,
+        member: &ComputedMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
         for dot_define in &self.config.0.dot {
             if Self::is_dot_define(
@@ -448,9 +440,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_static_member_expr(
-        &mut self,
+        &self,
         ctx: &mut TraverseCtx<'a>,
-        member: &mut StaticMemberExpression<'a>,
+        member: &StaticMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
         for dot_define in &self.config.0.dot {
             if Self::is_dot_define(
@@ -640,7 +632,7 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
 
 fn destructing_dot_define_optimizer<'ast>(
     mut expr: Expression<'ast>,
-    ctx: &mut TraverseCtx<'ast>,
+    ctx: &TraverseCtx<'ast>,
 ) -> Expression<'ast> {
     let Expression::ObjectExpression(obj) = &mut expr else { return expr };
     let parent = ctx.parent();

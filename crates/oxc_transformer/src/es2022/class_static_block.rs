@@ -224,7 +224,7 @@ impl<'a> Keys<'a> {
     ///
     /// Returned key will be either `_`, or `_<integer>` starting with `_2`.
     #[inline]
-    fn get_unique(&mut self, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
+    fn get_unique(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         #[expect(clippy::if_not_else)]
         if !self.underscore {
             self.underscore = true;
@@ -237,7 +237,7 @@ impl<'a> Keys<'a> {
     // `#[cold]` and `#[inline(never)]` as it should be very rare to need a key other than `#_`.
     #[cold]
     #[inline(never)]
-    fn get_unique_slow(&mut self, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
+    fn get_unique_slow(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         // Source text length is limited to `u32::MAX` so impossible to have more than `u32::MAX`
         // private keys. So `u32` is sufficient here.
         let mut i = 2u32;

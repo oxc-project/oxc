@@ -203,7 +203,7 @@ impl<'a> ClassProperties<'a, '_> {
         is_declaration: bool,
         class_symbol_id: Option<SymbolId>,
         object: &Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<(SymbolId, ReferenceId)> {
         if is_declaration {
             if let Some(class_symbol_id) = class_symbol_id {
@@ -288,7 +288,7 @@ impl<'a> ClassProperties<'a, '_> {
         call_expr: &mut CallExpression<'a>,
         callee: Expression<'a>,
         context: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         // Substitute `<callee>.call` as callee of call expression
         call_expr.callee = Expression::from(ctx.ast.member_expression_static(
@@ -579,7 +579,7 @@ impl<'a> ClassProperties<'a, '_> {
     // `transform_assignment_expression` can be elided.
     #[inline]
     fn transform_static_assignment_expression(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         prop_binding: &BoundIdentifier<'a>,
         class_binding: &BoundIdentifier<'a>,
@@ -1463,7 +1463,7 @@ impl<'a> ClassProperties<'a, '_> {
     #[inline]
     fn convert_chain_expression_to_expression(
         expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let Expression::ChainExpression(chain_expr) = ctx.ast.move_expression(expr) else {
             unreachable!()
@@ -1484,7 +1484,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// be handled by optional-chaining plugin correctly.
     fn ensure_optional_expression_wrapped_by_chain_expression(
         expr: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         if Self::has_optional_expression(&expr) {
             let chain_element = match expr {
@@ -2076,7 +2076,7 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expr_target(
         object: Expression<'a>,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         AssignmentTarget::from(Self::create_underscore_member_expr(object, span, ctx))
     }
@@ -2085,7 +2085,7 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expression(
         object: Expression<'a>,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         Expression::from(Self::create_underscore_member_expr(object, span, ctx))
     }
@@ -2094,7 +2094,7 @@ impl<'a> ClassProperties<'a, '_> {
     fn create_underscore_member_expr(
         object: Expression<'a>,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> MemberExpression<'a> {
         ctx.ast.member_expression_static(span, object, create_underscore_ident_name(ctx), false)
     }

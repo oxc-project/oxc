@@ -559,7 +559,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     fn create_checked_value(
         left: Expression<'a>,
         right: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let operator = BinaryOperator::StrictEquality;
         let undefined = ctx.ast.expression_string_literal(SPAN, "undefined", None);
@@ -570,7 +570,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
 
     // `_metadata(key, value)
     fn create_metadata_decorate(
-        &mut self,
+        &self,
         key: &str,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,

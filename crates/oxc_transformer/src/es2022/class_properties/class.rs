@@ -813,11 +813,7 @@ impl<'a> ClassProperties<'a, '_> {
     }
 
     /// Insert an expression after the class.
-    pub(super) fn insert_expr_after_class(
-        &mut self,
-        expr: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub(super) fn insert_expr_after_class(&mut self, expr: Expression<'a>, ctx: &TraverseCtx<'a>) {
         if self.current_class().is_declaration {
             self.insert_after_stmts.push(ctx.ast.statement_expression(SPAN, expr));
         } else {

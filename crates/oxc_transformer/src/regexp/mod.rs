@@ -242,7 +242,7 @@ fn try_parse_pattern<'a>(
     pattern_span_offset: u32,
     flags_text: &'a str,
     flags_span_offset: u32,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Result<Pattern<'a>> {
     use oxc_regular_expression::{LiteralParser, Options};
 

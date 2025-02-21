@@ -88,7 +88,7 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a, '_> {
 
 impl<'a> LogicalAssignmentOperators<'a, '_> {
     fn transform_logical_assignment(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         operator: LogicalOperator,
         ctx: &mut TraverseCtx<'a>,
@@ -148,7 +148,7 @@ impl<'a> LogicalAssignmentOperators<'a, '_> {
     }
 
     fn convert_static_member_expression(
-        &mut self,
+        &self,
         static_expr: &mut StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
@@ -174,7 +174,7 @@ impl<'a> LogicalAssignmentOperators<'a, '_> {
     }
 
     fn convert_computed_member_expression(
-        &mut self,
+        &self,
         computed_expr: &mut ComputedMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {

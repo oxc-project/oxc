@@ -23,7 +23,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// or a `_super` function. Change parent scope of first-level scopes in initializer to reflect this.
     pub(super) fn transform_instance_initializer(
         &mut self,
-        value: &mut Expression<'a>,
+        value: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(constructor_scope_id) = self.instance_inits_constructor_scope_id {
@@ -153,10 +153,7 @@ struct FastInstanceInitializerVisitor<'a, 'v> {
 }
 
 impl<'a, 'v> FastInstanceInitializerVisitor<'a, 'v> {
-    fn new(
-        class_properties: &'v mut ClassProperties<'a, '_>,
-        ctx: &'v mut TraverseCtx<'a>,
-    ) -> Self {
+    fn new(class_properties: &'v ClassProperties<'a, '_>, ctx: &'v mut TraverseCtx<'a>) -> Self {
         Self { parent_scope_id: class_properties.instance_inits_scope_id, ctx }
     }
 }

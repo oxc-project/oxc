@@ -163,7 +163,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ```
     // `#[inline]` so that compiler sees that `stmt` is a `Statement::ClassDeclaration`.
     #[inline]
-    fn transform_class(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn transform_class(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(class) = stmt else { unreachable!() };
 
         let stmt_address = class.address();
@@ -200,11 +200,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ```
     // `#[inline]` so that compiler sees that `stmt` is a `Statement::ExportDefaultDeclaration`.
     #[inline]
-    fn transform_export_default_class(
-        &mut self,
-        stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn transform_export_default_class(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ExportDefaultDeclaration(export) = stmt else { unreachable!() };
         let stmt_address = export.address();
         let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
@@ -251,11 +247,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ```
     // `#[inline]` so that compiler sees that `stmt` is a `Statement::ExportNamedDeclaration`.
     #[inline]
-    fn transform_export_named_class(
-        &mut self,
-        stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn transform_export_named_class(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ExportNamedDeclaration(export) = stmt else { unreachable!() };
         let stmt_address = export.address();
         let Some(Declaration::ClassDeclaration(class)) = &mut export.declaration else { return };
@@ -272,7 +264,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     }
 
     fn transform_class_impl(
-        &mut self,
+        &self,
         class: &mut Class<'a>,
         stmt_address: Address,
         ctx: &mut TraverseCtx<'a>,
@@ -305,7 +297,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Transforms a decorated class declaration and appends the resulting statements. If
     /// the class requires an alias to avoid issues with double-binding, the alias is returned.
     fn transform_class_declaration_with_class_decorators(
-        &mut self,
+        &self,
         class: &mut Class<'a>,
         has_private_in_expression_in_decorator: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -462,7 +454,7 @@ impl<'a> LegacyDecorator<'a, '_> {
 
     /// Transforms a non-decorated class declaration.
     fn transform_class_declaration_without_class_decorators(
-        &mut self,
+        &self,
         class: &mut Class<'a>,
         stmt_address: Address,
         has_private_in_expression_in_decorator: bool,
@@ -490,7 +482,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Transform decorators of [`ClassElement::MethodDefinition`],
     /// [`ClassElement::PropertyDefinition`] and [`ClassElement::AccessorProperty`].
     fn transform_decorators_of_class_elements(
-        &mut self,
+        &self,
         class: &mut Class<'a>,
         class_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -680,7 +672,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Converts a vec of [`Decorator`] to [`Expression::ArrayExpression`].
     fn convert_decorators_to_array_expression(
         decorators_iter: impl Iterator<Item = Decorator<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let decorations = ctx.ast.vec_from_iter(
             decorators_iter.map(|decorator| ArrayExpressionElement::from(decorator.expression)),
@@ -841,7 +833,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     ///  * Non-copiable key:
     ///    * `[a()] = 0;` mutates the key to `[_a = a()] = 0;` and returns `_a`
     fn get_name_of_property_key(
-        &mut self,
+        &self,
         key: &mut PropertyKey<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {

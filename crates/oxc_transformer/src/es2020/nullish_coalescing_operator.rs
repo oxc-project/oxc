@@ -66,7 +66,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a, '_> {
 
 impl<'a> NullishCoalescingOperator<'a, '_> {
     fn transform_logical_expression(
-        &mut self,
+        &self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -205,7 +205,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
         reference2: Expression<'a>,
         default: Expression<'a>,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let op = BinaryOperator::StrictInequality;
         let null = ctx.ast.expression_null_literal(SPAN);

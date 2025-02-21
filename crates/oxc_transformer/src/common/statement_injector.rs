@@ -161,7 +161,7 @@ impl<'a> StatementInjectorStore<'a> {
     fn insert_into_statements(
         &self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let mut insertions = self.insertions.borrow_mut();
         if insertions.is_empty() {

@@ -194,7 +194,7 @@ impl<'a, 'ctx> AutomaticScriptBindings<'a, 'ctx> {
     }
 
     fn add_require_statement(
-        &mut self,
+        &self,
         variable_name: &str,
         source: Atom<'a>,
         front: bool,
@@ -286,7 +286,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
     }
 
     fn add_jsx_import_statement(
-        &mut self,
+        &self,
         name: &'static str,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
@@ -294,7 +294,7 @@ impl<'a, 'ctx> AutomaticModuleBindings<'a, 'ctx> {
     }
 
     fn add_import_statement(
-        &mut self,
+        &self,
         name: &'static str,
         source: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -508,7 +508,7 @@ impl<'a> JsxImpl<'a, '_> {
         self.ctx.source_type.is_script()
     }
 
-    fn insert_filename_var_statement(&mut self, ctx: &mut TraverseCtx<'a>) {
+    fn insert_filename_var_statement(&self, ctx: &TraverseCtx<'a>) {
         let Some(declarator) = self.jsx_source.get_filename_var_declarator(ctx) else { return };
 
         // If is a module, add filename statements before `import`s. If script, then after `require`s.

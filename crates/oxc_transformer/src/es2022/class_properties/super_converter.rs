@@ -55,7 +55,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
 
     fn transform_static_member_expression_impl(
         &mut self,
-        member: &mut StaticMemberExpression<'a>,
+        member: &StaticMemberExpression<'a>,
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -141,7 +141,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
     /// [A, B, C] -> [[A, B, C]]
     fn transform_super_call_expression_arguments(
         arguments: &mut ArenaVec<'a, Argument<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let elements = arguments.drain(..).map(ArrayExpressionElement::from);
         let elements = ctx.ast.vec_from_iter(elements);

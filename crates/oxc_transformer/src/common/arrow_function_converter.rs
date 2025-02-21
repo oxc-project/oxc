@@ -532,7 +532,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Traverses upward through ancestor nodes to find the `ScopeId` of the block
     /// that potential affects the `this` expression.
-    fn get_scope_id_from_this_affected_block(&self, ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
+    fn get_scope_id_from_this_affected_block(&self, ctx: &TraverseCtx<'a>) -> Option<ScopeId> {
         // `this` inside a class resolves to `this` *outside* the class in:
         // * `extends` clause
         // * Computed method key
@@ -678,7 +678,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Check whether currently in a class property initializer.
     /// e.g. `x` in `class C { prop = [foo(x)]; }`
-    fn in_class_property_definition_value(ctx: &mut TraverseCtx<'a>) -> bool {
+    fn in_class_property_definition_value(ctx: &TraverseCtx<'a>) -> bool {
         for ancestor in ctx.ancestors() {
             if ancestor.is_parent_of_statement() {
                 return false;
@@ -1131,7 +1131,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Insert variable statement at the top of the statements.
     fn insert_variable_statement_at_the_top_of_statements(
-        &mut self,
+        &self,
         target_scope_id: ScopeId,
         statements: &mut ArenaVec<'a, Statement<'a>>,
         this_var: Option<BoundIdentifier<'a>>,

@@ -271,7 +271,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     //                         ^^^^^^^
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {

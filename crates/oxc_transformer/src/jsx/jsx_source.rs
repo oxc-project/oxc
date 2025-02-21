@@ -177,7 +177,7 @@ impl<'a> JsxSource<'a, '_> {
         ctx.ast.expression_object(SPAN, properties, None)
     }
 
-    pub fn get_filename_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
+    pub fn get_filename_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Statement<'a>> {
         let decl = self.get_filename_var_declarator(ctx)?;
 
         let var_decl = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(

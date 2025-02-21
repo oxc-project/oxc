@@ -84,7 +84,7 @@ impl<'a> JsxSelf<'a, '_> {
     }
 
     pub fn get_object_property_kind_for_jsx_plugin(
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
         let key = ctx.ast.property_key_static_identifier(SPAN, SELF);
