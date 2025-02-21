@@ -2,19 +2,4 @@ commit: bc5c1417
 
 estree_test262 Summary:
 AST Parsed     : 48767/48767 (100.00%)
-Positive Passed: 48762/48767 (99.99%)
-tasks/coverage/test262/test/built-ins/Array/prototype/indexOf/15.4.4.14-10-1.js
-serde_json error: number out of range at line 1 column 3184
-
-tasks/coverage/test262/test/built-ins/Array/prototype/lastIndexOf/15.4.4.15-9-1.js
-serde_json error: number out of range at line 1 column 3184
-
-tasks/coverage/test262/test/built-ins/Number/S9.3.1_A6_T1.js
-serde_json error: number out of range at line 1 column 1792
-
-tasks/coverage/test262/test/built-ins/Number/S9.3.1_A6_T2.js
-serde_json error: number out of range at line 1 column 3552
-
-tasks/coverage/test262/test/language/types/number/8.5.1.js
-serde_json error: number out of range at line 1 column 9723
-
+Positive Passed: 48767/48767 (100.00%)
