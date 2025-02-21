@@ -12,6 +12,8 @@ use oxc_semantic::{ScopeTree, Semantic, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::Atom;
 
 pub(crate) mod base54;
+mod private_name;
+pub use private_name::PrivateClassNameMangler;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
