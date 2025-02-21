@@ -12,4 +12,5 @@ use crate::{fixer::FixKind, FrameworkFlags};
 pub struct LintOptions {
     pub fix: FixKind,
     pub framework_hints: FrameworkFlags,
+    pub report_unused_directive: Option<AllowWarnDeny>,
 }
