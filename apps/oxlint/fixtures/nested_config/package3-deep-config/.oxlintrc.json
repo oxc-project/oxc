@@ -1,0 +1,6 @@
+{
+  "rules": {
+    // should not be used, as it is overridden by the nested config
+    "no-console": "warn"
+  }
+}

@@ -23,9 +23,14 @@ pub mod loader;
 pub mod rules;
 pub mod table;
 
-use std::{path::Path, rc::Rc, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    rc::Rc,
+    sync::Arc,
+};
 
 use oxc_semantic::{AstNode, Semantic};
+use rustc_hash::FxHashMap;
 
 pub use crate::{
     config::{
@@ -63,11 +68,23 @@ pub struct Linter {
     options: LintOptions,
     // config: Arc<LintConfig>,
     config: ConfigStore,
+    // TODO(refactor): remove duplication with `config` field when nested config is
+    // standardized, as we do not need to pass both at that point
+    nested_configs: FxHashMap<PathBuf, ConfigStore>,
 }
 
 impl Linter {
     pub fn new(options: LintOptions, config: ConfigStore) -> Self {
-        Self { options, config }
+        Self { options, config, nested_configs: FxHashMap::default() }
+    }
+
+    // TODO(refactor); remove this when nested config is standardized
+    pub fn new_with_nested_configs(
+        options: LintOptions,
+        config: ConfigStore,
+        nested_configs: FxHashMap<PathBuf, ConfigStore>,
+    ) -> Self {
+        Self { options, config, nested_configs }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -100,8 +117,15 @@ impl Linter {
         semantic: Rc<Semantic<'a>>,
         module_record: Arc<ModuleRecord>,
     ) -> Vec<Message<'a>> {
-        // Get config + rules for this file. Takes base rules and applies glob-based overrides.
-        let ResolvedLinterState { rules, config } = self.config.resolve(path);
+        // TODO(refactor): remove branch when nested config is standardized
+        let ResolvedLinterState { rules, config } = if self.nested_configs.is_empty() {
+            // Get config + rules for this file. Takes base rules and applies glob-based overrides.
+            self.config.resolve(path)
+        } else if let Some(nearest_config) = self.get_nearest_config(path) {
+            nearest_config.resolve(path)
+        } else {
+            self.config.resolve(path)
+        };
         let ctx_host =
             Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
 
@@ -181,6 +205,22 @@ impl Linter {
         }
 
         ctx_host.take_diagnostics()
+    }
+
+    /// Get the nearest config for the given path, in the following priority order:
+    /// 1. config file in the same directory as the path
+    /// 2. config file in the closest parent directory
+    fn get_nearest_config(&self, path: &Path) -> Option<&ConfigStore> {
+        // TODO(perf): should we cache the computed nearest config for every directory,
+        // so we don't have to recompute it for every file?
+        let mut current = path.parent();
+        while let Some(dir) = current {
+            if let Some(config_store) = self.nested_configs.get(dir) {
+                return Some(config_store);
+            }
+            current = dir.parent();
+        }
+        None
     }
 }
 
