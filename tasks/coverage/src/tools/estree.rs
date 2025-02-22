@@ -4,8 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde_json::Value;
-
 use oxc::{
     allocator::Allocator, ast::utf8_to_utf16::Utf8ToUtf16, diagnostics::OxcDiagnostic,
     parser::Parser, span::SourceType,
@@ -164,27 +162,9 @@ impl Case for EstreeTest262Case {
             }
         };
 
-        let acorn_json_value = match deserialize_json(&acorn_json) {
-            Ok(acorn_json) => acorn_json,
-            Err(e) => {
-                self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
-                return;
-            }
-        };
-        let mut oxc_json_value = match deserialize_json(&program.to_estree_ts_json()) {
-            Ok(oxc_json) => oxc_json,
-            Err(e) => {
-                self.base.set_result(TestResult::GenericError("serde_json", e.to_string()));
-                return;
-            }
-        };
-        remove_extra_properties_from_oxc_ast(&mut oxc_json_value, &acorn_json_value);
+        let oxc_json = program.to_pretty_estree_js_json();
 
-        // Compare JSON between Acorn and Oxc
-        let acorn_json = serde_json::to_string_pretty(&acorn_json_value).unwrap();
-        let oxc_json = serde_json::to_string_pretty(&oxc_json_value).unwrap();
-
-        if acorn_json == oxc_json {
+        if oxc_json == acorn_json {
             self.base.set_result(TestResult::Passed);
             return;
         }
@@ -203,45 +183,5 @@ impl Case for EstreeTest262Case {
         )
         .unwrap();
         self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
-    }
-}
-
-/// Deserialize JSON string to `serde_json::Value`.
-///
-/// Identical to `serde_json::from_str::<serde_json::Value>(json)`,
-/// except with no limit on how deeply nested the JSON can be.
-fn deserialize_json(json: &str) -> Result<Value, serde_json::Error> {
-    use serde::Deserialize;
-
-    let s = serde_json::de::StrRead::new(json);
-    let mut deserializer = serde_json::Deserializer::new(s);
-    deserializer.disable_recursion_limit();
-    let value = Value::deserialize(&mut deserializer)?;
-    deserializer.end()?;
-    Ok(value)
-}
-
-/// Remove extra properties from Oxc AST where there is no corresponding property in Acorn AST.
-///
-/// Intention is to ignore extra properties in Oxc AST which are Typescript-related extensions to AST,
-/// and don't appear in Acorn AST.
-fn remove_extra_properties_from_oxc_ast(oxc: &mut Value, acorn: &Value) {
-    match (oxc, acorn) {
-        (Value::Object(oxc), Value::Object(acorn)) => {
-            oxc.retain(|key, oxc_value| {
-                if let Some(acorn_value) = acorn.get(key) {
-                    remove_extra_properties_from_oxc_ast(oxc_value, acorn_value);
-                    true
-                } else {
-                    false
-                }
-            });
-        }
-        (Value::Array(oxc), Value::Array(acorn)) => {
-            for (oxc_value, acorn_value) in oxc.iter_mut().zip(acorn) {
-                remove_extra_properties_from_oxc_ast(oxc_value, acorn_value);
-            }
-        }
-        _ => {}
     }
 }

@@ -379,8 +379,14 @@ impl<'s> StructSerializerGenerator<'s> {
             quote!( #self_path.#field_name_ident )
         };
 
+        let serialize_method_ident = create_safe_ident(if field.estree.is_ts {
+            "serialize_ts_field"
+        } else {
+            "serialize_field"
+        });
+
         self.stmts.extend(quote! {
-            state.serialize_field(#field_camel_name, &#value);
+            state.#serialize_method_ident(#field_camel_name, &#value);
         });
     }
 

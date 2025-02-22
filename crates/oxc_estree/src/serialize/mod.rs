@@ -3,12 +3,14 @@
 
 mod blanket;
 mod buffer;
+mod config;
 mod formatter;
 mod primitives;
 mod sequences;
 mod strings;
 mod structs;
 use buffer::Buffer;
+use config::{Config, ConfigJS, ConfigTS};
 use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
@@ -52,21 +54,29 @@ trait SerializerPrivate: Sized {
 }
 
 /// ESTree serializer which produces compact JSON, including TypeScript fields.
-pub type CompactTSSerializer = ESTreeSerializer<CompactFormatter>;
+pub type CompactTSSerializer = ESTreeSerializer<ConfigTS, CompactFormatter>;
+
+/// ESTree serializer which produces compact JSON, excluding TypeScript fields.
+pub type CompactJSSerializer = ESTreeSerializer<ConfigJS, CompactFormatter>;
 
 /// ESTree serializer which produces pretty JSON, including TypeScript fields.
-pub type PrettyTSSerializer = ESTreeSerializer<PrettyFormatter>;
+pub type PrettyTSSerializer = ESTreeSerializer<ConfigTS, PrettyFormatter>;
+
+/// ESTree serializer which produces pretty JSON, excluding TypeScript fields.
+pub type PrettyJSSerializer = ESTreeSerializer<ConfigJS, PrettyFormatter>;
 
 /// ESTree serializer.
-pub struct ESTreeSerializer<F: Formatter> {
+pub struct ESTreeSerializer<C: Config, F: Formatter> {
     buffer: Buffer,
     formatter: F,
+    #[expect(unused)]
+    config: C,
 }
 
-impl<F: Formatter> ESTreeSerializer<F> {
+impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
     pub fn new() -> Self {
-        Self { buffer: Buffer::new(), formatter: F::new() }
+        Self { buffer: Buffer::new(), formatter: F::new(), config: C::new() }
     }
 
     /// Consume this [`ESTreeSerializer`] and convert buffer to string.
@@ -75,31 +85,31 @@ impl<F: Formatter> ESTreeSerializer<F> {
     }
 }
 
-impl<F: Formatter> Default for ESTreeSerializer<F> {
+impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
     #[inline(always)]
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'s, F: Formatter> Serializer for &'s mut ESTreeSerializer<F> {
-    type StructSerializer = ESTreeStructSerializer<'s, F>;
-    type SequenceSerializer = ESTreeSequenceSerializer<'s, F>;
+impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> {
+    type StructSerializer = ESTreeStructSerializer<'s, C, F>;
+    type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
 
     /// Serialize struct.
     #[inline(always)]
-    fn serialize_struct(self) -> ESTreeStructSerializer<'s, F> {
+    fn serialize_struct(self) -> ESTreeStructSerializer<'s, C, F> {
         ESTreeStructSerializer::new(self)
     }
 
     /// Serialize sequence.
     #[inline(always)]
-    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'s, F> {
+    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'s, C, F> {
         ESTreeSequenceSerializer::new(self)
     }
 }
 
-impl<F: Formatter> SerializerPrivate for &mut ESTreeSerializer<F> {
+impl<C: Config, F: Formatter> SerializerPrivate for &mut ESTreeSerializer<C, F> {
     type Formatter = F;
 
     /// Get mutable reference to buffer.
