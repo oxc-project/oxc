@@ -175,7 +175,12 @@ impl Runner for LintRunner {
         let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
         let mut nested_configs = FxHashMap::<PathBuf, ConfigStore>::default();
 
-        if experimental_nested_config {
+        let use_nested_config =
+            // If the `--config` option is explicitly passed, we should not search for nested config files
+            // as the passed config file takes absolute precedence.
+            basic_options.config.is_none();
+
+        if experimental_nested_config && use_nested_config {
             // get all of the unique directories among the paths to use for search for
             // oxlint config files in those directories
             // e.g. `/some/file.js` and `/some/other/file.js` would both result in `/some`
@@ -945,6 +950,14 @@ mod test {
     #[test]
     fn test_nested_config() {
         let args = &["--experimental-nested-config"];
+        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_nested_config_precedence() {
+        // `--config` takes absolute precedence over nested configs, and will be used for
+        // linting all files rather than the nested configuration files.
+        let args = &["--experimental-nested-config", "--config", "oxlint-no-console.json"];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
     }
 }
