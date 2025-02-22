@@ -218,13 +218,13 @@ fn test() {
             r#"
                 import type { MyType } from "./typescript-declare.ts";
             "#,
-            Some(json!(["always", {"checkTypeImports": true}]))
+            Some(json!(["always", {"checkTypeImports": true}])),
         ),
         (
             r#"
                 export type { MyType } from "./typescript-declare.ts";
             "#,
-            Some(json!(["always", {"checkTypeImports": true}]))
+            Some(json!(["always", {"checkTypeImports": true}])),
         ),
     ];
 
@@ -295,19 +295,19 @@ fn test() {
             r#"
                 import thing from "non-package/test";
             "#,
-            Some(json!(["always"]))
+            Some(json!(["always"])),
         ),
         (
             r#"
                 import thing from "@name/pkg/test";
             "#,
-            Some(json!(["always"]))
+            Some(json!(["always"])),
         ),
         (
             r#"
                 import thing from "@name/pkg/test.js";
             "#,
-            Some(json!(["never"]))
+            Some(json!(["never"])),
         ),
         (
             r#"
@@ -319,7 +319,7 @@ fn test() {
                 import chart from '@/configs/chart';
                 import express from 'express';
             "#,
-            Some(json!(["always", { "ignorePackages": true }]))
+            Some(json!(["always", { "ignorePackages": true }])),
         ),
         (
             r#"
@@ -331,7 +331,7 @@ fn test() {
                 import chart from '@/configs/chart';
                 import express from 'express';
             "#,
-            Some(json!(["ignorePackages"]))
+            Some(json!(["ignorePackages"])),
         ),
         (
             r#"
@@ -340,7 +340,7 @@ fn test() {
                 import Component from './Component.jsx';
                 import express from 'express';
             "#,
-            Some(json!(["never", { "ignorePackages": true }]))
+            Some(json!(["never", { "ignorePackages": true }])),
         ),
         (
             r#"
@@ -348,7 +348,7 @@ fn test() {
                 import bar from './bar.json';
                 import Component from './Component.jsx';
             "#,
-            Some(json!(["always", { "pattern": { "jsx": "never" } }]))
+            Some(json!(["always", { "pattern": { "jsx": "never" } }])),
         ),
         // Exports
         (
@@ -356,78 +356,71 @@ fn test() {
                 export { foo } from "./foo";
                 let bar; export { bar };
             "#,
-            Some(json!(["always"]))
+            Some(json!(["always"])),
         ),
         (
             r#"
                 export { foo } from "./foo.js";
                 let bar; export { bar };
             "#,
-            Some(json!(["never"]))
+            Some(json!(["never"])),
         ),
         // Query strings
-        (
-            r#"import withExtension from "./foo.js?a=True";"#,
-            Some(json!(["never"]))
-        ),
-        (
-            r#"import withoutExtension from "./foo?a=True.ext";"#,
-            Some(json!(["always"]))
-        ),
+        (r#"import withExtension from "./foo.js?a=True";"#, Some(json!(["never"]))),
+        (r#"import withoutExtension from "./foo?a=True.ext";"#, Some(json!(["always"]))),
         // Require
         (
             r#"
                 const { foo } = require("./foo");
                 export { foo };
             "#,
-            Some(json!(["always"]))
+            Some(json!(["always"])),
         ),
         (
             r#"
                 const { foo } = require("./foo".js);
                 export { foo };
             "#,
-            Some(json!(["never"]))
+            Some(json!(["never"])),
         ),
-        
         (
             r#"
                 import foo from "@/ImNotAScopedModule";
                 import chart from "@/configs/chart";
             "#,
-            Some(json!(["always"]))
+            Some(json!(["always"])),
         ),
         // Export { } from
         (
             r#"
                 export { foo } from "./foo";
             "#,
-            Some(json!(["always"]))
+            Some(json!(["always"])),
         ),
         (
             r#"
                 export { foo } from "./foo.js";
             "#,
-            Some(json!(["never"]))
+            Some(json!(["never"])),
         ),
         // Export * from
         (
             r#"
                 export * from "./foo";
             "#,
-            Some(json!(["always"]))
+            Some(json!(["always"])),
         ),
         (
             r#"
                 export * from "./foo.js";
             "#,
-            Some(json!(["never"]))
+            Some(json!(["never"])),
         ),
         (
             r#"
                 import foo from "@/ImNotAScopedModule.js";
             "#,
-            Some(json!(["never"]))
+            Some(json!(["never"])),
         ),
         (
             r#"
@@ -435,58 +428,66 @@ fn test() {
                 import m from '@test-scope/some-module/index.js';
                 import bar from './bar';
             "#,
-            Some(json!(["never"]))
+            Some(json!(["never"])),
         ),
         // Relative imports
         (
             r#"
                 import * as test from ".";
             "#,
-            Some(json!(["ignorePackages"]))
+            Some(json!(["ignorePackages"])),
         ),
         (
             r#"
                 import * as test from "..";
             "#,
-            Some(json!(["ignorePackages"]))
+            Some(json!(["ignorePackages"])),
         ),
         // Type imports
         (
             r#"
                 import T from "./typescript-declare";
             "#,
-            Some(json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]))
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
+            ),
         ),
         (
             r#"
                 export { MyType } from "./typescript-declare";
             "#,
-            Some(json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]))
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
+            ),
         ),
         (
             r#"
                 import type T from "./typescript-declare";
             "#,
-            Some(json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]))
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]),
+            ),
         ),
         (
             r#"
                 export type { MyType } from "./typescript-declare";
             "#,
-            Some(json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]))
-        ), 
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]),
+            ),
+        ),
         (
             r#"
                 import type { MyType } from "./typescript-declare";
             "#,
-            Some(json!(["always", { "checkTypeImports": true }]))
-        ), 
+            Some(json!(["always", { "checkTypeImports": true }])),
+        ),
         (
             r#"
                 export type { MyType } from "./typescript-declare";
             "#,
-            Some(json!(["always", { "checkTypeImports": true }]))
-        ), 
+            Some(json!(["always", { "checkTypeImports": true }])),
+        ),
     ];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();
