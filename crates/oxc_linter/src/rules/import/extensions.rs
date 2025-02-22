@@ -78,9 +78,9 @@ impl Rule for Extensions {
 #[test]
 fn test() {
     use crate::tester::Tester;
-    use serde_json::json;
+    use serde_json::{json, Value};
 
-    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
+    let pass: Vec<(&str, Option<Value>)> = vec![
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),
         (r#"import dot from "./file.with.dot""#, None),
@@ -223,7 +223,7 @@ fn test() {
         ),
     ];
 
-    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
+    let fail: Vec<(&str, Option<Value>)> = vec![
         (r#"import a from "a/index.js""#, None),
         (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
         (
