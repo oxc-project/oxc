@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
@@ -795,6 +794,12 @@ snapshot_kind: text
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import foo = require('import1');
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:10]
  1 │ export { foo } from 'import1';
    ·          ───
@@ -870,6 +875,13 @@ snapshot_kind: text
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import foo from 'import-foo';
    · ─────────────────────────────
+   ╰────
+  help: Please use import-bar instead.
+
+  ⚠ eslint(no-restricted-imports): 'import-foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import foo = require('import-foo');
+   · ───────────────────────────────────
    ╰────
   help: Please use import-bar instead.
 
