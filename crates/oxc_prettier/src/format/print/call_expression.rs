@@ -2,8 +2,8 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, dynamic_text, format::print::call_arguments, group, indent, ir::Doc, line, softline,
-    text, Format, Prettier,
+    Format, Prettier, array, dynamic_text, format::print::call_arguments, group, indent, ir::Doc,
+    line, softline, text,
 };
 
 pub enum CallExpressionLike<'a, 'b> {

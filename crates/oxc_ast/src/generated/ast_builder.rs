@@ -94,7 +94,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Program`] with `ScopeId`.
+    /// Build a [`Program`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_program_with_scope_id`] instead.
     ///
@@ -134,7 +134,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`Program`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`Program`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::program_with_scope_id`] instead.
     ///
@@ -843,19 +843,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn expression_private_in(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::PrivateInExpression(
-            self.alloc_private_in_expression(span, left, operator, right),
-        )
+        Expression::PrivateInExpression(self.alloc_private_in_expression(span, left, right))
     }
 
     /// Build an [`Expression::JSXElement`].
@@ -1075,7 +1071,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.identifier_reference(span, name), self.allocator)
     }
 
-    /// Build an [`IdentifierReference`] with `ReferenceId`.
+    /// Build an [`IdentifierReference`] with `reference_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_identifier_reference_with_reference_id`] instead.
     ///
@@ -1100,7 +1096,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build an [`IdentifierReference`] with `ReferenceId`, and store it in the memory arena.
+    /// Build an [`IdentifierReference`] with `reference_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::identifier_reference_with_reference_id`] instead.
     ///
@@ -1158,7 +1154,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.binding_identifier(span, name), self.allocator)
     }
 
-    /// Build a [`BindingIdentifier`] with `SymbolId`.
+    /// Build a [`BindingIdentifier`] with `symbol_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_binding_identifier_with_symbol_id`] instead.
     ///
@@ -1183,7 +1179,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`BindingIdentifier`] with `SymbolId`, and store it in the memory arena.
+    /// Build a [`BindingIdentifier`] with `symbol_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::binding_identifier_with_symbol_id`] instead.
     ///
@@ -2128,17 +2124,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn private_in_expression(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> PrivateInExpression<'a> {
-        PrivateInExpression { span, left, operator, right }
+        PrivateInExpression { span, left, right }
     }
 
     /// Build a [`PrivateInExpression`], and store it in the memory arena.
@@ -2148,17 +2142,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `left`
-    /// * `operator`
     /// * `right`
     #[inline]
     pub fn alloc_private_in_expression(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
-        operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Box<'a, PrivateInExpression<'a>> {
-        Box::new_in(self.private_in_expression(span, left, operator, right), self.allocator)
+        Box::new_in(self.private_in_expression(span, left, right), self.allocator)
     }
 
     /// Build a [`LogicalExpression`].
@@ -2649,8 +2641,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn assignment_target_property_assignment_target_property_property(
@@ -2707,8 +2699,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn assignment_target_property_property(
@@ -2727,8 +2719,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `binding`
+    /// * `name`: The property key
+    /// * `binding`: The binding part of the property
     /// * `computed`: Property was declared with a computed key
     #[inline]
     pub fn alloc_assignment_target_property_property(
@@ -3330,7 +3322,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.block_statement(span, body), self.allocator)
     }
 
-    /// Build a [`BlockStatement`] with `ScopeId`.
+    /// Build a [`BlockStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_block_statement_with_scope_id`] instead.
     ///
@@ -3348,7 +3340,7 @@ impl<'a> AstBuilder<'a> {
         BlockStatement { span, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`BlockStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`BlockStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::block_statement_with_scope_id`] instead.
     ///
@@ -3928,7 +3920,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.for_statement(span, init, test, update, body), self.allocator)
     }
 
-    /// Build a [`ForStatement`] with `ScopeId`.
+    /// Build a [`ForStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_statement_with_scope_id`] instead.
     ///
@@ -3952,7 +3944,7 @@ impl<'a> AstBuilder<'a> {
         ForStatement { span, init, test, update, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`ForStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`ForStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_statement_with_scope_id`] instead.
     ///
@@ -4044,7 +4036,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.for_in_statement(span, left, right, body), self.allocator)
     }
 
-    /// Build a [`ForInStatement`] with `ScopeId`.
+    /// Build a [`ForInStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_in_statement_with_scope_id`] instead.
     ///
@@ -4066,7 +4058,7 @@ impl<'a> AstBuilder<'a> {
         ForInStatement { span, left, right, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`ForInStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`ForInStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_in_statement_with_scope_id`] instead.
     ///
@@ -4160,7 +4152,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.for_of_statement(span, r#await, left, right, body), self.allocator)
     }
 
-    /// Build a [`ForOfStatement`] with `ScopeId`.
+    /// Build a [`ForOfStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_for_of_statement_with_scope_id`] instead.
     ///
@@ -4184,7 +4176,7 @@ impl<'a> AstBuilder<'a> {
         ForOfStatement { span, r#await, left, right, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`ForOfStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`ForOfStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::for_of_statement_with_scope_id`] instead.
     ///
@@ -4379,7 +4371,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.switch_statement(span, discriminant, cases), self.allocator)
     }
 
-    /// Build a [`SwitchStatement`] with `ScopeId`.
+    /// Build a [`SwitchStatement`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_switch_statement_with_scope_id`] instead.
     ///
@@ -4399,7 +4391,7 @@ impl<'a> AstBuilder<'a> {
         SwitchStatement { span, discriminant, cases, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`SwitchStatement`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`SwitchStatement`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::switch_statement_with_scope_id`] instead.
     ///
@@ -4624,7 +4616,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.catch_clause(span, param, body), self.allocator)
     }
 
-    /// Build a [`CatchClause`] with `ScopeId`.
+    /// Build a [`CatchClause`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_catch_clause_with_scope_id`] instead.
     ///
@@ -4652,7 +4644,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`CatchClause`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`CatchClause`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::catch_clause_with_scope_id`] instead.
     ///
@@ -5152,7 +5144,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Function`] with `ScopeId`.
+    /// Build a [`Function`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_function_with_scope_id`] instead.
     ///
@@ -5208,7 +5200,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`Function`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`Function`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id`] instead.
     ///
@@ -5484,7 +5476,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `ScopeId`.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_arrow_function_expression_with_scope_id`] instead.
     ///
@@ -5527,7 +5519,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `ScopeId`, and store it in the memory arena.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id`] instead.
     ///
@@ -5715,7 +5707,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Class`] with `ScopeId`.
+    /// Build a [`Class`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_with_scope_id`] instead.
     ///
@@ -5769,7 +5761,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`Class`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`Class`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_with_scope_id`] instead.
     ///
@@ -6332,7 +6324,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.static_block(span, body), self.allocator)
     }
 
-    /// Build a [`StaticBlock`] with `ScopeId`.
+    /// Build a [`StaticBlock`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_static_block_with_scope_id`] instead.
     ///
@@ -6350,7 +6342,7 @@ impl<'a> AstBuilder<'a> {
         StaticBlock { span, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`StaticBlock`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`StaticBlock`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::static_block_with_scope_id`] instead.
     ///
@@ -8534,7 +8526,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.ts_enum_declaration(span, id, members, r#const, declare), self.allocator)
     }
 
-    /// Build a [`TSEnumDeclaration`] with `ScopeId`.
+    /// Build a [`TSEnumDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_enum_declaration_with_scope_id`] instead.
     ///
@@ -8565,7 +8557,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSEnumDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSEnumDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_enum_declaration_with_scope_id`] instead.
     ///
@@ -8736,17 +8728,6 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::BooleanLiteral(self.alloc_boolean_literal(span, value))
     }
 
-    /// Build a [`TSLiteral::NullLiteral`].
-    ///
-    /// This node contains a [`NullLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    #[inline]
-    pub fn ts_literal_null_literal(self, span: Span) -> TSLiteral<'a> {
-        TSLiteral::NullLiteral(self.alloc_null_literal(span))
-    }
-
     /// Build a [`TSLiteral::NumericLiteral`].
     ///
     /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.
@@ -8786,24 +8767,6 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         TSLiteral::BigIntLiteral(self.alloc_big_int_literal(span, raw, base))
-    }
-
-    /// Build a [`TSLiteral::RegExpLiteral`].
-    ///
-    /// This node contains a [`RegExpLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `regex`: The parsed regular expression. See [`oxc_regular_expression`] for more
-    /// * `raw`: The regular expression as it appears in source code
-    #[inline]
-    pub fn ts_literal_reg_exp_literal(
-        self,
-        span: Span,
-        regex: RegExp<'a>,
-        raw: Option<Atom<'a>>,
-    ) -> TSLiteral<'a> {
-        TSLiteral::RegExpLiteral(self.alloc_reg_exp_literal(span, regex, raw))
     }
 
     /// Build a [`TSLiteral::StringLiteral`].
@@ -9268,24 +9231,6 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build a [`TSType::TSQualifiedName`].
-    ///
-    /// This node contains a [`TSQualifiedName`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `left`
-    /// * `right`
-    #[inline]
-    pub fn ts_type_qualified_name(
-        self,
-        span: Span,
-        left: TSTypeName<'a>,
-        right: IdentifierName<'a>,
-    ) -> TSType<'a> {
-        TSType::TSQualifiedName(self.alloc_ts_qualified_name(span, left, right))
-    }
-
     /// Build a [`TSType::TSTemplateLiteralType`].
     ///
     /// This node contains a [`TSTemplateLiteralType`] that will be stored in the memory arena.
@@ -9560,7 +9505,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSConditionalType`] with `ScopeId`.
+    /// Build a [`TSConditionalType`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_conditional_type_with_scope_id`] instead.
     ///
@@ -9591,7 +9536,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSConditionalType`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSConditionalType`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_conditional_type_with_scope_id`] instead.
     ///
@@ -10579,7 +10524,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSTypeAliasDeclaration`] with `ScopeId`.
+    /// Build a [`TSTypeAliasDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_alias_declaration_with_scope_id`] instead.
     ///
@@ -10613,7 +10558,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSTypeAliasDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSTypeAliasDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_type_alias_declaration_with_scope_id`] instead.
     ///
@@ -10763,7 +10708,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSInterfaceDeclaration`] with `ScopeId`.
+    /// Build a [`TSInterfaceDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_interface_declaration_with_scope_id`] instead.
     ///
@@ -10801,7 +10746,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSInterfaceDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSInterfaceDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_interface_declaration_with_scope_id`] instead.
     ///
@@ -11336,7 +11281,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSMethodSignature`] with `ScopeId`.
+    /// Build a [`TSMethodSignature`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_method_signature_with_scope_id`] instead.
     ///
@@ -11385,7 +11330,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSMethodSignature`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSMethodSignature`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_method_signature_with_scope_id`] instead.
     ///
@@ -11496,7 +11441,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSConstructSignatureDeclaration`] with `ScopeId`.
+    /// Build a [`TSConstructSignatureDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_construct_signature_declaration_with_scope_id`] instead.
     ///
@@ -11529,7 +11474,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSConstructSignatureDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSConstructSignatureDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_construct_signature_declaration_with_scope_id`] instead.
     ///
@@ -11785,7 +11730,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.ts_module_declaration(span, id, body, kind, declare), self.allocator)
     }
 
-    /// Build a [`TSModuleDeclaration`] with `ScopeId`.
+    /// Build a [`TSModuleDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_module_declaration_with_scope_id`] instead.
     ///
@@ -11809,7 +11754,7 @@ impl<'a> AstBuilder<'a> {
         TSModuleDeclaration { span, id, body, kind, declare, scope_id: Cell::new(Some(scope_id)) }
     }
 
-    /// Build a [`TSModuleDeclaration`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSModuleDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_module_declaration_with_scope_id`] instead.
     ///
@@ -12470,7 +12415,7 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`TSMappedType`] with `ScopeId`.
+    /// Build a [`TSMappedType`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_mapped_type_with_scope_id`] instead.
     ///
@@ -12507,7 +12452,7 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// Build a [`TSMappedType`] with `ScopeId`, and store it in the memory arena.
+    /// Build a [`TSMappedType`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_mapped_type_with_scope_id`] instead.
     ///

@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
 
 use crate::output_formatter::InternalFormatter;
@@ -41,10 +41,7 @@ fn format_github(diagnostic: &Error) -> String {
     let message = escape_data(&message);
     format!(
         "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
-        start.line,
-        end.line,
-        start.column,
-        end.column
+        start.line, end.line, start.column, end.column
     )
 }
 
@@ -85,8 +82,8 @@ fn escape_property(value: &str) -> String {
 #[cfg(test)]
 mod test {
     use oxc_diagnostics::{
-        reporter::{DiagnosticReporter, DiagnosticResult},
         NamedSource, OxcDiagnostic,
+        reporter::{DiagnosticReporter, DiagnosticResult},
     };
     use oxc_span::Span;
 
@@ -111,6 +108,9 @@ mod test {
         let result = reporter.render_error(error);
 
         assert!(result.is_some());
-        assert_eq!(result.unwrap(), "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n");
+        assert_eq!(
+            result.unwrap(),
+            "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
+        );
     }
 }

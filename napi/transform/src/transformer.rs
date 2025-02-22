@@ -11,6 +11,7 @@ use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
 use oxc::{
+    CompilerInterface,
     codegen::CodegenReturn,
     diagnostics::OxcDiagnostic,
     span::SourceType,
@@ -18,7 +19,6 @@ use oxc::{
         EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
         InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
     },
-    CompilerInterface,
 };
 use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
@@ -60,7 +60,7 @@ pub struct TransformResult {
     /// Example:
     ///
     /// ```text
-    /// { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+    /// { "_objectSpread": "@oxc-project/runtime/helpers/objectSpread2" }
     /// ```
     #[napi(ts_type = "Record<string, string>")]
     pub helpers_used: FxHashMap<String, String>,
@@ -278,11 +278,23 @@ pub struct DecoratorOptions {
     /// @see https://www.typescriptlang.org/tsconfig/#experimentalDecorators
     /// @default false
     pub legacy: Option<bool>,
+
+    /// Enables emitting decorator metadata.
+    ///
+    /// This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
+    /// in TypeScript, and it only works when `legacy` is true.
+    ///
+    /// @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
+    /// @default false
+    pub emit_decorator_metadata: Option<bool>,
 }
 
 impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
     fn from(options: DecoratorOptions) -> Self {
-        oxc::transformer::DecoratorOptions { legacy: options.legacy.unwrap_or_default() }
+        oxc::transformer::DecoratorOptions {
+            legacy: options.legacy.unwrap_or_default(),
+            emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
+        }
     }
 }
 
@@ -464,7 +476,7 @@ pub enum HelperMode {
     /// Example:
     ///
     /// ```js
-    /// import helperName from "@babel/runtime/helpers/helperName";
+    /// import helperName from "@oxc-project/runtime/helpers/helperName";
     /// helperName(...arguments);
     /// ```
     #[default]

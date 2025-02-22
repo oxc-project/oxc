@@ -1,9 +1,8 @@
 use rustc_hash::FxHashMap;
 
 use crate::{
-    logln,
+    DERIVES, Derive, GENERATORS, Generator, Output, RawOutput, Result, Schema, logln,
     parse::attr::{AttrPositions, AttrProcessor},
-    Derive, Generator, Output, RawOutput, Result, Schema, DERIVES, GENERATORS,
 };
 
 pub type DeriveId = usize;
@@ -97,7 +96,7 @@ pub trait Runner {
 pub fn get_runners() -> Vec<GeneratorOrDerive> {
     GENERATORS
         .iter()
-        .map(|&gen| GeneratorOrDerive::Generator(gen))
+        .map(|&g| GeneratorOrDerive::Generator(g))
         .chain(DERIVES.iter().map(|&derive| GeneratorOrDerive::Derive(derive)))
         .collect()
 }

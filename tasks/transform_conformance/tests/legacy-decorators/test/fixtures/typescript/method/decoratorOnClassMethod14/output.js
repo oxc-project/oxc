@@ -8,7 +8,7 @@ class Foo {
 }
 babelHelpers.decorate([
     decorator,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    babelHelpers.decorateMetadata("design:type", Function),
+    babelHelpers.decorateMetadata("design:paramtypes", []),
+    babelHelpers.decorateMetadata("design:returntype", void 0)
 ], Foo.prototype, "foo", null);

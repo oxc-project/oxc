@@ -1,7 +1,7 @@
 use crate::{
-    dynamic_text,
+    Prettier, dynamic_text,
     ir::{Doc, IndentIfBreak, JoinSeparator},
-    join, Prettier,
+    join,
 };
 
 pub fn will_break(doc: &mut Doc<'_>) -> bool {

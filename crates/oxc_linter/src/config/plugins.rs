@@ -1,14 +1,14 @@
 use bitflags::bitflags;
-use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
+use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
 use serde::{
+    Deserialize, Serialize,
     de::{self, Deserializer},
     ser::Serializer,
-    Deserialize, Serialize,
 };
 
 bitflags! {
     // NOTE: may be increased to a u32 if needed
-    #[derive(Debug, Clone, Copy, PartialEq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct LintPlugins: u16 {
         /// Not really a plugin. Included for completeness.
         const ESLINT = 0;
@@ -103,7 +103,8 @@ impl From<&str> for LintPlugins {
             }
             // deepscan for backwards compatibility. Those rules have been moved into oxc
             "oxc" | "deepscan" => LintPlugins::OXC,
-            "import" => LintPlugins::IMPORT,
+            // import-x has the same rules but better performance
+            "import" | "import-x" => LintPlugins::IMPORT,
             "jsdoc" => LintPlugins::JSDOC,
             "jest" => LintPlugins::JEST,
             "vitest" => LintPlugins::VITEST,
@@ -217,8 +218,8 @@ impl JsonSchema for LintPlugins {
         std::borrow::Cow::Borrowed("LintPlugins")
     }
 
-    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
-        gen.subschema_for::<Vec<&str>>()
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        r#gen.subschema_for::<Vec<&str>>()
     }
 }
 

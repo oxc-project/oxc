@@ -11,7 +11,7 @@ define_index_type! {
 }
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
     pub struct ElementKind: u8 {
         const Accessor = 1 << 0;
         const Method = 1 << 1;

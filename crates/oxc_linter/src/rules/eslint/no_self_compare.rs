@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_self_compare_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Both sides of this comparison are exactly the same")

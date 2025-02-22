@@ -1,10 +1,10 @@
-use oxc_ast::ast::Expression;
 use oxc_ast::AstKind;
+use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_nested_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not nest ternary expressions.").with_label(span)

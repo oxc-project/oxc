@@ -1,14 +1,15 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
+    AstKind,
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
         JSXChild, JSXElement, JSXElementName, JSXExpression, JSXMemberExpression,
         JSXMemberExpressionObject, JSXOpeningElement, MemberExpression,
     },
-    match_member_expression, AstKind,
+    match_member_expression,
 };
-use oxc_ecmascript::ToBoolean;
+use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};
@@ -82,7 +83,7 @@ pub fn is_hidden_from_screen_reader<'a>(
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
             if let Some(expr) = container.expression.as_expression() {
-                expr.to_boolean().unwrap_or(false)
+                expr.to_boolean(&WithoutGlobalReferenceInformation {}).unwrap_or(false)
             } else {
                 false
             }
@@ -274,7 +275,7 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
 /// Hook names must start with use followed by a capital letter,
 /// like useState (built-in) or useOnlineStatus (custom).
 pub fn is_react_hook_name(name: &str) -> bool {
-    name.starts_with("use") && name.chars().nth(3).map_or(true, char::is_uppercase)
+    name.starts_with("use") && name.chars().nth(3).is_none_or(char::is_uppercase)
     // uncomment this check if react decided to drop the idea of `use` hook.
     // <https://react.dev/reference/react/use> It is currently in `Canary` builds.
     // name.starts_with("use") && name.chars().nth(3).is_some_and(char::is_uppercase)
@@ -330,10 +331,10 @@ pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> boo
     }
 
     if let Some(member) = call.callee.as_member_expression() {
-        matches! {
+        matches!(
             member.object().get_identifier_reference(),
             Some(ident) if ident.name.as_str() == PRAGMA
-        }
+        )
     } else {
         true
     }

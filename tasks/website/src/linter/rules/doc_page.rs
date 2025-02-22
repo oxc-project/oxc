@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use oxc_linter::{table::RuleTableRow, LintPlugins};
+use oxc_linter::{LintPlugins, table::RuleTableRow};
 
 use super::HtmlWriter;
 
@@ -110,16 +110,18 @@ fn get_normalized_plugin_name(plugin: &str) -> &str {
 fn how_to_use(rule: &RuleTableRow) -> String {
     let plugin = &rule.plugin;
     let normalized_plugin_name = get_normalized_plugin_name(plugin);
-    let rule_full_name = match (normalized_plugin_name, rule) {
-        ("eslint", rule) => rule.name.to_string(),
-        (plugin, rule) => format!("{}/{}", plugin, rule.name),
+    let rule_full_name = if normalized_plugin_name.is_empty() {
+        rule.name.to_string()
+    } else {
+        format!("{}/{}", normalized_plugin_name, rule.name)
     };
-    let enable_bash_example = if is_default_plugin(plugin) {
+    let is_default_plugin = is_default_plugin(plugin);
+    let enable_bash_example = if is_default_plugin {
         format!(r"oxlint --deny {rule_full_name}")
     } else {
         format!(r"oxlint --deny {rule_full_name} --{normalized_plugin_name}-plugin")
     };
-    let enable_config_example = if is_default_plugin(plugin) {
+    let enable_config_example = if is_default_plugin {
         format!(
             r#"{{
     "rules": {{

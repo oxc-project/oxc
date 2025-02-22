@@ -7,15 +7,15 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use flate2::{write::GzEncoder, Compression};
-use humansize::{format_size, DECIMAL};
+use flate2::{Compression, write::GzEncoder};
+use humansize::{DECIMAL, format_size};
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_tasks_common::{project_root, TestFile, TestFiles};
+use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 use rustc_hash::FxHashMap;
 

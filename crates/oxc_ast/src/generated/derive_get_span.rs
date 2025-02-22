@@ -1512,10 +1512,8 @@ impl GetSpan for TSLiteral<'_> {
     fn span(&self) -> Span {
         match self {
             Self::BooleanLiteral(it) => GetSpan::span(&**it),
-            Self::NullLiteral(it) => GetSpan::span(&**it),
             Self::NumericLiteral(it) => GetSpan::span(&**it),
             Self::BigIntLiteral(it) => GetSpan::span(&**it),
-            Self::RegExpLiteral(it) => GetSpan::span(&**it),
             Self::StringLiteral(it) => GetSpan::span(&**it),
             Self::TemplateLiteral(it) => GetSpan::span(&**it),
             Self::UnaryExpression(it) => GetSpan::span(&**it),
@@ -1550,7 +1548,6 @@ impl GetSpan for TSType<'_> {
             Self::TSLiteralType(it) => GetSpan::span(&**it),
             Self::TSMappedType(it) => GetSpan::span(&**it),
             Self::TSNamedTupleMember(it) => GetSpan::span(&**it),
-            Self::TSQualifiedName(it) => GetSpan::span(&**it),
             Self::TSTemplateLiteralType(it) => GetSpan::span(&**it),
             Self::TSThisType(it) => GetSpan::span(&**it),
             Self::TSTupleType(it) => GetSpan::span(&**it),
@@ -1674,7 +1671,6 @@ impl GetSpan for TSTupleElement<'_> {
             Self::TSLiteralType(it) => GetSpan::span(&**it),
             Self::TSMappedType(it) => GetSpan::span(&**it),
             Self::TSNamedTupleMember(it) => GetSpan::span(&**it),
-            Self::TSQualifiedName(it) => GetSpan::span(&**it),
             Self::TSTemplateLiteralType(it) => GetSpan::span(&**it),
             Self::TSThisType(it) => GetSpan::span(&**it),
             Self::TSTupleType(it) => GetSpan::span(&**it),

@@ -94,11 +94,7 @@ fn get_last_comment_line(comment: Comment, raw: &str) -> String {
 fn is_valid_ts_ignore_present(comment: Comment, raw: &str) -> bool {
     let line = get_last_comment_line(comment, raw);
 
-    if comment.is_line() {
-        test_single_line_comment(&line)
-    } else {
-        test_multi_line_comment(&line)
-    }
+    if comment.is_line() { test_single_line_comment(&line) } else { test_multi_line_comment(&line) }
 }
 
 fn test_single_line_comment(line: &str) -> bool {

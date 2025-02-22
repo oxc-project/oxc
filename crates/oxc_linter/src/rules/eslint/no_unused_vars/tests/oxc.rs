@@ -3,7 +3,7 @@
 use serde_json::json;
 
 use super::NoUnusedVars;
-use crate::{tester::Tester, FixKind, RuleMeta as _};
+use crate::{FixKind, RuleMeta as _, tester::Tester};
 
 // uncomment to only run a single test. useful for step-through debugging.
 #[test]

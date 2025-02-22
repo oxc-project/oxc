@@ -1,13 +1,13 @@
-use oxc_ast::{ast::BindingIdentifier, AstKind};
+use oxc_ast::{AstKind, ast::BindingIdentifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_unsafe_declaration_merging_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {

@@ -11,21 +11,22 @@ use oxc_span::{GetSpan, Span};
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
+    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
-    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
 mod host;
-pub(crate) use host::ContextHost;
+pub use host::ContextHost;
 
+/// Contains all of the state and context specific to this lint rule.
+///
+/// Includes information like the rule name, plugin name, and severity of the rule.
+/// It also has a reference to the shared linting data [`ContextHost`], which is the same for all rules.
 #[derive(Clone)]
 #[must_use]
-/// Contains all of the state and context specific to this lint rule. Includes information
-/// like the rule name, plugin name, and severity of the rule. It also has a reference to
-/// the shared linting data [`ContextHost`], which is the same for all rules.
 pub struct LintContext<'a> {
     /// Shared context independent of the rule being linted.
     parent: Rc<ContextHost<'a>>,

@@ -159,13 +159,11 @@ pub struct TSLiteralType<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
-    NullLiteral(Box<'a, NullLiteral>) = 1,
-    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
-    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
-    RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
-    StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
-    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 7,
+    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 1,
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 2,
+    StringLiteral(Box<'a, StringLiteral<'a>>) = 3,
+    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 4,
+    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 5,
 }
 
 /// TypeScript Type
@@ -209,7 +207,6 @@ pub enum TSType<'a> {
     TSLiteralType(Box<'a, TSLiteralType<'a>>) = 22,
     TSMappedType(Box<'a, TSMappedType<'a>>) = 23,
     TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 24,
-    TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 25,
     TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 26,
     TSThisType(Box<'a, TSThisType>) = 10,
     TSTupleType(Box<'a, TSTupleType<'a>>) = 27,
@@ -255,7 +252,6 @@ macro_rules! match_ts_type {
             | $ty::TSLiteralType(_)
             | $ty::TSMappedType(_)
             | $ty::TSNamedTupleMember(_)
-            | $ty::TSQualifiedName(_)
             | $ty::TSTemplateLiteralType(_)
             | $ty::TSTupleType(_)
             | $ty::TSTypeLiteral(_)

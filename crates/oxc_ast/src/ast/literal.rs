@@ -20,11 +20,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    rename = "Literal",
-    add_fields(raw = crate::serialize::boolean_literal_raw(self)),
-    add_ts = "raw: string | null",
-)]
+#[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw))]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
@@ -38,14 +34,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    rename = "Literal",
-    add_fields(
-        value = crate::serialize::NULL,
-        raw = crate::serialize::null_literal_raw(self),
-    ),
-    add_ts = "value: null, raw: \"null\" | null",
-)]
+#[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw))]
 pub struct NullLiteral {
     /// Node location in source code
     pub span: Span,
@@ -102,11 +91,8 @@ pub struct StringLiteral<'a> {
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
 #[estree(
     rename = "Literal",
-    add_fields(
-        value = crate::serialize::NULL,
-        bigint = crate::serialize::bigint_literal_bigint(self),
-    ),
-    add_ts = "value: null, bigint: string",
+    add_fields(value = BigIntLiteralValue, bigint = BigIntLiteralBigint),
+    field_order(span, value, raw, bigint),
 )]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
@@ -128,14 +114,15 @@ pub struct BigIntLiteral<'a> {
 #[generate_derive(CloneIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
 #[estree(
     rename = "Literal",
-    add_fields(value = crate::serialize::EmptyObject),
-    add_ts = "value: {} | null",
+    add_fields(value = RegExpLiteralValue),
+    field_order(span, value, raw, regex),
 )]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code
     pub span: Span,
     /// The parsed regular expression. See [`oxc_regular_expression`] for more
     /// details.
+    #[estree(via = RegExpLiteralRegex)]
     pub regex: RegExp<'a>,
     /// The regular expression as it appears in source code
     ///

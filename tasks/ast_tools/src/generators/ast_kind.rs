@@ -11,10 +11,10 @@
 use quote::{format_ident, quote};
 
 use crate::{
-    output::{output_path, Output},
+    AST_CRATE_PATH, Codegen, Generator,
+    output::{Output, output_path},
     schema::{Def, Schema, TypeDef},
     utils::number_lit,
-    Codegen, Generator, AST_CRATE_PATH,
 };
 
 use super::define_generator;

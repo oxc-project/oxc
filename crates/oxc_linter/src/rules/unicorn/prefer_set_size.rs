@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{ArrayExpressionElement, Expression},
     AstKind,
+    ast::{ArrayExpressionElement, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    ast_util::get_declaration_of_variable, context::LintContext, fixer::Fix, rule::Rule, AstNode,
+    AstNode, ast_util::get_declaration_of_variable, context::LintContext, fixer::Fix, rule::Rule,
 };
 
 fn prefer_set_size_diagnostic(span: Span) -> OxcDiagnostic {

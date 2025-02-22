@@ -8,15 +8,15 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use regex::Regex;
 use rustc_hash::FxHashMap;
-use serde::{de::Error, Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, de::Error};
 use serde_json::Value;
 use std::borrow::Cow;
 
 use crate::{
+    ModuleRecord,
     context::LintContext,
     module_record::{ExportEntry, ExportImportName, ImportEntry, ImportImportName, NameSpan},
     rule::Rule,
-    ModuleRecord,
 };
 
 fn diagnostic_with_maybe_help(span: Span, msg: String, help: Option<CompactStr>) -> OxcDiagnostic {
@@ -57,8 +57,9 @@ fn diagnostic_pattern_and_everything(
     name: &str,
     source: &str,
 ) -> OxcDiagnostic {
-    let msg =
-    format!("* import is invalid because '{name}' from '{source}' is restricted from being used by a pattern.");
+    let msg = format!(
+        "* import is invalid because '{name}' from '{source}' is restricted from being used by a pattern."
+    );
 
     diagnostic_with_maybe_help(span, msg, help)
 }
@@ -70,8 +71,9 @@ fn diagnostic_pattern_and_everything_with_regex_import_name(
     source: &str,
 ) -> OxcDiagnostic {
     let regex = name.as_str();
-    let msg =
-    format!("* import is invalid because import name matching '{regex}' pattern from '{source}' is restricted from being used.");
+    let msg = format!(
+        "* import is invalid because import name matching '{regex}' pattern from '{source}' is restricted from being used."
+    );
 
     diagnostic_with_maybe_help(span, msg, help)
 }
@@ -105,7 +107,9 @@ fn diagnostic_allowed_import_name(
     source: &str,
     allowed: &str,
 ) -> OxcDiagnostic {
-    let msg = format!("'{name}' import from '{source}' is restricted because only {allowed} import(s) is/are allowed.");
+    let msg = format!(
+        "'{name}' import from '{source}' is restricted because only {allowed} import(s) is/are allowed."
+    );
 
     diagnostic_with_maybe_help(span, msg, help)
 }
@@ -129,7 +133,9 @@ fn diagnostic_allowed_import_name_pattern(
     source: &str,
     allowed_pattern: &str,
 ) -> OxcDiagnostic {
-    let msg = format!("'{name}' import from '{source}' is restricted because only imports that match the pattern '{allowed_pattern}' are allowed from '{source}'.");
+    let msg = format!(
+        "'{name}' import from '{source}' is restricted because only imports that match the pattern '{allowed_pattern}' are allowed from '{source}'."
+    );
 
     diagnostic_with_maybe_help(span, msg, help)
 }
@@ -140,7 +146,9 @@ fn diagnostic_everything_with_allowed_import_name_pattern(
     source: &str,
     allowed_pattern: &str,
 ) -> OxcDiagnostic {
-    let msg = format!("* import is invalid because only imports that match the pattern '{allowed_pattern}' from '{source}' are allowed.");
+    let msg = format!(
+        "* import is invalid because only imports that match the pattern '{allowed_pattern}' from '{source}' are allowed."
+    );
 
     diagnostic_with_maybe_help(span, msg, help)
 }
@@ -934,43 +942,38 @@ fn get_diagnostic_from_import_name_result_path(
 ) -> OxcDiagnostic {
     match result {
         ImportNameResult::GeneralDisallowed => diagnostic_path(span, path.message.clone(), source),
-        ImportNameResult::DefaultDisallowed => {
-            if let Some(import_names) = &path.import_names {
-                diagnostic_everything(
-                    span,
-                    path.message.clone(),
-                    import_names.join(", ").as_str(),
-                    source,
-                )
-            } else if let Some(allowed_import_names) = &path.allow_import_names {
-                diagnostic_everything_with_allowed_import_name(
+        ImportNameResult::DefaultDisallowed => match &path.import_names {
+            Some(import_names) => diagnostic_everything(
+                span,
+                path.message.clone(),
+                import_names.join(", ").as_str(),
+                source,
+            ),
+            _ => match &path.allow_import_names {
+                Some(allowed_import_names) => diagnostic_everything_with_allowed_import_name(
                     span,
                     path.message.clone(),
                     source,
                     allowed_import_names.join(", ").as_str(),
-                )
-            } else {
-                diagnostic_path(span, path.message.clone(), source)
-            }
-        }
-        ImportNameResult::NameDisallowed(name_span) => {
-            if let Some(allow_import_names) = &path.allow_import_names {
-                diagnostic_allowed_import_name(
-                    name_span.clone().span(),
-                    path.message.clone(),
-                    name_span.name(),
-                    source,
-                    allow_import_names.join(", ").as_str(),
-                )
-            } else {
-                diagnostic_import_name(
-                    name_span.clone().span(),
-                    path.message.clone(),
-                    name_span.name(),
-                    source,
-                )
-            }
-        }
+                ),
+                _ => diagnostic_path(span, path.message.clone(), source),
+            },
+        },
+        ImportNameResult::NameDisallowed(name_span) => match &path.allow_import_names {
+            Some(allow_import_names) => diagnostic_allowed_import_name(
+                name_span.clone().span(),
+                path.message.clone(),
+                name_span.name(),
+                source,
+                allow_import_names.join(", ").as_str(),
+            ),
+            _ => diagnostic_import_name(
+                name_span.clone().span(),
+                path.message.clone(),
+                name_span.name(),
+                source,
+            ),
+        },
         ImportNameResult::Allowed => unreachable!("should be filtered out by the parent function"),
     }
 }
@@ -986,66 +989,72 @@ fn get_diagnostic_from_import_name_result_pattern(
             diagnostic_pattern(span, pattern.message.clone(), source)
         }
         ImportNameResult::DefaultDisallowed => {
-            let diagnostic = if let Some(import_names) = &pattern.import_names {
-                diagnostic_pattern_and_everything(
+            let diagnostic = match &pattern.import_names {
+                Some(import_names) => diagnostic_pattern_and_everything(
                     span,
                     pattern.message.clone(),
                     import_names.join(", ").as_str(),
                     source,
-                )
-            } else if let Some(import_name_patterns) = &pattern.import_name_pattern {
-                diagnostic_pattern_and_everything_with_regex_import_name(
-                    span,
-                    pattern.message.clone(),
-                    import_name_patterns,
-                    source,
-                )
-            } else if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
-                diagnostic_everything_with_allowed_import_name_pattern(
-                    span,
-                    pattern.message.clone(),
-                    source,
-                    allow_import_name_pattern.as_str(),
-                )
-            } else if let Some(allowed_import_names) = &pattern.allow_import_names {
-                diagnostic_everything_with_allowed_import_name(
-                    span,
-                    pattern.message.clone(),
-                    source,
-                    allowed_import_names.join(", ").as_str(),
-                )
-            } else {
-                diagnostic_pattern(span, pattern.message.clone(), source)
+                ),
+                _ => match &pattern.import_name_pattern {
+                    Some(import_name_patterns) => {
+                        diagnostic_pattern_and_everything_with_regex_import_name(
+                            span,
+                            pattern.message.clone(),
+                            import_name_patterns,
+                            source,
+                        )
+                    }
+                    _ => match &pattern.allow_import_name_pattern {
+                        Some(allow_import_name_pattern) => {
+                            diagnostic_everything_with_allowed_import_name_pattern(
+                                span,
+                                pattern.message.clone(),
+                                source,
+                                allow_import_name_pattern.as_str(),
+                            )
+                        }
+                        _ => match &pattern.allow_import_names {
+                            Some(allowed_import_names) => {
+                                diagnostic_everything_with_allowed_import_name(
+                                    span,
+                                    pattern.message.clone(),
+                                    source,
+                                    allowed_import_names.join(", ").as_str(),
+                                )
+                            }
+                            _ => diagnostic_pattern(span, pattern.message.clone(), source),
+                        },
+                    },
+                },
             };
 
             diagnostic
         }
-        ImportNameResult::NameDisallowed(name_span) => {
-            if let Some(allow_import_names) = &pattern.allow_import_names {
-                diagnostic_allowed_import_name(
-                    name_span.clone().span(),
-                    pattern.message.clone(),
-                    name_span.name(),
-                    source,
-                    allow_import_names.join(", ").as_str(),
-                )
-            } else if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
-                diagnostic_allowed_import_name_pattern(
+        ImportNameResult::NameDisallowed(name_span) => match &pattern.allow_import_names {
+            Some(allow_import_names) => diagnostic_allowed_import_name(
+                name_span.clone().span(),
+                pattern.message.clone(),
+                name_span.name(),
+                source,
+                allow_import_names.join(", ").as_str(),
+            ),
+            _ => match &pattern.allow_import_name_pattern {
+                Some(allow_import_name_pattern) => diagnostic_allowed_import_name_pattern(
                     name_span.clone().span(),
                     pattern.message.clone(),
                     name_span.name(),
                     source,
                     allow_import_name_pattern.as_str(),
-                )
-            } else {
-                diagnostic_pattern_and_import_name(
+                ),
+                _ => diagnostic_pattern_and_import_name(
                     name_span.clone().span(),
                     pattern.message.clone(),
                     name_span.name(),
                     source,
-                )
-            }
-        }
+                ),
+            },
+        },
         ImportNameResult::Allowed => unreachable!("should be filtered out by parent function"),
     }
 }
@@ -1157,11 +1166,11 @@ fn test() {
         ),
         (
             r#"import { AllowedObject } from "foo";"#,
-            Some(serde_json::json!(pass_disallowed_object_foo.clone())),
+            Some(serde_json::json!(pass_disallowed_object_foo)),
         ),
         (
             r#"import { 'AllowedObject' as bar } from "foo";"#,
-            Some(serde_json::json!(pass_disallowed_object_foo.clone())),
+            Some(serde_json::json!(pass_disallowed_object_foo)),
         ),
         (
             r#"import { ' ' as bar } from "foo";"#,
@@ -1203,7 +1212,7 @@ fn test() {
         ),
         (
             r#"import AllowedObject, { AllowedObjectTwo as DisallowedObject } from "foo";"#,
-            Some(pass_disallowed_object_foo.clone()),
+            Some(pass_disallowed_object_foo),
         ),
         (
             r#"import AllowedObject, { AllowedObjectTwo as DisallowedObject } from "foo";"#,

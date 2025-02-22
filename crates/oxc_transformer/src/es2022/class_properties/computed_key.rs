@@ -5,7 +5,7 @@ use oxc_ast::ast::*;
 use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::TraverseCtx;
 
-use super::{utils::create_assignment, ClassProperties};
+use super::{ClassProperties, utils::create_assignment};
 
 impl<'a> ClassProperties<'a, '_> {
     /// Substitute temp var for method computed key.
@@ -79,7 +79,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// Create `let _x;` statement and insert it.
     /// Return `_x = x()` assignment, and `_x` identifier referencing same temp var.
     fn create_computed_key_temp_var(
-        &mut self,
+        &self,
         key: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (/* assignment */ Expression<'a>, /* identifier */ Expression<'a>) {

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use oxc_ast::{
-    ast::{BindingPatternKind, Expression, IdentifierReference, MemberExpression},
     AstKind,
+    ast::{BindingPatternKind, Expression, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

@@ -2,13 +2,13 @@ use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::{FxHashMap, FxHashSet};
-use syn::{parse_str, Path};
+use syn::{Path, parse_str};
 
 use crate::{
-    output::{output_path, Output},
-    parse::attr::{attr_positions, AttrLocation, AttrPart, AttrPositions},
-    schema::{Def, Derives, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
     Codegen, Result, Runner,
+    output::{Output, output_path},
+    parse::attr::{AttrLocation, AttrPart, AttrPositions, attr_positions},
+    schema::{Def, Derives, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
 };
 
 mod clone_in;

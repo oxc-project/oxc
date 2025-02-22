@@ -1,11 +1,11 @@
-use oxc_ast::{ast::MemberExpression, AstKind};
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_prototype_property,
-    AstNode,
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    utils::is_prototype_property,
 };
 
 fn require_array_join_separator_diagnostic(span: Span) -> OxcDiagnostic {

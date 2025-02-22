@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,9 +8,9 @@ use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn jsx_no_duplicate_props_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {

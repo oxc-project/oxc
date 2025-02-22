@@ -1,15 +1,15 @@
 use oxc_ast::{
-    ast::{TSModuleDeclaration, TSModuleDeclarationKind, TSModuleDeclarationName},
     AstKind,
+    ast::{TSModuleDeclaration, TSModuleDeclarationKind, TSModuleDeclarationName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn prefer_namespace_keyword_diagnostic(span: Span) -> OxcDiagnostic {

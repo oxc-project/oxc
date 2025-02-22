@@ -1,14 +1,14 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{match_member_expression, CallExpression, Expression},
     AstKind,
+    ast::{CallExpression, Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 
-use crate::{ast_util, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
 fn unicorn_prefer_spread_diagnostic(span: Span, bad_method: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {bad_method}"))

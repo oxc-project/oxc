@@ -3,10 +3,10 @@
 use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Allocator, Box, FromIn, Vec};
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
-use crate::{ast::*, AstBuilder};
+use crate::{AstBuilder, ast::*};
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
@@ -92,17 +92,6 @@ impl<'a> AstBuilder<'a> {
             Cow::Borrowed(s) => Atom::from(*s),
             Cow::Owned(s) => self.atom(s),
         }
-    }
-
-    /// # SAFETY
-    /// This method is completely unsound and should not be used.
-    /// We need to remove all uses of it. Please don't add any more!
-    /// <https://github.com/oxc-project/oxc/issues/3483>
-    #[expect(clippy::missing_safety_doc)]
-    #[inline]
-    pub unsafe fn copy<T>(self, src: &T) -> T {
-        // SAFETY: Not safe (see above)
-        unsafe { std::mem::transmute_copy(src) }
     }
 
     /// Moves the expression out by replacing it with an [`Expression::NullLiteral`].

@@ -2,7 +2,7 @@
 
 use std::{env, io, path::Path};
 
-use oxc::{span::SourceType, Compiler};
+use oxc::{Compiler, span::SourceType};
 
 // Instruction:
 // 1. create a `test.js`

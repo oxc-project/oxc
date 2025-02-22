@@ -8,11 +8,11 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::SPAN;
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
 // Core
 mod common;
@@ -60,8 +60,8 @@ pub use crate::{
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
-        babel::{BabelEnvOptions, BabelOptions},
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
+        babel::{BabelEnvOptions, BabelOptions},
     },
     plugins::*,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
@@ -251,6 +251,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.enter_class(class, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class(class, ctx);
         }
@@ -419,6 +420,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         def: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_method_definition(def, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_method_definition(def, ctx);
         }
@@ -445,6 +447,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         def: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_property_definition(def, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_property_definition(def, ctx);
         }
@@ -464,6 +467,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         node: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.enter_accessor_property(node, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_accessor_property(node, ctx);
         }

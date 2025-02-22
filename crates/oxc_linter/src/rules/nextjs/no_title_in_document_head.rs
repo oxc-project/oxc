@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{ImportDeclarationSpecifier, JSXChild, JSXElementName, ModuleDeclaration},
     AstKind,
+    ast::{ImportDeclarationSpecifier, JSXChild, JSXElementName, ModuleDeclaration},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_title_in_document_head_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent usage of `<title>` with `Head` component from `next/document`.")

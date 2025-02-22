@@ -102,7 +102,7 @@ describe('target', () => {
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
     expect(ret.code).toMatchInlineSnapshot(`
-      "import _classPrivateFieldInitSpec from "@babel/runtime/helpers/classPrivateFieldInitSpec";
+      "import _classPrivateFieldInitSpec from "@oxc-project/runtime/helpers/classPrivateFieldInitSpec";
       var _a = new WeakMap();
       class Foo {
       	constructor() {
@@ -117,7 +117,10 @@ describe('target', () => {
 describe('helpers', () => {
   const data: Array<[HelperMode, string]> = [
     [HelperMode.External, 'babelHelpers.objectSpread2({}, x);\n'],
-    [HelperMode.Runtime, 'import _objectSpread from "@babel/runtime/helpers/objectSpread2";\n_objectSpread({}, x);\n'],
+    [
+      HelperMode.Runtime,
+      'import _objectSpread from "@oxc-project/runtime/helpers/objectSpread2";\n_objectSpread({}, x);\n',
+    ],
   ];
 
   test.each(data)('%s', (mode, expected) => {
@@ -128,7 +131,7 @@ describe('helpers', () => {
     });
     expect(ret.code).toEqual(expected);
     expect(ret.helpersUsed).toStrictEqual({
-      objectSpread2: '@babel/runtime/helpers/objectSpread2',
+      objectSpread2: '@oxc-project/runtime/helpers/objectSpread2',
     });
   });
 });
@@ -260,8 +263,8 @@ describe('legacy decorator', () => {
       },
     });
     expect(ret.code).toMatchInlineSnapshot(`
-      "import _decorate from "@babel/runtime/helpers/decorate";
-      import _decorateParam from "@babel/runtime/helpers/decorateParam";
+      "import _decorate from "@oxc-project/runtime/helpers/decorate";
+      import _decorateParam from "@oxc-project/runtime/helpers/decorateParam";
       let C = class C {
       	prop = 0;
       	method(param) {}
@@ -272,5 +275,42 @@ describe('legacy decorator', () => {
       export default C;
       "
     `);
+  });
+
+  describe('emitDecoratorMetadata', () => {
+    it('matches output', () => {
+      const code = `
+    export default @dce class C {
+      @dce
+      prop = 0;
+      method(@dce param) {}
+    }
+  `;
+      const ret = transform('test.tsx', code, {
+        decorator: {
+          legacy: true,
+          emitDecoratorMetadata: true,
+        },
+      });
+      expect(ret.code).toMatchInlineSnapshot(`
+        "import _decorateMetadata from "@oxc-project/runtime/helpers/decorateMetadata";
+        import _decorate from "@oxc-project/runtime/helpers/decorate";
+        import _decorateParam from "@oxc-project/runtime/helpers/decorateParam";
+        let C = class C {
+        	prop = 0;
+        	method(param) {}
+        };
+        _decorate([dce, _decorateMetadata("design:type", Object)], C.prototype, "prop", void 0);
+        _decorate([
+        	_decorateParam(0, dce),
+        	_decorateParam(0, _decorateMetadata("design:type", Function)),
+        	_decorateParam(0, _decorateMetadata("design:paramtypes", [Object])),
+        	_decorateParam(0, _decorateMetadata("design:returntype", void 0))
+        ], C.prototype, "method", null);
+        C = _decorate([dce], C);
+        export default C;
+        "
+      `);
+    });
   });
 });

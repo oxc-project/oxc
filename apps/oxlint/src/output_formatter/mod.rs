@@ -158,10 +158,6 @@ mod test {
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
 
-    /// disabled for windows
-    /// stylish will output the offset which will be different for windows
-    /// when there are multiple lines (`\r\n` vs `\n`)
-    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn test_output_formatter_diagnostic_stylish() {
         let args = &["--format=stylish", "test.js"];

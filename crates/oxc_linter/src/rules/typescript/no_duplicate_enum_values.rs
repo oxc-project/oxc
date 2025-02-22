@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Expression, TSEnumMember},
     AstKind,
+    ast::{Expression, TSEnumMember},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,9 +8,9 @@ use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_duplicate_enum_values_diagnostic(

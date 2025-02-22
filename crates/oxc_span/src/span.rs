@@ -5,6 +5,8 @@ use std::{
 };
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Serializer as SerdeSerializer, ser::SerializeMap};
 
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
@@ -74,6 +76,7 @@ pub const SPAN: Span = Span::new(0, 0);
 #[ast(visit)]
 #[derive(Default, Clone, Copy, Eq, PartialOrd, Ord)]
 #[generate_derive(ESTree)]
+#[builder(skip)]
 #[content_eq(skip)]
 #[estree(no_type, flatten)]
 pub struct Span {
@@ -539,6 +542,16 @@ impl<'a> CloneIn<'a> for Span {
     #[inline]
     fn clone_in(&self, _: &'a Allocator) -> Self {
         *self
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl Serialize for Span {
+    fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("start", &self.start)?;
+        map.serialize_entry("end", &self.end)?;
+        map.end()
     }
 }
 

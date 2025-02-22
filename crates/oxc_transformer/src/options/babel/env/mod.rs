@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::{options::EngineTargets, Module};
+use crate::{Module, options::EngineTargets};
 
 mod targets;
 pub use targets::BabelTargets;

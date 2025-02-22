@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXOpeningElement},
     AstKind,
+    ast::{JSXAttributeItem, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,6 +9,7 @@ use oxc_span::Span;
 use phf::phf_set;
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::{VALID_ARIA_PROPS, VALID_ARIA_ROLES},
     rule::Rule,
@@ -16,7 +17,6 @@ use crate::{
         get_element_type, get_jsx_attribute_name, get_string_literal_prop_value,
         has_jsx_prop_ignore_case,
     },
-    AstNode,
 };
 
 declare_oxc_lint!(
@@ -157,11 +157,7 @@ fn get_implicit_role<'a>(
         _ => "",
     };
 
-    if VALID_ARIA_ROLES.contains(implicit_role) {
-        Some(implicit_role)
-    } else {
-        None
-    }
+    if VALID_ARIA_ROLES.contains(implicit_role) { Some(implicit_role) } else { None }
 }
 
 fn get_invalid_aria_props_for_role(role_value: &str) -> Vec<&&str> {

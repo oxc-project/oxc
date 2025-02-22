@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{Expression, ModuleDeclaration, TSModuleReference},
     AstKind,
+    ast::{Expression, ModuleDeclaration, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_node_protocol_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using the `node:` protocol when importing Node.js builtin modules.")
@@ -73,11 +73,7 @@ impl Rule for PreferNodeProtocol {
         };
         let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
             // `e.g. ignore "assert/"`
-            if postfix.is_empty() {
-                string_lit_value.as_str()
-            } else {
-                prefix
-            }
+            if postfix.is_empty() { string_lit_value.as_str() } else { prefix }
         } else {
             string_lit_value.as_str()
         };

@@ -1,9 +1,9 @@
-use oxc_ast::{ast::FormalParameter, AstKind};
+use oxc_ast::{AstKind, ast::FormalParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn default_param_last_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Default parameters should be last")

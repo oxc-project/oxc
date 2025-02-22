@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{DoWhileStatement, ForStatement, WhileStatement},
     AstKind,
+    ast::{DoWhileStatement, ForStatement, WhileStatement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
@@ -11,7 +11,7 @@ mod typescript;
 use javascript as js;
 use typescript as ts;
 
-use crate::{builder::SemanticBuilder, AstNode};
+use crate::{AstNode, builder::SemanticBuilder};
 
 pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     let kind = node.kind();

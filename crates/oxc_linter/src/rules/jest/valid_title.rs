@@ -2,8 +2,8 @@ use std::hash::Hash;
 
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{Argument, BinaryExpression, Expression},
     AstKind,
+    ast::{Argument, BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,7 +14,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
 };
 
 fn valid_title_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {

@@ -11,11 +11,7 @@ use crate::ast::*;
 impl BooleanLiteral {
     /// `"true"` or `"false"` depending on this boolean's value.
     pub fn as_str(&self) -> &'static str {
-        if self.value {
-            "true"
-        } else {
-            "false"
-        }
+        if self.value { "true" } else { "false" }
     }
 }
 
@@ -45,7 +41,7 @@ impl NumericLiteral<'_> {
             return int32_value;
         }
 
-        // NaN, Infinity if not included in our NumericLiteral, so we just serde(skip) step 2.
+        // NaN, Infinity if not included in our NumericLiteral, so we just skip step 2.
 
         // step 3
         let pos_int = num.signum() * num.abs().floor();
@@ -54,11 +50,7 @@ impl NumericLiteral<'_> {
         let int32bit = pos_int % 2f64.powi(32);
 
         // step5
-        if int32bit >= 2f64.powi(31) {
-            (int32bit - 2f64.powi(32)) as i32
-        } else {
-            int32bit as i32
-        }
+        if int32bit >= 2f64.powi(31) { (int32bit - 2f64.powi(32)) as i32 } else { int32bit as i32 }
     }
 
     /// Return raw source code for `NumericLiteral`.
@@ -182,11 +174,7 @@ impl<'a> RegExpPattern<'a> {
     /// Flatten this regular expression into a compiled [`Pattern`], returning
     /// [`None`] if the pattern is invalid or not parsed.
     pub fn as_pattern(&self) -> Option<&Pattern<'a>> {
-        if let Self::Pattern(it) = self {
-            Some(it.as_ref())
-        } else {
-            None
-        }
+        if let Self::Pattern(it) = self { Some(it.as_ref()) } else { None }
     }
 }
 

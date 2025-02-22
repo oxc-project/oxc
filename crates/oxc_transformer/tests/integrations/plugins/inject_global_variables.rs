@@ -11,7 +11,7 @@ use oxc_transformer::{InjectGlobalVariables, InjectGlobalVariablesConfig, Inject
 
 use crate::codegen;
 
-pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
+pub fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) {
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();

@@ -1,4 +1,4 @@
-use phf::{phf_map, phf_set, Map};
+use phf::{Map, phf_map, phf_set};
 
 pub const PRE_DEFINE_VAR: Map<&'static str, bool> = phf_map! {
     "undefined" => false,

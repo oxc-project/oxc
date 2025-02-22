@@ -1,14 +1,13 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    diagnostics,
+    Context, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
-    Context, ParserImpl,
 };
 
 impl<'a> ParserImpl<'a> {
@@ -338,7 +337,9 @@ impl<'a> ParserImpl<'a> {
             | Kind::Boolean
             | Kind::Undefined
             | Kind::Never
-            | Kind::Object => {
+            | Kind::Object
+            // Parse `null` as `TSNullKeyword` instead of null literal to align with typescript eslint.
+            | Kind::Null => {
                 if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
                     Ok(ty)
                 } else {
@@ -361,7 +362,7 @@ impl<'a> ParserImpl<'a> {
             // return parseJSDocFunctionType();
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
             Kind::Bang => self.parse_js_doc_non_nullable_type(),
-            Kind::NoSubstitutionTemplate | Kind::Str | Kind::True | Kind::False | Kind::Null => {
+            Kind::NoSubstitutionTemplate | Kind::Str | Kind::True | Kind::False => {
                 self.parse_literal_type_node(/* negative */ false)
             }
             kind if kind.is_number() => {
@@ -437,10 +438,6 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 self.ast.ts_type_never_keyword(self.end_span(span))
             }
-            Kind::Null => {
-                self.bump_any();
-                self.ast.ts_type_null_keyword(self.end_span(span))
-            }
             Kind::Number => {
                 self.bump_any();
                 self.ast.ts_type_number_keyword(self.end_span(span))
@@ -465,9 +462,9 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 self.ast.ts_type_unknown_keyword(self.end_span(span))
             }
-            Kind::Void => {
+            Kind::Null => {
                 self.bump_any();
-                self.ast.ts_type_void_keyword(self.end_span(span))
+                self.ast.ts_type_null_keyword(self.end_span(span))
             }
             _ => return Err(self.unexpected()),
         };
@@ -650,7 +647,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_this_type_predicate(&mut self, this_ty: TSThisType) -> Result<TSType<'a>> {
         let span = this_ty.span;
         self.bump_any(); // bump `is`
-                         // TODO: this should go through the ast builder.
+        // TODO: this should go through the ast builder.
         let parameter_name = TSTypePredicateName::This(this_ty);
         let type_span = self.start_span();
         let ty = self.parse_ts_type()?;
@@ -963,10 +960,8 @@ impl<'a> ParserImpl<'a> {
         } else {
             match expression {
                 Expression::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
-                Expression::NullLiteral(literal) => TSLiteral::NullLiteral(literal),
                 Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
                 Expression::BigIntLiteral(literal) => TSLiteral::BigIntLiteral(literal),
-                Expression::RegExpLiteral(literal) => TSLiteral::RegExpLiteral(literal),
                 Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
                 Expression::TemplateLiteral(literal) => TSLiteral::TemplateLiteral(literal),
                 _ => return Err(self.unexpected()),
@@ -1371,7 +1366,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    fn is_binary_operator(&mut self) -> bool {
+    fn is_binary_operator(&self) -> bool {
         if self.ctx.has_in() && self.at(Kind::In) {
             return false;
         }

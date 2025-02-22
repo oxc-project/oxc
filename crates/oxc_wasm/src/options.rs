@@ -73,6 +73,9 @@ pub struct OxcLinterOptions {}
 pub struct OxcTransformerOptions {
     #[tsify(optional)]
     pub target: Option<String>,
+
+    #[tsify(optional)]
+    pub isolated_declarations: Option<bool>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]

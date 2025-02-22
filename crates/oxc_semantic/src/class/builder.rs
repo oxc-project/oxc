@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         AccessorProperty, ClassBody, ClassElement, MethodDefinition, MethodDefinitionKind,
         PrivateIdentifier, PropertyDefinition,
     },
-    AstKind,
 };
 use oxc_span::GetSpan;
 use oxc_syntax::class::{ClassId, ElementKind};
@@ -11,8 +11,8 @@ use oxc_syntax::class::{ClassId, ElementKind};
 use crate::{AstNodes, NodeId};
 
 use super::{
-    table::{Element, PrivateIdentifierReference},
     ClassTable,
+    table::{Element, PrivateIdentifierReference},
 };
 
 #[derive(Debug, Default)]

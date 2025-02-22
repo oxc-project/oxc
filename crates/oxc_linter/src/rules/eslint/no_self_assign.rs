@@ -1,17 +1,17 @@
 use oxc_ast::{
-    ast::{
-        match_assignment_target, match_simple_assignment_target, ArrayExpressionElement,
-        AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty, Expression,
-        MemberExpression, ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
-    },
     AstKind,
+    ast::{
+        ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
+        AssignmentTargetProperty, Expression, MemberExpression, ObjectProperty, ObjectPropertyKind,
+        SimpleAssignmentTarget, match_assignment_target, match_simple_assignment_target,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("this expression is assigned to itself").with_label(span)

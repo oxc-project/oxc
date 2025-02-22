@@ -2,12 +2,12 @@ use std::{path::Path, sync::Arc};
 
 use rustc_hash::FxHashSet;
 
-use super::{overrides::OxlintOverrides, LintConfig, LintPlugins};
-use crate::{rules::RULES, RuleWithSeverity};
+use super::{LintConfig, LintPlugins, overrides::OxlintOverrides};
+use crate::{RuleWithSeverity, rules::RULES};
 
 // TODO: support `categories` et. al. in overrides.
 #[derive(Debug)]
-pub(crate) struct ResolvedLinterState {
+pub struct ResolvedLinterState {
     // TODO: Arc + Vec -> SyncVec? It would save a pointer dereference.
     pub rules: Arc<[RuleWithSeverity]>,
     pub config: Arc<LintConfig>,
@@ -143,8 +143,8 @@ impl ConfigStore {
 mod test {
     use super::{ConfigStore, OxlintOverrides};
     use crate::{
-        config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
         AllowWarnDeny, LintPlugins, RuleEnum, RuleWithSeverity,
+        config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     };
 
     macro_rules! from_json {

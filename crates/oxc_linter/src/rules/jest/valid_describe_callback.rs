@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, Expression, FunctionBody, Statement},
     AstKind,
+    ast::{Argument, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
 };
 
 fn valid_describe_callback_diagnostic(

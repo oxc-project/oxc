@@ -1,9 +1,8 @@
 use std::ops::Deref;
 
-use oxc_ast::{ast::*, AstBuilder};
-use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue},
-    side_effects::MayHaveSideEffects,
+use oxc_ast::{AstBuilder, ast::*};
+use oxc_ecmascript::constant_evaluation::{
+    ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
 };
 use oxc_semantic::{IsGlobalReference, SymbolTable};
 use oxc_traverse::TraverseCtx;
@@ -19,15 +18,15 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
     }
 }
 
-impl<'a> ConstantEvaluation<'a> for Ctx<'a, '_> {
-    fn ast(&self) -> AstBuilder<'a> {
-        self.ast
+impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+        Some(ident.is_global_reference(self.0.symbols()))
     }
 }
 
-impl MayHaveSideEffects for Ctx<'_, '_> {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
-        ident.is_global_reference(self.0.symbols())
+impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
+    fn ast(&self) -> AstBuilder<'a> {
+        self.ast
     }
 }
 
@@ -45,7 +44,16 @@ impl<'a> Ctx<'a, '_> {
     }
 
     pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
-        self.eval_binary_expression(e).map(|v| self.value_to_expr(e.span, v))
+        e.evaluate_value(&self).map(|v| self.value_to_expr(e.span, v))
+    }
+
+    pub fn eval_binary_operation(
+        self,
+        operator: BinaryOperator,
+        left: &Expression<'a>,
+        right: &Expression<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        binary_operation_evaluate_value(operator, left, right, &self)
     }
 
     pub fn value_to_expr(self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
@@ -113,11 +121,7 @@ impl<'a> Ctx<'a, '_> {
             }
             int_value = int_value.checked_mul(10).and_then(|v| {
                 let n = i32::from(b & 15);
-                if is_negative {
-                    v.checked_sub(n)
-                } else {
-                    v.checked_add(n)
-                }
+                if is_negative { v.checked_sub(n) } else { v.checked_add(n) }
             })?;
         }
         Some(f64::from(int_value))

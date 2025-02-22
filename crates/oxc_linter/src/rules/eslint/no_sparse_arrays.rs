@@ -1,8 +1,8 @@
-use oxc_ast::{ast::ArrayExpressionElement, AstKind};
+use oxc_ast::{AstKind, ast::ArrayExpressionElement};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSparseArrays;
@@ -14,12 +14,42 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// The confusion around sparse arrays is enough that it’s recommended to avoid using them unless you are certain that they are useful in your code.
+    /// Take the following example:
     ///
-    /// ### Example
+    /// ```javascript
+    /// const items = [,,];
+    /// ```
+    ///
+    /// While the items array in this example has a length of 2, there are actually
+    /// no values in items[0] or items[1]. The fact that the array literal is
+    /// valid with only commas inside, coupled with the length being set and
+    /// actual item values not being set, make sparse arrays confusing for many
+    /// developers.
+    ///
+    /// The confusion around sparse arrays is enough that it’s recommended to
+    /// avoid using them unless you are certain that they are useful in your
+    /// code.
+    ///
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var items = [,,];
+    /// ```
+    ///
+    /// ```javascript
     /// var colors = [ "red",, "blue" ];
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var items = [];
+    /// ```
+    ///
+    /// // trailing comma (after the last element) is not a problem
+    /// ```javascript
+    /// var colors = [ "red", "blue", ];
     /// ```
     NoSparseArrays,
     eslint,
@@ -79,7 +109,7 @@ impl Rule for NoSparseArrays {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["var a = [ 1, 2, ]"];
+    let pass = vec!["var a = [ 1, 2, ]", "var a = [];"];
 
     let fail = vec![
         "var a = [,];",

@@ -8,7 +8,9 @@ use syn::Ident;
 use crate::utils::{create_ident, pluralize};
 
 use super::{
+    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
     extensions::{
+        ast_builder::AstBuilderType,
         clone_in::CloneInType,
         content_eq::ContentEqType,
         estree::{ESTreeEnum, ESTreeEnumVariant},
@@ -16,7 +18,6 @@ use super::{
         layout::Layout,
         visit::{VisitEnum, VisitFieldOrVariant},
     },
-    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
 };
 
 pub type Discriminant = u8;
@@ -33,6 +34,7 @@ pub struct EnumDef {
     pub variants: Vec<VariantDef>,
     /// For `@inherits` inherited enum variants
     pub inherits: Vec<TypeId>,
+    pub builder: AstBuilderType,
     pub visit: VisitEnum,
     pub kind: Kind,
     pub layout: Layout,
@@ -63,6 +65,7 @@ impl EnumDef {
             generated_derives,
             variants,
             inherits,
+            builder: AstBuilderType::default(),
             visit: VisitEnum::default(),
             kind: Kind::default(),
             layout: Layout::default(),

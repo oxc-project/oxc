@@ -26,7 +26,8 @@ export default function generateWalkFunctionsCode(types) {
       clippy::semicolon_if_nothing_returned,
       clippy::ptr_as_ptr,
       clippy::ref_as_ptr,
-      clippy::cast_ptr_alignment
+      clippy::cast_ptr_alignment,
+      clippy::borrow_as_ptr
     )]
 
     use std::{cell::Cell, marker::PhantomData};
@@ -44,7 +45,7 @@ export default function generateWalkFunctionsCode(types) {
     ///   (\`Program<'a>\`).
     /// * \`ctx\` must contain a \`TraverseAncestry<'a>\` with single \`Ancestor::None\` on its stack.
     #[inline]
-    pub(crate) unsafe fn walk_ast<'a, Tr: Traverse<'a>>(
+    pub unsafe fn walk_ast<'a, Tr: Traverse<'a>>(
       traverser: &mut Tr,
       program: *mut Program<'a>,
       ctx: &mut TraverseCtx<'a>,

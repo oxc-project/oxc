@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
@@ -62,7 +62,7 @@ impl<'a> PeepholeOptimizations {
                 // "a ? a : b" => "a || b"
                 if let Expression::Identifier(id2) = &expr.consequent {
                     if id.name == id2.name {
-                        return Some(Self::join_with_left_associative_op(
+                        return Some(self.join_with_left_associative_op(
                             expr.span,
                             LogicalOperator::Or,
                             ctx.ast.move_expression(&mut expr.test),
@@ -74,7 +74,7 @@ impl<'a> PeepholeOptimizations {
                 // "a ? b : a" => "a && b"
                 if let Expression::Identifier(id2) = &expr.alternate {
                     if id.name == id2.name {
-                        return Some(Self::join_with_left_associative_op(
+                        return Some(self.join_with_left_associative_op(
                             expr.span,
                             LogicalOperator::And,
                             ctx.ast.move_expression(&mut expr.test),
@@ -110,13 +110,13 @@ impl<'a> PeepholeOptimizations {
             match (left.value, right.value) {
                 (true, false) => {
                     let test = ctx.ast.move_expression(&mut expr.test);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = self.minimize_not(expr.span, test, ctx);
+                    let test = self.minimize_not(expr.span, test, ctx);
                     return Some(test);
                 }
                 (false, true) => {
                     let test = ctx.ast.move_expression(&mut expr.test);
-                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = self.minimize_not(expr.span, test, ctx);
                     return Some(test);
                 }
                 _ => {}
@@ -128,7 +128,7 @@ impl<'a> PeepholeOptimizations {
             if ctx.expr_eq(&consequent.alternate, &expr.alternate) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
-                    Self::join_with_left_associative_op(
+                    self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::And,
                         ctx.ast.move_expression(&mut expr.test),
@@ -146,7 +146,7 @@ impl<'a> PeepholeOptimizations {
             if ctx.expr_eq(&alternate.consequent, &expr.consequent) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
-                    Self::join_with_left_associative_op(
+                    self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::Or,
                         ctx.ast.move_expression(&mut expr.test),
@@ -167,7 +167,7 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
                     ctx.ast.vec_from_array([
-                        Self::join_with_left_associative_op(
+                        self.join_with_left_associative_op(
                             expr.test.span(),
                             LogicalOperator::Or,
                             ctx.ast.move_expression(&mut expr.test),
@@ -188,7 +188,7 @@ impl<'a> PeepholeOptimizations {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
                     ctx.ast.vec_from_array([
-                        Self::join_with_left_associative_op(
+                        self.join_with_left_associative_op(
                             expr.test.span(),
                             LogicalOperator::And,
                             ctx.ast.move_expression(&mut expr.test),
@@ -203,12 +203,10 @@ impl<'a> PeepholeOptimizations {
 
         // "a ? b || c : c" => "(a && b) || c"
         if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent {
-            if logical_expr.operator == LogicalOperator::Or
-                && ctx.expr_eq(&logical_expr.right, &expr.alternate)
-            {
+            if logical_expr.operator.is_or() && ctx.expr_eq(&logical_expr.right, &expr.alternate) {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
-                    Self::join_with_left_associative_op(
+                    self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::And,
                         ctx.ast.move_expression(&mut expr.test),
@@ -228,7 +226,7 @@ impl<'a> PeepholeOptimizations {
             {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
-                    Self::join_with_left_associative_op(
+                    self.join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::Or,
                         ctx.ast.move_expression(&mut expr.test),
@@ -249,8 +247,8 @@ impl<'a> PeepholeOptimizations {
                 // we can improve compression by allowing side effects on one side if the other side is
                 // an identifier that is not modified after it is declared.
                 // but for now, we only perform compression if neither side has side effects.
-                && !(ctx.expression_may_have_side_effects(&expr.test)
-                    || ctx.expression_may_have_side_effects(&consequent.callee))
+                && !expr.test.may_have_side_effects(&ctx)
+                && !consequent.callee.may_have_side_effects(&ctx)
                 && ctx.expr_eq(&consequent.callee, &alternate.callee)
                 && consequent
                     .arguments
@@ -590,8 +588,8 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        tester::{run, test, test_same},
         CompressOptions,
+        tester::{run, test, test_same},
     };
 
     fn test_es2019(source_text: &str, expected: &str) {
@@ -609,13 +607,13 @@ mod test {
         test("(x ? true : y) && y()", "(x || y) && y();");
         test("(x ? y : false) && y()", "(x && y) && y()");
         test("var x; (x && true) && y()", "var x; x && y()");
-        test("var x; (x && false) && y()", "var x; x && !1");
+        test("var x; (x && false) && y()", "var x");
         test("(x && true) && y()", "x && y()");
-        test("(x && false) && y()", "x && !1");
+        test("(x && false) && y()", "x");
         test("var x; (x || true) && y()", "var x; y()");
         test("var x; (x || false) && y()", "var x; x && y()");
 
-        test("(x || true) && y()", "x || !0, y()");
+        test("(x || true) && y()", "x, y()");
         test("(x || false) && y()", "x && y()");
 
         test("let x = foo ? true : false", "let x = !!foo");

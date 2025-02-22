@@ -1,10 +1,10 @@
 use memchr::{memchr, memrchr};
-use oxc_ast::{ast::BinaryOperator, AstKind};
+use oxc_ast::{AstKind, ast::BinaryOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnexpectedMultiline;

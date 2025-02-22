@@ -33,10 +33,10 @@ impl JsonSchema for OxlintCategories {
         "OxlintCategories".to_string()
     }
 
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        let severity = gen.subschema_for::<AllowWarnDeny>();
+    fn json_schema(r#gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        let severity = r#gen.subschema_for::<AllowWarnDeny>();
         let mut schema =
-            gen.subschema_for::<FxHashMap<RuleCategory, AllowWarnDeny>>().into_object();
+            r#gen.subschema_for::<FxHashMap<RuleCategory, AllowWarnDeny>>().into_object();
 
         {
             schema.object().additional_properties = None;
@@ -48,7 +48,7 @@ impl JsonSchema for OxlintCategories {
             properties.insert(RuleCategory::Perf.as_str().to_string(), severity.clone());
             properties.insert(RuleCategory::Style.as_str().to_string(), severity.clone());
             properties.insert(RuleCategory::Restriction.as_str().to_string(), severity.clone());
-            properties.insert(RuleCategory::Nursery.as_str().to_string(), severity.clone());
+            properties.insert(RuleCategory::Nursery.as_str().to_string(), severity);
         }
 
         {

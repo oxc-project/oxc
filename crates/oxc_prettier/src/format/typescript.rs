@@ -3,14 +3,18 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    array, dynamic_text,
+    Prettier, array, dynamic_text,
     format::{
-        print::{array, object, property, template_literal},
         Format,
+        print::{
+            array,
+            object::{self, ObjectLike},
+            property, template_literal,
+        },
     },
     group, hardline, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, text, wrap, Prettier,
+    join, line, softline, text, wrap,
 };
 
 impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
@@ -67,7 +71,6 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSLiteralType(v) => v.format(p),
             TSType::TSMappedType(v) => v.format(p),
             TSType::TSNamedTupleMember(v) => v.format(p),
-            TSType::TSQualifiedName(v) => v.format(p),
             TSType::TSTemplateLiteralType(v) => v.format(p),
             TSType::TSTupleType(v) => v.format(p),
             TSType::TSTypeLiteral(v) => v.format(p),
@@ -303,10 +306,8 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match &self.literal {
             TSLiteral::BooleanLiteral(v) => v.format(p),
-            TSLiteral::NullLiteral(v) => v.format(p),
             TSLiteral::NumericLiteral(v) => v.format(p),
             TSLiteral::BigIntLiteral(v) => v.format(p),
-            TSLiteral::RegExpLiteral(v) => v.format(p),
             TSLiteral::StringLiteral(v) => v.format(p),
             TSLiteral::TemplateLiteral(v) => v.format(p),
             TSLiteral::UnaryExpression(v) => v.format(p),
@@ -581,21 +582,8 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
                 }
             }
 
-            parts.push(text!("{"));
-            if self.body.body.len() > 0 {
-                let mut indent_parts = Vec::new_in(p.allocator);
-                for sig in &self.body.body {
-                    indent_parts.push(hardline!(p));
-                    indent_parts.push(sig.format(p));
+            parts.push(object::print_object(p, &object::ObjectLike::TSInterfaceBody(&self.body)));
 
-                    if let Some(semi) = p.semi() {
-                        indent_parts.push(semi);
-                    }
-                }
-                parts.push(indent!(p, indent_parts));
-                parts.push(hardline!(p));
-            }
-            parts.push(text!("}"));
             array!(p, parts)
         })
     }
@@ -603,44 +591,34 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
 
 impl<'a> Format<'a> for TSEnumDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        if self.declare {
-            parts.push(text!("declare "));
-        }
-        if self.r#const {
-            parts.push(text!("const "));
-        }
-        parts.push(text!("enum "));
-        parts.push(self.id.format(p));
-        parts.push(text!(" {"));
-        if self.members.len() > 0 {
-            let mut indent_parts = Vec::new_in(p.allocator);
-            for member in &self.members {
-                indent_parts.push(hardline!(p));
-                indent_parts.push(member.format(p));
-            }
-            parts.push(indent!(p, indent_parts));
-            parts.push(hardline!(p));
-        }
-        parts.push(text!("}"));
+        wrap!(p, self, TSEnumDeclaration, {
+            let mut parts = Vec::new_in(p.allocator);
 
-        array!(p, parts)
+            if self.declare {
+                parts.push(text!("declare "));
+            }
+            if self.r#const {
+                parts.push(text!("const "));
+            }
+            parts.push(text!("enum "));
+            parts.push(self.id.format(p));
+            parts.push(text!(" "));
+            parts.push(object::print_object(p, &ObjectLike::TSEnumDeclaration(self)));
+
+            array!(p, parts)
+        })
     }
 }
 
 impl<'a> Format<'a> for TSEnumMember<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(self.id.format(p));
+        let id_doc = self.id.format(p);
 
         if let Some(initializer) = &self.initializer {
-            parts.push(text!(" = "));
-            parts.push(initializer.format(p));
+            return array!(p, [id_doc, text!(" = "), initializer.format(p)]);
         }
 
-        parts.push(text!(","));
-
-        array!(p, parts)
+        id_doc
     }
 }
 
@@ -868,7 +846,6 @@ impl<'a> Format<'a> for TSTupleElement<'a> {
             TSTupleElement::TSLiteralType(it) => it.format(p),
             TSTupleElement::TSMappedType(it) => it.format(p),
             TSTupleElement::TSNamedTupleMember(it) => it.format(p),
-            TSTupleElement::TSQualifiedName(it) => it.format(p),
             TSTupleElement::TSTemplateLiteralType(it) => it.format(p),
             TSTupleElement::TSThisType(it) => it.format(p),
             TSTupleElement::TSTupleType(it) => it.format(p),

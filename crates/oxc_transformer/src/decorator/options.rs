@@ -11,4 +11,10 @@ pub struct DecoratorOptions {
     /// <https://www.typescriptlang.org/tsconfig#experimentalDecorators>
     #[serde(skip)]
     pub legacy: bool,
+
+    /// Enables emitting decorator metadata.
+    ///
+    /// This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
+    /// in TypeScript, and it only works when `legacy` is true.
+    pub emit_decorator_metadata: bool,
 }

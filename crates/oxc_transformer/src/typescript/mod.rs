@@ -13,10 +13,10 @@ mod options;
 mod rewrite_extensions;
 
 use annotations::TypeScriptAnnotations;
+use r#enum::TypeScriptEnum;
 use module::TypeScriptModule;
 use namespace::TypeScriptNamespace;
 pub use options::{RewriteExtensionsMode, TypeScriptOptions};
-use r#enum::TypeScriptEnum;
 use rewrite_extensions::TypeScriptRewriteExtensions;
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)

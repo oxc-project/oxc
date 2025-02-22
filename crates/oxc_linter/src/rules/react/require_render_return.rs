@@ -1,17 +1,17 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_cfg::{
-    graph::visit::neighbors_filtered_by_edge_weight, EdgeType, Instruction, InstructionKind,
-    ReturnInstructionKind,
+    EdgeType, Instruction, InstructionKind, ReturnInstructionKind,
+    graph::visit::neighbors_filtered_by_edge_weight,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
-    AstNode,
 };
 
 fn require_render_return_diagnostic(span: Span) -> OxcDiagnostic {

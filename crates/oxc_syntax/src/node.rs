@@ -30,10 +30,11 @@ impl NodeId {
     ///
     /// # SAFETY
     /// `idx` must not be `u32::MAX`.
-    #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
     pub const unsafe fn new_unchecked(idx: u32) -> Self {
-        // SAFETY: Caller must ensure `idx` is not `u32::MAX`
-        Self(NonMaxU32::new_unchecked(idx))
+        unsafe {
+            // SAFETY: Caller must ensure `idx` is not `u32::MAX`
+            Self(NonMaxU32::new_unchecked(idx))
+        }
     }
 }
 
@@ -52,10 +53,7 @@ impl Idx for NodeId {
 
 #[cfg(feature = "serialize")]
 impl Serialize for NodeId {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_u32(self.0.get())
     }
 }

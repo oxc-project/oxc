@@ -1,14 +1,14 @@
 use oxc_allocator::Vec;
 use oxc_span::Span;
 
-use crate::{ir::Doc, Prettier};
+use crate::{Prettier, ir::Doc};
 
 use super::{CommentFlags, DanglingCommentsPrintOptions};
 
 impl<'a> Prettier<'a> {
     #[must_use]
     pub(crate) fn print_comments(
-        &mut self,
+        &self,
         before: Option<Doc<'a>>,
         doc: Doc<'a>,
         after: Option<Doc<'a>>,
@@ -27,28 +27,28 @@ impl<'a> Prettier<'a> {
         doc
     }
 
-    pub(crate) fn has_comment(&mut self, _span: Span, _flags: CommentFlags) -> bool {
+    pub(crate) fn has_comment(&self, _span: Span, _flags: CommentFlags) -> bool {
         false
     }
 
     #[must_use]
-    pub(crate) fn print_leading_comments(&mut self, _span: Span) -> Option<Doc<'a>> {
+    pub(crate) fn print_leading_comments(&self, _span: Span) -> Option<Doc<'a>> {
         None
     }
 
     #[must_use]
-    pub(crate) fn print_trailing_comments(&mut self, _span: Span) -> Option<Doc<'a>> {
+    pub(crate) fn print_trailing_comments(&self, _span: Span) -> Option<Doc<'a>> {
         None
     }
 
     #[must_use]
-    pub(crate) fn print_inner_comment(&mut self, _span: Span) -> Vec<'a, Doc<'a>> {
+    pub(crate) fn print_inner_comment(&self, _span: Span) -> Vec<'a, Doc<'a>> {
         Vec::new_in(self.allocator)
     }
 
     #[must_use]
     pub(crate) fn print_dangling_comments(
-        &mut self,
+        &self,
         _span: Span,
         _dangling_options: Option<&DanglingCommentsPrintOptions>,
     ) -> Option<Doc<'a>> {

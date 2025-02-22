@@ -41,7 +41,10 @@
 //! All the source files listed in [`SOURCE_PATHS`] are read, and parsed with [`syn`].
 //!
 //! At this stage, only type names and other basic information about types is obtained.
-//! Each type is assigned a [`TypeId`], and a mapping of type name to [`TypeId`] is built.
+//! Each type with an `#[ast]` attribute is assigned a [`TypeId`], and a mapping of type name
+//! to [`TypeId`] is built.
+//!
+//! Any "meta types" with an `#[ast_meta]` attribute are also identified.
 //!
 //! This is the bare minimum required to link types up to each other in the next phase.
 //!
@@ -69,7 +72,8 @@
 //! Container types e.g. [`VecDef`] contain the `TypeId` of the inner type (e.g. `T` in `Vec<T>`).
 //!
 //! Custom attributes on types (e.g. `#[visit]`) are also parsed at this stage, in conjunction with
-//! the [`Generator`]s and [`Derive`]s which define those attributes.
+//! the [`Generator`]s and [`Derive`]s which define those attributes. Meta types ([`MetaType`]s)
+//! and their custom attributes are also parsed.
 //!
 //! The end result of this phase is the [`Schema`], which is the single source of truth about the AST.
 //!
@@ -143,7 +147,7 @@
 //! * That file should define types for structs / enums / struct fields / enum variants, depending on
 //!   where the data needs to be stored. e.g. `PictureStruct`, `PictureEnumField`.
 //! * Those types must implement `Default` and `Debug`.
-//! * Add those types to [`StructDef`], [`EnumDef`], [`FieldDef`] and/or [`VariantDef`].
+//! * Add those types to [`StructDef`], [`EnumDef`], [`FieldDef`], [`VariantDef`] and/or [`MetaType`].
 //! * Implement [`Generator::attrs`] / [`Derive::attrs`] to declare the generator's custom attributes.
 //! * Implement [`Generator::parse_attr`] / [`Derive::parse_attr`] to parse those attributes
 //!   and mutate the "extension" types in [`Schema`] as required.
@@ -152,6 +156,13 @@
 //!
 //! `oxc_ast_tools` provides abstractions [`AttrLocation`] and [`AttrPart`] which assist with parsing
 //! custom attributes, and are much simpler than `syn`'s types.
+//!
+//! #### Meta types
+//!
+//! Meta types ([`MetaType`]) are types which are not part of the AST, but are used by `oxc_ast_tools`
+//! in some way, and may also be used in generated output. Tagging a type with `#[ast_meta]` attribute
+//! and then adding further custom attributes to that type is a way to pass ancillary information to a
+//! `Derive` / `Generator`.
 //!
 //! [`TypeId`]: schema::TypeId
 //! [`TypeDef`]: schema::TypeDef
@@ -164,6 +175,7 @@
 //! [`PrimitiveDef`]: schema::PrimitiveDef
 //! [`FieldDef`]: schema::FieldDef
 //! [`VariantDef`]: schema::VariantDef
+//! [`MetaType`]: schema::MetaType
 //! [`AssertLayouts`]: generators::AssertLayouts
 //! [`TokenStream`]: proc_macro2::TokenStream
 //! [`AttrLocation`]: parse::attr::AttrLocation
@@ -184,11 +196,11 @@ mod parse;
 mod schema;
 mod utils;
 
-use codegen::{get_runners, Codegen, Runner};
+use codegen::{Codegen, Runner, get_runners};
 use derives::Derive;
 use generators::Generator;
 use logger::{log, log_failed, log_result, log_success, logln};
-use output::{output_path, Output, RawOutput};
+use output::{Output, RawOutput, output_path};
 use parse::parse_files;
 use schema::Schema;
 use utils::create_ident;
@@ -200,6 +212,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/ast/jsx.rs",
     "crates/oxc_ast/src/ast/ts.rs",
     "crates/oxc_ast/src/ast/comment.rs",
+    "crates/oxc_ast/src/serialize.rs",
     "crates/oxc_syntax/src/lib.rs",
     "crates/oxc_syntax/src/number.rs",
     "crates/oxc_syntax/src/operator.rs",

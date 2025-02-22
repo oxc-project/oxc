@@ -2,19 +2,19 @@ pub mod return_checker;
 
 use std::borrow::Cow;
 
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 use serde_json::Value;
 
-use self::return_checker::{check_function_body, StatementReturnStatus};
+use self::return_checker::{StatementReturnStatus, check_function_body};
 use crate::{
+    AstNode,
     ast_util::{get_enclosing_function, is_nth_argument, outermost_paren},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 fn expect_return(method_name: &str, span: Span) -> OxcDiagnostic {

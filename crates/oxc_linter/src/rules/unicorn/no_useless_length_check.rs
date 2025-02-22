@@ -1,15 +1,15 @@
 use std::fmt::Debug;
 
 use oxc_ast::{
-    ast::{Expression, LogicalExpression},
     AstKind,
+    ast::{Expression, LogicalExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn some(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Found a useless array length check")
@@ -76,13 +76,8 @@ fn is_useless_check<'a>(
     };
 
     let mut array_name: &str = "";
-    let active_condition = {
-        if operator == LogicalOperator::Or {
-            every_condition
-        } else {
-            some_condition
-        }
-    };
+    let active_condition =
+        { if operator == LogicalOperator::Or { every_condition } else { some_condition } };
     let mut binary_expression_span: Option<Span> = None;
     let mut call_expression_span: Option<Span> = None;
 

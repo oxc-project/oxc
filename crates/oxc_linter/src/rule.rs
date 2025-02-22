@@ -10,9 +10,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    AllowWarnDeny, AstNode, FixKind, RuleEnum,
     context::{ContextHost, LintContext},
     utils::PossibleJestNode,
-    AllowWarnDeny, AstNode, FixKind, RuleEnum,
 };
 
 pub trait Rule: Sized + Default + fmt::Debug {
@@ -306,7 +306,7 @@ impl RuleWithSeverity {
 
 #[cfg(test)]
 mod test {
-    use markdown::{to_html_with_options, Options};
+    use markdown::{Options, to_html_with_options};
 
     use super::RuleCategory;
     use crate::rules::RULES;

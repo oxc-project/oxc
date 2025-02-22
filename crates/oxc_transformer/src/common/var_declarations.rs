@@ -21,7 +21,7 @@ use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_traverse::{
-    ast_operations::GatherNodeParts, Ancestor, BoundIdentifier, Traverse, TraverseCtx,
+    Ancestor, BoundIdentifier, Traverse, TraverseCtx, ast_operations::GatherNodeParts,
 };
 
 use crate::TransformCtx;
@@ -207,7 +207,7 @@ impl<'a> VarDeclarationsStore<'a> {
     fn insert_into_statements(
         &self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         if matches!(ctx.parent(), Ancestor::ProgramBody(_)) {
             // Handle in `insert_into_program` instead
@@ -219,7 +219,7 @@ impl<'a> VarDeclarationsStore<'a> {
         }
     }
 
-    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
         if let Some(insert_stmts) = self.get_var_statement(ctx) {
             // Delegate to `TopLevelStatements`
             transform_ctx.top_level_statements.insert_statements(insert_stmts);
@@ -231,7 +231,7 @@ impl<'a> VarDeclarationsStore<'a> {
         debug_assert!(stack.last().is_none());
     }
 
-    fn get_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Vec<Statement<'a>>> {
+    fn get_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Vec<Statement<'a>>> {
         let mut stack = self.stack.borrow_mut();
         let Declarators { var_declarators, let_declarators } = stack.pop()?;
 
@@ -256,7 +256,7 @@ impl<'a> VarDeclarationsStore<'a> {
     fn create_declaration(
         kind: VariableDeclarationKind,
         declarators: ArenaVec<'a, VariableDeclarator<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Statement<'a> {
         Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
             SPAN,

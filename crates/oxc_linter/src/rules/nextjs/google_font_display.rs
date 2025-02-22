@@ -1,13 +1,13 @@
-use oxc_ast::{ast::JSXElementName, AstKind};
+use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{find_url_query_value, get_string_literal_prop_value, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn font_display_parameter_missing(span: Span) -> OxcDiagnostic {

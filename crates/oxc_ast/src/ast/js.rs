@@ -30,6 +30,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, directives, source_type, hashbang))]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
@@ -362,7 +363,11 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Property")]
+#[estree(
+    rename = "Property",
+    field_order(span, method, shorthand, computed, key, kind, value),
+    custom_serialize
+)]
 pub struct ObjectProperty<'a> {
     pub span: Span,
     pub kind: PropertyKind,
@@ -411,6 +416,7 @@ pub enum PropertyKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, expressions, quasis))]
 pub struct TemplateLiteral<'a> {
     pub span: Span,
     pub quasis: Vec<'a, TemplateElement<'a>>,
@@ -437,6 +443,7 @@ pub struct TaggedTemplateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, value, tail))]
 pub struct TemplateElement<'a> {
     pub span: Span,
     pub tail: bool,
@@ -493,7 +500,11 @@ pub use match_member_expression;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = true), add_ts = "computed: true")]
+#[estree(
+    rename = "MemberExpression",
+    add_fields(computed = True),
+    field_order(span, object, expression, computed, optional),
+)]
 pub struct ComputedMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -508,7 +519,11 @@ pub struct ComputedMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = false), add_ts = "computed: false")]
+#[estree(
+    rename = "MemberExpression",
+    add_fields(computed = False),
+    field_order(span, object, property, computed, optional),
+)]
 pub struct StaticMemberExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
@@ -522,10 +537,15 @@ pub struct StaticMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "MemberExpression", add_fields(computed = false), add_ts = "computed: false")]
+#[estree(
+    rename = "MemberExpression",
+    add_fields(computed = False),
+    field_order(span, object, field, computed, optional),
+)]
 pub struct PrivateFieldExpression<'a> {
     pub span: Span,
     pub object: Expression<'a>,
+    #[estree(rename = "property")]
     pub field: PrivateIdentifier<'a>,
     pub optional: bool, // for optional chaining
 }
@@ -643,7 +663,7 @@ pub struct UpdateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(prefix = true), add_ts = "prefix: true")]
+#[estree(add_fields(prefix = True), field_order(span, operator, prefix, argument))]
 pub struct UnaryExpression<'a> {
     pub span: Span,
     pub operator: UnaryOperator,
@@ -667,10 +687,14 @@ pub struct BinaryExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(
+    rename = "BinaryExpression",
+    add_fields(operator = In),
+    field_order(span, left, operator, right),
+)]
 pub struct PrivateInExpression<'a> {
     pub span: Span,
     pub left: PrivateIdentifier<'a>,
-    pub operator: BinaryOperator, // BinaryOperator::In
     pub right: Expression<'a>,
 }
 
@@ -896,18 +920,14 @@ pub enum AssignmentTargetProperty<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(kind = "\"init\"", method = false, shorthand = true, computed = false),
-    add_ts = "kind: \"init\"; method: false; shorthand: false; computed: false"
+    add_fields(method = False, shorthand = True, computed = False, kind = Init),
+    field_order(span, method, shorthand, computed, binding, kind, init),
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
     #[estree(rename = "key")]
     pub binding: IdentifierReference<'a>,
-    #[estree(
-        rename = "value",
-        via = crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
-        ts_type = "IdentifierReference | AssignmentTargetWithDefault",
-    )]
+    #[estree(rename = "value", via = AssignmentTargetPropertyIdentifierValue)]
     pub init: Option<Expression<'a>>,
 }
 
@@ -919,13 +939,23 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(kind = "\"init\"", method = false, shorthand = false),
-    add_ts = "kind: \"init\"; method: false; shorthand: false"
+    add_fields(method = False, shorthand = False, kind = Init),
+    field_order(span, method, shorthand, computed, name, binding, kind),
 )]
 pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
+    /// The property key
+    /// ```
+    /// ({ prop: renamed } = obj)
+    ///    ^^^^
+    /// ```
     #[estree(rename = "key")]
     pub name: PropertyKey<'a>,
+    /// The binding part of the property
+    /// ```
+    /// ({ prop: renamed } = obj)
+    ///          ^^^^^^^
+    /// ```
     #[estree(rename = "value")]
     pub binding: AssignmentTargetMaybeDefault<'a>,
     /// Property was declared with a computed key
@@ -1119,6 +1149,7 @@ pub use match_declaration;
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, declarations, kind, declare))]
 pub struct VariableDeclaration<'a> {
     pub span: Span,
     pub kind: VariableDeclarationKind,
@@ -1333,6 +1364,7 @@ pub struct SwitchStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, consequent, test))]
 pub struct SwitchCase<'a> {
     pub span: Span,
     pub test: Option<Expression<'a>>,
@@ -1343,6 +1375,7 @@ pub struct SwitchCase<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, body, label))]
 pub struct LabeledStatement<'a> {
     pub span: Span,
     pub label: LabelIdentifier<'a>,
@@ -1434,7 +1467,9 @@ pub struct CatchClause<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(no_type, ts_alias = "BindingPattern")]
 pub struct CatchParameter<'a> {
+    #[estree(skip)]
     pub span: Span,
     /// The bound error
     #[estree(flatten)]
@@ -1516,8 +1551,9 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    add_fields(kind = "\"init\"", method = false),
-    add_ts = "kind: \"init\"; method: false"
+    add_fields(method = False, kind = Init),
+    field_order(span, method, shorthand, computed, key, kind, value),
+    custom_serialize,
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,
@@ -1603,8 +1639,11 @@ pub struct BindingRestElement<'a> {
 // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/cd61c555bfc93e985b313263a42ed78074570d08/types/estree/index.d.ts#L411
 #[estree(
     add_ts_def = "type ParamPattern = FormalParameter | FormalParameterRest",
-    add_fields(expression = false),
-    add_ts = "expression: false"
+    add_fields(expression = False),
+    field_order(
+        r#type, span, id, expression, generator, r#async, params, body,
+        declare, type_parameters, this_param, return_type,
+    ),
 )]
 pub struct Function<'a> {
     pub span: Span,
@@ -1706,15 +1745,13 @@ pub struct FormalParameters<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // Pluralize as `FormalParameterList` to avoid naming clash with `FormalParameters`.
 #[plural(FormalParameterList)]
-#[estree(no_type)]
+#[estree(no_type, field_order(pattern, decorators, accessibility, readonly, r#override))]
 pub struct FormalParameter<'a> {
+    #[estree(skip)]
     pub span: Span,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
-    #[estree(
-        flatten,
-        ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
-    )]
+    #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
     #[ts]
     pub accessibility: Option<TSAccessibility>,
@@ -1761,8 +1798,8 @@ pub struct FunctionBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
-    add_fields(generator = false, id = crate::serialize::NULL),
-    add_ts = "generator: false; id: null"
+    add_fields(id = Null, generator = False),
+    field_order(span, id, expression, generator, r#async, params, body, type_parameters, return_type),
 )]
 pub struct ArrowFunctionExpression<'a> {
     pub span: Span,
@@ -1777,7 +1814,7 @@ pub struct ArrowFunctionExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
     // ESTree: https://github.com/estree/estree/blob/master/es2015.md#arrowfunctionexpression
-    #[estree(via = crate::serialize::ArrowFunctionExpressionBody(self), ts_type = "FunctionBody | Expression")]
+    #[estree(via = ArrowFunctionExpressionBody)]
     pub body: Box<'a, FunctionBody<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1797,6 +1834,11 @@ pub struct YieldExpression<'a> {
 #[scope(flags = ScopeFlags::StrictMode)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[rustfmt::skip]
+#[estree(field_order(
+    r#type, span, id, super_class, body,
+    decorators, type_parameters, super_type_parameters, implements, r#abstract, declare,
+))]
 pub struct Class<'a> {
     pub span: Span,
     pub r#type: ClassType,
@@ -1936,6 +1978,11 @@ pub enum ClassElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[rustfmt::skip]
+#[estree(field_order(
+    r#type, span, r#static, computed, key, kind, value,
+    decorators, r#override, optional, accessibility
+))]
 pub struct MethodDefinition<'a> {
     pub span: Span,
     /// Method definition type
@@ -1975,6 +2022,11 @@ pub enum MethodDefinitionType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[rustfmt::skip]
+#[estree(field_order(
+    r#type, span, r#static, computed, key, value,
+    decorators, declare, r#override, optional, definite, readonly, type_annotation, accessibility,
+))]
 pub struct PropertyDefinition<'a> {
     pub span: Span,
     pub r#type: PropertyDefinitionType,
@@ -2195,6 +2247,11 @@ pub enum AccessorPropertyType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[rustfmt::skip]
+#[estree(field_order(
+    r#type, span, key, value, computed, r#static,
+    decorators, definite, type_annotation, accessibility,
+))]
 pub struct AccessorProperty<'a> {
     pub span: Span,
     pub r#type: AccessorPropertyType,
@@ -2243,7 +2300,9 @@ pub struct AccessorProperty<'a> {
 pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
+    #[estree(rename = "options", via = ImportExpressionArguments)]
     pub arguments: Vec<'a, Expression<'a>>,
+    #[estree(skip)]
     pub phase: Option<ImportPhase>,
 }
 
@@ -2253,12 +2312,13 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    #[estree(via = crate::serialize::OptionVecDefault(&self.specifiers), ts_type = "Array<ImportDeclarationSpecifier>")]
+    #[estree(via = ImportDeclarationSpecifiers)]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
+    #[estree(skip)]
     pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
-    #[ts]
+    #[estree(rename = "attributes", via = ImportDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
     #[ts]
@@ -2348,6 +2408,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(no_ts_def)]
 pub struct WithClause<'a> {
     pub span: Span,
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
@@ -2385,6 +2446,7 @@ pub enum ImportAttributeKey<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(custom_serialize)]
 pub struct ExportNamedDeclaration<'a> {
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,
@@ -2394,7 +2456,7 @@ pub struct ExportNamedDeclaration<'a> {
     #[ts]
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
-    #[ts]
+    #[estree(rename = "attributes", via = ExportNamedDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 
@@ -2413,6 +2475,7 @@ pub struct ExportNamedDeclaration<'a> {
 pub struct ExportDefaultDeclaration<'a> {
     pub span: Span,
     pub declaration: ExportDefaultDeclarationKind<'a>,
+    #[estree(skip)]
     pub exported: ModuleExportName<'a>, // the `default` Keyword
 }
 
@@ -2434,7 +2497,7 @@ pub struct ExportAllDeclaration<'a> {
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
-    #[ts]
+    #[estree(rename = "attributes", via = ExportAllDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
     #[ts]
     pub export_kind: ImportOrExportKind, // `export type *`

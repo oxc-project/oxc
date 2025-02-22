@@ -1,12 +1,12 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use oxc_ast::{ast::NumericLiteral, AstKind};
+use oxc_ast::{AstKind, ast::NumericLiteral};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_loss_of_precision_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("This number literal will lose precision at runtime.").with_label(span)
@@ -25,10 +25,54 @@ declare_oxc_lint!(
     /// It can lead to unexpected results in certain situations
     /// For example, when performing mathematical operations
     ///
-    /// ### Example
+    /// In JS, Numbers are stored as double-precision floating-point numbers
+    /// according to the IEEE 754 standard. Because of this, numbers can only
+    /// retain accuracy up to a certain amount of digits. If the programmer
+    /// enters additional digits, those digits will be lost in the conversion
+    /// to the Number type and will result in unexpected behavior.
     ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var x = 2e999;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = 9007199254740993;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = 5123000000000000000000000000001;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = 1230000000000000000000000.0;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = 0X200000_0000000_1;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var x = 12345";
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = 123.456;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = 123.0000000000000000000000";
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = 123e34;
+    /// ```
+    ///
+    /// ```javascript
+    /// var x = 0x1FFF_FFFF_FFF_FFF;
     /// ```
     NoLossOfPrecision,
     eslint,

@@ -63,3 +63,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────
    ╰────
   help: Provide screen reader accessible content when using heading elements.
+
+  ⚠ eslint-plugin-jsx-a11y(heading-has-content): Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <h1><CustomInput type="hidden" /></h1>
+   · ────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.

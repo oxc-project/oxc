@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+### Features
+
+- bde4126 parser: Parse `a ? b ? (c = 0) : d => 1 : (e = 2) : f => 3` (#9229) (Boshen)
+
+### Documentation
+
+- 3414824 oxc: Enable `clippy::too_long_first_doc_paragraph` (#9237) (Boshen)
+
+### Refactor
+
+- ef856f5 oxc: Apply `clippy::needless_pass_by_ref_mut` (#9253) (Boshen)
+- d615b34 parser: Add `ArrowFunctionHead` struct (#9222) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
+## [0.51.0] - 2025-02-15
+
+- 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)
+
+### Features
+
+
+### Bug Fixes
+
+- bc64c9d lexer: Fix decoding lone `\r` in template literals (#9066) (overlookmotel)
+- b8278d8 parser: Parse `let _: null` as `TSNullKeyword` (#9133) (Boshen)
+
+## [0.50.0] - 2025-02-12
+
+- d9189f1 ast: [**BREAKING**] Remove `PrivateInExpression::operator` field (#9041) (overlookmotel)
+
+### Bug Fixes
+
+- 662ab90 parser: Correct AST for `#field in x << y` (#9039) (Boshen)
+- 567bc2c parser: Fix `SequenceExpression` span (#9035) (hi-ogawa)
+
+### Refactor
+
+
 ## [0.49.0] - 2025-02-10
 
 - bbb075d ast: [**BREAKING**] Name `AstBuilder` enum builders after variant name not type name (#8890) (overlookmotel)

@@ -1,21 +1,21 @@
 use oxc_allocator::CloneIn;
 use oxc_ast::{
+    NONE,
     ast::{
         ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
         ObjectExpression, ObjectPropertyKind, TSLiteral, TSMethodSignatureKind, TSTupleElement,
         TSType, TSTypeOperatorOperator,
     },
-    NONE,
 };
-use oxc_span::{GetSpan, Span, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 
 use crate::{
+    IsolatedDeclarations,
     diagnostics::{
         arrays_with_spread_elements, function_must_have_explicit_return_type,
         inferred_type_of_expression, object_with_spread_assignments, shorthand_property,
     },
     function::get_function_span,
-    IsolatedDeclarations,
 };
 
 impl<'a> IsolatedDeclarations<'a> {

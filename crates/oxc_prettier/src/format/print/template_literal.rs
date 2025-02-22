@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, format::Format, group, ir::Doc, line_suffix_boundary, softline, text, Prettier,
+    Prettier, array, format::Format, group, ir::Doc, line_suffix_boundary, softline, text,
 };
 
 pub enum TemplateLiteralLike<'a, 'b> {

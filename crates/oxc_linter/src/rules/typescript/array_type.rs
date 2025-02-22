@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
     AstKind,
+    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -396,7 +396,6 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         | TSType::TSNullKeyword(_)
         | TSType::TSArrayType(_)
         | TSType::TSUndefinedKeyword(_)
-        | TSType::TSQualifiedName(_)
         | TSType::TSThisType(_) => true,
         TSType::TSTypeReference(node) => {
             let type_name = TSTypeName::get_identifier_reference(&node.type_name);
@@ -463,7 +462,6 @@ fn get_ts_element_type_span(ts_type: &TSType) -> Option<Span> {
         TSType::TSLiteralType(t) => Some(t.span),
         TSType::TSMappedType(t) => Some(t.span),
         TSType::TSNamedTupleMember(t) => Some(t.span),
-        TSType::TSQualifiedName(t) => Some(t.span),
         TSType::TSTemplateLiteralType(t) => Some(t.span),
         TSType::TSTupleType(t) => Some(t.span),
         TSType::TSTypeLiteral(t) => Some(t.span),

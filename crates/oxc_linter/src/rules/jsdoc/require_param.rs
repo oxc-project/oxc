@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use lazy_static::lazy_static;
-use oxc_ast::{ast::MethodDefinitionKind, AstKind};
+use oxc_ast::{AstKind, ast::MethodDefinitionKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, JSDoc};
@@ -13,8 +13,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_params, default_true, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
-        should_ignore_as_internal, should_ignore_as_private, ParamKind,
+        ParamKind, collect_params, default_true, get_function_nearest_jsdoc_node,
+        should_ignore_as_avoid, should_ignore_as_internal, should_ignore_as_private,
     },
 };
 

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_label_var_diagnostic(name: &str, id_span: Span, label_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Found identifier '{name}' with the same name as a label."))

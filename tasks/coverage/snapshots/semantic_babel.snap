@@ -2,7 +2,7 @@ commit: acbc09a8
 
 semantic_babel Summary:
 AST Parsed     : 2292/2292 (100.00%)
-Positive Passed: 1909/2292 (83.29%)
+Positive Passed: 1906/2292 (83.16%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -45,11 +45,17 @@ Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(7): ScopeFlags(0x0)
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
+semantic error: Unexpected token
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
-semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
+semantic error: Unexpected token
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 semantic error: 'arguments' is not allowed in class field initializer
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-in-arguments-of-async-call/input.js
+semantic error: Unexpected token
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
 semantic error: Bindings mismatch:
@@ -62,8 +68,11 @@ Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-property-in-arguments-of-async-call/input.js
+semantic error: Unexpected token
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
-semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
+semantic error: Unexpected token
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 semantic error: Unexpected new.target expression

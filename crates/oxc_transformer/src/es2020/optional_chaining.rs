@@ -50,11 +50,11 @@
 use std::mem;
 
 use oxc_allocator::CloneIn;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, TransformCtx};
+use crate::{TransformCtx, utils::ast_builder::wrap_expression_in_arrow_function_iife};
 
 #[derive(Debug)]
 enum CallContext<'a> {
@@ -135,7 +135,7 @@ impl<'a> OptionalChaining<'a, '_> {
     }
 
     /// Get the call context from [`Self::call_context`]
-    fn get_call_context(&mut self, ctx: &mut TraverseCtx<'a>) -> Argument<'a> {
+    fn get_call_context(&self, ctx: &mut TraverseCtx<'a>) -> Argument<'a> {
         debug_assert!(!matches!(self.call_context, CallContext::None));
         Argument::from(if let CallContext::Binding(binding) = &self.call_context {
             binding.create_read_expression(ctx)
@@ -148,7 +148,7 @@ impl<'a> OptionalChaining<'a, '_> {
     fn should_specify_context(
         &self,
         ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         match &self.call_context {
             CallContext::None => false,
@@ -254,7 +254,7 @@ impl<'a> OptionalChaining<'a, '_> {
     #[inline]
     fn convert_chain_expression_to_expression(
         expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let Expression::ChainExpression(chain_expr) = ctx.ast.move_expression(expr) else {
             unreachable!()
@@ -354,7 +354,7 @@ impl<'a> OptionalChaining<'a, '_> {
     ///
     /// `Foo.bar` -> `Foo.bar.bind(context)`
     fn transform_expression_to_bind_context(
-        &mut self,
+        &self,
         mut expr: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {

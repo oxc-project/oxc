@@ -4,8 +4,9 @@ use std::borrow::Cow;
 use oxc_allocator::IntoIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ValueType},
-    StringCharAt, StringCharCodeAt, StringIndexOf, StringLastIndexOf, StringSubstring, ToInt32,
+    StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
+    StringSubstring, ToInt32,
+    constant_evaluation::{ConstantEvaluation, DetermineValueType},
 };
 use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
@@ -140,11 +141,11 @@ impl<'a> PeepholeOptimizations {
         let Expression::StringLiteral(s) = object else { return None };
         let start_idx = args.first().and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
-            _ => ctx.get_side_free_number_value(arg.to_expression()),
+            _ => arg.to_expression().get_side_free_number_value(&ctx),
         });
         let end_idx = args.get(1).and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
-            _ => ctx.get_side_free_number_value(arg.to_expression()),
+            _ => arg.to_expression().get_side_free_number_value(&ctx),
         });
         #[expect(clippy::cast_precision_loss)]
         if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
@@ -174,21 +175,18 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
-        let char_at_index: Option<f64> = match args.first() {
-            Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
-            Some(Argument::UnaryExpression(unary_expr))
-                if unary_expr.operator == UnaryOperator::UnaryNegation =>
-            {
-                let Expression::NumericLiteral(numeric_lit) = &unary_expr.argument else {
-                    return None;
-                };
-                Some(-(numeric_lit.value))
+        let char_at_index = match args.first() {
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
             }
             None => None,
-            _ => return None,
         };
-        let result =
-            &s.value.as_str().char_at(char_at_index).map_or(String::new(), |v| v.to_string());
+        let result = match s.value.as_str().char_at(char_at_index) {
+            StringCharAtResult::Value(c) => &c.to_string(),
+            StringCharAtResult::InvalidChar(_) => return None,
+            StringCharAtResult::OutOfRange => "",
+        };
         Some(ctx.ast.expression_string_literal(span, result, None))
     }
 
@@ -201,17 +199,13 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<Expression<'a>> {
         let Expression::StringLiteral(s) = object else { return None };
         let char_at_index = match args.first() {
-            None => Some(0.0),
-            Some(Argument::SpreadElement(_)) => None,
-            Some(e) => ctx.get_side_free_number_value(e.to_expression()),
-        }?;
-        let value = if (0.0..65536.0).contains(&char_at_index) {
-            s.value.as_str().char_code_at(Some(char_at_index))? as f64
-        } else if char_at_index.is_nan() || char_at_index.is_infinite() {
-            return None;
-        } else {
-            f64::NAN
+            Some(Argument::SpreadElement(_)) => return None,
+            Some(arg @ match_expression!(Argument)) => {
+                Some(arg.to_expression().get_side_free_number_value(&ctx)?)
+            }
+            None => None,
         };
+        let value = s.value.as_str().char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
         Some(ctx.ast.expression_numeric_literal(span, value, None, NumberBase::Decimal))
     }
 
@@ -230,14 +224,14 @@ impl<'a> PeepholeOptimizations {
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                ctx.get_side_free_string_value(search_value.to_expression())?
+                search_value.to_expression().evaluate_value(&ctx)?.into_string()?
             }
         };
         let replace_value = args.get(1).unwrap();
         let replace_value = match replace_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
-                ctx.get_side_free_string_value(replace_value.to_expression())?
+                replace_value.to_expression().get_side_free_string_value(&ctx)?
             }
         };
         if replace_value.contains('$') {
@@ -265,7 +259,7 @@ impl<'a> PeepholeOptimizations {
         let mut s = String::with_capacity(args.len());
         for arg in args {
             let expr = arg.as_expression()?;
-            let v = ctx.get_side_free_number_value(expr)?;
+            let v = expr.get_side_free_number_value(&ctx)?;
             let v = v.to_int_32() as u16 as u32;
             let c = char::try_from(v).ok()?;
             s.push(c);
@@ -333,7 +327,7 @@ impl<'a> PeepholeOptimizations {
                 if args.is_empty() =>
             {
                 use oxc_ecmascript::ToJsString;
-                object.to_js_string().map(|s| ctx.ast.expression_string_literal(span, s, None))
+                object.to_js_string(&ctx).map(|s| ctx.ast.expression_string_literal(span, s, None))
             }
             _ => None,
         }
@@ -385,7 +379,7 @@ impl<'a> PeepholeOptimizations {
         let first_arg = first_arg.to_expression_mut(); // checked above
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
-            if ValueType::from(&*expr).is_number() {
+            if expr.value_type(&ctx).is_number() {
                 ctx.ast.move_expression(expr)
             } else {
                 ctx.ast.expression_unary(
@@ -398,7 +392,8 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             span,
-            wrap_with_unary_plus_if_needed(first_arg),
+            // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
+            ctx.ast.move_expression(first_arg),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
@@ -420,7 +415,7 @@ impl<'a> PeepholeOptimizations {
         {
             return None;
         }
-        let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
+        let arg_val = arguments[0].to_expression().get_side_free_number_value(&ctx)?;
         if arg_val == f64::INFINITY || arg_val.is_nan() || arg_val == 0.0 {
             return Some(ctx.ast.expression_numeric_literal(
                 span,
@@ -459,7 +454,7 @@ impl<'a> PeepholeOptimizations {
         {
             return None;
         }
-        let arg_val = ctx.get_side_free_number_value(arguments[0].to_expression())?;
+        let arg_val = arguments[0].to_expression().get_side_free_number_value(&ctx)?;
         let result = match name {
             "abs" => arg_val.abs(),
             "ceil" => arg_val.ceil(),
@@ -469,7 +464,7 @@ impl<'a> PeepholeOptimizations {
                 // In Rust, when facing `.5`, it may follow `half-away-from-zero` instead of round to upper bound.
                 // So we need to handle it manually.
                 let frac_part = arg_val.fract();
-                let epsilon = 2f64.powf(-52f64);
+                let epsilon = 2f64.powi(-52);
                 if (frac_part.abs() - 0.5).abs() < epsilon {
                     // We should ceil it.
                     arg_val.ceil()
@@ -504,7 +499,7 @@ impl<'a> PeepholeOptimizations {
         }
         let numbers = arguments
             .iter()
-            .map(|arg| arg.as_expression().map(|e| ctx.get_side_free_number_value(e))?)
+            .map(|arg| arg.as_expression().map(|e| e.get_side_free_number_value(&ctx))?)
             .collect::<Option<Vec<_>>>()?;
         let result = if numbers.iter().any(|n| n.is_nan()) {
             f64::NAN
@@ -744,11 +739,7 @@ impl<'a> PeepholeOptimizations {
                         SPAN,
                         false,
                         TemplateElementValue {
-                            raw: s
-                                .cow_replace("\\", "\\\\")
-                                .cow_replace("`", "\\`")
-                                .cow_replace("${", "\\${")
-                                .cow_replace("\r\n", "\\r\n")
+                            raw: Self::escape_string_for_template_literal(&s)
                                 .into_in(ctx.ast.allocator),
                             cooked: Some(cooked),
                         },
@@ -762,6 +753,20 @@ impl<'a> PeepholeOptimizations {
                 Some(ctx.ast.expression_template_literal(span, quasis, expressions))
             }
             _ => None,
+        }
+    }
+
+    pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
+        if s.contains(['\\', '`', '$', '\r']) {
+            Cow::Owned(
+                s.cow_replace("\\", "\\\\")
+                    .cow_replace("`", "\\`")
+                    .cow_replace("${", "\\${")
+                    .cow_replace("\r\n", "\\r\n")
+                    .into_owned(),
+            )
+        } else {
+            Cow::Borrowed(s)
         }
     }
 
@@ -826,7 +831,7 @@ impl<'a> PeepholeOptimizations {
             "NaN" => num(span, f64::NAN),
             "MAX_SAFE_INTEGER" => {
                 if self.target < ESTarget::ES2016 {
-                    num(span, 2.0f64.powf(53.0) - 1.0)
+                    num(span, 2.0f64.powi(53) - 1.0)
                 } else {
                     // 2**53 - 1
                     pow_with_expr(span, 2.0, 53.0, BinaryOperator::Subtraction, 1.0)
@@ -834,7 +839,7 @@ impl<'a> PeepholeOptimizations {
             }
             "MIN_SAFE_INTEGER" => {
                 if self.target < ESTarget::ES2016 {
-                    num(span, -(2.0f64.powf(53.0) - 1.0))
+                    num(span, -(2.0f64.powi(53) - 1.0))
                 } else {
                     // -(2**53 - 1)
                     ctx.ast.expression_unary(
@@ -887,8 +892,8 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        tester::{run, test, test_same},
         CompressOptions,
+        tester::{run, test, test_same},
     };
 
     fn test_es2015(code: &str, expected: &str) {
@@ -1060,6 +1065,7 @@ mod test {
         test("x = 'ab'.replaceAll('','x')", "x = 'xaxbx'");
 
         test("x = 'c_c_c'.replaceAll('c','x')", "x = 'x_x_x'");
+        test("x = 'acaca'.replaceAll('c',/x/)", "x = 'a/x/a/x/a'");
 
         test_same("x = 'acaca'.replaceAll(/c/,'x')"); // this should throw
         test_same("x = 'acaca'.replaceAll(/c/g,'x')"); // this will affect the global RegExp props
@@ -1121,12 +1127,13 @@ mod test {
         test("x = 'abcde'.charAt(5)", "x = ''");
         test("x = 'abcde'.charAt(-1)", "x = ''");
         test("x = 'abcde'.charAt()", "x = 'a'");
+        test_same("x = 'abcde'.charAt(...foo)");
         test_same("x = 'abcde'.charAt(0, ++z)");
         test_same("x = 'abcde'.charAt(y)");
-        test_same("x = 'abcde'.charAt(null)"); // or x = 'a'
-        test_same("x = 'abcde'.charAt(!0)"); // or x = 'b'
-                                             // test("x = '\\ud834\udd1e'.charAt(0)", "x = '\\ud834'");
-                                             // test("x = '\\ud834\udd1e'.charAt(1)", "x = '\\udd1e'");
+        test("x = 'abcde'.charAt(null)", "x = 'a'");
+        test("x = 'abcde'.charAt(!0)", "x = 'b'");
+        test_same("x = '\\ud834\\udd1e'.charAt(0)"); // or x = '\\ud834'
+        test_same("x = '\\ud834\\udd1e'.charAt(1)"); // or x = '\\udd1e'
 
         // Template strings
         test("x = `abcdef`.charAt(0)", "x = 'a'");
@@ -1141,15 +1148,16 @@ mod test {
         test("x = 'abcde'.charCodeAt(2)", "x = 99");
         test("x = 'abcde'.charCodeAt(3)", "x = 100");
         test("x = 'abcde'.charCodeAt(4)", "x = 101");
-        test_same("x = 'abcde'.charCodeAt(5)");
+        test("x = 'abcde'.charCodeAt(5)", "x = NaN");
         test("x = 'abcde'.charCodeAt(-1)", "x = NaN");
+        test_same("x = 'abcde'.charCodeAt(...foo)");
         test_same("x = 'abcde'.charCodeAt(y)");
         test("x = 'abcde'.charCodeAt()", "x = 97");
         test("x = 'abcde'.charCodeAt(0, ++z)", "x = 97");
         test("x = 'abcde'.charCodeAt(null)", "x = 97");
         test("x = 'abcde'.charCodeAt(true)", "x = 98");
-        // test("x = '\\ud834\udd1e'.charCodeAt(0)", "x = 55348");
-        // test("x = '\\ud834\udd1e'.charCodeAt(1)", "x = 56606");
+        test("x = '\\ud834\\udd1e'.charCodeAt(0)", "x = 55348");
+        test("x = '\\ud834\\udd1e'.charCodeAt(1)", "x = 56606");
         test("x = `abcdef`.charCodeAt(0)", "x = 97");
         test_same("x = `abcdef ${abc}`.charCodeAt(0)");
     }
@@ -1762,8 +1770,11 @@ mod test {
         test("x = ''.concat('a', b)", "x = `a${b}`");
         test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
         test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
-        test("x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)", "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`");
-        test("x = ''.concat(a, 1)", "x = `${a}${1}`"); // inlining 1 is not implemented yet
+        test(
+            "x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)",
+            "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`",
+        );
+        test("x = ''.concat(a, 1)", "x = `${a}1`");
 
         test("x = '\\\\s'.concat(a)", "x = `\\\\s${a}`");
         test("x = '`'.concat(a)", "x = `\\`${a}`");
@@ -1785,7 +1796,7 @@ mod test {
         test("x = (-Infinity).toString(2)", "x = '-Infinity';");
         test("x = 1n.toString()", "x = '1'");
         test_same("254n.toString(16);"); // unimplemented
-                                         // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
+        // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
         test_same("null.toString()"); // type error
 
         test("x = 100 .toString(0)", "x = 100 .toString(0)");

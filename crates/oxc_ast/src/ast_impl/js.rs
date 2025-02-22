@@ -352,11 +352,7 @@ impl<'a> Expression<'a> {
     ///
     /// See [`CallExpression::is_require_call`] for details of the exact patterns that match.
     pub fn is_require_call(&self) -> bool {
-        if let Self::CallExpression(call_expr) = self {
-            call_expr.is_require_call()
-        } else {
-            false
-        }
+        if let Self::CallExpression(call_expr) = self { call_expr.is_require_call() } else { false }
     }
 
     /// Returns `true` if this is an [assignment expression](AssignmentExpression).
@@ -891,8 +887,8 @@ impl AssignmentTargetMaybeDefault<'_> {
     ///
     /// ## Example
     ///
-    /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)
-    /// - returns `b` when called on `a: b` in `({a: b} = obj)
+    /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)`
+    /// - returns `b` when called on `a: b` in `({a: b} = obj)`
     pub fn identifier(&self) -> Option<&IdentifierReference<'_>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),

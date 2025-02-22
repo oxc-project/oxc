@@ -1,6 +1,6 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.38.0",
+  "version": "0.51.0",
   "description": "Wasm target for the oxc parser.",
   "keywords": [
     "JavaScript",
@@ -29,10 +29,11 @@
     "@oxc-project/types": "workspace:^"
   },
   "scripts": {
-    "build": "pnpm run build-node && pnpm run build-web && pnpm run copy-files && pnpm run clean-files",
+    "build": "pnpm run build-node && pnpm run build-web && pnpm run update-bindings && pnpm run copy-files && pnpm run clean-files",
     "build-node": "pnpm run build-base --target nodejs --out-dir ../../npm/parser-wasm/node .",
     "build-web": "pnpm run build-base --target web --out-dir ../../npm/parser-wasm/web .",
     "build-base": "wasm-pack build --release --no-pack",
+    "update-bindings": "node ./update-bindings.mjs",
     "copy-files": "cp ./package.json ../../npm/parser-wasm/package.json && cp ./README.md ../../npm/parser-wasm/README.md",
     "clean-files": "rm ../../npm/parser-wasm/*/.gitignore",
     "test": "node ./test-node.mjs",

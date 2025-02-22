@@ -5,11 +5,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
     ast::CharacterClass,
-    visit::{walk::walk_character_class, Visit},
+    visit::{Visit, walk::walk_character_class},
 };
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_character_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty character class will not match anything")

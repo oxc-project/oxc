@@ -448,7 +448,6 @@ impl ContentEq for BinaryExpression<'_> {
 impl ContentEq for PrivateInExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.left, &other.left)
-            && ContentEq::content_eq(&self.operator, &other.operator)
             && ContentEq::content_eq(&self.right, &other.right)
     }
 }
@@ -1763,10 +1762,8 @@ impl ContentEq for TSLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::BooleanLiteral(a), Self::BooleanLiteral(b)) => a.content_eq(b),
-            (Self::NullLiteral(a), Self::NullLiteral(b)) => a.content_eq(b),
             (Self::NumericLiteral(a), Self::NumericLiteral(b)) => a.content_eq(b),
             (Self::BigIntLiteral(a), Self::BigIntLiteral(b)) => a.content_eq(b),
-            (Self::RegExpLiteral(a), Self::RegExpLiteral(b)) => a.content_eq(b),
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
             (Self::UnaryExpression(a), Self::UnaryExpression(b)) => a.content_eq(b),
@@ -1802,7 +1799,6 @@ impl ContentEq for TSType<'_> {
             (Self::TSLiteralType(a), Self::TSLiteralType(b)) => a.content_eq(b),
             (Self::TSMappedType(a), Self::TSMappedType(b)) => a.content_eq(b),
             (Self::TSNamedTupleMember(a), Self::TSNamedTupleMember(b)) => a.content_eq(b),
-            (Self::TSQualifiedName(a), Self::TSQualifiedName(b)) => a.content_eq(b),
             (Self::TSTemplateLiteralType(a), Self::TSTemplateLiteralType(b)) => a.content_eq(b),
             (Self::TSThisType(a), Self::TSThisType(b)) => a.content_eq(b),
             (Self::TSTupleType(a), Self::TSTupleType(b)) => a.content_eq(b),
@@ -1929,7 +1925,6 @@ impl ContentEq for TSTupleElement<'_> {
             (Self::TSLiteralType(a), Self::TSLiteralType(b)) => a.content_eq(b),
             (Self::TSMappedType(a), Self::TSMappedType(b)) => a.content_eq(b),
             (Self::TSNamedTupleMember(a), Self::TSNamedTupleMember(b)) => a.content_eq(b),
-            (Self::TSQualifiedName(a), Self::TSQualifiedName(b)) => a.content_eq(b),
             (Self::TSTemplateLiteralType(a), Self::TSTemplateLiteralType(b)) => a.content_eq(b),
             (Self::TSThisType(a), Self::TSThisType(b)) => a.content_eq(b),
             (Self::TSTupleType(a), Self::TSTupleType(b)) => a.content_eq(b),

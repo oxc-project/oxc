@@ -1,14 +1,14 @@
 use std::{
     io::{ErrorKind, Write},
     path::{Path, PathBuf},
-    sync::{mpsc, Arc},
+    sync::{Arc, mpsc},
 };
 
 use cow_utils::CowUtils;
 
 use crate::{
-    reporter::{DiagnosticReporter, DiagnosticResult},
     Error, NamedSource, OxcDiagnostic, Severity,
+    reporter::{DiagnosticReporter, DiagnosticResult},
 };
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);

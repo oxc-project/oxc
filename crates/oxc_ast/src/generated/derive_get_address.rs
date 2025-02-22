@@ -614,10 +614,8 @@ impl GetAddress for TSLiteral<'_> {
     fn address(&self) -> Address {
         match self {
             Self::BooleanLiteral(it) => GetAddress::address(it),
-            Self::NullLiteral(it) => GetAddress::address(it),
             Self::NumericLiteral(it) => GetAddress::address(it),
             Self::BigIntLiteral(it) => GetAddress::address(it),
-            Self::RegExpLiteral(it) => GetAddress::address(it),
             Self::StringLiteral(it) => GetAddress::address(it),
             Self::TemplateLiteral(it) => GetAddress::address(it),
             Self::UnaryExpression(it) => GetAddress::address(it),
@@ -654,7 +652,6 @@ impl GetAddress for TSType<'_> {
             Self::TSLiteralType(it) => GetAddress::address(it),
             Self::TSMappedType(it) => GetAddress::address(it),
             Self::TSNamedTupleMember(it) => GetAddress::address(it),
-            Self::TSQualifiedName(it) => GetAddress::address(it),
             Self::TSTemplateLiteralType(it) => GetAddress::address(it),
             Self::TSThisType(it) => GetAddress::address(it),
             Self::TSTupleType(it) => GetAddress::address(it),
@@ -703,7 +700,6 @@ impl GetAddress for TSTupleElement<'_> {
             Self::TSLiteralType(it) => GetAddress::address(it),
             Self::TSMappedType(it) => GetAddress::address(it),
             Self::TSNamedTupleMember(it) => GetAddress::address(it),
-            Self::TSQualifiedName(it) => GetAddress::address(it),
             Self::TSTemplateLiteralType(it) => GetAddress::address(it),
             Self::TSThisType(it) => GetAddress::address(it),
             Self::TSTupleType(it) => GetAddress::address(it),

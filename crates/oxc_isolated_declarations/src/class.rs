@@ -1,16 +1,16 @@
 use std::borrow::Cow;
 
 use oxc_allocator::{Box, CloneIn};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    IsolatedDeclarations,
     diagnostics::{
         accessor_must_have_explicit_return_type, computed_property_name, extends_clause_expression,
         method_must_have_explicit_return_type, property_must_have_explicit_type,
     },
-    IsolatedDeclarations,
 };
 
 impl<'a> IsolatedDeclarations<'a> {
@@ -82,7 +82,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut type_annotations = None;
         let mut value = None;
 
-        if property.accessibility.map_or(true, |a| !a.is_private()) {
+        if property.accessibility.is_none_or(|a| !a.is_private()) {
             if property.type_annotation.is_some() {
                 type_annotations = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {
@@ -504,6 +504,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
+                    let type_annotation = match property.accessibility {
+                        Some(TSAccessibility::Private) => None,
+                        _ => property.type_annotation.clone_in(self.ast.allocator),
+                    };
+
                     // FIXME: missing many fields
                     let new_element = self.ast.class_element_accessor_property(
                         property.span,
@@ -514,7 +519,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.computed,
                         property.r#static,
                         property.definite,
-                        property.type_annotation.clone_in(self.ast.allocator),
+                        type_annotation,
                         property.accessibility,
                     );
                     elements.push(new_element);

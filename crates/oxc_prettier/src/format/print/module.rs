@@ -2,9 +2,9 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, dynamic_text, group, if_break, indent,
+    Format, Prettier, array, dynamic_text, group, if_break, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, text, Format, Prettier,
+    join, line, softline, text,
 };
 
 pub fn print_import_declaration<'a>(p: &mut Prettier<'a>, decl: &ImportDeclaration<'a>) -> Doc<'a> {

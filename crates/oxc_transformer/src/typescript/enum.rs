@@ -2,11 +2,11 @@ use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
+use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::ToInt32;
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},

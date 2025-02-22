@@ -49,7 +49,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
         let mut bindings = scope_tree.get_bindings(scope_id).iter().collect::<Vec<_>>();
         bindings.sort_unstable_by_key(|&(_, symbol_id)| symbol_id);
         result.push('[');
-        bindings.iter().enumerate().for_each(|(index, (name, &symbol_id))| {
+        bindings.iter().enumerate().for_each(|(index, &(name, &symbol_id))| {
             if index != 0 {
                 result.push(',');
             }

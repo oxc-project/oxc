@@ -1,14 +1,13 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::VariableDeclarationParent;
 use crate::{
-    diagnostics,
+    ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, Modifiers},
-    ParserImpl, StatementContext,
 };
 
 impl<'a> ParserImpl<'a> {

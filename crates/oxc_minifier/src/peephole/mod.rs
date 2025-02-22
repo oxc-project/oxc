@@ -7,10 +7,12 @@ mod minimize_exit_points;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
 mod minimize_if_statement;
+mod minimize_logical_expression;
 mod minimize_not_expression;
 mod minimize_statements;
 mod normalize;
 mod remove_dead_code;
+mod remove_unused_expression;
 mod replace_known_methods;
 mod statement_fusion;
 mod substitute_alternate_syntax;
@@ -21,7 +23,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_syntax::{es_target::ESTarget, scope::ScopeId};
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
 
 use crate::ctx::Ctx;
 
@@ -108,13 +110,18 @@ impl<'a> PeepholeOptimizations {
         F: Fn(&'x A) -> Option<RetF>,
         G: Fn(&'x A) -> Option<RetG>,
     {
-        if let Some(a) = check_a(pair.0) {
-            if let Some(b) = check_b(pair.1) {
-                return Some((a, b));
+        match check_a(pair.0) {
+            Some(a) => {
+                if let Some(b) = check_b(pair.1) {
+                    return Some((a, b));
+                }
             }
-        } else if let Some(a) = check_a(pair.1) {
-            if let Some(b) = check_b(pair.0) {
-                return Some((a, b));
+            _ => {
+                if let Some(a) = check_a(pair.1) {
+                    if let Some(b) = check_b(pair.0) {
+                        return Some((a, b));
+                    }
+                }
             }
         }
         None
@@ -151,7 +158,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             return;
         }
         let ctx = Ctx(ctx);
-        Self::try_fold_stmt_in_boolean_context(stmt, ctx);
+        self.try_fold_stmt_in_boolean_context(stmt, ctx);
         self.remove_dead_code_exit_statement(stmt, ctx);
         if let Statement::IfStatement(if_stmt) = stmt {
             if let Some(folded_stmt) = self.try_minimize_if(if_stmt, ctx) {
@@ -201,6 +208,17 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.substitute_exit_expression(expr, ctx);
     }
 
+    fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.is_prev_function_changed() {
+            return;
+        }
+        if expr.operator.is_not()
+            && self.try_fold_expr_in_boolean_context(&mut expr.argument, Ctx(ctx))
+        {
+            self.mark_current_function_as_changed();
+        }
+    }
+
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_prev_function_changed() {
             return;
@@ -215,6 +233,18 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
         let ctx = Ctx(ctx);
         self.substitute_object_property(prop, ctx);
+    }
+
+    fn exit_assignment_target_property(
+        &mut self,
+        node: &mut AssignmentTargetProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.is_prev_function_changed() {
+            return;
+        }
+        let ctx = Ctx(ctx);
+        self.substitute_assignment_target_property(node, ctx);
     }
 
     fn exit_assignment_target_property_property(

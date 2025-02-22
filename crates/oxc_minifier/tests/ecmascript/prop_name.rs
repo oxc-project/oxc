@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::ObjectExpression, Visit};
+use oxc_ast::{Visit, ast::ObjectExpression};
 use oxc_ecmascript::PropName;
 use oxc_parser::Parser;
 use oxc_span::SourceType;

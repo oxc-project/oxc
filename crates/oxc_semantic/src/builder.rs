@@ -8,7 +8,7 @@ use std::{
 use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, AstKind, Visit};
+use oxc_ast::{AstKind, Visit, ast::*};
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
@@ -23,6 +23,7 @@ use oxc_syntax::{
 };
 
 use crate::{
+    JSDocFinder, Semantic,
     binder::Binder,
     checker,
     class::ClassTableBuilder,
@@ -34,16 +35,11 @@ use crate::{
     stats::Stats,
     symbol::SymbolTable,
     unresolved_stack::UnresolvedReferencesStack,
-    JSDocFinder, Semantic,
 };
 
 macro_rules! control_flow {
-    ($self:ident, |$cfg:tt| $body:expr) => {
-        if let Some($cfg) = &mut $self.cfg {
-            $body
-        } else {
-            Default::default()
-        }
+    ($self:ident, |$cfg:tt| $body:expr_2021) => {
+        if let Some($cfg) = &mut $self.cfg { $body } else { Default::default() }
     };
 }
 
@@ -564,8 +560,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
         // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
         let parent_id = self.scope.get_parent_id(self.current_scope_id);
+
         debug_assert!(parent_id.is_some());
         if let Some(parent_id) = parent_id {
+            if self.scope.get_flags(self.current_scope_id).contains_direct_eval() {
+                self.scope.get_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
+            }
             self.current_scope_id = parent_id;
         }
 
@@ -2068,6 +2068,11 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::YieldExpression(_) => {
                 self.set_function_node_flags(NodeFlags::HasYield);
+            }
+            AstKind::CallExpression(call_expr) => {
+                if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
+                    self.scope.get_flags_mut(self.current_scope_id).insert(ScopeFlags::DirectEval);
+                }
             }
             _ => {}
         }

@@ -6,9 +6,9 @@ use oxc_ast::ast::{
 use oxc_span::SPAN;
 
 use crate::{
+    IsolatedDeclarations,
     diagnostics::{array_inferred, inferred_type_of_class_expression},
     return_type::FunctionReturnType,
-    IsolatedDeclarations,
 };
 
 impl<'a> IsolatedDeclarations<'a> {

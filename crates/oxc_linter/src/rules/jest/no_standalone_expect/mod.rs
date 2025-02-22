@@ -6,14 +6,14 @@ use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_node_name, parse_expect_jest_fn_call,
-        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind,
-        ParsedExpectFnCall, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
+        PossibleJestNode, collect_possible_jest_call_node, get_node_name,
+        parse_expect_jest_fn_call, parse_general_jest_fn_call,
     },
-    AstNode,
 };
 
 fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {

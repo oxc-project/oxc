@@ -3,7 +3,7 @@ use std::{
     sync::mpsc,
 };
 
-use ignore::{overrides::Override, DirEntry};
+use ignore::{DirEntry, overrides::Override};
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::cli::IgnoreOptions;

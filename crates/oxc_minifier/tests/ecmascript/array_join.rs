@@ -1,6 +1,6 @@
 use oxc_allocator::{Allocator, CloneIn};
-use oxc_ast::{ast::*, AstBuilder};
-use oxc_ecmascript::ArrayJoin;
+use oxc_ast::{AstBuilder, ast::*};
+use oxc_ecmascript::{ArrayJoin, is_global_reference::WithoutGlobalReferenceInformation};
 use oxc_span::SPAN;
 
 #[test]
@@ -32,10 +32,10 @@ fn test() {
     array2.elements.push(ArrayExpressionElement::ObjectExpression(
         ast.alloc(ast.object_expression(SPAN, ast.vec(), None)),
     ));
-    let joined = array2.array_join(Some("_"));
+    let joined = array2.array_join(&WithoutGlobalReferenceInformation {}, Some("_"));
     assert_eq!(joined, Some("__42_foo_true_42_,,42,foo,true,42_[object Object]".to_string()));
 
-    let joined2 = array2.array_join(None);
+    let joined2 = array2.array_join(&WithoutGlobalReferenceInformation {}, None);
     // By default, in `Array.prototype.toString`, the separator is a comma. However, in `Array.prototype.join`, the separator is none if not given.
     assert_eq!(joined2, Some(",,42,foo,true,42,,,42,foo,true,42,[object Object]".to_string()));
 }

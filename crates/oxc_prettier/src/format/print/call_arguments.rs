@@ -4,11 +4,11 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    array, break_parent, conditional_group,
+    Format, Prettier, array, break_parent, conditional_group,
     format::print::{array, call_expression, misc},
     group, hardline, if_break, indent,
     ir::Doc,
-    line, softline, text, utils, Format, Prettier,
+    line, softline, text, utils,
 };
 
 pub fn print_call_arguments<'a>(

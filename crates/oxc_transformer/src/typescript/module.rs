@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -51,7 +51,7 @@ impl<'a> Traverse<'a> for TypeScriptModule<'a, '_> {
 impl<'a> TypeScriptModule<'a, '_> {
     /// Transform `export = expression` to `module.exports = expression`.
     fn transform_ts_export_assignment(
-        &mut self,
+        &self,
         export_assignment: &mut TSExportAssignment<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {

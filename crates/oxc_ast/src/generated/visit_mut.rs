@@ -3352,10 +3352,8 @@ pub mod walk_mut {
         // No `AstType` for this type
         match it {
             TSLiteral::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
-            TSLiteral::NullLiteral(it) => visitor.visit_null_literal(it),
             TSLiteral::NumericLiteral(it) => visitor.visit_numeric_literal(it),
             TSLiteral::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
-            TSLiteral::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
             TSLiteral::StringLiteral(it) => visitor.visit_string_literal(it),
             TSLiteral::TemplateLiteral(it) => visitor.visit_template_literal(it),
             TSLiteral::UnaryExpression(it) => visitor.visit_unary_expression(it),
@@ -3389,7 +3387,6 @@ pub mod walk_mut {
             TSType::TSLiteralType(it) => visitor.visit_ts_literal_type(it),
             TSType::TSMappedType(it) => visitor.visit_ts_mapped_type(it),
             TSType::TSNamedTupleMember(it) => visitor.visit_ts_named_tuple_member(it),
-            TSType::TSQualifiedName(it) => visitor.visit_ts_qualified_name(it),
             TSType::TSTemplateLiteralType(it) => visitor.visit_ts_template_literal_type(it),
             TSType::TSThisType(it) => visitor.visit_ts_this_type(it),
             TSType::TSTupleType(it) => visitor.visit_ts_tuple_type(it),

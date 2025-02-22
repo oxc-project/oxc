@@ -39,11 +39,16 @@ mod eslint {
     pub mod eqeqeq;
     pub mod for_direction;
     pub mod func_names;
+    pub mod func_style;
     pub mod getter_return;
+    pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
     pub mod init_declarations;
     pub mod max_classes_per_file;
+    pub mod max_depth;
     pub mod max_lines;
+    pub mod max_lines_per_function;
+    pub mod max_nested_callbacks;
     pub mod max_params;
     pub mod new_cap;
     pub mod no_alert;
@@ -128,6 +133,7 @@ mod eslint {
     pub mod no_undef;
     pub mod no_undefined;
     pub mod no_unexpected_multiline;
+    pub mod no_unneeded_ternary;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -328,6 +334,7 @@ mod unicorn {
     pub mod no_empty_file;
     pub mod no_hex_escape;
     pub mod no_instanceof_array;
+    pub mod no_invalid_fetch_options;
     pub mod no_invalid_remove_event_listener;
     pub mod no_length_as_slice_end;
     pub mod no_lonely_if;
@@ -542,15 +549,21 @@ oxc_macros::declare_all_lint_rules! {
     eslint::default_param_last,
     eslint::eqeqeq,
     eslint::for_direction,
+    eslint::func_style,
     eslint::func_names,
     eslint::getter_return,
+    eslint::grouped_accessor_pairs,
     eslint::guard_for_in,
     eslint::init_declarations,
+    eslint::max_nested_callbacks,
+    eslint::max_lines_per_function,
     eslint::max_classes_per_file,
+    eslint::max_depth,
     eslint::max_lines,
     eslint::max_params,
     eslint::new_cap,
     eslint::no_useless_call,
+    eslint::no_unneeded_ternary,
     eslint::no_extra_label,
     eslint::no_multi_assign,
     eslint::no_nested_ternary,
@@ -928,6 +941,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_invalid_fetch_options,
     unicorn::no_abusive_eslint_disable,
     unicorn::no_anonymous_default_export,
     unicorn::no_array_for_each,

@@ -99,9 +99,11 @@
 //! ESBuild does not handle `super()` in constructor params correctly:
 //! [ESBuild REPL](https://esbuild.github.io/try/#dAAwLjI0LjAALS10YXJnZXQ9ZXMyMDIwAGNsYXNzIEMgZXh0ZW5kcyBTIHsKICBwcm9wID0gZm9vKCk7CiAgY29uc3RydWN0b3IoeCA9IHN1cGVyKCksIHkgPSBzdXBlcigpKSB7fQp9Cg)
 
+use std::iter;
+
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
+use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut};
 use oxc_span::SPAN;
 use oxc_syntax::{
     node::NodeId,
@@ -111,8 +113,8 @@ use oxc_syntax::{
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use super::{
-    utils::{create_assignment, exprs_into_stmts},
     ClassProperties,
+    utils::{create_assignment, exprs_into_stmts},
 };
 
 /// Location to insert instance property initializers
@@ -316,7 +318,7 @@ impl<'a> ClassProperties<'a, '_> {
         let this_expr = ctx.ast.expression_this(SPAN);
         let body_exprs = ctx.ast.expression_sequence(
             SPAN,
-            ctx.ast.vec_from_iter([super_call].into_iter().chain(inits).chain([this_expr])),
+            ctx.ast.vec_from_iter(iter::once(super_call).chain(inits).chain(iter::once(this_expr))),
         );
         let body = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, body_exprs));
 

@@ -14,11 +14,13 @@ mod printer;
 mod utils;
 
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::{ast::Program, AstKind};
+use oxc_ast::{AstKind, ast::Program};
 use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
-pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
+pub use crate::options::{
+    ArrowParens, EndOfLine, ObjectWrap, PrettierOptions, QuoteProps, TrailingComma,
+};
 use crate::{format::Format, ir::Doc, printer::Printer};
 
 type GroupId = u32;
@@ -99,10 +101,9 @@ impl<'a> Prettier<'a> {
         (len >= 3).then(|| self.stack[len - 3])
     }
 
-    #[expect(unused)]
-    fn nth_parent_kind(&self, n: usize) -> Option<AstKind<'a>> {
+    fn parent_parent_parent_kind(&self) -> Option<AstKind<'a>> {
         let len = self.stack.len();
-        (len > n).then(|| self.stack[len - n - 1])
+        (len >= 4).then(|| self.stack[len - 4])
     }
 
     fn find_ancestor(&self, predicate: impl Fn(AstKind<'a>) -> bool) -> Option<AstKind<'a>> {

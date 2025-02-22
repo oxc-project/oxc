@@ -3,15 +3,15 @@ use std::sync::Arc;
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, AstBuilder, NONE};
+use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::identifier;
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
 use super::{
-    replace_global_defines::{DotDefine, ReplaceGlobalDefines},
     DotDefineMemberExpression,
+    replace_global_defines::{DotDefine, ReplaceGlobalDefines},
 };
 
 #[derive(Debug, Clone)]
@@ -176,12 +176,19 @@ impl<'a> InjectGlobalVariables<'a> {
             .iter()
             .filter(|i| {
                 // remove replaced `Buffer` for `Buffer` + Buffer.isBuffer` combo.
-                if let Some(replace_value) = &i.replace_value {
-                    self.replaced_dot_defines.iter().any(|d| d.1 == replace_value)
-                } else if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
-                    false
-                } else {
-                    scopes.root_unresolved_references().contains_key(i.specifier.local().as_str())
+                match &i.replace_value {
+                    Some(replace_value) => {
+                        self.replaced_dot_defines.iter().any(|d| d.1 == replace_value)
+                    }
+                    _ => {
+                        if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
+                            false
+                        } else {
+                            scopes
+                                .root_unresolved_references()
+                                .contains_key(i.specifier.local().as_str())
+                        }
+                    }
                 }
             })
             .cloned()

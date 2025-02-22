@@ -5,15 +5,15 @@ use std::{borrow::Cow, fmt::Write};
 use itertools::Itertools;
 
 use crate::{
+    Codegen, Generator, TYPESCRIPT_DEFINITIONS_PATH,
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field, should_skip_field,
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
-    Codegen, Generator, Result, TYPESCRIPT_DEFINITIONS_PATH,
 };
 
-use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
+use super::define_generator;
 
 /// Generator for TypeScript type definitions.
 pub struct TypescriptGenerator;
@@ -21,32 +21,6 @@ pub struct TypescriptGenerator;
 define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
-    /// Register that accept `#[ts]` attr on struct fields and enum variants.
-    fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[("ts", attr_positions!(StructField | EnumVariant))]
-    }
-
-    /// Parse `#[ts]` on struct field or enum variant.
-    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
-        // No need to check attr name is `ts`, because that's the only attribute this derive handles.
-        if !matches!(part, AttrPart::None) {
-            return Err(());
-        }
-
-        // Location can only be `StructField` or `EnumVariant`
-        match location {
-            AttrLocation::StructField(struct_def, field_index) => {
-                struct_def.fields[field_index].estree.is_ts = true;
-            }
-            AttrLocation::EnumVariant(enum_def, variant_index) => {
-                enum_def.variants[variant_index].estree.is_ts = true;
-            }
-            _ => unreachable!(),
-        }
-
-        Ok(())
-    }
-
     /// Generate Typescript type definitions for all AST types.
     fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
         let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
@@ -126,8 +100,34 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> O
     }
 
     let mut output_as_type = false;
-    for field in &struct_def.fields {
-        if !should_skip_field(field, schema) {
+
+    if let Some(field_indices) = &struct_def.estree.field_indices {
+        // Specified field order - output in this order
+        for &field_index in field_indices {
+            let field_index = field_index as usize;
+            if let Some(field) = struct_def.fields.get(field_index) {
+                generate_ts_type_def_for_struct_field(
+                    struct_def,
+                    field,
+                    &mut fields_str,
+                    &mut extends,
+                    &mut output_as_type,
+                    schema,
+                );
+            } else {
+                let (field_name, converter_name) =
+                    &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
+                generate_ts_type_def_for_added_struct_field(
+                    field_name,
+                    converter_name,
+                    &mut fields_str,
+                    schema,
+                );
+            }
+        }
+    } else {
+        // No specified field order - output in original order
+        for field in &struct_def.fields {
             generate_ts_type_def_for_struct_field(
                 struct_def,
                 field,
@@ -137,10 +137,15 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> O
                 schema,
             );
         }
-    }
 
-    if let Some(add_ts) = struct_def.estree.add_ts.as_deref() {
-        fields_str.push_str(&format!("\n\t{add_ts};"));
+        for (field_name, converter_name) in &struct_def.estree.add_fields {
+            generate_ts_type_def_for_added_struct_field(
+                field_name,
+                converter_name,
+                &mut fields_str,
+                schema,
+            );
+        }
     }
 
     let ts_def = if extends.is_empty() {
@@ -157,6 +162,28 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> O
 ///
 /// Field definition is appended to `fields_str` or `extends`.
 fn generate_ts_type_def_for_struct_field<'s>(
+    struct_def: &StructDef,
+    field: &'s FieldDef,
+    fields_str: &mut String,
+    extends: &mut Vec<Cow<'s, str>>,
+    output_as_type: &mut bool,
+    schema: &'s Schema,
+) {
+    if should_skip_field(field, schema) {
+        return;
+    }
+
+    generate_ts_type_def_for_struct_field_impl(
+        struct_def,
+        field,
+        fields_str,
+        extends,
+        output_as_type,
+        schema,
+    );
+}
+
+fn generate_ts_type_def_for_struct_field_impl<'s>(
     struct_def: &StructDef,
     field: &'s FieldDef,
     fields_str: &mut String,
@@ -209,6 +236,8 @@ fn generate_ts_type_def_for_struct_field<'s>(
         }
 
         Cow::Owned(field_type_name)
+    } else if let Some(converter_name) = &field.estree.via {
+        Cow::Borrowed(get_ts_type_for_converter(converter_name, schema))
     } else {
         get_field_type_name(field, schema)
     };
@@ -217,7 +246,7 @@ fn generate_ts_type_def_for_struct_field<'s>(
         if let TypeDef::Struct(field_type) = field.type_def(schema) {
             if let Some(flatten_field) = get_single_field(field_type, schema) {
                 // Only one field to flatten. Add it as a field on the parent type, instead of extending.
-                generate_ts_type_def_for_struct_field(
+                generate_ts_type_def_for_struct_field_impl(
                     field_type,
                     flatten_field,
                     fields_str,
@@ -239,6 +268,30 @@ fn generate_ts_type_def_for_struct_field<'s>(
 
     let field_camel_name = get_struct_field_name(field);
     fields_str.push_str(&format!("\n\t{field_camel_name}: {field_type_name};"));
+}
+
+/// Generate Typescript type definition for an extra struct field
+/// specified with `#[estree(add_fields(...))]`.
+fn generate_ts_type_def_for_added_struct_field(
+    field_name: &str,
+    converter_name: &str,
+    fields_str: &mut String,
+    schema: &Schema,
+) {
+    let ts_type = get_ts_type_for_converter(converter_name, schema);
+    fields_str.push_str(&format!("\n\t{field_name}: {ts_type};"));
+}
+
+/// Get the TS type definition for a converter.
+///
+/// Converters are specified with `#[estree(add_fields(field_name = converter_name))]`
+/// and `#[estree(via = converter_name)]`.
+fn get_ts_type_for_converter<'s>(converter_name: &str, schema: &'s Schema) -> &'s str {
+    let converter = schema.meta_by_name(converter_name);
+    let Some(ts_type) = &converter.estree.ts_type else {
+        panic!("No `ts_type` provided for ESTree converter `{}`", converter.name());
+    };
+    ts_type
 }
 
 /// Generate Typescript type definition for an enum.

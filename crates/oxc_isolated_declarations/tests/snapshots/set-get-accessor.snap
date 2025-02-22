@@ -12,6 +12,9 @@ declare class Cls {
 	set b(v: string);
 	private get c();
 	private set c(value);
+	accessor d: string;
+	private accessor e;
+	private static accessor f;
 }
 declare class ClsBad {
 	get a();
@@ -23,11 +26,11 @@ declare class ClsBad {
 
   x TS9009: At least one accessor must have an explicit return type annotation
   | with --isolatedDeclarations.
-    ,-[21:7]
- 20 | class ClsBad {
- 21 |   get a() {
+    ,-[25:7]
+ 24 | class ClsBad {
+ 25 |   get a() {
     :       ^
- 22 |     return;
+ 26 |     return;
     `----
 
 

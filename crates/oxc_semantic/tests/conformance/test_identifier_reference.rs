@@ -1,4 +1,4 @@
-use oxc_ast::{ast::IdentifierReference, AstKind};
+use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{NodeId, Reference};
 use oxc_span::GetSpan;

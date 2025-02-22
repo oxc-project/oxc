@@ -1,6 +1,6 @@
 use oxc_ast::ast::CallExpression;
 
-use super::{parse_jest_fn_call, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode};
+use super::{ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode, parse_jest_fn_call};
 use crate::LintContext;
 
 mod valid_vitest_fn;

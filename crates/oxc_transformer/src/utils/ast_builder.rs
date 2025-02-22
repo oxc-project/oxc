@@ -1,25 +1,25 @@
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::TraverseCtx;
 
 /// `object` -> `object.call`.
-pub(crate) fn create_member_callee<'a>(
+pub fn create_member_callee<'a>(
     object: Expression<'a>,
     property: &'static str,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
     Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
 }
 
 /// `object` -> `object.bind(this)`.
-pub(crate) fn create_bind_call<'a>(
+pub fn create_bind_call<'a>(
     callee: Expression<'a>,
     this: Expression<'a>,
     span: Span,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let callee = create_member_callee(callee, "bind", ctx);
     let arguments = ctx.ast.vec1(Argument::from(this));
@@ -27,11 +27,11 @@ pub(crate) fn create_bind_call<'a>(
 }
 
 /// `object` -> `object.call(...arguments)`.
-pub(crate) fn create_call_call<'a>(
+pub fn create_call_call<'a>(
     callee: Expression<'a>,
     this: Expression<'a>,
     span: Span,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let callee = create_member_callee(callee, "call", ctx);
     let arguments = ctx.ast.vec1(Argument::from(this));
@@ -42,7 +42,7 @@ pub(crate) fn create_call_call<'a>(
 /// with a body block.
 ///
 /// `expr` -> `(() => { return expr; })()`
-pub(crate) fn wrap_expression_in_arrow_function_iife<'a>(
+pub fn wrap_expression_in_arrow_function_iife<'a>(
     expr: Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
@@ -56,11 +56,11 @@ pub(crate) fn wrap_expression_in_arrow_function_iife<'a>(
 /// Wrap statements in an IIFE (immediately invoked function expression).
 ///
 /// `x; y; z;` -> `(() => { x; y; z; })()`
-pub(crate) fn wrap_statements_in_arrow_function_iife<'a>(
+pub fn wrap_statements_in_arrow_function_iife<'a>(
     stmts: ArenaVec<'a, Statement<'a>>,
     scope_id: ScopeId,
     span: Span,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let kind = FormalParameterKind::ArrowFormalParameters;
     let params = ctx.ast.alloc_formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
@@ -73,11 +73,21 @@ pub(crate) fn wrap_statements_in_arrow_function_iife<'a>(
 }
 
 /// `object` -> `object.prototype`.
-pub(crate) fn create_prototype_member<'a>(
+pub fn create_prototype_member<'a>(
     object: Expression<'a>,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
     let static_member = ctx.ast.member_expression_static(SPAN, object, property, false);
     Expression::from(static_member)
+}
+
+/// `object` -> `object.a`.
+pub fn create_property_access<'a>(
+    object: Expression<'a>,
+    property: &str,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
 }

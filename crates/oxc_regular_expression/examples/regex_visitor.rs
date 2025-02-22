@@ -2,8 +2,8 @@
 
 use oxc_allocator::Allocator;
 use oxc_regular_expression::{
-    visit::{RegExpAstKind, Visit},
     LiteralParser, Options,
+    visit::{RegExpAstKind, Visit},
 };
 use oxc_span::GetSpan;
 

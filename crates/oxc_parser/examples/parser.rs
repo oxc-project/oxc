@@ -43,7 +43,7 @@ fn main() -> Result<(), String> {
         if show_estree {
             Utf8ToUtf16::new().convert(&mut program);
         }
-        println!("{}", serde_json::to_string_pretty(&program).unwrap());
+        println!("{}", program.to_pretty_estree_ts_json());
     }
 
     if ret.errors.is_empty() {

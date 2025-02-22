@@ -2,10 +2,10 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 
 use crate::{
+    ModuleRecord,
     context::LintContext,
     module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile},
     rule::Rule,
-    ModuleRecord,
 };
 
 fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> OxcDiagnostic {

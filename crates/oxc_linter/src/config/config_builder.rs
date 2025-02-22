@@ -8,10 +8,10 @@ use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    config::{ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules},
-    rules::RULES,
     AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
     RuleWithSeverity,
+    config::{ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules},
+    rules::RULES,
 };
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
@@ -210,11 +210,14 @@ impl ConfigStoreBuilder {
         // NOTE: we may want to warn users if they're configuring a rule that does not exist.
         let rules_to_configure = all_rules.iter().filter(query);
         for rule in rules_to_configure {
-            if let Some(mut existing_rule) = self.rules.take(rule) {
-                existing_rule.severity = severity;
-                self.rules.insert(existing_rule);
-            } else {
-                self.rules.insert(RuleWithSeverity::new(rule.clone(), severity));
+            match self.rules.take(rule) {
+                Some(mut existing_rule) => {
+                    existing_rule.severity = severity;
+                    self.rules.insert(existing_rule);
+                }
+                _ => {
+                    self.rules.insert(RuleWithSeverity::new(rule.clone(), severity));
+                }
             }
         }
     }
@@ -589,13 +592,13 @@ mod test {
 
         // Enable eslint plugin. Since it's already enabled, this does nothing.
         assert!(initial_plugins.contains(LintPlugins::ESLINT)); // sanity check that eslint is
-                                                                // enabled
+        // enabled
         let builder = builder.and_plugins(LintPlugins::ESLINT, true);
         assert_eq!(initial_plugins, builder.plugins());
 
         // Disable import plugin. Since it's not already enabled, this is also a no-op.
         assert!(!builder.plugins().contains(LintPlugins::IMPORT)); // sanity check that it's not
-                                                                   // already enabled
+        // already enabled
         let builder = builder.and_plugins(LintPlugins::IMPORT, false);
         assert_eq!(initial_plugins, builder.plugins());
 

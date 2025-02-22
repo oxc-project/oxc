@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Expression, MemberExpression},
     AstKind,
+    ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer RegExp#test() over String#match() and RegExp#exec()")

@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Expression, MemberExpression},
     AstKind,
+    ast::{Expression, MemberExpression},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
-use crate::utils::{is_constructor_matching_name, ReactPerfRule};
+use crate::utils::{ReactPerfRule, is_constructor_matching_name};
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoNewFunctionAsProp;
@@ -81,11 +81,7 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 
             let member_expr = expr.callee.as_member_expression()?;
             let property_name = MemberExpression::static_property_name(member_expr);
-            if property_name == Some("bind") {
-                Some(expr.span)
-            } else {
-                None
-            }
+            if property_name == Some("bind") { Some(expr.span) } else { None }
         }
         Expression::NewExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Function") {

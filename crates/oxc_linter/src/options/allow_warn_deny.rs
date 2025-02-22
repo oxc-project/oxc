@@ -3,8 +3,8 @@ use std::{
     fmt::{self, Display},
 };
 
-use schemars::{schema::SchemaObject, JsonSchema};
-use serde::{de, Deserialize, Serialize};
+use schemars::{JsonSchema, schema::SchemaObject};
+use serde::{Deserialize, Serialize, de};
 use serde_json::{Number, Value};
 
 use oxc_diagnostics::{OxcDiagnostic, Severity};
@@ -167,8 +167,8 @@ impl JsonSchema for AllowWarnDeny {
         "AllowWarnDeny".into()
     }
 
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        let mut string_schema = <String as JsonSchema>::json_schema(gen).into_object();
+    fn json_schema(r#gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut string_schema = <String as JsonSchema>::json_schema(r#gen).into_object();
         string_schema.enum_values =
             Some(vec!["allow".into(), "off".into(), "warn".into(), "error".into(), "deny".into()]);
         string_schema.metadata().description = Some(
@@ -178,7 +178,7 @@ impl JsonSchema for AllowWarnDeny {
 - "error" or "deny": Turn the rule on as an error (will exit with a failure code)."#
                 .to_string(),
         );
-        let mut int_schema = <u32 as JsonSchema>::json_schema(gen).into_object();
+        let mut int_schema = <u32 as JsonSchema>::json_schema(r#gen).into_object();
         int_schema.number().minimum = Some(0.0);
         int_schema.number().maximum = Some(2.0);
         int_schema.metadata().description = Some(

@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to run `cargo run -p javascript_globals`.
 
-use phf::{phf_map, Map};
+use phf::{Map, phf_map};
 
 pub static GLOBALS: Map<&'static str, Map<&'static str, bool>> = phf_map! {
     "builtin" => phf_map! {

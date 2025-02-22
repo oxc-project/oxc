@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{ChainElement, Expression, UnaryOperator},
     AstKind,
+    ast::{ChainElement, Expression, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unused_expressions_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow unused expressions")
