@@ -1,7 +1,7 @@
 use ignore::gitignore::GitignoreBuilder;
 use oxc_ast::{
-    ast::{ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference},
     AstKind,
+    ast::{ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
