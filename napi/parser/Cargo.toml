@@ -24,13 +24,9 @@ doctest = false
 [dependencies]
 oxc = { workspace = true }
 oxc_ast = { workspace = true, features = ["serialize"] } # enable feature only
-oxc_data_structures = { workspace = true }
 oxc_napi = { workspace = true }
-oxc_sourcemap = { workspace = true, features = ["napi"] }
 
 rustc-hash = { workspace = true }
-self_cell = { workspace = true }
-string_wizard = { workspace = true, features = ["sourcemap", "serde"] }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
