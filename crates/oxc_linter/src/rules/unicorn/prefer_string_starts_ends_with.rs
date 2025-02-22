@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
     AstKind,
+    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,10 +8,10 @@ use oxc_regular_expression::ast::{BoundaryAssertionKind, Term};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
 };
 
 fn starts_with(span: Span) -> OxcDiagnostic {

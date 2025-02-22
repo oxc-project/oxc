@@ -2,20 +2,20 @@
 
 use cow_utils::CowUtils;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote, ToTokens};
-use syn::{parse_str, Expr, Ident};
+use quote::{ToTokens, format_ident, quote};
+use syn::{Expr, Ident, parse_str};
 
 use crate::{
-    output::{output_path, Output},
+    AST_CRATE_PATH, Codegen, Generator, Result,
+    output::{Output, output_path},
     schema::{
-        extensions::visit::{Scope, VisitorNames},
         Def, EnumDef, FieldDef, OptionDef, Schema, StructDef, TypeDef, VecDef,
+        extensions::visit::{Scope, VisitorNames},
     },
     utils::{create_ident, create_ident_tokens, create_safe_ident},
-    Codegen, Generator, Result, AST_CRATE_PATH,
 };
 
-use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
+use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
 /// Generator for `Visit` and `VisitMut` traits.
 pub struct VisitGenerator;

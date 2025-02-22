@@ -7,6 +7,7 @@ use quote::quote;
 use crate::utils::{create_ident_tokens, pluralize};
 
 use super::{
+    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
     extensions::{
         ast_builder::{AstBuilderStructField, AstBuilderType},
         clone_in::{CloneInStructField, CloneInType},
@@ -17,7 +18,6 @@ use super::{
         span::SpanStruct,
         visit::{VisitFieldOrVariant, VisitStruct},
     },
-    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
 };
 
 /// Type definition for a struct.

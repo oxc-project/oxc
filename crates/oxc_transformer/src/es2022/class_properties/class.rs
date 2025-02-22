@@ -3,7 +3,7 @@
 
 use indexmap::map::Entry;
 use oxc_allocator::{Address, GetAddress};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{
     node::NodeId,
@@ -13,12 +13,12 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
 
-use crate::{common::helper_loader::Helper, TransformCtx};
+use crate::{TransformCtx, common::helper_loader::Helper};
 
 use super::{
+    ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,
     constructor::InstanceInitsInsertLocation,
     utils::{create_assignment, create_variable_declaration, exprs_into_stmts},
-    ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,
 };
 
 // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside

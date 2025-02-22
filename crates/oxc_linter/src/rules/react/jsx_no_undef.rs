@@ -1,15 +1,15 @@
 use oxc_ast::{
-    ast::{IdentifierReference, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
     AstKind,
+    ast::{IdentifierReference, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn jsx_no_undef_diagnostic(ident_name: &str, span1: Span) -> OxcDiagnostic {

@@ -2,12 +2,11 @@ use bitflags::bitflags;
 use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::{GetSpan, Span, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 
 use crate::{
-    diagnostics,
+    ParserImpl, diagnostics,
     lexer::{Kind, Token},
-    ParserImpl,
 };
 
 bitflags! {
@@ -465,11 +464,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ => self.next_token_is_on_same_line_and_can_follow_modifier(),
         };
-        if b {
-            Ok(())
-        } else {
-            Err(self.unexpected())
-        }
+        if b { Ok(()) } else { Err(self.unexpected()) }
     }
 
     fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> Result<()> {

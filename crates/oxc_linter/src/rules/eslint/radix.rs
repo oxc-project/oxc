@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
     AstKind,
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn missing_parameters(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing parameters.").with_label(span)

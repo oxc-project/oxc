@@ -31,10 +31,11 @@ impl ScopeId {
     ///
     /// # SAFETY
     /// `idx` must not be `u32::MAX`.
-    #[expect(clippy::unnecessary_safety_comment)]
     pub const unsafe fn new_unchecked(idx: u32) -> Self {
-        // SAFETY: Caller must ensure `idx` is not `u32::MAX`
-        Self(NonMaxU32::new_unchecked(idx))
+        unsafe {
+            // SAFETY: Caller must ensure `idx` is not `u32::MAX`
+            Self(NonMaxU32::new_unchecked(idx))
+        }
     }
 }
 
@@ -86,11 +87,7 @@ impl ScopeFlags {
     #[must_use]
     #[inline]
     pub fn with_strict_mode(self, yes: bool) -> Self {
-        if yes {
-            self | Self::StrictMode
-        } else {
-            self
-        }
+        if yes { self | Self::StrictMode } else { self }
     }
 
     #[inline]

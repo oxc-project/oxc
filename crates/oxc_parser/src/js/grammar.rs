@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 
-use crate::{diagnostics, ParserImpl};
+use crate::{ParserImpl, diagnostics};
 
 pub trait CoverGrammar<'a, T>: Sized {
     fn cover(value: T, p: &mut ParserImpl<'a>) -> Result<Self>;

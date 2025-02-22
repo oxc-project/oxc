@@ -4,7 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
 
-use crate::{diagnostics, lexer::Kind, modifiers::Modifier, Context, ParserImpl};
+use crate::{Context, ParserImpl, diagnostics, lexer::Kind, modifiers::Modifier};
 
 impl<'a> ParserImpl<'a> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)

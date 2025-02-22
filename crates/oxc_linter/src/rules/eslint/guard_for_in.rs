@@ -1,9 +1,9 @@
-use oxc_ast::{ast::Statement, AstKind};
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn guard_for_in_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require `for-in` loops to include an `if` statement")

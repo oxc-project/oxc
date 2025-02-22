@@ -120,8 +120,8 @@ mod test {
     use oxc_span::{GetSpan, SourceType, Span};
 
     use crate::{
-        ast::{Expression, Statement},
         AstBuilder, Comment, CommentKind,
+        ast::{Expression, Statement},
     };
 
     use super::Utf8ToUtf16;
@@ -207,7 +207,7 @@ mod test {
     #[test]
     fn char_lengths() {
         macro_rules! assert_utf8_bytes_eq {
-            ($c:expr, $bytes:expr) => {{
+            ($c:expr_2021, $bytes:expr_2021) => {{
                 let mut buffer = [0; 4];
                 let bytes = $c.encode_utf8(&mut buffer).as_bytes();
                 assert!($bytes == bytes);

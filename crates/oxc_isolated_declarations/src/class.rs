@@ -1,16 +1,16 @@
 use std::borrow::Cow;
 
 use oxc_allocator::{Box, CloneIn};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use rustc_hash::FxHashMap;
 
 use crate::{
+    IsolatedDeclarations,
     diagnostics::{
         accessor_must_have_explicit_return_type, computed_property_name, extends_clause_expression,
         method_must_have_explicit_return_type, property_must_have_explicit_type,
     },
-    IsolatedDeclarations,
 };
 
 impl<'a> IsolatedDeclarations<'a> {

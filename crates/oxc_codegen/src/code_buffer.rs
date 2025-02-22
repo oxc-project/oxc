@@ -161,11 +161,7 @@ impl CodeBuffer {
     #[must_use = "Peeking is pointless if the peeked char isn't used"]
     pub fn peek_nth_byte_back(&self, n: usize) -> Option<u8> {
         let len = self.len();
-        if n < len {
-            Some(self.buf[len - 1 - n])
-        } else {
-            None
-        }
+        if n < len { Some(self.buf[len - 1 - n]) } else { None }
     }
 
     /// Peek the last byte from the end of the buffer.

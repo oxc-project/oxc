@@ -32,16 +32,16 @@ use std::mem;
 use serde::Deserialize;
 
 use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{
-    is_global_reference::WithoutGlobalReferenceInformation, BoundNames, ToJsString,
+    BoundNames, ToJsString, is_global_reference::WithoutGlobalReferenceInformation,
 };
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{common::helper_loader::Helper, TransformCtx};
+use crate::{TransformCtx, common::helper_loader::Helper};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]

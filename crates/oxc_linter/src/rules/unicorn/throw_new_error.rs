@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{match_member_expression, Expression},
     AstKind,
+    ast::{Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,10 +9,10 @@ use oxc_span::Span;
 use regex::Regex;
 
 use crate::{
+    AstNode,
     ast_util::{outermost_paren, outermost_paren_parent},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 fn throw_new_error_diagnostic(span: Span) -> OxcDiagnostic {

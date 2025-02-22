@@ -1,14 +1,15 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
+    AstKind,
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
         JSXChild, JSXElement, JSXElementName, JSXExpression, JSXMemberExpression,
         JSXMemberExpressionObject, JSXOpeningElement, MemberExpression,
     },
-    match_member_expression, AstKind,
+    match_member_expression,
 };
-use oxc_ecmascript::{is_global_reference::WithoutGlobalReferenceInformation, ToBoolean};
+use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};

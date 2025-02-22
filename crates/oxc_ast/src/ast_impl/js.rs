@@ -352,11 +352,7 @@ impl<'a> Expression<'a> {
     ///
     /// See [`CallExpression::is_require_call`] for details of the exact patterns that match.
     pub fn is_require_call(&self) -> bool {
-        if let Self::CallExpression(call_expr) = self {
-            call_expr.is_require_call()
-        } else {
-            false
-        }
+        if let Self::CallExpression(call_expr) = self { call_expr.is_require_call() } else { false }
     }
 
     /// Returns `true` if this is an [assignment expression](AssignmentExpression).

@@ -250,8 +250,8 @@ impl schemars::JsonSchema for CompactStr {
         Cow::Borrowed("String")
     }
 
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        <&str>::json_schema(gen)
+    fn json_schema(g: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        <&str>::json_schema(g)
     }
 }
 

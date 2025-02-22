@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
     AstKind, CommentKind,
+    ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     fixer::Fix,
     rule::Rule,
-    AstNode,
 };
 
 fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnostic {

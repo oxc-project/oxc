@@ -4,7 +4,7 @@ use num_traits::{One, Zero};
 use oxc_ast::ast::{BigIntLiteral, Expression};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{is_global_reference::IsGlobalReference, StringToBigInt, ToBoolean, ToJsString};
+use crate::{StringToBigInt, ToBoolean, ToJsString, is_global_reference::IsGlobalReference};
 
 /// `ToBigInt`
 ///
@@ -33,21 +33,19 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
                     Some(BigInt::zero())
                 }
             }
-            Expression::UnaryExpression(unary_expr) => {
-                match unary_expr.operator {
-                    UnaryOperator::LogicalNot => self
-                        .to_boolean(is_global_reference)
-                        .map(|boolean| if boolean { BigInt::one() } else { BigInt::zero() }),
-                    UnaryOperator::UnaryNegation => {
-                        unary_expr.argument.to_big_int(is_global_reference).map(std::ops::Neg::neg)
-                    }
-                    UnaryOperator::BitwiseNot => {
-                        unary_expr.argument.to_big_int(is_global_reference).map(std::ops::Not::not)
-                    }
-                    UnaryOperator::UnaryPlus => unary_expr.argument.to_big_int(is_global_reference),
-                    _ => None,
+            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+                UnaryOperator::LogicalNot => self
+                    .to_boolean(is_global_reference)
+                    .map(|boolean| if boolean { BigInt::one() } else { BigInt::zero() }),
+                UnaryOperator::UnaryNegation => {
+                    unary_expr.argument.to_big_int(is_global_reference).map(std::ops::Neg::neg)
                 }
-            }
+                UnaryOperator::BitwiseNot => {
+                    unary_expr.argument.to_big_int(is_global_reference).map(std::ops::Not::not)
+                }
+                UnaryOperator::UnaryPlus => unary_expr.argument.to_big_int(is_global_reference),
+                _ => None,
+            },
             Expression::StringLiteral(string_literal) => {
                 string_literal.value.as_str().string_to_big_int()
             }

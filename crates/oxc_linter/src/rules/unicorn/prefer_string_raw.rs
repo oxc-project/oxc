@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName},
     AstKind,
+    ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{StringCharAt, StringCharAtResult};
@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::keyword::RESERVED_KEYWORDS;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_string_raw(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r"`String.raw` should be used to avoid escaping `\`.").with_label(span)

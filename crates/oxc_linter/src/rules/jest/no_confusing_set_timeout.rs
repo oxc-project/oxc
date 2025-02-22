@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_ast::{ast::MemberExpression, AstKind};
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, ReferenceId};
@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{collect_possible_jest_call_node, parse_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, collect_possible_jest_call_node, parse_jest_fn_call},
 };
 
 fn no_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {

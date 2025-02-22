@@ -1,15 +1,15 @@
 use std::ops::Deref;
 
 use oxc_ast::{
-    ast::{Argument, ArrowFunctionExpression, Expression, Function},
     AstKind,
+    ast::{Argument, ArrowFunctionExpression, Expression, Function},
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, utils, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAsyncEndpointHandlers(Box<NoAsyncEndpointHandlersConfig>);

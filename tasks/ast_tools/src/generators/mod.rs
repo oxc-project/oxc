@@ -1,7 +1,7 @@
 use crate::{
-    output::Output,
-    parse::attr::{attr_positions, AttrLocation, AttrPart, AttrPositions},
     Codegen, Result, Runner, Schema,
+    output::Output,
+    parse::attr::{AttrLocation, AttrPart, AttrPositions, attr_positions},
 };
 
 mod assert_layouts;

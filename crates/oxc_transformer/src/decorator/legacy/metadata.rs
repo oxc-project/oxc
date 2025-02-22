@@ -93,7 +93,7 @@ use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{context::TransformCtx, utils::ast_builder::create_property_access, Helper};
+use crate::{Helper, context::TransformCtx, utils::ast_builder::create_property_access};
 
 pub struct LegacyDecoratorMetadata<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,

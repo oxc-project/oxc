@@ -13,7 +13,7 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::{scopes_collector::ChildScopeCollector, BoundIdentifier};
+use crate::{BoundIdentifier, scopes_collector::ChildScopeCollector};
 
 /// Traverse scope context.
 ///

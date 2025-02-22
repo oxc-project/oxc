@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::CompilerAssumptions;
 

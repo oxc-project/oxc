@@ -19,7 +19,7 @@ pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
-pub use settings::{jsdoc::JSDocPluginSettings, OxlintSettings};
+pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
 
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {

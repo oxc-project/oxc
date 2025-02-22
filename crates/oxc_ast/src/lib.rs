@@ -83,7 +83,7 @@ pub use crate::{
     ast_builder::AstBuilder,
     ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
-    trivia::{comments_range, has_comments_between, CommentsRange},
+    trivia::{CommentsRange, comments_range, has_comments_between},
     visit::{Visit, VisitMut},
 };
 

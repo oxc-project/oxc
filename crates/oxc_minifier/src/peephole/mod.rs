@@ -23,7 +23,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_syntax::{es_target::ESTarget, scope::ScopeId};
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
 
 use crate::ctx::Ctx;
 
@@ -110,13 +110,18 @@ impl<'a> PeepholeOptimizations {
         F: Fn(&'x A) -> Option<RetF>,
         G: Fn(&'x A) -> Option<RetG>,
     {
-        if let Some(a) = check_a(pair.0) {
-            if let Some(b) = check_b(pair.1) {
-                return Some((a, b));
+        match check_a(pair.0) {
+            Some(a) => {
+                if let Some(b) = check_b(pair.1) {
+                    return Some((a, b));
+                }
             }
-        } else if let Some(a) = check_a(pair.1) {
-            if let Some(b) = check_b(pair.0) {
-                return Some((a, b));
+            _ => {
+                if let Some(a) = check_a(pair.1) {
+                    if let Some(b) = check_b(pair.0) {
+                        return Some((a, b));
+                    }
+                }
             }
         }
         None

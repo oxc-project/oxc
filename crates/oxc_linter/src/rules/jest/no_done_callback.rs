@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, FormalParameters},
     AstKind,
+    ast::{Argument, CallExpression, Expression, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_node_name, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, parse_general_jest_fn_call,
     },
 };
 

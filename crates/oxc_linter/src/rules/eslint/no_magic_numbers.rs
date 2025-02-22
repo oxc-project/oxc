@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, Expression, MemberExpression, VariableDeclarationKind},
     AstKind,
+    ast::{AssignmentTarget, Expression, MemberExpression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,7 +8,7 @@ use oxc_semantic::AstNodes;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 enum NoMagicNumberReportReason {
     MustUseConst,

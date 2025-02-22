@@ -3,7 +3,7 @@ use std::{
     iter::FusedIterator,
 };
 
-use crate::{codegen::DeriveId, DERIVES};
+use crate::{DERIVES, codegen::DeriveId};
 
 /// Number of bytes required for bit set which can represent all [`DeriveId`]s.
 const NUM_BYTES: usize = (DERIVES.len() + 7) / 8;

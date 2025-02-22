@@ -5,12 +5,12 @@ use std::{borrow::Cow, fmt::Write};
 use itertools::Itertools;
 
 use crate::{
+    Codegen, Generator, TYPESCRIPT_DEFINITIONS_PATH,
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field, should_skip_field,
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
-    Codegen, Generator, TYPESCRIPT_DEFINITIONS_PATH,
 };
 
 use super::define_generator;

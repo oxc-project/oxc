@@ -72,7 +72,10 @@ impl ModuleCache {
         let cache_hit = if self.modules.pin().contains_key(path.as_os_str()) {
             true
         } else {
-            let i = if let CacheStateEntry::PendingStore(i) = *state { i.get() } else { 0 };
+            let i = match *state {
+                CacheStateEntry::PendingStore(i) => i.get(),
+                CacheStateEntry::ReadyToConstruct => 0,
+            };
             // SAFETY: 1 + any natural number is always non-zero.
             *state = CacheStateEntry::PendingStore(unsafe { NonZeroUsize::new_unchecked(i + 1) });
             false

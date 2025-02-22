@@ -95,7 +95,7 @@ use indexmap::IndexMap;
 use rustc_hash::FxBuildHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
-use oxc_ast::{ast::*, visit::walk, Visit};
+use oxc_ast::{Visit, ast::*, visit::walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_span::CompactStr;
@@ -323,11 +323,7 @@ rebuilt        : {value_rebuilt}
 
     /// Get errors
     fn get(self) -> Option<Vec<OxcDiagnostic>> {
-        if self.0.is_empty() {
-            None
-        } else {
-            Some(self.0)
-        }
+        if self.0.is_empty() { None } else { Some(self.0) }
     }
 }
 

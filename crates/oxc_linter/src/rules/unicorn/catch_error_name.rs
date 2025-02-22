@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{Argument, BindingPatternKind, Expression},
     AstKind,
+    ast::{Argument, BindingPatternKind, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn catch_error_name_diagnostic(
     caught_ident: &str,

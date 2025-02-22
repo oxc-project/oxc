@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Argument, MemberExpression},
     AstKind,
+    ast::{Argument, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_invalid_remove_event_listener_diagnostic(call_span: Span, arg_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid `removeEventListener` call.")

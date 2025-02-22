@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{JSXChild, JSXElementName},
     AstKind,
+    ast::{JSXChild, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     globals::HTML_TAG,
     rule::Rule,
-    AstNode,
 };
 
 fn self_closing_comp_diagnostic(span: Span) -> OxcDiagnostic {

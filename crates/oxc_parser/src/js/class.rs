@@ -5,10 +5,9 @@ use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    diagnostics,
+    Context, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
-    Context, ParserImpl, StatementContext,
 };
 
 type Extends<'a> =

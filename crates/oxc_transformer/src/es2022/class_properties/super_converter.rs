@@ -4,11 +4,11 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_traverse::{ast_operations::get_var_name_from_node, TraverseCtx};
+use oxc_traverse::{TraverseCtx, ast_operations::get_var_name_from_node};
 
-use crate::{utils::ast_builder::create_prototype_member, Helper};
+use crate::{Helper, utils::ast_builder::create_prototype_member};
 
-use super::{utils::create_assignment, ClassProperties};
+use super::{ClassProperties, utils::create_assignment};
 
 #[derive(Debug)]
 pub(super) enum ClassPropertiesSuperConverterMode {

@@ -4,16 +4,16 @@ use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
 use crate::{
+    FrameworkFlags, RuleWithSeverity,
     config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{FixKind, Message},
     frameworks,
     module_record::ModuleRecord,
     options::LintOptions,
-    FrameworkFlags, RuleWithSeverity,
 };
 
-use super::{plugin_name_to_prefix, LintContext};
+use super::{LintContext, plugin_name_to_prefix};
 
 /// Stores shared information about a file being linted.
 ///

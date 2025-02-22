@@ -1,14 +1,14 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{BinaryExpression, BinaryOperator, Expression},
     AstKind,
+    ast::{BinaryExpression, BinaryOperator, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
 fn prefer_math_min_max_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(

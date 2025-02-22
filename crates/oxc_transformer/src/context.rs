@@ -8,12 +8,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
 use crate::{
+    CompilerAssumptions, Module, TransformOptions,
     common::{
         helper_loader::HelperLoaderStore, module_imports::ModuleImportsStore,
         statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
         var_declarations::VarDeclarationsStore,
     },
-    CompilerAssumptions, Module, TransformOptions,
 };
 
 pub struct TransformCtx<'a> {

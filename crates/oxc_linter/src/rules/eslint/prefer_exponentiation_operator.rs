@@ -1,11 +1,11 @@
-use oxc_ast::{ast::Expression, match_member_expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression, match_member_expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule,
-    AstNode,
+    AstNode, ast_util::is_method_call, context::LintContext, globals::GLOBAL_OBJECT_NAMES,
+    rule::Rule,
 };
 
 #[derive(Debug, Default, Clone)]

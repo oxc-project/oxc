@@ -1,5 +1,5 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
-use oxc_ast::{ast::Expression, AstKind};
+use crate::{AstNode, context::LintContext, rule::Rule};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -98,7 +98,10 @@ fn test() {
         ("var a = x === 2 ? 'Yes' : false;", None),
         ("var a = x === 2 ? 'true' : 'false';", None),
         ("var a = foo ? foo : bar;", None),
-        ("var value = 'a';var canSet = true;var result = value || (canSet ? 'unset' : 'can not set')", None),
+        (
+            "var value = 'a';var canSet = true;var result = value || (canSet ? 'unset' : 'can not set')",
+            None,
+        ),
         ("var a = foo ? bar : foo;", None),
         ("foo ? bar : foo;", None),
         ("var a = f(x ? x : 1)", None),
@@ -107,7 +110,7 @@ fn test() {
         ("var a = foo ? 'Yes' : foo;", None),
         ("var a = foo ? 'Yes' : foo;", Some(serde_json::json!([{ "defaultAssignment": false }]))),
         ("var a = foo ? bar : foo;", Some(serde_json::json!([{ "defaultAssignment": false }]))),
-        ("foo ? bar : foo;", Some(serde_json::json!([{ "defaultAssignment": false }])))
+        ("foo ? bar : foo;", Some(serde_json::json!([{ "defaultAssignment": false }]))),
     ];
 
     let fail = vec![

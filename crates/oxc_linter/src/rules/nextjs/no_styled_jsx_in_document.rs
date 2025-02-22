@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXElementName},
     AstKind,
+    ast::{JSXAttributeItem, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_styled_jsx_in_document_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`styled-jsx` should not be used in `pages/_document.js`")

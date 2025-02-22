@@ -9,8 +9,8 @@ use itertools::Itertools;
 use nonmax::NonMaxU32;
 use oxc_index::{Idx, IndexVec};
 use petgraph::{
-    visit::{Control, DfsEvent, EdgeRef},
     Direction,
+    visit::{Control, DfsEvent, EdgeRef},
 };
 
 pub mod graph {

@@ -1,12 +1,12 @@
 use std::{borrow::Cow, ops::Deref, path::Path};
 
 use nonmax::NonMaxU32;
-use schemars::{gen, schema::Schema, JsonSchema};
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use schemars::{JsonSchema, r#gen, schema::Schema};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
 use oxc_index::{Idx, IndexVec};
 
-use crate::{config::OxlintRules, LintPlugins, OxlintEnv, OxlintGlobals};
+use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct OverrideId(NonMaxU32);
@@ -59,8 +59,8 @@ impl JsonSchema for OxlintOverrides {
         Cow::Borrowed("OxlintOverrides")
     }
 
-    fn json_schema(gen: &mut gen::SchemaGenerator) -> Schema {
-        gen.subschema_for::<Vec<OxlintOverride>>()
+    fn json_schema(r#gen: &mut r#gen::SchemaGenerator) -> Schema {
+        r#gen.subschema_for::<Vec<OxlintOverride>>()
     }
 }
 
@@ -148,8 +148,8 @@ impl JsonSchema for GlobSet {
         Cow::Borrowed("GlobSet")
     }
 
-    fn json_schema(gen: &mut gen::SchemaGenerator) -> Schema {
-        gen.subschema_for::<Vec<String>>()
+    fn json_schema(r#gen: &mut r#gen::SchemaGenerator) -> Schema {
+        r#gen.subschema_for::<Vec<String>>()
     }
 }
 

@@ -2,11 +2,11 @@ use std::{fs, path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
+    VisitMut,
     ast::{
         Argument, ArrayExpressionElement, CallExpression, Expression, ObjectPropertyKind,
         VariableDeclarator,
     },
-    VisitMut,
 };
 use oxc_parser::Parser;
 use oxc_prettier::{

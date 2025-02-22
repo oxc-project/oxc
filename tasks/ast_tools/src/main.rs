@@ -196,11 +196,11 @@ mod parse;
 mod schema;
 mod utils;
 
-use codegen::{get_runners, Codegen, Runner};
+use codegen::{Codegen, Runner, get_runners};
 use derives::Derive;
 use generators::Generator;
 use logger::{log, log_failed, log_result, log_success, logln};
-use output::{output_path, Output, RawOutput};
+use output::{Output, RawOutput, output_path};
 use parse::parse_files;
 use schema::Schema;
 use utils::create_ident;

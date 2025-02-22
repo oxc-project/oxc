@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{ClassElement, PropertyKey, TSSignature, TSType, TSTypeName},
     AstKind,
+    ast::{ClassElement, PropertyKey, TSSignature, TSType, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_misused_new_interface_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Interfaces cannot be constructed, only classes.")

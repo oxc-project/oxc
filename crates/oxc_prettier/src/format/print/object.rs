@@ -1,13 +1,13 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    array,
+    Format, Prettier, array,
     format::print::{function_parameters, misc},
     group, hardline, if_break, indent,
     ir::Doc,
-    line, softline, text, Format, Prettier,
+    line, softline, text,
 };
 
 pub enum ObjectLike<'a, 'b> {

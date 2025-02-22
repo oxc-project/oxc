@@ -8,6 +8,7 @@ use syn::Ident;
 use crate::utils::{create_ident, pluralize};
 
 use super::{
+    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
     extensions::{
         ast_builder::AstBuilderType,
         clone_in::CloneInType,
@@ -17,7 +18,6 @@ use super::{
         layout::Layout,
         visit::{VisitEnum, VisitFieldOrVariant},
     },
-    Def, Derives, File, FileId, Schema, TypeDef, TypeId,
 };
 
 pub type Discriminant = u8;

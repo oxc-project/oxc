@@ -50,11 +50,11 @@
 use std::mem;
 
 use oxc_allocator::CloneIn;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, TransformCtx};
+use crate::{TransformCtx, utils::ast_builder::wrap_expression_in_arrow_function_iife};
 
 #[derive(Debug)]
 enum CallContext<'a> {

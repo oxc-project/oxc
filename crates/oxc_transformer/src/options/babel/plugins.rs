@@ -1,8 +1,8 @@
 use serde::Deserialize;
 
 use crate::{
-    es2015::ArrowFunctionsOptions, es2018::ObjectRestSpreadOptions, es2022::ClassPropertiesOptions,
-    jsx::JsxOptions, DecoratorOptions, TypeScriptOptions,
+    DecoratorOptions, TypeScriptOptions, es2015::ArrowFunctionsOptions,
+    es2018::ObjectRestSpreadOptions, es2022::ClassPropertiesOptions, jsx::JsxOptions,
 };
 
 use super::PluginPresetEntries;

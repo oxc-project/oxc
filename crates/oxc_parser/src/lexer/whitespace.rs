@@ -1,6 +1,6 @@
 use super::{
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
     Kind, Lexer,
+    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =

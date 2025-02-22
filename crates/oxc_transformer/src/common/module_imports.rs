@@ -34,9 +34,9 @@
 
 use std::cell::RefCell;
 
-use indexmap::{map::Entry as IndexMapEntry, IndexMap};
+use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;

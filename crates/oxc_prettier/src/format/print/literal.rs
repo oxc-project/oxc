@@ -5,9 +5,9 @@ use oxc_allocator::String;
 use oxc_span::Span;
 
 use crate::{
-    dynamic_text,
+    Prettier, dynamic_text,
     ir::{Doc, JoinSeparator},
-    join, Prettier,
+    join,
 };
 
 /// Print quoted string.

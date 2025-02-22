@@ -1,10 +1,10 @@
 use oxc_ast::{
-    ast::{Argument, Expression, MethodDefinitionKind},
     AstKind,
+    ast::{Argument, Expression, MethodDefinitionKind},
 };
 use oxc_cfg::{
-    graph::visit::{neighbors_filtered_by_edge_weight, EdgeRef},
     BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind,
+    graph::visit::{EdgeRef, neighbors_filtered_by_edge_weight},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,7 +12,7 @@ use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_this_before_super_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected to always call super() before this/super property access.")

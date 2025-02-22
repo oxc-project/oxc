@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, Expression, FormalParameter},
     AstKind,
+    ast::{Argument, Expression, FormalParameter},
 };
 use oxc_span::Atom;
 use phf::{phf_set, set::Set};

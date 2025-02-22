@@ -4,7 +4,7 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
-use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_span::{Atom, GetSpan, SPAN, Span};
 use oxc_syntax::{
     operator::AssignmentOperator,
     reference::ReferenceFlags,
@@ -422,11 +422,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         // Remove declare declaration
         stmts.retain(
             |stmt| {
-                if let Some(decl) = stmt.as_declaration() {
-                    !decl.declare()
-                } else {
-                    true
-                }
+                if let Some(decl) = stmt.as_declaration() { !decl.declare() } else { true }
             },
         );
     }

@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{match_assignment_target_pattern, Argument, AssignmentTarget, Expression},
     AstKind,
+    ast::{Argument, AssignmentTarget, Expression, match_assignment_target_pattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unsafe_optional_chaining_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe usage of optional chaining")

@@ -1,8 +1,8 @@
 use std::{borrow::Cow, fmt};
 
 use serde::{
-    de::{self, Visitor},
     Deserialize, Deserializer,
+    de::{self, Visitor},
 };
 
 fn default_for_jsx_pragma() -> Cow<'static, str> {
@@ -106,11 +106,7 @@ where
         where
             E: de::Error,
         {
-            if value {
-                Ok(Some(RewriteExtensionsMode::Rewrite))
-            } else {
-                Ok(None)
-            }
+            if value { Ok(Some(RewriteExtensionsMode::Rewrite)) } else { Ok(None) }
         }
 
         fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>

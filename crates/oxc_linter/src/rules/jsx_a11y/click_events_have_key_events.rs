@@ -4,6 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
@@ -11,7 +12,6 @@ use crate::{
         get_element_type, has_jsx_prop, is_hidden_from_screen_reader, is_interactive_element,
         is_presentation_role,
     },
-    AstNode,
 };
 
 fn click_events_have_key_events_diagnostic(span: Span) -> OxcDiagnostic {

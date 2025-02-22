@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         ArrowFunctionExpression, BindingPatternKind, Expression, FunctionType, JSXAttributeItem,
         PropertyKind, Statement, TSType, TSTypeName,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,13 +12,13 @@ use oxc_syntax::operator::UnaryOperator;
 use rustc_hash::FxHashSet;
 
 use crate::{
+    AstNode,
     ast_util::outermost_paren_parent,
     context::{ContextHost, LintContext},
     rule::Rule,
     rules::eslint::array_callback_return::return_checker::{
-        check_statement, StatementReturnStatus,
+        StatementReturnStatus, check_statement,
     },
-    AstNode,
 };
 
 #[derive(Debug, Default, Clone)]

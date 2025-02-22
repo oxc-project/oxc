@@ -1,14 +1,14 @@
 use std::str::Chars;
 
 use oxc_ast::{
-    ast::{StringLiteral, TemplateLiteral},
     AstKind,
+    ast::{StringLiteral, TemplateLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn escape_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use uppercase characters for the value of the escape sequence.")
@@ -126,11 +126,7 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
         }
     }
 
-    if result == value {
-        None
-    } else {
-        Some(result)
-    }
+    if result == value { None } else { Some(result) }
 }
 impl Rule for EscapeCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

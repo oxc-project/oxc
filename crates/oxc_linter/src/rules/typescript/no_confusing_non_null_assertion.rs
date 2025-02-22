@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Expression, SimpleAssignmentTarget},
     AstKind,
+    ast::{Expression, SimpleAssignmentTarget},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,9 +8,9 @@ use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 #[derive(Debug, Default, Clone)]

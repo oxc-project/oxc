@@ -2,21 +2,19 @@ use std::fs;
 
 use indexmap::map::Entry;
 use syn::{
-    braced,
+    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Variant,
+    Visibility, WhereClause, braced,
     parse::{Parse, ParseBuffer},
     parse_file,
     punctuated::Punctuated,
-    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Token, Variant,
-    Visibility, WhereClause,
 };
 
 use crate::schema::FileId;
 
 use super::{
-    ident_name,
+    FxIndexMap, ident_name,
     parse::convert_expr_to_string,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
-    FxIndexMap,
 };
 
 /// Load file and extract structs and enums with `#[ast]` or `#[ast_meta]` attributes.
@@ -107,17 +105,23 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
             let mut variants = Punctuated::new();
             let mut inherits = vec![];
             while !content.is_empty() {
-                if let Ok(variant) = Variant::parse(&content) {
-                    variants.push_value(variant);
-                    let punct = content.parse()?;
-                    variants.push_punct(punct);
-                } else if content.parse::<Token![@]>().is_ok()
-                    && content.parse::<Ident>().is_ok_and(|id| id == "inherit")
-                {
-                    let inherit_ident = content.parse::<Ident>().expect("Invalid `@inherits`");
-                    inherits.push(ident_name(&inherit_ident));
-                } else {
-                    panic!("Invalid `inherit_variants!` macro usage");
+                match Variant::parse(&content) {
+                    Ok(variant) => {
+                        variants.push_value(variant);
+                        let punct = content.parse()?;
+                        variants.push_punct(punct);
+                    }
+                    _ => {
+                        if content.parse::<Token![@]>().is_ok()
+                            && content.parse::<Ident>().is_ok_and(|id| id == "inherit")
+                        {
+                            let inherit_ident =
+                                content.parse::<Ident>().expect("Invalid `@inherits`");
+                            inherits.push(ident_name(&inherit_ident));
+                        } else {
+                            panic!("Invalid `inherit_variants!` macro usage");
+                        }
+                    }
                 }
             }
 

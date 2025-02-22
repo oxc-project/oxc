@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{BindingIdentifier, BindingPatternKind},
     AstKind,
+    ast::{BindingIdentifier, BindingPatternKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

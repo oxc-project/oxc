@@ -1,11 +1,7 @@
 use oxc_ast::Comment;
 
 fn line_has_just_comment(line: &str, comment_chars: &str) -> bool {
-    if let Some(line) = line.trim().strip_prefix(comment_chars) {
-        line.is_empty()
-    } else {
-        false
-    }
+    if let Some(line) = line.trim().strip_prefix(comment_chars) { line.is_empty() } else { false }
 }
 
 pub fn count_comment_lines(comment: &Comment, source_text: &str) -> usize {

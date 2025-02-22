@@ -42,7 +42,7 @@
 use itoa::Buffer as ItoaBuffer;
 
 use oxc_allocator::String as ArenaString;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::{Traverse, TraverseCtx};

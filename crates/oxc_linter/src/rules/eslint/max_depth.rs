@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{ast_util::is_function_node, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_function_node, context::LintContext, rule::Rule};
 
 fn max_depth_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Blocks are nested too deeply ({num}). Maximum allowed is {max}."))
@@ -157,34 +157,85 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("function foo() { if (true) { if (false) { if (true) { } } } }", Some(serde_json::json!([3]))),
-        ("function foo() { if (true) { } else if (false) { } else if (true) { } else if (false) {} }", Some(serde_json::json!([3]))),
-        ("var foo = () => { if (true) { if (false) { if (true) { } } } }", Some(serde_json::json!([3]))), // { "ecmaVersion": 6 },
+        (
+            "function foo() { if (true) { if (false) { if (true) { } } } }",
+            Some(serde_json::json!([3])),
+        ),
+        (
+            "function foo() { if (true) { } else if (false) { } else if (true) { } else if (false) {} }",
+            Some(serde_json::json!([3])),
+        ),
+        (
+            "var foo = () => { if (true) { if (false) { if (true) { } } } }",
+            Some(serde_json::json!([3])),
+        ), // { "ecmaVersion": 6 },
         ("function foo() { if (true) { if (false) { if (true) { } } } }", None),
-        ("function foo() { if (true) { if (false) { if (true) { } } } }", Some(serde_json::json!([{ "max": 3 }]))),
+        (
+            "function foo() { if (true) { if (false) { if (true) { } } } }",
+            Some(serde_json::json!([{ "max": 3 }])),
+        ),
         ("class C { static { if (1) { if (2) {} } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
-        ("class C { static { if (1) { if (2) {} } if (1) { if (2) {} } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
-        ("class C { static { if (1) { if (2) {} } } static { if (1) { if (2) {} } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
+        (
+            "class C { static { if (1) { if (2) {} } if (1) { if (2) {} } } }",
+            Some(serde_json::json!([2])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "class C { static { if (1) { if (2) {} } } static { if (1) { if (2) {} } } }",
+            Some(serde_json::json!([2])),
+        ), // { "ecmaVersion": 2022 },
         ("if (1) { class C { static { if (1) { if (2) {} } } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
-        ("function foo() { if (1) { class C { static { if (1) { if (2) {} } } } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
-        ("function foo() { if (1) { if (2) { class C { static { if (1) { if (2) {} } if (1) { if (2) {} } } } } } if (1) { if (2) {} } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 }
+        (
+            "function foo() { if (1) { class C { static { if (1) { if (2) {} } } } } }",
+            Some(serde_json::json!([2])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "function foo() { if (1) { if (2) { class C { static { if (1) { if (2) {} } if (1) { if (2) {} } } } } } if (1) { if (2) {} } }",
+            Some(serde_json::json!([2])),
+        ), // { "ecmaVersion": 2022 }
     ];
 
     let fail = vec![
-        ("function foo() { if (true) { if (false) { if (true) { } } } }", Some(serde_json::json!([2]))),
-        ("var foo = () => { if (true) { if (false) { if (true) { } } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 6 },
+        (
+            "function foo() { if (true) { if (false) { if (true) { } } } }",
+            Some(serde_json::json!([2])),
+        ),
+        (
+            "var foo = () => { if (true) { if (false) { if (true) { } } } }",
+            Some(serde_json::json!([2])),
+        ), // { "ecmaVersion": 6 },
         ("function foo() { if (true) {} else { for(;;) {} } }", Some(serde_json::json!([1]))),
         ("function foo() { while (true) { if (true) {} } }", Some(serde_json::json!([1]))),
         ("function foo() { for (let x of foo) { if (true) {} } }", Some(serde_json::json!([1]))), // { "ecmaVersion": 6 },
-        ("function foo() { while (true) { if (true) { if (false) { } } } }", Some(serde_json::json!([1]))),
-        ("function foo() { if (true) { if (false) { if (true) { if (false) { if (true) { } } } } } }", None),
-        ("function foo() { if (true) { if (false) { if (true) { } } } }", Some(serde_json::json!([{ "max": 2 }]))),
-        ("function foo() { if (a) { if (b) { if (c) { if (d) { if (e) {} } } } } }", Some(serde_json::json!([{}]))),
+        (
+            "function foo() { while (true) { if (true) { if (false) { } } } }",
+            Some(serde_json::json!([1])),
+        ),
+        (
+            "function foo() { if (true) { if (false) { if (true) { if (false) { if (true) { } } } } } }",
+            None,
+        ),
+        (
+            "function foo() { if (true) { if (false) { if (true) { } } } }",
+            Some(serde_json::json!([{ "max": 2 }])),
+        ),
+        (
+            "function foo() { if (a) { if (b) { if (c) { if (d) { if (e) {} } } } } }",
+            Some(serde_json::json!([{}])),
+        ),
         ("function foo() { if (true) {} }", Some(serde_json::json!([{ "max": 0 }]))),
         ("class C { static { if (1) { if (2) { if (3) {} } } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
-        ("if (1) { class C { static { if (1) { if (2) { if (3) {} } } } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
-        ("function foo() { if (1) { class C { static { if (1) { if (2) { if (3) {} } } } } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 },
-        ("function foo() { if (1) { class C { static { if (1) { if (2) {} } } } if (2) { if (3) {} } } }", Some(serde_json::json!([2]))), // { "ecmaVersion": 2022 }
+        (
+            "if (1) { class C { static { if (1) { if (2) { if (3) {} } } } } }",
+            Some(serde_json::json!([2])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "function foo() { if (1) { class C { static { if (1) { if (2) { if (3) {} } } } } } }",
+            Some(serde_json::json!([2])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "function foo() { if (1) { class C { static { if (1) { if (2) {} } } } if (2) { if (3) {} } } }",
+            Some(serde_json::json!([2])),
+        ), // { "ecmaVersion": 2022 }
     ];
 
     Tester::new(MaxDepth::NAME, MaxDepth::PLUGIN, pass, fail).test_and_snapshot();

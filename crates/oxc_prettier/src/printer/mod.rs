@@ -11,9 +11,9 @@ use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 
 use crate::{
+    GroupId, PrettierOptions,
     ir::{Doc, Fill, IfBreak, IndentIfBreak, Line},
     printer::command::{Command, Indent, Mode},
-    GroupId, PrettierOptions,
 };
 
 pub struct Printer<'a> {

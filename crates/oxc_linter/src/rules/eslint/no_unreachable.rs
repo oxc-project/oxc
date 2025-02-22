@@ -1,10 +1,10 @@
-use oxc_ast::{ast::VariableDeclarationKind, AstKind};
+use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 use oxc_cfg::{
-    graph::{
-        visit::{depth_first_search, Control, DfsEvent, EdgeRef},
-        Direction,
-    },
     EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
+    graph::{
+        Direction,
+        visit::{Control, DfsEvent, EdgeRef, depth_first_search},
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

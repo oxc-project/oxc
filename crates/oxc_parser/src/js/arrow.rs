@@ -1,11 +1,11 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
 use super::Tristate;
-use crate::{diagnostics, lexer::Kind, ParserImpl};
+use crate::{ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

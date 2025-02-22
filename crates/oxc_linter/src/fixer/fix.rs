@@ -1,7 +1,7 @@
 use std::{borrow::Cow, ops::Deref};
 
 use bitflags::bitflags;
-use oxc_span::{GetSpan, Span, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 
 bitflags! {
     /// Flags describing an automatic code fix.

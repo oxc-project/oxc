@@ -4,13 +4,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_params, get_function_nearest_jsdoc_node, should_ignore_as_internal,
-        should_ignore_as_private, ParamKind,
+        ParamKind, collect_params, get_function_nearest_jsdoc_node, should_ignore_as_internal,
+        should_ignore_as_private,
     },
-    AstNode,
 };
 
 fn missing_type_diagnostic(span: Span) -> OxcDiagnostic {

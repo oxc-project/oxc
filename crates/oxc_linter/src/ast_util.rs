@@ -1,15 +1,15 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{BindingIdentifier, *},
     AstKind,
+    ast::{BindingIdentifier, *},
 };
-use oxc_ecmascript::{is_global_reference::WithoutGlobalReferenceInformation, ToBoolean};
+use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
-use crate::{utils::get_function_nearest_jsdoc_node, LintContext};
+use crate::{LintContext, utils::get_function_nearest_jsdoc_node};
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:

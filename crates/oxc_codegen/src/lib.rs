@@ -8,7 +8,7 @@ mod binary_expr_visitor;
 mod code_buffer;
 mod comment;
 mod context;
-mod gen;
+mod r#gen;
 mod operator;
 mod options;
 mod sourcemap_builder;
@@ -21,9 +21,9 @@ use oxc_ast::ast::{
 };
 use oxc_data_structures::stack::Stack;
 use oxc_semantic::SymbolTable;
-use oxc_span::{GetSpan, Span, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
-    identifier::{is_identifier_part, is_identifier_part_ascii, LS, PS},
+    identifier::{LS, PS, is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -34,7 +34,7 @@ use crate::{
 };
 pub use crate::{
     context::Context,
-    gen::{Gen, GenExpr},
+    r#gen::{Gen, GenExpr},
     options::{CodegenOptions, LegalComment},
 };
 

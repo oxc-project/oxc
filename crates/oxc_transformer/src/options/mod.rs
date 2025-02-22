@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
+    ReactRefreshOptions,
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
     decorator::DecoratorOptions,
@@ -15,7 +16,6 @@ use crate::{
     jsx::JsxOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
-    ReactRefreshOptions,
 };
 
 pub mod babel;

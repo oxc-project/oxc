@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Expression, Statement},
     AstKind,
+    ast::{Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_await_in_loop_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span)

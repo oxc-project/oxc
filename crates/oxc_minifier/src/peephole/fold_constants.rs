@@ -1,8 +1,8 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
+    ToJsString,
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
-    ToJsString,
 };
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
@@ -1720,7 +1720,7 @@ mod test {
 
     mod bigint {
         use super::{
-            fold, fold_same, MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT,
+            MAX_SAFE_FLOAT, MAX_SAFE_INT, NEG_MAX_SAFE_FLOAT, NEG_MAX_SAFE_INT, fold, fold_same,
         };
 
         #[test]

@@ -4,7 +4,7 @@ use oxc_span::SourceType;
 
 mod partial_loader;
 mod source;
-pub use partial_loader::{PartialLoader, LINT_PARTIAL_LOADER_EXT};
+pub use partial_loader::{LINT_PARTIAL_LOADER_EXT, PartialLoader};
 pub use source::JavaScriptSource;
 
 // TODO: use oxc_resolver::FileSystem. We can't do so until that crate exposes FileSystemOs

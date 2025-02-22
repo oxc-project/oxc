@@ -11,6 +11,7 @@ use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
 use oxc::{
+    CompilerInterface,
     codegen::CodegenReturn,
     diagnostics::OxcDiagnostic,
     span::SourceType,
@@ -18,7 +19,6 @@ use oxc::{
         EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
         InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
     },
-    CompilerInterface,
 };
 use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;

@@ -4,11 +4,11 @@ use num_bigint::BigInt;
 use num_traits::{FromPrimitive, ToPrimitive, Zero};
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{AstBuilder, ast::*};
 
 use crate::{
-    is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects,
-    to_numeric::ToNumeric, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber,
+    ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber, is_global_reference::IsGlobalReference,
+    side_effects::MayHaveSideEffects, to_numeric::ToNumeric,
 };
 
 mod equality_comparison;

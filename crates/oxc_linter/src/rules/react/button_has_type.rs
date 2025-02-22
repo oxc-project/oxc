@@ -1,19 +1,19 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName,
         ObjectPropertyKind,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
-    AstNode,
 };
 
 fn missing_type_prop(span: Span) -> OxcDiagnostic {

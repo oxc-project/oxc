@@ -1,10 +1,10 @@
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
 use rustc_hash::FxHashMap;
 
-use super::{xml_utils::xml_escape, InternalFormatter};
+use super::{InternalFormatter, xml_utils::xml_escape};
 
 #[derive(Default)]
 pub struct JUnitOutputFormatter;
@@ -76,9 +76,22 @@ fn format_junit(diagnostics: &[Error]) -> String {
                 format!("\n        <testcase name=\"{rule}\">\n{status}\n        </testcase>");
             test_cases = format!("{test_cases}{test_case}");
         }
-        test_suite = format!("    <testsuite name=\"{}\" tests=\"{}\" disabled=\"0\" errors=\"{}\" failures=\"{}\">{}\n    </testsuite>", filename, diagnostics.len(), error, warning, test_cases);
+        test_suite = format!(
+            "    <testsuite name=\"{}\" tests=\"{}\" disabled=\"0\" errors=\"{}\" failures=\"{}\">{}\n    </testsuite>",
+            filename,
+            diagnostics.len(),
+            error,
+            warning,
+            test_cases
+        );
     }
-    let test_suites = format!("<testsuites name=\"Oxlint\" tests=\"{}\" failures=\"{}\" errors=\"{}\">\n{}\n</testsuites>\n", total_errors + total_warnings, total_warnings, total_errors, test_suite);
+    let test_suites = format!(
+        "<testsuites name=\"Oxlint\" tests=\"{}\" failures=\"{}\" errors=\"{}\">\n{}\n</testsuites>\n",
+        total_errors + total_warnings,
+        total_warnings,
+        total_errors,
+        test_suite
+    );
 
     format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{test_suites}")
 }
@@ -86,7 +99,7 @@ fn format_junit(diagnostics: &[Error]) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
-    use oxc_diagnostics::{reporter::DiagnosticResult, NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
     use oxc_span::Span;
 
     #[test]

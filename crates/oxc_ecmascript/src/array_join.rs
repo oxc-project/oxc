@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::{is_global_reference::IsGlobalReference, ToJsString};
+use crate::{ToJsString, is_global_reference::IsGlobalReference};
 
 pub trait ArrayJoin<'a> {
     /// `Array.prototype.join ( separator )`

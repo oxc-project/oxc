@@ -6,9 +6,8 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    diagnostics,
+    Context, ParserImpl, diagnostics,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
-    Context, ParserImpl,
 };
 
 #[derive(Clone, Copy)]
@@ -350,10 +349,13 @@ impl<'a> ParserImpl<'a> {
             if kind == close || kind == Kind::Eof {
                 break;
             }
-            if let Some(e) = f(self)? {
-                list.push(e);
-            } else {
-                break;
+            match f(self)? {
+                Some(e) => {
+                    list.push(e);
+                }
+                _ => {
+                    break;
+                }
             }
         }
         self.expect(close)?;

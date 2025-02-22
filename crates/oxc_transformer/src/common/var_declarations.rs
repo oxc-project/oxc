@@ -21,7 +21,7 @@ use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_traverse::{
-    ast_operations::GatherNodeParts, Ancestor, BoundIdentifier, Traverse, TraverseCtx,
+    Ancestor, BoundIdentifier, Traverse, TraverseCtx, ast_operations::GatherNodeParts,
 };
 
 use crate::TransformCtx;

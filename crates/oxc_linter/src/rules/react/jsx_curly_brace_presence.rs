@@ -1,10 +1,10 @@
 use oxc_allocator::Vec;
 use oxc_ast::{
+    AstKind,
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName,
         JSXExpressionContainer,
     },
-    AstKind,
 };
 use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
@@ -13,9 +13,9 @@ use oxc_span::{GetSpan as _, Span};
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn jsx_curly_brace_presence_unnecessary_diagnostic(span: Span) -> OxcDiagnostic {
@@ -303,7 +303,10 @@ declare_oxc_lint!(
 impl Rule for JsxCurlyBracePresence {
     fn from_configuration(value: Value) -> Self {
         let default = Self::default();
-        let value = if let Some(arr) = value.as_array() { &arr[0] } else { &value };
+        let value = match value.as_array() {
+            Some(arr) => &arr[0],
+            _ => &value,
+        };
         match value {
             Value::String(s) => {
                 let allowed = Allowed::try_from(s.as_str())

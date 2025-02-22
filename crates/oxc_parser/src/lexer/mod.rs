@@ -14,7 +14,7 @@ use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 
-use crate::{diagnostics, UniquePromise};
+use crate::{UniquePromise, diagnostics};
 
 mod byte_handlers;
 mod comment;

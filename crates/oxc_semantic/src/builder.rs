@@ -8,7 +8,7 @@ use std::{
 use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, AstKind, Visit};
+use oxc_ast::{AstKind, Visit, ast::*};
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
@@ -23,6 +23,7 @@ use oxc_syntax::{
 };
 
 use crate::{
+    JSDocFinder, Semantic,
     binder::Binder,
     checker,
     class::ClassTableBuilder,
@@ -34,16 +35,11 @@ use crate::{
     stats::Stats,
     symbol::SymbolTable,
     unresolved_stack::UnresolvedReferencesStack,
-    JSDocFinder, Semantic,
 };
 
 macro_rules! control_flow {
-    ($self:ident, |$cfg:tt| $body:expr) => {
-        if let Some($cfg) = &mut $self.cfg {
-            $body
-        } else {
-            Default::default()
-        }
+    ($self:ident, |$cfg:tt| $body:expr_2021) => {
+        if let Some($cfg) = &mut $self.cfg { $body } else { Default::default() }
     };
 }
 

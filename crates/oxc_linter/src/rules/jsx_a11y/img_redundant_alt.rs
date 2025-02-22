@@ -2,8 +2,8 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,12 +11,12 @@ use oxc_span::{CompactStr, Span};
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
         get_element_type, get_prop_value, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
     },
-    AstNode,
 };
 
 fn img_redundant_alt_diagnostic(span: Span) -> OxcDiagnostic {

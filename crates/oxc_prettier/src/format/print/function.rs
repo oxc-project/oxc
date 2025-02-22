@@ -2,11 +2,11 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, dynamic_text,
+    Format, Prettier, array, dynamic_text,
     format::print::{function, function_parameters, property},
     group, if_break, indent,
     ir::Doc,
-    softline, text, Format, Prettier,
+    softline, text,
 };
 
 pub fn print_function<'a>(

@@ -1,10 +1,10 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
-    array, binaryish::BinaryishOperator, comments::CommentFlags, group, indent, ir::Doc, line,
-    text, Format, Prettier,
+    Format, Prettier, array, binaryish::BinaryishOperator, comments::CommentFlags, group, indent,
+    ir::Doc, line, text,
 };
 
 pub fn print_binaryish_expression<'a>(

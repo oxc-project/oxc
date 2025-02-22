@@ -17,9 +17,10 @@ use oxc::{
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{
+    TestRunnerOptions,
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
     driver::Driver,
-    fixture_root, override_root, oxc_test_root, packages_root, TestRunnerOptions,
+    fixture_root, override_root, oxc_test_root, packages_root,
 };
 
 #[derive(Debug)]

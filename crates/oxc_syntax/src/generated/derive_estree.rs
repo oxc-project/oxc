@@ -4,8 +4,8 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ser::{AppendTo, AppendToConcat},
     ESTree, FlatStructSerializer, Serializer, StructSerializer,
+    ser::{AppendTo, AppendToConcat},
 };
 
 use crate::operator::*;

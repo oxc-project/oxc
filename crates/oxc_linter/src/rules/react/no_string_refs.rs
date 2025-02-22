@@ -1,19 +1,19 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
         JSXExpression, JSXExpressionContainer,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::get_parent_component,
-    AstNode,
 };
 
 fn this_refs_deprecated(span: Span) -> OxcDiagnostic {

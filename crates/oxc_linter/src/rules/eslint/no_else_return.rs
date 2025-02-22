@@ -1,10 +1,10 @@
-use oxc_ast::{ast::Statement, AstKind};
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeId, ScopeTree};
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoElseReturn {
@@ -281,11 +281,7 @@ fn naive_has_return(node: &Statement) -> Option<Span> {
     match node {
         Statement::BlockStatement(block) => {
             let last_child = block.body.last()?;
-            if let Statement::ReturnStatement(r) = last_child {
-                Some(r.span)
-            } else {
-                None
-            }
+            if let Statement::ReturnStatement(r) = last_child { Some(r.span) } else { None }
         }
         Statement::ReturnStatement(r) => Some(r.span),
         _ => None,

@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use num_traits::Zero;
 
-use crate::{is_global_reference::IsGlobalReference, ToBoolean, ToJsString, ToNumber};
+use crate::{ToBoolean, ToJsString, ToNumber, is_global_reference::IsGlobalReference};
 
 #[derive(Debug, PartialEq)]
 pub enum ConstantValue<'a> {

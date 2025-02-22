@@ -9,6 +9,7 @@ use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
+    Client, LanguageServer, LspService, Server,
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
         CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
@@ -18,12 +19,11 @@ use tower_lsp::{
         InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, Url,
         WorkspaceEdit,
     },
-    Client, LanguageServer, LspService, Server,
 };
 
 use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 
-use crate::capabilities::{Capabilities, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC};
+use crate::capabilities::{CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, Capabilities};
 use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::server_linter::ServerLinter;
 
@@ -75,11 +75,7 @@ impl Options {
     }
 
     fn get_config_path(&self) -> Option<PathBuf> {
-        if self.config_path.is_empty() {
-            None
-        } else {
-            Some(PathBuf::from(&self.config_path))
-        }
+        if self.config_path.is_empty() { None } else { Some(PathBuf::from(&self.config_path)) }
     }
 }
 

@@ -1,8 +1,8 @@
-use oxc_ast::{ast::ArrayExpressionElement, AstKind};
+use oxc_ast::{AstKind, ast::ArrayExpressionElement};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSparseArrays;

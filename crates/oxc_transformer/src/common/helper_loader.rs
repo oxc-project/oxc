@@ -72,11 +72,11 @@ use serde::Deserialize;
 
 use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
     NONE,
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use crate::TransformCtx;

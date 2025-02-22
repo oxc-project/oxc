@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::cli::{lint_command, LintRunner};
+use crate::cli::{LintRunner, lint_command};
 #[cfg(test)]
 use crate::runner::Runner;
 #[cfg(test)]

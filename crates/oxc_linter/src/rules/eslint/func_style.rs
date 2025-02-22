@@ -1,4 +1,4 @@
-use oxc_ast::{ast::FunctionType, AstKind};
+use oxc_ast::{AstKind, ast::FunctionType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId};
@@ -23,11 +23,7 @@ enum Style {
 
 impl Style {
     pub fn from(raw: &str) -> Self {
-        if raw == "declaration" {
-            Self::Declaration
-        } else {
-            Self::Expression
-        }
+        if raw == "declaration" { Self::Declaration } else { Self::Expression }
     }
 
     pub fn as_str(&self) -> &str {

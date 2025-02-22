@@ -1,19 +1,19 @@
 use std::{borrow::Cow, fmt};
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
+use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
 use serde::{
+    Deserialize, Serialize, Serializer,
     de::{self, Deserializer, Visitor},
     ser::SerializeMap,
-    Deserialize, Serialize, Serializer,
 };
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
-    rules::{RuleEnum, RULES},
-    utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
     AllowWarnDeny, RuleWithSeverity,
+    rules::{RULES, RuleEnum},
+    utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
 
 type RuleSet = FxHashSet<RuleWithSeverity>;
@@ -112,11 +112,7 @@ impl OxlintRules {
                     let rules = rules_for_override
                         .iter()
                         .filter_map(|r| {
-                            if r.name() == *name {
-                                Some((r.plugin_name(), r))
-                            } else {
-                                None
-                            }
+                            if r.name() == *name { Some((r.plugin_name(), r)) } else { None }
                         })
                         .collect::<FxHashMap<_, _>>();
 
@@ -185,7 +181,7 @@ impl JsonSchema for OxlintRules {
         Cow::Borrowed("OxlintRules")
     }
 
-    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
         #[expect(unused)]
         #[derive(Debug, Clone, JsonSchema)]
         #[serde(untagged)]
@@ -201,7 +197,7 @@ impl JsonSchema for OxlintRules {
         )]
         struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
 
-        gen.subschema_for::<DummyRuleMap>()
+        r#gen.subschema_for::<DummyRuleMap>()
     }
 }
 
@@ -355,11 +351,11 @@ impl ESLintRule {
 #[expect(clippy::default_trait_access)]
 mod test {
     use serde::Deserialize;
-    use serde_json::{json, Value};
+    use serde_json::{Value, json};
 
     use crate::{
-        rules::{RuleEnum, RULES},
         AllowWarnDeny, RuleWithSeverity,
+        rules::{RULES, RuleEnum},
     };
 
     use super::{OxlintRules, RuleSet};

@@ -11,14 +11,14 @@ use wasm_bindgen::prelude::*;
 
 use oxc::{
     allocator::Allocator,
-    ast::{ast::Program, utf8_to_utf16::Utf8ToUtf16, Comment as OxcComment, CommentKind, Visit},
+    ast::{Comment as OxcComment, CommentKind, Visit, ast::Program, utf8_to_utf16::Utf8ToUtf16},
     codegen::{CodeGenerator, CodegenOptions},
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
-        dot::{DebugDot, DebugDotContext},
         ReferenceId, ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolFlags, SymbolTable,
+        dot::{DebugDot, DebugDotContext},
     },
     span::{SourceType, Span},
     syntax::reference::Reference,

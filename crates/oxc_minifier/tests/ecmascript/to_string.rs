@@ -1,8 +1,8 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::{
-    is_global_reference::{IsGlobalReference, WithoutGlobalReferenceInformation},
     ToJsString,
+    is_global_reference::{IsGlobalReference, WithoutGlobalReferenceInformation},
 };
 use oxc_span::SPAN;
 
@@ -12,11 +12,7 @@ struct GlobalReferenceInformation {
 
 impl IsGlobalReference for GlobalReferenceInformation {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
-        if ident.name == "undefined" {
-            Some(!self.is_undefined_shadowed)
-        } else {
-            None
-        }
+        if ident.name == "undefined" { Some(!self.is_undefined_shadowed) } else { None }
     }
 }
 

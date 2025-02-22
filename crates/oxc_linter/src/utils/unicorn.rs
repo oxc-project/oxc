@@ -1,10 +1,10 @@
 mod boolean;
 use oxc_ast::{
+    AstKind,
     ast::{
         BindingPatternKind, Expression, FormalParameters, FunctionBody, LogicalExpression,
         MemberExpression, Statement,
     },
-    AstKind,
 };
 use oxc_semantic::AstNode;
 use oxc_span::ContentEq;

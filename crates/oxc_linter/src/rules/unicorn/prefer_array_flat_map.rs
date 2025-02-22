@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Argument, Expression},
     AstKind,
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, fixer::Fix, rule::Rule};
 
 fn prefer_array_flat_map_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`Array.flatMap` performs `Array.map` and `Array.flat` in one step.")

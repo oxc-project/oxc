@@ -12,14 +12,14 @@
 /// ```
 #[macro_export]
 macro_rules! array {
-    ($p:ident, [$( $x:expr ),* $(,)?]) => {{
+    ($p:ident, [$( $x:expr_2021 ),* $(,)?]) => {{
         let mut temp_vec = oxc_allocator::Vec::new_in($p.allocator);
         $(
             temp_vec.push($x);
         )*
         array!($p, temp_vec)
     }};
-    ($p:ident, $vec:expr) => {{
+    ($p:ident, $vec:expr_2021) => {{
         $crate::ir::Doc::Array($vec)
     }};
 }
@@ -32,7 +32,7 @@ macro_rules! array {
 /// ```
 #[macro_export]
 macro_rules! text {
-    ($str:expr) => {{
+    ($str:expr_2021) => {{
         let s: &'static str = $str;
         $crate::ir::Doc::Str(s)
     }};
@@ -46,7 +46,7 @@ macro_rules! text {
 /// ```
 #[macro_export]
 macro_rules! dynamic_text {
-    ($p:ident, $str:expr) => {{
+    ($p:ident, $str:expr_2021) => {{
         let s = $p.allocator.alloc_str($str);
         $crate::ir::Doc::Str(s)
     }};
@@ -73,7 +73,7 @@ macro_rules! dynamic_text {
 /// ```
 #[macro_export]
 macro_rules! group {
-    ($p:ident, [$( $x:expr ),* $(,)?], $should_break:expr, $group_id:expr) => {{
+    ($p:ident, [$( $x:expr_2021 ),* $(,)?], $should_break:expr_2021, $group_id:expr_2021) => {{
         let mut temp_vec = oxc_allocator::Vec::new_in($p.allocator);
         $(
             temp_vec.push($x);
@@ -85,7 +85,7 @@ macro_rules! group {
             group_id: $group_id,
         })
     }};
-    ($p:ident, $vec:expr, $should_break:expr, $group_id:expr) => {{
+    ($p:ident, $vec:expr_2021, $should_break:expr_2021, $group_id:expr_2021) => {{
         $crate::ir::Doc::Group($crate::ir::Group {
             contents: $vec,
             should_break: $should_break,
@@ -93,14 +93,14 @@ macro_rules! group {
             group_id: $group_id,
         })
     }};
-    ($p:ident, [$( $x:expr ),* $(,)?]) => {{
+    ($p:ident, [$( $x:expr_2021 ),* $(,)?]) => {{
         let mut temp_vec = oxc_allocator::Vec::new_in($p.allocator);
         $(
             temp_vec.push($x);
         )*
         group!($p, temp_vec, false, None)
     }};
-    ($p:ident, $vec:expr) => {{
+    ($p:ident, $vec:expr_2021) => {{
         group!($p, $vec, false, None)
     }};
 }
@@ -116,7 +116,7 @@ macro_rules! group {
 /// ```
 #[macro_export]
 macro_rules! conditional_group {
-    ($p:ident, [$doc:expr, $( $x:expr ),* $(,)?]) => {{
+    ($p:ident, [$doc:expr_2021, $( $x:expr_2021 ),* $(,)?]) => {{
         let mut temp_single = oxc_allocator::Vec::with_capacity_in(1, $p.allocator);
         temp_single.push($doc);
         let mut temp_vec = oxc_allocator::Vec::new_in($p.allocator);
@@ -148,14 +148,14 @@ macro_rules! conditional_group {
 /// ```
 #[macro_export]
 macro_rules! fill {
-    ($p:ident, [$( $x:expr ),* $(,)?]) => {{
+    ($p:ident, [$( $x:expr_2021 ),* $(,)?]) => {{
         let mut temp_vec = oxc_allocator::Vec::new_in($p.allocator);
         $(
             temp_vec.push($x);
         )*
         fill!($p, temp_vec)
     }};
-    ($p:ident, $vec:expr) => {{
+    ($p:ident, $vec:expr_2021) => {{
         $crate::ir::Doc::Fill($crate::ir::Fill { parts: $vec })
     }};
 }
@@ -176,14 +176,14 @@ macro_rules! fill {
 /// ```
 #[macro_export]
 macro_rules! if_break {
-    ($p:ident, $break:expr, $flat:expr, $group_id:expr) => {{
+    ($p:ident, $break:expr_2021, $flat:expr_2021, $group_id:expr_2021) => {{
         $crate::ir::Doc::IfBreak($crate::ir::IfBreak {
             break_contents: oxc_allocator::Box::new_in($break, $p.allocator),
             flat_contents: oxc_allocator::Box::new_in($flat, $p.allocator),
             group_id: $group_id,
         })
     }};
-    ($p:ident, $break:expr) => {{
+    ($p:ident, $break:expr_2021) => {{
         use $crate::text;
         if_break!($p, $break, text!(""), None)
     }};
@@ -196,9 +196,7 @@ macro_rules! if_break {
 /// ```
 #[macro_export]
 macro_rules! break_parent {
-    () => {{
-        $crate::ir::Doc::BreakParent
-    }};
+    () => {{ $crate::ir::Doc::BreakParent }};
 }
 
 /// Join an array of docs with a separator.
@@ -208,7 +206,7 @@ macro_rules! break_parent {
 /// ```
 #[macro_export]
 macro_rules! join {
-    ($p:ident, $sep:expr, $vec:expr) => {{
+    ($p:ident, $sep:expr_2021, $vec:expr_2021) => {{
         let mut parts = oxc_allocator::Vec::new_in($p.allocator);
         for (i, doc) in $vec.into_iter().enumerate() {
             if i != 0 {
@@ -238,9 +236,7 @@ macro_rules! join {
 /// ```
 #[macro_export]
 macro_rules! line {
-    () => {{
-        $crate::ir::Doc::Line($crate::ir::Line::default())
-    }};
+    () => {{ $crate::ir::Doc::Line($crate::ir::Line::default()) }};
 }
 
 /// Specify a line break.
@@ -251,9 +247,7 @@ macro_rules! line {
 /// ```
 #[macro_export]
 macro_rules! softline {
-    () => {{
-        $crate::ir::Doc::Line($crate::ir::Line { soft: true, ..Default::default() })
-    }};
+    () => {{ $crate::ir::Doc::Line($crate::ir::Line { soft: true, ..Default::default() }) }};
 }
 
 /// Specify a line break that is always included in the output, no matter if the expression fits on one line or not.
@@ -304,9 +298,7 @@ macro_rules! literalline {
 /// ```
 #[macro_export]
 macro_rules! line_suffix_boundary {
-    () => {{
-        $crate::ir::Doc::LineSuffixBoundary
-    }};
+    () => {{ $crate::ir::Doc::LineSuffixBoundary }};
 }
 
 /// Increase the level of indentation.
@@ -317,14 +309,14 @@ macro_rules! line_suffix_boundary {
 /// ```
 #[macro_export]
 macro_rules! indent {
-    ($p:ident, [$( $x:expr ),* $(,)?]) => {{
+    ($p:ident, [$( $x:expr_2021 ),* $(,)?]) => {{
         let mut temp_vec = oxc_allocator::Vec::new_in($p.allocator);
         $(
             temp_vec.push($x);
         )*
         $crate::ir::Doc::Indent(temp_vec)
     }};
-    ($p:ident, $vec:expr) => {{
+    ($p:ident, $vec:expr_2021) => {{
         $crate::ir::Doc::Indent($vec)
     }};
 }
@@ -341,7 +333,7 @@ macro_rules! indent {
 /// ```
 #[macro_export]
 macro_rules! indent_if_break {
-    ($p:ident, $doc:expr, $group_id:expr) => {{
+    ($p:ident, $doc:expr_2021, $group_id:expr_2021) => {{
         $crate::ir::Doc::IndentIfBreak($crate::ir::IndentIfBreak {
             contents: oxc_allocator::Box::new_in($doc, $p.allocator),
             group_id: $group_id,
@@ -359,7 +351,7 @@ macro_rules! indent_if_break {
 /// This may be or may not be a problem.
 #[macro_export]
 macro_rules! wrap {
-    ($p:ident, $self:expr, $kind:ident, $block:block) => {{
+    ($p:ident, $self:expr_2021, $kind:ident, $block:block) => {{
         let kind = oxc_ast::AstKind::$kind($p.alloc($self));
         $p.enter_node(kind);
 

@@ -24,11 +24,7 @@ impl Display for Disjunction<'_> {
 impl Display for Alternative<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn as_character<'a>(term: &'a Term) -> Option<&'a Character> {
-            if let Term::Character(ch) = term {
-                Some(ch)
-            } else {
-                None
-            }
+            if let Term::Character(ch) = term { Some(ch) } else { None }
         }
 
         write_join_with(f, "", &self.body, |iter| {
@@ -177,11 +173,7 @@ impl Display for UnicodePropertyEscape<'_> {
 impl Display for CharacterClass<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn as_character<'a>(content: &'a CharacterClassContents) -> Option<&'a Character> {
-            if let CharacterClassContents::Character(ch) = content {
-                Some(ch)
-            } else {
-                None
-            }
+            if let CharacterClassContents::Character(ch) = content { Some(ch) } else { None }
         }
 
         write!(f, "[")?;

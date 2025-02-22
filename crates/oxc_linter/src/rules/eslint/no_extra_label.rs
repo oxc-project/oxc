@@ -1,9 +1,9 @@
-use oxc_ast::{ast::LabelIdentifier, AstKind};
+use oxc_ast::{AstKind, ast::LabelIdentifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_extra_label_diagnostic(label: &LabelIdentifier) -> OxcDiagnostic {
     let label_name = &label.name;

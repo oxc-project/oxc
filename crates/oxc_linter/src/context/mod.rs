@@ -11,11 +11,11 @@ use oxc_span::{GetSpan, Span};
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
+    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
-    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
 mod host;

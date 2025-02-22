@@ -3,11 +3,11 @@ use serde::Deserialize;
 use tower_lsp::{
     jsonrpc::{self, Error},
     lsp_types::{
-        request::ApplyWorkspaceEdit, ApplyWorkspaceEditParams, TextEdit, Url, WorkspaceEdit,
+        ApplyWorkspaceEditParams, TextEdit, Url, WorkspaceEdit, request::ApplyWorkspaceEdit,
     },
 };
 
-use crate::{capabilities::Capabilities, Backend};
+use crate::{Backend, capabilities::Capabilities};
 
 pub const LSP_COMMANDS: [WorkspaceCommands; 1] = [WorkspaceCommands::FixAll(FixAllCommand)];
 

@@ -21,15 +21,15 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
 use crate::{
-    loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    Fixer, Linter, Message,
+    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_string,
-    Fixer, Linter, Message,
 };
 
 use super::{
-    module_cache::{ModuleCache, ModuleState},
     LintServiceOptions,
+    module_cache::{ModuleCache, ModuleState},
 };
 
 pub struct Runtime {

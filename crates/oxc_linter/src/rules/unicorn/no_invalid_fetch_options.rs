@@ -3,15 +3,15 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 use oxc_allocator::Box;
 use oxc_ast::{
-    ast::{Argument, Expression, ObjectExpression, ObjectPropertyKind, PropertyKey},
     AstKind,
+    ast::{Argument, Expression, ObjectExpression, ObjectPropertyKind, PropertyKey},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{ast_util::is_new_expression, rule::Rule, LintContext};
+use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);

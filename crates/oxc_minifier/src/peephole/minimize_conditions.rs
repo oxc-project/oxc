@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::{constant_evaluation::DetermineValueType, ToInt32};
+use oxc_ecmascript::{ToInt32, constant_evaluation::DetermineValueType};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -273,8 +273,8 @@ impl<'a> PeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        tester::{run, test, test_same},
         CompressOptions,
+        tester::{run, test, test_same},
     };
     use oxc_syntax::es_target::ESTarget;
 

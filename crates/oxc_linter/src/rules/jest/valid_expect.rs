@@ -1,18 +1,18 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{Expression, MemberExpression},
     AstKind,
+    ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{parse_expect_jest_fn_call, ExpectError, PossibleJestNode},
-    AstNode,
+    utils::{ExpectError, PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn valid_expect_diagnostic<S: Into<Cow<'static, str>>>(

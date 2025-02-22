@@ -3,12 +3,12 @@ use std::path::{Path, PathBuf};
 use oxc::span::SourceType;
 
 use crate::{
+    Driver,
     babel::BabelCase,
     misc::MiscCase,
     suite::{Case, TestResult},
     test262::Test262Case,
     typescript::TypeScriptCase,
-    Driver,
 };
 
 /// Idempotency test

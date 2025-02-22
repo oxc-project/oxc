@@ -1,8 +1,8 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 
 use crate::{
-    array, format::print::arrow_function, ir::Doc, needs_parens, text, utils, Format, Prettier,
+    Format, Prettier, array, format::print::arrow_function, ir::Doc, needs_parens, text, utils,
 };
 
 pub fn print_expression_statement<'a>(

@@ -4,16 +4,16 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_str, Expr};
+use syn::{Expr, parse_str};
 
 use crate::{
+    Result,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
     utils::create_safe_ident,
-    Result,
 };
 
 use super::{
-    attr_positions, define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum,
+    AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum, attr_positions, define_derive,
 };
 
 /// Derive for `ESTree` impls, which serialize AST to ESTree format in JSON.
@@ -245,10 +245,10 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
     }
 
     let krate = struct_def.file(schema).krate();
-    let mut gen = StructSerializerGenerator::new(!struct_def.estree.no_type, krate, schema);
-    gen.generate_stmts_for_struct(struct_def, &quote!(self));
+    let mut g = StructSerializerGenerator::new(!struct_def.estree.no_type, krate, schema);
+    g.generate_stmts_for_struct(struct_def, &quote!(self));
 
-    let type_field = if gen.add_type_field {
+    let type_field = if g.add_type_field {
         let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
         quote! {
             state.serialize_field("type", #type_name);
@@ -257,7 +257,7 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
         quote!()
     };
 
-    let stmts = gen.stmts;
+    let stmts = g.stmts;
     quote! {
         let mut state = serializer.serialize_struct();
         #type_field

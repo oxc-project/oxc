@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, AssignmentTargetProperty, BindingPatternKind},
     AstKind,
+    ast::{AssignmentTarget, AssignmentTargetProperty, BindingPatternKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(

@@ -1,13 +1,13 @@
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{has_jsx_prop_ignore_case, parse_jsx_value},
-    AstNode,
 };
 
 fn tabindex_no_positive_diagnostic(span: Span) -> OxcDiagnostic {

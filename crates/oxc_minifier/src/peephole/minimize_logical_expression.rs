@@ -127,11 +127,7 @@ impl<'a> PeepholeOptimizations {
                 LeftPairValueResult::Undefined => a.is_null().then_some(Some(a.span())),
             },
             |b| {
-                if let Expression::Identifier(id) = b {
-                    Some(id)
-                } else {
-                    None
-                }
+                if let Expression::Identifier(id) = b { Some(id) } else { None }
             },
         )?;
 

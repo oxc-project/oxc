@@ -6,7 +6,7 @@ use std::{
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 #[cfg(feature = "serialize")]
-use serde::{ser::SerializeMap, Serialize, Serializer as SerdeSerializer};
+use serde::{Serialize, Serializer as SerdeSerializer, ser::SerializeMap};
 
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;

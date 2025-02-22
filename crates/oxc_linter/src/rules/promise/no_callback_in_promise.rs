@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression, MemberExpression},
     AstKind,
+    ast::{CallExpression, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_callback_in_promise_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid calling back inside of a promise")

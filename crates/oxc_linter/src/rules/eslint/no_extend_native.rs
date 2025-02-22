@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{CallExpression, ChainElement, Expression, MemberExpression},
     AstKind,
+    ast::{CallExpression, ChainElement, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, ContentEq, GetSpan};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoExtendNative(Box<NoExtendNativeConfig>);

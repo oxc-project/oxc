@@ -307,7 +307,9 @@ mod test {
         test("var obj = Object((null, 2, 3), 1, 2);", "var obj = Object(3, 1, 2);");
         test_same("(0 instanceof 0, foo)");
         test_same("(0 in 0, foo)");
-        test_same("React.useEffect(() => (isMountRef.current = !1, () => { isMountRef.current = !0; }), [])");
+        test_same(
+            "React.useEffect(() => (isMountRef.current = !1, () => { isMountRef.current = !0; }), [])",
+        );
     }
 
     #[test]

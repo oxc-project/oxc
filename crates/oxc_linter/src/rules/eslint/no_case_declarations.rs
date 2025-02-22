@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Statement, VariableDeclarationKind},
     AstKind,
+    ast::{Statement, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_case_declarations_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected lexical declaration in case block.").with_label(span)

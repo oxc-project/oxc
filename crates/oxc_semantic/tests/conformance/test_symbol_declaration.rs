@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{BindingIdentifier, BindingPattern},
     AstKind,
+    ast::{BindingIdentifier, BindingPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};

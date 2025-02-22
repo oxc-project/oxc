@@ -6,13 +6,13 @@ use quote::{format_ident, quote};
 use syn::Ident;
 
 use crate::{
-    output::{output_path, Output},
+    AST_CRATE_PATH, Codegen, Generator, Result,
+    output::{Output, output_path},
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
     utils::{create_safe_ident, is_reserved_name},
-    Codegen, Generator, Result, AST_CRATE_PATH,
 };
 
-use super::{attr_positions, define_generator, AttrLocation, AttrPart, AttrPositions};
+use super::{AttrLocation, AttrPart, AttrPositions, attr_positions, define_generator};
 
 /// Generator for `AstBuilder`.
 pub struct AstBuilderGenerator;
@@ -220,11 +220,15 @@ fn generate_builder_methods_for_struct_impl(
     let struct_name = struct_def.name();
     let article = article_for(struct_name);
     let fn_doc1 = format!(" Build {article} [`{struct_name}`]{doc_postfix}.");
-    let fn_doc2 = format!(" If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead.");
+    let fn_doc2 = format!(
+        " If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."
+    );
     let alloc_doc1 = format!(
         " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
     );
-    let alloc_doc2 = format!(" Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead.");
+    let alloc_doc2 = format!(
+        " Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."
+    );
     let params_docs = generate_doc_comment_for_params(params);
 
     quote! {

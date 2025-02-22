@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{array, group, ir::Doc, text, ArrowParens, Format, Prettier};
+use crate::{ArrowParens, Format, Prettier, array, group, ir::Doc, text};
 
 pub fn print_arrow_function<'a>(
     p: &mut Prettier<'a>,

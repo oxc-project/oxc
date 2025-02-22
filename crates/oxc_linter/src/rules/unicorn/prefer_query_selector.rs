@@ -1,10 +1,10 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_map;
 
-use crate::{context::LintContext, rule::Rule, utils::is_node_value_not_dom_node, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_node_value_not_dom_node};
 
 fn prefer_query_selector_diagnostic(
     good_method: &str,

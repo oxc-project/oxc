@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, Statement},
     AstKind,
+    ast::{Argument, CallExpression, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -478,8 +478,14 @@ fn test() {
         ("aVariable.mockReturnValueOnce(Promise.resolve(42))", None),
         ("aVariable.mockReturnValueOnce(Promise.reject(42))", None),
         ("aVariable.mockReturnValue(Promise.resolve({ target: 'world', message: 'hello' }))", None),
-        ("aVariable.mockImplementation(() => Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValue(Promise.reject(42))", None),
-        ("aVariable.mockReturnValueOnce(Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValueOnce(Promise.reject(42))", None),
+        (
+            "aVariable.mockImplementation(() => Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValue(Promise.reject(42))",
+            None,
+        ),
+        (
+            "aVariable.mockReturnValueOnce(Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValueOnce(Promise.reject(42))",
+            None,
+        ),
         ("aVariable.mockReturnValueOnce(Promise.reject(new Error('oh noes!')))", None),
         ("vi.fn().mockReturnValue(Promise.resolve(42), xyz)", None),
         ("vi.fn().mockImplementation(() => Promise.reject(42), xyz)", None),
@@ -488,32 +494,96 @@ fn test() {
     ];
 
     let fix_vitest = vec![
-        ("vi.fn().mockImplementation(() => Promise.resolve(42))", "vi.fn().mockResolvedValue(42)", None),
-        ("vi.fn().mockImplementation(() => Promise.reject(42))", "vi.fn().mockRejectedValue(42)", None),
-        ("aVariable.mockImplementation(() => Promise.resolve(42))", "aVariable.mockResolvedValue(42)", None),
-        ("aVariable.mockImplementation(() => { return Promise.resolve(42) })", "aVariable.mockResolvedValue(42)", None),
-        ("aVariable.mockImplementation(() => Promise.reject(42))", "aVariable.mockRejectedValue(42)", None),
-        ("aVariable.mockImplementation(() => Promise.reject(42),)", "aVariable.mockRejectedValue(42,)", None),
-        ("aVariable.mockImplementationOnce(() => Promise.resolve(42))", "aVariable.mockResolvedValueOnce(42)", None),
-        ("aVariable.mockImplementationOnce(() => Promise.reject(42))", "aVariable.mockRejectedValueOnce(42)", None),
+        (
+            "vi.fn().mockImplementation(() => Promise.resolve(42))",
+            "vi.fn().mockResolvedValue(42)",
+            None,
+        ),
+        (
+            "vi.fn().mockImplementation(() => Promise.reject(42))",
+            "vi.fn().mockRejectedValue(42)",
+            None,
+        ),
+        (
+            "aVariable.mockImplementation(() => Promise.resolve(42))",
+            "aVariable.mockResolvedValue(42)",
+            None,
+        ),
+        (
+            "aVariable.mockImplementation(() => { return Promise.resolve(42) })",
+            "aVariable.mockResolvedValue(42)",
+            None,
+        ),
+        (
+            "aVariable.mockImplementation(() => Promise.reject(42))",
+            "aVariable.mockRejectedValue(42)",
+            None,
+        ),
+        (
+            "aVariable.mockImplementation(() => Promise.reject(42),)",
+            "aVariable.mockRejectedValue(42,)",
+            None,
+        ),
+        (
+            "aVariable.mockImplementationOnce(() => Promise.resolve(42))",
+            "aVariable.mockResolvedValueOnce(42)",
+            None,
+        ),
+        (
+            "aVariable.mockImplementationOnce(() => Promise.reject(42))",
+            "aVariable.mockRejectedValueOnce(42)",
+            None,
+        ),
         ("vi.fn().mockReturnValue(Promise.resolve(42))", "vi.fn().mockResolvedValue(42)", None),
         ("vi.fn().mockReturnValue(Promise.reject(42))", "vi.fn().mockRejectedValue(42)", None),
         ("aVariable.mockReturnValue(Promise.resolve(42))", "aVariable.mockResolvedValue(42)", None),
         ("aVariable.mockReturnValue(Promise.reject(42))", "aVariable.mockRejectedValue(42)", None),
-        ("aVariable.mockReturnValueOnce(Promise.resolve(42))", "aVariable.mockResolvedValueOnce(42)", None),
-        ("aVariable.mockReturnValueOnce(Promise.reject(42))", "aVariable.mockRejectedValueOnce(42)", None),
+        (
+            "aVariable.mockReturnValueOnce(Promise.resolve(42))",
+            "aVariable.mockResolvedValueOnce(42)",
+            None,
+        ),
+        (
+            "aVariable.mockReturnValueOnce(Promise.reject(42))",
+            "aVariable.mockRejectedValueOnce(42)",
+            None,
+        ),
         // Todo: Fixed
         // (
         //     "aVariable.mockReturnValue(Promise.resolve({ target: 'world', message: 'hello' }))",
-        //     "aVariable.mockResolvedValue({ target: 'world', message: 'hello' })", 
+        //     "aVariable.mockResolvedValue({ target: 'world', message: 'hello' })",
         //     None,
         // ),
-        ("aVariable.mockImplementation(() => Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValue(Promise.reject(42))", "aVariable.mockRejectedValue(42).mockResolvedValue(42).mockRejectedValue(42)", None),
-        ("aVariable.mockReturnValueOnce(Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValueOnce(Promise.reject(42))", "aVariable.mockRejectedValueOnce(42).mockResolvedValue(42).mockRejectedValueOnce(42)", None),
-        ("aVariable.mockReturnValueOnce(Promise.reject(new Error('oh noes!')))", "aVariable.mockRejectedValueOnce(new Error('oh noes!'))", None),
-        ("vi.fn().mockReturnValue(Promise.resolve(42), xyz)", "vi.fn().mockResolvedValue(42, xyz)", None),
-        ("vi.fn().mockImplementation(() => Promise.reject(42), xyz)", "vi.fn().mockRejectedValue(42, xyz)", None),
-        ("aVariable.mockReturnValueOnce(Promise.resolve())", "aVariable.mockResolvedValueOnce(undefined)", None)
+        (
+            "aVariable.mockImplementation(() => Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValue(Promise.reject(42))",
+            "aVariable.mockRejectedValue(42).mockResolvedValue(42).mockRejectedValue(42)",
+            None,
+        ),
+        (
+            "aVariable.mockReturnValueOnce(Promise.reject(42)).mockImplementation(() => Promise.resolve(42)).mockReturnValueOnce(Promise.reject(42))",
+            "aVariable.mockRejectedValueOnce(42).mockResolvedValue(42).mockRejectedValueOnce(42)",
+            None,
+        ),
+        (
+            "aVariable.mockReturnValueOnce(Promise.reject(new Error('oh noes!')))",
+            "aVariable.mockRejectedValueOnce(new Error('oh noes!'))",
+            None,
+        ),
+        (
+            "vi.fn().mockReturnValue(Promise.resolve(42), xyz)",
+            "vi.fn().mockResolvedValue(42, xyz)",
+            None,
+        ),
+        (
+            "vi.fn().mockImplementation(() => Promise.reject(42), xyz)",
+            "vi.fn().mockRejectedValue(42, xyz)",
+            None,
+        ),
+        (
+            "aVariable.mockReturnValueOnce(Promise.resolve())",
+            "aVariable.mockResolvedValueOnce(undefined)",
+            None,
+        ),
     ];
 
     pass.extend(pass_vitest);

@@ -1,11 +1,11 @@
 use std::{cell::OnceCell, fmt};
 
 use oxc_ast::{
+    AstKind,
     ast::{
         AssignmentTarget, BindingIdentifier, BindingPattern, IdentifierReference,
         ImportDeclarationSpecifier, VariableDeclarator,
     },
-    AstKind,
 };
 use oxc_semantic::{
     AstNode, AstNodes, NodeId, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
@@ -74,7 +74,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    pub fn references(&self) -> impl DoubleEndedIterator<Item = &Reference> + '_ {
+    pub fn references(&self) -> impl DoubleEndedIterator<Item = &Reference> + '_ + use<'_> {
         self.symbols().get_resolved_references(self.id)
     }
 

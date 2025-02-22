@@ -1,14 +1,14 @@
 use std::fmt;
 
 use oxc_ast::{
-    ast::{AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression},
     AstKind,
+    ast::{AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_anonymous_default_export_diagnostic(span: Span, kind: ErrorNodeKind) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("This {kind} default export is missing a name"))

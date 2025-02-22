@@ -53,10 +53,9 @@ use rustc_hash::FxBuildHasher;
 use syn::Ident;
 
 use crate::{
-    log, log_success,
+    Codegen, log, log_success,
     schema::Derives,
     schema::{File, FileId, Schema},
-    Codegen,
 };
 
 pub mod attr;

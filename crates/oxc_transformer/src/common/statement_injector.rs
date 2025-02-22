@@ -179,22 +179,25 @@ impl<'a> StatementInjectorStore<'a> {
         let mut new_statements = ctx.ast.vec_with_capacity(statements.len() + new_statement_count);
 
         for stmt in statements.drain(..) {
-            if let Some(mut adjacent_stmts) = insertions.remove(&stmt.address()) {
-                let first_after_stmt_index = adjacent_stmts
-                    .iter()
-                    .position(|s| matches!(s.direction, Direction::After))
-                    .unwrap_or(adjacent_stmts.len());
-                if first_after_stmt_index != 0 {
-                    let right = adjacent_stmts.split_off(first_after_stmt_index);
-                    new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
-                    new_statements.push(stmt);
-                    new_statements.extend(right.into_iter().map(|s| s.stmt));
-                } else {
-                    new_statements.push(stmt);
-                    new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+            match insertions.remove(&stmt.address()) {
+                Some(mut adjacent_stmts) => {
+                    let first_after_stmt_index = adjacent_stmts
+                        .iter()
+                        .position(|s| matches!(s.direction, Direction::After))
+                        .unwrap_or(adjacent_stmts.len());
+                    if first_after_stmt_index != 0 {
+                        let right = adjacent_stmts.split_off(first_after_stmt_index);
+                        new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+                        new_statements.push(stmt);
+                        new_statements.extend(right.into_iter().map(|s| s.stmt));
+                    } else {
+                        new_statements.push(stmt);
+                        new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+                    }
                 }
-            } else {
-                new_statements.push(stmt);
+                _ => {
+                    new_statements.push(stmt);
+                }
             }
         }
 

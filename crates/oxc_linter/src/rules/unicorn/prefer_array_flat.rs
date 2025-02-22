@@ -1,14 +1,15 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, ArrayExpressionElement, BindingPatternKind, CallExpression, Expression, Statement,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     ast_util::is_method_call,
     context::LintContext,
     rule::Rule,
@@ -16,7 +17,6 @@ use crate::{
         get_first_parameter_name, get_return_identifier_name, is_empty_array_expression,
         is_prototype_property,
     },
-    AstNode,
 };
 
 fn prefer_array_flat_diagnostic(span: Span) -> OxcDiagnostic {

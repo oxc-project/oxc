@@ -5,13 +5,13 @@ use quote::quote;
 use syn::Ident;
 
 use crate::{
+    Result,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
     utils::create_safe_ident,
-    Result,
 };
 
 use super::{
-    attr_positions, define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum,
+    AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum, attr_positions, define_derive,
 };
 
 /// Derive for `CloneIn` trait.

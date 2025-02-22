@@ -3,9 +3,9 @@ use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
+    Visit,
     ast::{Class, Function, TSImportType},
     visit::walk,
-    Visit,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;

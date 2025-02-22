@@ -1,17 +1,17 @@
 use rustc_hash::FxHashSet;
 
-use oxc_ast::{visit::walk, AstKind, Visit};
+use oxc_ast::{AstKind, Visit, visit::walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::{get_function_like_declaration, nth_outermost_paren_parent, outermost_paren_parent},
     context::LintContext,
     rule::Rule,
     utils::is_react_hook,
-    AstNode,
 };
 
 fn consistent_function_scoping(span: Span) -> OxcDiagnostic {

@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
 
 use crate::output_formatter::InternalFormatter;
@@ -54,8 +54,8 @@ fn format_unix(diagnostic: &Error) -> String {
 #[cfg(test)]
 mod test {
     use oxc_diagnostics::{
-        reporter::{DiagnosticReporter, DiagnosticResult},
         NamedSource, OxcDiagnostic,
+        reporter::{DiagnosticReporter, DiagnosticResult},
     };
     use oxc_span::Span;
 

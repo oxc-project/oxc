@@ -11,8 +11,8 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, options::LintOptions, rules::RULES, AllowWarnDeny, ConfigStoreBuilder, Fixer,
-    LintPlugins, LintService, LintServiceOptions, Linter, Oxlintrc, RuleEnum, RuleWithSeverity,
+    AllowWarnDeny, ConfigStoreBuilder, Fixer, LintPlugins, LintService, LintServiceOptions, Linter,
+    Oxlintrc, RuleEnum, RuleWithSeverity, fixer::FixKind, options::LintOptions, rules::RULES,
 };
 
 #[derive(Eq, PartialEq)]
