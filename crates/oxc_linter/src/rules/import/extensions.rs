@@ -211,33 +211,30 @@ fn test() {
             "#,
             Some(json!(["always"])),
         ),
-
         // Type import tests
         (
             r#"import type T from "./typescript-declare";"#,
-            Some(json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never"}]))
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never"}]),
+            ),
         ),
         (
             r#"export type { MyType } from "./typescript-declare";"#,
-            Some(json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]))
-        )
+            Some(
+                json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
+            ),
+        ),
     ];
 
     let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
-        (
-            r#"import a from "a/index.js""#,
-            None
-        ),
-        (
-            r#"import dot from "./file.with.dot""#,
-            Some(json!(["always"]))
-        ),
+        (r#"import a from "a/index.js""#, None),
+        (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
         (
             r#"
                 import a from "a/index.js";
                 import packageConfig from "./package";
             "#,
-            Some(json!([{ "json": "always", "js": "never"}]))
+            Some(json!([{ "json": "always", "js": "never"}])),
         ),
         (
             r#"
@@ -245,7 +242,7 @@ fn test() {
                 import component from "./bar.jsx";
                 import data from "./bar.json";
             "#,
-            Some(json!(["never"]))
+            Some(json!(["never"])),
         ),
         (
             r#"
@@ -253,19 +250,16 @@ fn test() {
                 import component from "./bar.jsx";
                 import data from "./bar.json";
             "#,
-            Some(json!([{ "json": "always", "js": "never", "jsx": "never" }]))
+            Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
         ),
         (
             r#"
                 import component from "./bar.jsx";
                 import data from "./bar.json";
             "#,
-            Some(json!([{ "json": "always", "js": "never", "jsx": "never" }]))
+            Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
         ),
-        (
-            r#"import "./bar.coffee""#,
-            Some(json!(["never", { "js": "always", "jsx": "always" }]))
-        ),
+        (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
         (
             r#"
                 import barjs from "./bar.js";
@@ -279,7 +273,7 @@ fn test() {
                 import barjs from ".";
                 import barjs2 from "..";
             "#,
-            Some(json!(["always"]))
+            Some(json!(["always"])),
         ),
         (
             r#"
@@ -287,27 +281,21 @@ fn test() {
                 import barjson from "./bar.json";
                 import barnone from "./bar";
             "#,
-            Some(json!(["never", { "json": "always", "js": "never", "jsx": "never" }]))
+            Some(json!(["never", { "json": "always", "js": "never", "jsx": "never" }])),
+        ),
+        (
+            r#"
+                import thing from "./fake-file.js";
+            "#,
+            Some(json!(["never"])),
         ),
     ];
-
 
     // ruleTester.run('extensions', rule, {
     //   invalid: [
     //     // extension resolve order (#583/#965)
 
     //     // unresolved (#271/#295)
-    //     test({
-    //       code: 'import thing from "./fake-file.js"',
-    //       options: ['never'],
-    //       errors: [
-    //         {
-    //           message: 'Unexpected use of file extension "js" for "./fake-file.js"',
-    //           line: 1,
-    //           column: 19,
-    //         },
-    //       ],
-    //     }),
     //     test({
     //       code: 'import thing from "non-package/test"',
     //       options: ['always'],
