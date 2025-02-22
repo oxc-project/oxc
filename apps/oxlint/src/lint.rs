@@ -954,10 +954,32 @@ mod test {
     }
 
     #[test]
-    fn test_nested_config_precedence() {
+    fn test_nested_config_explicit_config_precedence() {
         // `--config` takes absolute precedence over nested configs, and will be used for
         // linting all files rather than the nested configuration files.
         let args = &["--experimental-nested-config", "--config", "oxlint-no-console.json"];
+        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_nested_config_filter_precedence() {
+        // CLI arguments take precedence over nested configs, but apply over top of the nested
+        // config files, rather than replacing them.
+        let args = &["--experimental-nested-config", "-A", "no-console"];
+        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_nested_config_explicit_config_and_filter_precedence() {
+        // Combining `--config` and CLI filters should make the passed config file be
+        // used for all files, but still override any rules specified in the config file.
+        let args = &[
+            "--experimental-nested-config",
+            "-A",
+            "no-console",
+            "--config",
+            "oxlint-no-console.json",
+        ];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
     }
 }
