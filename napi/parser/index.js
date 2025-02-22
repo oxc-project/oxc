@@ -9,7 +9,7 @@ module.exports.parseWithoutReturn = bindings.parseWithoutReturn;
 module.exports.Severity = bindings.Severity;
 
 function wrap(result) {
-  let program, module, comments, errors, magicString;
+  let program, module, comments, errors;
   return {
     get program() {
       if (!program) {
@@ -47,17 +47,6 @@ function wrap(result) {
     get errors() {
       if (!errors) errors = result.errors;
       return errors;
-    },
-    get magicString() {
-      if (!magicString) magicString = result.magicString;
-      magicString.generateMap = function generateMap(options) {
-        return {
-          toString: () => magicString.toSourcemapString(options),
-          toUrl: () => magicString.toSourcemapUrl(options),
-          toMap: () => magicString.toSourcemapObject(options),
-        };
-      };
-      return magicString;
     },
   };
 }

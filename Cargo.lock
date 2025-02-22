@@ -1760,7 +1760,6 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5eca5d9726cd0a6e433debe003b7bc88b2ecad0bb6109f0cef7c55e692139a34"
 dependencies = [
- "rayon",
  "serde",
 ]
 
@@ -1978,7 +1977,6 @@ dependencies = [
  "oxc_sourcemap",
  "rustc-hash",
  "self_cell",
- "string_wizard",
 ]
 
 [[package]]
@@ -2984,18 +2982,6 @@ name = "str_indices"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d08889ec5408683408db66ad89e0e1f93dff55c73a4ccc71c427d5b277ee47e6"
-
-[[package]]
-name = "string_wizard"
-version = "0.0.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baa2ddbd6b187e9467902cf1c0f90266969897659ec5e7cefb3433ff5ffcf97d"
-dependencies = [
- "oxc_index",
- "oxc_sourcemap",
- "rustc-hash",
- "serde",
-]
 
 [[package]]
 name = "strsim"

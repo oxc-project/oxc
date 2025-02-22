@@ -1,4 +1,4 @@
-import { assert, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
 
@@ -114,18 +114,12 @@ describe('parse', () => {
 describe('UTF-16 span', () => {
   it('basic', async () => {
     const code = "'🤨'";
-    const utf8 = await parseAsync('test.js', code);
-    expect(utf8.program.end).toMatchInlineSnapshot(`6`);
-    const utf16 = await parseAsync('test.js', code, {
-      convertSpanUtf16: true,
-    });
+    const utf16 = await parseAsync('test.js', code);
     expect(utf16.program.end).toMatchInlineSnapshot(`4`);
   });
 
   it('comment', async () => {
-    const ret = await parseAsync('test.js', `// ∞`, {
-      convertSpanUtf16: true,
-    });
+    const ret = await parseAsync('test.js', `// ∞`);
     expect(ret.comments).toMatchInlineSnapshot(`
       [
         {
@@ -139,9 +133,7 @@ describe('UTF-16 span', () => {
   });
 
   it('module record', async () => {
-    const ret = await parseAsync('test.js', `"🤨";import x from "x"; export { x };import("y");import.meta.z`, {
-      convertSpanUtf16: true,
-    });
+    const ret = await parseAsync('test.js', `"🤨";import x from "x"; export { x };import("y");import.meta.z`);
     expect(ret.module).toMatchInlineSnapshot(`
       {
         "dynamicImports": [
@@ -224,9 +216,7 @@ describe('UTF-16 span', () => {
   });
 
   it('error', async () => {
-    const ret = await parseAsync('test.js', `"🤨";asdf asdf`, {
-      convertSpanUtf16: true,
-    });
+    const ret = await parseAsync('test.js', `"🤨";asdf asdf`);
     expect(ret.errors).toMatchInlineSnapshot(`
       [
         {

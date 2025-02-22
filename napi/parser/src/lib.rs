@@ -16,9 +16,7 @@ use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
 use oxc_napi::OxcError;
 
 mod convert;
-mod magic_string;
 mod types;
-pub use magic_string::MagicString;
 pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
 fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
@@ -86,29 +84,28 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         })
         .collect::<Vec<Comment>>();
 
-    if options.convert_span_utf16.unwrap_or(false) {
-        // Empty `comments` so comment spans don't get converted twice
-        ret.program.comments.clear();
+    // Empty `comments` so comment spans don't get converted twice
+    ret.program.comments.clear();
 
-        let mut converter = Utf8ToUtf16::new();
-        converter.convert(&mut ret.program);
-        converter.convert_module_record(&mut ret.module_record);
+    let mut converter = Utf8ToUtf16::new();
+    converter.convert(&mut ret.program);
+    converter.convert_module_record(&mut ret.module_record);
 
-        for comment in &mut comments {
-            comment.start = converter.convert_offset(comment.start);
-            comment.end = converter.convert_offset(comment.end);
-        }
+    for comment in &mut comments {
+        comment.start = converter.convert_offset(comment.start);
+        comment.end = converter.convert_offset(comment.end);
+    }
 
-        for error in &mut errors {
-            for label in &mut error.labels {
-                label.start = converter.convert_offset(label.start);
-                label.end = converter.convert_offset(label.end);
-            }
+    for error in &mut errors {
+        for label in &mut error.labels {
+            label.start = converter.convert_offset(label.start);
+            label.end = converter.convert_offset(label.end);
         }
     }
+
     let program = ret.program.to_estree_ts_json();
     let module = EcmaScriptModule::from(&ret.module_record);
-    ParseResult { source_text, program, module, comments, errors }
+    ParseResult { program, module, comments, errors }
 }
 
 /// Parse synchronously.

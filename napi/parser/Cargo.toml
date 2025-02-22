@@ -30,7 +30,6 @@ oxc_sourcemap = { workspace = true, features = ["napi"] }
 
 rustc-hash = { workspace = true }
 self_cell = { workspace = true }
-string_wizard = { workspace = true, features = ["sourcemap", "serde"] }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
