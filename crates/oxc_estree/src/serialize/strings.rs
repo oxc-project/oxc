@@ -121,7 +121,7 @@ fn write_char_escape(escape: Escape, byte: u8, buffer: &mut Buffer) {
 
 #[cfg(test)]
 mod tests {
-    use super::super::CompactSerializer;
+    use super::super::CompactTSSerializer;
     use super::*;
 
     #[test]
@@ -148,7 +148,7 @@ mod tests {
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactSerializer::new();
+            let mut serializer = CompactTSSerializer::new();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -160,7 +160,7 @@ mod tests {
         let cases = [(String::new(), r#""""#), ("foobar".to_string(), r#""foobar""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactSerializer::new();
+            let mut serializer = CompactTSSerializer::new();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);

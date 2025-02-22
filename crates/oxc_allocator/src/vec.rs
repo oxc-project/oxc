@@ -334,13 +334,13 @@ mod test {
 
     #[test]
     fn vec_serialize_estree() {
-        use oxc_estree::{CompactSerializer, ESTree};
+        use oxc_estree::{CompactTSSerializer, ESTree};
 
         let allocator = Allocator::default();
         let mut v = Vec::new_in(&allocator);
         v.push("x");
 
-        let mut serializer = CompactSerializer::new();
+        let mut serializer = CompactTSSerializer::new();
         v.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(s, r#"["x"]"#);

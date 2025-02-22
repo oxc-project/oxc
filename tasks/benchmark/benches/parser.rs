@@ -49,7 +49,7 @@ fn bench_estree(criterion: &mut Criterion) {
                     .program;
                 runner.run(|| {
                     Utf8ToUtf16::new().convert(&mut program);
-                    program.to_json();
+                    program.to_estree_ts_json();
                     program
                 });
             });

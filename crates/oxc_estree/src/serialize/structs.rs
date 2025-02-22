@@ -165,7 +165,7 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::{CompactSerializer, FlatStructSerializer, PrettySerializer, Serializer};
+    use super::super::{CompactTSSerializer, FlatStructSerializer, PrettyTSSerializer, Serializer};
     use super::*;
 
     #[test]
@@ -227,7 +227,7 @@ mod tests {
             maybe_not_bar: None,
         };
 
-        let mut serializer = CompactSerializer::new();
+        let mut serializer = CompactTSSerializer::new();
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
@@ -235,7 +235,7 @@ mod tests {
             r#"{"n":123,"u":12345,"bar":{"yes":"yup","no":"nope"},"empty":{},"hello":"hi!","maybe_bar":{"yes":"hell yeah!","no":"not a chance in a million, mate"},"maybe_not_bar":null}"#
         );
 
-        let mut serializer = PrettySerializer::new();
+        let mut serializer = PrettyTSSerializer::new();
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
@@ -316,7 +316,7 @@ mod tests {
             outer2: "out2",
         };
 
-        let mut serializer = CompactSerializer::new();
+        let mut serializer = CompactTSSerializer::new();
         outer.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
@@ -324,7 +324,7 @@ mod tests {
             r#"{"outer1":"out1","inner1":"in1","innermost1":"inin1","innermost2":"inin2","inner2":"in2","outer2":"out2"}"#
         );
 
-        let mut serializer = PrettySerializer::new();
+        let mut serializer = PrettyTSSerializer::new();
         outer.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(

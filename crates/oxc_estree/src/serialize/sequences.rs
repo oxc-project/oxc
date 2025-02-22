@@ -84,7 +84,7 @@ impl<T: ESTree, const N: usize> ESTree for [T; N] {
 
 #[cfg(test)]
 mod tests {
-    use super::super::{CompactSerializer, PrettySerializer, StructSerializer};
+    use super::super::{CompactTSSerializer, PrettyTSSerializer, StructSerializer};
     use super::*;
 
     #[test]
@@ -107,12 +107,12 @@ mod tests {
 
         let foo = Foo { none: &[], one: &["one"], two: ["two one", "two two"] };
 
-        let mut serializer = CompactSerializer::new();
+        let mut serializer = CompactTSSerializer::new();
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(&s, r#"{"none":[],"one":["one"],"two":["two one","two two"]}"#);
 
-        let mut serializer = PrettySerializer::new();
+        let mut serializer = PrettyTSSerializer::new();
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(

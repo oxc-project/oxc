@@ -51,11 +51,11 @@ trait SerializerPrivate: Sized {
     fn buffer_and_formatter_mut(&mut self) -> (&mut Buffer, &mut Self::Formatter);
 }
 
-/// ESTree serializer which produces compact JSON.
-pub type CompactSerializer = ESTreeSerializer<CompactFormatter>;
+/// ESTree serializer which produces compact JSON, including TypeScript fields.
+pub type CompactTSSerializer = ESTreeSerializer<CompactFormatter>;
 
-/// ESTree serializer which produces pretty JSON.
-pub type PrettySerializer = ESTreeSerializer<PrettyFormatter>;
+/// ESTree serializer which produces pretty JSON, including TypeScript fields.
+pub type PrettyTSSerializer = ESTreeSerializer<PrettyFormatter>;
 
 /// ESTree serializer.
 pub struct ESTreeSerializer<F: Formatter> {
