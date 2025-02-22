@@ -601,27 +601,15 @@ impl RestrictedPattern {
     }
 
     fn get_regex_result(&self, name: &str) -> bool {
-        let Some(regex) = &self.regex else {
-            return false;
-        };
-
-        regex.find(name).is_some()
+        self.regex.as_ref().is_some_and(|regex| regex.is_match(name))
     }
 
     fn get_import_name_pattern_result(&self, name: &CompactStr) -> bool {
-        let Some(import_name_pattern) = &self.import_name_pattern else {
-            return false;
-        };
-
-        import_name_pattern.find(name).is_some()
+        self.import_name_pattern.as_ref().is_some_and(|regex| regex.is_match(name))
     }
 
     fn get_allow_import_name_pattern_result(&self, name: &CompactStr) -> bool {
-        let Some(allow_import_names) = &self.allow_import_name_pattern else {
-            return false;
-        };
-
-        allow_import_names.find(name).is_some()
+        self.allow_import_name_pattern.as_ref().is_some_and(|regex| regex.is_match(name))
     }
 }
 
