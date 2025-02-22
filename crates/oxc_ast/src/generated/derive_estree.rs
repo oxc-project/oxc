@@ -1591,7 +1591,6 @@ impl ESTree for ImportDeclaration<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("specifiers", &crate::serialize::ImportDeclarationSpecifiers(self));
         state.serialize_field("source", &self.source);
-        state.serialize_field("phase", &self.phase);
         state.serialize_field("attributes", &crate::serialize::ImportDeclarationWithClause(self));
         state.serialize_field("importKind", &self.import_kind);
         state.end();
@@ -1685,24 +1684,6 @@ impl ESTree for ImportAttributeKey<'_> {
     }
 }
 
-impl ESTree for ExportNamedDeclaration<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ExportNamedDeclaration");
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("declaration", &self.declaration);
-        state.serialize_field("specifiers", &self.specifiers);
-        state.serialize_field("source", &self.source);
-        state.serialize_field("exportKind", &self.export_kind);
-        state.serialize_field(
-            "attributes",
-            &crate::serialize::ExportNamedDeclarationWithClause(self),
-        );
-        state.end();
-    }
-}
-
 impl ESTree for ExportDefaultDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
@@ -1710,7 +1691,6 @@ impl ESTree for ExportDefaultDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("declaration", &self.declaration);
-        state.serialize_field("exported", &self.exported);
         state.end();
     }
 }

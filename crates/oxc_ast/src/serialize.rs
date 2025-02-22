@@ -360,6 +360,30 @@ impl ESTree for ImportExpressionArguments<'_> {
     }
 }
 
+/// Serialize `ExportNamedDeclaration`.
+///
+/// Omit `with_clause` field (which is renamed to `attributes` in ESTree)
+/// unless `source` field is `Some`.
+impl ESTree for ExportNamedDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", "ExportNamedDeclaration");
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("declaration", &self.declaration);
+        state.serialize_field("specifiers", &self.specifiers);
+        state.serialize_field("source", &self.source);
+        state.serialize_field("exportKind", &self.export_kind);
+        if self.source.is_some() {
+            state.serialize_field(
+                "attributes",
+                &crate::serialize::ExportNamedDeclarationWithClause(self),
+            );
+        }
+        state.end();
+    }
+}
+
 // Serializers for `with_clause` field of `ImportDeclaration`, `ExportNamedDeclaration`,
 // and `ExportAllDeclaration` (which are renamed to `attributes` in ESTree AST).
 //
