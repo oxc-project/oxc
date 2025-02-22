@@ -23,7 +23,7 @@ absolute_paths_not_starting_with_crate = "warn"
 non_ascii_idents = "warn"
 unit-bindings = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
-tail_expr_drop_order = "allow" # FIXME
+tail_expr_drop_order = "warn"
 unsafe_op_in_unsafe_fn = "allow" # FIXME
 unused_unsafe = "allow"
 
