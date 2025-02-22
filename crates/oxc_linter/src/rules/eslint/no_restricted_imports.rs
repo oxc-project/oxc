@@ -1,7 +1,7 @@
 use ignore::gitignore::GitignoreBuilder;
 use oxc_ast::{
-    AstKind,
     ast::{ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration, TSModuleReference},
+    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -751,7 +751,7 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            match pattern.get_group_glob_result(&entry.module_request.name()) {
+            match pattern.get_group_glob_result(entry.module_request.name()) {
                 GlobResult::Whitelist => {
                     whitelist_found = true;
                     break;
@@ -769,7 +769,7 @@ impl NoRestrictedImports {
                 GlobResult::None => (),
             };
 
-            if pattern.get_regex_result(&entry.module_request.name()) {
+            if pattern.get_regex_result(entry.module_request.name()) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
                     entry.statement_span,
                     source,
@@ -795,9 +795,7 @@ impl NoRestrictedImports {
             return;
         };
 
-        let source: &str = &reference.expression.value;
-
-        println!("{source:?}");
+        let source = &reference.expression.value;
 
         for path in &self.paths {
             if source != path.name.as_str() {
