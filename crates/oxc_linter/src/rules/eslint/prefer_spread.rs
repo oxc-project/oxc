@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{match_member_expression, CallExpression, ChainElement, Expression, MemberExpression},
     AstKind,
+    ast::{CallExpression, ChainElement, Expression, MemberExpression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn eslint_prefer_spread_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require spread operators instead of .apply()").with_label(span)

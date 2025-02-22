@@ -3,12 +3,12 @@
 //! See <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/needs-parens.js>
 
 use oxc_ast::{
-    ast::{
-        match_member_expression, AssignmentTarget, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ForStatementInit, ForStatementLeft, MemberExpression, ObjectExpression,
-        SimpleAssignmentTarget,
-    },
     AstKind,
+    ast::{
+        AssignmentTarget, ChainElement, ExportDefaultDeclarationKind, Expression, ForStatementInit,
+        ForStatementLeft, MemberExpression, ObjectExpression, SimpleAssignmentTarget,
+        match_member_expression,
+    },
 };
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
@@ -16,7 +16,7 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-use crate::{binaryish::BinaryishOperator, utils, Prettier};
+use crate::{Prettier, binaryish::BinaryishOperator, utils};
 
 impl<'a> Prettier<'a> {
     // NOTE: This `mut` is only for `should_wrap_function_for_export_default()`

@@ -63,11 +63,7 @@ impl Rule for NoCommentedOutTests {
         let comments = ctx.semantic().comments();
         let commented_tests = comments.iter().filter_map(|comment| {
             let text = ctx.source_range(comment.content_span());
-            if RE.is_match(text) {
-                Some(comment.content_span())
-            } else {
-                None
-            }
+            if RE.is_match(text) { Some(comment.content_span()) } else { None }
         });
         for span in commented_tests {
             ctx.diagnostic(no_commented_out_tests_diagnostic(span));

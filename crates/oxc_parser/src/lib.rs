@@ -87,8 +87,8 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, Box as ArenaBox};
 use oxc_ast::{
-    ast::{Expression, Program},
     AstBuilder,
+    ast::{Expression, Program},
 };
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};

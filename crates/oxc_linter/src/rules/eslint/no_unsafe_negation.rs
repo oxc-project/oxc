@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{BinaryExpression, Expression},
     AstKind,
+    ast::{BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, fixer::RuleFixer, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
 
 fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected logical not in the left hand side of '{operator}' operator"))

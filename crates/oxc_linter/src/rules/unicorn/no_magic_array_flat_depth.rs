@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression},
     AstKind,
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn no_magic_array_flat_map_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Magic number for `Array.prototype.flat` depth is not allowed.")

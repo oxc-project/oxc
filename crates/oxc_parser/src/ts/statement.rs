@@ -4,11 +4,10 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    diagnostics,
+    ParserImpl, diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
-    ParserImpl,
 };
 
 impl<'a> ParserImpl<'a> {

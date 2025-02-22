@@ -62,11 +62,7 @@ impl<'a> Fill<'a> {
     }
 
     pub fn dequeue(&mut self) -> Option<Doc<'a>> {
-        if self.parts.len() > 0 {
-            Some(self.parts.remove(0))
-        } else {
-            None
-        }
+        if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None }
     }
 
     pub fn enqueue(&mut self, doc: Doc<'a>) {

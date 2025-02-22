@@ -1,6 +1,6 @@
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
 use rustc_hash::FxHashMap;
 
@@ -110,7 +110,7 @@ fn format_stylish(diagnostics: &[Error]) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
-    use oxc_diagnostics::{reporter::DiagnosticResult, NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
     use oxc_span::Span;
 
     #[test]

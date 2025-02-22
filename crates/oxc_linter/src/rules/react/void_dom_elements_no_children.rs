@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, JSXAttributeItem, JSXAttributeName, JSXElementName, ObjectPropertyKind,
         PropertyKey,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,10 +11,10 @@ use oxc_span::Span;
 use phf::phf_set;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::is_create_element_call,
-    AstNode,
 };
 
 fn void_dom_elements_no_children_diagnostic(tag: &str, span: Span) -> OxcDiagnostic {

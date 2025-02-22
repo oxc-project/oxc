@@ -3,8 +3,8 @@ use itertools::Itertools as _;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    parse::{Parse, ParseStream},
     Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Result, Token,
+    parse::{Parse, ParseStream},
 };
 
 pub struct LintRuleMeta {
@@ -21,14 +21,17 @@ impl Parse for LintRuleMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let mut documentation = String::new();
         for attr in input.call(Attribute::parse_outer)? {
-            if let Some(lit) = parse_attr(["doc"], &attr) {
-                let value = lit.value();
-                let line = value.strip_prefix(' ').unwrap_or(&value);
+            match parse_attr(["doc"], &attr) {
+                Some(lit) => {
+                    let value = lit.value();
+                    let line = value.strip_prefix(' ').unwrap_or(&value);
 
-                documentation.push_str(line);
-                documentation.push('\n');
-            } else {
-                return Err(Error::new_spanned(attr, "unexpected attribute"));
+                    documentation.push_str(line);
+                    documentation.push('\n');
+                }
+                _ => {
+                    return Err(Error::new_spanned(attr, "unexpected attribute"));
+                }
             }
         }
 

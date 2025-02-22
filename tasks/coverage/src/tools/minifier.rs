@@ -3,10 +3,10 @@ use std::path::{Path, PathBuf};
 use oxc::span::SourceType;
 
 use crate::{
+    Driver,
     babel::BabelCase,
     suite::{Case, TestResult},
     test262::Test262Case,
-    Driver,
 };
 
 /// Idempotency test

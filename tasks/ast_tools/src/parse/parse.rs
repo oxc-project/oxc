@@ -2,25 +2,25 @@ use oxc_index::IndexVec;
 use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::{
-    punctuated::Punctuated, token::Comma, AttrStyle, Attribute, Expr, ExprLit, Field, Fields,
-    GenericArgument, Generics, Ident, ItemEnum, ItemStruct, Lit, Meta, MetaList, PathArguments,
-    PathSegment, Type, TypePath, TypeReference, Variant, Visibility as SynVisibility,
+    AttrStyle, Attribute, Expr, ExprLit, Field, Fields, GenericArgument, Generics, Ident, ItemEnum,
+    ItemStruct, Lit, Meta, MetaList, PathArguments, PathSegment, Type, TypePath, TypeReference,
+    Variant, Visibility as SynVisibility, punctuated::Punctuated, token::Comma,
 };
 
 use crate::{
+    DERIVES, GENERATORS, Result,
     codegen::Codegen,
     schema::{
         BoxDef, CellDef, Def, EnumDef, FieldDef, File, FileId, MetaId, MetaType, OptionDef,
         PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef, VecDef, Visibility,
     },
-    Result, DERIVES, GENERATORS,
 };
 
 use super::{
+    Derives, FxIndexMap, FxIndexSet,
     attr::{AttrLocation, AttrPart, AttrPartListElement, AttrPositions, AttrProcessor},
     ident_name,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
-    Derives, FxIndexMap, FxIndexSet,
 };
 
 /// Parse [`Skeleton`]s into [`TypeDef`]s.

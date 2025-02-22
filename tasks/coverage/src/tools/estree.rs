@@ -57,7 +57,6 @@ impl Case for EstreeTest262Case {
             "test262/test/language/statements/for-in/head-lhs-cover.js",
             "test262/test/language/statements/for-of/head-lhs-async-parens.js",
             "test262/test/language/statements/for-of/head-lhs-cover.js",
-
             // Lone surrogates in strings.
             // We cannot pass these tests at present, as Oxc's parser does not handle them correctly.
             // https://github.com/oxc-project/oxc/issues/3526#issuecomment-2650260735
@@ -97,7 +96,6 @@ impl Case for EstreeTest262Case {
             "test262/test/language/literals/regexp/u-surrogate-pairs-atom-char-class.js",
             "test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js",
             "test262/test/language/statements/for-of/string-astral-truncated.js",
-
             // Hashbangs.
             // We intentionally diverge from Acorn, by including an extra `hashbang` field on `Program`.
             // `acorn-test262` adapts Acorn's AST to add a `hashbang: null` field to `Program`,

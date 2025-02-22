@@ -1,12 +1,12 @@
 //! This module checks if an unused variable is allowed. Note that this does not
 //! consider variables ignored by name pattern, but by where they are declared.
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{NodeId, Semantic};
 
-use super::{options::ArgsOption, NoUnusedVars, Symbol};
+use super::{NoUnusedVars, Symbol, options::ArgsOption};
 use crate::{
-    rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding},
     ModuleRecord,
+    rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding},
 };
 
 impl Symbol<'_, '_> {

@@ -1,25 +1,25 @@
 mod const_eval;
 
-use const_eval::{is_array_from, is_new_typed_array, ConstEval};
+use const_eval::{ConstEval, is_array_from, is_new_typed_array};
 use oxc_ast::{
+    AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
         ObjectExpression, ObjectPropertyKind, SpreadElement,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::{
         get_new_expr_ident_name, is_method_call, is_new_expression, outermost_paren_parent,
     },
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
 };
 
 fn spread_in_list(span: Span, arr_or_obj: &str) -> OxcDiagnostic {
@@ -417,11 +417,7 @@ fn check_useless_clone<'a>(
 fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&'a str> {
     fn pretty_snippet(snippet: &str) -> Option<&str> {
         // unwieldy snippets don't get included in diagnostic messages
-        if snippet.len() > 50 || snippet.contains('\n') {
-            None
-        } else {
-            Some(snippet)
-        }
+        if snippet.len() > 50 || snippet.contains('\n') { None } else { Some(snippet) }
     }
 
     match expr {

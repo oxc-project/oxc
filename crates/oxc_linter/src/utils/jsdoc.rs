@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters},
     AstKind,
+    ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters},
 };
 use oxc_semantic::{JSDoc, Semantic};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
-use crate::{config::JSDocPluginSettings, AstNode};
+use crate::{AstNode, config::JSDocPluginSettings};
 
 /// JSDoc is often attached on the parent node of a function.
 ///

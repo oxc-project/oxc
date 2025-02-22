@@ -1,7 +1,7 @@
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{AstBuilder, ast::*};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{es2018::ObjectRestSpreadOptions, TransformCtx};
+use crate::{TransformCtx, es2018::ObjectRestSpreadOptions};
 
 mod comments;
 mod diagnostics;

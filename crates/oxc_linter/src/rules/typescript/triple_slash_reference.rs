@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Statement, TSModuleReference},
     AstKind,
+    ast::{Statement, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

@@ -4,26 +4,26 @@
 use std::mem;
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 use oxc_traverse::{
-    ast_operations::get_var_name_from_node, Ancestor, BoundIdentifier, TraverseCtx,
+    Ancestor, BoundIdentifier, TraverseCtx, ast_operations::get_var_name_from_node,
 };
 
 use crate::{
+    TransformCtx,
     common::helper_loader::Helper,
     utils::ast_builder::{create_bind_call, create_call_call, create_member_callee},
-    TransformCtx,
 };
 
 use super::{
+    ClassProperties, ResolvedPrivateProp,
     class_details::ResolvedGetSetPrivateProp,
     utils::{
         create_assignment, create_underscore_ident_name,
         debug_assert_expr_is_not_parenthesis_or_typescript_syntax,
     },
-    ClassProperties, ResolvedPrivateProp,
 };
 
 impl<'a> ClassProperties<'a, '_> {
@@ -61,29 +61,32 @@ impl<'a> ClassProperties<'a, '_> {
         let span = field_expr.span;
         let object = ctx.ast.move_expression(&mut field_expr.object);
         let resolved = if is_assignment {
-            if let Some(prop) = self.classes_stack.find_writeable_private_prop(&field_expr.field) {
-                prop
-            } else {
-                // Early return for read-only error
-                return self.create_sequence_with_read_only_error(
-                    &field_expr.field.name,
-                    object,
-                    None,
-                    span,
-                    ctx,
-                );
+            match self.classes_stack.find_writeable_private_prop(&field_expr.field) {
+                Some(prop) => prop,
+                _ => {
+                    // Early return for read-only error
+                    return self.create_sequence_with_read_only_error(
+                        &field_expr.field.name,
+                        object,
+                        None,
+                        span,
+                        ctx,
+                    );
+                }
             }
-        } else if let Some(prop) = self.classes_stack.find_readable_private_prop(&field_expr.field)
-        {
-            prop
         } else {
-            // Early return for write-only error
-            return self.create_sequence_with_write_only_error(
-                &field_expr.field.name,
-                object,
-                span,
-                ctx,
-            );
+            match self.classes_stack.find_readable_private_prop(&field_expr.field) {
+                Some(prop) => prop,
+                _ => {
+                    // Early return for write-only error
+                    return self.create_sequence_with_write_only_error(
+                        &field_expr.field.name,
+                        object,
+                        span,
+                        ctx,
+                    );
+                }
+            }
         };
 
         let ResolvedPrivateProp {

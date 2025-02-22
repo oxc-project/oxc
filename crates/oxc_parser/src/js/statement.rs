@@ -3,9 +3,9 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
-use super::{grammar::CoverGrammar, VariableDeclarationParent};
+use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
-    diagnostics, lexer::Kind, modifiers::Modifiers, Context, ParserImpl, StatementContext,
+    Context, ParserImpl, StatementContext, diagnostics, lexer::Kind, modifiers::Modifiers,
 };
 
 impl<'a> ParserImpl<'a> {

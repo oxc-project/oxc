@@ -3,18 +3,18 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    array, dynamic_text,
+    Prettier, array, dynamic_text,
     format::{
+        Format,
         print::{
             array,
             object::{self, ObjectLike},
             property, template_literal,
         },
-        Format,
     },
     group, hardline, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, text, wrap, Prettier,
+    join, line, softline, text, wrap,
 };
 
 impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {

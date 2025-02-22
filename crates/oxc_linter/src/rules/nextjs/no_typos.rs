@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{BindingPatternKind, Declaration, ModuleDeclaration},
     AstKind,
+    ast::{BindingPatternKind, Declaration, ModuleDeclaration},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,9 +8,9 @@ use oxc_span::Span;
 use phf::phf_set;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_typos_diagnostic(typo: &str, suggestion: &str, span: Span) -> OxcDiagnostic {

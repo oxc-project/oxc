@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class property declarations (instance or static properties).
 
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::TraverseCtx;
@@ -9,8 +9,8 @@ use oxc_traverse::TraverseCtx;
 use crate::common::helper_loader::Helper;
 
 use super::{
-    utils::{create_assignment, create_underscore_ident_name, create_variable_declaration},
     ClassProperties,
+    utils::{create_assignment, create_underscore_ident_name, create_variable_declaration},
 };
 
 // Instance properties

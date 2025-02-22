@@ -1,8 +1,8 @@
 use std::{ops::Deref, path::Path};
 
 use oxc_ast::{
-    ast::{Expression, ExpressionStatement, MemberExpression},
     AstKind,
+    ast::{Expression, ExpressionStatement, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -13,7 +13,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{iter_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, iter_possible_jest_call_node, parse_expect_jest_fn_call},
 };
 
 // TODO: re-word diagnostic messages

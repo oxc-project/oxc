@@ -1,9 +1,9 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, BindingPatternKind, CallExpression, Expression, ForInStatement, ForOfStatement,
         ForStatement, VariableDeclarationKind,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,10 +11,10 @@ use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::{call_expr_method_callee_info, is_method_call},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 fn reduce_likely_array_spread_diagnostic(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {

@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     fs,
-    io::{stdout, Read, Write},
+    io::{Read, Write, stdout},
     panic::UnwindSafe,
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -14,13 +14,13 @@ use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
     span::SourceType,
 };
-use oxc_tasks_common::{normalize_path, Snapshot};
+use oxc_tasks_common::{Snapshot, normalize_path};
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
 use walkdir::WalkDir;
 
-use crate::{snap_root, workspace_root, AppArgs, Driver};
+use crate::{AppArgs, Driver, snap_root, workspace_root};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TestResult {
@@ -57,7 +57,7 @@ pub trait Suite<T: Case> {
     }
 
     fn run_async(&mut self, args: &AppArgs) {
-        use futures::{stream, StreamExt};
+        use futures::{StreamExt, stream};
         self.read_test_cases("runtime", args);
         let cases = self.get_test_cases_mut().iter_mut().map(T::run_async);
         Runtime::new().unwrap().block_on(stream::iter(cases).buffer_unordered(100).count());

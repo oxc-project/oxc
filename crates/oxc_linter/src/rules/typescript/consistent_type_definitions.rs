@@ -1,15 +1,15 @@
 use oxc_ast::{
-    ast::{ExportDefaultDeclarationKind, TSType},
     AstKind,
+    ast::{ExportDefaultDeclarationKind, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn consistent_type_definitions_diagnostic(

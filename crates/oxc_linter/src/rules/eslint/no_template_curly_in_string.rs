@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_template_curly_in_string_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Template placeholders will not interpolate in regular strings")

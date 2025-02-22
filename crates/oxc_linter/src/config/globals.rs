@@ -2,7 +2,7 @@ use std::{borrow, fmt, hash, ops::Deref};
 
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
-use serde::{de::Visitor, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::Visitor};
 
 /// Add or remove global variables.
 ///
@@ -87,11 +87,7 @@ impl<'de> Deserialize<'de> for GlobalValue {
 impl From<bool> for GlobalValue {
     #[inline]
     fn from(value: bool) -> Self {
-        if value {
-            GlobalValue::Writeable
-        } else {
-            GlobalValue::Readonly
-        }
+        if value { GlobalValue::Writeable } else { GlobalValue::Readonly }
     }
 }
 

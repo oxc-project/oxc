@@ -5,10 +5,9 @@ use oxc_span::Span;
 
 use super::FunctionKind;
 use crate::{
-    diagnostics,
+    Context, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
-    Context, ParserImpl, StatementContext,
 };
 
 impl FunctionKind {

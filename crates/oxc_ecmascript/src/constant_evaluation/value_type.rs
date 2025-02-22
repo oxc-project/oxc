@@ -196,11 +196,7 @@ impl DetermineValueType for AssignmentExpression<'_> {
             AssignmentOperator::Assign => self.right.value_type(is_global_reference),
             AssignmentOperator::Addition => {
                 let right = self.right.value_type(is_global_reference);
-                if right.is_string() {
-                    ValueType::String
-                } else {
-                    ValueType::Undetermined
-                }
+                if right.is_string() { ValueType::String } else { ValueType::Undetermined }
             }
             AssignmentOperator::Subtraction
             | AssignmentOperator::Multiplication

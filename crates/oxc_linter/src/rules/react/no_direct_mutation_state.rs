@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{Expression, MethodDefinitionKind, SimpleAssignmentTarget, StaticMemberExpression},
     AstKind,
+    ast::{Expression, MethodDefinitionKind, SimpleAssignmentTarget, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
-    AstNode,
 };
 
 fn no_direct_mutation_state_diagnostic(span: Span) -> OxcDiagnostic {

@@ -49,13 +49,13 @@ use std::mem;
 
 use metadata::LegacyDecoratorMetadata;
 use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
-use oxc_ast::{ast::*, Visit, VisitMut, NONE};
+use oxc_ast::{NONE, Visit, VisitMut, ast::*};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{utils::ast_builder::create_prototype_member, Helper, TransformCtx};
+use crate::{Helper, TransformCtx, utils::ast_builder::create_prototype_member};
 
 struct ClassDecoratorInfo {
     /// `@dec class C {}` or `class C { constructor(@dec p) {} }`
@@ -813,11 +813,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let ident = class_binding.create_read_expression(ctx);
-        if is_static {
-            ident
-        } else {
-            create_prototype_member(ident, ctx)
-        }
+        if is_static { ident } else { create_prototype_member(ident, ctx) }
     }
 
     /// Get the name of the property key.

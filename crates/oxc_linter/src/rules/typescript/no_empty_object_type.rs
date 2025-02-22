@@ -1,15 +1,15 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{TSInterfaceDeclaration, TSTypeLiteral},
     AstKind,
+    ast::{TSInterfaceDeclaration, TSTypeLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
     span: Span,

@@ -8,11 +8,11 @@ use oxc_span::{GetSpan, Span};
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     ast_util::{get_function_name_with_kind, is_function_node, iter_outer_expressions},
     context::LintContext,
     rule::Rule,
     utils::count_comment_lines,
-    AstNode,
 };
 
 fn max_lines_per_function_diagnostic(

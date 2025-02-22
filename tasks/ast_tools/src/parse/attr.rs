@@ -3,9 +3,9 @@ use std::fmt::{self, Display};
 use bitflags::bitflags;
 
 use crate::{
+    DERIVES, GENERATORS, Result,
     codegen::{DeriveId, GeneratorId},
     schema::{Def, EnumDef, MetaType, StructDef},
-    Result, DERIVES, GENERATORS,
 };
 
 /// Processor of an attribute - either a derive or a generator.
@@ -172,29 +172,17 @@ pub enum AttrPartListElement {
 impl AttrPartListElement {
     /// Unwrap this [`AttrPartListElement`] if it is an [`AttrPartListElement::Tag`].
     pub fn try_into_tag(self) -> Result<String> {
-        if let Self::Tag(name) = self {
-            Ok(name)
-        } else {
-            Err(())
-        }
+        if let Self::Tag(name) = self { Ok(name) } else { Err(()) }
     }
 
     /// Unwrap this [`AttrPartListElement`] if it is an [`AttrPartListElement::String`].
     pub fn try_into_string(self) -> Result<(String, String)> {
-        if let Self::String(name, value) = self {
-            Ok((name, value))
-        } else {
-            Err(())
-        }
+        if let Self::String(name, value) = self { Ok((name, value)) } else { Err(()) }
     }
 
     /// Unwrap this [`AttrPartListElement`] if it is an [`AttrPartListElement::List`].
     #[expect(dead_code)]
     pub fn try_into_list(self) -> Result<(String, Vec<AttrPartListElement>)> {
-        if let Self::List(name, elements) = self {
-            Ok((name, elements))
-        } else {
-            Err(())
-        }
+        if let Self::List(name, elements) = self { Ok((name, elements)) } else { Err(()) }
     }
 }

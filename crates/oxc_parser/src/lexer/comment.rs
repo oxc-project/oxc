@@ -5,10 +5,9 @@ use oxc_syntax::identifier::is_line_terminator;
 use crate::diagnostics;
 
 use super::{
-    cold_branch,
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
+    Kind, Lexer, cold_branch,
+    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
     source::SourcePosition,
-    Kind, Lexer,
 };
 
 // Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)

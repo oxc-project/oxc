@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use oxc_linter::{table::RuleTableRow, LintPlugins};
+use oxc_linter::{LintPlugins, table::RuleTableRow};
 
 use super::HtmlWriter;
 

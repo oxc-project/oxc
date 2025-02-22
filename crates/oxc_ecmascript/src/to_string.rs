@@ -5,11 +5,11 @@ use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
+    ToBoolean,
     array_join::ArrayJoin,
     constant_evaluation::{DetermineValueType, ValueType},
     is_global_reference::IsGlobalReference,
     to_primitive::maybe_object_with_to_primitive_related_properties_overridden,
-    ToBoolean,
 };
 
 /// `ToString`

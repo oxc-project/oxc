@@ -4,10 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, is_hidden_from_screen_reader, object_has_accessible_child},
-    AstNode,
 };
 
 fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {

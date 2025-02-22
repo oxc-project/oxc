@@ -9,7 +9,7 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{gen::GenExpr, Codegen, Context, Operator};
+use crate::{Codegen, Context, Operator, r#gen::GenExpr};
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -67,7 +67,7 @@ fn print_binary_operator(op: BinaryOperator, p: &mut Codegen) {
 }
 
 impl BinaryishOperator {
-    fn gen(self, p: &mut Codegen) {
+    fn r#gen(self, p: &mut Codegen) {
         match self {
             Self::Binary(op) => print_binary_operator(op, p),
             Self::Logical(op) => p.print_str(op.as_str()),
@@ -220,7 +220,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
     pub fn visit_right_and_finish(&self, p: &mut Codegen) {
         p.print_soft_space();
-        self.operator.gen(p);
+        self.operator.r#gen(p);
         p.print_soft_space();
         self.e.right().gen_expr(p, self.right_precedence, self.ctx);
         if self.wrap {

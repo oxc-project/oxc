@@ -1,17 +1,17 @@
 use oxc_ast::{
-    ast::{JSXAttribute, JSXAttributeItem, JSXElementName},
     AstKind,
+    ast::{JSXAttribute, JSXAttributeItem, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case, is_interactive_element, parse_jsx_value},
-    AstNode,
 };
 
 fn aria_activedescendant_has_tabindex_diagnostic(span: Span, el_name: &str) -> OxcDiagnostic {

@@ -1,15 +1,15 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, utils::get_element_type, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::get_element_type};
 
 fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing <track> element with captions inside <audio> or <video> element")

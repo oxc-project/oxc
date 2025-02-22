@@ -1,9 +1,9 @@
 use bitflags::bitflags;
-use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
+use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
 use serde::{
+    Deserialize, Serialize,
     de::{self, Deserializer},
     ser::Serializer,
-    Deserialize, Serialize,
 };
 
 bitflags! {
@@ -218,8 +218,8 @@ impl JsonSchema for LintPlugins {
         std::borrow::Cow::Borrowed("LintPlugins")
     }
 
-    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
-        gen.subschema_for::<Vec<&str>>()
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        r#gen.subschema_for::<Vec<&str>>()
     }
 }
 

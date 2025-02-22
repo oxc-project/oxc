@@ -1,4 +1,4 @@
-use oxc_index::{define_index_type, IndexVec};
+use oxc_index::{IndexVec, define_index_type};
 use rustc_hash::FxHashMap;
 // Have to import this even though don't use it, due to a bug in `define_index_type!` macro
 #[expect(unused_imports)]

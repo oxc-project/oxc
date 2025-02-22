@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
+    AstKind,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
         FunctionType, PropertyKind,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,7 +14,7 @@ use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 use phf::phf_set;
 
-use crate::{ast_util::get_function_name_with_kind, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::get_function_name_with_kind, context::LintContext, rule::Rule};
 
 fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected named {function_name}."))
@@ -371,20 +371,12 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<C
             }
             AstKind::ObjectProperty(prop) => {
                 return prop.key.static_name().and_then(|name| {
-                    if is_valid_identifier_name(&name) {
-                        Some(name)
-                    } else {
-                        None
-                    }
+                    if is_valid_identifier_name(&name) { Some(name) } else { None }
                 });
             }
             AstKind::PropertyDefinition(prop) => {
                 return prop.key.static_name().and_then(|name| {
-                    if is_valid_identifier_name(&name) {
-                        Some(name)
-                    } else {
-                        None
-                    }
+                    if is_valid_identifier_name(&name) { Some(name) } else { None }
                 });
             }
             _ => return None,

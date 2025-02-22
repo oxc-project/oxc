@@ -1,9 +1,9 @@
-use oxc_ast::{ast::Statement, AstKind};
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::get_preceding_indent_str, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::get_preceding_indent_str, context::LintContext, rule::Rule};
 
 #[derive(Clone, Copy)]
 enum Diagnostic {

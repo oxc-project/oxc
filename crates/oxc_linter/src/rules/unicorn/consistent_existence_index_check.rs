@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{BinaryOperator, Expression, UnaryOperator, VariableDeclarationKind},
     AstKind,
+    ast::{BinaryOperator, Expression, UnaryOperator, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

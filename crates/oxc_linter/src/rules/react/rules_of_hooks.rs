@@ -1,22 +1,22 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{ArrowFunctionExpression, Function},
     AstKind,
+    ast::{ArrowFunctionExpression, Function},
 };
 use oxc_cfg::{
-    graph::{algo, visit::Control},
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
+    graph::{algo, visit::Control},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
-    AstNode,
 };
 
 mod diagnostics {

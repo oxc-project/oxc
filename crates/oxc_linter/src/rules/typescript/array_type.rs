@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
     AstKind,
+    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

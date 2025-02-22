@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use oxc::{span::SourceType, transformer::BabelOptions};
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::{
     suite::{Case, Suite, TestResult},

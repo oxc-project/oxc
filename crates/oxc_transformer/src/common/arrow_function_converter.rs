@@ -92,7 +92,7 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{ast::*, visit::walk_mut::walk_expression, VisitMut, NONE};
+use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, GetSpan, SPAN};
@@ -102,7 +102,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, EnvOptions};
+use crate::{EnvOptions, utils::ast_builder::wrap_expression_in_arrow_function_iife};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 

@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::constant_evaluation::{
-    binary_operation_evaluate_value, ConstantEvaluation, ConstantEvaluationCtx, ConstantValue,
+    ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
 };
 use oxc_semantic::{IsGlobalReference, SymbolTable};
 use oxc_traverse::TraverseCtx;
@@ -121,11 +121,7 @@ impl<'a> Ctx<'a, '_> {
             }
             int_value = int_value.checked_mul(10).and_then(|v| {
                 let n = i32::from(b & 15);
-                if is_negative {
-                    v.checked_sub(n)
-                } else {
-                    v.checked_add(n)
-                }
+                if is_negative { v.checked_sub(n) } else { v.checked_add(n) }
             })?;
         }
         Some(f64::from(int_value))

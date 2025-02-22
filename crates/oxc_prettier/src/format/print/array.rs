@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    array, fill, group, hardline, if_break, indent, ir::Doc, line, softline, text, Format, Prettier,
+    Format, Prettier, array, fill, group, hardline, if_break, indent, ir::Doc, line, softline, text,
 };
 
 pub enum ArrayLike<'a, 'b> {

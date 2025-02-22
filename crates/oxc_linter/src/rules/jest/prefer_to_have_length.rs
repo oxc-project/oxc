@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{match_member_expression, CallExpression, Expression, MemberExpression},
     AstKind,
+    ast::{CallExpression, Expression, MemberExpression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     fixer::RuleFixer,
     rule::Rule,
-    utils::{is_equality_matcher, parse_expect_jest_fn_call, ParsedExpectFnCall, PossibleJestNode},
+    utils::{ParsedExpectFnCall, PossibleJestNode, is_equality_matcher, parse_expect_jest_fn_call},
 };
 
 fn use_to_have_length(span: Span) -> OxcDiagnostic {

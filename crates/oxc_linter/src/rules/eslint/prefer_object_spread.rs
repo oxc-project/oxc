@@ -1,17 +1,17 @@
 use std::cmp::max;
 
 use oxc_allocator::Box;
+use oxc_ast::AstKind;
 use oxc_ast::ast::Expression;
 use oxc_ast::ast::ObjectExpression;
 use oxc_ast::ast::ObjectPropertyKind;
 use oxc_ast::ast::PropertyKind;
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::GetSpan;
 use oxc_span::Span;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn prefer_object_spread_diagnostic(span: Span, for_use_literal: bool) -> OxcDiagnostic {
     let help_message = if for_use_literal {
@@ -612,11 +612,27 @@ fn test() {
         ("Object.assign({}, { foo: 'bar' })", "({ foo: 'bar'})", None),
         ("Object.assign({}, baz, { foo: 'bar' })", "({ ...baz, foo: 'bar'})", None),
         ("Object.assign({}, { foo: 'bar', baz: 'foo' })", "({ foo: 'bar', baz: 'foo'})", None),
-        (r"Object.assign/** comment with multi byte 😀 */({}, { '😀': '😀', '😆': '💪' })", r"({ '😀': '😀', '😆': '💪'})", None),
+        (
+            r"Object.assign/** comment with multi byte 😀 */({}, { '😀': '😀', '😆': '💪' })",
+            r"({ '😀': '😀', '😆': '💪'})",
+            None,
+        ),
         ("Object.assign({ foo: 'bar' }, baz)", "({foo: 'bar', ...baz})", None),
-        ("Object.assign({ foo: 'bar' }, cats, dogs, trees, birds)", "({foo: 'bar', ...cats, ...dogs, ...trees, ...birds})", None),
-        ("Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, baz))", "({foo: 'bar', ...Object.assign({ bar: 'foo' }, baz)})", None),
-        ("Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' })))", "({foo: 'bar', ...Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' }))})", None),
+        (
+            "Object.assign({ foo: 'bar' }, cats, dogs, trees, birds)",
+            "({foo: 'bar', ...cats, ...dogs, ...trees, ...birds})",
+            None,
+        ),
+        (
+            "Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, baz))",
+            "({foo: 'bar', ...Object.assign({ bar: 'foo' }, baz)})",
+            None,
+        ),
+        (
+            "Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' })))",
+            "({foo: 'bar', ...Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' }))})",
+            None,
+        ),
         ("Object.assign({foo: 'bar', ...bar}, baz)", "({foo: 'bar', ...bar, ...baz})", None),
         ("Object.assign({}, { foo, bar, baz })", "({ foo, bar, baz})", None),
         ("Object.assign({}, { [bar]: 'foo' })", "({ [bar]: 'foo'})", None),
@@ -634,7 +650,7 @@ fn test() {
                 foo: 'bar',
                 baz: "cats"})
             "#,
-            None
+            None,
         ),
         (
             r#"
@@ -655,7 +671,7 @@ fn test() {
                 foo: 'bar',
                 baz: "cats"})
             "#,
-            None
+            None,
         ),
         (
             r#"
@@ -672,7 +688,7 @@ fn test() {
                 baz: "cats"
                 */ weird}
             "#,
-            None
+            None,
         ),
         (
             r#"
@@ -685,7 +701,7 @@ fn test() {
             const test = {...bar, foo: 'bar', // inline comment
                 baz: "cats"}
             "#,
-            None
+            None,
         ),
         (
             r#"
@@ -704,7 +720,7 @@ fn test() {
                 foo: 'bar',
                 baz: "cats"}
             "#,
-            None
+            None,
         ),
         ("Object.assign({})", "({})", None),
         ("Object.assign({ foo: bar })", "({foo: bar})", None),
@@ -717,7 +733,7 @@ fn test() {
             const foo = 'bar';
             ({foo: bar})
             ",
-            None
+            None,
         ),
         (
             "
@@ -728,14 +744,18 @@ fn test() {
             foo = 'bar';
             ({foo: bar})
             ",
-            None
+            None,
         ),
         ("let a = Object.assign({})", "let a = {}", None),
         ("let a = Object.assign({}, a)", "let a = { ...a}", None),
         ("let a = Object.assign   ({}, a)", "let a = { ...a}", None),
         ("let a = Object.assign({ a: 1 }, b)", "let a = {a: 1, ...b}", None),
         ("Object.assign(  {},  a,      b,   )", "({    ...a,      ...b,   })", None),
-        ("Object.assign({}, a ? b : {}, b => c, a = 2)", "({ ...(a ? b : {}), ...(b => c), ...(a = 2)})", None),
+        (
+            "Object.assign({}, a ? b : {}, b => c, a = 2)",
+            "({ ...(a ? b : {}), ...(b => c), ...(a = 2)})",
+            None,
+        ),
         (
             "
             const someVar = 'foo';
@@ -745,7 +765,7 @@ fn test() {
             const someVar = 'foo';
             ({ ...(a ? b : {}), ...(b => c), ...(a = 2)})
             ",
-            None
+            None,
         ),
         (
             "
@@ -756,13 +776,21 @@ fn test() {
             someVar = 'foo';
             ({ ...(a ? b : {}), ...(b => c), ...(a = 2)})
             ",
-            None
+            None,
         ),
         ("[1, 2, Object.assign({}, a)]", "[1, 2, { ...a}]", None),
         ("const foo = Object.assign({}, a)", "const foo = { ...a}", None),
-        ("function foo() { return Object.assign({}, a) }", "function foo() { return { ...a} }", None),
+        (
+            "function foo() { return Object.assign({}, a) }",
+            "function foo() { return { ...a} }",
+            None,
+        ),
         ("foo(Object.assign({}, a));", "foo({ ...a});", None),
-        ("const x = { foo: 'bar', baz: Object.assign({}, a) }", "const x = { foo: 'bar', baz: { ...a} }", None),
+        (
+            "const x = { foo: 'bar', baz: Object.assign({}, a) }",
+            "const x = { foo: 'bar', baz: { ...a} }",
+            None,
+        ),
         (
             "
             import Foo from 'foo';
@@ -772,7 +800,7 @@ fn test() {
             import Foo from 'foo';
             ({foo: Foo});
             ",
-            None
+            None,
         ),
         (
             "
@@ -783,7 +811,7 @@ fn test() {
             import Foo from 'foo';
             ({ ...Foo});
             ",
-            None
+            None,
         ),
         (
             "
@@ -794,7 +822,7 @@ fn test() {
             const Foo = require('foo');
             ({foo: Foo});
             ",
-            None
+            None,
         ),
         (
             "
@@ -805,7 +833,7 @@ fn test() {
             import { Something as somethingelse } from 'foo';
             ({ ...somethingelse});
             ",
-            None
+            None,
         ),
         (
             "
@@ -816,7 +844,7 @@ fn test() {
             import { foo } from 'foo';
             ({foo: Foo});
             ",
-            None
+            None,
         ),
         (
             "
@@ -827,7 +855,7 @@ fn test() {
             const Foo = require('foo');
             ({ ...Foo});
             ",
-            None
+            None,
         ),
         (
             "
@@ -844,7 +872,7 @@ fn test() {
                 ...this.props.actions
             };
             ",
-            None
+            None,
         ),
         (
             "
@@ -862,7 +890,7 @@ fn test() {
                 ...this.props.actions
             };
             ",
-            None
+            None,
         ),
         (
             "
@@ -880,7 +908,7 @@ fn test() {
                 ...this.props.actions
             };
             ",
-            None
+            None,
         ),
         (
             "
@@ -907,12 +935,12 @@ fn test() {
                 )
             };
             ",
-            None
+            None,
         ),
         (
             "eventData = Object.assign({}, eventData, { outsideLocality: `${originLocality} - ${destinationLocality}` })",
             "eventData = { ...eventData, outsideLocality: `${originLocality} - ${destinationLocality}`}",
-            None
+            None,
         ),
         ("Object.assign({ });", "({});", None),
         ("Object.assign({\n});", "({});", None),
@@ -927,7 +955,7 @@ fn test() {
             function foo () { var globalThis = bar; }
             ({});
             ",
-            None
+            None,
         ),
         (
             "
@@ -938,11 +966,15 @@ fn test() {
             const Foo = require('foo');
             ({foo: Foo});
             ",
-            None
+            None,
         ),
         ("Object.assign({ get a() {}, set b(val) {} })", "({get a() {}, set b(val) {}})", None),
-        ("const obj = Object.assign<{}, Record<string, string[]>>({}, getObject());", "const obj = { ...getObject()};", None),
-        ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None)
+        (
+            "const obj = Object.assign<{}, Record<string, string[]>>({}, getObject());",
+            "const obj = { ...getObject()};",
+            None,
+        ),
+        ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None),
     ];
     Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
         .expect_fix(fix)

@@ -8,11 +8,11 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::SPAN;
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
 // Core
 mod common;
@@ -60,8 +60,8 @@ pub use crate::{
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
-        babel::{BabelEnvOptions, BabelOptions},
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
+        babel::{BabelEnvOptions, BabelOptions},
     },
     plugins::*,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},

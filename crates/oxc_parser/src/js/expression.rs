@@ -17,9 +17,8 @@ use super::{
     },
 };
 use crate::{
-    diagnostics,
-    lexer::{parse_big_int, parse_float, parse_int, Kind},
-    Context, ParserImpl,
+    Context, ParserImpl, diagnostics,
+    lexer::{Kind, parse_big_int, parse_float, parse_int},
 };
 
 impl<'a> ParserImpl<'a> {

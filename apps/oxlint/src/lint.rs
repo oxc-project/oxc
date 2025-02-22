@@ -9,8 +9,8 @@ use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind,
-    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions, LintService,
+    LintServiceOptions, Linter, Oxlintrc, loader::LINT_PARTIAL_LOADER_EXT,
 };
 use oxc_span::VALID_EXTENSIONS;
 use serde_json::Value;
@@ -340,13 +340,17 @@ impl LintRunner {
                     ));
                 }
                 Err(InvalidFilterKind::PluginMissing(filter)) => {
-                    return Err((CliRunResult::InvalidOptionSeverityWithoutPluginName, format!(
+                    return Err((
+                        CliRunResult::InvalidOptionSeverityWithoutPluginName,
+                        format!(
                             "Failed to {severity} filter {filter}: Plugin name is missing. Expected <plugin>/<rule>\n"
                         ),
                     ));
                 }
                 Err(InvalidFilterKind::RuleMissing(filter)) => {
-                    return Err((CliRunResult::InvalidOptionSeverityWithoutRuleName, format!(
+                    return Err((
+                        CliRunResult::InvalidOptionSeverityWithoutRuleName,
+                        format!(
                             "Failed to {severity} filter {filter}: Rule name is missing. Expected <plugin>/<rule>\n"
                         ),
                     ));

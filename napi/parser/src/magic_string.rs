@@ -6,7 +6,7 @@ use napi_derive::napi;
 use self_cell::self_cell;
 use string_wizard::{Hires, MagicString as MS};
 
-use oxc_data_structures::rope::{get_line_column, Rope};
+use oxc_data_structures::rope::{Rope, get_line_column};
 
 #[napi]
 pub struct MagicString {

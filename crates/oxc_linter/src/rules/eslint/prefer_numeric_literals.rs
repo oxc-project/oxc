@@ -1,18 +1,18 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, CallExpression, Expression, IdentifierReference, MemberExpression,
         StaticMemberExpression,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::{phf_map, phf_ordered_set, Map};
+use phf::{Map, phf_map, phf_ordered_set};
 
 use crate::{
-    ast_util::get_symbol_id_of_variable, context::LintContext, fixer::RuleFixer, rule::Rule,
-    AstNode,
+    AstNode, ast_util::get_symbol_id_of_variable, context::LintContext, fixer::RuleFixer,
+    rule::Rule,
 };
 
 fn prefer_numeric_literals_diagnostic(span: Span, prefix_name: &str) -> OxcDiagnostic {

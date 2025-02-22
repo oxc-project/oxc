@@ -1971,7 +1971,10 @@ fn test_remove_dead_expr_ignore() {
         "function wrapper(arg0, arg1) { let x = 0; let y = ++x; return [x, y]}",
         "function wrapper(arg0, arg1) { let x = 0, y = ++x; return [x, y];}",
     );
-    test("function wrapper(arg0, arg1) { let x = 0; let y = {valueOf() { x = 1 }}; let z = x; return [y == 1, z]}", "function wrapper(arg0, arg1) { let x = 0, y = { valueOf() { x = 1; } }, z = x; return [y == 1, z];}");
+    test(
+        "function wrapper(arg0, arg1) { let x = 0; let y = {valueOf() { x = 1 }}; let z = x; return [y == 1, z]}",
+        "function wrapper(arg0, arg1) { let x = 0, y = { valueOf() { x = 1; } }, z = x; return [y == 1, z];}",
+    );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; return [...x];}",
         "function wrapper(arg0, arg1) { return [...arg0];}",
@@ -2180,7 +2183,10 @@ fn test_remove_dead_expr_ignore() {
         "function wrapper(arg0, arg1) {return async () => { let x = arg0; await y; return x; };}",
         "function wrapper(arg0, arg1) { return async () => { let x = arg0; return await y, x; };}",
     );
-    test("function wrapper(arg0, arg1) {return async () => { let x = arg0; await arg1; return x; };}", "function wrapper(arg0, arg1) { return async () => { let x = arg0; return await arg1, x; };}");
+    test(
+        "function wrapper(arg0, arg1) {return async () => { let x = arg0; await arg1; return x; };}",
+        "function wrapper(arg0, arg1) { return async () => { let x = arg0; return await arg1, x; };}",
+    );
     test(
         "function wrapper(arg0, arg1) {return function* () { let x = arg0; yield x; };}",
         "function wrapper(arg0, arg1) { return function* () { yield arg0; };}",
@@ -2193,7 +2199,10 @@ fn test_remove_dead_expr_ignore() {
         "function wrapper(arg0, arg1) {return function* () { let x = arg0; yield y; return x; };}",
         "function wrapper(arg0, arg1) { return function* () { let x = arg0; return yield y, x; };}",
     );
-    test("function wrapper(arg0, arg1) {return function* () { let x = arg0; yield arg1; return x; };}", "function wrapper(arg0, arg1) { return function* () { let x = arg0; return yield arg1, x; };}");
+    test(
+        "function wrapper(arg0, arg1) {return function* () { let x = arg0; yield arg1; return x; };}",
+        "function wrapper(arg0, arg1) { return function* () { let x = arg0; return yield arg1, x; };}",
+    );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; x()}",
         "function wrapper(arg0, arg1) { arg0();}",
@@ -2255,9 +2264,9 @@ fn test_remove_dead_expr_ignore() {
         "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); arg1() + x;}",
     );
     test(
-    "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); /* @__PURE__ */ arg1() + x}",
-    "function wrapper(arg0, arg1) { /* @__PURE__ */ arg1() + /* @__PURE__ */ arg0();}",
-  );
+        "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); /* @__PURE__ */ arg1() + x}",
+        "function wrapper(arg0, arg1) { /* @__PURE__ */ arg1() + /* @__PURE__ */ arg0();}",
+    );
     test("if (1) a(); else { ; }", "a();");
     test("if (1) a(); else { b() }", "a();");
     test("if (1) a(); else { const b = c }", "a();");

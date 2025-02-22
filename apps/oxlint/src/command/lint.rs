@@ -6,8 +6,9 @@ use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 use crate::output_formatter::OutputFormat;
 
 use super::{
-    ignore::{ignore_options, IgnoreOptions},
-    misc_options, validate_paths, MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
+    MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
+    ignore::{IgnoreOptions, ignore_options},
+    misc_options, validate_paths,
 };
 
 #[derive(Debug, Clone, Bpaf)]
@@ -392,7 +393,7 @@ mod plugins {
 
 #[cfg(test)]
 mod warning_options {
-    use super::{lint_command, WarningOptions};
+    use super::{WarningOptions, lint_command};
 
     fn get_warning_options(arg: &str) -> WarningOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -425,7 +426,7 @@ mod lint_options {
 
     use oxc_linter::AllowWarnDeny;
 
-    use super::{lint_command, LintCommand, OutputFormat};
+    use super::{LintCommand, OutputFormat, lint_command};
 
     fn get_lint_options(arg: &str) -> LintCommand {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();

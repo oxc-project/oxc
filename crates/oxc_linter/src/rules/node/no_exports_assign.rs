@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, Expression, MemberExpression},
     AstKind,
+    ast::{AssignmentTarget, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_exports_assign(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected assignment to 'exports'.")

@@ -1,14 +1,14 @@
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
 use crate::{
+    AstNode,
     ast_util::{self, IsConstant},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 /// `https://eslint.org/docs/latest/rules/no-constant-binary-expression`

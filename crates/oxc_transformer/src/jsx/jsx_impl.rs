@@ -89,9 +89,9 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{ast::*, AstBuilder, NONE};
+use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{
     identifier::{is_line_terminator, is_white_space_single_line},
     reference::ReferenceFlags,
@@ -101,8 +101,8 @@ use oxc_syntax::{
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::{
-    es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
     TransformCtx,
+    es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
 };
 
 use super::{
@@ -986,11 +986,7 @@ impl<'a> JsxImpl<'a, '_> {
 
     fn add_line_of_jsx_text(acc: Option<String>, trimmed_line: &str) -> String {
         let decoded = Self::decode_entities(trimmed_line);
-        if let Some(acc) = acc {
-            format!("{acc} {decoded}")
-        } else {
-            decoded
-        }
+        if let Some(acc) = acc { format!("{acc} {decoded}") } else { decoded }
     }
 
     /// Replace entities like "&nbsp;", "&#123;", and "&#xDEADBEEF;" with the characters they encode.

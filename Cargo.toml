@@ -6,13 +6,16 @@ exclude = ["tasks/lint_rules", "tasks/e2e"]
 [workspace.package]
 authors = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
 categories = ["compilers", "development-tools", "web-programming"]
-edition = "2021"
 homepage = "https://oxc.rs"
 keywords = ["JavaScript", "TypeScript", "linter", "minifier", "parser"]
 license = "MIT"
 repository = "https://github.com/oxc-project/oxc"
-rust-version = "1.82.0" # Support last 4 minor versions. (NOTE: bump to `edition = "2024"` when 1.85.0.
 description = "A collection of JavaScript tools written in Rust."
+
+edition = "2024"
+# MSRV Policy N-2 (12 weeks) starting from v1.87.0
+# Balance between the core contributors enjoying the latest version of rustc, while waiting for dependents to catch up.
+rust-version = "1.85.0"
 
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>
 [workspace.lints.rust]
@@ -20,6 +23,9 @@ absolute_paths_not_starting_with_crate = "warn"
 non_ascii_idents = "warn"
 unit-bindings = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
+tail_expr_drop_order = "allow" # FIXME
+unsafe_op_in_unsafe_fn = "allow" # FIXME
+unused_unsafe = "allow"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
@@ -45,7 +51,7 @@ rc_buffer = "warn"
 rc_mutex = "warn"
 rest_pat_in_fully_bound_structs = "warn"
 unnecessary_safety_comment = "warn"
-undocumented_unsafe_blocks = "warn"
+undocumented_unsafe_blocks = "allow" # FIXME
 infinite_loop = "warn"
 map_with_unused_argument_over_ranges = "warn"
 unused_result_ok = "warn"

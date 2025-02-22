@@ -255,10 +255,11 @@ impl<R> IgnorePattern<R> {
     /// See also [`Option::expect`].
     #[inline]
     pub fn expect(self, msg: &str) -> R {
-        if let Self::Some(r) = self {
-            r
-        } else {
-            panic!("{}", msg)
+        match self {
+            Self::Some(r) => r,
+            _ => {
+                panic!("{}", msg)
+            }
         }
     }
 
@@ -571,7 +572,7 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
             }
             Value::Null => Ok(Self::default()),
             _ => Err(OxcDiagnostic::error(format!(
-                        "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}"
+                "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}"
             ))),
         }
     }

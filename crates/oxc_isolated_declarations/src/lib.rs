@@ -10,9 +10,9 @@ use std::{cell::RefCell, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, CloneIn};
-use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_ast::{AstBuilder, NONE, Visit, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, GetSpan, SourceType, SPAN};
+use oxc_span::{Atom, GetSpan, SPAN, SourceType};
 
 use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 

@@ -1,8 +1,8 @@
 use pico_args::Arguments;
 
 use oxc_prettier_conformance::{
-    options::{TestLanguage, TestRunnerOptions},
     TestRunner,
+    options::{TestLanguage, TestRunnerOptions},
 };
 
 /// This CLI runs in 2 modes:

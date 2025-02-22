@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{array, group, indent, ir::Doc, softline, text, Format, Prettier};
+use crate::{Format, Prettier, array, group, indent, ir::Doc, softline, text};
 
 #[expect(clippy::enum_variant_names)]
 pub enum MemberExpressionLike<'a, 'b> {

@@ -67,11 +67,7 @@ impl Lexer<'_> {
     fn read_right_angle(&mut self) -> Kind {
         if self.next_ascii_byte_eq(b'>') {
             if self.next_ascii_byte_eq(b'>') {
-                if self.next_ascii_byte_eq(b'=') {
-                    Kind::ShiftRight3Eq
-                } else {
-                    Kind::ShiftRight3
-                }
+                if self.next_ascii_byte_eq(b'=') { Kind::ShiftRight3Eq } else { Kind::ShiftRight3 }
             } else if self.next_ascii_byte_eq(b'=') {
                 Kind::ShiftRightEq
             } else {

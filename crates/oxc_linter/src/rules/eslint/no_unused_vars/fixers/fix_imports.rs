@@ -1,7 +1,7 @@
 use oxc_ast::ast::ImportDeclaration;
 use oxc_span::GetSpan;
 
-use super::{count_whitespace_or_commas, NoUnusedVars, Symbol};
+use super::{NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::fixer::{RuleFix, RuleFixer};
 
 impl NoUnusedVars {

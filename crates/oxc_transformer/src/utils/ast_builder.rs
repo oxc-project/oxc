@@ -1,5 +1,5 @@
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::TraverseCtx;

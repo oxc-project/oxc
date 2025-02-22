@@ -3,10 +3,10 @@
 use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Allocator, Box, FromIn, Vec};
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
-use crate::{ast::*, AstBuilder};
+use crate::{AstBuilder, ast::*};
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.

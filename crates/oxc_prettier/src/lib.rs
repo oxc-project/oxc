@@ -14,7 +14,7 @@ mod printer;
 mod utils;
 
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::{ast::Program, AstKind};
+use oxc_ast::{AstKind, ast::Program};
 use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 

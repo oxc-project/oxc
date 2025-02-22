@@ -5,7 +5,7 @@ use std::cell::Cell;
 
 use oxc_ast::{
     ast::*,
-    visit::{walk_mut, VisitMut},
+    visit::{VisitMut, walk_mut},
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::TraverseCtx;
@@ -13,8 +13,8 @@ use oxc_traverse::TraverseCtx;
 use crate::utils::ast_builder::wrap_statements_in_arrow_function_iife;
 
 use super::{
-    super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
     ClassProperties,
+    super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
 };
 
 impl<'a> ClassProperties<'a, '_> {

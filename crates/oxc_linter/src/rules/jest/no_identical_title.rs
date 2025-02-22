@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression},
     AstKind,
+    ast::{Argument, CallExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,13 +9,13 @@ use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
+        parse_general_jest_fn_call,
     },
-    AstNode,
 };
 
 fn describe_repeat(span: Span) -> OxcDiagnostic {

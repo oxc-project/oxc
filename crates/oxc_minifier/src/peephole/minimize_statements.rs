@@ -1,7 +1,7 @@
 use std::ops::ControlFlow;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, Visit};
+use oxc_ast::{Visit, ast::*};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};

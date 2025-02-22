@@ -1,14 +1,14 @@
 use oxc_allocator::{Box, CloneIn};
-use oxc_ast::{ast::*, NONE};
-use oxc_span::{Span, SPAN};
+use oxc_ast::{NONE, ast::*};
+use oxc_span::{SPAN, Span};
 
 use crate::{
+    IsolatedDeclarations,
     diagnostics::{
         function_must_have_explicit_return_type, implicitly_adding_undefined_to_type,
         parameter_must_have_explicit_type,
     },
     formal_parameter_binding_pattern::FormalParameterBindingPattern,
-    IsolatedDeclarations,
 };
 
 impl<'a> IsolatedDeclarations<'a> {

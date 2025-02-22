@@ -1,6 +1,6 @@
 use oxc_allocator::{Allocator, CloneIn};
-use oxc_ast::{ast::*, AstBuilder};
-use oxc_ecmascript::{is_global_reference::WithoutGlobalReferenceInformation, ArrayJoin};
+use oxc_ast::{AstBuilder, ast::*};
+use oxc_ecmascript::{ArrayJoin, is_global_reference::WithoutGlobalReferenceInformation};
 use oxc_span::SPAN;
 
 #[test]

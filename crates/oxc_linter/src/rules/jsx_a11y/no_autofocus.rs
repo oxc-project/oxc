@@ -4,11 +4,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop},
-    AstNode,
 };
 
 fn no_autofocus_diagnostic(span: Span) -> OxcDiagnostic {

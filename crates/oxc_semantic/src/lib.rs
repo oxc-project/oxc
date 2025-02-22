@@ -8,7 +8,7 @@
 use std::ops::RangeBounds;
 
 use oxc_ast::{
-    ast::IdentifierReference, comments_range, has_comments_between, AstKind, Comment, CommentsRange,
+    AstKind, Comment, CommentsRange, ast::IdentifierReference, comments_range, has_comments_between,
 };
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -209,7 +209,10 @@ impl<'a> Semantic<'a> {
     }
 
     /// Get all resolved references for a symbol
-    pub fn symbol_references(&self, symbol_id: SymbolId) -> impl Iterator<Item = &Reference> + '_ {
+    pub fn symbol_references(
+        &self,
+        symbol_id: SymbolId,
+    ) -> impl Iterator<Item = &Reference> + '_ + use<'_> {
         self.symbols.get_resolved_references(symbol_id)
     }
 
@@ -238,7 +241,7 @@ impl<'a> Semantic<'a> {
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
-    use oxc_ast::{ast::VariableDeclarationKind, AstKind};
+    use oxc_ast::{AstKind, ast::VariableDeclarationKind};
     use oxc_span::{Atom, SourceType};
 
     use super::*;

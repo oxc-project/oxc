@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_span::Span;
 
-use crate::{ir::Doc, Prettier};
+use crate::{Prettier, ir::Doc};
 
 use super::{CommentFlags, DanglingCommentsPrintOptions};
 

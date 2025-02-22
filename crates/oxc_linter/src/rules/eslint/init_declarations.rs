@@ -1,16 +1,16 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         BindingPatternKind, ForInStatement, ForOfStatement, ForStatementLeft,
         VariableDeclarationKind,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) -> OxcDiagnostic {
     let msg = if Mode::Always == *mode {
@@ -32,11 +32,7 @@ enum Mode {
 
 impl Mode {
     pub fn from(raw: &str) -> Self {
-        if raw == "never" {
-            Self::Never
-        } else {
-            Self::Always
-        }
+        if raw == "never" { Self::Never } else { Self::Always }
     }
 }
 

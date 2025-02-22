@@ -9,7 +9,7 @@ use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
 };
 
-use crate::{diagnostics::enum_member_initializers, IsolatedDeclarations};
+use crate::{IsolatedDeclarations, diagnostics::enum_member_initializers};
 
 #[derive(Debug, Clone)]
 enum ConstantValue {

@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use crate::output_formatter::InternalFormatter;
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, DiagnosticResult},
     Error, GraphicalReportHandler,
+    reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::table::RuleTable;
 
@@ -51,11 +51,7 @@ impl InternalFormatter for DefaultOutputFormatter {
 impl DefaultOutputFormatter {
     fn get_execution_time(duration: &Duration) -> String {
         let ms = duration.as_millis();
-        if ms < 1000 {
-            format!("{ms}ms")
-        } else {
-            format!("{:.1}s", duration.as_secs_f64())
-        }
+        if ms < 1000 { format!("{ms}ms") } else { format!("{:.1}s", duration.as_secs_f64()) }
     }
 }
 
@@ -115,8 +111,8 @@ fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
 #[cfg(test)]
 mod test_implementation {
     use oxc_diagnostics::{
-        reporter::{DiagnosticReporter, DiagnosticResult, Info},
         Error, GraphicalReportHandler, GraphicalTheme,
+        reporter::{DiagnosticReporter, DiagnosticResult, Info},
     };
 
     use crate::output_formatter::default::get_diagnostic_result_output;
@@ -155,8 +151,8 @@ mod test {
     use std::time::Duration;
 
     use crate::output_formatter::{
-        default::{DefaultOutputFormatter, GraphicalReporter},
         InternalFormatter, LintCommandInfo,
+        default::{DefaultOutputFormatter, GraphicalReporter},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
 

@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,10 +10,10 @@ use oxc_span::{CompactStr, GetSpan, Span};
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn missing_href_attribute(span: Span) -> OxcDiagnostic {

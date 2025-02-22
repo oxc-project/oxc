@@ -2,23 +2,23 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
 
 use crate::{
-    array, dynamic_text,
+    Prettier, array, dynamic_text,
     format::{
+        Format,
         print::{
             array, arrow_function, assignment, binaryish, block, call_expression, class,
             expression_statement, function, function_parameters, literal, member, misc, module,
             object, property, statement, template_literal, ternary,
         },
-        Format,
     },
     group, hardline, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, text, utils, wrap, Prettier,
+    join, line, softline, text, utils, wrap,
 };
 
 impl<'a> Format<'a> for Program<'a> {

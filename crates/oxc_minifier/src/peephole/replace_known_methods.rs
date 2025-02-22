@@ -4,9 +4,9 @@ use std::borrow::Cow;
 use oxc_allocator::IntoIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, DetermineValueType},
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
     StringSubstring, ToInt32,
+    constant_evaluation::{ConstantEvaluation, DetermineValueType},
 };
 use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
@@ -892,8 +892,8 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        tester::{run, test, test_same},
         CompressOptions,
+        tester::{run, test, test_same},
     };
 
     fn test_es2015(code: &str, expected: &str) {
@@ -1770,7 +1770,10 @@ mod test {
         test("x = ''.concat('a', b)", "x = `a${b}`");
         test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
         test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
-        test("x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)", "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`");
+        test(
+            "x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)",
+            "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`",
+        );
         test("x = ''.concat(a, 1)", "x = `${a}1`");
 
         test("x = '\\\\s'.concat(a)", "x = `\\\\s${a}`");
@@ -1793,7 +1796,7 @@ mod test {
         test("x = (-Infinity).toString(2)", "x = '-Infinity';");
         test("x = 1n.toString()", "x = '1'");
         test_same("254n.toString(16);"); // unimplemented
-                                         // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
+        // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
         test_same("null.toString()"); // type error
 
         test("x = 100 .toString(0)", "x = 100 .toString(0)");

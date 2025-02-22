@@ -1,7 +1,7 @@
 #![expect(clippy::print_stdout)]
 use std::{env, path::Path};
 
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions, CodegenReturn};
 use oxc_parser::Parser;

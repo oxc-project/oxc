@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case, parse_jsx_value},
-    AstNode,
 };
 
 fn no_aria_hidden_on_focusable_diagnostic(span: Span) -> OxcDiagnostic {

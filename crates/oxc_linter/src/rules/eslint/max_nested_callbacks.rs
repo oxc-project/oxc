@@ -6,10 +6,10 @@ use oxc_span::{GetSpan, Span};
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     ast_util::{is_function_node, iter_outer_expressions},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {

@@ -2,7 +2,7 @@
 
 use std::ptr;
 
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::{GetSpan, SourceType};
 use oxc_syntax::{

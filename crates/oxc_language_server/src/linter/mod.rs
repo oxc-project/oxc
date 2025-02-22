@@ -1,4 +1,4 @@
-use oxc_data_structures::rope::{get_line_column, Rope};
+use oxc_data_structures::rope::{Rope, get_line_column};
 use tower_lsp::lsp_types::Position;
 
 pub mod error_with_position;

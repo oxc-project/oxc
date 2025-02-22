@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{
-        match_expression, Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
-        BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
-        ObjectPropertyKind, PropertyKey,
-    },
     AstKind,
+    ast::{
+        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
+        BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
+        ObjectPropertyKind, PropertyKey, match_expression,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not add `then` to an object.")

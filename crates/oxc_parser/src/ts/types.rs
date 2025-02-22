@@ -1,14 +1,13 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
-    diagnostics,
+    Context, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
-    Context, ParserImpl,
 };
 
 impl<'a> ParserImpl<'a> {
@@ -648,7 +647,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_this_type_predicate(&mut self, this_ty: TSThisType) -> Result<TSType<'a>> {
         let span = this_ty.span;
         self.bump_any(); // bump `is`
-                         // TODO: this should go through the ast builder.
+        // TODO: this should go through the ast builder.
         let parameter_name = TSTypePredicateName::This(this_ty);
         let type_span = self.start_span();
         let ty = self.parse_ts_type()?;

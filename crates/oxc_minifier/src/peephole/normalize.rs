@@ -3,9 +3,9 @@ use oxc_ast::ast::*;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
 
-use crate::{ctx::Ctx, CompressOptions};
+use crate::{CompressOptions, ctx::Ctx};
 
 #[derive(Default)]
 pub struct NormalizeOptions {

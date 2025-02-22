@@ -3,8 +3,9 @@ use std::{ops::ControlFlow, path::PathBuf};
 use rustc_hash::FxHashSet;
 
 use oxc::{
+    CompilerInterface,
     allocator::Allocator,
-    ast::{ast::Program, AstKind, Comment},
+    ast::{AstKind, Comment, ast::Program},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
@@ -13,7 +14,6 @@ use oxc::{
     semantic::{Semantic, SemanticBuilderReturn},
     span::{ContentEq, SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
-    CompilerInterface,
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 

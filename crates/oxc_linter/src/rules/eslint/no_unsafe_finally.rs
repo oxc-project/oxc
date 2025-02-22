@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{BreakStatement, ContinueStatement},
     AstKind,
+    ast::{BreakStatement, ContinueStatement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unsafe_finally_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe finally block")

@@ -1,10 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_str, Ident, Path};
+use syn::{Ident, Path, parse_str};
 
 use crate::utils::create_ident;
 
-use super::{extensions::estree::ESTreeMeta, File, FileId, MetaId, Schema};
+use super::{File, FileId, MetaId, Schema, extensions::estree::ESTreeMeta};
 
 /// Definition for a meta type.
 ///

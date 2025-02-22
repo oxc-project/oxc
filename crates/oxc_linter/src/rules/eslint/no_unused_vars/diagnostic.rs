@@ -5,7 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
 use oxc_span::{GetSpan, Span};
 
-use super::{options::IgnorePattern, Symbol};
+use super::{Symbol, options::IgnorePattern};
 
 fn pronoun_for_symbol(
     symbol_flags: SymbolFlags,

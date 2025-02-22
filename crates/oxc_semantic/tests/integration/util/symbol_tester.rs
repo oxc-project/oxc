@@ -282,11 +282,7 @@ impl<'a> Expect<(Rc<Semantic<'a>>, SymbolId), Result<(), OxcDiagnostic>> for Sym
     {
         let Ok(symbol_id) = self.test_result else { return self };
         let did_pass = expectation((Rc::clone(&self.semantic), symbol_id));
-        if let Err(e) = did_pass {
-            Self { test_result: Err(e), ..self }
-        } else {
-            self
-        }
+        if let Err(e) = did_pass { Self { test_result: Err(e), ..self } } else { self }
     }
 }
 

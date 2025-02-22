@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::{CharacterKind, Term};
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_div_regex_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("A regular expression literal can be confused with '/='.")

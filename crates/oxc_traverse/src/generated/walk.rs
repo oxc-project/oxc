@@ -17,8 +17,8 @@ use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeId;
 
 use crate::{
-    ancestor::{self, AncestorType},
     Ancestor, Traverse, TraverseCtx,
+    ancestor::{self, AncestorType},
 };
 
 /// Walk AST with `Traverse` impl.

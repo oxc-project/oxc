@@ -1,8 +1,8 @@
 use oxc_allocator::{Box, CloneIn, Vec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_span::{Atom, GetSpan, SPAN};
 
-use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
+use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_export_named_declaration(

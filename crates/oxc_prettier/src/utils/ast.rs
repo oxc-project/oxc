@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 
 pub fn has_naked_left_side(kind: AstKind<'_>) -> bool {
     matches!(

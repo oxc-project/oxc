@@ -1,7 +1,7 @@
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::Span;
 
-use crate::{array, indent, ir::Doc, line, text, Prettier};
+use crate::{Prettier, array, indent, ir::Doc, line, text};
 
 pub fn adjust_clause<'a>(
     p: &Prettier<'a>,

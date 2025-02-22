@@ -71,11 +71,7 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 // If the array has at least 2 elements, `ToPrimitive` returns a string containing
                 // `,` which is not included in `StringNumericLiteral`
                 // So `ToNumber` returns `NaN`
-                if non_spread_element_count >= 2 {
-                    Some(f64::NAN)
-                } else {
-                    None
-                }
+                if non_spread_element_count >= 2 { Some(f64::NAN) } else { None }
             }
             _ => None,
         }

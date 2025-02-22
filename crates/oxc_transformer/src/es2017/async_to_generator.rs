@@ -54,7 +54,7 @@
 use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString};
-use oxc_ast::{ast::*, Visit, NONE};
+use oxc_ast::{NONE, Visit, ast::*};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::{
@@ -63,7 +63,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{common::helper_loader::Helper, TransformCtx};
+use crate::{TransformCtx, common::helper_loader::Helper};
 
 pub struct AsyncToGenerator<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,

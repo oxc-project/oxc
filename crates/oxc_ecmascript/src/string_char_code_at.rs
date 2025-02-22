@@ -1,4 +1,4 @@
-use crate::{string_char_at::StringCharAtResult, StringCharAt};
+use crate::{StringCharAt, string_char_at::StringCharAtResult};
 
 pub trait StringCharCodeAt {
     /// `String.prototype.charCodeAt ( pos )`

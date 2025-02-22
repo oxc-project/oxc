@@ -22,6 +22,7 @@ yanked = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
+  "RUSTSEC-2025-0007", # ring is unmaintained
   # "RUSTSEC-0000-0000",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
@@ -128,7 +129,6 @@ workspace-default-features = "allow"
 external-default-features = "allow"
 # List of crates that are allowed. Use with care!
 allow = [
-
   # { name = "ansi_term", version = "=0.11.0" },
 ]
 # List of crates to deny

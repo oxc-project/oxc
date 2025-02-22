@@ -5,7 +5,7 @@ use oxc_ast::ast::*;
 use oxc_syntax::symbol::SymbolFlags;
 use oxc_traverse::TraverseCtx;
 
-use super::{utils::create_assignment, ClassProperties};
+use super::{ClassProperties, utils::create_assignment};
 
 impl<'a> ClassProperties<'a, '_> {
     /// Substitute temp var for method computed key.

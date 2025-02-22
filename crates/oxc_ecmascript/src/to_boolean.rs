@@ -36,13 +36,9 @@ impl<'a> ToBoolean<'a> for Expression<'a> {
             | Expression::ObjectExpression(_) => Some(true),
             Expression::NullLiteral(_) => Some(false),
             Expression::BooleanLiteral(boolean_literal) => Some(boolean_literal.value),
-            Expression::NumericLiteral(lit) => Some({
-                if lit.value.is_nan() {
-                    false
-                } else {
-                    lit.value != 0.0
-                }
-            }),
+            Expression::NumericLiteral(lit) => {
+                Some(if lit.value.is_nan() { false } else { lit.value != 0.0 })
+            }
             Expression::BigIntLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
             Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
             Expression::TemplateLiteral(template_literal) => {

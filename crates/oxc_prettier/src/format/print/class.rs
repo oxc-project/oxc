@@ -5,11 +5,11 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    array,
+    Format, Prettier, array,
     format::print::{assignment, function, property},
     group, hardline, if_break, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, text, Format, Prettier,
+    join, line, softline, text,
 };
 
 pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {

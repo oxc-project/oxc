@@ -1,5 +1,5 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::Reference;
 use oxc_span::SPAN;
@@ -13,8 +13,8 @@ use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 use crate::TransformCtx;
 
 use super::{
-    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
     TypeScriptOptions,
+    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
 };
 
 pub struct TypeScriptNamespace<'a, 'ctx> {
@@ -228,7 +228,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     continue;
                 }
                 Statement::TSTypeAliasDeclaration(_) | Statement::TSInterfaceDeclaration(_) => {
-                    continue
+                    continue;
                 }
                 _ => {}
             }

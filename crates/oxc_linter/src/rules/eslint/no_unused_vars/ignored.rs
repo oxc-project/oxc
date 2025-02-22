@@ -1,14 +1,14 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         ArrayAssignmentTarget, AssignmentTarget, AssignmentTargetMaybeDefault,
         AssignmentTargetProperty, BindingPattern, BindingPatternKind, ClassElement,
         ObjectAssignmentTarget,
     },
-    AstKind,
 };
 use regex::Regex;
 
-use super::{options::IgnorePattern, NoUnusedVars, Symbol};
+use super::{NoUnusedVars, Symbol, options::IgnorePattern};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) enum FoundStatus {
@@ -34,11 +34,7 @@ impl FoundStatus {
 
     #[inline]
     pub const fn found(is_found: bool) -> Self {
-        if is_found {
-            Self::NotIgnored
-        } else {
-            Self::NotFound
-        }
+        if is_found { Self::NotIgnored } else { Self::NotFound }
     }
 
     /// Mark a target as ignored if it's found.
