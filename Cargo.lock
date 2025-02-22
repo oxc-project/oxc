@@ -1972,11 +1972,8 @@ dependencies = [
  "napi-derive",
  "oxc",
  "oxc_ast",
- "oxc_data_structures",
  "oxc_napi",
- "oxc_sourcemap",
  "rustc-hash",
- "self_cell",
 ]
 
 [[package]]
