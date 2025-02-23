@@ -108,7 +108,7 @@ fn closest_promise_callback_args<'a, 'b>(
         .filter(|a| has_promise_callback(a))
         //.map(|)
         //        .map(|s| s.arguments.iter().map(|arg|))
-        .nth(0);
+        .nth(1);
     //  .nth(0);
 
     a
@@ -238,16 +238,13 @@ impl Rule for NoNesting {
             println!("dooo");
         }
         */
-        if let Some(closest) = closest_promise_callback_args(node, ctx) {
-            //    let v = get_arg_names(closest);
-            // println!("closest {closest:?}");
 
-            let mut argys = vec![];
-            closest.arguments.iter().for_each(|new_expr| {
-                //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
-
-                //  for argument in &new_expr.arguments {
-                let Some(arg_expr) = new_expr.as_expression() else {
+        let mut ancestors = ctx.nodes().ancestors(node.id());
+        if ancestors.any(|node| is_inside_promise(node, ctx)) {
+            // get the args passed into the nested promise call.
+            let mut nested_call_args = vec![];
+            call_expr.arguments.iter().for_each(|arg| {
+                let Some(arg_expr) = arg.as_expression() else {
                     return;
                 };
                 match arg_expr {
@@ -257,7 +254,7 @@ impl Rule for NoNesting {
                                 &param.pattern.kind
                             {
                                 //  let n = param_ident.name;
-                                argys.push(param_ident.name.to_compact_str());
+                                nested_call_args.push(param_ident.name.to_compact_str());
                                 //     println!("arg {n}");
                                 //   arg_names.push(&n.to_compact_str())
                                 //   v.push(param_ident.name.to_compact_str());
@@ -265,20 +262,53 @@ impl Rule for NoNesting {
                         }
                         //   self.check_parameter_names(&arrow_expr.params, ctx);
                     }
-                    Expression::FunctionExpression(func_expr) => {
-                        // self.check_parameter_names(&func_expr.params, ctx);
-                    }
-                    _ => return,
+                    _ => {}
                 }
-                //     }
             });
+            println!("nested call args {nested_call_args:?}");
 
-            println!("argys {argys:?}");
-        };
-        // println!("nope");
+            // now check to see if args of .then() reference any args that aren't defined
+            // in the callback scope the given .then() lives in.
 
-        let mut ancestors = ctx.nodes().ancestors(node.id());
-        if ancestors.any(|node| is_inside_promise(node, ctx)) {
+            if let Some(closest) = closest_promise_callback_args(node, ctx) {
+                //    let v = get_arg_names(closest);
+                // println!("closest {closest:?}");
+
+                let mut argys = vec![];
+                closest.arguments.iter().for_each(|new_expr| {
+                    //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
+
+                    //  for argument in &new_expr.arguments {
+                    let Some(arg_expr) = new_expr.as_expression() else {
+                        return;
+                    };
+                    match arg_expr {
+                        Expression::ArrowFunctionExpression(arrow_expr) => {
+                            for param in &arrow_expr.params.items {
+                                if let BindingPatternKind::BindingIdentifier(param_ident) =
+                                    &param.pattern.kind
+                                {
+                                    //  let n = param_ident.name;
+                                    argys.push(param_ident.name.to_compact_str());
+                                    //     println!("arg {n}");
+                                    //   arg_names.push(&n.to_compact_str())
+                                    //   v.push(param_ident.name.to_compact_str());
+                                };
+                            }
+                            //   self.check_parameter_names(&arrow_expr.params, ctx);
+                        }
+                        Expression::FunctionExpression(func_expr) => {
+                            // self.check_parameter_names(&func_expr.params, ctx);
+                        }
+                        _ => return,
+                    }
+                    //     }
+                });
+
+                println!("argys {argys:?}");
+            };
+            // println!("nope");
+
             ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
         }
     }
