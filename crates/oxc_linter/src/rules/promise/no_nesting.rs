@@ -89,7 +89,7 @@ fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
 fn closest_promise_callback_args<'a, 'b>(
     node: &'a AstNode<'b>,
     ctx: &'a LintContext<'b>,
-) -> Option<&'a AstNode<'b>> {
+) -> Option<&'a CallExpression<'b>> {
     println!("111oo");
 
     //if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
@@ -101,10 +101,11 @@ fn closest_promise_callback_args<'a, 'b>(
     let a = ctx
         .nodes()
         .ancestors(node.id())
-        .filter(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
-        .nth(0);
-
-    println!("zoo {a:?}");
+        .filter_map(|node| node.kind().as_call_expression())
+        .filter(|a| has_promise_callback(a))
+        //.map(|)
+        //        .map(|s| s.arguments.iter().map(|arg|))
+        .nth(1);
 
     a
     //  .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
