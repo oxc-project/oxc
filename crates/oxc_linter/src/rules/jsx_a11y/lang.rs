@@ -111,29 +111,29 @@ fn test() {
     }
 
     let pass = vec![
-        ("<div />;", None, None, None),
-        ("<div foo='bar' />;", None, None, None),
-        ("<div lang='foo' />;", None, None, None),
-        ("<html lang='en' />", None, None, None),
-        ("<html lang='en-US' />", None, None, None),
-        ("<html lang='zh-Hans' />", None, None, None),
-        ("<html lang='zh-Hant-HK' />", None, None, None),
-        ("<html lang='zh-yue-Hant' />", None, None, None),
-        ("<html lang='ja-Latn' />", None, None, None),
-        ("<html lang={foo} />", None, None, None),
-        ("<HTML lang='foo' />", None, None, None),
-        ("<Foo lang={undefined} />", None, None, None),
-        ("<Foo lang='en' />", None, Some(settings()), None),
-        ("<Box as='html' lang='en'  />", None, Some(settings()), None),
+        ("<div />;", None, None),
+        ("<div foo='bar' />;", None, None),
+        ("<div lang='foo' />;", None, None),
+        ("<html lang='en' />", None, None),
+        ("<html lang='en-US' />", None, None),
+        ("<html lang='zh-Hans' />", None, None),
+        ("<html lang='zh-Hant-HK' />", None, None),
+        ("<html lang='zh-yue-Hant' />", None, None),
+        ("<html lang='ja-Latn' />", None, None),
+        ("<html lang={foo} />", None, None),
+        ("<HTML lang='foo' />", None, None),
+        ("<Foo lang={undefined} />", None, None),
+        ("<Foo lang='en' />", None, Some(settings())),
+        ("<Box as='html' lang='en'  />", None, Some(settings())),
     ];
 
     let fail = vec![
-        ("<html lang='foo' />", None, None, None),
-        ("<html lang='n'></html>", None, None, None),
-        ("<html lang='zz-LL' />", None, None, None),
-        ("<html lang={undefined} />", None, None, None),
-        ("<Foo lang={undefined} />", None, Some(settings()), None),
-        ("<Box as='html' lang='foo' />", None, Some(settings()), None),
+        ("<html lang='foo' />", None, None),
+        ("<html lang='n'></html>", None, None),
+        ("<html lang='zz-LL' />", None, None),
+        ("<html lang={undefined} />", None, None),
+        ("<Foo lang={undefined} />", None, Some(settings())),
+        ("<Box as='html' lang='foo' />", None, Some(settings())),
     ];
 
     Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail).test_and_snapshot();

@@ -89,22 +89,22 @@ fn test() {
     }
 
     let pass = vec![
-        (r"<div />", None, None, None),
-        (r"<Marquee />", None, None, None),
-        (r"<div marquee />", None, None, None),
-        (r"<Blink />", None, None, None),
-        (r"<div blink />", None, None, None),
+        (r"<div />", None, None),
+        (r"<Marquee />", None, None),
+        (r"<div marquee />", None, None),
+        (r"<Blink />", None, None),
+        (r"<div blink />", None, None),
     ];
 
     let fail = vec![
-        (r"<marquee />", None, None, None),
-        (r"<marquee {...props} />", None, None, None),
-        (r"<marquee lang={undefined} />", None, None, None),
-        (r"<blink />", None, None, None),
-        (r"<blink {...props} />", None, None, None),
-        (r"<blink foo={undefined} />", None, None, None),
-        (r"<Blink />", Some(config()), Some(settings()), None),
-        (r"<Marquee />", Some(config()), Some(settings()), None),
+        (r"<marquee />", None, None),
+        (r"<marquee {...props} />", None, None),
+        (r"<marquee lang={undefined} />", None, None),
+        (r"<blink />", None, None),
+        (r"<blink {...props} />", None, None),
+        (r"<blink foo={undefined} />", None, None),
+        (r"<Blink />", Some(config()), Some(settings())),
+        (r"<Marquee />", Some(config()), Some(settings())),
     ];
 
     Tester::new(NoDistractingElements::NAME, NoDistractingElements::PLUGIN, pass, fail)
