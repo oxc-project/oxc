@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
+use oxc_allocator::{Allocator, Box, CloneIn, GetAddress, Vec};
 use oxc_ast::{
     ast::{
         Argument, ArrowFunctionExpression, BindingPatternKind, CallExpression, Expression,
@@ -8,7 +8,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -114,7 +114,8 @@ fn closest_promise_callback_args<'a, 'b>(
     //  .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
 }
 
-fn get_arg_names<'b>(call: &CallExpression<'b>) {
+fn get_arg_names<'b>(call: &CallExpression<'b>) -> Vec<CompactStr> {
+    let mut a = vec![];
     call.arguments.iter().for_each(|new_expr| {
         //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
 
@@ -127,8 +128,10 @@ fn get_arg_names<'b>(call: &CallExpression<'b>) {
                 for param in &arrow_expr.params.items {
                     if let BindingPatternKind::BindingIdentifier(param_ident) = &param.pattern.kind
                     {
-                        let n = param_ident.name;
-                        println!("arg {n}");
+                        //  let n = param_ident.name;
+                        a.push(param_ident.name.to_compact_str());
+                        //     println!("arg {n}");
+                        //   arg_names.push(&n.to_compact_str())
                         //   v.push(param_ident.name.to_compact_str());
                     };
                 }
@@ -140,7 +143,7 @@ fn get_arg_names<'b>(call: &CallExpression<'b>) {
             _ => return,
         }
         //     }
-    })
+    });
 }
 
 fn has_promise_callback(call_expr: &CallExpression) -> bool {
@@ -233,7 +236,8 @@ impl Rule for NoNesting {
         }
         */
         if let Some(closest) = closest_promise_callback_args(node, ctx) {
-            get_arg_names(closest);
+            let allocator = Allocator::default();
+            let v = get_arg_names(closest, &allocator);
             // println!("closest {closest:?}");
         };
         // println!("nope");
