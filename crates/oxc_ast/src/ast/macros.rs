@@ -18,7 +18,7 @@
 ///
 /// # Expansion
 ///
-/// ```
+/// ```ignore
 /// inherit_variants! {
 ///     #[ast]
 ///     enum Statement<'a> {
@@ -34,7 +34,7 @@
 ///
 /// expands to:
 ///
-/// ```
+/// ```ignore
 /// #[ast]
 /// enum Statement<'a> {
 ///     pub enum Statement<'a> {
@@ -744,7 +744,7 @@ pub(crate) use inherit_variants;
 ///
 /// NB: For illustration only - `Statement` and `Declaration` in reality share 9 variants, not 2.
 ///
-/// ```
+/// ```ignore
 /// shared_enum_variants!(
 ///     Statement, Declaration,
 ///     is_declaration,
@@ -757,7 +757,7 @@ pub(crate) use inherit_variants;
 ///
 /// expands to:
 ///
-/// ```
+/// ```ignore
 /// const _: () = {
 ///     assert!(discriminant!(Statement::VariableDeclaration) == discriminant!(Declaration::VariableDeclaration));
 ///     assert!(discriminant!(Statement::FunctionDeclaration) == discriminant!(Declaration::FunctionDeclaration));

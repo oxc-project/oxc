@@ -945,14 +945,14 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
     /// The property key
-    /// ```
+    /// ```js
     /// ({ prop: renamed } = obj)
     ///    ^^^^
     /// ```
     #[estree(rename = "key")]
     pub name: PropertyKey<'a>,
     /// The binding part of the property
-    /// ```
+    /// ```js
     /// ({ prop: renamed } = obj)
     ///          ^^^^^^^
     /// ```

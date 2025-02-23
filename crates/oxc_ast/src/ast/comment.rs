@@ -24,7 +24,7 @@ pub enum CommentPosition {
     ///
     /// e.g.
     ///
-    /// ```
+    /// ```ignore
     /// /* leading */ token;
     /// /* leading */
     /// // leading
