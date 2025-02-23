@@ -82,6 +82,22 @@ declare_oxc_lint!(
     /// x = x + y;
     /// x.y = x.y / a.b;
     /// ```
+    ///
+    /// ### Options
+    /// This rule has a single string option:
+    ///
+    /// `{ type: String, default: 'always' }`
+    ///
+    /// * `always` requires assignment operator shorthand where possible
+    /// * `never` disallows assignment operator shorthand
+    ///
+    /// Example:
+    ///
+    /// ```json
+    /// "eslint/max-nested-callbacks": ["error", "always"]
+    ///
+    /// "eslint/max-nested-callbacks": ["error", "never"]
+    /// ```
     OperatorAssignment,
     eslint,
     style,
