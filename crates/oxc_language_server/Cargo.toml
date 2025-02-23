@@ -19,7 +19,6 @@ workspace = true
 [[bin]]
 name = "oxc_language_server"
 test = true
-doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }

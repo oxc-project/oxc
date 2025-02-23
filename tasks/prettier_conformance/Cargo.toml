@@ -14,13 +14,11 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
 
 [[bin]]
 name = "oxc_prettier_conformance"
 path = "src/main.rs"
 test = false
-doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }

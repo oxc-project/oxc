@@ -14,12 +14,10 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
 
 [[bin]]
 name = "oxc_coverage"
 test = false
-doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize"] }

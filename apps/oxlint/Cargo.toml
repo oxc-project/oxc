@@ -16,13 +16,11 @@ description.workspace = true
 workspace = true
 
 [lib]
-doctest = false
 
 [[bin]]
 name = "oxlint"
 path = "src/main.rs"
 test = false
-doctest = false
 
 [target.'cfg(all(not(target_env = "msvc"), not(target_os = "windows")))'.dependencies]
 jemallocator = { workspace = true, optional = true }

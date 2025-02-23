@@ -10,7 +10,6 @@ workspace = true
 
 [lib]
 test = false
-doctest = false
 
 [dependencies]
 console = { workspace = true }

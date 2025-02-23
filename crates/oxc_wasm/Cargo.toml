@@ -16,7 +16,6 @@ workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 test = false
-doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["codegen", "minifier", "semantic", "serialize", "transformer", "isolated_declarations", "wasm"] }

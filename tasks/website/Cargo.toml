@@ -11,10 +11,8 @@ workspace = true
 [[bin]]
 name = "website"
 test = false
-doctest = false
 
 [lib]
-doctest = false
 
 [dependencies]
 bpaf = { workspace = true, features = ["docgen"] }

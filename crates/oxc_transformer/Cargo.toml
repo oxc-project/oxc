@@ -18,7 +18,6 @@ workspace = true
 
 [lib]
 test = true
-doctest = false
 
 [dependencies]
 oxc-browserslist = { workspace = true }

@@ -19,7 +19,6 @@ workspace = true
 [lib]
 crate-type = ["cdylib", "lib"]
 test = false
-doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["full"] }

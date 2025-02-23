@@ -18,7 +18,6 @@ workspace = true
 
 [lib]
 test = false
-doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
