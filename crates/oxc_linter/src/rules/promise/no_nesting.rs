@@ -1,5 +1,6 @@
+use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast::{
-    ast::{Argument, CallExpression, FormalParameters, MemberExpression},
+    ast::{Argument, ArrowFunctionExpression, CallExpression, FormalParameters, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -120,10 +121,10 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 ///  .then(b => getC(a, b))
 /// ```
 ///
-fn get_closest_promise_callback<'a, 'b>(
+fn get_closest_promise_callback_args<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
-) -> &'b Option<Vec<Argument<'a>>> {
+) -> Option<&'a Vec<'a, Argument<'a>>> {
     let closest_prom_cb_args = ctx.semantic().nodes().ancestors(node.id()).find_map(|node| {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return None;
@@ -153,7 +154,24 @@ impl Rule for NoNesting {
             return;
         };
 
-        println!("yayyyyy  {call_expr:?}");
+        if let Some(args) = get_closest_promise_callback_args(node, ctx) {
+            //println!("args  {call_expr:?}");
+            match args.first() {
+                Some(Argument::Identifier(identifier_reference)) => {
+                    let name = identifier_reference.name;
+                    println!("args id name  {name:?}");
+                }
+                Some(Argument::ArrowFunctionExpression(arrow)) => {
+                    let p = &arrow.params.items;
+                    println!("looo {p:?}");
+                }
+                a => {
+                    println!("dooo {a:?}");
+                }
+            }
+        } else {
+            println!("dooo");
+        }
 
         let mut ancestors = ctx.nodes().ancestors(node.id());
         if ancestors.any(|node| is_inside_promise(node, ctx)) {
