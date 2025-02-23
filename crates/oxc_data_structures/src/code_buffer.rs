@@ -300,7 +300,7 @@ impl CodeBuffer {
     #[inline]
     pub fn print_char(&mut self, ch: char) {
         let mut b = [0; 4];
-        self.buf.extend(ch.encode_utf8(&mut b).as_bytes());
+        self.buf.extend_from_slice(ch.encode_utf8(&mut b).as_bytes());
     }
 
     /// Push a string into the buffer.
@@ -313,7 +313,7 @@ impl CodeBuffer {
     /// ```
     #[inline]
     pub fn print_str<S: AsRef<str>>(&mut self, s: S) {
-        self.buf.extend(s.as_ref().as_bytes());
+        self.buf.extend_from_slice(s.as_ref().as_bytes());
     }
 
     /// Push a sequence of ASCII characters into the buffer.
