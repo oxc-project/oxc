@@ -274,7 +274,12 @@ impl Rule for NoNesting {
                 //    let v = get_arg_names(closest);
                 // println!("closest {closest:?}");
 
-                let mut argys = vec![];
+                // Compare the arg identifier names of the nested promise
+                //
+                // .then(a => getB(a)  <--- we need to get the args defined in this cb
+                //   .then(b => getC(a, b)) <--- to see if they are used here in this cb scope
+                // because if any are then we cannot unnest and so don't flag as rule violation.
+                let mut closest_promise_cb_args = vec![];
                 closest.arguments.iter().for_each(|new_expr| {
                     //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
 
@@ -289,7 +294,7 @@ impl Rule for NoNesting {
                                     &param.pattern.kind
                                 {
                                     //  let n = param_ident.name;
-                                    argys.push(param_ident.name.to_compact_str());
+                                    closest_promise_cb_args.push(param_ident.name.to_compact_str());
                                     //     println!("arg {n}");
                                     //   arg_names.push(&n.to_compact_str())
                                     //   v.push(param_ident.name.to_compact_str());
@@ -305,11 +310,13 @@ impl Rule for NoNesting {
                     //     }
                 });
 
-                println!("argys {argys:?}");
-            };
-            // println!("nope");
+                println!("argys {closest_promise_cb_args:?}");
 
-            ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
+                // now check in the nested cb scope for references to variables defined
+                // in the args of closest parent cb args.
+
+                ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
+            };
         }
     }
 }
