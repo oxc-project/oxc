@@ -91,16 +91,38 @@ fn has_promise_callback(call_expr: &CallExpression) -> bool {
     )
 }
 
-fn is_promise_then_catch_fin(call_expr: &CallExpression) -> Option<String> {
+fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
     let member_expr = call_expr.callee.get_member_expr()?;
     let prop_name = member_expr.static_property_name()?;
 
-    // hello.then(), hello.catch(), hello.finally()
-    if matches!(prop_name, "then" | "catch" | "finally") {
+    // hello.then(), hello.catch()
+    if matches!(prop_name, "then" | "catch") {
         return Some(prop_name.into());
     }
 
     None
+}
+
+/// Get closest callback function scope outside of current callback.
+/// ```
+/// doThing()
+///  .then(a => getB(a) <---- get this scopes args
+///    .then(b => getC(a, b)) <--- when here
+///  )
+/// ```
+/// We don't want a violation of this rule in such cases
+/// because we cannot unnest the above as `a` would be undefined.
+/// Here is the unnested version where would be `a` `undefined`
+/// in the second `then` callback:
+/// ```
+/// doThing()
+///  .then(a => getB(a))
+///  .then(b => getC(a, b))
+/// ```
+///
+fn get_closest_promise_callback<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    let depth =
+        ctx.semantic().nodes().ancestors(node.id()).filter(|node| has_promise_callback(node, ctx));
 }
 
 impl Rule for NoNesting {
@@ -109,7 +131,7 @@ impl Rule for NoNesting {
             return;
         };
 
-        let Some(prop_name) = is_promise_then_catch_fin(call_expr) else {
+        let Some(prop_name) = is_promise_then_or_catch(call_expr) else {
             return;
         };
 
