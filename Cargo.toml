@@ -148,10 +148,10 @@ syn = { version = "2", default-features = false }
 unicode-id-start = "1"
 
 #
-oxc-browserslist = "1.1.2"
-oxc_index = "2"
+oxc-browserslist = "2.0.0"
+oxc_index = "3"
 oxc_resolver = "4"
-oxc_sourcemap = "1"
+oxc_sourcemap = "2"
 
 #
 allocator-api2 = "0.2.21"
@@ -165,7 +165,7 @@ console = "0.15.10"
 console_error_panic_hook = "0.1.7"
 convert_case = "0.7.1"
 cow-utils = "0.1.3"
-criterion2 = { version = "2.0.0", default-features = false }
+criterion2 = { version = "3.0.0", default-features = false }
 encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.6", default-features = false }
