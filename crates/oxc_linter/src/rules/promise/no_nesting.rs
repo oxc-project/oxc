@@ -109,10 +109,13 @@ fn closest_promise_callback_args<'a, 'b>(
         //.map(|)
         //        .map(|s| s.arguments.iter().map(|arg|))
         .nth(0);
+    //  .nth(0);
 
     a
     //  .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
 }
+
+/*
 
 fn get_arg_names<'b>(call: &CallExpression<'b>) -> Vec<CompactStr> {
     let mut a = vec![];
@@ -145,7 +148,7 @@ fn get_arg_names<'b>(call: &CallExpression<'b>) -> Vec<CompactStr> {
         //     }
     });
 }
-
+*/
 fn has_promise_callback(call_expr: &CallExpression) -> bool {
     matches!(
         call_expr.callee.as_member_expression().and_then(MemberExpression::static_property_name),
@@ -236,9 +239,41 @@ impl Rule for NoNesting {
         }
         */
         if let Some(closest) = closest_promise_callback_args(node, ctx) {
-            let allocator = Allocator::default();
-            let v = get_arg_names(closest, &allocator);
+            //    let v = get_arg_names(closest);
             // println!("closest {closest:?}");
+
+            let mut argys = vec![];
+            closest.arguments.iter().for_each(|new_expr| {
+                //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
+
+                //  for argument in &new_expr.arguments {
+                let Some(arg_expr) = new_expr.as_expression() else {
+                    return;
+                };
+                match arg_expr {
+                    Expression::ArrowFunctionExpression(arrow_expr) => {
+                        for param in &arrow_expr.params.items {
+                            if let BindingPatternKind::BindingIdentifier(param_ident) =
+                                &param.pattern.kind
+                            {
+                                //  let n = param_ident.name;
+                                argys.push(param_ident.name.to_compact_str());
+                                //     println!("arg {n}");
+                                //   arg_names.push(&n.to_compact_str())
+                                //   v.push(param_ident.name.to_compact_str());
+                            };
+                        }
+                        //   self.check_parameter_names(&arrow_expr.params, ctx);
+                    }
+                    Expression::FunctionExpression(func_expr) => {
+                        // self.check_parameter_names(&func_expr.params, ctx);
+                    }
+                    _ => return,
+                }
+                //     }
+            });
+
+            println!("argys {argys:?}");
         };
         // println!("nope");
 
