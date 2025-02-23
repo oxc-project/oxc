@@ -1,6 +1,9 @@
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast::{
-    ast::{Argument, ArrowFunctionExpression, CallExpression, FormalParameters, MemberExpression},
+    ast::{
+        Argument, ArrowFunctionExpression, BindingPatternKind, CallExpression, Expression,
+        FormalParameters, MemberExpression,
+    },
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -105,10 +108,39 @@ fn closest_promise_callback_args<'a, 'b>(
         .filter(|a| has_promise_callback(a))
         //.map(|)
         //        .map(|s| s.arguments.iter().map(|arg|))
-        .nth(1);
+        .nth(0);
 
     a
     //  .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
+}
+
+fn get_arg_names<'b>(call: &CallExpression<'b>) {
+    call.arguments.iter().for_each(|new_expr| {
+        //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
+
+        //  for argument in &new_expr.arguments {
+        let Some(arg_expr) = new_expr.as_expression() else {
+            return;
+        };
+        match arg_expr {
+            Expression::ArrowFunctionExpression(arrow_expr) => {
+                for param in &arrow_expr.params.items {
+                    if let BindingPatternKind::BindingIdentifier(param_ident) = &param.pattern.kind
+                    {
+                        let n = param_ident.name;
+                        println!("arg {n}");
+                        //   v.push(param_ident.name.to_compact_str());
+                    };
+                }
+                //   self.check_parameter_names(&arrow_expr.params, ctx);
+            }
+            Expression::FunctionExpression(func_expr) => {
+                // self.check_parameter_names(&func_expr.params, ctx);
+            }
+            _ => return,
+        }
+        //     }
+    })
 }
 
 fn has_promise_callback(call_expr: &CallExpression) -> bool {
@@ -201,7 +233,8 @@ impl Rule for NoNesting {
         }
         */
         if let Some(closest) = closest_promise_callback_args(node, ctx) {
-            println!("closest {closest:?}");
+            get_arg_names(closest);
+            // println!("closest {closest:?}");
         };
         // println!("nope");
 
