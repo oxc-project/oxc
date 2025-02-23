@@ -116,6 +116,7 @@ mod eslint {
     pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
+    pub mod no_redundant_constructor_init;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
     pub mod no_restricted_imports;
@@ -630,6 +631,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_proto,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
+    eslint::no_redundant_constructor_init,
     eslint::no_regex_spaces,
     eslint::no_restricted_globals,
     eslint::no_return_assign,
