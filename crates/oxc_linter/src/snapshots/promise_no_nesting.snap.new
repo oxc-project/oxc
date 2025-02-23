@@ -1,0 +1,86 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 357
+---
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:1:29]
+ 1 │ doThing().then(function() { a.then() })
+   ·                             ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:1:29]
+ 1 │ doThing().then(function() { b.catch() })
+   ·                             ───────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:1:36]
+ 1 │ doThing().then(function() { return a.then() })
+   ·                                    ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:1:36]
+ 1 │ doThing().then(function() { return b.catch() })
+   ·                                    ───────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:1:24]
+ 1 │ doThing().then(() => { a.then() })
+   ·                        ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:1:24]
+ 1 │ doThing().then(() => { b.catch() })
+   ·                        ───────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:1:22]
+ 1 │ doThing().then(() => a.then())
+   ·                      ──────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:1:22]
+ 1 │ doThing().then(() => b.catch())
+   ·                      ───────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:3:23]
+ 2 │                       doThing()
+ 3 │ ╭─▶                     .then(a => getB(a)
+ 4 │ ╰─▶                       .then(b => getC(b))
+ 5 │                         )
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:3:23]
+ 2 │                       doThing()
+ 3 │ ╭─▶                     .then(a => getB(a)
+ 4 │ ╰─▶                       .then(b => getC(a, b)
+ 5 │                             .then(c => getD(a, c))
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint-plugin-promise(no-nesting): Should be an imperative statement about what is wrong
+   ╭─[no_nesting.tsx:4:25]
+ 3 │                         .then(a => getB(a)
+ 4 │ ╭─▶                       .then(b => getC(a, b)
+ 5 │ ╰─▶                         .then(c => getD(a, c))
+ 6 │                           )
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue

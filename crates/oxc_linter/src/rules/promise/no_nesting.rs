@@ -85,6 +85,26 @@ fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
         .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
 }
 
+fn closest_promise_callback_args<'a>(
+    node: &'a AstNode<'a>,
+    ctx: &'a LintContext<'a>,
+) -> Option<&'a AstNode<'a>> {
+    if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        || !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::Argument(_)))
+    {
+        return None;
+    }
+
+    let a = ctx
+        .nodes()
+        .ancestors(node.id())
+        .filter(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
+        .nth(2);
+
+    a
+    //  .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
+}
+
 fn has_promise_callback(call_expr: &CallExpression) -> bool {
     matches!(
         call_expr.callee.as_member_expression().and_then(MemberExpression::static_property_name),
@@ -154,6 +174,7 @@ impl Rule for NoNesting {
             return;
         };
 
+        /*
         if let Some(args) = get_closest_promise_callback_args(node, ctx) {
             //println!("args  {call_expr:?}");
             match args.first() {
@@ -172,6 +193,11 @@ impl Rule for NoNesting {
         } else {
             println!("dooo");
         }
+        */
+        if let Some(closest) = closest_promise_callback_args(node, ctx) {
+            println!("closest {closest:?}");
+        };
+        println!("nope");
 
         let mut ancestors = ctx.nodes().ancestors(node.id());
         if ancestors.any(|node| is_inside_promise(node, ctx)) {
