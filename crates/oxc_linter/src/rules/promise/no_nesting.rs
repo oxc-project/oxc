@@ -280,6 +280,8 @@ impl Rule for NoNesting {
                 //   .then(b => getC(a, b)) <--- to see if they are used here in this cb scope
                 // because if any are then we cannot unnest and so don't flag as rule violation.
                 let mut closest_promise_cb_args = vec![];
+                let mut closest_promise_cb_args_symbols = vec![];
+
                 closest.arguments.iter().for_each(|new_expr| {
                     //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
 
@@ -295,6 +297,8 @@ impl Rule for NoNesting {
                                 {
                                     //  let n = param_ident.name;
                                     closest_promise_cb_args.push(param_ident.name.to_compact_str());
+                                    closest_promise_cb_args_symbols.push(param_ident.symbol_id());
+                                    //param_ident.name.to_compact_str());
                                     //     println!("arg {n}");
                                     //   arg_names.push(&n.to_compact_str())
                                     //   v.push(param_ident.name.to_compact_str());
@@ -312,8 +316,31 @@ impl Rule for NoNesting {
 
                 println!("argys {closest_promise_cb_args:?}");
 
+                // probs redundant as maybe already have this
+                let cb_node_id = ctx
+                    .nodes()
+                    .ancestors(node.id())
+                    //.filter_map(|node| node.kind().as_call_expression())
+                    .filter(|a| has_promise_callback(a))
+                    //.map(|)
+                    //        .map(|s| s.arguments.iter().map(|arg|))
+                    .nth(0)
+                    .unwrap()
+                    .id();
+
                 // now check in the nested cb scope for references to variables defined
                 // in the args of closest parent cb args.
+                if let Some(symbol_id) = closest_promise_cb_args_symbols.iter().nth(0) {
+                    let mut references = ctx.semantic().symbol_references(*symbol_id).peekable();
+                    
+                    reference_span.contains_inclusive
+                    for reference in references {
+                        let node_id_where_arg_used = reference.node_id();
+                        let node_where_arg_used = ctx.nodes().get_node(node_id_where_arg_used);
+                        let is_within_cb = 
+                        print!(node_where_arg_used.parent)
+                    }
+                };
 
                 ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
             };
