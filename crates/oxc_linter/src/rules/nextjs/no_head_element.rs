@@ -1,9 +1,9 @@
-use oxc_ast::{ast::JSXElementName, AstKind};
+use oxc_ast::{AstKind, ast::JSXElementName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_in_app_dir, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_in_app_dir};
 
 fn no_head_element_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `<head>` element. Use `<Head />` from `next/head` instead.")

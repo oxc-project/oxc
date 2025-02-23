@@ -5,9 +5,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn type_diagnostic(banned_type: &str, suggested_type: &str, span2: Span) -> OxcDiagnostic {

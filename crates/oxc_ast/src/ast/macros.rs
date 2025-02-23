@@ -605,8 +605,6 @@ macro_rules! inherit_variants {
                 /// Inherited from [`TSType`]
                 TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 24,
                 /// Inherited from [`TSType`]
-                TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 25,
-                /// Inherited from [`TSType`]
                 TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 26,
                 /// Inherited from [`TSType`]
                 TSTupleType(Box<'a, TSTupleType<'a>>) = 27,
@@ -672,7 +670,6 @@ macro_rules! inherit_variants {
                 TSLiteralType,
                 TSMappedType,
                 TSNamedTupleMember,
-                TSQualifiedName,
                 TSTemplateLiteralType,
                 TSTupleType,
                 TSTypeLiteral,

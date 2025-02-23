@@ -12,7 +12,9 @@ use std::{
 };
 
 #[cfg(any(feature = "serialize", test))]
-use serde::{Serialize, Serializer};
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+#[cfg(any(feature = "serialize", test))]
+use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::Allocator;
 
@@ -64,7 +66,7 @@ impl<T> Box<'_, T> {
     /// # SAFETY
     /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
     /// Only purpose is for mocking types without allocating for const assertions.
-    #[expect(unsafe_code, clippy::missing_safety_doc)]
+    #[expect(unsafe_code)]
     pub const unsafe fn dangling() -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
@@ -182,15 +184,16 @@ impl<T: ?Sized + Debug> Debug for Box<'_, T> {
 // }
 
 #[cfg(any(feature = "serialize", test))]
-impl<T> Serialize for Box<'_, T>
-where
-    T: Serialize,
-{
-    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        self.deref().serialize(s)
+impl<T: Serialize> Serialize for Box<'_, T> {
+    fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.deref().serialize(serializer)
+    }
+}
+
+#[cfg(any(feature = "serialize", test))]
+impl<T: ESTree> ESTree for Box<'_, T> {
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        self.deref().serialize(serializer);
     }
 }
 
@@ -244,8 +247,21 @@ mod test {
     fn box_serialize() {
         let allocator = Allocator::default();
         let b = Box::new_in("x", &allocator);
-        let b = serde_json::to_string(&b).unwrap();
-        assert_eq!(b, "\"x\"");
+        let s = serde_json::to_string(&b).unwrap();
+        assert_eq!(s, r#""x""#);
+    }
+
+    #[test]
+    fn box_serialize_estree() {
+        use oxc_estree::{CompactTSSerializer, ESTree};
+
+        let allocator = Allocator::default();
+        let b = Box::new_in("x", &allocator);
+
+        let mut serializer = CompactTSSerializer::new();
+        b.serialize(&mut serializer);
+        let s = serializer.into_string();
+        assert_eq!(s, r#""x""#);
     }
 
     #[test]

@@ -16,7 +16,7 @@ use crate::{JsxOptions, JsxRuntime, TransformCtx, TypeScriptOptions};
 /// otherwise `JSDoc` could be used instead.
 ///
 /// This behavior is aligned with Babel.
-pub(crate) fn update_options_with_comments(
+pub fn update_options_with_comments(
     comments: &[Comment],
     typescript: &mut TypeScriptOptions,
     jsx: &mut JsxOptions,

@@ -92,7 +92,7 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{ast::*, visit::walk_mut::walk_expression, VisitMut, NONE};
+use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, GetSpan, SPAN};
@@ -102,7 +102,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, EnvOptions};
+use crate::{EnvOptions, utils::ast_builder::wrap_expression_in_arrow_function_iife};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
@@ -532,7 +532,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Traverses upward through ancestor nodes to find the `ScopeId` of the block
     /// that potential affects the `this` expression.
-    fn get_scope_id_from_this_affected_block(&self, ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
+    fn get_scope_id_from_this_affected_block(&self, ctx: &TraverseCtx<'a>) -> Option<ScopeId> {
         // `this` inside a class resolves to `this` *outside* the class in:
         // * `extends` clause
         // * Computed method key
@@ -678,7 +678,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Check whether currently in a class property initializer.
     /// e.g. `x` in `class C { prop = [foo(x)]; }`
-    fn in_class_property_definition_value(ctx: &mut TraverseCtx<'a>) -> bool {
+    fn in_class_property_definition_value(ctx: &TraverseCtx<'a>) -> bool {
         for ancestor in ctx.ancestors() {
             if ancestor.is_parent_of_statement() {
                 return false;
@@ -1131,7 +1131,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Insert variable statement at the top of the statements.
     fn insert_variable_statement_at_the_top_of_statements(
-        &mut self,
+        &self,
         target_scope_id: ScopeId,
         statements: &mut ArenaVec<'a, Statement<'a>>,
         this_var: Option<BoundIdentifier<'a>>,

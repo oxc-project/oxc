@@ -3,12 +3,12 @@ use std::ops::Deref;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
+    AstKind, Visit,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
         ObjectPropertyKind, ReturnStatement,
     },
     visit::walk,
-    AstKind, Visit,
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
@@ -16,12 +16,12 @@ use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::{is_method_call, leftmost_identifier_reference},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
     utils::default_true,
-    AstNode,
 };
 
 fn no_map_spread_diagnostic(

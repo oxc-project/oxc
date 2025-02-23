@@ -1,10 +1,10 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::AssignmentTarget, AstKind};
+use oxc_ast::{AstKind, ast::AssignmentTarget};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unreadable_array_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Array destructuring may not contain consecutive ignored values.")

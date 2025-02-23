@@ -4,13 +4,13 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::{
+    Result,
     schema::{Def, EnumDef, Schema, StructDef, TypeDef},
     utils::create_safe_ident,
-    Result,
 };
 
 use super::{
-    attr_positions, define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum,
+    AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum, attr_positions, define_derive,
 };
 
 /// Derive for `ContentEq` trait.

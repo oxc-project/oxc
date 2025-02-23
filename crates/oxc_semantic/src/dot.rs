@@ -1,15 +1,15 @@
 use oxc_ast::{
-    ast::{BreakStatement, ContinueStatement},
     AstKind,
+    ast::{BreakStatement, ContinueStatement},
 };
 use oxc_cfg::{
+    BasicBlock, ControlFlowGraph, EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
+    IterationInstructionKind, LabeledInstruction, ReturnInstructionKind,
     dot::{Attr, Attrs},
     graph::{
         dot::{Config, Dot},
         visit::EdgeRef,
     },
-    BasicBlock, ControlFlowGraph, EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
-    IterationInstructionKind, LabeledInstruction, ReturnInstructionKind,
 };
 use oxc_syntax::node::NodeId;
 

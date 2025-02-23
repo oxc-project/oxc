@@ -41,6 +41,11 @@ impl<'a> Traverse<'a> for StatementInjector<'a, '_> {
     ) {
         self.ctx.statement_injector.insert_into_statements(statements, ctx);
     }
+
+    #[inline]
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.ctx.statement_injector.assert_no_insertions_remaining();
+    }
 }
 
 #[derive(Debug)]
@@ -156,7 +161,7 @@ impl<'a> StatementInjectorStore<'a> {
     fn insert_into_statements(
         &self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         let mut insertions = self.insertions.borrow_mut();
         if insertions.is_empty() {
@@ -174,25 +179,36 @@ impl<'a> StatementInjectorStore<'a> {
         let mut new_statements = ctx.ast.vec_with_capacity(statements.len() + new_statement_count);
 
         for stmt in statements.drain(..) {
-            if let Some(mut adjacent_stmts) = insertions.remove(&stmt.address()) {
-                let first_after_stmt_index = adjacent_stmts
-                    .iter()
-                    .position(|s| matches!(s.direction, Direction::After))
-                    .unwrap_or(adjacent_stmts.len());
-                if first_after_stmt_index != 0 {
-                    let right = adjacent_stmts.split_off(first_after_stmt_index);
-                    new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
-                    new_statements.push(stmt);
-                    new_statements.extend(right.into_iter().map(|s| s.stmt));
-                } else {
-                    new_statements.push(stmt);
-                    new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+            match insertions.remove(&stmt.address()) {
+                Some(mut adjacent_stmts) => {
+                    let first_after_stmt_index = adjacent_stmts
+                        .iter()
+                        .position(|s| matches!(s.direction, Direction::After))
+                        .unwrap_or(adjacent_stmts.len());
+                    if first_after_stmt_index != 0 {
+                        let right = adjacent_stmts.split_off(first_after_stmt_index);
+                        new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+                        new_statements.push(stmt);
+                        new_statements.extend(right.into_iter().map(|s| s.stmt));
+                    } else {
+                        new_statements.push(stmt);
+                        new_statements.extend(adjacent_stmts.into_iter().map(|s| s.stmt));
+                    }
                 }
-            } else {
-                new_statements.push(stmt);
+                _ => {
+                    new_statements.push(stmt);
+                }
             }
         }
 
         *statements = new_statements;
+    }
+
+    // Assertion for checking if no remaining insertions are left.
+    // `#[inline(always)]` because this is a no-op in release mode
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn assert_no_insertions_remaining(&self) {
+        debug_assert!(self.insertions.borrow().is_empty());
     }
 }

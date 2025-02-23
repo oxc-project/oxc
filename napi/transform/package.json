@@ -4,7 +4,7 @@
   "scripts": {
     "build-dev": "napi --no-dts-cache build --platform",
     "build": "napi --no-dts-cache build --platform --release",
-    "test": "vitest --typecheck run ./test"
+    "test": "vitest --typecheck run ./test && tsc"
   },
   "napi": {
     "binaryName": "transform",
@@ -18,5 +18,8 @@
       "x86_64-apple-darwin",
       "aarch64-apple-darwin"
     ]
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
   }
 }

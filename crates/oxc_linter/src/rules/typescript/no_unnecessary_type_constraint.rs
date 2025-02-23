@@ -1,12 +1,12 @@
-use oxc_ast::{ast::TSType, AstKind};
+use oxc_ast::{AstKind, ast::TSType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_unnecessary_type_constraint_diagnostic(

@@ -1,5 +1,5 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::Reference;
 use oxc_span::SPAN;
@@ -13,8 +13,8 @@ use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 use crate::TransformCtx;
 
 use super::{
-    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
     TypeScriptOptions,
+    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
 };
 
 pub struct TypeScriptNamespace<'a, 'ctx> {
@@ -60,7 +60,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
                     continue;
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
-                    if export_decl.declaration.as_ref().map_or(true, |decl| {
+                    if export_decl.declaration.as_ref().is_none_or(|decl| {
                         decl.declare() || !matches!(decl, Declaration::TSModuleDeclaration(_))
                     }) {
                         new_stmts.push(Statement::ExportNamedDeclaration(export_decl));
@@ -228,7 +228,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     continue;
                 }
                 Statement::TSTypeAliasDeclaration(_) | Statement::TSInterfaceDeclaration(_) => {
-                    continue
+                    continue;
                 }
                 _ => {}
             }
@@ -271,7 +271,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     //                         ^^^^^^^
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {

@@ -5,7 +5,7 @@ use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{Codegen, LegalComment};
 
-pub(crate) type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
+pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
 impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {

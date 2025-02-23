@@ -1,21 +1,21 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{JSXChild, JSXElement},
     AstKind,
+    ast::{JSXChild, JSXElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{
         get_element_type, get_string_literal_prop_value, has_jsx_prop_ignore_case,
         is_hidden_from_screen_reader,
     },
-    AstNode,
 };
 
 fn anchor_has_ambiguous_text(span: Span) -> OxcDiagnostic {

@@ -1,14 +1,14 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn text_encoding_identifier_case_diagnostic(
     span: Span,

@@ -1,14 +1,14 @@
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
 use crate::{
+    AstNode,
     ast_util::{self, IsConstant},
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 /// `https://eslint.org/docs/latest/rules/no-constant-binary-expression`
@@ -168,7 +168,10 @@ impl NoConstantBinaryExpression {
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
-                        && ctx.is_reference_to_global_variable(ident);
+                        && ctx
+                            .scopes()
+                            .root_unresolved_references()
+                            .contains_key(ident.name.as_str());
                 }
                 false
             }
@@ -291,18 +294,21 @@ impl NoConstantBinaryExpression {
             },
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    if ident.name == "String"
-                        || ident.name == "Number" && ctx.is_reference_to_global_variable(ident)
+                    let unresolved_references = ctx.scopes().root_unresolved_references();
+                    if (ident.name == "String" || ident.name == "Number")
+                        && unresolved_references.contains_key(ident.name.as_str())
                     {
                         return true;
                     }
 
-                    if ident.name == "Boolean" && ctx.is_reference_to_global_variable(ident) {
+                    if ident.name == "Boolean"
+                        && unresolved_references.contains_key(ident.name.as_str())
+                    {
                         return call_expr
                             .arguments
                             .iter()
                             .next()
-                            .map_or(true, |first| first.is_constant(true, ctx));
+                            .is_none_or(|first| first.is_constant(true, ctx));
                     }
                 }
                 false
@@ -339,7 +345,10 @@ impl NoConstantBinaryExpression {
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ctx.env_contains_var(ident.name.as_str())
-                        && ctx.is_reference_to_global_variable(ident);
+                        && ctx
+                            .scopes()
+                            .root_unresolved_references()
+                            .contains_key(ident.name.as_str());
                 }
                 false
             }

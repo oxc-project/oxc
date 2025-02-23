@@ -1,0 +1,228 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = x === 2 ? true : false;
+   ·         ──────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = (x === 2) ? true : false;
+   ·         ────────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = x >= 2 ? true : false;
+   ·         ─────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = x ? true : false;
+   ·         ────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = x === 1 ? false : true;
+   ·         ──────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = x != 1 ? false : true;
+   ·         ─────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = foo() ? false : true;
+   ·         ────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = !foo() ? false : true;
+   ·         ─────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = foo + bar ? false : true;
+   ·         ────────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = x instanceof foo ? false : true;
+   ·         ───────────────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = foo ? false : false;
+   ·         ───────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = foo() ? false : false;
+   ·         ─────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = x instanceof foo ? true : false;
+   ·         ───────────────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = !foo ? true : false;
+   ·         ───────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:4:33]
+ 3 │                             var canSet = true
+ 4 │                             var result = value ? value : canSet ? 'unset' : 'can not set'
+   ·                                          ────────────────────────────────────────────────
+ 5 │                         
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:1]
+ 1 │ foo ? foo : (bar ? baz : qux)
+   · ─────────────────────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:18]
+ 1 │ function* fn() { foo ? foo : yield bar }
+   ·                  ─────────────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = foo ? foo : 'No';
+   ·         ────────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = ((foo)) ? (((((foo))))) : ((((((((((((((bar))))))))))))));
+   ·         ─────────────────────────────────────────────────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = b ? b : c => c;
+   ·         ──────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = b ? b : c = 0;
+   ·         ─────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = b ? b : (c => c);
+   ·         ────────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = b ? b : (c = 0);
+   ·         ───────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = b ? b : (c) => (c);
+   ·         ──────────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = b ? b : c, d; // this is ((b ? b : c), (d))
+   ·         ─────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = b ? b : (c, d);
+   ·         ──────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:3]
+ 1 │ f(x ? x : 1);
+   ·   ─────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:1]
+ 1 │ x ? x : 1;
+   · ─────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = foo ? foo : bar;
+   ·         ───────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:9]
+ 1 │ var a = foo ? foo : a ?? b;
+   ·         ──────────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
+   ╭─[no_unneeded_ternary.tsx:1:1]
+ 1 │ foo as any ? false : true
+   · ─────────────────────────
+   ╰────
+  help: Remove this ternary operator
+
+  ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
+   ╭─[no_unneeded_ternary.tsx:1:1]
+ 1 │ foo ? foo : bar as any
+   · ──────────────────────
+   ╰────
+  help: Remove this ternary operator and use the variable directly

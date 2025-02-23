@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn default_case_last_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce default clauses in switch statements to be last")

@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::{Captures, Regex};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn replacement(escape_sequence: &str, replacement: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Don't use '{escape_sequence}' escape sequence."))
@@ -63,7 +63,7 @@ impl Rule for NoNonoctalDecimalEscape {
 }
 trait StickyRegex {
     fn sticky_captures<'h>(&self, haystack: &'h str, start: usize)
-        -> (Option<Captures<'h>>, usize);
+    -> (Option<Captures<'h>>, usize);
 }
 
 impl StickyRegex for Regex {

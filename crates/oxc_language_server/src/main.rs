@@ -1,7 +1,6 @@
 use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
 use commands::LSP_COMMANDS;
-use dashmap::DashMap;
 use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
@@ -10,6 +9,7 @@ use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
+    Client, LanguageServer, LspService, Server,
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
         CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
@@ -19,12 +19,11 @@ use tower_lsp::{
         InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, Url,
         WorkspaceEdit,
     },
-    Client, LanguageServer, LspService, Server,
 };
 
 use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 
-use crate::capabilities::{Capabilities, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC};
+use crate::capabilities::{CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, Capabilities};
 use crate::linter::error_with_position::DiagnosticReport;
 use crate::linter::server_linter::ServerLinter;
 
@@ -32,13 +31,13 @@ mod capabilities;
 mod commands;
 mod linter;
 
-type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
+type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
 struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
     server_linter: RwLock<ServerLinter>,
-    diagnostics_report_map: FxDashMap<String, Vec<DiagnosticReport>>,
+    diagnostics_report_map: ConcurrentHashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
     gitignore_glob: Mutex<Vec<Gitignore>>,
 }
@@ -76,11 +75,7 @@ impl Options {
     }
 
     fn get_config_path(&self) -> Option<PathBuf> {
-        if self.config_path.is_empty() {
-            None
-        } else {
-            Some(PathBuf::from(&self.config_path))
-        }
+        if self.config_path.is_empty() { None } else { Some(PathBuf::from(&self.config_path)) }
     }
 }
 
@@ -153,13 +148,14 @@ impl LanguageServer for Backend {
         {
             debug!("lint level change detected {:?}", &changed_options.get_lint_level());
             // clear all exists diagnostics when linter is disabled
-            let opened_files = self.diagnostics_report_map.iter().map(|k| k.key().to_string());
-            let cleared_diagnostics = opened_files
-                .into_iter()
+            let cleared_diagnostics = self
+                .diagnostics_report_map
+                .pin()
+                .keys()
                 .map(|uri| {
                     (
                         // should convert successfully, case the key is from `params.document.uri`
-                        Url::from_str(&uri)
+                        Url::from_str(uri)
                             .ok()
                             .and_then(|url| url.to_file_path().ok())
                             .expect("should convert to path"),
@@ -247,7 +243,7 @@ impl LanguageServer for Backend {
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = params.text_document.uri.to_string();
-        self.diagnostics_report_map.remove(&uri);
+        self.diagnostics_report_map.pin().remove(&uri);
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
@@ -258,7 +254,7 @@ impl LanguageServer for Backend {
             .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
 
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
-        if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
+        if let Some(value) = self.diagnostics_report_map.pin().get(&uri.to_string()) {
             let reports = value.iter().filter(|r| {
                 r.diagnostic.range == params.range
                     || range_overlaps(params.range, r.diagnostic.range)
@@ -476,8 +472,8 @@ impl Backend {
     }
 
     async fn revalidate_open_files(&self) {
-        join_all(self.diagnostics_report_map.iter().map(|map| {
-            let url = Url::from_str(map.key()).expect("should convert to path");
+        join_all(self.diagnostics_report_map.pin_owned().keys().map(|key| {
+            let url = Url::from_str(key).expect("should convert to path");
 
             self.handle_file_update(url, None, None)
         }))
@@ -514,7 +510,8 @@ impl Backend {
 
     async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
         if let Some(Some(_root_uri)) = self.root_uri.get() {
-            if let Some(diagnostics) = self.server_linter.read().await.run_single(&uri, content) {
+            let diagnostics = self.server_linter.read().await.run_single(&uri, content);
+            if let Some(diagnostics) = diagnostics {
                 self.client
                     .publish_diagnostics(
                         uri.clone(),
@@ -523,7 +520,7 @@ impl Backend {
                     )
                     .await;
 
-                self.diagnostics_report_map.insert(uri.to_string(), diagnostics);
+                self.diagnostics_report_map.pin().insert(uri.to_string(), diagnostics);
             }
         }
     }
@@ -561,7 +558,7 @@ async fn main() {
     let stdout = tokio::io::stdout();
 
     let server_linter = ServerLinter::new();
-    let diagnostics_report_map = FxDashMap::default();
+    let diagnostics_report_map = ConcurrentHashMap::default();
 
     let (service, socket) = LspService::build(|client| Backend {
         client,

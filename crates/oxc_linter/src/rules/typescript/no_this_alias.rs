@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{match_simple_assignment_target, AssignmentTarget, BindingPatternKind, Expression},
     AstKind,
+    ast::{AssignmentTarget, BindingPatternKind, Expression, match_simple_assignment_target},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,9 +9,9 @@ use rustc_hash::FxHashSet;
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_this_alias_diagnostic(span: Span) -> OxcDiagnostic {

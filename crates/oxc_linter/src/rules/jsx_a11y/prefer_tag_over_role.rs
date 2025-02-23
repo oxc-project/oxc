@@ -2,18 +2,18 @@ use lazy_static::lazy_static;
 use phf::phf_map;
 
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn prefer_tag_over_role_diagnostic(span: Span, tag: &str, role: &str) -> OxcDiagnostic {

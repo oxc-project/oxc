@@ -279,14 +279,14 @@ impl NoUnusedVars {
                 if self.is_allowed_variable_declaration(symbol, decl) {
                     return;
                 };
-                let report =
-                    if let Some(last_write) = symbol.references().rev().find(|r| r.is_write()) {
+                let report = match symbol.references().rev().find(|r| r.is_write()) {
+                    Some(last_write) => {
                         // ahg
                         let span = ctx.nodes().get_node(last_write.node_id()).kind().span();
                         diagnostic::assign(symbol, span, &self.vars_ignore_pattern)
-                    } else {
-                        diagnostic::declared(symbol, &self.vars_ignore_pattern)
-                    };
+                    }
+                    _ => diagnostic::declared(symbol, &self.vars_ignore_pattern),
+                };
 
                 ctx.diagnostic_with_suggestion(report, |fixer| {
                     // NOTE: suggestions produced by this fixer are all flagged

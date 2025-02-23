@@ -3,7 +3,7 @@ use oxc_semantic::{Semantic, SymbolId};
 
 use crate::ModuleRecord;
 
-use super::{symbol::Symbol, NoUnusedVars};
+use super::{NoUnusedVars, symbol::Symbol};
 
 #[derive(Clone, Copy)]
 pub(super) struct BindingContext<'s, 'a> {

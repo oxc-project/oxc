@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
     AstKind,
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn bad_min_max_func_diagnostic(constant_result: f64, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Math.min and Math.max combination leads to constant result")
@@ -119,11 +119,7 @@ impl BadMinMaxFunc {
                 let mut inner = vec![];
 
                 for expr in arguments.iter().filter_map(|arg| {
-                    if let Argument::CallExpression(expr) = arg {
-                        Some(&**expr)
-                    } else {
-                        None
-                    }
+                    if let Argument::CallExpression(expr) = arg { Some(&**expr) } else { None }
                 }) {
                     inner.push(expr);
                 }

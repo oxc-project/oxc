@@ -1,18 +1,18 @@
 use oxc_ast::ast::{Expression, NumberBase};
 
-use super::{ConstantEvaluation, ValueType};
+use super::{ConstantEvaluation, ConstantEvaluationCtx, DetermineValueType, ValueType};
 
 /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
 pub(super) fn abstract_equality_comparison<'a>(
-    c: &impl ConstantEvaluation<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
     left_expr: &Expression<'a>,
     right_expr: &Expression<'a>,
 ) -> Option<bool> {
-    let left = ValueType::from(left_expr);
-    let right = ValueType::from(right_expr);
+    let left = left_expr.value_type(ctx);
+    let right = right_expr.value_type(ctx);
     if left != ValueType::Undetermined && right != ValueType::Undetermined {
         if left == right {
-            return strict_equality_comparison(c, left_expr, right_expr);
+            return strict_equality_comparison(ctx, left_expr, right_expr);
         }
         if matches!(
             (left, right),
@@ -24,14 +24,14 @@ pub(super) fn abstract_equality_comparison<'a>(
         if matches!((left, right), (ValueType::Number, ValueType::String))
             || matches!(right, ValueType::Boolean)
         {
-            if let Some(num) = c.get_side_free_number_value(right_expr) {
-                let number_literal_expr = c.ast().expression_numeric_literal(
+            if let Some(num) = right_expr.get_side_free_number_value(ctx) {
+                let number_literal_expr = ctx.ast().expression_numeric_literal(
                     oxc_span::SPAN,
                     num,
                     None,
                     if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                 );
-                return abstract_equality_comparison(c, left_expr, &number_literal_expr);
+                return abstract_equality_comparison(ctx, left_expr, &number_literal_expr);
             }
             return None;
         }
@@ -39,21 +39,21 @@ pub(super) fn abstract_equality_comparison<'a>(
         if matches!((left, right), (ValueType::String, ValueType::Number))
             || matches!(left, ValueType::Boolean)
         {
-            if let Some(num) = c.get_side_free_number_value(left_expr) {
-                let number_literal_expr = c.ast().expression_numeric_literal(
+            if let Some(num) = left_expr.get_side_free_number_value(ctx) {
+                let number_literal_expr = ctx.ast().expression_numeric_literal(
                     oxc_span::SPAN,
                     num,
                     None,
                     if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                 );
-                return abstract_equality_comparison(c, &number_literal_expr, right_expr);
+                return abstract_equality_comparison(ctx, &number_literal_expr, right_expr);
             }
             return None;
         }
 
         if matches!(left, ValueType::BigInt) || matches!(right, ValueType::BigInt) {
-            let left_bigint = c.get_side_free_bigint_value(left_expr);
-            let right_bigint = c.get_side_free_bigint_value(right_expr);
+            let left_bigint = left_expr.get_side_free_bigint_value(ctx);
+            let right_bigint = right_expr.get_side_free_bigint_value(ctx);
             if let (Some(l_big), Some(r_big)) = (left_bigint, right_bigint) {
                 return Some(l_big.eq(&r_big));
             }
@@ -79,12 +79,12 @@ pub(super) fn abstract_equality_comparison<'a>(
 /// <https://tc39.es/ecma262/#sec-strict-equality-comparison>
 #[expect(clippy::float_cmp)]
 pub(super) fn strict_equality_comparison<'a>(
-    c: &impl ConstantEvaluation<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
     left_expr: &Expression<'a>,
     right_expr: &Expression<'a>,
 ) -> Option<bool> {
-    let left = ValueType::from(left_expr);
-    let right = ValueType::from(right_expr);
+    let left = left_expr.value_type(ctx);
+    let right = right_expr.value_type(ctx);
     if !left.is_undetermined() && !right.is_undetermined() {
         // Strict equality can only be true for values of the same type.
         if left != right {
@@ -92,27 +92,27 @@ pub(super) fn strict_equality_comparison<'a>(
         }
         return match left {
             ValueType::Number => {
-                let lnum = c.get_side_free_number_value(left_expr)?;
-                let rnum = c.get_side_free_number_value(right_expr)?;
+                let lnum = left_expr.get_side_free_number_value(ctx)?;
+                let rnum = right_expr.get_side_free_number_value(ctx)?;
                 if lnum.is_nan() || rnum.is_nan() {
                     return Some(false);
                 }
                 Some(lnum == rnum)
             }
             ValueType::String => {
-                let left = c.get_side_free_string_value(left_expr)?;
-                let right = c.get_side_free_string_value(right_expr)?;
+                let left = left_expr.get_side_free_string_value(ctx)?;
+                let right = right_expr.get_side_free_string_value(ctx)?;
                 Some(left == right)
             }
             ValueType::Undefined | ValueType::Null => Some(true),
             ValueType::Boolean => {
-                let left = c.get_boolean_value(left_expr)?;
-                let right = c.get_boolean_value(right_expr)?;
+                let left = left_expr.evaluate_value_to_boolean(ctx)?;
+                let right = right_expr.evaluate_value_to_boolean(ctx)?;
                 Some(left == right)
             }
             ValueType::BigInt => {
-                let left = c.get_side_free_bigint_value(left_expr)?;
-                let right = c.get_side_free_bigint_value(right_expr)?;
+                let left = left_expr.get_side_free_bigint_value(ctx)?;
+                let right = right_expr.get_side_free_bigint_value(ctx)?;
                 Some(left == right)
             }
             ValueType::Object => None,

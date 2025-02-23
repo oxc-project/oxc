@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{Expression, MemberExpression},
     AstKind,
+    ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn prefer_object_has_own_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(

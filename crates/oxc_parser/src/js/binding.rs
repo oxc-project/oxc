@@ -1,8 +1,8 @@
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
-use crate::{diagnostics, lexer::Kind, Context, ParserImpl};
+use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
 impl<'a> ParserImpl<'a> {
     /// `BindingElement`

@@ -6,7 +6,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_eq_null_diagnostic(span: Span, suggested_operator: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `null` comparisons without type-checking operators.")

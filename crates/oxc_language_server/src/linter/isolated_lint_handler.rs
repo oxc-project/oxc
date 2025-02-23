@@ -12,16 +12,16 @@ use tower_lsp::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverit
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource};
 use oxc_linter::{
-    loader::{JavaScriptSource, Loader, LINT_PARTIAL_LOADER_EXT},
     Linter, ModuleRecord,
+    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, Loader},
 };
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::VALID_EXTENSIONS;
 
+use crate::DiagnosticReport;
 use crate::linter::error_with_position::{ErrorReport, ErrorWithPosition, FixedContent};
 use crate::linter::offset_to_position;
-use crate::DiagnosticReport;
 
 pub struct IsolatedLintHandler {
     linter: Arc<Linter>,

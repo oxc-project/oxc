@@ -2,15 +2,15 @@
 use std::cmp::Ordering;
 
 use oxc_ast::{
-    ast::{Expression, LogicalExpression, NumericLiteral, UnaryOperator},
     AstKind,
+    ast::{Expression, LogicalExpression, NumericLiteral, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
 fn redundant_left_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")

@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+### Bug Fixes
+
+- 1cc1669 codegen: Fix `clippy::unused_peekable` warning (#9236) (Boshen)
+
+### Refactor
+
+- 97cc1c8 ast: Remove `TSLiteral::NullLiteral` (replaced by `TSNullKeyword`) (#9147) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
+### Testing
+
+- 51c4491 codegen: Clean up esbuild tests (Boshen)
+
+## [0.51.0] - 2025-02-15
+
+- 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)
+
+- 9091387 ast: [**BREAKING**] Remove `TSType::TSQualifiedName` (#9051) (Dunqing)
+
+### Features
+
+
+### Bug Fixes
+
+- d9684af codegen: Fix missing StringLiteral sourcemap (#9064) (hi-ogawa)
+
 ## [0.49.0] - 2025-02-10
 
 ### Features

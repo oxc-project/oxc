@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,10 +8,10 @@ use oxc_span::{CompactStr, Span};
 use phf::phf_set;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {

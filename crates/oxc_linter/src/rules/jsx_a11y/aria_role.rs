@@ -1,17 +1,17 @@
 use oxc_ast::{
-    ast::{JSXAttributeValue, JSXExpression},
     AstKind,
+    ast::{JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::{HTML_TAG, VALID_ARIA_ROLES},
     rule::Rule,
     utils::{get_element_type, get_prop_value, has_jsx_prop},
-    AstNode,
 };
 
 fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {

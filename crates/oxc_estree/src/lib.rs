@@ -1,6 +1,12 @@
 #[cfg(feature = "serialize")]
 pub mod ser;
+#[cfg(feature = "serialize")]
+mod serialize;
+#[cfg(feature = "serialize")]
+pub use serialize::*;
 
-/// Empty trait that will be used later for custom serialization and TypeScript
-/// generation for AST nodes.
+/// Placeholder for real `ESTree` trait when `serialize` feature not enabled.
+///
+/// Provided to support `#[generate_derive(ESTree)]`, without enabling the feature.
+#[cfg(not(feature = "serialize"))]
 pub trait ESTree {}

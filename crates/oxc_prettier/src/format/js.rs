@@ -1,24 +1,24 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use oxc_allocator::{Box, FromIn, Vec};
-use oxc_ast::{ast::*, AstKind};
+use oxc_allocator::{Box, Vec};
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
 
 use crate::{
-    array, dynamic_text,
+    Prettier, array, dynamic_text,
     format::{
-        print::{
-            array, arrow_function, assignment, binaryish, block, call_expression, class, function,
-            function_parameters, literal, member, misc, module, object, property, statement,
-            template_literal, ternary,
-        },
         Format,
+        print::{
+            array, arrow_function, assignment, binaryish, block, call_expression, class,
+            expression_statement, function, function_parameters, literal, member, misc, module,
+            object, property, statement, template_literal, ternary,
+        },
     },
     group, hardline, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, text, utils, wrap, Prettier,
+    join, line, softline, text, utils, wrap,
 };
 
 impl<'a> Format<'a> for Program<'a> {
@@ -108,14 +108,7 @@ impl<'a> Format<'a> for Statement<'a> {
 impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ExpressionStatement, {
-            let mut parts = Vec::new_in(p.allocator);
-
-            parts.push(self.expression.format(p));
-            if let Some(semi) = p.semi() {
-                parts.push(semi);
-            }
-
-            array!(p, parts)
+            expression_statement::print_expression_statement(p, self)
         })
     }
 }
@@ -380,30 +373,35 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
 
 impl<'a> Format<'a> for SwitchCase<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
+        wrap!(p, self, SwitchCase, {
+            let mut parts = Vec::new_in(p.allocator);
 
-        if let Some(test) = &self.test {
-            parts.push(text!("case "));
-            parts.push(test.format(p));
-            parts.push(text!(":"));
-        } else {
-            parts.push(text!("default:"));
-        }
-
-        let len =
-            self.consequent.iter().filter(|c| !matches!(c, Statement::EmptyStatement(_))).count();
-        if len != 0 {
-            let consequent_parts =
-                statement::print_statement_sequence(p, self.consequent.as_slice());
-
-            if len == 1 && matches!(self.consequent[0], Statement::BlockStatement(_)) {
-                parts.push(array!(p, [text!(" "), array!(p, consequent_parts)]));
+            if let Some(test) = &self.test {
+                parts.push(text!("case "));
+                parts.push(test.format(p));
+                parts.push(text!(":"));
             } else {
-                parts.push(indent!(p, [hardline!(p), array!(p, consequent_parts)]));
+                parts.push(text!("default:"));
             }
-        }
 
-        array!(p, parts)
+            let len = self
+                .consequent
+                .iter()
+                .filter(|c| !matches!(c, Statement::EmptyStatement(_)))
+                .count();
+            if len != 0 {
+                let consequent_parts =
+                    statement::print_statement_sequence(p, self.consequent.as_slice());
+
+                if len == 1 && matches!(self.consequent[0], Statement::BlockStatement(_)) {
+                    parts.push(array!(p, [text!(" "), array!(p, consequent_parts)]));
+                } else {
+                    parts.push(indent!(p, [hardline!(p), array!(p, consequent_parts)]));
+                }
+            }
+
+            array!(p, parts)
+        })
     }
 }
 
@@ -579,7 +577,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 }
             }
 
-            if !parent_for_loop_span.is_some_and(|span| span != self.span) {
+            if parent_for_loop_span.is_none_or(|span| span == self.span) {
                 if let Some(semi) = p.semi() {
                     parts.push(semi);
                 }
@@ -1087,7 +1085,7 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
         wrap!(p, self, PrivateInExpression, {
             let left_doc = self.left.format(p);
             let right_doc = self.right.format(p);
-            array!(p, [left_doc, text!(" "), text!(self.operator.as_str()), text!(" "), right_doc])
+            array!(p, [left_doc, text!(" "), text!("in"), text!(" "), right_doc])
         })
     }
 }

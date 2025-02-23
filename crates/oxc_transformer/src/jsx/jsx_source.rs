@@ -34,9 +34,9 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
 use oxc_ast::ast::*;
-use oxc_data_structures::rope::{get_line_column, Rope};
+use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Span, SPAN};
+use oxc_span::{SPAN, Span};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
@@ -177,7 +177,7 @@ impl<'a> JsxSource<'a, '_> {
         ctx.ast.expression_object(SPAN, properties, None)
     }
 
-    pub fn get_filename_var_statement(&self, ctx: &mut TraverseCtx<'a>) -> Option<Statement<'a>> {
+    pub fn get_filename_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Statement<'a>> {
         let decl = self.get_filename_var_declarator(ctx)?;
 
         let var_decl = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(

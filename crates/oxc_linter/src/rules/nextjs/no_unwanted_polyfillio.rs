@@ -1,13 +1,13 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
-use phf::{phf_set, Set};
+use phf::{Set, phf_set};
 
 use crate::{
     context::LintContext,

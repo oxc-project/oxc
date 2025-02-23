@@ -1,11 +1,11 @@
 //! This module contains logic for checking if any [`Reference`]s to a
 //! [`Symbol`] are considered a usage.
 
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 
-use super::{ignored::FoundStatus, NoUnusedVars, Symbol};
+use super::{NoUnusedVars, Symbol, ignored::FoundStatus};
 
 impl<'a> Symbol<'_, 'a> {
     // =========================================================================

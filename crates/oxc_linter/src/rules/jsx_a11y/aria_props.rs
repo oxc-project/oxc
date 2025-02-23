@@ -1,12 +1,12 @@
 use cow_utils::CowUtils;
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, utils::get_jsx_attribute_name,
-    AstNode,
+    AstNode, context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule,
+    utils::get_jsx_attribute_name,
 };
 
 fn aria_props_diagnostic(span: Span, prop_name: &str, suggestion: Option<&str>) -> OxcDiagnostic {

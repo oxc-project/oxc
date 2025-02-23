@@ -1,11 +1,11 @@
 use oxc_ast::{
-    ast::{Expression, VariableDeclarator},
     AstKind,
+    ast::{Expression, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
 use oxc_span::CompactStr;
 
-use super::{count_whitespace_or_commas, BindingInfo, NoUnusedVars, Symbol};
+use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::{
     fixer::{RuleFix, RuleFixer},
     rules::eslint::no_unused_vars::options::IgnorePattern,

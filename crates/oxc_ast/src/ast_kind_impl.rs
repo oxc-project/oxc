@@ -2,7 +2,7 @@
 use oxc_span::Atom;
 use oxc_syntax::scope::ScopeId;
 
-use super::{ast::*, AstKind};
+use super::{AstKind, ast::*};
 
 impl<'a> AstKind<'a> {
     #[rustfmt::skip]

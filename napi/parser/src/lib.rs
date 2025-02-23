@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use napi::{bindgen_prelude::AsyncTask, Task};
+use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
@@ -12,12 +12,11 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
+use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
 use oxc_napi::OxcError;
 
 mod convert;
-mod magic_string;
 mod types;
-pub use magic_string::MagicString;
 pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
 fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
@@ -67,12 +66,10 @@ pub fn parse_without_return(filename: String, source_text: String, options: Opti
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type = get_source_type(filename, options);
-    let ret = parse(&allocator, source_type, &source_text, options);
-    let program = serde_json::to_string(&ret.program).unwrap();
+    let mut ret = parse(&allocator, source_type, &source_text, options);
+    let mut errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
 
-    let errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
-
-    let comments = ret
+    let mut comments = ret
         .program
         .comments
         .iter()
@@ -87,8 +84,28 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         })
         .collect::<Vec<Comment>>();
 
+    // Empty `comments` so comment spans don't get converted twice
+    ret.program.comments.clear();
+
+    let mut converter = Utf8ToUtf16::new();
+    converter.convert(&mut ret.program);
+    converter.convert_module_record(&mut ret.module_record);
+
+    for comment in &mut comments {
+        comment.start = converter.convert_offset(comment.start);
+        comment.end = converter.convert_offset(comment.end);
+    }
+
+    for error in &mut errors {
+        for label in &mut error.labels {
+            label.start = converter.convert_offset(label.start);
+            label.end = converter.convert_offset(label.end);
+        }
+    }
+
+    let program = ret.program.to_estree_ts_json();
     let module = EcmaScriptModule::from(&ret.module_record);
-    ParseResult { source_text, program, module, comments, errors }
+    ParseResult { program, module, comments, errors }
 }
 
 /// Parse synchronously.

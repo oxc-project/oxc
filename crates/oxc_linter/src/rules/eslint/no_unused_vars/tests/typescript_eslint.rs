@@ -1,7 +1,7 @@
 use serde_json::json;
 
 use super::NoUnusedVars;
-use crate::{tester::Tester, RuleMeta as _};
+use crate::{RuleMeta as _, tester::Tester};
 
 // TODO: port these over. I (@DonIsaac) would love some help with this...
 

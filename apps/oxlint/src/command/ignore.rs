@@ -1,6 +1,6 @@
 use std::ffi::OsString;
 
-use bpaf::{doc::Style, Bpaf};
+use bpaf::{Bpaf, doc::Style};
 
 pub const NO_IGNORE_HELP: &[(&str, Style)] = &[
     ("Disables excluding of files from .eslintignore files, ", Style::Text),

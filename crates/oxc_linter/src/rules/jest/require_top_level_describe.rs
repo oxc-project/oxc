@@ -9,8 +9,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedGeneralJestFnCall, ParsedJestFnCallNew, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, ParsedJestFnCallNew,
+        PossibleJestNode, collect_possible_jest_call_node, parse_jest_fn_call,
     },
 };
 

@@ -7,8 +7,8 @@ use std::{
 use cow_utils::CowUtils;
 use itertools::Itertools;
 use oxc_ast::{
-    ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement},
     AstKind,
+    ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

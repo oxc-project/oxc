@@ -43,10 +43,6 @@ impl Context {
 
     #[inline]
     fn and(self, flag: Self, set: bool) -> Self {
-        if set {
-            self | flag
-        } else {
-            self - flag
-        }
+        if set { self | flag } else { self - flag }
     }
 }

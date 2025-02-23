@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{BindingPattern, BindingPatternKind},
     AstKind,
+    ast::{BindingPattern, BindingPatternKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_optional_catch_binding_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer omitting the catch binding parameter if it is unused")

@@ -1,15 +1,15 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, CallExpression, Expression, JSXAttributeItem, JSXAttributeName,
         JSXAttributeValue, JSXElement, JSXExpression, ObjectPropertyKind, PropertyKey,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn no_array_index_key_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Usage of Array index in keys is not allowed")

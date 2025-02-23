@@ -11,7 +11,7 @@ use oxc_syntax::{
 
 use crate::SymbolTable;
 
-pub(crate) type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
+pub type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
 pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, ReferenceId>>;
 
 /// Scope Tree
@@ -62,14 +62,14 @@ impl Default for ScopeTree {
 }
 
 self_cell::self_cell!(
-    pub(crate) struct ScopeTreeCell {
+    pub struct ScopeTreeCell {
         owner: Allocator,
         #[covariant]
         dependent: ScopeTreeInner,
     }
 );
 
-pub(crate) struct ScopeTreeInner<'cell> {
+pub struct ScopeTreeInner<'cell> {
     /// Symbol bindings in a scope.
     ///
     /// A binding is a mapping from an identifier name to its [`SymbolId`]

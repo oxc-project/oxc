@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{BinaryExpression, Expression},
     AstKind,
+    ast::{BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn eqeqeq_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected {x1} and instead saw {x0}"))

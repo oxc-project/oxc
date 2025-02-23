@@ -1,5 +1,5 @@
 use memchr::memmem;
-use oxc_ast::{ast::RegExpFlags, AstKind};
+use oxc_ast::{AstKind, ast::RegExpFlags};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
@@ -9,7 +9,7 @@ use oxc_regular_expression::{
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_useless_escape_diagnostic(escape_char: char, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unnecessary escape character {escape_char:?}")).with_label(span)
@@ -162,11 +162,7 @@ fn check_character(
     let span = character.span;
     let escape_char = char_text.chars().nth(1).unwrap();
     let escapes = if character_class.is_some() {
-        if unicode_sets {
-            REGEX_CLASSSET_CHARACTER_ESCAPES
-        } else {
-            REGEX_GENERAL_ESCAPES
-        }
+        if unicode_sets { REGEX_CLASSSET_CHARACTER_ESCAPES } else { REGEX_GENERAL_ESCAPES }
     } else {
         REGEX_NON_CHARCLASS_ESCAPES
     };

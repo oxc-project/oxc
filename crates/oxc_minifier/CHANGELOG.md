@@ -4,6 +4,64 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+### Features
+
+- dde05e3 mangler: Opt-out of direct eval (#9191) (Boshen)
+- 857f901 minifier: Inline constant values in template literals (#9201) (sapphi-red)
+
+### Bug Fixes
+
+- d2ab0fe minifier: Fix `clippy::suspicious_operation_groupings` warning (#9238) (Boshen)
+
+### Refactor
+
+- 3b1497b minifier: Improve minimize_if_statement (#9177) (Boshen)
+- 814eab6 minifier: `Math.pow(a,b)` -> `a ** (+b)` instead of `(+a) ** (+b)` (#9154) (Boshen)
+- ef856f5 oxc: Apply `clippy::needless_pass_by_ref_mut` (#9253) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
+## [0.51.0] - 2025-02-15
+
+### Features
+
+- 36c8640 ecmascript: Support more string concatenation (#9121) (sapphi-red)
+- 6936b08 ecmascript: Fold `typeof` with ValueType information (#9086) (sapphi-red)
+- b25b84b minifier: Substitute redundant assignment target bindings (#9096) (camchenry)
+- 125d610 minifier: Fold String::charAt / String::charCodeAt more precisely (#9082) (sapphi-red)
+- 237ffba minifier: Fold bitwise binary expressions with negative BigInts (#9081) (sapphi-red)
+- 24830e6 minifier: Fold `a + 'a' + 1` to `a + 'a1'` (#9080) (sapphi-red)
+- b5eb6e5 minifier: Improve `remove_unused_expression` (#9071) (Boshen)
+
+### Bug Fixes
+
+- eb7cd62 ecmascript: To_number for shadowed undefined (#9106) (sapphi-red)
+- 8cbdf00 ecmascript: To_boolean for shadowed undefined (#9105) (sapphi-red)
+- 17c745c ecmascript: To_string for object with toString (#9104) (sapphi-red)
+- cfc71f9 ecmascript: To_string for shadowed undefined (#9103) (sapphi-red)
+- 2ab2a8f ecmascript: Handle shadowed global variables in `ValueType` (#9085) (sapphi-red)
+- 2fd1589 minifier: Compress computed string literals in method/property definitions (#9126) (camchenry)
+
+### Refactor
+
+- 8bd6eef ecmascript: Merge constant evaluation logics (#9120) (sapphi-red)
+- b164072 ecmascript: Extract to_numeric (#9111) (sapphi-red)
+- 8f79012 ecmascript: Pass IsGlobalReference to DetermineValueType instead of extending it (#9107) (sapphi-red)
+- db1744c ecmascript: Remove "constant_evaluation" / "side_effects" features (#9114) (sapphi-red)
+- d670ec7 ecmascript: Pass IsGlobalReference to MayHaveSideEffects instead of extending it (#9101) (sapphi-red)
+- f4e2d4e ecmascript: Allow IsGlobalReference to return None (#9100) (sapphi-red)
+- 29be94d minifier: Inline more minification methods (#9088) (Boshen)
+- 80f719e minifier: Clean up minimize_statements.rs (#9076) (Boshen)
+- d5edde0 minifier: Minimize `if (!foo) foo = bar;` -> `foo ||= bar` in the same AST pass (#9075) (Boshen)
+
+## [0.50.0] - 2025-02-12
+
+### Features
+
+- 4d2b0d5 minifier: Port esbuild `SimplifyUnusedExpr` (#9036) (Boshen)
+- df6941d minifier: Fold unary not (#9031) (Boshen)
+
 ## [0.49.0] - 2025-02-10
 
 - bbb075d ast: [**BREAKING**] Name `AstBuilder` enum builders after variant name not type name (#8890) (overlookmotel)

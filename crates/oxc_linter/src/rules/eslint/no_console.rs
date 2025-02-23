@@ -1,13 +1,13 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
 };
 
 fn no_console_diagnostic(span: Span) -> OxcDiagnostic {
@@ -84,8 +84,8 @@ impl Rule for NoConsole {
             return;
         };
 
-        if ctx.is_reference_to_global_variable(ident)
-            && ident.name == "console"
+        if ident.name == "console"
+            && ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str())
             && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
         {
             if let Some((mem_span, _)) = mem.static_property_info() {
@@ -144,33 +144,53 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("Console.info(foo)", None),
-        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["info"] }]))),
-        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["warn"] }]))),
-        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["error"] }]))),
-        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["log"] }]))),
-        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["warn", "info"] }]))),
-        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["error", "warn"] }]))),
-        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["log", "error"] }]))),
-        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["info", "log", "warn"] }]))),
-        ("var console = require('myconsole'); console.log(foo)", None),
-        ("import console from 'myconsole'; console.log(foo)", None),
+        ("Console.info(foo)", None, None),
+        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["info"] }])), None),
+        (
+            "console.info(foo)",
+            Some(serde_json::json!([{ "allow": ["info"] }])),
+            Some(serde_json::json!({ "env": { "browser": true}})),
+        ),
+        (
+            "console.info(foo)",
+            Some(serde_json::json!([{ "allow": ["info"] }])),
+            Some(serde_json::json!({ "globals": { "console": "readonly"}})),
+        ),
+        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["warn"] }])), None),
+        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["error"] }])), None),
+        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["log"] }])), None),
+        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["warn", "info"] }])), None),
+        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["error", "warn"] }])), None),
+        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["log", "error"] }])), None),
+        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["info", "log", "warn"] }])), None),
+        ("var console = require('myconsole'); console.log(foo)", None, None),
+        ("import console from 'myconsole'; console.log(foo)", None, None),
     ];
 
     let fail = vec![
-        ("console.log()", None),
-        ("console.log(foo)", None),
-        ("console.error(foo)", None),
-        ("console.info(foo)", None),
-        ("console.warn(foo)", None),
-        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["error"] }]))),
-        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["warn"] }]))),
-        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["log"] }]))),
-        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["error"] }]))),
-        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["warn", "info"] }]))),
-        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["warn", "info", "log"] }]))),
-        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["warn", "error", "log"] }]))),
-        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["info", "log"] }]))),
+        ("console.log()", None, None),
+        ("console.log(foo)", None, None),
+        ("console.error(foo)", None, None),
+        ("console.info(foo)", None, None),
+        ("console.warn(foo)", None, None),
+        ("console.log()", None, Some(serde_json::json!({ "env": { "browser": true}}))),
+        ("console.log()", None, Some(serde_json::json!({ "globals": { "console": "off"}}))),
+        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["error"] }])), None),
+        ("console.error(foo)", Some(serde_json::json!([{ "allow": ["warn"] }])), None),
+        ("console.info(foo)", Some(serde_json::json!([{ "allow": ["log"] }])), None),
+        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["error"] }])), None),
+        ("console.log(foo)", Some(serde_json::json!([{ "allow": ["warn", "info"] }])), None),
+        (
+            "console.error(foo)",
+            Some(serde_json::json!([{ "allow": ["warn", "info", "log"] }])),
+            None,
+        ),
+        (
+            "console.info(foo)",
+            Some(serde_json::json!([{ "allow": ["warn", "error", "log"] }])),
+            None,
+        ),
+        ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["info", "log"] }])), None),
     ];
 
     let fix = vec![

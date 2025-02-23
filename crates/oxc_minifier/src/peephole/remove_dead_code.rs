@@ -1,10 +1,6 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, Visit};
-use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, IsLiteralValue, ValueType},
-    side_effects::MayHaveSideEffects,
-};
-use oxc_span::GetSpan;
+use oxc_ast::{Visit, ast::*};
+use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
@@ -32,12 +28,7 @@ impl<'a, 'b> PeepholeOptimizations {
             self.mark_current_function_as_changed();
         }
 
-        if let Statement::ExpressionStatement(s) = stmt {
-            if let Some(new_stmt) = Self::try_fold_expression_stmt(s, ctx) {
-                *stmt = new_stmt;
-                self.mark_current_function_as_changed();
-            }
-        }
+        self.try_fold_expression_stmt(stmt, ctx);
     }
 
     pub fn remove_dead_code_exit_expression(
@@ -46,7 +37,7 @@ impl<'a, 'b> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) {
         if let Some(folded_expr) = match expr {
-            Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
+            Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
             Expression::SequenceExpression(sequence_expression) => {
                 Self::try_fold_sequence_expression(sequence_expression, ctx)
             }
@@ -185,7 +176,7 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => {}
         }
 
-        if let Some(boolean) = ctx.get_side_free_boolean_value(&if_stmt.test) {
+        if let Some(boolean) = if_stmt.test.get_side_free_boolean_value(&ctx) {
             // Use "1" and "0" instead of "true" and "false" to be shorter.
             // And also prevent swapping consequent and alternate when `!0` is encourtnered.
             if let Expression::BooleanLiteral(b) = &if_stmt.test {
@@ -229,7 +220,11 @@ impl<'a, 'b> PeepholeOptimizations {
         for_stmt: &mut ForStatement<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
-        let test_boolean = for_stmt.test.as_ref().and_then(|test| ctx.get_boolean_value(test));
+        let test_boolean =
+            for_stmt.test.as_ref().and_then(|test| test.evaluate_value_to_boolean(&ctx));
+        if for_stmt.test.as_ref().is_some_and(|test| test.may_have_side_effects(&ctx)) {
+            return None;
+        }
         match test_boolean {
             Some(false) => match &mut for_stmt.init {
                 Some(ForStatementInit::VariableDeclaration(var_init)) => {
@@ -295,114 +290,19 @@ impl<'a, 'b> PeepholeOptimizations {
         var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span)).into()
     }
 
-    fn try_fold_expression_stmt(
-        stmt: &mut ExpressionStatement<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
+    fn try_fold_expression_stmt(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, 'b>) {
+        let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
         if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
             if *body.expression() {
-                return None;
+                return;
             }
         }
 
-        if stmt.expression.is_literal_value(false) {
-            return Some(ctx.ast.statement_empty(stmt.span));
-        }
-
-        match &mut stmt.expression {
-            Expression::MetaProperty(e) => Some(ctx.ast.statement_empty(e.span)),
-            Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
-            Expression::ObjectExpression(object_expr) => {
-                Self::try_fold_object_expression(object_expr, ctx)
-            }
-            Expression::TemplateLiteral(template_lit) => {
-                if !template_lit.expressions.is_empty() {
-                    return None;
-                }
-                let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
-                if expressions.len() == 0 {
-                    return Some(ctx.ast.statement_empty(stmt.span));
-                } else if expressions.len() == 1 {
-                    return Some(
-                        ctx.ast.statement_expression(template_lit.span, expressions.pop().unwrap()),
-                    );
-                }
-                Some(ctx.ast.statement_expression(
-                    template_lit.span,
-                    ctx.ast.expression_sequence(template_lit.span, expressions),
-                ))
-            }
-            Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
-                Some(ctx.ast.statement_empty(stmt.span))
-            }
-            // `typeof x` -> ``
-            Expression::UnaryExpression(unary_expr)
-                if unary_expr.operator.is_typeof()
-                    && unary_expr.argument.is_identifier_reference() =>
-            {
-                Some(ctx.ast.statement_empty(stmt.span))
-            }
-            // `typeof x.y` -> `x.y`, `void x` -> `x`, `!x` -> `x`
-            // `+0n` -> `Uncaught TypeError: Cannot convert a BigInt value to a number`
-            Expression::UnaryExpression(unary_expr)
-                if matches!(
-                    unary_expr.operator,
-                    UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::LogicalNot
-                ) =>
-            {
-                Some(ctx.ast.statement_expression(
-                    unary_expr.span,
-                    ctx.ast.move_expression(&mut unary_expr.argument),
-                ))
-            }
-            Expression::NewExpression(e) => {
-                let Expression::Identifier(ident) = &e.callee else { return None };
-                let len = e.arguments.len();
-                if match ident.name.as_str() {
-                    "WeakSet" | "WeakMap" if ctx.is_global_reference(ident) => match len {
-                        0 => true,
-                        1 => match e.arguments[0].as_expression()? {
-                            Expression::NullLiteral(_) => true,
-                            Expression::ArrayExpression(e) => e.elements.is_empty(),
-                            e if ctx.is_expression_undefined(e) => true,
-                            _ => false,
-                        },
-                        _ => false,
-                    },
-                    "Date" if ctx.is_global_reference(ident) => match len {
-                        0 => true,
-                        1 => {
-                            let arg = e.arguments[0].as_expression()?;
-                            let ty = ValueType::from(arg);
-                            matches!(
-                                ty,
-                                ValueType::Null
-                                    | ValueType::Undefined
-                                    | ValueType::Boolean
-                                    | ValueType::Number
-                                    | ValueType::String
-                            ) && !ctx.expression_may_have_side_effects(arg)
-                        }
-                        _ => false,
-                    },
-                    "Set" | "Map" if ctx.is_global_reference(ident) => match len {
-                        0 => true,
-                        1 => match e.arguments[0].as_expression()? {
-                            Expression::NullLiteral(_) => true,
-                            e if ctx.is_expression_undefined(e) => true,
-                            _ => false,
-                        },
-                        _ => false,
-                    },
-                    _ => false,
-                } {
-                    return Some(ctx.ast.statement_empty(e.span));
-                }
-                None
-            }
-            _ => None,
+        if self.remove_unused_expression(&mut expr_stmt.expression, ctx) {
+            *stmt = ctx.ast.statement_empty(expr_stmt.span);
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -429,84 +329,9 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    // `([1,2,3, foo()])` -> `foo()`
-    fn try_fold_array_expression(
-        array_expr: &mut ArrayExpression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
-        let mut transformed_elements = ctx.ast.vec();
-        let mut pending_spread_elements = ctx.ast.vec();
-
-        if array_expr.elements.len() == 0
-            || array_expr.elements.iter().all(|el| match el {
-                ArrayExpressionElement::SpreadElement(_) => true,
-                ArrayExpressionElement::Identifier(ident) => ctx.is_global_reference(ident),
-                _ => false,
-            })
-        {
-            return None;
-        }
-
-        for el in &mut array_expr.elements {
-            match el {
-                ArrayExpressionElement::SpreadElement(_) => {
-                    let spread_element = ctx.ast.move_array_expression_element(el);
-                    pending_spread_elements.push(spread_element);
-                }
-                ArrayExpressionElement::Elision(_) => {}
-                match_expression!(ArrayExpressionElement) => {
-                    let el = el.to_expression_mut();
-                    let el_expr = ctx.ast.move_expression(el);
-                    if !el_expr.is_literal_value(false)
-                        && !matches!(&el_expr, Expression::Identifier(ident) if !ctx.is_global_reference(ident))
-                    {
-                        if pending_spread_elements.len() > 0 {
-                            // flush pending spread elements
-                            transformed_elements.push(ctx.ast.expression_array(
-                                el_expr.span(),
-                                pending_spread_elements,
-                                None,
-                            ));
-                            pending_spread_elements = ctx.ast.vec();
-                        }
-                        transformed_elements.push(el_expr);
-                    }
-                }
-            }
-        }
-
-        if pending_spread_elements.len() > 0 {
-            transformed_elements.push(ctx.ast.expression_array(
-                array_expr.span,
-                pending_spread_elements,
-                None,
-            ));
-        }
-
-        if transformed_elements.is_empty() {
-            return Some(ctx.ast.statement_empty(array_expr.span));
-        } else if transformed_elements.len() == 1 {
-            return Some(
-                ctx.ast.statement_expression(array_expr.span, transformed_elements.pop().unwrap()),
-            );
-        }
-
-        Some(ctx.ast.statement_expression(
-            array_expr.span,
-            ctx.ast.expression_sequence(array_expr.span, transformed_elements),
-        ))
-    }
-
-    // `{a: 1, b: 2, c: foo()}` -> `foo()`
-    fn try_fold_object_expression(
-        _object_expr: &mut ObjectExpression<'a>,
-        _ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
-        None
-    }
-
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
+        &self,
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -518,27 +343,26 @@ impl<'a, 'b> PeepholeOptimizations {
             return None;
         }
 
-        match ctx.get_boolean_value(&expr.test) {
-            Some(v) => {
-                if ctx.expression_may_have_side_effects(&expr.test) {
-                    let mut exprs = ctx.ast.vec_with_capacity(2);
-                    exprs.push(ctx.ast.move_expression(&mut expr.test));
-                    exprs.push(ctx.ast.move_expression(if v {
+        expr.test.evaluate_value_to_boolean(&ctx).map(|v| {
+            if expr.test.may_have_side_effects(&ctx) {
+                // "(a, true) ? b : c" => "a, b"
+                let exprs = ctx.ast.vec_from_iter([
+                    {
+                        let mut test = ctx.ast.move_expression(&mut expr.test);
+                        self.remove_unused_expression(&mut test, ctx);
+                        test
+                    },
+                    ctx.ast.move_expression(if v {
                         &mut expr.consequent
                     } else {
                         &mut expr.alternate
-                    }));
-                    Some(ctx.ast.expression_sequence(expr.span, exprs))
-                } else {
-                    Some(ctx.ast.move_expression(if v {
-                        &mut expr.consequent
-                    } else {
-                        &mut expr.alternate
-                    }))
-                }
+                    }),
+                ]);
+                ctx.ast.expression_sequence(expr.span, exprs)
+            } else {
+                ctx.ast.move_expression(if v { &mut expr.consequent } else { &mut expr.alternate })
             }
-            None => None,
-        }
+        })
     }
 
     fn try_fold_sequence_expression(
@@ -557,9 +381,7 @@ impl<'a, 'b> PeepholeOptimizations {
         let (should_fold, new_len) = sequence_expr.expressions.iter().enumerate().fold(
             (false, 0),
             |(mut should_fold, mut new_len), (i, expr)| {
-                if i == sequence_expr.expressions.len() - 1
-                    || ctx.expression_may_have_side_effects(expr)
-                {
+                if i == sequence_expr.expressions.len() - 1 || expr.may_have_side_effects(&ctx) {
                     new_len += 1;
                 } else {
                     should_fold = true;
@@ -576,7 +398,7 @@ impl<'a, 'b> PeepholeOptimizations {
             let mut new_exprs = ctx.ast.vec_with_capacity(new_len);
             let len = sequence_expr.expressions.len();
             for (i, expr) in sequence_expr.expressions.iter_mut().enumerate() {
-                if i == len - 1 || ctx.expression_may_have_side_effects(expr) {
+                if i == len - 1 || expr.may_have_side_effects(&ctx) {
                     new_exprs.push(ctx.ast.move_expression(expr));
                 }
             }
@@ -727,79 +549,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    fn test_object_literal() {
-        test("({})", "");
-        test("({a:1})", "");
-        test("({a:foo()})", "foo()");
-        test("({'a':foo()})", "foo()");
-        // Object-spread may trigger getters.
-        test_same("({...a})");
-        test_same("({...foo()})");
-
-        test("({ [bar()]: foo() })", "bar(), foo()");
-        test_same("({ ...baz, [bar()]: foo() })");
-    }
-
-    #[test]
-    fn test_array_literal() {
-        test("([])", "");
-        test("([1])", "");
-        test("([a])", "[a]");
-        test("var a; ([a])", "var a;");
-        test("([foo()])", "foo()");
-        test_same("baz.map((v) => [v])");
-    }
-
-    #[test]
-    fn test_array_literal_containing_spread() {
-        test_same("([...c])");
-        test("([4, ...c, a])", "([...c], a)");
-        test("var a; ([4, ...c, a])", "var a; ([...c])");
-        test("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
-        test("([...a, b, ...c])", "([...a, b, ...c])");
-        test("var b; ([...a, b, ...c])", "var b; ([...a, ...c])");
-        test_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
-    }
-
-    #[test]
-    fn test_fold_unary_expression_statement() {
-        test("typeof x", "");
-        test("typeof x?.y", "x?.y");
-        test("typeof x.y", "x.y");
-        test("typeof x.y.z()", "x.y.z()");
-        test("void x", "x");
-        test("void x?.y", "x?.y");
-        test("void x.y", "x.y");
-        test("void x.y.z()", "x.y.z()");
-
-        test("!x", "x");
-        test("!x?.y", "x?.y");
-        test("!x.y", "x.y");
-        test("!x.y.z()", "x.y.z()");
-        test_same("-x.y.z()");
-
-        test_same("delete x");
-        test_same("delete x.y");
-        test_same("delete x.y.z()");
-        test_same("+0n"); // Uncaught TypeError: Cannot convert a BigInt value to a number
-    }
-
-    #[test]
-    fn test_fold_sequence_expr() {
-        test("('foo', 'bar', 'baz')", "");
-        test("('foo', 'bar', baz())", "baz()");
-        test("('foo', bar(), baz())", "bar(), baz()");
-        test("(() => {}, bar(), baz())", "bar(), baz()");
-        test("(function k() {}, k(), baz())", "k(), baz()");
-        test_same("(0, o.f)();");
-        test("var obj = Object((null, 2, 3), 1, 2);", "var obj = Object(3, 1, 2);");
-        test_same("(0 instanceof 0, foo)");
-        test_same("(0 in 0, foo)");
-        test_same("React.useEffect(() => (isMountRef.current = !1, () => { isMountRef.current = !0; }), [])");
-    }
-
-    #[test]
     fn test_fold_try_statement() {
         test("try { throw 0 } catch (e) { foo() }", "try { throw 0 } catch { foo() }");
         test("try {} catch (e) { var foo }", "try {} catch { var foo }");
@@ -827,7 +576,7 @@ mod test {
         test("true ? foo() : bar()", "foo()");
         test("false ? foo() : bar()", "bar()");
         test_same("foo() ? bar() : baz()");
-        test("foo && false ? foo() : bar()", "(foo && !1, bar());");
+        test("foo && false ? foo() : bar()", "(foo, bar());");
     }
 
     #[test]
@@ -860,52 +609,6 @@ mod test {
     fn test_remove_empty_static_block() {
         test("class Foo { static {}; foo }", "class Foo { foo }");
         test_same("class Foo { static { foo() } }");
-    }
-
-    #[test]
-    fn remove_expression_statement() {
-        test("void 0", "");
-        test("-1", "");
-        test("!1", "");
-        test("1", "");
-        test("import.meta", "");
-    }
-
-    #[test]
-    fn test_new_constructor_side_effect() {
-        test("new WeakSet()", "");
-        test("new WeakSet(null)", "");
-        test("new WeakSet(void 0)", "");
-        test("new WeakSet([])", "");
-        test_same("new WeakSet([x])");
-        test_same("new WeakSet(x)");
-        test("new WeakMap()", "");
-        test("new WeakMap(null)", "");
-        test("new WeakMap(void 0)", "");
-        test("new WeakMap([])", "");
-        test_same("new WeakMap([x])");
-        test_same("new WeakMap(x)");
-        test("new Date()", "");
-        test("new Date('')", "");
-        test("new Date(0)", "");
-        test("new Date(null)", "");
-        test("new Date(true)", "");
-        test("new Date(false)", "");
-        test("new Date(undefined)", "");
-        test_same("new Date(x)");
-        test("new Set()", "");
-        // test("new Set([a, b, c])", "");
-        test("new Set(null)", "");
-        test("new Set(undefined)", "");
-        test("new Set(void 0)", "");
-        test_same("new Set(x)");
-        test("new Map()", "");
-        test("new Map(null)", "");
-        test("new Map(undefined)", "");
-        test("new Map(void 0)", "");
-        // test_same("new Map([x])");
-        test_same("new Map(x)");
-        // test("new Map([[a, b], [c, d]])", "");
     }
 
     #[test]

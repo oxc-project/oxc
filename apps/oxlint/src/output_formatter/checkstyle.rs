@@ -3,11 +3,11 @@ use std::borrow::Cow;
 use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
 
-use crate::output_formatter::{xml_utils::xml_escape, InternalFormatter};
+use crate::output_formatter::{InternalFormatter, xml_utils::xml_escape};
 
 #[derive(Debug, Default)]
 pub struct CheckStyleOutputFormatter;
@@ -69,8 +69,8 @@ fn format_checkstyle(diagnostics: &[Error]) -> String {
 #[cfg(test)]
 mod test {
     use oxc_diagnostics::{
-        reporter::{DiagnosticReporter, DiagnosticResult},
         NamedSource, OxcDiagnostic,
+        reporter::{DiagnosticReporter, DiagnosticResult},
     };
     use oxc_span::Span;
 
@@ -93,6 +93,9 @@ mod test {
         let second_result = reporter.finish(&DiagnosticResult::default());
 
         assert!(second_result.is_some());
-        assert_eq!(second_result.unwrap(), "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"file://test.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>\n");
+        assert_eq!(
+            second_result.unwrap(),
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"file://test.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>\n"
+        );
     }
 }

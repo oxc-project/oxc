@@ -8,7 +8,7 @@ mod binary_expr_visitor;
 mod code_buffer;
 mod comment;
 mod context;
-mod gen;
+mod r#gen;
 mod operator;
 mod options;
 mod sourcemap_builder;
@@ -16,13 +16,14 @@ mod sourcemap_builder;
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
-    BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
+    BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
+    Statement, StringLiteral,
 };
 use oxc_data_structures::stack::Stack;
 use oxc_semantic::SymbolTable;
-use oxc_span::{GetSpan, Span, SPAN};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
-    identifier::{is_identifier_part, is_identifier_part_ascii, LS, PS},
+    identifier::{LS, PS, is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -33,7 +34,7 @@ use crate::{
 };
 pub use crate::{
     context::Context,
-    gen::{Gen, GenExpr},
+    r#gen::{Gen, GenExpr},
     options::{CodegenOptions, LegalComment},
 };
 
@@ -589,6 +590,12 @@ impl<'a> Codegen<'a> {
                 self.need_space_before_dot = self.code_len();
             }
         }
+    }
+
+    fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
+        self.add_source_mapping(s.span);
+        let s = s.value.as_str();
+        self.print_quoted_utf16(s, allow_backtick);
     }
 
     fn print_quoted_utf16(&mut self, s: &str, allow_backtick: bool) {

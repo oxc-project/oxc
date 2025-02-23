@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case};
 
 fn no_access_key_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No access key attribute allowed.")

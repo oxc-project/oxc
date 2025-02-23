@@ -60,7 +60,13 @@ const isMuslFromChildProcess = () => {
 }
 
 function requireNative() {
-  if (process.platform === 'android') {
+  if (process.env.NAPI_RS_NATIVE_LIBRARY_PATH) {
+    try {
+      nativeBinding = require(process.env.NAPI_RS_NATIVE_LIBRARY_PATH);
+    } catch (err) {
+      loadErrors.push(err);
+    }
+  } else if (process.platform === 'android') {
     if (process.arch === 'arm64') {
       try {
         return require('./parser.android-arm64.node')
@@ -364,7 +370,6 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-module.exports.MagicString = nativeBinding.MagicString
 module.exports.ParseResult = nativeBinding.ParseResult
 module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind

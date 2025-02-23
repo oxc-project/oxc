@@ -34,6 +34,7 @@ export interface OxcLinterOptions {}
 
 export interface OxcTransformerOptions {
     target?: string;
+    isolatedDeclarations?: boolean;
 }
 
 export interface OxcCodegenOptions {
@@ -69,6 +70,7 @@ export * from "@oxc-project/types";
 
 export interface Oxc {
     ast: Program;
+    astJson: string;
     ir: string;
     controlFlowGraph: string;
     symbols: any;
@@ -99,16 +101,6 @@ export type NodeFlags = {
 
 
 
-export type SymbolId = number;
-export type SymbolFlags = unknown;
-export type RedeclarationId = unknown;
-
-
-
-export type ScopeId = number;
-
-
-
 export type ReferenceId = number;
 export type ReferenceFlags = {
     None: 0,
@@ -117,6 +109,16 @@ export type ReferenceFlags = {
     Type: 0b100,
     Value: 0b11
 }
+
+
+
+export type ScopeId = number;
+
+
+
+export type SymbolId = number;
+export type SymbolFlags = unknown;
+export type RedeclarationId = unknown;
 
 
 export class Oxc {
@@ -145,7 +147,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly __wbg_oxc_free: (a: number, b: number) => void;
-  readonly __wbg_get_oxc_ast: (a: number) => any;
+  readonly __wbg_get_oxc_astJson: (a: number) => [number, number];
   readonly __wbg_get_oxc_ir: (a: number) => [number, number];
   readonly __wbg_get_oxc_controlFlowGraph: (a: number) => [number, number];
   readonly __wbg_get_oxc_symbols: (a: number) => any;

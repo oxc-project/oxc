@@ -1,8 +1,6 @@
-#![expect(clippy::unnecessary_safety_comment)]
-
 use std::{marker::PhantomData, slice, str};
 
-use crate::{UniquePromise, MAX_LEN};
+use crate::{MAX_LEN, UniquePromise};
 
 use super::search::SEARCH_BATCH_SIZE;
 
@@ -233,9 +231,11 @@ impl<'a> Source<'a> {
         &self,
         pos: SourcePosition<'a>,
     ) -> &'a str {
-        // SAFETY: Caller guarantees `pos` is not after current position of `Source`.
-        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
-        self.str_between_positions_unchecked(pos, SourcePosition::new(self.ptr))
+        unsafe {
+            // SAFETY: Caller guarantees `pos` is not after current position of `Source`.
+            // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
+            self.str_between_positions_unchecked(pos, SourcePosition::new(self.ptr))
+        }
     }
 
     /// Get string slice from current position of `Source` up to a `SourcePosition`, without checks.
@@ -250,9 +250,11 @@ impl<'a> Source<'a> {
         &self,
         pos: SourcePosition<'a>,
     ) -> &'a str {
-        // SAFETY: Caller guarantees `pos` is not before current position of `Source`.
-        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
-        self.str_between_positions_unchecked(SourcePosition::new(self.ptr), pos)
+        unsafe {
+            // SAFETY: Caller guarantees `pos` is not before current position of `Source`.
+            // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
+            self.str_between_positions_unchecked(SourcePosition::new(self.ptr), pos)
+        }
     }
 
     /// Get string slice from a `SourcePosition` up to the end of `Source`.
@@ -274,30 +276,32 @@ impl<'a> Source<'a> {
         start: SourcePosition<'a>,
         end: SourcePosition<'a>,
     ) -> &'a str {
-        // Check `start` is not after `end`
-        debug_assert!(start.ptr <= end.ptr);
-        // Check `start` and `end` are within bounds of `Source`
-        debug_assert!(start.ptr >= self.start);
-        debug_assert!(end.ptr <= self.end);
-        // Check `start` and `end` are on UTF-8 character boundaries.
-        // SAFETY: Above assertions ensure `start` and `end` are valid to read from if not at EOF.
-        debug_assert!(start.ptr == self.end || !is_utf8_cont_byte(start.read()));
-        debug_assert!(end.ptr == self.end || !is_utf8_cont_byte(end.read()));
+        unsafe {
+            // Check `start` is not after `end`
+            debug_assert!(start.ptr <= end.ptr);
+            // Check `start` and `end` are within bounds of `Source`
+            debug_assert!(start.ptr >= self.start);
+            debug_assert!(end.ptr <= self.end);
+            // Check `start` and `end` are on UTF-8 character boundaries.
+            // SAFETY: Above assertions ensure `start` and `end` are valid to read from if not at EOF.
+            debug_assert!(start.ptr == self.end || !is_utf8_cont_byte(start.read()));
+            debug_assert!(end.ptr == self.end || !is_utf8_cont_byte(end.read()));
 
-        // SAFETY: Caller guarantees `start` is not after `end`.
-        // `SourcePosition`s can only be created from a `Source`.
-        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
-        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
-        // `Source` originated on another thread can "jump" onto this one.
-        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
-        // from this `Source`, therefore `start.ptr` and `end.ptr` must both be within the same
-        // allocation, and derived from the same original pointer.
-        // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
-        // on UTF-8 character boundaries. So slicing source text between these 2 points will always
-        // yield a valid UTF-8 string.
-        let len = end.addr() - start.addr();
-        let slice = slice::from_raw_parts(start.ptr, len);
-        std::str::from_utf8_unchecked(slice)
+            // SAFETY: Caller guarantees `start` is not after `end`.
+            // `SourcePosition`s can only be created from a `Source`.
+            // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
+            // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
+            // `Source` originated on another thread can "jump" onto this one.
+            // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
+            // from this `Source`, therefore `start.ptr` and `end.ptr` must both be within the same
+            // allocation, and derived from the same original pointer.
+            // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
+            // on UTF-8 character boundaries. So slicing source text between these 2 points will always
+            // yield a valid UTF-8 string.
+            let len = end.addr() - start.addr();
+            let slice = slice::from_raw_parts(start.ptr, len);
+            std::str::from_utf8_unchecked(slice)
+        }
     }
 
     /// Get current position in source, relative to start of source.
@@ -443,12 +447,14 @@ impl<'a> Source<'a> {
     #[expect(dead_code)]
     #[inline]
     unsafe fn next_byte(&mut self) -> Option<u8> {
-        #[expect(clippy::if_not_else)] // Hot path first
-        if !self.is_eof() {
-            // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
-            Some(self.next_byte_unchecked())
-        } else {
-            None
+        unsafe {
+            #[expect(clippy::if_not_else)] // Hot path first
+            if !self.is_eof() {
+                // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
+                Some(self.next_byte_unchecked())
+            } else {
+                None
+            }
         }
     }
 
@@ -474,13 +480,15 @@ impl<'a> Source<'a> {
     /// are *not* safe to call until one of above conditions is satisfied.
     #[inline]
     pub(super) unsafe fn next_byte_unchecked(&mut self) -> u8 {
-        // SAFETY: Caller guarantees not at end of file i.e. `ptr != end`.
-        // Methods of this type provide no way for `ptr` to be before `start` or after `end`.
-        // Therefore always valid to read a byte from `ptr`, and incrementing `ptr` cannot result
-        // in `ptr > end`.
-        let byte = self.peek_byte_unchecked();
-        self.ptr = self.ptr.add(1);
-        byte
+        unsafe {
+            // SAFETY: Caller guarantees not at end of file i.e. `ptr != end`.
+            // Methods of this type provide no way for `ptr` to be before `start` or after `end`.
+            // Therefore always valid to read a byte from `ptr`, and incrementing `ptr` cannot result
+            // in `ptr > end`.
+            let byte = self.peek_byte_unchecked();
+            self.ptr = self.ptr.add(1);
+            byte
+        }
     }
 
     /// Peek next char of source, without consuming it.
@@ -539,13 +547,15 @@ impl<'a> Source<'a> {
     /// Caller must ensure `Source` is not at end of file.
     #[inline]
     pub(super) unsafe fn peek_byte_unchecked(&self) -> u8 {
-        // SAFETY: Caller guarantees `ptr` is before `end` (i.e. not at end of file).
-        // Methods of this type provide no way to allow `ptr` to be before `start`.
-        // `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
-        // `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `self.ptr`
-        // addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
-        debug_assert!(self.ptr >= self.start && self.ptr < self.end);
-        self.position().read()
+        unsafe {
+            // SAFETY: Caller guarantees `ptr` is before `end` (i.e. not at end of file).
+            // Methods of this type provide no way to allow `ptr` to be before `start`.
+            // `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
+            // `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `self.ptr`
+            // addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
+            debug_assert!(self.ptr >= self.start && self.ptr < self.end);
+            self.position().read()
+        }
     }
 }
 
@@ -590,7 +600,7 @@ impl SourcePosition<'_> {
     /// just not past it.
     #[inline]
     pub(super) unsafe fn add(self, n: usize) -> Self {
-        Self::new(self.ptr.add(n))
+        unsafe { Self::new(self.ptr.add(n)) }
     }
 
     /// Create new `SourcePosition` which is `n` bytes before this one.
@@ -601,7 +611,7 @@ impl SourcePosition<'_> {
     /// of `Source` this `SourcePosition` was created from.
     #[inline]
     pub(super) unsafe fn sub(self, n: usize) -> Self {
-        Self::new(self.ptr.sub(n))
+        unsafe { Self::new(self.ptr.sub(n)) }
     }
 
     /// Read byte from this `SourcePosition`.
@@ -621,15 +631,17 @@ impl SourcePosition<'_> {
     /// because if a `&mut` reference existed, that would violate Rust's aliasing rules.
     #[inline]
     pub(super) unsafe fn read(self) -> u8 {
-        // SAFETY:
-        // Caller guarantees `self` is not at end of source text.
-        // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
-        // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
-        // to the same memory can exist, as that would violate Rust's aliasing rules.
-        // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
-        // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
-        debug_assert!(!self.ptr.is_null());
-        *self.ptr.as_ref().unwrap_unchecked()
+        unsafe {
+            // SAFETY:
+            // Caller guarantees `self` is not at end of source text.
+            // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
+            // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
+            // to the same memory can exist, as that would violate Rust's aliasing rules.
+            // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
+            // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
+            debug_assert!(!self.ptr.is_null());
+            *self.ptr.as_ref().unwrap_unchecked()
+        }
     }
 
     /// Read 2 bytes from this `SourcePosition`.
@@ -639,17 +651,19 @@ impl SourcePosition<'_> {
     /// i.e. if source length is 10, `self` must be on position 8 max.
     #[inline]
     pub(super) unsafe fn read2(self) -> [u8; 2] {
-        // SAFETY:
-        // Caller guarantees `self` is not at no later than 2 bytes before end of source text.
-        // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
-        // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
-        // to the same memory can exist, as that would violate Rust's aliasing rules.
-        // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
-        // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
-        debug_assert!(!self.ptr.is_null());
-        #[expect(clippy::ptr_as_ptr)]
-        let p = self.ptr as *const [u8; 2];
-        *p.as_ref().unwrap_unchecked()
+        unsafe {
+            // SAFETY:
+            // Caller guarantees `self` is not at no later than 2 bytes before end of source text.
+            // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
+            // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
+            // to the same memory can exist, as that would violate Rust's aliasing rules.
+            // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
+            // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
+            debug_assert!(!self.ptr.is_null());
+            #[expect(clippy::ptr_as_ptr)]
+            let p = self.ptr as *const [u8; 2];
+            *p.as_ref().unwrap_unchecked()
+        }
     }
 }
 

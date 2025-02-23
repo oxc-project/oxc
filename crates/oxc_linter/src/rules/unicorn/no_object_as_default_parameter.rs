@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{BindingPatternKind, Expression},
     AstKind,
+    ast::{BindingPatternKind, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn identifier(span: Span, param: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use an object literal as default for parameter `{param}`."))

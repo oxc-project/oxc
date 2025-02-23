@@ -21,15 +21,15 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
 use crate::{
-    loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    Fixer, Linter, Message,
+    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_string,
-    Fixer, Linter, Message,
 };
 
 use super::{
-    module_cache::{ModuleCache, ModuleState},
     LintServiceOptions,
+    module_cache::{ModuleCache, ModuleState},
 };
 
 pub struct Runtime {
@@ -253,14 +253,14 @@ impl Runtime {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
                     // Append target_module to loaded_modules
-                    if let Some(target_ref) = self.modules.get(path) {
-                        if let ModuleState::Resolved(target_module_record) = target_ref.value() {
-                            module_record
-                                .loaded_modules
-                                .write()
-                                .unwrap()
-                                .insert(specifier.clone(), Arc::clone(target_module_record));
-                        }
+                    if let Some(ModuleState::Resolved(target_module_record)) =
+                        self.modules.get(path)
+                    {
+                        module_record
+                            .loaded_modules
+                            .write()
+                            .unwrap()
+                            .insert(specifier.clone(), Arc::clone(&target_module_record));
                     };
                 });
 

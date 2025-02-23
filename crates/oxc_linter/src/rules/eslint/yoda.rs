@@ -1,16 +1,16 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         BinaryExpression, BinaryOperator, Expression, LogicalExpression, LogicalOperator,
         UnaryOperator,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::ToBigInt;
+use oxc_ecmascript::{ToBigInt, is_global_reference::WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
 fn yoda_diagnostic(span: Span, never: bool, operator: &str) -> OxcDiagnostic {
     let expected_side = if never { "right" } else { "left" };
@@ -486,7 +486,7 @@ fn get_number(expr: &Expression) -> Option<f64> {
     match expr {
         Expression::NumericLiteral(numeric) => Some(numeric.value),
         Expression::BigIntLiteral(big_int) => {
-            let big_int = big_int.to_big_int()?;
+            let big_int = big_int.to_big_int(&WithoutGlobalReferenceInformation {})?;
 
             let Ok(big_int) = big_int.to_string().parse::<f64>() else {
                 return None;

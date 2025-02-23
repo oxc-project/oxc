@@ -4,10 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::is_global_require_call,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_var_requires_diagnostic(span: Span) -> OxcDiagnostic {

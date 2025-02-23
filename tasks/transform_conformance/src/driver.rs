@@ -1,13 +1,13 @@
 use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc::{
+    CompilerInterface,
     ast::ast::Program,
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     parser::ParseOptions,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
-    CompilerInterface,
 };
 use oxc_tasks_transform_checker::check_semantic_after_transform;
 

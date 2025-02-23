@@ -17,9 +17,10 @@ use oxc::{
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{
+    TestRunnerOptions,
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
     driver::Driver,
-    fixture_root, override_root, oxc_test_root, packages_root, TestRunnerOptions,
+    fixture_root, override_root, oxc_test_root, packages_root,
 };
 
 #[derive(Debug)]
@@ -245,7 +246,7 @@ impl TestCase {
         if !errors.is_empty() {
             let source = NamedSource::new(
                 path.strip_prefix(project_root).unwrap().to_string_lossy(),
-                source_text.to_string(),
+                source_text,
             );
             return Err(errors
                 .into_iter()
@@ -389,7 +390,7 @@ impl TestCase {
         }
     }
 
-    fn test_exec(&mut self, filtered: bool) {
+    fn test_exec(&self, filtered: bool) {
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());

@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::{group, indent, ir::Doc, line, text, Format, Prettier};
+use crate::{Format, Prettier, group, indent, ir::Doc, line, text};
 
 pub fn print_ternary<'a>(p: &mut Prettier<'a>, expr: &ConditionalExpression<'a>) -> Doc<'a> {
     let test_doc = expr.test.format(p);

@@ -1,5 +1,3 @@
-#![doc = include_str!("../README.md")]
-
 #[cfg(feature = "full")]
 mod compiler;
 

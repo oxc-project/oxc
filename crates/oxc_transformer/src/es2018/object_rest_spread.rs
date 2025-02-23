@@ -32,14 +32,16 @@ use std::mem;
 use serde::Deserialize;
 
 use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{BoundNames, ToJsString};
+use oxc_ecmascript::{
+    BoundNames, ToJsString, is_global_reference::WithoutGlobalReferenceInformation,
+};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{common::helper_loader::Helper, TransformCtx};
+use crate::{TransformCtx, common::helper_loader::Helper};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -377,7 +379,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
     }
 
     fn walk_and_replace_nested_object_target(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -992,7 +994,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 // `let { [1], ... rest }`
                 if expr.is_literal() {
                     let span = expr.span();
-                    let s = expr.to_js_string().unwrap();
+                    let s = expr.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
                     let expr = ctx.ast.expression_string_literal(span, s, None);
                     return Some(ArrayExpressionElement::from(expr));
                 }

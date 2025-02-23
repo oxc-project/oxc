@@ -1,6 +1,7 @@
 //! Convert UTF-8 span offsets to UTF-16.
 
 use oxc_span::Span;
+use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
 
 use crate::{ast::Program, visit::VisitMut};
 
@@ -29,7 +30,7 @@ impl Utf8ToUtf16 {
     }
 
     /// Convert all spans in the AST to UTF-16.
-    pub fn convert(mut self, program: &mut Program<'_>) {
+    pub fn convert(&mut self, program: &mut Program<'_>) {
         self.build_table(program.source_text);
         // Skip if source is entirely ASCII
         if self.translations.len() == 1 {
@@ -39,6 +40,11 @@ impl Utf8ToUtf16 {
         for comment in &mut program.comments {
             self.convert_span(&mut comment.span);
         }
+    }
+
+    /// Convert spans in ModuleRecord to UTF-16
+    pub fn convert_module_record(&mut self, module_record: &mut ModuleRecord<'_>) {
+        self.visit_module_record(module_record);
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -81,7 +87,8 @@ impl Utf8ToUtf16 {
         span.end = self.convert_offset(span.end);
     }
 
-    fn convert_offset(&self, utf8_offset: u32) -> u32 {
+    /// Convert UTF-8 offset to UTF-16.
+    pub fn convert_offset(&self, utf8_offset: u32) -> u32 {
         // Find the first entry in table *after* the UTF-8 offset.
         // The difference we need to subtract is recorded in the entry prior to it.
         let index =
@@ -101,14 +108,20 @@ impl VisitMut<'_> for Utf8ToUtf16 {
     }
 }
 
+impl VisitMutModuleRecord for Utf8ToUtf16 {
+    fn visit_span(&mut self, span: &mut Span) {
+        self.convert_span(span);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
     use oxc_span::{GetSpan, SourceType, Span};
 
     use crate::{
-        ast::{Expression, Statement},
         AstBuilder, Comment, CommentKind,
+        ast::{Expression, Statement},
     };
 
     use super::Utf8ToUtf16;
@@ -194,7 +207,7 @@ mod test {
     #[test]
     fn char_lengths() {
         macro_rules! assert_utf8_bytes_eq {
-            ($c:expr, $bytes:expr) => {{
+            ($c:expr_2021, $bytes:expr_2021) => {{
                 let mut buffer = [0; 4];
                 let bytes = $c.encode_utf8(&mut buffer).as_bytes();
                 assert!($bytes == bytes);

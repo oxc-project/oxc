@@ -4,11 +4,11 @@ use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
+    CompressOptions,
     peephole::{
         DeadCodeElimination, LatePeepholeOptimizations, Normalize, NormalizeOptions,
         PeepholeOptimizations,
     },
-    CompressOptions,
 };
 
 pub struct Compressor<'a> {

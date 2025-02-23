@@ -4,6 +4,90 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+- 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)
+
+- 611b029 ast: [**BREAKING**] Remove `AstBuilder::copy` (#9210) (Dunqing)
+
+### Features
+
+
+### Bug Fixes
+
+- 72bab88 ast/estree: Remove unused TS type def for `WithClause` (#9250) (overlookmotel)
+
+### Documentation
+
+- d4d01c3 ast: Correct and improve docs for `get_identifier` methods on JSX types (#9225) (overlookmotel)
+- 70726e9 ast: Docs for `AstBuilder` `*_with_*` methods list extra field names, not field types (#9206) (overlookmotel)
+
+### Refactor
+
+- 97cc1c8 ast: Remove `TSLiteral::NullLiteral` (replaced by `TSNullKeyword`) (#9147) (Boshen)
+- 46b9151 ast/estree: Simplify serializer for `BindingProperty` (#9255) (overlookmotel)
+- 2e2823b ast/estree: Define custom ESTree serializers on struct fields via meta types (#9251) (overlookmotel)
+- 3236fe4 ast/estree: Simplify serializing `FormalParameters` (#9195) (overlookmotel)
+
+## [0.51.0] - 2025-02-15
+
+- 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)
+
+- 9091387 ast: [**BREAKING**] Remove `TSType::TSQualifiedName` (#9051) (Dunqing)
+
+### Features
+
+
+### Bug Fixes
+
+- 38f81af ast/estree: Order fields same as Acorn (#9128) (overlookmotel)
+- 67f8932 ast/estree: `CatchParameter` do not include `type` and `Span` twice (#9125) (overlookmotel)
+- 1b02fe0 ast/estree: `FormalParameter` do not include `Span` twice (#9124) (overlookmotel)
+- d3b5fb0 ast/estree: Fix TS type for `AssignmentTargetPropertyIdentifier` (#9092) (overlookmotel)
+- d8d80a9 ast/estree: Fix TS types for `BigIntLiteral` and `RegExpLiteral` (#9091) (overlookmotel)
+- 15f23f1 napi/parser: Utf16 span for module record (#9093) (hi-ogawa)
+- 9edfb1d napi/parser: Fix unicode comment panic (#9084) (hi-ogawa)
+
+### Documentation
+
+- 896d770 ast: Add missing docs and fix broken code for assignment targets (#9095) (camchenry)
+
+### Refactor
+
+- 08b2d80 ast/estree: Define TS types for extra fields on converters (#9118) (overlookmotel)
+- 6c5a435 ast/estree: Define types for `#[estree(add_fields)]` converters (#9116) (overlookmotel)
+
+## [0.50.0] - 2025-02-12
+
+- d9189f1 ast: [**BREAKING**] Remove `PrivateInExpression::operator` field (#9041) (overlookmotel)
+
+### Bug Fixes
+
+- 22d93be ast: Estree compat `AssignmentTargetPropertyIdentifier` (#9006) (hi-ogawa)
+- cd2e199 ast/estree: Fix serializing `RegExpLiteral` (#9043) (overlookmotel)
+- f705c64 ast/estree: Serialize `PrivateInExpression` as `BinaryExpression` (#9033) (hi-ogawa)
+- 2948804 ast/estree: Fix `ExportAllDeclaration` attributes (#9032) (hi-ogawa)
+- 2371dd4 ast/estree: Fix serializing import and export `attributes` (#9030) (hi-ogawa)
+- 2b47299 ast/estree: Fix serializing `RegExpLiteral` flags (#9027) (overlookmotel)
+- e75e1d2 ast/estree: Fix serializing `PrivateFieldExpression` (#9025) (overlookmotel)
+- fcb5490 ast/estree: Fix serializing `ImportExpression`s (#9024) (overlookmotel)
+- cac5545 ast/estree: Fix serializing `BigInt`s (#9022) (overlookmotel)
+- 9427007 ast/estree: Use `#[estree(append_to)]` for `TSModuleBlock` (#9020) (overlookmotel)
+
+### Documentation
+
+- 11829bf ast: Improve and reformat doc comments (#9017) (overlookmotel)
+
+### Refactor
+
+- cb3240c ast/estree: Remove redundant `ts_type` (#9037) (hi-ogawa)
+- eef8874 ast/estree: Re-arrange and comment custom serialization code (#9019) (overlookmotel)
+- 8db4727 ast/estree: Remove serialization wrapper (#9018) (overlookmotel)
+
+### Styling
+
+- 50a87c2 ast: Reformat `#[estree]` attribute (#9016) (overlookmotel)
+
 ## [0.49.0] - 2025-02-10
 
 - bbb075d ast: [**BREAKING**] Name `AstBuilder` enum builders after variant name not type name (#8890) (overlookmotel)

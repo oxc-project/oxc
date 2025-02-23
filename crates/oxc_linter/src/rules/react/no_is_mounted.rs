@@ -1,12 +1,12 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn no_is_mounted_diagnostic(span: Span) -> OxcDiagnostic {
@@ -56,7 +56,7 @@ impl Rule for NoIsMounted {
         };
 
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
-            || !member_expr.static_property_name().is_some_and(|str| str == "isMounted")
+            || member_expr.static_property_name().is_none_or(|str| str != "isMounted")
         {
             return;
         }

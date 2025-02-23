@@ -1,15 +1,15 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{IdentifierReference, Statement};
-use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_ecmascript::{is_global_reference::IsGlobalReference, side_effects::MayHaveSideEffects};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-struct SideEffectChecker {
+struct GlobalReferenceChecker {
     global_variable_names: Vec<String>,
 }
-impl MayHaveSideEffects for SideEffectChecker {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
-        self.global_variable_names.iter().any(|name| name == ident.name.as_str())
+impl IsGlobalReference for GlobalReferenceChecker {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+        Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }
 
@@ -27,13 +27,13 @@ fn test_with_global_variables(
     assert!(!ret.panicked, "{source_text}");
     assert!(ret.errors.is_empty(), "{source_text}");
 
-    let side_effect_checker = SideEffectChecker { global_variable_names };
+    let global_reference_checker = GlobalReferenceChecker { global_variable_names };
 
     let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
         panic!("should have a expression statement body: {source_text}");
     };
     assert_eq!(
-        side_effect_checker.expression_may_have_side_effects(&stmt.expression),
+        stmt.expression.may_have_side_effects(&global_reference_checker),
         expected,
         "{source_text}"
     );

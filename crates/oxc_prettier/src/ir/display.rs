@@ -37,7 +37,7 @@ fn print_doc_ast(doc: &Doc<'_>) -> String {
             json.push(',');
             json.push_str(&format!(r#""contents":{}"#, print_doc_ast(contents)));
             json.push(',');
-            json.push_str(&format!(r#"groupId":"{group_id}""#));
+            json.push_str(&format!(r#""groupId":"{group_id}""#));
             json.push('}');
         }
         Doc::Group(Group { contents, should_break, expanded_states, group_id }) => {

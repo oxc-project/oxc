@@ -80,7 +80,8 @@ fn dce_if_statement() {
 
     // Shadowed `undefined` as a variable should not be erased.
     // This is a rollup test.
-    test_same("function foo(undefined) { if (!undefined) foo }");
+    // <https://github.com/rollup/rollup/blob/master/test/function/samples/allow-undefined-as-parameter/main.js>
+    test_same("function foo(undefined) { if (!undefined) throw Error('') }");
 
     test("function foo() { if (undefined) { bar } }", "function foo() { }");
     test("function foo() { { bar } }", "function foo() { bar }");

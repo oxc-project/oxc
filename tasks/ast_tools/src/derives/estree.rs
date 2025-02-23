@@ -1,22 +1,22 @@
-//! Derive for `Serialize` impls, which serialize AST to ESTree format in JSON.
+//! Derive for `ESTree` impls, which serialize AST to ESTree format in JSON.
 
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_str, Expr};
+use syn::{Expr, parse_str};
 
 use crate::{
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
-    utils::number_lit,
     Result,
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
+    utils::create_safe_ident,
 };
 
 use super::{
-    attr_positions, define_derive, AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum,
+    AttrLocation, AttrPart, AttrPositions, Derive, StructOrEnum, attr_positions, define_derive,
 };
 
-/// Derive for `Serialize` impls, which serialize AST to ESTree format in JSON.
+/// Derive for `ESTree` impls, which serialize AST to ESTree format in JSON.
 pub struct DeriveESTree;
 
 define_derive!(DeriveESTree);
@@ -34,38 +34,44 @@ impl Derive for DeriveESTree {
         "estree".to_string()
     }
 
-    /// Register that accept `#[estree]` attr on structs, enums, struct fields, or enum variants.
+    /// Register that accept `#[estree]` attr on structs, enums, struct fields, enum variants,
+    /// or meta types.
     /// Allow attr on structs and enums which don't derive this trait.
+    /// Also accept `#[ts]` attr on struct fields and enum variants.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
-        &[(
-            "estree",
-            attr_positions!(StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant),
-        )]
+        &[
+            (
+                "estree",
+                attr_positions!(
+                    StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant | Meta
+                ),
+            ),
+            ("ts", attr_positions!(StructField | EnumVariant)),
+        ]
     }
 
-    /// Parse `#[estree]` attr.
-    fn parse_attr(&self, _attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
-        // No need to check attr name is `estree`, because that's the only attribute this derive handles
-        parse_estree_attr(location, part)
+    /// Parse `#[estree]` and `#[ts]` attrs.
+    fn parse_attr(&self, attr_name: &str, location: AttrLocation, part: AttrPart) -> Result<()> {
+        match attr_name {
+            "estree" => parse_estree_attr(location, part),
+            "ts" => parse_ts_attr(location, &part),
+            _ => unreachable!(),
+        }
     }
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(unused_imports, clippy::match_same_arms)]
+            #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
             ///@@line_break
-            use serde::{
-                __private::ser::FlatMapSerializer,
-                ser::SerializeMap,
-                Serialize, Serializer
+            use oxc_estree::{
+                ser::{AppendTo, AppendToConcat},
+                ESTree, FlatStructSerializer, Serializer, StructSerializer,
             };
-
-            ///@@line_break
-            use oxc_estree::ser::{AppendTo, AppendToConcat};
         }
     }
 
-    /// Generate implementation of `Serialize` for a struct or enum.
+    /// Generate implementation of `ESTree` for a struct or enum.
     fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
         let body = match type_def {
             StructOrEnum::Struct(struct_def) => {
@@ -85,8 +91,8 @@ impl Derive for DeriveESTree {
         let ty = type_def.ty_anon(schema);
 
         quote! {
-            impl Serialize for #ty {
-                fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            impl ESTree for #ty {
+                fn serialize<S: Serializer>(&self, serializer: S) {
                     #body
                 }
             }
@@ -111,7 +117,28 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                     struct_def.estree.add_fields.push((name, value));
                 }
             }
-            AttrPart::String("add_ts", value) => struct_def.estree.add_ts = Some(value),
+            AttrPart::List("field_order", list) => {
+                // Get iterator over all field names (including added fields)
+                let all_field_names = struct_def.fields.iter().map(FieldDef::name).chain(
+                    struct_def.estree.add_fields.iter().map(|(field_name, _)| field_name.as_str()),
+                );
+
+                // Convert field names to indexes.
+                // Added fields (`#[estree(add_fields(...))]`) get indexes after the real fields.
+                let field_indices = list
+                    .into_iter()
+                    .map(|list_element| {
+                        let field_name = list_element.try_into_tag()?;
+                        let field_name = field_name.trim_start_matches("r#");
+                        all_field_names
+                            .clone()
+                            .position(|this_field_name| this_field_name == field_name)
+                            .map(|index| u8::try_from(index).map_err(|_| ()))
+                            .ok_or(())?
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                struct_def.estree.field_indices = Some(field_indices);
+            }
             AttrPart::String("custom_ts_def", value) => {
                 struct_def.estree.custom_ts_def = Some(value);
             }
@@ -177,6 +204,31 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             }
             _ => return Err(()),
         },
+        // `#[estree]` attr on meta type
+        AttrLocation::Meta(meta) => match part {
+            AttrPart::String("ts_type", ts_type) => meta.estree.ts_type = Some(ts_type),
+            _ => return Err(()),
+        },
+        _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
+/// Parse `#[ts]` attr on struct field or enum variant.
+fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
+    if !matches!(part, AttrPart::None) {
+        return Err(());
+    }
+
+    // Location can only be `StructField` or `EnumVariant`
+    match location {
+        AttrLocation::StructField(struct_def, field_index) => {
+            struct_def.fields[field_index].estree.is_ts = true;
+        }
+        AttrLocation::EnumVariant(enum_def, variant_index) => {
+            enum_def.variants[variant_index].estree.is_ts = true;
+        }
         _ => unreachable!(),
     }
 
@@ -193,31 +245,24 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
     }
 
     let krate = struct_def.file(schema).krate();
-    let mut gen = StructSerializerGenerator::new(!struct_def.estree.no_type, krate, schema);
-    gen.generate_stmts_for_struct(struct_def, &quote!(self));
+    let mut g = StructSerializerGenerator::new(!struct_def.estree.no_type, krate, schema);
+    g.generate_stmts_for_struct(struct_def, &quote!(self));
 
-    let type_field = if gen.add_type_field {
+    let type_field = if g.add_type_field {
         let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
         quote! {
-            map.serialize_entry("type", #type_name)?;
+            state.serialize_field("type", #type_name);
         }
     } else {
         quote!()
     };
 
-    // Add any additional manually-defined fields
-    let add_fields = struct_def.estree.add_fields.iter().map(|(name, value)| {
-        let value = parse_str::<syn::Expr>(value).unwrap();
-        quote!( map.serialize_entry(#name, &#value)?; )
-    });
-
-    let stmts = gen.stmts;
+    let stmts = g.stmts;
     quote! {
-        let mut map = serializer.serialize_map(None)?;
+        let mut state = serializer.serialize_struct();
         #type_field
         #stmts
-        #(#add_fields)*
-        map.end()
+        state.end();
     }
 }
 
@@ -233,7 +278,7 @@ struct StructSerializerGenerator<'s> {
     /// `true` if a `type` field should be added.
     /// `false` one already exists (or if `#[estree(no_type)]` attr on struct).
     add_type_field: bool,
-    /// Crate in which the `Serialize` impl for the type will be generated
+    /// Crate in which the `ESTree` impl for the type will be generated
     krate: &'s str,
     /// Schema
     schema: &'s Schema,
@@ -247,8 +292,27 @@ impl<'s> StructSerializerGenerator<'s> {
 
     /// Generate code to serialize all fields in a struct.
     fn generate_stmts_for_struct(&mut self, struct_def: &StructDef, self_path: &TokenStream) {
-        for field in &struct_def.fields {
-            self.generate_stmts_for_field(field, struct_def, self_path);
+        if let Some(field_indices) = &struct_def.estree.field_indices {
+            // Specified field order - serialize in this order
+            for &field_index in field_indices {
+                let field_index = field_index as usize;
+                if let Some(field) = struct_def.fields.get(field_index) {
+                    self.generate_stmts_for_field(field, struct_def, self_path);
+                } else {
+                    let (field_name, converter_name) =
+                        &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
+                    self.generate_stmt_for_added_field(field_name, converter_name, self_path);
+                }
+            }
+        } else {
+            // No specified field order - serialize in original order
+            for field in &struct_def.fields {
+                self.generate_stmts_for_field(field, struct_def, self_path);
+            }
+
+            for (field_name, converter_name) in &struct_def.estree.add_fields {
+                self.generate_stmt_for_added_field(field_name, converter_name, self_path);
+            }
         }
     }
 
@@ -284,7 +348,7 @@ impl<'s> StructSerializerGenerator<'s> {
             );
 
             self.stmts.extend(quote! {
-                #self_path.#field_name_ident.serialize(FlatMapSerializer(&mut map))?;
+                #self_path.#field_name_ident.serialize(FlatStructSerializer(&mut state));
             });
             return;
         }
@@ -295,45 +359,63 @@ impl<'s> StructSerializerGenerator<'s> {
             self.add_type_field = false;
         }
 
-        let mut value = quote!( #self_path.#field_name_ident );
-        if let Some(via_str) = field.estree.via.as_deref() {
-            let via_expr = parse_str::<Expr>(via_str).unwrap();
-            value = quote!( #via_expr );
+        let value = if let Some(converter_name) = &field.estree.via {
+            let converter = self.schema.meta_by_name(converter_name);
+            let converter_path = converter.import_path_from_crate(self.krate, self.schema);
+            quote!( #converter_path(#self_path) )
         } else if let Some(append_field_index) = field.estree.append_field_index {
             let append_field = &struct_def.fields[append_field_index];
             let append_from_ident = append_field.ident();
-            let wrapper = if append_field.type_def(self.schema).is_option() {
-                quote! { AppendTo }
+            let wrapper_name = if append_field.type_def(self.schema).is_option() {
+                "AppendTo"
             } else {
-                quote! { AppendToConcat }
+                "AppendToConcat"
             };
-            value = quote! {
-                #wrapper { array: &#value, after: &#self_path.#append_from_ident  }
+            let wrapper_ident = create_safe_ident(wrapper_name);
+            quote! {
+                #wrapper_ident { array: &#self_path.#field_name_ident, after: &#self_path.#append_from_ident  }
             }
-        }
+        } else {
+            quote!( #self_path.#field_name_ident )
+        };
+
+        let serialize_method_ident = create_safe_ident(if field.estree.is_ts {
+            "serialize_ts_field"
+        } else {
+            "serialize_field"
+        });
 
         self.stmts.extend(quote! {
-            map.serialize_entry(#field_camel_name, &#value)?;
+            state.#serialize_method_ident(#field_camel_name, &#value);
+        });
+    }
+
+    fn generate_stmt_for_added_field(
+        &mut self,
+        field_name: &str,
+        converter_name: &str,
+        self_path: &TokenStream,
+    ) {
+        let converter = self.schema.meta_by_name(converter_name);
+        let converter_path = converter.import_path_from_crate(self.krate, self.schema);
+        self.stmts.extend(quote! {
+            state.serialize_field(#field_name, &#converter_path(#self_path));
         });
     }
 }
 
 /// Generate body of `serialize` method for an enum.
 fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    let enum_ident = enum_def.ident();
-
     let match_branches = enum_def.all_variants(schema).map(|variant| {
         let variant_ident = variant.ident();
         if variant.is_fieldless() {
-            let enum_name = enum_def.name();
-            let discriminant = number_lit(variant.discriminant);
             let value = get_fieldless_variant_value(enum_def, variant);
             quote! {
-                #enum_ident::#variant_ident => serializer.serialize_unit_variant(#enum_name, #discriminant, #value),
+                Self::#variant_ident => #value.serialize(serializer),
             }
         } else {
             quote! {
-                #enum_ident::#variant_ident(it) => it.serialize(serializer),
+                Self::#variant_ident(it) => it.serialize(serializer),
             }
         }
     });
@@ -385,7 +467,7 @@ pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
 ///
 /// If the field's type is a struct, then usually it can.
 /// But it can't in the case where that type is defined in a different crate from where
-/// the `Serialize` impl will be generated, and one of the flattened fields is not public.
+/// the `ESTree` impl will be generated, and one of the flattened fields is not public.
 pub fn can_flatten_field_inline(field: &FieldDef, krate: &str, schema: &Schema) -> bool {
     let field_type = field.type_def(schema);
     let TypeDef::Struct(struct_def) = field_type else { return false };

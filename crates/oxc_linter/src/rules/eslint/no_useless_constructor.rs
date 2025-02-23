@@ -1,15 +1,15 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         Argument, BindingPattern, BindingPatternKind, BindingRestElement, CallExpression,
         Expression, FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 /// ```js
 /// class A { constructor(){} }
@@ -203,11 +203,7 @@ fn is_single_super_call<'a, 'f>(body: &'f FunctionBody<'a>) -> Option<&'f CallEx
     let Statement::ExpressionStatement(expr) = &body.statements[0] else { return None };
     let Expression::CallExpression(call) = &expr.expression else { return None };
 
-    if call.callee.is_super() {
-        Some(call)
-    } else {
-        None
-    }
+    if call.callee.is_super() { Some(call) } else { None }
 }
 
 /// Returns `false` if any parameter is an array/object unpacking binding or an

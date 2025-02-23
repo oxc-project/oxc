@@ -15,7 +15,9 @@ unsafe impl Allocator for &crate::Allocator {
 
     #[inline(always)]
     unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
-        self.bump().deallocate(ptr, layout);
+        unsafe {
+            self.bump().deallocate(ptr, layout);
+        }
     }
 
     #[inline(always)]
@@ -25,7 +27,7 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        self.bump().shrink(ptr, old_layout, new_layout)
+        unsafe { self.bump().shrink(ptr, old_layout, new_layout) }
     }
 
     #[inline(always)]
@@ -35,7 +37,7 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        self.bump().grow(ptr, old_layout, new_layout)
+        unsafe { self.bump().grow(ptr, old_layout, new_layout) }
     }
 
     #[inline(always)]
@@ -45,6 +47,6 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        self.bump().grow_zeroed(ptr, old_layout, new_layout)
+        unsafe { self.bump().grow_zeroed(ptr, old_layout, new_layout) }
     }
 }

@@ -27,6 +27,8 @@ Arguments:
 
 ";
 
+/// `print_rules`
+///
 /// `cargo run -p website linter-rules --table
 /// /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/generated-rules.md
 /// --rule-docs /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/rules

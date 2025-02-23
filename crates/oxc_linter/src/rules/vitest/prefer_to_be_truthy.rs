@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, Expression},
     AstKind,
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_equality_matcher, parse_expect_and_typeof_vitest_fn_call, PossibleJestNode},
+    utils::{PossibleJestNode, is_equality_matcher, parse_expect_and_typeof_vitest_fn_call},
 };
 
 pub fn prefer_to_be_simply_bool<'a>(

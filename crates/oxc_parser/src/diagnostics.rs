@@ -471,6 +471,11 @@ pub fn new_target(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("The only valid meta property for new is new.target").with_label(span)
 }
 
+#[cold]
+pub fn private_in_private(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]

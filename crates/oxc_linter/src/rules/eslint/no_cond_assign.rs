@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{AssignmentExpression, Expression},
     AstKind,
+    ast::{AssignmentExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_cond_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a conditional expression and instead saw an assignment")

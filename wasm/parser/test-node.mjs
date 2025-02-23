@@ -1,7 +1,22 @@
 import assert from 'assert';
 import { parseSync } from '../../npm/parser-wasm/node/oxc_parser_wasm.js';
 
-const code = 'let foo';
+const code = '/abc/gu; 123n; 1e+350;';
 const result = parseSync(code, { sourceFilename: 'test.ts' });
+
 assert(result.errors.length === 0);
-assert(result.program.body.length === 1);
+
+// Check `program` getter caches result
+const program = result.program;
+assert(result.program === program);
+
+// Check output is correct
+assert(program.type === 'Program');
+assert(program.body.length === 3);
+
+// Check `RegExp`s, `BigInt`s and `Infinity` are deserialized correctly
+assert(program.body[0].expression.value instanceof RegExp);
+assert(typeof program.body[1].expression.value === 'bigint');
+const inf = program.body[2].expression.value;
+assert(typeof inf === 'number');
+assert(inf === Infinity);

@@ -4,21 +4,21 @@ use cow_utils::CowUtils;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::{phf_map, phf_set, Map, Set};
+use phf::{Map, Set, phf_map, phf_set};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
     utils::get_jsx_attribute_name,
-    AstNode,
 };
 
 fn invalid_prop_on_tag(span: Span, prop: &str, tag: &str) -> OxcDiagnostic {

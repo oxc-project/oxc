@@ -6,7 +6,9 @@ use std::{
 
 use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
-use serde::Serialize;
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{CompactStr, ContentEq};
 
@@ -15,8 +17,6 @@ use crate::{CompactStr, ContentEq};
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for
 /// the lifetimeless form.
 #[derive(Clone, Copy, Eq)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Atom<'a>(&'a str);
 
 impl Atom<'static> {
@@ -205,5 +205,19 @@ impl fmt::Debug for Atom<'_> {
 impl fmt::Display for Atom<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self.as_str(), f)
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl Serialize for Atom<'_> {
+    fn serialize<S: SerdeSerializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Serialize::serialize(self.as_str(), serializer)
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl ESTree for Atom<'_> {
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        ESTree::serialize(self.as_str(), serializer);
     }
 }

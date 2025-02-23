@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -7,8 +7,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        parse_general_jest_fn_call, JestGeneralFnKind, KnownMemberExpressionProperty,
-        ParsedGeneralJestFnCall, PossibleJestNode,
+        JestGeneralFnKind, KnownMemberExpressionProperty, ParsedGeneralJestFnCall,
+        PossibleJestNode, parse_general_jest_fn_call,
     },
 };
 

@@ -1,11 +1,11 @@
 use std::ops::Deref;
 
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `structuredClone(…)` to create a deep clone.")

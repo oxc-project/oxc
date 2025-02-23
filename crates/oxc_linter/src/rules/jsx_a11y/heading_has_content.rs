@@ -4,10 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, is_hidden_from_screen_reader, object_has_accessible_child},
-    AstNode,
 };
 
 fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
@@ -48,7 +48,7 @@ declare_oxc_lint!(
     /// this could either confuse users or even prevent them
     /// from accessing information on the page's structure.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -85,14 +85,10 @@ impl Rule for HeadingHasContent {
             return;
         };
 
-        // let JSXElementName::Identifier(iden) = &jsx_el.name else {
-        //     return;
-        // };
+        let name = get_element_type(ctx, jsx_el);
+        let name = name.as_ref();
 
-        // let name = iden.name.as_str();
-        let name = &get_element_type(ctx, jsx_el);
-
-        if !DEFAULT_COMPONENTS.iter().any(|&comp| comp == name)
+        if DEFAULT_COMPONENTS.binary_search(&name).is_err()
             && !self
                 .components
                 .as_ref()
@@ -178,8 +174,7 @@ fn test() {
         (r"<Heading>{undefined}</Heading>", Some(components()), None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS SETTINGS
         (r"<Heading />", None, Some(settings())),
-        // TODO: This should be failed but pass for now
-        // (r#"<h1><CustomInput type="hidden" /></h1>"#, None, Some(settings())),
+        (r#"<h1><CustomInput type="hidden" /></h1>"#, None, Some(settings())),
     ];
 
     Tester::new(HeadingHasContent::NAME, HeadingHasContent::PLUGIN, pass, fail)

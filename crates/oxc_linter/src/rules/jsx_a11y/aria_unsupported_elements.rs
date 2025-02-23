@@ -1,15 +1,15 @@
 use cow_utils::CowUtils;
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{AstKind, ast::JSXAttributeItem};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 
 use crate::{
+    AstNode, LintContext,
     globals::RESERVED_HTML_TAG,
     rule::Rule,
     utils::{get_element_type, get_jsx_attribute_name},
-    AstNode, LintContext,
 };
 
 declare_oxc_lint! {

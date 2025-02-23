@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_multi_str_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected multi string.").with_label(span)

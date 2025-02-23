@@ -2,13 +2,13 @@ use std::collections::hash_map::Entry;
 
 use base64::{
     encoded_len as base64_encoded_len,
-    prelude::{Engine, BASE64_STANDARD},
+    prelude::{BASE64_STANDARD, Engine},
 };
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
 use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, Vec as ArenaVec};
-use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
+use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
@@ -712,7 +712,7 @@ impl<'a> ReactRefresh<'a, '_> {
 
     fn handle_function_declaration(
         &mut self,
-        func: &mut Function<'a>,
+        func: &Function<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Some(id) = &func.id else {
@@ -854,7 +854,7 @@ impl<'a> ReactRefresh<'a, '_> {
     /// ```
     fn transform_arrow_function_to_block(
         arrow: &mut ArrowFunctionExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         if !arrow.expression {
             return;
@@ -878,7 +878,7 @@ fn is_componentish_name(name: &str) -> bool {
 }
 
 fn is_use_hook_name(name: &str) -> bool {
-    name.starts_with("use") && name.as_bytes().get(3).map_or(true, u8::is_ascii_uppercase)
+    name.starts_with("use") && name.as_bytes().get(3).is_none_or(u8::is_ascii_uppercase)
 }
 
 #[rustfmt::skip]

@@ -1,9 +1,9 @@
-use oxc_ast::{ast::BlockStatement, AstKind};
+use oxc_ast::{AstKind, ast::BlockStatement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected empty block statements")

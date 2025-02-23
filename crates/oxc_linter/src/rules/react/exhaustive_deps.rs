@@ -5,6 +5,7 @@ use phf::phf_set;
 use rustc_hash::FxHashSet;
 
 use oxc_ast::{
+    AstKind, AstType, Visit,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPatternKind,
         CallExpression, ChainElement, Expression, Function, FunctionBody, IdentifierReference,
@@ -12,7 +13,6 @@ use oxc_ast::{
     },
     match_expression,
     visit::walk::walk_function_body,
-    AstKind, AstType, Visit,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -20,12 +20,12 @@ use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
     },
     context::LintContext,
     rule::Rule,
-    AstNode,
 };
 
 const SCOPE: &str = "eslint-plugin-react-hooks";

@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(max-nested-callbacks): Too many nested callbacks (3). Maximum allowed is 2.
+   ╭─[max_nested_callbacks.tsx:1:50]
+ 1 │ foo(function() { bar(thing, function(data) { baz(function() {}); }); });
+   ·                                                  ─────────────
+   ╰────
+  help: Reduce nesting with promises or refactoring your code.
+
+  ⚠ eslint(max-nested-callbacks): Too many nested callbacks (3). Maximum allowed is 2.
+   ╭─[max_nested_callbacks.tsx:1:45]
+ 1 │ foo(function() { bar(thing, (data) => { baz(function() {}); }); });
+   ·                                             ─────────────
+   ╰────
+  help: Reduce nesting with promises or refactoring your code.
+
+  ⚠ eslint(max-nested-callbacks): Too many nested callbacks (3). Maximum allowed is 2.
+   ╭─[max_nested_callbacks.tsx:1:41]
+ 1 │ foo(() => { bar(thing, (data) => { baz( () => {}); }); });
+   ·                                         ────────
+   ╰────
+  help: Reduce nesting with promises or refactoring your code.
+
+  ⚠ eslint(max-nested-callbacks): Too many nested callbacks (3). Maximum allowed is 2.
+   ╭─[max_nested_callbacks.tsx:1:57]
+ 1 │ foo(function() { if (isTrue) { bar(function(data) { baz(function() {}); }); } });
+   ·                                                         ─────────────
+   ╰────
+  help: Reduce nesting with promises or refactoring your code.
+
+  ⚠ eslint(max-nested-callbacks): Too many nested callbacks (11). Maximum allowed is 10.
+   ╭─[max_nested_callbacks.tsx:1:165]
+ 1 │ foo(function() {foo(function() {foo(function() {foo(function() {foo(function() {foo(function() {foo(function() {foo(function() {foo(function() {foo(function() {foo(function() {});});});});});});});});});});});
+   ·                                                                                                                                                                     ─────────────
+   ╰────
+  help: Reduce nesting with promises or refactoring your code.
+
+  ⚠ eslint(max-nested-callbacks): Too many nested callbacks (1). Maximum allowed is 0.
+   ╭─[max_nested_callbacks.tsx:1:5]
+ 1 │ foo(function() {})
+   ·     ─────────────
+   ╰────
+  help: Reduce nesting with promises or refactoring your code.
+
+  ⚠ eslint(max-nested-callbacks): Too many nested callbacks (3). Maximum allowed is 2.
+   ╭─[max_nested_callbacks.tsx:1:50]
+ 1 │ foo(function() { bar(thing, function(data) { baz(function() {}); }); });
+   ·                                                  ─────────────
+   ╰────
+  help: Reduce nesting with promises or refactoring your code.

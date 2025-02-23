@@ -5,6 +5,7 @@ authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
+include = ["/src", "build.rs"]
 keywords.workspace = true
 license.workspace = true
 publish = false

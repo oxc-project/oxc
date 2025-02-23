@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, Item};
+use quote::quote;
+use syn::{Item, parse_macro_input};
 
 mod ast;
 mod generated;
@@ -41,6 +42,20 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+/// Dummy attribute macro `#[ast_meta]`.
+///
+/// This macro passes the input through unchanged, except that it applies
+/// `#[derive(::oxc_ast_macros::Ast)]` to the type, to allow the use of helper attributes.
+///
+/// This attribute should be used on types which are not part of the AST, but are used by `oxc_ast_tools`
+/// in processing the AST in some way. The purpose of this attribute is to pass data to `oxc_ast_tools`.
+#[proc_macro_attribute]
+pub fn ast_meta(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let mut output = TokenStream::from(quote!( #[derive(::oxc_ast_macros::Ast)] ));
+    output.extend(input);
+    output
+}
+
 /// Dummy derive macro for a non-existent trait `Ast`.
 ///
 /// Does not generate any code.
@@ -49,7 +64,18 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// See [`macro@ast`] for further details.
 #[proc_macro_derive(
     Ast,
-    attributes(clone_in, content_eq, estree, generate_derive, plural, scope, span, ts, visit)
+    attributes(
+        builder,
+        clone_in,
+        content_eq,
+        estree,
+        generate_derive,
+        plural,
+        scope,
+        span,
+        ts,
+        visit
+    )
 )]
 pub fn ast_derive(_input: TokenStream) -> TokenStream {
     TokenStream::new()

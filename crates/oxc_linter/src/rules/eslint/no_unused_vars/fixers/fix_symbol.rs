@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use super::Symbol;
@@ -126,11 +126,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 1 => {
                     let last_property = obj.properties.len() - 1;
                     let own_span = obj.properties.iter().enumerate().find_map(|(idx, el)| {
-                        if self == &el.value {
-                            Some((el.span, idx == last_property))
-                        } else {
-                            None
-                        }
+                        if self == &el.value { Some((el.span, idx == last_property)) } else { None }
                     });
                     if let Some(rest) = obj.rest.as_ref() {
                         if rest.span.contains_inclusive(self.span()) {
@@ -181,11 +177,7 @@ pub(super) enum BindingInfo {
 impl BindingInfo {
     #[inline]
     const fn single_or_missing(found: bool) -> Self {
-        if found {
-            BindingInfo::SingleDestructure
-        } else {
-            BindingInfo::NotFound
-        }
+        if found { BindingInfo::SingleDestructure } else { BindingInfo::NotFound }
     }
 
     fn multi_or_missing(found: Option<(Span, bool)>, is_object: bool) -> Self {

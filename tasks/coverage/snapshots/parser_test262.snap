@@ -6675,13 +6675,12 @@ Negative Passed: 4519/4519 (100.00%)
  18 │ 
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:17]
+  × Unexpected token
+    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:16]
  14 │ $DONOTEVALUATE();
  15 │ async(x = await) => {  }
-    ·                 ▲
+    ·                ─
     ╰────
-  help: Try insert a semicolon here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js:15:7]
@@ -17731,11 +17730,11 @@ Negative Passed: 4519/4519 (100.00%)
     · ───────────
     ╰────
 
-  × Unexpected token
+  × Unexpected right-hand side of private-in expression
     ╭─[test262/test/language/expressions/in/private-field-in-nested.js:26:15]
  25 │   constructor() {
  26 │     #field in #field in this;
-    ·               ──────
+    ·               ──────────────
  27 │   }
     ╰────
 

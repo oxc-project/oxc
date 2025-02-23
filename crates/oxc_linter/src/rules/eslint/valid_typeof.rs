@@ -1,11 +1,11 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
-use phf::{phf_set, Set};
+use phf::{Set, phf_set};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     let mut d =
@@ -98,7 +98,9 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::Identifier(ident) = sibling {
-            if ident.name == "undefined" && ctx.is_reference_to_global_variable(ident) {
+            if ident.name == "undefined"
+                && ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+            {
                 ctx.diagnostic_with_fix(
                     if self.require_string_literals {
                         not_string(

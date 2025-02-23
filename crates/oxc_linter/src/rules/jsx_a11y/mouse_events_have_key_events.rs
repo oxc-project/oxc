@@ -1,14 +1,14 @@
-use oxc_ast::{ast::JSXAttributeValue, AstKind};
+use oxc_ast::{AstKind, ast::JSXAttributeValue};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
+    AstNode,
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
     utils::{get_element_type, get_prop_value, has_jsx_prop},
-    AstNode,
 };
 
 fn miss_on_focus(span: Span, attr_name: &str) -> OxcDiagnostic {

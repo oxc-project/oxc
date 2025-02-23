@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.52.0] - 2025-02-21
+
+### Features
+
+- 8a5051e napi/transform: Support enabling `emitDecoratorMetadata` (#9190) (Dunqing)
+- 90ba283 transformer/decorator: Support emitting decorator metadata (#9057) (Dunqing)
+
+## [0.51.0] - 2025-02-15
+
+### Features
+
+- fef82ff transformer/helper-loader: Replace `@babel/runtime` with `@oxc-project/runtime` (#9059) (Dunqing)
+
 ## [0.49.0] - 2025-02-10
 
 ### Features

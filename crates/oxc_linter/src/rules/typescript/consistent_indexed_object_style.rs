@@ -1,15 +1,15 @@
 use oxc_ast::{
-    ast::{TSSignature, TSType, TSTypeName},
     AstKind,
+    ast::{TSSignature, TSType, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> OxcDiagnostic {

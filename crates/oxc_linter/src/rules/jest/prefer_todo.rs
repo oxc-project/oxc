@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
     AstKind,
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
 fn empty_test(span: Span) -> OxcDiagnostic {

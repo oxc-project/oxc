@@ -1,13 +1,13 @@
 use oxc_ast::{
-    ast::{BinaryExpression, Expression},
     AstKind,
+    ast::{BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{identifier::is_line_terminator, operator::BinaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessConcat;
@@ -25,11 +25,30 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// It’s unnecessary to concatenate two strings together.
+    /// It’s unnecessary to concatenate two strings together when they could
+    /// be combined into a single literal.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var foo = "a" + "b";
+    /// ```
+    ///
+    /// ```javascript
+    /// var foo = 'a' + 'b' + 'c';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var foo = 'a' + bar;
+    /// ```
+    ///
+    /// // when the string concatenation is multiline
+    /// ```javascript
+    /// var foo = 'a'
+    ///     + 'b'
+    ///     + 'c';
     /// ```
     NoUselessConcat,
     eslint,

@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{BindingPatternKind, Expression, Statement},
     AstKind,
+    ast::{BindingPatternKind, Expression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_useless_catch_diagnostic(catch: Span, rethrow: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary try/catch wrapper")

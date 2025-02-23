@@ -430,6 +430,24 @@ pub enum LogicalOperator {
 }
 
 impl LogicalOperator {
+    /// Is `||`
+    #[inline]
+    pub fn is_or(self) -> bool {
+        self == Self::Or
+    }
+
+    /// Is `&&`
+    #[inline]
+    pub fn is_and(self) -> bool {
+        self == Self::And
+    }
+
+    /// Is `??`
+    #[inline]
+    pub fn is_coalesce(self) -> bool {
+        self == Self::Coalesce
+    }
+
     /// Get the string representation of this operator as it appears in source code.
     pub fn as_str(&self) -> &'static str {
         match self {

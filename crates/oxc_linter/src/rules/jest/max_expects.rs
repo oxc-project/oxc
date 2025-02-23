@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::Idx;
 use oxc_macros::declare_oxc_lint;
@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{collect_possible_jest_call_node, PossibleJestNode},
+    utils::{PossibleJestNode, collect_possible_jest_call_node},
 };
 
 fn exceeded_max_assertion(x0: usize, x1: usize, span2: Span) -> OxcDiagnostic {

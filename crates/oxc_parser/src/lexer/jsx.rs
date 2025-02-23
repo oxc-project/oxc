@@ -5,9 +5,8 @@ use oxc_syntax::identifier::is_identifier_part;
 use crate::diagnostics;
 
 use super::{
-    cold_branch,
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
-    Kind, Lexer, Token,
+    Kind, Lexer, Token, cold_branch,
+    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
@@ -28,25 +27,26 @@ impl Lexer<'_> {
     /// # SAFETY
     /// * `delimiter` must be an ASCII character.
     /// * Next char in `lexer.source` must be ASCII.
-    #[expect(clippy::unnecessary_safety_comment)]
     pub(super) unsafe fn read_jsx_string_literal(&mut self, delimiter: u8) -> Kind {
-        // Skip opening quote
-        debug_assert!(delimiter.is_ascii());
-        // SAFETY: Caller guarantees next byte is ASCII, so `.add(1)` is a UTF-8 char boundary
-        let after_opening_quote = self.source.position().add(1);
-        let remaining = self.source.str_from_pos_to_end(after_opening_quote);
+        unsafe {
+            // Skip opening quote
+            debug_assert!(delimiter.is_ascii());
+            // SAFETY: Caller guarantees next byte is ASCII, so `.add(1)` is a UTF-8 char boundary
+            let after_opening_quote = self.source.position().add(1);
+            let remaining = self.source.str_from_pos_to_end(after_opening_quote);
 
-        let len = memchr(delimiter, remaining.as_bytes());
-        if let Some(len) = len {
-            // SAFETY: `after_opening_quote` + `len` is position of delimiter.
-            // Caller guarantees delimiter is ASCII, so 1 byte after it is a UTF-8 char boundary.
-            let after_closing_quote = after_opening_quote.add(len + 1);
-            self.source.set_position(after_closing_quote);
-            Kind::Str
-        } else {
-            self.source.advance_to_end();
-            self.error(diagnostics::unterminated_string(self.unterminated_range()));
-            Kind::Undetermined
+            let len = memchr(delimiter, remaining.as_bytes());
+            if let Some(len) = len {
+                // SAFETY: `after_opening_quote` + `len` is position of delimiter.
+                // Caller guarantees delimiter is ASCII, so 1 byte after it is a UTF-8 char boundary.
+                let after_closing_quote = after_opening_quote.add(len + 1);
+                self.source.set_position(after_closing_quote);
+                Kind::Str
+            } else {
+                self.source.advance_to_end();
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
+                Kind::Undetermined
+            }
         }
     }
 

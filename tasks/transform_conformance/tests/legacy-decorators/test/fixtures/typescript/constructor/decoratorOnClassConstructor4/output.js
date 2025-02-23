@@ -8,7 +8,7 @@ let B = class B {
 };
 B = babelHelpers.decorate([
     dec,
-    __metadata("design:paramtypes", [Number])
+    babelHelpers.decorateMetadata("design:paramtypes", [Number])
 ], B);
 let C = class C extends A {
 };

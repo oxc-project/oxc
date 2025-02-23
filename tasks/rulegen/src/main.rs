@@ -7,13 +7,13 @@ use std::{
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
 use oxc_ast::{
+    Visit,
     ast::{
         Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
         ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
         PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
         TemplateLiteral,
     },
-    Visit,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -177,7 +177,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     if tag_expr.tag.is_specific_member_access("String", "raw") {
         tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
-        tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw).to_string())
+        tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
     } else {
         tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
     }
@@ -683,7 +683,7 @@ fn main() {
     let context = match body {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
-            let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
+            let source_type = SourceType::from_path(rule_test_path).unwrap();
             let ret = Parser::new(&allocator, &body, source_type).parse();
 
             let mut state = State::new(&body);

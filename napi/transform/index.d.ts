@@ -31,6 +31,16 @@ export interface DecoratorOptions {
    * @default false
    */
   legacy?: boolean
+  /**
+   * Enables emitting decorator metadata.
+   *
+   * This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
+   * in TypeScript, and it only works when `legacy` is true.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
+   * @default false
+   */
+  emitDecoratorMetadata?: boolean
 }
 
 export interface ErrorLabel {
@@ -51,7 +61,7 @@ export declare const enum HelperMode {
    * Example:
    *
    * ```js
-   * import helperName from "@babel/runtime/helpers/helperName";
+   * import helperName from "@oxc-project/runtime/helpers/helperName";
    * helperName(...arguments);
    * ```
    */
@@ -218,6 +228,17 @@ export declare const enum Severity {
   Advice = 'Advice'
 }
 
+export interface SourceMap {
+  file?: string
+  mappings: string
+  names: Array<string>
+  sourceRoot?: string
+  sources: Array<string>
+  sourcesContent?: Array<string>
+  version: number
+  x_google_ignoreList?: Array<number>
+}
+
 /**
  * Transpile a JavaScript or TypeScript into a target ECMAScript version.
  *
@@ -325,7 +346,7 @@ export interface TransformResult {
    * Example:
    *
    * ```text
-   * { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+   * { "_objectSpread": "@oxc-project/runtime/helpers/objectSpread2" }
    * ```
    */
   helpersUsed: Record<string, string>

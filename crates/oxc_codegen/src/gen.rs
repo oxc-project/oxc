@@ -9,19 +9,19 @@ use oxc_syntax::{
 };
 
 use crate::{
-    binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     Codegen, Context, Operator,
+    binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
 };
 
 /// Generate source code for an AST node.
 pub trait Gen: GetSpan {
     /// Generate code for an AST node.
-    fn gen(&self, p: &mut Codegen, ctx: Context);
+    fn r#gen(&self, p: &mut Codegen, ctx: Context);
 
     /// Generate code for an AST node. Alias for `gen`.
     #[inline]
     fn print(&self, p: &mut Codegen, ctx: Context) {
-        self.gen(p, ctx);
+        self.r#gen(p, ctx);
     }
 }
 
@@ -38,7 +38,7 @@ pub trait GenExpr: GetSpan {
 }
 
 impl Gen for Program<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.is_jsx = self.source_type.is_jsx();
 
         if let Some(hashbang) = &self.hashbang {
@@ -57,7 +57,7 @@ impl Gen for Program<'_> {
 }
 
 impl Gen for Hashbang<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("#!");
         p.print_str(self.value.as_str());
         p.print_hard_newline();
@@ -65,7 +65,7 @@ impl Gen for Hashbang<'_> {
 }
 
 impl Gen for Directive<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
@@ -73,7 +73,7 @@ impl Gen for Directive<'_> {
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
         let directive = self.directive.as_str();
 
-        let mut chars = directive.chars().peekable();
+        let mut chars = directive.chars();
         let mut quote = p.quote;
         while let Some(c) = chars.next() {
             match c {
@@ -100,7 +100,7 @@ impl Gen for Directive<'_> {
 }
 
 impl Gen for Statement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::BlockStatement(stmt) => {
                 p.print_statement_comments(stmt.span.start);
@@ -251,7 +251,7 @@ impl Gen for Statement<'_> {
 }
 
 impl Gen for ExpressionStatement<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.start_of_stmt = p.code_len();
@@ -265,7 +265,7 @@ impl Gen for ExpressionStatement<'_> {
 }
 
 impl Gen for IfStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         print_if(self, p, ctx);
@@ -352,7 +352,7 @@ fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
 }
 
 impl Gen for BlockStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         p.print_block_statement(self, ctx);
         p.print_soft_newline();
@@ -360,7 +360,7 @@ impl Gen for BlockStatement<'_> {
 }
 
 impl Gen for ForStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -392,7 +392,7 @@ impl Gen for ForStatement<'_> {
 }
 
 impl Gen for ForInStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -411,7 +411,7 @@ impl Gen for ForInStatement<'_> {
 }
 
 impl Gen for ForOfStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -433,7 +433,7 @@ impl Gen for ForOfStatement<'_> {
 }
 
 impl Gen for ForStatementInit<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::VariableDeclaration(var) => var.print(p, ctx),
             _ => self.to_expression().print_expr(p, Precedence::Lowest, ctx),
@@ -442,7 +442,7 @@ impl Gen for ForStatementInit<'_> {
 }
 
 impl Gen for ForStatementLeft<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             ForStatementLeft::VariableDeclaration(var) => var.print(p, ctx),
             ForStatementLeft::AssignmentTargetIdentifier(identifier) => {
@@ -457,7 +457,7 @@ impl Gen for ForStatementLeft<'_> {
 }
 
 impl Gen for WhileStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -471,7 +471,7 @@ impl Gen for WhileStatement<'_> {
 }
 
 impl Gen for DoWhileStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -502,7 +502,7 @@ impl Gen for DoWhileStatement<'_> {
 }
 
 impl Gen for EmptyStatement {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_semicolon();
@@ -511,7 +511,7 @@ impl Gen for EmptyStatement {
 }
 
 impl Gen for ContinueStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -525,7 +525,7 @@ impl Gen for ContinueStatement<'_> {
 }
 
 impl Gen for BreakStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -539,7 +539,7 @@ impl Gen for BreakStatement<'_> {
 }
 
 impl Gen for SwitchStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -560,7 +560,7 @@ impl Gen for SwitchStatement<'_> {
 }
 
 impl Gen for SwitchCase<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_semicolon_if_needed();
         p.print_indent();
         p.add_source_mapping(self.span);
@@ -590,7 +590,7 @@ impl Gen for SwitchCase<'_> {
 }
 
 impl Gen for ReturnStatement<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -604,7 +604,7 @@ impl Gen for ReturnStatement<'_> {
 }
 
 impl Gen for LabeledStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if !p.options.minify && (p.indent > 0 || p.print_next_indent_as_space) {
             p.add_source_mapping(self.span);
             p.print_indent();
@@ -617,7 +617,7 @@ impl Gen for LabeledStatement<'_> {
 }
 
 impl Gen for TryStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -647,7 +647,7 @@ impl Gen for TryStatement<'_> {
 }
 
 impl Gen for ThrowStatement<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -659,7 +659,7 @@ impl Gen for ThrowStatement<'_> {
 }
 
 impl Gen for WithStatement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -672,7 +672,7 @@ impl Gen for WithStatement<'_> {
 }
 
 impl Gen for DebuggerStatement {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -682,7 +682,7 @@ impl Gen for DebuggerStatement {
 }
 
 impl Gen for VariableDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_space_before_identifier();
         if self.declare {
@@ -713,7 +713,7 @@ impl Gen for VariableDeclaration<'_> {
 }
 
 impl Gen for VariableDeclarator<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.id.kind.print(p, ctx);
         if self.definite {
             p.print_ascii_byte(b'!');
@@ -737,7 +737,7 @@ impl Gen for VariableDeclarator<'_> {
 }
 
 impl Gen for Function<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.print_annotation_comments(self.span.start);
@@ -787,7 +787,7 @@ impl Gen for Function<'_> {
 }
 
 impl Gen for FunctionBody<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let span_end = self.span.end;
         let comments_at_end = if p.print_comments && span_end > 0 {
             p.get_statement_comments(span_end - 1)
@@ -817,7 +817,7 @@ impl Gen for FunctionBody<'_> {
 }
 
 impl Gen for FormalParameter<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         for decorator in &self.decorators {
             decorator.print(p, ctx);
             p.print_soft_space();
@@ -837,7 +837,7 @@ impl Gen for FormalParameter<'_> {
 }
 
 impl Gen for FormalParameters<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_list(&self.items, ctx);
         if let Some(rest) = &self.rest {
             if !self.items.is_empty() {
@@ -850,7 +850,7 @@ impl Gen for FormalParameters<'_> {
 }
 
 impl Gen for ImportDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
@@ -952,7 +952,7 @@ impl Gen for ImportDeclaration<'_> {
             p.print_str("from");
         }
         p.print_soft_space();
-        p.print_quoted_utf16(&self.source.value, false);
+        p.print_string_literal(&self.source, false);
         if let Some(with_clause) = &self.with_clause {
             p.print_soft_space();
             with_clause.print(p, ctx);
@@ -963,7 +963,7 @@ impl Gen for ImportDeclaration<'_> {
 }
 
 impl Gen for WithClause<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         self.attributes_keyword.print(p, ctx);
         p.print_soft_space();
@@ -980,23 +980,23 @@ impl Gen for WithClause<'_> {
 }
 
 impl Gen for ImportAttribute<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         match &self.key {
             ImportAttributeKey::Identifier(identifier) => {
                 p.print_str(identifier.name.as_str());
             }
             ImportAttributeKey::StringLiteral(literal) => {
-                p.print_quoted_utf16(&literal.value, false);
+                p.print_string_literal(literal, false);
             }
         };
         p.print_colon();
         p.print_soft_space();
-        p.print_quoted_utf16(&self.value.value, false);
+        p.print_string_literal(&self.value, false);
     }
 }
 
 impl Gen for ExportNamedDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
 
@@ -1057,7 +1057,7 @@ impl Gen for ExportNamedDeclaration<'_> {
                 p.print_soft_space();
                 p.print_str("from");
                 p.print_soft_space();
-                p.print_quoted_utf16(&source.value, false);
+                p.print_string_literal(source, false);
             }
             p.print_semicolon_after_statement();
         }
@@ -1065,7 +1065,7 @@ impl Gen for ExportNamedDeclaration<'_> {
 }
 
 impl Gen for TSExportAssignment<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         p.print_str("export = ");
         self.expression.print_expr(p, Precedence::Lowest, ctx);
@@ -1074,7 +1074,7 @@ impl Gen for TSExportAssignment<'_> {
 }
 
 impl Gen for TSNamespaceExportDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         p.print_str("export as namespace ");
         self.id.print(p, ctx);
@@ -1094,7 +1094,7 @@ fn get_module_export_name<'a>(
 }
 
 impl Gen for ExportSpecifier<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.export_kind.is_type() {
             p.print_str("type ");
         }
@@ -1109,17 +1109,17 @@ impl Gen for ExportSpecifier<'_> {
 }
 
 impl Gen for ModuleExportName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::IdentifierName(ident) => ident.print(p, ctx),
             Self::IdentifierReference(ident) => ident.print(p, ctx),
-            Self::StringLiteral(literal) => p.print_quoted_utf16(&literal.value, false),
+            Self::StringLiteral(literal) => p.print_string_literal(literal, false),
         };
     }
 }
 
 impl Gen for ExportAllDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("export");
@@ -1141,7 +1141,7 @@ impl Gen for ExportAllDeclaration<'_> {
 
         p.print_str("from");
         p.print_soft_space();
-        p.print_quoted_utf16(&self.source.value, false);
+        p.print_string_literal(&self.source, false);
         if let Some(with_clause) = &self.with_clause {
             p.print_hard_space();
             with_clause.print(p, ctx);
@@ -1151,7 +1151,7 @@ impl Gen for ExportAllDeclaration<'_> {
 }
 
 impl Gen for ExportDefaultDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("export default ");
@@ -1159,7 +1159,7 @@ impl Gen for ExportDefaultDeclaration<'_> {
     }
 }
 impl Gen for ExportDefaultDeclarationKind<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::FunctionDeclaration(fun) => {
                 fun.print(p, ctx);
@@ -1235,7 +1235,7 @@ impl GenExpr for ParenthesizedExpression<'_> {
 }
 
 impl Gen for IdentifierReference<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         let name = p.get_identifier_reference_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
@@ -1244,7 +1244,7 @@ impl Gen for IdentifierReference<'_> {
 }
 
 impl Gen for IdentifierName<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
         p.print_str(self.name.as_str());
@@ -1252,7 +1252,7 @@ impl Gen for IdentifierName<'_> {
 }
 
 impl Gen for BindingIdentifier<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         let name = p.get_binding_identifier_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
@@ -1261,7 +1261,7 @@ impl Gen for BindingIdentifier<'_> {
 }
 
 impl Gen for LabelIdentifier<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
         p.print_str(self.name.as_str());
@@ -1269,7 +1269,7 @@ impl Gen for LabelIdentifier<'_> {
 }
 
 impl Gen for BooleanLiteral {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_space_before_identifier();
         p.print_str(self.as_str());
@@ -1277,7 +1277,7 @@ impl Gen for BooleanLiteral {
 }
 
 impl Gen for NullLiteral {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
         p.print_str("null");
@@ -1342,7 +1342,7 @@ impl GenExpr for BigIntLiteral<'_> {
 }
 
 impl Gen for RegExpLiteral<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         let last = p.last_byte();
         let pattern_text = self.regex.pattern.source_text(p.source_text);
@@ -1361,15 +1361,13 @@ impl Gen for RegExpLiteral<'_> {
 }
 
 impl Gen for StringLiteral<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span);
-        let s = self.value.as_str();
-        p.print_quoted_utf16(s, /* allow_backtick */ true);
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.print_string_literal(self, true);
     }
 }
 
 impl Gen for ThisExpression {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
         p.print_str("this");
@@ -1476,7 +1474,7 @@ impl GenExpr for CallExpression<'_> {
 }
 
 impl Gen for Argument<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::SpreadElement(elem) => elem.print(p, ctx),
             _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
@@ -1485,7 +1483,7 @@ impl Gen for Argument<'_> {
 }
 
 impl Gen for ArrayExpressionElement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::SpreadElement(elem) => elem.print(p, ctx),
             Self::Elision(_span) => {}
@@ -1495,7 +1493,7 @@ impl Gen for ArrayExpressionElement<'_> {
 }
 
 impl Gen for SpreadElement<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ellipsis();
         self.argument.print_expr(p, Precedence::Comma, Context::empty());
@@ -1503,7 +1501,7 @@ impl Gen for SpreadElement<'_> {
 }
 
 impl Gen for ArrayExpression<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let is_multi_line = self.elements.len() > 2;
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
@@ -1573,7 +1571,7 @@ impl GenExpr for ObjectExpression<'_> {
 }
 
 impl Gen for ObjectPropertyKind<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::ObjectProperty(prop) => prop.print(p, ctx),
             Self::SpreadProperty(elem) => elem.print(p, ctx),
@@ -1582,7 +1580,7 @@ impl Gen for ObjectPropertyKind<'_> {
 }
 
 impl Gen for ObjectProperty<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if let Expression::FunctionExpression(func) = &self.value {
             p.add_source_mapping(self.span);
             let is_accessor = match &self.kind {
@@ -1671,7 +1669,7 @@ impl Gen for ObjectProperty<'_> {
 }
 
 impl Gen for PropertyKey<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::StaticIdentifier(ident) => ident.print(p, ctx),
             Self::PrivateIdentifier(ident) => ident.print(p, ctx),
@@ -1888,7 +1886,7 @@ impl GenExpr for AssignmentExpression<'_> {
 }
 
 impl Gen for AssignmentTarget<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_simple_assignment_target!(Self) => {
                 self.to_simple_assignment_target().print_expr(
@@ -1921,7 +1919,7 @@ impl GenExpr for SimpleAssignmentTarget<'_> {
 }
 
 impl Gen for AssignmentTargetPattern<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::ArrayAssignmentTarget(target) => target.print(p, ctx),
             Self::ObjectAssignmentTarget(target) => target.print(p, ctx),
@@ -1930,7 +1928,7 @@ impl Gen for AssignmentTargetPattern<'_> {
 }
 
 impl Gen for ArrayAssignmentTarget<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
         for (index, item) in self.elements.iter().enumerate() {
@@ -1958,7 +1956,7 @@ impl Gen for ArrayAssignmentTarget<'_> {
 }
 
 impl Gen for ObjectAssignmentTarget<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
         p.print_list(&self.properties, ctx);
@@ -1975,7 +1973,7 @@ impl Gen for ObjectAssignmentTarget<'_> {
 }
 
 impl Gen for AssignmentTargetMaybeDefault<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_assignment_target!(Self) => self.to_assignment_target().print(p, ctx),
             Self::AssignmentTargetWithDefault(target) => target.print(p, ctx),
@@ -1984,7 +1982,7 @@ impl Gen for AssignmentTargetMaybeDefault<'_> {
 }
 
 impl Gen for AssignmentTargetWithDefault<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.binding.print(p, ctx);
         p.print_soft_space();
         p.print_equal();
@@ -1994,7 +1992,7 @@ impl Gen for AssignmentTargetWithDefault<'_> {
 }
 
 impl Gen for AssignmentTargetProperty<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::AssignmentTargetPropertyIdentifier(ident) => ident.print(p, ctx),
             Self::AssignmentTargetPropertyProperty(prop) => prop.print(p, ctx),
@@ -2003,7 +2001,7 @@ impl Gen for AssignmentTargetProperty<'_> {
 }
 
 impl Gen for AssignmentTargetPropertyIdentifier<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let ident_name = p.get_identifier_reference_name(&self.binding);
         if ident_name == self.binding.name.as_str() {
             self.binding.print(p, ctx);
@@ -2024,7 +2022,7 @@ impl Gen for AssignmentTargetPropertyIdentifier<'_> {
 }
 
 impl Gen for AssignmentTargetPropertyProperty<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let omit_key = if p.options.minify {
             let key_name = match &self.name {
                 PropertyKey::StaticIdentifier(ident) => Some(&ident.name),
@@ -2065,7 +2063,7 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
 }
 
 impl Gen for AssignmentTargetRest<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_ellipsis();
         self.target.print(p, ctx);
     }
@@ -2135,7 +2133,7 @@ impl GenExpr for ImportExpression<'_> {
 }
 
 impl Gen for TemplateLiteral<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_ascii_byte(b'`');
         let mut expressions = self.expressions.iter();
 
@@ -2155,7 +2153,7 @@ impl Gen for TemplateLiteral<'_> {
 }
 
 impl Gen for TaggedTemplateExpression<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         self.tag.print_expr(p, Precedence::Postfix, Context::empty());
         if let Some(type_parameters) = &self.type_parameters {
@@ -2166,7 +2164,7 @@ impl Gen for TaggedTemplateExpression<'_> {
 }
 
 impl Gen for Super {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
         p.print_str("super");
@@ -2297,7 +2295,7 @@ impl GenExpr for TSTypeAssertion<'_> {
 }
 
 impl Gen for MetaProperty<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
         self.meta.print(p, ctx);
@@ -2307,7 +2305,7 @@ impl Gen for MetaProperty<'_> {
 }
 
 impl Gen for Class<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
@@ -2351,7 +2349,7 @@ impl Gen for Class<'_> {
 }
 
 impl Gen for ClassBody<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
             for item in &self.body {
                 p.print_semicolon_if_needed();
@@ -2364,7 +2362,7 @@ impl Gen for ClassBody<'_> {
 }
 
 impl Gen for ClassElement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::StaticBlock(elem) => {
                 elem.print(p, ctx);
@@ -2391,14 +2389,14 @@ impl Gen for ClassElement<'_> {
 }
 
 impl Gen for JSXIdentifier<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping_for_name(self.span, &self.name);
         p.print_str(self.name.as_str());
     }
 }
 
 impl Gen for JSXMemberExpressionObject<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::IdentifierReference(ident) => ident.print(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
@@ -2408,7 +2406,7 @@ impl Gen for JSXMemberExpressionObject<'_> {
 }
 
 impl Gen for JSXMemberExpression<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.object.print(p, ctx);
         p.print_ascii_byte(b'.');
         self.property.print(p, ctx);
@@ -2416,7 +2414,7 @@ impl Gen for JSXMemberExpression<'_> {
 }
 
 impl Gen for JSXElementName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(identifier) => identifier.print(p, ctx),
             Self::IdentifierReference(identifier) => identifier.print(p, ctx),
@@ -2428,7 +2426,7 @@ impl Gen for JSXElementName<'_> {
 }
 
 impl Gen for JSXNamespacedName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.namespace.print(p, ctx);
         p.print_colon();
         self.property.print(p, ctx);
@@ -2436,7 +2434,7 @@ impl Gen for JSXNamespacedName<'_> {
 }
 
 impl Gen for JSXAttributeName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(ident) => ident.print(p, ctx),
             Self::NamespacedName(namespaced_name) => namespaced_name.print(p, ctx),
@@ -2445,7 +2443,7 @@ impl Gen for JSXAttributeName<'_> {
 }
 
 impl Gen for JSXAttribute<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.name.print(p, ctx);
         if let Some(value) = &self.value {
             p.print_equal();
@@ -2455,11 +2453,11 @@ impl Gen for JSXAttribute<'_> {
 }
 
 impl Gen for JSXEmptyExpression {
-    fn gen(&self, _: &mut Codegen, _ctx: Context) {}
+    fn r#gen(&self, _: &mut Codegen, _ctx: Context) {}
 }
 
 impl Gen for JSXExpression<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::EmptyExpression(expr) => expr.print(p, ctx),
             _ => p.print_expression(self.to_expression()),
@@ -2468,7 +2466,7 @@ impl Gen for JSXExpression<'_> {
 }
 
 impl Gen for JSXExpressionContainer<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_ascii_byte(b'{');
         self.expression.print(p, ctx);
         p.print_ascii_byte(b'}');
@@ -2476,7 +2474,7 @@ impl Gen for JSXExpressionContainer<'_> {
 }
 
 impl Gen for JSXAttributeValue<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
@@ -2492,7 +2490,7 @@ impl Gen for JSXAttributeValue<'_> {
 }
 
 impl Gen for JSXSpreadAttribute<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("{...");
         self.argument.print_expr(p, Precedence::Comma, Context::empty());
         p.print_ascii_byte(b'}');
@@ -2500,7 +2498,7 @@ impl Gen for JSXSpreadAttribute<'_> {
 }
 
 impl Gen for JSXAttributeItem<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Attribute(attr) => attr.print(p, ctx),
             Self::SpreadAttribute(spread_attr) => spread_attr.print(p, ctx),
@@ -2509,7 +2507,7 @@ impl Gen for JSXAttributeItem<'_> {
 }
 
 impl Gen for JSXOpeningElement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'<');
         self.name.print(p, ctx);
@@ -2533,7 +2531,7 @@ impl Gen for JSXOpeningElement<'_> {
 }
 
 impl Gen for JSXClosingElement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_str("</");
         self.name.print(p, ctx);
@@ -2542,7 +2540,7 @@ impl Gen for JSXClosingElement<'_> {
 }
 
 impl Gen for JSXElement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.opening_element.print(p, ctx);
         for child in &self.children {
             child.print(p, ctx);
@@ -2554,35 +2552,35 @@ impl Gen for JSXElement<'_> {
 }
 
 impl Gen for JSXOpeningFragment {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_str("<>");
     }
 }
 
 impl Gen for JSXClosingFragment {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_str("</>");
     }
 }
 
 impl Gen for JSXText<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_str(self.value.as_str());
     }
 }
 
 impl Gen for JSXSpreadChild<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("...");
         p.print_expression(&self.expression);
     }
 }
 
 impl Gen for JSXChild<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
@@ -2594,7 +2592,7 @@ impl Gen for JSXChild<'_> {
 }
 
 impl Gen for JSXFragment<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.opening_fragment.print(p, ctx);
         for child in &self.children {
             child.print(p, ctx);
@@ -2604,7 +2602,7 @@ impl Gen for JSXFragment<'_> {
 }
 
 impl Gen for StaticBlock<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_str("static");
         p.print_soft_space();
@@ -2619,7 +2617,7 @@ impl Gen for StaticBlock<'_> {
 }
 
 impl Gen for MethodDefinition<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
@@ -2704,7 +2702,7 @@ impl Gen for MethodDefinition<'_> {
 }
 
 impl Gen for PropertyDefinition<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
@@ -2761,7 +2759,7 @@ impl Gen for PropertyDefinition<'_> {
 }
 
 impl Gen for AccessorProperty<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
@@ -2811,7 +2809,7 @@ impl Gen for AccessorProperty<'_> {
 }
 
 impl Gen for PrivateIdentifier<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping_for_name(self.span, &self.name);
         p.print_ascii_byte(b'#');
         p.print_str(self.name.as_str());
@@ -2819,7 +2817,7 @@ impl Gen for PrivateIdentifier<'_> {
 }
 
 impl Gen for BindingPattern<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.kind.print(p, ctx);
         if self.optional {
             p.print_str("?");
@@ -2833,7 +2831,7 @@ impl Gen for BindingPattern<'_> {
 }
 
 impl Gen for BindingPatternKind<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             BindingPatternKind::BindingIdentifier(ident) => ident.print(p, ctx),
             BindingPatternKind::ObjectPattern(pattern) => pattern.print(p, ctx),
@@ -2844,7 +2842,7 @@ impl Gen for BindingPatternKind<'_> {
 }
 
 impl Gen for ObjectPattern<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
         if !self.is_empty() {
@@ -2866,7 +2864,7 @@ impl Gen for ObjectPattern<'_> {
 }
 
 impl Gen for BindingProperty<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         if self.computed {
             p.print_ascii_byte(b'[');
@@ -2908,7 +2906,7 @@ impl Gen for BindingProperty<'_> {
 }
 
 impl Gen for BindingRestElement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ellipsis();
         self.argument.print(p, ctx);
@@ -2916,7 +2914,7 @@ impl Gen for BindingRestElement<'_> {
 }
 
 impl Gen for ArrayPattern<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
         for (index, item) in self.elements.iter().enumerate() {
@@ -2941,7 +2939,7 @@ impl Gen for ArrayPattern<'_> {
 }
 
 impl Gen for AssignmentPattern<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.left.print(p, ctx);
         p.print_soft_space();
         p.print_equal();
@@ -2951,7 +2949,7 @@ impl Gen for AssignmentPattern<'_> {
 }
 
 impl Gen for Decorator<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         fn need_wrap(expr: &Expression) -> bool {
             match expr {
                 // "@foo"
@@ -2978,7 +2976,7 @@ impl Gen for Decorator<'_> {
 }
 
 impl Gen for TSClassImplements<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.expression.print(p, ctx);
         if let Some(type_parameters) = self.type_parameters.as_ref() {
             type_parameters.print(p, ctx);
@@ -2987,7 +2985,7 @@ impl Gen for TSClassImplements<'_> {
 }
 
 impl Gen for TSTypeParameterDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let is_multi_line = self.params.len() >= 2;
         p.print_ascii_byte(b'<');
         if is_multi_line {
@@ -3019,13 +3017,13 @@ impl Gen for TSTypeParameterDeclaration<'_> {
 }
 
 impl Gen for TSTypeAnnotation<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.type_annotation.print(p, ctx);
     }
 }
 
 impl Gen for TSType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let ctx = ctx.with_typescript();
         match self {
             Self::TSFunctionType(ty) => ty.print(p, ctx),
@@ -3042,7 +3040,6 @@ impl Gen for TSType<'_> {
             Self::TSNamedTupleMember(ty) => ty.print(p, ctx),
             Self::TSLiteralType(ty) => ty.literal.print(p, ctx),
             Self::TSImportType(ty) => ty.print(p, ctx),
-            Self::TSQualifiedName(ty) => ty.print(p, ctx),
             Self::TSAnyKeyword(_) => p.print_str("any"),
             Self::TSBigIntKeyword(_) => p.print_str("bigint"),
             Self::TSBooleanKeyword(_) => p.print_str("boolean"),
@@ -3071,14 +3068,14 @@ impl Gen for TSType<'_> {
 }
 
 impl Gen for TSArrayType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.element_type.print(p, ctx);
         p.print_str("[]");
     }
 }
 
 impl Gen for TSTupleType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("[");
         p.print_list(&self.element_types, ctx);
         p.print_str("]");
@@ -3086,7 +3083,7 @@ impl Gen for TSTupleType<'_> {
 }
 
 impl Gen for TSUnionType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.types.len() == 1 {
             self.types[0].print(p, ctx);
             return;
@@ -3103,7 +3100,7 @@ impl Gen for TSUnionType<'_> {
 }
 
 impl Gen for TSParenthesizedType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_ascii_byte(b'(');
         self.type_annotation.print(p, ctx);
         p.print_ascii_byte(b')');
@@ -3111,7 +3108,7 @@ impl Gen for TSParenthesizedType<'_> {
 }
 
 impl Gen for TSIntersectionType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.types.len() == 1 {
             self.types[0].print(p, ctx);
             return;
@@ -3128,7 +3125,7 @@ impl Gen for TSIntersectionType<'_> {
 }
 
 impl Gen for TSConditionalType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.check_type.print(p, ctx);
         p.print_str(" extends ");
         self.extends_type.print(p, ctx);
@@ -3140,14 +3137,14 @@ impl Gen for TSConditionalType<'_> {
 }
 
 impl Gen for TSInferType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("infer ");
         self.type_parameter.print(p, ctx);
     }
 }
 
 impl Gen for TSIndexedAccessType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.object_type.print(p, ctx);
         p.print_str("[");
         self.index_type.print(p, ctx);
@@ -3156,7 +3153,7 @@ impl Gen for TSIndexedAccessType<'_> {
 }
 
 impl Gen for TSMappedType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("{");
         p.print_soft_space();
         match self.readonly {
@@ -3210,7 +3207,7 @@ impl Gen for TSMappedType<'_> {
 }
 
 impl Gen for TSQualifiedName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.left.print(p, ctx);
         p.print_str(".");
         self.right.print(p, ctx);
@@ -3218,7 +3215,7 @@ impl Gen for TSQualifiedName<'_> {
 }
 
 impl Gen for TSTypeOperator<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self.operator {
             TSTypeOperatorOperator::Keyof => {
                 p.print_str("keyof ");
@@ -3235,7 +3232,7 @@ impl Gen for TSTypeOperator<'_> {
 }
 
 impl Gen for TSTypePredicate<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.asserts {
             p.print_str("asserts ");
         }
@@ -3255,7 +3252,7 @@ impl Gen for TSTypePredicate<'_> {
 }
 
 impl Gen for TSTypeReference<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.type_name.print(p, ctx);
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
@@ -3264,7 +3261,7 @@ impl Gen for TSTypeReference<'_> {
 }
 
 impl Gen for JSDocNullableType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.postfix {
             self.type_annotation.print(p, ctx);
             p.print_str("?");
@@ -3276,7 +3273,7 @@ impl Gen for JSDocNullableType<'_> {
 }
 
 impl Gen for JSDocNonNullableType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.postfix {
             self.type_annotation.print(p, ctx);
             p.print_str("!");
@@ -3288,7 +3285,7 @@ impl Gen for JSDocNonNullableType<'_> {
 }
 
 impl Gen for TSTemplateLiteralType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("`");
         for (index, item) in self.quasis.iter().enumerate() {
             if index != 0 {
@@ -3305,7 +3302,7 @@ impl Gen for TSTemplateLiteralType<'_> {
 }
 
 impl Gen for TSTypeLiteral<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for item in &self.members {
                 p.print_leading_comments(item.span().start);
@@ -3321,7 +3318,7 @@ impl Gen for TSTypeLiteral<'_> {
 }
 
 impl Gen for TSTypeName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::IdentifierReference(ident) => {
                 ident.print(p, ctx);
@@ -3336,13 +3333,11 @@ impl Gen for TSTypeName<'_> {
 }
 
 impl Gen for TSLiteral<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::BooleanLiteral(decl) => decl.print(p, ctx),
-            Self::NullLiteral(decl) => decl.print(p, ctx),
             Self::NumericLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
             Self::BigIntLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
-            Self::RegExpLiteral(decl) => decl.print(p, ctx),
             Self::StringLiteral(decl) => decl.print(p, ctx),
             Self::TemplateLiteral(decl) => decl.print(p, ctx),
             Self::UnaryExpression(decl) => decl.print_expr(p, Precedence::Comma, ctx),
@@ -3351,7 +3346,7 @@ impl Gen for TSLiteral<'_> {
 }
 
 impl Gen for TSTypeParameter<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.r#const {
             p.print_str("const ");
         }
@@ -3368,7 +3363,7 @@ impl Gen for TSTypeParameter<'_> {
 }
 
 impl Gen for TSFunctionType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }
@@ -3390,7 +3385,7 @@ impl Gen for TSFunctionType<'_> {
 }
 
 impl Gen for TSThisParameter<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("this");
         if let Some(type_annotation) = &self.type_annotation {
             p.print_str(": ");
@@ -3400,7 +3395,7 @@ impl Gen for TSThisParameter<'_> {
 }
 
 impl Gen for TSSignature<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::TSIndexSignature(signature) => signature.print(p, ctx),
             Self::TSPropertySignature(signature) => signature.r#gen(p, ctx),
@@ -3457,7 +3452,7 @@ impl Gen for TSSignature<'_> {
                             p.print_str(key.name.as_str());
                         }
                         PropertyKey::StringLiteral(key) => {
-                            p.print_quoted_utf16(&key.value, false);
+                            p.print_string_literal(key, false);
                         }
                         key => {
                             key.to_expression().print_expr(p, Precedence::Comma, ctx);
@@ -3491,7 +3486,7 @@ impl Gen for TSSignature<'_> {
 }
 
 impl Gen for TSPropertySignature<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.readonly {
             p.print_str("readonly ");
         }
@@ -3508,7 +3503,7 @@ impl Gen for TSPropertySignature<'_> {
                     p.print_str(key.name.as_str());
                 }
                 PropertyKey::StringLiteral(key) => {
-                    p.print_quoted_utf16(&key.value, false);
+                    p.print_string_literal(key, false);
                 }
                 key => {
                     key.to_expression().print_expr(p, Precedence::Comma, ctx);
@@ -3527,7 +3522,7 @@ impl Gen for TSPropertySignature<'_> {
 }
 
 impl Gen for TSTypeQuery<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("typeof ");
         self.expr_name.print(p, ctx);
         if let Some(type_params) = &self.type_parameters {
@@ -3537,7 +3532,7 @@ impl Gen for TSTypeQuery<'_> {
 }
 
 impl Gen for TSTypeQueryExprName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),
             Self::TSImportType(decl) => decl.print(p, ctx),
@@ -3546,7 +3541,7 @@ impl Gen for TSTypeQueryExprName<'_> {
 }
 
 impl Gen for TSImportType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.is_type_of {
             p.print_str("typeof ");
         }
@@ -3568,7 +3563,7 @@ impl Gen for TSImportType<'_> {
 }
 
 impl Gen for TSImportAttributes<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_ascii_byte(b'{');
         p.print_soft_space();
         self.attributes_keyword.print(p, ctx);
@@ -3585,7 +3580,7 @@ impl Gen for TSImportAttributes<'_> {
 }
 
 impl Gen for TSImportAttribute<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.name.print(p, ctx);
         p.print_str(": ");
         self.value.print_expr(p, Precedence::Member, ctx);
@@ -3593,18 +3588,18 @@ impl Gen for TSImportAttribute<'_> {
 }
 
 impl Gen for TSImportAttributeName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             TSImportAttributeName::Identifier(ident) => ident.print(p, ctx),
             TSImportAttributeName::StringLiteral(literal) => {
-                p.print_quoted_utf16(&literal.value, false);
+                p.print_string_literal(literal, false);
             }
         }
     }
 }
 
 impl Gen for TSTypeParameterInstantiation<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("<");
         p.print_list(&self.params, ctx);
         p.print_str(">");
@@ -3612,7 +3607,7 @@ impl Gen for TSTypeParameterInstantiation<'_> {
 }
 
 impl Gen for TSIndexSignature<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.readonly {
             p.print_str("readonly ");
         }
@@ -3634,7 +3629,7 @@ impl Gen for TSIndexSignature<'_> {
 }
 
 impl Gen for TSTupleElement<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_ts_type!(TSTupleElement) => self.to_ts_type().print(p, ctx),
             TSTupleElement::TSOptionalType(ts_type) => {
@@ -3650,7 +3645,7 @@ impl Gen for TSTupleElement<'_> {
 }
 
 impl Gen for TSNamedTupleMember<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.label.print(p, ctx);
         if self.optional {
             p.print_str("?");
@@ -3662,7 +3657,7 @@ impl Gen for TSNamedTupleMember<'_> {
 }
 
 impl Gen for TSModuleDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {
             p.print_str("declare ");
         }
@@ -3699,16 +3694,16 @@ impl Gen for TSModuleDeclaration<'_> {
 }
 
 impl Gen for TSModuleDeclarationName<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => p.print_quoted_utf16(&s.value, false),
+            Self::StringLiteral(s) => p.print_string_literal(s, false),
         }
     }
 }
 
 impl Gen for TSModuleBlock<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let is_empty = self.directives.is_empty() && self.body.is_empty();
         p.print_curly_braces(self.span, is_empty, |p| {
             for directive in &self.directives {
@@ -3724,7 +3719,7 @@ impl Gen for TSModuleBlock<'_> {
 }
 
 impl Gen for TSTypeAliasDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {
             p.print_str("declare ");
         }
@@ -3742,7 +3737,7 @@ impl Gen for TSTypeAliasDeclaration<'_> {
 }
 
 impl Gen for TSInterfaceDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("interface");
         p.print_hard_space();
         self.id.print(p, ctx);
@@ -3769,7 +3764,7 @@ impl Gen for TSInterfaceDeclaration<'_> {
 }
 
 impl Gen for TSInterfaceHeritage<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.expression.print_expr(p, Precedence::Call, ctx);
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
@@ -3778,7 +3773,7 @@ impl Gen for TSInterfaceHeritage<'_> {
 }
 
 impl Gen for TSEnumDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         if self.declare {
             p.print_str("declare ");
@@ -3803,10 +3798,10 @@ impl Gen for TSEnumDeclaration<'_> {
 }
 
 impl Gen for TSEnumMember<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.id {
             TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
-            TSEnumMemberName::String(decl) => p.print_quoted_utf16(&decl.value, false),
+            TSEnumMemberName::String(decl) => p.print_string_literal(decl, false),
         }
         if let Some(init) = &self.initializer {
             p.print_soft_space();
@@ -3818,7 +3813,7 @@ impl Gen for TSEnumMember<'_> {
 }
 
 impl Gen for TSConstructorType<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.r#abstract {
             p.print_str("abstract ");
         }
@@ -3837,7 +3832,7 @@ impl Gen for TSConstructorType<'_> {
 }
 
 impl Gen for TSImportEqualsDeclaration<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("import ");
         self.id.print(p, ctx);
         p.print_str(" = ");
@@ -3846,11 +3841,11 @@ impl Gen for TSImportEqualsDeclaration<'_> {
 }
 
 impl Gen for TSModuleReference<'_> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::ExternalModuleReference(decl) => {
                 p.print_str("require(");
-                p.print_quoted_utf16(&decl.expression.value, false);
+                p.print_string_literal(&decl.expression, false);
                 p.print_str(")");
             }
             match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),

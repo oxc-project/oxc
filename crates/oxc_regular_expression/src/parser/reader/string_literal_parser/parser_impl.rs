@@ -4,7 +4,7 @@ use oxc_span::Span;
 use crate::parser::reader::string_literal_parser::{
     ast,
     characters::{
-        is_line_terminator, is_non_escape_character, is_single_escape_character, CR, LF, LS, PS,
+        CR, LF, LS, PS, is_line_terminator, is_non_escape_character, is_single_escape_character,
     },
     diagnostics,
     options::Options,
@@ -201,7 +201,7 @@ impl Parser {
         if let Some(cp) = self.parse_character_escape_sequence() {
             return Ok(Some(cp));
         }
-        if self.peek() == Some('0') && self.peek2().map_or(true, |ch| !ch.is_ascii_digit()) {
+        if self.peek() == Some('0') && self.peek2().is_none_or(|ch| !ch.is_ascii_digit()) {
             self.advance();
             return Ok(Some(0x00));
         }
@@ -517,16 +517,16 @@ impl Parser {
         self.offset
     }
 
-    fn peek_nth(&mut self, n: usize) -> Option<char> {
+    fn peek_nth(&self, n: usize) -> Option<char> {
         let nth = self.index + n;
         self.chars.get(nth).copied()
     }
 
-    fn peek(&mut self) -> Option<char> {
+    fn peek(&self) -> Option<char> {
         self.peek_nth(0)
     }
 
-    fn peek2(&mut self) -> Option<char> {
+    fn peek2(&self) -> Option<char> {
         self.peek_nth(1)
     }
 }

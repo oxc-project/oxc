@@ -1,17 +1,13 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{array, group, ir::Doc, text, Format, Prettier};
+use crate::{ArrowParens, Format, Prettier, array, group, ir::Doc, text};
 
 pub fn print_arrow_function<'a>(
     p: &mut Prettier<'a>,
     expr: &ArrowFunctionExpression<'a>,
 ) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
-
-    if !p.options.semi && p.options.arrow_parens.is_always() {
-        parts.push(text!(";"));
-    }
 
     if expr.r#async {
         parts.push(text!("async "));
@@ -44,4 +40,33 @@ pub fn print_arrow_function<'a>(
     }
 
     array!(p, parts)
+}
+
+pub fn should_print_params_without_parens<'a>(
+    p: &Prettier<'a>,
+    expr: &ArrowFunctionExpression<'a>,
+) -> bool {
+    match p.options.arrow_parens {
+        ArrowParens::Always => false,
+        ArrowParens::Avoid => {
+            // TODO: hasComment(node, CommentCheckFlags.Dangling) &&
+            let expr_has_dangling_comment = false;
+            if (expr.type_parameters.is_some() || expr_has_dangling_comment) {
+                return false;
+            }
+
+            if expr.params.rest.is_some() || expr.params.items.len() != 1 {
+                return false;
+            }
+            let first_param_pat =
+                &expr.params.items.first().expect("There should be at least one param").pattern;
+
+            // TODO: hasComment(firstParam)
+            let first_param_has_comment = false;
+            first_param_pat.kind.is_binding_identifier()
+                && first_param_pat.type_annotation.is_none()
+                && !first_param_pat.optional
+                && !first_param_has_comment
+        }
+    }
 }

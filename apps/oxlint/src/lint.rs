@@ -9,10 +9,11 @@ use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind,
-    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions,
+    LintService, LintServiceOptions, Linter, Oxlintrc, loader::LINT_PARTIAL_LOADER_EXT,
 };
 use oxc_span::VALID_EXTENSIONS;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use crate::{
@@ -55,6 +56,7 @@ impl Runner for LintRunner {
             fix_options,
             enable_plugins,
             misc_options,
+            experimental_nested_config,
             ..
         } = self.options;
 
@@ -168,6 +170,54 @@ impl Runner for LintRunner {
 
         let number_of_files = paths.len();
 
+        // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
+        // per-file or per-directory basis, to avoid calling `.parent()` on every path.
+        let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
+        let mut nested_configs = FxHashMap::<PathBuf, ConfigStore>::default();
+
+        if experimental_nested_config {
+            // get all of the unique directories among the paths to use for search for
+            // oxlint config files in those directories
+            // e.g. `/some/file.js` and `/some/other/file.js` would both result in `/some`
+            let mut directories = FxHashSet::default();
+            for path in &paths {
+                if let Some(directory) = path.parent() {
+                    // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
+                    // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
+                    directories.insert(directory);
+                }
+            }
+            for directory in directories {
+                if let Ok(config) = Self::find_oxlint_config_in_directory(directory) {
+                    nested_oxlintrc.insert(directory, config);
+                }
+            }
+
+            // iterate over each config and build the ConfigStore
+            for (dir, oxlintrc) in nested_oxlintrc {
+                // TODO(perf): figure out if we can avoid cloning `filter`
+                let builder =
+                    ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter.clone());
+                match builder.build() {
+                    Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
+                    Err(diagnostic) => {
+                        let handler = GraphicalReportHandler::new();
+                        let mut err = String::new();
+                        handler.render_report(&mut err, &diagnostic).unwrap();
+                        stdout
+                            .write_all(
+                                format!("Failed to parse configuration file.\n{err}\n").as_bytes(),
+                            )
+                            .or_else(Self::check_for_writer_error)
+                            .unwrap();
+                        stdout.flush().unwrap();
+
+                        return CliRunResult::InvalidOptionConfig;
+                    }
+                };
+            }
+        }
+
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
 
         let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
@@ -209,7 +259,7 @@ impl Runner for LintRunner {
 
                 if fs::write(Self::DEFAULT_OXLINTRC, configuration).is_ok() {
                     stdout
-                        .write_all("Configuration file created\n".as_bytes())
+                        .write_all(b"Configuration file created\n")
                         .or_else(Self::check_for_writer_error)
                         .unwrap();
                     stdout.flush().unwrap();
@@ -245,8 +295,11 @@ impl Runner for LintRunner {
             }
         };
 
-        let linter =
-            Linter::new(LintOptions::default(), lint_config).with_fix(fix_options.fix_kind());
+        let linter = if experimental_nested_config {
+            Linter::new_with_nested_configs(LintOptions::default(), lint_config, nested_configs)
+        } else {
+            Linter::new(LintOptions::default(), lint_config).with_fix(fix_options.fix_kind())
+        };
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -340,13 +393,17 @@ impl LintRunner {
                     ));
                 }
                 Err(InvalidFilterKind::PluginMissing(filter)) => {
-                    return Err((CliRunResult::InvalidOptionSeverityWithoutPluginName, format!(
+                    return Err((
+                        CliRunResult::InvalidOptionSeverityWithoutPluginName,
+                        format!(
                             "Failed to {severity} filter {filter}: Plugin name is missing. Expected <plugin>/<rule>\n"
                         ),
                     ));
                 }
                 Err(InvalidFilterKind::RuleMissing(filter)) => {
-                    return Err((CliRunResult::InvalidOptionSeverityWithoutRuleName, format!(
+                    return Err((
+                        CliRunResult::InvalidOptionSeverityWithoutRuleName,
+                        format!(
                             "Failed to {severity} filter {filter}: Rule name is missing. Expected <plugin>/<rule>\n"
                         ),
                     ));
@@ -379,6 +436,24 @@ impl LintRunner {
         // or return the default configuration, when no valid file is found
         let config_path = cwd.join(Self::DEFAULT_OXLINTRC);
         Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
+    }
+
+    /// Looks in a directory for an oxlint config file, returns the oxlint config if it exists
+    /// and returns `Err` if none exists or the file is invalid. Does not apply the default
+    /// config file.
+    fn find_oxlint_config_in_directory(dir: &Path) -> Result<Oxlintrc, String> {
+        let possible_config_path = dir.join(Self::DEFAULT_OXLINTRC);
+        if possible_config_path.is_file() {
+            Oxlintrc::from_file(&possible_config_path).map_err(|e| {
+                let handler = GraphicalReportHandler::new();
+                let mut err = String::new();
+                handler.render_report(&mut err, &e).unwrap();
+                err
+            })
+        } else {
+            // TODO: Better error handling here.
+            Err("No oxlint config file found".to_string())
+        }
     }
 
     fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
@@ -678,8 +753,12 @@ mod test {
 
     #[test]
     fn test_import_plugin_enabled_in_config() {
-        let args = &["-c", "fixtures/import/.oxlintrc.json", "fixtures/import/test.js"];
-        Tester::new().test_and_snapshot(args);
+        let args_1 = &["-c", ".oxlintrc.json", "test.js"];
+        // support import-x namespace see #8779
+        let args_2 = &["-c", ".oxlintrc-import-x.json", "test.js"];
+        Tester::new()
+            .with_cwd("fixtures/import".into())
+            .test_and_snapshot_multiple(&[args_1, args_2]);
     }
 
     #[test]
@@ -861,5 +940,11 @@ mod test {
             adjusted_patterns,
             vec![String::from("src/target"), String::from("!src/dist"), String::from("!!src/dist")]
         );
+    }
+
+    #[test]
+    fn test_nested_config() {
+        let args = &["--experimental-nested-config"];
+        Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
     }
 }

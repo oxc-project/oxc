@@ -1,12 +1,13 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXChild, JSXElement},
     AstKind,
+    ast::{JSXAttributeItem, JSXChild, JSXElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     fixer::{Fix, RuleFix},
     rule::Rule,
@@ -14,7 +15,6 @@ use crate::{
         get_element_type, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
         object_has_accessible_child,
     },
-    AstNode,
 };
 
 fn missing_content(span: Span) -> OxcDiagnostic {

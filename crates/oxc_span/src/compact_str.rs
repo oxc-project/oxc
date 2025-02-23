@@ -6,7 +6,7 @@ use std::{
 
 use compact_str::CompactString;
 #[cfg(feature = "serialize")]
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::Span;
 
@@ -21,7 +21,6 @@ pub const MAX_INLINE_LEN: usize = 16;
 /// Currently implemented as just a wrapper around [`compact_str::CompactString`],
 /// but will be reduced in size with a custom implementation later.
 #[derive(Clone, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serialize", derive(serde::Deserialize))]
 pub struct CompactStr(CompactString);
 
 impl CompactStr {
@@ -224,11 +223,16 @@ impl fmt::Display for CompactStr {
 
 #[cfg(feature = "serialize")]
 impl Serialize for CompactStr {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.as_str())
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.as_str().serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl<'de> Deserialize<'de> for CompactStr {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let compact_string = CompactString::deserialize(deserializer)?;
+        Ok(Self(compact_string))
     }
 }
 
@@ -246,8 +250,8 @@ impl schemars::JsonSchema for CompactStr {
         Cow::Borrowed("String")
     }
 
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        <&str>::json_schema(gen)
+    fn json_schema(g: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        <&str>::json_schema(g)
     }
 }
 

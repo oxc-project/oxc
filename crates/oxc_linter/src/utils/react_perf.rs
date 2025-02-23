@@ -1,17 +1,17 @@
 use std::fmt;
 
 use oxc_ast::{
+    AstKind,
     ast::{
         BindingIdentifier, BindingPattern, BindingPatternKind, Expression, JSXAttributeItem,
         JSXAttributeValue,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{context::ContextHost, rule::Rule, AstNode, LintContext};
+use crate::{AstNode, LintContext, context::ContextHost, rule::Rule};
 
 fn react_perf_inline_diagnostic(message: &'static str, attr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(message)
@@ -37,7 +37,7 @@ fn react_perf_reference_diagnostic(
     diagnostic.and_label(attr_span.label("And used here"))
 }
 
-pub(crate) trait ReactPerfRule: Sized + Default + fmt::Debug {
+pub trait ReactPerfRule: Sized + Default + fmt::Debug {
     const MESSAGE: &'static str;
 
     /// Check if an [`Expression`] violates a react perf rule. If it does,

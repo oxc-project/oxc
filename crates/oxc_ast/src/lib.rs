@@ -22,7 +22,7 @@
 //! You can obtain an AST by parsing source code with a [`Parser`] from [`oxc_parser`].
 //!
 //! ## Cargo Features
-//! * `"serde"` enables support for serde serialization
+//! * `"serialize"` enables support for serialization to ESTree JSON
 //!
 //! [`BindingIdentifier`]: ast::BindingIdentifier
 //! [`IdentifierReference`]: ast::IdentifierReference
@@ -83,7 +83,7 @@ pub use crate::{
     ast_builder::AstBuilder,
     ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
-    trivia::{comments_range, has_comments_between, CommentsRange},
+    trivia::{CommentsRange, comments_range, has_comments_between},
     visit::{Visit, VisitMut},
 };
 

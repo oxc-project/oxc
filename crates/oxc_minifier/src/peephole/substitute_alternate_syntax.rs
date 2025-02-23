@@ -1,8 +1,7 @@
 use oxc_allocator::{CloneIn, Vec};
-use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::{
-    constant_evaluation::ValueType, side_effects::MayHaveSideEffects, ToJsString, ToNumber,
-};
+use oxc_ast::{NONE, ast::*};
+use oxc_ecmascript::constant_evaluation::DetermineValueType;
+use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
 use oxc_syntax::{
@@ -32,6 +31,38 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
+    }
+
+    pub fn substitute_assignment_target_property(
+        &mut self,
+        prop: &mut AssignmentTargetProperty<'a>,
+        ctx: Ctx<'a, '_>,
+    ) {
+        self.try_compress_assignment_target_property(prop, ctx);
+    }
+
+    pub fn try_compress_assignment_target_property(
+        &mut self,
+        prop: &mut AssignmentTargetProperty<'a>,
+        ctx: Ctx<'a, '_>,
+    ) {
+        // `a: a` -> `a`
+        if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(assign_target_prop_prop) =
+            prop
+        {
+            let Some(prop_name) = assign_target_prop_prop.name.static_name() else { return };
+            let Some(binding_identifier) = assign_target_prop_prop.binding.identifier() else {
+                return;
+            };
+            if prop_name == binding_identifier.name {
+                *prop = ctx.ast.assignment_target_property_assignment_target_property_identifier(
+                    assign_target_prop_prop.span,
+                    ctx.ast.identifier_reference(assign_target_prop_prop.span, prop_name),
+                    None,
+                );
+                self.mark_current_function_as_changed();
+            }
+        }
     }
 
     pub fn substitute_binding_property(
@@ -114,7 +145,7 @@ impl<'a> PeepholeOptimizations {
                 .and_then(|name| {
                     Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
                 })
-                .or_else(|| Self::try_fold_simple_function_call(e, ctx)),
+                .or_else(|| self.try_fold_simple_function_call(e, ctx)),
             _ => None,
         } {
             *expr = folded_expr;
@@ -217,11 +248,11 @@ impl<'a> PeepholeOptimizations {
         let parent_expression_does_to_number_conversion = match parent_expression {
             Ancestor::BinaryExpressionLeft(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
-                    && ValueType::from(e.right()).is_number()
+                    && e.right().value_type(&ctx).is_number()
             }
             Ancestor::BinaryExpressionRight(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
-                    && ValueType::from(e.left()).is_number()
+                    && e.left().value_type(&ctx).is_number()
             }
             _ => false,
         };
@@ -505,7 +536,7 @@ impl<'a> PeepholeOptimizations {
         if !match argument {
             Expression::Identifier(ident) => ctx.is_identifier_undefined(ident),
             Expression::UnaryExpression(e) => {
-                e.operator.is_void() && !ctx.expression_may_have_side_effects(argument)
+                e.operator.is_void() && !argument.may_have_side_effects(&ctx)
             }
             _ => false,
         } {
@@ -547,6 +578,7 @@ impl<'a> PeepholeOptimizations {
     /// `String()` -> `''`
     /// `BigInt(1)` -> `1`
     fn try_fold_simple_function_call(
+        &self,
         call_expr: &mut CallExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
@@ -576,9 +608,9 @@ impl<'a> PeepholeOptimizations {
                 None => Some(ctx.ast.expression_boolean_literal(span, false)),
                 Some(arg) => {
                     let mut arg = ctx.ast.move_expression(arg);
-                    Self::try_fold_expr_in_boolean_context(&mut arg, ctx);
+                    self.try_fold_expr_in_boolean_context(&mut arg, ctx);
                     let arg = ctx.ast.expression_unary(span, UnaryOperator::LogicalNot, arg);
-                    Some(Self::minimize_not(span, arg, ctx))
+                    Some(self.minimize_not(span, arg, ctx))
                 }
             },
             "String" => {
@@ -603,7 +635,7 @@ impl<'a> PeepholeOptimizations {
                 span,
                 match arg {
                     None => 0.0,
-                    Some(arg) => arg.to_number()?,
+                    Some(arg) => arg.to_number(&ctx)?,
                 },
                 None,
                 NumberBase::Decimal,
@@ -740,7 +772,7 @@ impl<'a> PeepholeOptimizations {
                 arguments_len == 0
                     || (arguments_len >= 1
                         && e.arguments[0].as_expression().is_some_and(|first_argument| {
-                            let ty = ValueType::from(first_argument);
+                            let ty = first_argument.value_type(&ctx);
                             !ty.is_undetermined() && !ty.is_object()
                         }))
             }
@@ -793,7 +825,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_template_literal(t: &TemplateLiteral, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
-        t.to_js_string().map(|val| ctx.ast.expression_string_literal(t.span(), val, None))
+        t.to_js_string(&ctx).map(|val| ctx.ast.expression_string_literal(t.span(), val, None))
     }
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>
@@ -832,8 +864,8 @@ impl<'a> PeepholeOptimizations {
                     NumberBase::Decimal,
                 ));
                 self.mark_current_function_as_changed();
+                return;
             }
-            return;
         }
         if *computed {
             *computed = false;
@@ -1072,7 +1104,7 @@ impl<'a> LatePeepholeOptimizations {
         DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
     }
 
-    pub fn substitute_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: Ctx<'a, '_>) {
+    pub fn substitute_catch_clause(&self, catch: &mut CatchClause<'a>, ctx: Ctx<'a, '_>) {
         if self.target >= ESTarget::ES2019 {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
@@ -1137,8 +1169,8 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        tester::{run, test, test_same},
         CompressOptions,
+        tester::{run, test, test_same},
     };
 
     #[test]
@@ -1617,20 +1649,20 @@ mod test {
         // Method Definition
         test(
             "class F { '0'(){}; 'a'(){}; [1](){}; ['1'](){}; ['b'](){}; ['c.c'](){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }",
-            "class F {  0(){};   a(){};    1(){};    1(){};     b(){};   'c.c'(){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }"
+            "class F {  0(){};   a(){};    1(){};    1(){};     b(){};   'c.c'(){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }",
         );
         // Property Definition
         test(
             "class F { '0' = _; 'a' = _; [1] = _; ['1'] = _; ['b'] = _; ['c.c'] = _; '1.1' = _; '😊' = _; 'd.d' = _ }",
-            "class F {  0 = _;   a = _;    1 = _;    1 = _;     b = _;   'c.c' = _; '1.1' = _; '😊' = _; 'd.d' = _ }"
+            "class F {  0 = _;   a = _;    1 = _;    1 = _;     b = _;   'c.c' = _; '1.1' = _; '😊' = _; 'd.d' = _ }",
         );
         // Accessor Property
         test(
             "class F { accessor '0' = _; accessor 'a' = _; accessor [1] = _; accessor ['1'] = _; accessor ['b'] = _; accessor ['c.c'] = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
-            "class F { accessor  0 = _;  accessor  a = _;    accessor 1 = _;accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }"
+            "class F { accessor  0 = _;  accessor  a = _;    accessor 1 = _;accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
         );
 
-        test_same("class C { ['-1']() {} }");
+        test("class C { ['-1']() {} }", "class C { '-1'() {} }");
         test_same("class C { ['prototype']() {} }");
         test_same("class C { ['__proto__']() {} }");
         test_same("class C { ['constructor']() {} }");
@@ -1703,7 +1735,7 @@ mod test {
 
     #[test]
     fn test_fold_big_int_constructor() {
-        test("BigInt(1n)", "1n");
+        test("var x = BigInt(1n)", "var x = 1n");
         test_same("BigInt()");
         test_same("BigInt(1)");
     }
@@ -1712,7 +1744,7 @@ mod test {
     fn optional_catch_binding() {
         test("try { foo } catch(e) {}", "try { foo } catch {}");
         test("try { foo } catch(e) {foo}", "try { foo } catch {foo}");
-        test_same("try { foo } catch(e) {e}");
+        test_same("try { foo } catch(e) { bar(e) }");
         test_same("try { foo } catch([e]) {}");
         test_same("try { foo } catch({e}) {}");
 
@@ -1739,5 +1771,15 @@ mod test {
         test_same("v = x == null && y");
         test_same("v = x != null || y");
         test("void (x == null && y)", "x ?? y");
+    }
+
+    #[test]
+    fn test_compress_destructuring_assignment_target() {
+        test_same("var {y} = x");
+        test_same("var {y, z} = x");
+        test_same("var {y: z, z: y} = x");
+        test("var {y: y} = x", "var {y} = x");
+        test("var {y: z, 'z': y} = x", "var {y: z, z: y} = x");
+        test("var {y: y, 'z': z} = x", "var {y, z} = x");
     }
 }

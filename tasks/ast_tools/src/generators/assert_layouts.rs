@@ -14,13 +14,13 @@ use quote::quote;
 use syn::Ident;
 
 use crate::{
-    output::{output_path, Output},
+    AST_CRATE_PATH, Codegen, Generator,
+    output::{Output, output_path},
     schema::{
-        extensions::layout::{Layout, Niche, Offset, PlatformLayout},
         Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
+        extensions::layout::{Layout, Niche, Offset, PlatformLayout},
     },
     utils::number_lit,
-    Codegen, Generator, AST_CRATE_PATH,
 };
 
 use super::define_generator;
@@ -164,10 +164,7 @@ fn calculate_layout_for_struct(type_id: TypeId, schema: &mut Schema) -> Layout {
             // Update niche.
             // Take the largest niche. Preference for earlier niche if 2 fields have niches of same size.
             if let Some(field_niche) = &field_layout.niche {
-                // TODO: Use `Option::is_none_or` once our MSRV reaches 1.82.0
-                if layout.niche.is_none()
-                    || field_niche.count > layout.niche.as_ref().unwrap().count
-                {
+                if layout.niche.as_ref().is_none_or(|niche| field_niche.count > niche.count) {
                     let mut niche = field_niche.clone();
                     niche.offset += offset;
                     layout.niche = Some(niche);
@@ -370,7 +367,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "u128" => {
             panic!("Cannot calculate alignment for `u128`. It differs depending on Rust version.")
         }
-        "usize" => usize_layout.clone(),
+        "usize" => usize_layout,
         "i8" => Layout::from_type::<i8>(),
         "i16" => Layout::from_type::<i16>(),
         "i32" => Layout::from_type::<i32>(),
@@ -378,25 +375,29 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "i128" => {
             panic!("Cannot calculate alignment for `i128`. It differs depending on Rust version.")
         }
-        "isize" => usize_layout.clone(),
+        "isize" => usize_layout,
         "f32" => Layout::from_type::<f32>(),
         "f64" => Layout::from_type::<f64>(),
-        "&str" => str_layout.clone(),
+        "&str" => str_layout,
         "Atom" => str_layout,
         "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
         "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
         "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),
         "NonZeroU64" => Layout::from_type_with_niche_for_zero::<num::NonZeroU64>(),
         "NonZeroU128" => {
-            panic!("Cannot calculate alignment for `NonZeroU128`. It differs depending on Rust version.")
+            panic!(
+                "Cannot calculate alignment for `NonZeroU128`. It differs depending on Rust version."
+            )
         }
-        "NonZeroUsize" => non_zero_usize_layout.clone(),
+        "NonZeroUsize" => non_zero_usize_layout,
         "NonZeroI8" => Layout::from_type_with_niche_for_zero::<num::NonZeroI8>(),
         "NonZeroI16" => Layout::from_type_with_niche_for_zero::<num::NonZeroI16>(),
         "NonZeroI32" => Layout::from_type_with_niche_for_zero::<num::NonZeroI32>(),
         "NonZeroI64" => Layout::from_type_with_niche_for_zero::<num::NonZeroI64>(),
         "NonZeroI128" => {
-            panic!("Cannot calculate alignment for `NonZeroI128`. It differs depending on Rust version.")
+            panic!(
+                "Cannot calculate alignment for `NonZeroI128`. It differs depending on Rust version."
+            )
         }
         "NonZeroIsize" => non_zero_usize_layout,
         "PointerAlign" => Layout {
@@ -421,7 +422,7 @@ fn generate_layout_assertions(
 /// Generate layout assertions for a struct.
 /// This includes size and alignment assertions, plus assertions about offset of fields.
 fn generate_layout_assertions_for_struct(struct_def: &StructDef) -> (TokenStream, TokenStream) {
-    fn gen(struct_def: &StructDef, is_64: bool, struct_ident: &Ident) -> TokenStream {
+    fn r#gen(struct_def: &StructDef, is_64: bool, struct_ident: &Ident) -> TokenStream {
         let layout =
             if is_64 { &struct_def.layout.layout_64 } else { &struct_def.layout.layout_32 };
 
@@ -449,7 +450,7 @@ fn generate_layout_assertions_for_struct(struct_def: &StructDef) -> (TokenStream
     }
 
     let ident = struct_def.ident();
-    (gen(struct_def, true, &ident), gen(struct_def, false, &ident))
+    (r#gen(struct_def, true, &ident), r#gen(struct_def, false, &ident))
 }
 
 /// Generate layout assertions for an enum.

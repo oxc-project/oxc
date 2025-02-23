@@ -1,17 +1,17 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, MemberExpression},
     AstKind,
+    ast::{Argument, CallExpression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::outermost_paren_parent,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
 };
 
 fn resolve(span: Span, preferred: &str) -> OxcDiagnostic {

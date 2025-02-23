@@ -1,15 +1,15 @@
 use oxc_ast::{
-    ast::{Expression, TSLiteral, TSType},
     AstKind,
+    ast::{Expression, TSLiteral, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::Rule,
-    AstNode,
 };
 
 fn prefer_as_const_diagnostic(span: Span) -> OxcDiagnostic {
@@ -108,10 +108,6 @@ fn check_and_report(
                         None
                     }
                 }
-                _ => None,
-            },
-            TSLiteral::NullLiteral(null_literal) => match initial_value_expression {
-                Expression::NullLiteral(_) => Some(null_literal.span),
                 _ => None,
             },
             TSLiteral::NumericLiteral(number_literal) => match initial_value_expression {

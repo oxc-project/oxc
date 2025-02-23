@@ -1,16 +1,16 @@
 use oxc_ast::{
-    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
     AstKind,
+    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, get_jsx_attribute_name, is_create_element_call},
-    AstNode,
 };
 
 fn missing_property(span: Span) -> OxcDiagnostic {

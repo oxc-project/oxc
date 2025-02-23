@@ -1,5 +1,9 @@
 use oxc_ast::ast::*;
 
+use crate::{
+    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
+};
+
 /// Returns true if subtree changes application state.
 ///
 /// This trait assumes the following:
@@ -11,18 +15,14 @@ use oxc_ast::ast::*;
 /// - TDZ errors does not happen.
 ///
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
-pub trait MayHaveSideEffects: Sized {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool;
+pub trait MayHaveSideEffects {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool;
+}
 
-    fn expression_may_have_side_effects(&self, e: &Expression<'_>) -> bool {
-        match e {
-            Expression::Identifier(ident) => match ident.name.as_str() {
-                "NaN" | "Infinity" | "undefined" => false,
-                // Reading global variables may have a side effect.
-                // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
-                // NOTE: we ignore TDZ errors
-                _ => self.is_global_reference(ident),
-            },
+impl MayHaveSideEffects for Expression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
+            Expression::Identifier(ident) => ident.may_have_side_effects(is_global_reference),
             Expression::NumericLiteral(_)
             | Expression::BooleanLiteral(_)
             | Expression::StringLiteral(_)
@@ -35,65 +35,81 @@ pub trait MayHaveSideEffects: Sized {
             | Expression::FunctionExpression(_)
             | Expression::Super(_) => false,
             Expression::TemplateLiteral(template) => {
-                template.expressions.iter().any(|e| self.expression_may_have_side_effects(e))
+                template.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
             }
-            Expression::UnaryExpression(e) => self.unary_expression_may_have_side_effects(e),
-            Expression::LogicalExpression(e) => self.logical_expression_may_have_side_effects(e),
+            Expression::UnaryExpression(e) => e.may_have_side_effects(is_global_reference),
+            Expression::LogicalExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::ParenthesizedExpression(e) => {
-                self.expression_may_have_side_effects(&e.expression)
+                e.expression.may_have_side_effects(is_global_reference)
             }
             Expression::ConditionalExpression(e) => {
-                self.expression_may_have_side_effects(&e.test)
-                    || self.expression_may_have_side_effects(&e.consequent)
-                    || self.expression_may_have_side_effects(&e.alternate)
+                e.test.may_have_side_effects(is_global_reference)
+                    || e.consequent.may_have_side_effects(is_global_reference)
+                    || e.alternate.may_have_side_effects(is_global_reference)
             }
             Expression::SequenceExpression(e) => {
-                e.expressions.iter().any(|e| self.expression_may_have_side_effects(e))
+                e.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
             }
-            Expression::BinaryExpression(e) => self.binary_expression_may_have_side_effects(e),
+            Expression::BinaryExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::ObjectExpression(object_expr) => object_expr
                 .properties
                 .iter()
-                .any(|property| self.object_property_kind_may_have_side_effects(property)),
-            Expression::ArrayExpression(e) => self.array_expression_may_have_side_effects(e),
-            Expression::ClassExpression(e) => self.class_may_have_side_effects(e),
+                .any(|property| property.may_have_side_effects(is_global_reference)),
+            Expression::ArrayExpression(e) => e.may_have_side_effects(is_global_reference),
+            Expression::ClassExpression(e) => e.may_have_side_effects(is_global_reference),
             // NOTE: private in can throw `TypeError`
+            Expression::StaticMemberExpression(e) => e.may_have_side_effects(is_global_reference),
+            Expression::ComputedMemberExpression(e) => e.may_have_side_effects(is_global_reference),
             _ => true,
         }
     }
+}
 
-    fn unary_expression_may_have_side_effects(&self, e: &UnaryExpression<'_>) -> bool {
-        match e.operator {
+impl MayHaveSideEffects for IdentifierReference<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self.name.as_str() {
+            "NaN" | "Infinity" | "undefined" => false,
+            // Reading global variables may have a side effect.
+            // NOTE: It should also return true when the reference might refer to a reference value created by a with statement
+            // NOTE: we ignore TDZ errors
+            _ => is_global_reference.is_global_reference(self) != Some(false),
+        }
+    }
+}
+
+impl MayHaveSideEffects for UnaryExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self.operator {
             UnaryOperator::Delete => true,
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                self.expression_may_have_side_effects(&e.argument)
+                self.argument.may_have_side_effects(is_global_reference)
             }
             UnaryOperator::Typeof => {
-                if matches!(&e.argument, Expression::Identifier(_)) {
+                if matches!(&self.argument, Expression::Identifier(_)) {
                     false
                 } else {
-                    self.expression_may_have_side_effects(&e.argument)
+                    self.argument.may_have_side_effects(is_global_reference)
                 }
             }
             UnaryOperator::UnaryPlus => {
                 // ToNumber throws an error when the argument is Symbol / BigInt / an object that
                 // returns Symbol or BigInt from ToPrimitive
-                maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
-                    self,
-                    &e.argument,
-                ) || self.expression_may_have_side_effects(&e.argument)
+                self.argument.to_primitive(is_global_reference).is_symbol_or_bigint() != Some(false)
+                    || self.argument.may_have_side_effects(is_global_reference)
             }
             UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
                 // ToNumeric throws an error when the argument is Symbol / an object that
                 // returns Symbol from ToPrimitive
-                maybe_symbol_or_to_primitive_may_return_symbol(self, &e.argument)
-                    || self.expression_may_have_side_effects(&e.argument)
+                self.argument.to_primitive(is_global_reference).is_symbol() != Some(false)
+                    || self.argument.may_have_side_effects(is_global_reference)
             }
         }
     }
+}
 
-    fn binary_expression_may_have_side_effects(&self, e: &BinaryExpression<'_>) -> bool {
-        match e.operator {
+impl MayHaveSideEffects for BinaryExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self.operator {
             BinaryOperator::Equality
             | BinaryOperator::Inequality
             | BinaryOperator::StrictEquality
@@ -102,35 +118,34 @@ pub trait MayHaveSideEffects: Sized {
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterThan
             | BinaryOperator::GreaterEqualThan => {
-                self.expression_may_have_side_effects(&e.left)
-                    || self.expression_may_have_side_effects(&e.right)
+                self.left.may_have_side_effects(is_global_reference)
+                    || self.right.may_have_side_effects(is_global_reference)
             }
             BinaryOperator::In | BinaryOperator::Instanceof => {
                 // instanceof and in can throw `TypeError`
                 true
             }
             BinaryOperator::Addition => {
-                if is_string_or_to_primitive_returns_string(&e.left)
-                    || is_string_or_to_primitive_returns_string(&e.right)
+                let left = self.left.to_primitive(is_global_reference);
+                let right = self.right.to_primitive(is_global_reference);
+                if left.is_string() == Some(true) || right.is_string() == Some(true) {
+                    // If either side is a string, ToString is called for both sides.
+                    let other_side = if left.is_string() == Some(true) { right } else { left };
+                    // ToString() for Symbols throws an error.
+                    return other_side.is_symbol() != Some(false)
+                        || self.left.may_have_side_effects(is_global_reference)
+                        || self.right.may_have_side_effects(is_global_reference);
+                }
+
+                let left_to_numeric_type = left.to_numeric(is_global_reference);
+                let right_to_numeric_type = right.to_numeric(is_global_reference);
+                if (left_to_numeric_type.is_number() && right_to_numeric_type.is_number())
+                    || (left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint())
                 {
-                    let other_side = if is_string_or_to_primitive_returns_string(&e.left) {
-                        &e.right
-                    } else {
-                        &e.left
-                    };
-                    maybe_symbol_or_to_primitive_may_return_symbol(self, other_side)
-                        || self.expression_may_have_side_effects(&e.left)
-                        || self.expression_may_have_side_effects(&e.right)
-                } else if e.left.is_number() || e.right.is_number() {
-                    let other_side = if e.left.is_number() { &e.right } else { &e.left };
-                    !matches!(
-                        other_side,
-                        Expression::NullLiteral(_)
-                            | Expression::NumericLiteral(_)
-                            | Expression::BooleanLiteral(_)
-                    )
+                    self.left.may_have_side_effects(is_global_reference)
+                        || self.right.may_have_side_effects(is_global_reference)
                 } else {
-                    !(e.left.is_big_int_literal() && e.right.is_big_int_literal())
+                    true
                 }
             }
             BinaryOperator::Subtraction
@@ -144,218 +159,150 @@ pub trait MayHaveSideEffects: Sized {
             | BinaryOperator::BitwiseAnd
             | BinaryOperator::Exponential
             | BinaryOperator::ShiftRightZeroFill => {
-                if e.left.is_big_int_literal() || e.right.is_big_int_literal() {
-                    if let (Expression::BigIntLiteral(_), Expression::BigIntLiteral(right)) =
-                        (&e.left, &e.right)
-                    {
-                        match e.operator {
-                            BinaryOperator::Exponential => right.is_negative(),
-                            BinaryOperator::Division | BinaryOperator::Remainder => right.is_zero(),
-                            BinaryOperator::ShiftRightZeroFill => true,
-                            _ => false,
+                let left_to_numeric_type = self.left.to_numeric(is_global_reference);
+                let right_to_numeric_type = self.right.to_numeric(is_global_reference);
+                if left_to_numeric_type.is_bigint() && right_to_numeric_type.is_bigint() {
+                    if self.operator == BinaryOperator::ShiftRightZeroFill {
+                        true
+                    } else if matches!(
+                        self.operator,
+                        BinaryOperator::Exponential
+                            | BinaryOperator::Division
+                            | BinaryOperator::Remainder
+                    ) {
+                        if let Expression::BigIntLiteral(right) = &self.right {
+                            match self.operator {
+                                BinaryOperator::Exponential => {
+                                    right.is_negative()
+                                        || self.left.may_have_side_effects(is_global_reference)
+                                }
+                                BinaryOperator::Division | BinaryOperator::Remainder => {
+                                    right.is_zero()
+                                        || self.left.may_have_side_effects(is_global_reference)
+                                }
+                                _ => unreachable!(),
+                            }
+                        } else {
+                            true
                         }
                     } else {
-                        true
+                        self.left.may_have_side_effects(is_global_reference)
+                            || self.right.may_have_side_effects(is_global_reference)
                     }
-                } else if !(maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
-                    self, &e.left,
-                ) || maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
-                    self, &e.right,
-                )) {
-                    self.expression_may_have_side_effects(&e.left)
-                        || self.expression_may_have_side_effects(&e.right)
+                } else if left_to_numeric_type.is_number() && right_to_numeric_type.is_number() {
+                    self.left.may_have_side_effects(is_global_reference)
+                        || self.right.may_have_side_effects(is_global_reference)
                 } else {
                     true
                 }
             }
         }
     }
+}
 
-    fn logical_expression_may_have_side_effects(&self, e: &LogicalExpression<'_>) -> bool {
-        self.expression_may_have_side_effects(&e.left)
-            || self.expression_may_have_side_effects(&e.right)
+impl MayHaveSideEffects for LogicalExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        self.left.may_have_side_effects(is_global_reference)
+            || self.right.may_have_side_effects(is_global_reference)
     }
+}
 
-    fn array_expression_may_have_side_effects(&self, e: &ArrayExpression<'_>) -> bool {
-        e.elements
-            .iter()
-            .any(|element| self.array_expression_element_may_have_side_effects(element))
+impl MayHaveSideEffects for ArrayExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        self.elements.iter().any(|element| element.may_have_side_effects(is_global_reference))
     }
+}
 
-    fn array_expression_element_may_have_side_effects(
-        &self,
-        e: &ArrayExpressionElement<'_>,
-    ) -> bool {
-        match e {
+impl MayHaveSideEffects for ArrayExpressionElement<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
             ArrayExpressionElement::SpreadElement(e) => match &e.argument {
-                Expression::ArrayExpression(arr) => {
-                    self.array_expression_may_have_side_effects(arr)
-                }
+                Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
                 Expression::StringLiteral(_) => false,
                 Expression::TemplateLiteral(t) => {
-                    t.expressions.iter().any(|e| self.expression_may_have_side_effects(e))
+                    t.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
                 }
                 _ => true,
             },
             match_expression!(ArrayExpressionElement) => {
-                self.expression_may_have_side_effects(e.to_expression())
+                self.to_expression().may_have_side_effects(is_global_reference)
             }
             ArrayExpressionElement::Elision(_) => false,
         }
     }
+}
 
-    fn object_property_kind_may_have_side_effects(&self, e: &ObjectPropertyKind<'_>) -> bool {
-        match e {
-            ObjectPropertyKind::ObjectProperty(o) => self.object_property_may_have_side_effects(o),
+impl MayHaveSideEffects for ObjectPropertyKind<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
+            ObjectPropertyKind::ObjectProperty(o) => o.may_have_side_effects(is_global_reference),
             ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
-                Expression::ArrayExpression(arr) => {
-                    self.array_expression_may_have_side_effects(arr)
-                }
+                Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
                 Expression::StringLiteral(_) => false,
                 Expression::TemplateLiteral(t) => {
-                    t.expressions.iter().any(|e| self.expression_may_have_side_effects(e))
+                    t.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
                 }
                 _ => true,
             },
         }
     }
+}
 
-    fn object_property_may_have_side_effects(&self, e: &ObjectProperty<'_>) -> bool {
-        self.property_key_may_have_side_effects(&e.key)
-            || self.expression_may_have_side_effects(&e.value)
+impl MayHaveSideEffects for ObjectProperty<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        self.key.may_have_side_effects(is_global_reference)
+            || self.value.may_have_side_effects(is_global_reference)
     }
+}
 
-    fn property_key_may_have_side_effects(&self, key: &PropertyKey<'_>) -> bool {
-        match key {
+impl MayHaveSideEffects for PropertyKey<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
             PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
-                self.expression_may_have_side_effects(key.to_expression())
+                self.to_expression().may_have_side_effects(is_global_reference)
             }
         }
     }
+}
 
-    fn class_may_have_side_effects(&self, class: &Class<'_>) -> bool {
-        class.body.body.iter().any(|element| self.class_element_may_have_side_effects(element))
+impl MayHaveSideEffects for Class<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        self.body.body.iter().any(|element| element.may_have_side_effects(is_global_reference))
     }
+}
 
-    fn class_element_may_have_side_effects(&self, e: &ClassElement<'_>) -> bool {
-        match e {
+impl MayHaveSideEffects for ClassElement<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
             // TODO: check side effects inside the block
             ClassElement::StaticBlock(block) => !block.body.is_empty(),
             ClassElement::MethodDefinition(e) => {
-                e.r#static && self.property_key_may_have_side_effects(&e.key)
+                e.r#static && e.key.may_have_side_effects(is_global_reference)
             }
             ClassElement::PropertyDefinition(e) => {
                 e.r#static
-                    && (self.property_key_may_have_side_effects(&e.key)
+                    && (e.key.may_have_side_effects(is_global_reference)
                         || e.value
                             .as_ref()
-                            .is_some_and(|v| self.expression_may_have_side_effects(v)))
+                            .is_some_and(|v| v.may_have_side_effects(is_global_reference)))
             }
             ClassElement::AccessorProperty(e) => {
-                e.r#static && self.property_key_may_have_side_effects(&e.key)
+                e.r#static && e.key.may_have_side_effects(is_global_reference)
             }
             ClassElement::TSIndexSignature(_) => false,
         }
     }
 }
 
-fn is_string_or_to_primitive_returns_string(expr: &Expression<'_>) -> bool {
-    match expr {
-        Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::ArrayExpression(_) => true,
-        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-        // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => {
-            !maybe_object_with_to_primitive_related_properties_overridden(obj)
-        }
-        _ => false,
+impl MayHaveSideEffects for StaticMemberExpression<'_> {
+    fn may_have_side_effects(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
+        true
     }
 }
 
-/// Whether the given expression may be a `Symbol` or converted to a `Symbol` when passed to `toPrimitive`.
-fn maybe_symbol_or_to_primitive_may_return_symbol(
-    m: &impl MayHaveSideEffects,
-    expr: &Expression<'_>,
-) -> bool {
-    match expr {
-        Expression::Identifier(ident) => {
-            !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
-                && m.is_global_reference(ident))
-        }
-        Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BigIntLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::ArrayExpression(_) => false,
-        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-        // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => {
-            maybe_object_with_to_primitive_related_properties_overridden(obj)
-        }
-        _ => true,
+impl MayHaveSideEffects for ComputedMemberExpression<'_> {
+    fn may_have_side_effects(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
+        true
     }
-}
-
-/// Whether the given expression may be a `Symbol`/`BigInt` or converted to a `Symbol`/`BigInt` when passed to `toPrimitive`.
-fn maybe_symbol_or_bigint_or_to_primitive_may_return_symbol_or_bigint(
-    m: &impl MayHaveSideEffects,
-    expr: &Expression<'_>,
-) -> bool {
-    match expr {
-        Expression::Identifier(ident) => {
-            !(matches!(ident.name.as_str(), "Infinity" | "NaN" | "undefined")
-                && m.is_global_reference(ident))
-        }
-        Expression::StringLiteral(_)
-        | Expression::TemplateLiteral(_)
-        | Expression::NullLiteral(_)
-        | Expression::NumericLiteral(_)
-        | Expression::BooleanLiteral(_)
-        | Expression::RegExpLiteral(_)
-        | Expression::ArrayExpression(_) => false,
-        // unless `Symbol.toPrimitive`, `valueOf`, `toString` is overridden,
-        // ToPrimitive for an object returns `"[object Object]"`
-        Expression::ObjectExpression(obj) => {
-            maybe_object_with_to_primitive_related_properties_overridden(obj)
-        }
-        _ => true,
-    }
-}
-
-fn maybe_object_with_to_primitive_related_properties_overridden(
-    obj: &ObjectExpression<'_>,
-) -> bool {
-    obj.properties.iter().any(|prop| match prop {
-        ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
-            PropertyKey::StaticIdentifier(id) => {
-                matches!(id.name.as_str(), "toString" | "valueOf")
-            }
-            PropertyKey::PrivateIdentifier(_) => false,
-            PropertyKey::StringLiteral(str) => {
-                matches!(str.value.as_str(), "toString" | "valueOf")
-            }
-            PropertyKey::TemplateLiteral(temp) => {
-                !temp.is_no_substitution_template()
-                    || temp
-                        .quasi()
-                        .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf"))
-            }
-            _ => true,
-        },
-        ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
-            Expression::ObjectExpression(obj) => {
-                maybe_object_with_to_primitive_related_properties_overridden(obj)
-            }
-            Expression::ArrayExpression(_)
-            | Expression::StringLiteral(_)
-            | Expression::TemplateLiteral(_) => false,
-            _ => true,
-        },
-    })
 }

@@ -1,7 +1,7 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{ast::*, NONE};
+use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
@@ -23,11 +23,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         )
     }
 
-    pub(crate) fn transform_statement(
-        &mut self,
-        stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub(crate) fn transform_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let (for_of, label) = match stmt {
             Statement::LabeledStatement(labeled) => {
                 let LabeledStatement { label, body, .. } = labeled.as_mut();
@@ -93,7 +89,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
     }
 
     pub(self) fn transform_for_of_statement(
-        &mut self,
+        &self,
         stmt: &mut ForOfStatement<'a>,
         parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,

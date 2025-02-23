@@ -22,12 +22,12 @@
 //!
 //! ### Runtime ([`HelperLoaderMode::Runtime`])
 //!
-//! Uses `@babel/runtime` as a dependency, importing helper functions from the runtime.
+//! Uses `@oxc-project/runtime` as a dependency, importing helper functions from the runtime.
 //!
 //! Generated code example:
 //!
 //! ```js
-//! import helperName from "@babel/runtime/helpers/helperName";
+//! import helperName from "@oxc-project/runtime/helpers/helperName";
 //! helperName(...arguments);
 //! ```
 //!
@@ -72,11 +72,11 @@ use serde::Deserialize;
 
 use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
     NONE,
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use crate::TransformCtx;
@@ -110,7 +110,7 @@ pub enum HelperLoaderMode {
     ///
     /// Example output:
     /// ```js
-    /// import helperName from "@babel/runtime/helpers/helperName";
+    /// import helperName from "@oxc-project/runtime/helpers/helperName";
     /// helperName(...arguments);
     /// ```
     #[default]
@@ -122,7 +122,7 @@ pub enum HelperLoaderMode {
 pub struct HelperLoaderOptions {
     #[serde(default = "default_as_module_name")]
     /// The module name to import helper functions from.
-    /// Default: `@babel/runtime`
+    /// Default: `@oxc-project/runtime`
     pub module_name: Cow<'static, str>,
     pub mode: HelperLoaderMode,
 }
@@ -134,7 +134,7 @@ impl Default for HelperLoaderOptions {
 }
 
 fn default_as_module_name() -> Cow<'static, str> {
-    Cow::Borrowed("@babel/runtime")
+    Cow::Borrowed("@oxc-project/runtime")
 }
 
 /// Available helpers.
@@ -166,6 +166,7 @@ pub enum Helper {
     CheckInRHS,
     Decorate,
     DecorateParam,
+    DecorateMetadata,
 }
 
 impl Helper {
@@ -197,6 +198,7 @@ impl Helper {
             Self::CheckInRHS => "checkInRHS",
             Self::Decorate => "decorate",
             Self::DecorateParam => "decorateParam",
+            Self::DecorateMetadata => "decorateMetadata",
         }
     }
 }
@@ -305,7 +307,7 @@ impl<'a> HelperLoaderStore<'a> {
     }
 
     // Construct string directly in arena without an intermediate temp allocation
-    fn get_runtime_source(&self, helper: Helper, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
+    fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         let helper_name = helper.name();
         let len = self.module_name.len() + "/helpers/".len() + helper_name.len();
         let mut source = ArenaString::with_capacity_in(len, ctx.ast.allocator);

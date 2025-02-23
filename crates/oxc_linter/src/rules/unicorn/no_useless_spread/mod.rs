@@ -1,25 +1,25 @@
 mod const_eval;
 
-use const_eval::{is_array_from, is_new_typed_array, ConstEval};
+use const_eval::{ConstEval, is_array_from, is_new_typed_array};
 use oxc_ast::{
+    AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
         ObjectExpression, ObjectPropertyKind, SpreadElement,
     },
-    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
+    AstNode,
     ast_util::{
         get_new_expr_ident_name, is_method_call, is_new_expression, outermost_paren_parent,
     },
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
 };
 
 fn spread_in_list(span: Span, arr_or_obj: &str) -> OxcDiagnostic {
@@ -81,7 +81,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// - The following builtins accept an iterable, so it's unnecessary to convert the iterable to an array:
+    /// The following builtins accept an iterable, so it's unnecessary to
+    /// convert the iterable to an array:
     ///
     ///   - `Map` constructor
     ///   - `WeakMap` constructor
@@ -93,53 +94,46 @@ declare_oxc_lint!(
     ///   - `Promise.{all,allSettled,any,race}(…)`
     ///   - `Object.fromEntries(…)`
     ///
-    /// - `for…of` loop can iterate over any iterable object not just array, so it's unnecessary to convert the iterable to an array.
+    /// The `for…of` loop can iterate over any iterable object not just array,
+    /// so it's unnecessary to convert the iterable to an array.
     ///
-    /// - `yield*` can delegate to another iterable, so it's unnecessary to convert the iterable to an array.
+    /// The `yield*` can delegate to another iterable, so it's unnecessary to
+    /// convert the iterable to an array.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
     /// const array = [firstElement, ...[secondElement], thirdElement];
-    /// const object = {firstProperty, ...{secondProperty}, thirdProperty};
-    /// foo(firstArgument, ...[secondArgument], thirdArgument);
-    /// const object = new Foo(firstArgument, ...[secondArgument], thirdArgument);
-    /// const set = new Set([...iterable]);
-    /// async function foo() {
-    ///     const results = await Promise.all([...iterable]);
-    /// }
+    ///
+    /// await Promise.all([...iterable])
+    ///
     /// for (const foo of [...set]);
+    ///
     /// function * foo() {
     /// 	yield * [...anotherGenerator()];
     /// }
+    ///
     /// function foo(bar) {
-    /// 	return [
-    /// 		...bar.map(x => x * 2),
-    /// 	];
+    /// 	return [...bar.map(x => x * 2)];
     /// }
+    /// ```
     ///
-    /// // Pass
-    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const array = [firstElement, secondElement, thirdElement];
-    /// const object = {firstProperty, secondProperty, thirdProperty};
-    /// foo(firstArgument, secondArgument, thirdArgument);
-    /// const object = new Foo(firstArgument, secondArgument, thirdArgument);
-    /// const array = [...foo, bar];
-    /// const object = {...foo, bar};
-    /// foo(foo, ...bar);
-    /// const object = new Foo(...foo, bar);
-    /// const set = new Set(iterable);
-    /// async function foo() {
-    ///    const results = await Promise.all(iterable);
-    /// }
+    ///
+    /// await Promise.all(iterable);
+    ///
     /// for (const foo of set);
+    ///
     /// function * foo() {
     /// 	yield * anotherGenerator();
     /// }
+    ///
     /// function foo(bar) {
     /// 	return bar.map(x => x * 2);
     /// }
-    ///
     /// ```
     NoUselessSpread,
     unicorn,
@@ -423,11 +417,7 @@ fn check_useless_clone<'a>(
 fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&'a str> {
     fn pretty_snippet(snippet: &str) -> Option<&str> {
         // unwieldy snippets don't get included in diagnostic messages
-        if snippet.len() > 50 || snippet.contains('\n') {
-            None
-        } else {
-            Some(snippet)
-        }
+        if snippet.len() > 50 || snippet.contains('\n') { None } else { Some(snippet) }
     }
 
     match expr {

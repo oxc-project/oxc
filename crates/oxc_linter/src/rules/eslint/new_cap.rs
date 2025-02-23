@@ -1,7 +1,7 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::{
-    ast::{ChainElement, ComputedMemberExpression, Expression},
     AstKind,
+    ast::{ChainElement, ComputedMemberExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

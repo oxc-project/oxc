@@ -1,10 +1,10 @@
-use oxc_ast::{ast::MemberExpression, AstKind};
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression, AstNode,
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression,
 };
 
 fn no_length_as_slice_end_diagnostic(call_span: Span, arg_span: Span) -> OxcDiagnostic {

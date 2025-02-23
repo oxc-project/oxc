@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
-use crate::{rule::Rule, utils::get_element_type, LintContext};
+use crate::{LintContext, rule::Rule, utils::get_element_type};
 
 fn no_distracting_elements_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.")

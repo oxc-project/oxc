@@ -5,9 +5,8 @@ use oxc_allocator::String;
 use crate::diagnostics;
 
 use super::{
-    cold_branch,
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
-    Kind, Lexer, LexerContext, Span, Token,
+    Kind, Lexer, LexerContext, Span, Token, cold_branch,
+    search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
@@ -26,7 +25,7 @@ static SINGLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
 /// `$table` must be a `SafeByteMatchTable`.
 /// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
 macro_rules! handle_string_literal {
-    ($lexer:ident, $delimiter:expr, $table:ident) => {{
+    ($lexer:ident, $delimiter:expr_2021, $table:ident) => {{
         debug_assert!($delimiter.is_ascii());
 
         if $lexer.context == LexerContext::JsxAttributeValue {
@@ -75,7 +74,7 @@ macro_rules! handle_string_literal {
 }
 
 macro_rules! handle_string_literal_escape {
-    ($lexer:ident, $delimiter:expr, $table:ident, $after_opening_quote:ident) => {{
+    ($lexer:ident, $delimiter:expr_2021, $table:ident, $after_opening_quote:ident) => {{
         // Create arena string to hold unescaped string.
         // We don't know how long string will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.

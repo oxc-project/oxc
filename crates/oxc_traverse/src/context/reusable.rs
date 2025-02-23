@@ -40,7 +40,6 @@ impl<'a> ReusableTraverseCtx<'a> {
     ///
     /// [`TraverseAncestry`]: super::TraverseAncestry
     #[inline]
-    #[expect(clippy::missing_safety_doc)]
     pub unsafe fn unwrap(self) -> TraverseCtx<'a> {
         self.0
     }

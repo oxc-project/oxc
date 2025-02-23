@@ -6,8 +6,9 @@ use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 use crate::output_formatter::OutputFormat;
 
 use super::{
-    ignore::{ignore_options, IgnoreOptions},
-    misc_options, validate_paths, MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
+    MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
+    ignore::{IgnoreOptions, ignore_options},
+    misc_options, validate_paths,
 };
 
 #[derive(Debug, Clone, Bpaf)]
@@ -40,6 +41,10 @@ pub struct LintCommand {
 
     #[bpaf(external)]
     pub misc_options: MiscOptions,
+
+    /// Enables automatic loading of nested configuration files (experimental feature)
+    #[bpaf(switch, hide_usage)]
+    pub experimental_nested_config: bool,
 
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
@@ -388,7 +393,7 @@ mod plugins {
 
 #[cfg(test)]
 mod warning_options {
-    use super::{lint_command, WarningOptions};
+    use super::{WarningOptions, lint_command};
 
     fn get_warning_options(arg: &str) -> WarningOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -421,7 +426,7 @@ mod lint_options {
 
     use oxc_linter::AllowWarnDeny;
 
-    use super::{lint_command, LintCommand, OutputFormat};
+    use super::{LintCommand, OutputFormat, lint_command};
 
     fn get_lint_options(arg: &str) -> LintCommand {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -512,5 +517,13 @@ mod lint_options {
     fn list_rules() {
         let options = get_lint_options("--rules");
         assert!(options.list_rules);
+    }
+
+    #[test]
+    fn experimental_nested_config() {
+        let options = get_lint_options("--experimental-nested-config");
+        assert!(options.experimental_nested_config);
+        let options = get_lint_options(".");
+        assert!(!options.experimental_nested_config);
     }
 }

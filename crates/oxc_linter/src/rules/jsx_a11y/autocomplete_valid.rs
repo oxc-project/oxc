@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,10 +10,10 @@ use rustc_hash::FxHashSet;
 use serde_json::Value;
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case},
-    AstNode,
 };
 
 fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnostic {

@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, UnaryOperator},
     AstKind,
+    ast::{Argument, CallExpression, Expression, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,11 +8,11 @@ use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
+    AstNode,
     ast_util::{call_expr_method_callee_info, is_method_call, outermost_paren_parent},
     context::LintContext,
     rule::Rule,
     utils::is_boolean_node,
-    AstNode,
 };
 
 fn over_method(span: Span) -> OxcDiagnostic {

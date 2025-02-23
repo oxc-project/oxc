@@ -1,6 +1,8 @@
 use oxc_ast::ast::*;
 
-/// Returns true if this is a literal value. We define a literal value as any node that evaluates
+/// Returns true if this is a literal value.
+///
+/// We define a literal value as any node that evaluates
 /// to the same thing regardless of when or where it is evaluated. So `/xyz/` and `[3, 5]` are
 /// literals, but the name a is not.
 ///

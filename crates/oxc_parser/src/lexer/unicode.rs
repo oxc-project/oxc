@@ -1,7 +1,7 @@
 use oxc_allocator::String;
 use oxc_syntax::identifier::{
-    is_identifier_part, is_identifier_start, is_identifier_start_unicode,
-    is_irregular_line_terminator, is_irregular_whitespace, CR, FF, LF, LS, PS, TAB, VT,
+    CR, FF, LF, LS, PS, TAB, VT, is_identifier_part, is_identifier_start,
+    is_identifier_start_unicode, is_irregular_line_terminator, is_irregular_whitespace,
 };
 
 use crate::diagnostics;

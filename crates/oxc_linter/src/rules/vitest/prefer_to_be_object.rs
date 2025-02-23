@@ -1,6 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, BinaryOperator, Expression},
     AstKind,
+    ast::{Argument, BinaryOperator, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,8 +10,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        parse_jest_fn_call, KnownMemberExpressionProperty, ParsedExpectFnCall, ParsedJestFnCallNew,
-        PossibleJestNode,
+        KnownMemberExpressionProperty, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode,
+        parse_jest_fn_call,
     },
 };
 

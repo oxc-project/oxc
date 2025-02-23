@@ -121,15 +121,15 @@ exports[`esm > export { default, /* …, */ } from "module-name"; 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 50,
+      "end": 48,
       "entries": [
         {
           "start": 9,
           "end": 16,
           "moduleRequest": {
             "value": "module-name",
-            "start": 36,
-            "end": 49
+            "start": 34,
+            "end": 47
           },
           "importName": {
             "kind": "Name",
@@ -162,15 +162,15 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
   "staticExports": [
     {
       "start": 0,
-      "end": 83,
+      "end": 81,
       "entries": [
         {
           "start": 9,
           "end": 25,
           "moduleRequest": {
             "value": "module-name",
-            "start": 69,
-            "end": 82
+            "start": 67,
+            "end": 80
           },
           "importName": {
             "kind": "Name",
@@ -193,8 +193,8 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
           "end": 43,
           "moduleRequest": {
             "value": "module-name",
-            "start": 69,
-            "end": 82
+            "start": 67,
+            "end": 80
           },
           "importName": {
             "kind": "Name",
@@ -213,24 +213,24 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
           }
         },
         {
-          "start": 56,
-          "end": 61,
+          "start": 54,
+          "end": 59,
           "moduleRequest": {
             "value": "module-name",
-            "start": 69,
-            "end": 82
+            "start": 67,
+            "end": 80
           },
           "importName": {
             "kind": "Name",
             "name": "nameN",
-            "start": 56,
-            "end": 61
+            "start": 54,
+            "end": 59
           },
           "exportName": {
             "kind": "Name",
             "name": "nameN",
-            "start": 56,
-            "end": 61
+            "start": 54,
+            "end": 59
           },
           "localName": {
             "kind": "None"
@@ -251,7 +251,7 @@ exports[`esm > export { name1 as default /*, … */ }; 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 39,
+      "end": 37,
       "entries": [
         {
           "start": 9,
@@ -287,15 +287,15 @@ exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 54,
+      "end": 52,
       "entries": [
         {
           "start": 9,
           "end": 14,
           "moduleRequest": {
             "value": "module-name",
-            "start": 40,
-            "end": 53
+            "start": 38,
+            "end": 51
           },
           "importName": {
             "kind": "Name",
@@ -314,24 +314,24 @@ exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
           }
         },
         {
-          "start": 27,
-          "end": 32,
+          "start": 25,
+          "end": 30,
           "moduleRequest": {
             "value": "module-name",
-            "start": 40,
-            "end": 53
+            "start": 38,
+            "end": 51
           },
           "importName": {
             "kind": "Name",
             "name": "nameN",
-            "start": 27,
-            "end": 32
+            "start": 25,
+            "end": 30
           },
           "exportName": {
             "kind": "Name",
             "name": "nameN",
-            "start": 27,
-            "end": 32
+            "start": 25,
+            "end": 30
           },
           "localName": {
             "kind": "None"
@@ -352,7 +352,7 @@ exports[`esm > export { name1, /* …, */ nameN }; 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 35,
+      "end": 33,
       "entries": [
         {
           "start": 9,
@@ -374,22 +374,22 @@ exports[`esm > export { name1, /* …, */ nameN }; 1`] = `
           }
         },
         {
-          "start": 27,
-          "end": 32,
+          "start": 25,
+          "end": 30,
           "importName": {
             "kind": "None"
           },
           "exportName": {
             "kind": "Name",
             "name": "nameN",
-            "start": 27,
-            "end": 32
+            "start": 25,
+            "end": 30
           },
           "localName": {
             "kind": "Name",
             "name": "nameN",
-            "start": 27,
-            "end": 32
+            "start": 25,
+            "end": 30
           }
         }
       ]
@@ -443,7 +443,7 @@ exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN
   "staticExports": [
     {
       "start": 0,
-      "end": 68,
+      "end": 66,
       "entries": [
         {
           "start": 9,
@@ -484,22 +484,22 @@ exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN
           }
         },
         {
-          "start": 60,
-          "end": 65,
+          "start": 58,
+          "end": 63,
           "importName": {
             "kind": "None"
           },
           "exportName": {
             "kind": "Name",
             "name": "nameN",
-            "start": 60,
-            "end": 65
+            "start": 58,
+            "end": 63
           },
           "localName": {
             "kind": "Name",
             "name": "nameN",
-            "start": 60,
-            "end": 65
+            "start": 58,
+            "end": 63
           }
         }
       ]
@@ -517,11 +517,11 @@ exports[`esm > export class ClassName { /* … */ } 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 36,
+      "end": 34,
       "entries": [
         {
           "start": 7,
-          "end": 36,
+          "end": 34,
           "importName": {
             "kind": "None"
           },
@@ -663,11 +663,11 @@ exports[`esm > export const name1 = 1, name2 = 2/*, … */; // also var, let 1`]
   "staticExports": [
     {
       "start": 0,
-      "end": 44,
+      "end": 42,
       "entries": [
         {
           "start": 7,
-          "end": 44,
+          "end": 42,
           "importName": {
             "kind": "None"
           },
@@ -686,7 +686,7 @@ exports[`esm > export const name1 = 1, name2 = 2/*, … */; // also var, let 1`]
         },
         {
           "start": 7,
-          "end": 44,
+          "end": 42,
           "importName": {
             "kind": "None"
           },
@@ -718,11 +718,11 @@ exports[`esm > export default class { /* … */ } 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 34,
+      "end": 32,
       "entries": [
         {
           "start": 15,
-          "end": 34,
+          "end": 32,
           "importName": {
             "kind": "None"
           },
@@ -750,11 +750,11 @@ exports[`esm > export default class ClassName { /* … */ } 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 44,
+      "end": 42,
       "entries": [
         {
           "start": 15,
-          "end": 44,
+          "end": 42,
           "importName": {
             "kind": "None"
           },
@@ -820,11 +820,11 @@ exports[`esm > export default function () { /* … */ } 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 40,
+      "end": 38,
       "entries": [
         {
           "start": 15,
-          "end": 40,
+          "end": 38,
           "importName": {
             "kind": "None"
           },
@@ -852,11 +852,11 @@ exports[`esm > export default function functionName() { /* … */ } 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 52,
+      "end": 50,
       "entries": [
         {
           "start": 15,
-          "end": 52,
+          "end": 50,
           "importName": {
             "kind": "None"
           },
@@ -887,11 +887,11 @@ exports[`esm > export default function* () { /* … */ } 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 41,
+      "end": 39,
       "entries": [
         {
           "start": 15,
-          "end": 41,
+          "end": 39,
           "importName": {
             "kind": "None"
           },
@@ -919,11 +919,11 @@ exports[`esm > export default function* generatorFunctionName() { /* … */ } 1`
   "staticExports": [
     {
       "start": 0,
-      "end": 62,
+      "end": 60,
       "entries": [
         {
           "start": 15,
-          "end": 62,
+          "end": 60,
           "importName": {
             "kind": "None"
           },
@@ -954,11 +954,11 @@ exports[`esm > export function functionName() { /* … */ } 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 44,
+      "end": 42,
       "entries": [
         {
           "start": 7,
-          "end": 44,
+          "end": 42,
           "importName": {
             "kind": "None"
           },
@@ -990,11 +990,11 @@ exports[`esm > export function* generatorFunctionName() { /* … */ } 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 54,
+      "end": 52,
       "entries": [
         {
           "start": 7,
-          "end": 54,
+          "end": 52,
           "importName": {
             "kind": "None"
           },
@@ -1026,11 +1026,11 @@ exports[`esm > export let name1, name2/*, … */; // also var 1`] = `
   "staticExports": [
     {
       "start": 0,
-      "end": 34,
+      "end": 32,
       "entries": [
         {
           "start": 7,
-          "end": 34,
+          "end": 32,
           "importName": {
             "kind": "None"
           },
@@ -1049,7 +1049,7 @@ exports[`esm > export let name1, name2/*, … */; // also var 1`] = `
         },
         {
           "start": 7,
-          "end": 34,
+          "end": 32,
           "importName": {
             "kind": "None"
           },
@@ -1328,11 +1328,11 @@ exports[`esm > import { export1, export2 as alias2, /* … */ } from "module-nam
   "staticImports": [
     {
       "start": 0,
-      "end": 68,
+      "end": 66,
       "moduleRequest": {
         "value": "module-name",
-        "start": 54,
-        "end": 67
+        "start": 52,
+        "end": 65
       },
       "entries": [
         {
@@ -1459,11 +1459,11 @@ exports[`esm > import defaultExport, { export1, /* … */ } from "module-name"; 
   "staticImports": [
     {
       "start": 0,
-      "end": 64,
+      "end": 62,
       "moduleRequest": {
         "value": "module-name",
-        "start": 50,
-        "end": 63
+        "start": 48,
+        "end": 61
       },
       "entries": [
         {

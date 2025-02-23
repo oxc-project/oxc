@@ -1,8 +1,8 @@
 use serde::Deserialize;
 
 use crate::{
-    es2015::ArrowFunctionsOptions, es2018::ObjectRestSpreadOptions, es2022::ClassPropertiesOptions,
-    jsx::JsxOptions, TypeScriptOptions,
+    DecoratorOptions, TypeScriptOptions, es2015::ArrowFunctionsOptions,
+    es2018::ObjectRestSpreadOptions, es2022::ClassPropertiesOptions, jsx::JsxOptions,
 };
 
 use super::PluginPresetEntries;
@@ -71,7 +71,7 @@ pub struct BabelPlugins {
     pub class_properties: Option<ClassPropertiesOptions>,
 
     // Decorator
-    pub legacy_decorator: bool,
+    pub legacy_decorator: Option<DecoratorOptions>,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -142,7 +142,10 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         .ok();
                 }
                 // This is not a Babel plugin, we pretend it exists for running legacy decorator by Babel options
-                "transform-legacy-decorator" => p.legacy_decorator = true,
+                "transform-legacy-decorator" => {
+                    p.legacy_decorator =
+                        entry.value::<DecoratorOptions>().map_err(|err| p.errors.push(err)).ok();
+                }
                 s => p.unsupported.push(s.to_string()),
             }
         }
