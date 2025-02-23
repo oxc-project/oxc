@@ -1759,6 +1759,7 @@ name = "oxc_estree"
 version = "0.52.0"
 dependencies = [
  "itoa",
+ "oxc_data_structures",
  "ryu-js",
 ]
 

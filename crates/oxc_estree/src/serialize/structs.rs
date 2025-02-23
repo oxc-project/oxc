@@ -1,5 +1,7 @@
+use oxc_data_structures::code_buffer::CodeBuffer;
+
 use super::{
-    Buffer, Config, ESTree, ESTreeSequenceSerializer, ESTreeSerializer, Formatter, Serializer,
+    Config, ESTree, ESTreeSequenceSerializer, ESTreeSerializer, Formatter, Serializer,
     SerializerPrivate,
 };
 
@@ -42,7 +44,7 @@ pub struct ESTreeStructSerializer<'s, C: Config, F: Formatter> {
 impl<'s, C: Config, F: Formatter> ESTreeStructSerializer<'s, C, F> {
     /// Create new [`ESTreeStructSerializer`].
     pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<C, F>) -> Self {
-        serializer.buffer_mut().push_ascii_byte(b'{');
+        serializer.buffer_mut().print_ascii_byte(b'{');
         Self { serializer, state: StructState::Empty }
     }
 }
@@ -60,13 +62,13 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
             self.state = StructState::HasFields;
             formatter.before_first_element(buffer);
         } else {
-            buffer.push_ascii_byte(b',');
+            buffer.print_ascii_byte(b',');
             formatter.before_later_element(buffer);
         }
 
-        buffer.push_ascii_byte(b'"');
-        buffer.push_str(key);
-        buffer.push_str("\":");
+        buffer.print_ascii_byte(b'"');
+        buffer.print_str(key);
+        buffer.print_str("\":");
         formatter.before_field_value(buffer);
         value.serialize(&mut *self.serializer);
     }
@@ -94,7 +96,7 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         if self.state == StructState::HasFields {
             formatter.after_last_element(buffer);
         }
-        buffer.push_ascii_byte(b'}');
+        buffer.print_ascii_byte(b'}');
     }
 }
 
@@ -161,13 +163,13 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
 impl<P: StructSerializer> SerializerPrivate for FlatStructSerializer<'_, P> {
     type Formatter = P::Formatter;
 
-    fn buffer_mut(&mut self) -> &mut Buffer {
+    fn buffer_mut(&mut self) -> &mut CodeBuffer {
         const {
             panic!("Cannot flatten anything but a struct into another struct");
         }
     }
 
-    fn buffer_and_formatter_mut(&mut self) -> (&mut Buffer, &mut P::Formatter) {
+    fn buffer_and_formatter_mut(&mut self) -> (&mut CodeBuffer, &mut P::Formatter) {
         const {
             panic!("Cannot flatten anything but a struct into another struct");
         }

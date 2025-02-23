@@ -19,6 +19,8 @@ workspace = true
 doctest = false
 
 [dependencies]
+oxc_data_structures = { workspace = true }
+
 itoa = { workspace = true }
 ryu-js = { workspace = true, optional = true }
 
