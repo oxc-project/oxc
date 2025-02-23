@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{CallExpression, FormalParameters, MemberExpression},
+    ast::{Argument, CallExpression, FormalParameters, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -120,9 +120,27 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 ///  .then(b => getC(a, b))
 /// ```
 ///
-fn get_closest_promise_callback<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    let depth =
-        ctx.semantic().nodes().ancestors(node.id()).filter(|node| has_promise_callback(node, ctx));
+fn get_closest_promise_callback<'a, 'b>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> &'b Option<Vec<Argument<'a>>> {
+    let closest_prom_cb_args = ctx.semantic().nodes().ancestors(node.id()).find_map(|node| {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return None;
+        };
+
+        if let Some(prop_name) = is_promise_then_or_catch(call_expr) {
+            if prop_name == "then" {
+                return Some(&call_expr.arguments);
+            } else {
+                return None;
+            }
+        } else {
+            return None;
+        };
+    });
+
+    closest_prom_cb_args
 }
 
 impl Rule for NoNesting {
