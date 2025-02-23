@@ -46,7 +46,7 @@ declare_oxc_lint!(
     /// ```
     NoRedundantConstructorInit,
     oxc,
-    style,
+    correctness,
     pending,
 );
 
