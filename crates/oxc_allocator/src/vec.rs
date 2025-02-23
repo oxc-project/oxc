@@ -14,6 +14,8 @@ use std::{
     slice::SliceIndex,
 };
 
+use assert_unchecked::assert_unchecked;
+
 use crate::vec2::Vec as InnerVec;
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
@@ -165,6 +167,54 @@ impl<'alloc, T> Vec<'alloc, T> {
         let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
         Self(ManuallyDrop::new(vec))
     }
+
+    /// Appends an element to the end of the [`Vec`].
+    ///
+    /// # Panics
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_allocator::{Allocator, Vec};
+    /// # let allocator = Allocator::new();
+    /// let mut vec = Vec::new_in(&allocator);
+    /// vec.push(1);
+    /// vec.push(2);
+    /// vec.push(3);
+    /// assert_eq!(vec, [1, 2, 3]);
+    /// ```
+    //
+    // Override `InnerVec`'s `push` method, because it's inefficient.
+    //
+    // Its fast path is for the case when the `Vec` is full to capacity, and needs to grow.
+    // But growth strategy is doubling, so it's far more common that there is already sufficient
+    // capacity. So that should be the fast path.
+    //
+    // Achieve this by delegating the slow path to `push_slow`, which is marked `#[cold]`
+    // and `#[inline(never)]`. Both branches just call `push` on the inner `Vec`,
+    // but this arrangement guides the compiler to optimize `push` for the common case.
+    #[inline(always)]
+    pub fn push(&mut self, value: T) {
+        if self.len() == self.capacity() {
+            // SAFETY: Vector is full to capacity
+            unsafe { self.push_slow(value) };
+        } else {
+            self.0.push(value);
+        }
+    }
+
+    /// Push when vector is already full to capacity.
+    /// i.e. `self.len() == self.capacity()`.
+    ///
+    /// # SAFETY
+    /// Vector must be full to capacity.
+    #[cold]
+    #[inline(never)]
+    unsafe fn push_slow(&mut self, value: T) {
+        // SAFETY: Caller guarantees vector is full to capacity
+        unsafe { assert_unchecked!(self.len() == self.capacity()) };
+        self.0.push(value);
+    }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
@@ -276,6 +326,37 @@ mod test {
         let allocator = Allocator::default();
         let v: Vec<i32> = Vec::with_capacity_in(10, &allocator);
         assert!(v.is_empty());
+    }
+
+    #[test]
+    fn vec_push() {
+        let allocator = Allocator::default();
+
+        // Pushing to `Vec` which has not yet allocated
+        let mut v: Vec<u32> = Vec::new_in(&allocator);
+        assert_eq!(v.capacity(), 0);
+        v.push(123);
+        assert_eq!(v.len(), 1);
+        assert!(v.capacity() >= 1);
+        assert_eq!(v[0], 123);
+
+        // Pushing to `Vec` which has sufficient capacity
+        let mut v: Vec<u32> = Vec::with_capacity_in(2, &allocator);
+        assert_eq!(v.capacity(), 2);
+        v.push(123);
+        v.push(456);
+        assert_eq!(v.len(), 2);
+        assert_eq!(v.capacity(), 2);
+        assert_eq!(v[0], 123);
+        assert_eq!(v[1], 456);
+
+        // Pushing to `Vec` which is full to capacity
+        v.push(789);
+        assert_eq!(v.len(), 3);
+        assert!(v.capacity() >= 3);
+        assert_eq!(v[0], 123);
+        assert_eq!(v[1], 456);
+        assert_eq!(v[2], 789);
     }
 
     #[test]
