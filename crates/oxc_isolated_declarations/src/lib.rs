@@ -148,19 +148,30 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
-        let mut stmts = stmts
-            .iter()
-            .filter(|stmt| stmt.is_declaration() && !self.has_internal_annotation(stmt.span()))
-            .collect::<Vec<_>>();
+        // Filter out:
+        // * All statements except declarations.
+        // * Declarations with an `@internal` annotation.
+        // * Duplicate function declarations.
+        //
+        // Transform the remaining declarations, or clone them if they need no transformation.
+        let mut last_function_name = None;
+        self.ast.vec_from_iter(stmts.iter().filter_map(|stmt| {
+            let decl = stmt.as_declaration()?;
 
-        Self::remove_function_overloads_implementation(&mut stmts);
-
-        self.ast.vec_from_iter(stmts.iter().map(|stmt| {
-            if let Some(new_decl) = self.transform_declaration(stmt.to_declaration(), false) {
-                Statement::from(new_decl)
-            } else {
-                stmt.clone_in(self.ast.allocator)
+            if self.has_internal_annotation(decl.span()) {
+                return None;
             }
+
+            if let Declaration::FunctionDeclaration(func) = decl {
+                if !Self::should_retain_function_declaration(func, &mut last_function_name) {
+                    return None;
+                }
+            }
+
+            let new_decl = self
+                .transform_declaration(decl, false)
+                .unwrap_or_else(|| decl.clone_in(self.ast.allocator));
+            Some(Statement::from(new_decl))
         }))
     }
 
@@ -170,14 +181,52 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
-        let mut stmts = stmts
+        // Filter out:
+        // * All statements except declarations and module declarations.
+        // * Declarations / module declarations with an `@internal` annotation.
+        // * Duplicate function declarations.
+        let mut last_function_name = None;
+        let mut is_export_default_function_overloads = false;
+        let stmts = stmts
             .iter()
-            .filter(|stmt| {
-                (stmt.is_declaration() || stmt.is_module_declaration())
-                    && !self.has_internal_annotation(stmt.span())
+            .filter(|&stmt| match stmt {
+                match_declaration!(Statement) => {
+                    let decl = stmt.to_declaration();
+
+                    if self.has_internal_annotation(decl.span()) {
+                        false
+                    } else if let Declaration::FunctionDeclaration(func) = decl {
+                        Self::should_retain_function_declaration(func, &mut last_function_name)
+                    } else {
+                        true
+                    }
+                }
+                match_module_declaration!(Statement) => {
+                    let decl = stmt.to_module_declaration();
+
+                    if self.has_internal_annotation(decl.span()) {
+                        false
+                    } else {
+                        match decl {
+                            ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                                Self::should_retain_export_named_declaration(
+                                    decl,
+                                    &mut last_function_name,
+                                )
+                            }
+                            ModuleDeclaration::ExportDefaultDeclaration(decl) => {
+                                Self::should_retain_export_default_declaration(
+                                    decl,
+                                    &mut is_export_default_function_overloads,
+                                )
+                            }
+                            _ => true,
+                        }
+                    }
+                }
+                _ => false,
             })
             .collect::<Vec<_>>();
-        Self::remove_function_overloads_implementation(&mut stmts);
 
         // https://github.com/microsoft/TypeScript/pull/58912
         let mut need_empty_export_marker = true;
@@ -430,69 +479,82 @@ impl<'a> IsolatedDeclarations<'a> {
         new_stmts
     }
 
-    fn remove_function_overloads_implementation(stmts: &mut Vec<&Statement<'a>>) {
-        let mut last_function_name: Option<Atom<'a>> = None;
-        let mut is_export_default_function_overloads = false;
+    /// Determine if should retain a function declaration.
+    ///
+    /// Returns `true` unless this function has a body,
+    /// and follows another function declaration with the same name.
+    fn should_retain_function_declaration(
+        func: &Function<'a>,
+        last_function_name: &mut Option<Atom<'a>>,
+    ) -> bool {
+        let name = func
+            .id
+            .as_ref()
+            .unwrap_or_else(|| {
+                unreachable!("Only export default function declaration is allowed to have no name")
+            })
+            .name;
 
-        stmts.retain(move |&stmt| match stmt {
-            Statement::FunctionDeclaration(func) => {
-                let name = func
-                    .id
-                    .as_ref()
-                    .unwrap_or_else(|| {
-                        unreachable!(
-                            "Only export default function declaration is allowed to have no name"
-                        )
-                    })
-                    .name;
+        if func.body.is_some() {
+            if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
+                return false;
+            }
+        } else {
+            *last_function_name = Some(name);
+        }
+        true
+    }
 
-                if func.body.is_some() {
-                    if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
-                        return false;
-                    }
-                } else {
-                    last_function_name = Some(name);
+    /// Determine if should retain a named export declaration.
+    ///
+    /// Returns `true` unless this function has a body,
+    /// and follows another function declaration with the same name.
+    fn should_retain_export_named_declaration(
+        decl: &ExportNamedDeclaration<'a>,
+        last_function_name: &mut Option<Atom<'a>>,
+    ) -> bool {
+        if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
+            let name = func
+                .id
+                .as_ref()
+                .unwrap_or_else(|| {
+                    unreachable!(
+                        "Only export default function declaration is allowed to have no name"
+                    )
+                })
+                .name;
+            if func.body.is_some() {
+                if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
+                    return false;
                 }
-                true
+            } else {
+                *last_function_name = Some(name);
             }
-            Statement::ExportNamedDeclaration(decl) => {
-                if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
-                    let name = func
-                        .id
-                        .as_ref()
-                        .unwrap_or_else(|| {
-                            unreachable!(
-                            "Only export default function declaration is allowed to have no name"
-                        )
-                        })
-                        .name;
-                    if func.body.is_some() {
-                        if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
-                            return false;
-                        }
-                    } else {
-                        last_function_name = Some(name);
-                    }
-                    true
-                } else {
-                    true
-                }
+            true
+        } else {
+            true
+        }
+    }
+
+    /// Determine if should retain a default export declaration.
+    ///
+    /// Returns `true` unless this export is a function declaration with a body,
+    /// and follows another export default declaration.
+    fn should_retain_export_default_declaration(
+        decl: &ExportDefaultDeclaration<'a>,
+        is_export_default_function_overloads: &mut bool,
+    ) -> bool {
+        if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &decl.declaration {
+            if *is_export_default_function_overloads && func.body.is_some() {
+                *is_export_default_function_overloads = false;
+                return false;
             }
-            Statement::ExportDefaultDeclaration(decl) => {
-                if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &decl.declaration {
-                    if is_export_default_function_overloads && func.body.is_some() {
-                        is_export_default_function_overloads = false;
-                        return false;
-                    }
-                    is_export_default_function_overloads = true;
-                    true
-                } else {
-                    is_export_default_function_overloads = false;
-                    true
-                }
-            }
-            _ => true,
-        });
+            *is_export_default_function_overloads = true;
+            true
+        } else {
+            *is_export_default_function_overloads = false;
+            true
+        }
     }
 
     fn get_assignable_properties_for_namespaces(
