@@ -1572,6 +1572,7 @@ name = "oxc_allocator"
 version = "0.53.0"
 dependencies = [
  "allocator-api2",
+ "assert-unchecked",
  "bumpalo",
  "hashbrown 0.15.2",
  "oxc_estree",
