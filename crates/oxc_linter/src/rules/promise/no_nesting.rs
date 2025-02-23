@@ -85,21 +85,26 @@ fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
         .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
 }
 
-fn closest_promise_callback_args<'a>(
-    node: &'a AstNode<'a>,
-    ctx: &'a LintContext<'a>,
-) -> Option<&'a AstNode<'a>> {
-    if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-        || !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::Argument(_)))
-    {
-        return None;
-    }
+// .skip(1) useful too
+fn closest_promise_callback_args<'a, 'b>(
+    node: &'a AstNode<'b>,
+    ctx: &'a LintContext<'b>,
+) -> Option<&'a AstNode<'b>> {
+    println!("111oo");
+
+    //if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+    //    || !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::Argument(_)))
+    //{
+    //    return None;
+    //}
 
     let a = ctx
         .nodes()
         .ancestors(node.id())
         .filter(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
-        .nth(2);
+        .nth(0);
+
+    println!("zoo {a:?}");
 
     a
     //  .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
@@ -197,7 +202,7 @@ impl Rule for NoNesting {
         if let Some(closest) = closest_promise_callback_args(node, ctx) {
             println!("closest {closest:?}");
         };
-        println!("nope");
+        // println!("nope");
 
         let mut ancestors = ctx.nodes().ancestors(node.id());
         if ancestors.any(|node| is_inside_promise(node, ctx)) {
