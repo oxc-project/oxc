@@ -1,10 +1,9 @@
 use oxc_ast::{
-    AstKind,
     ast::{
         AssignmentExpression, AssignmentTarget, BinaryOperator, Expression, MemberExpression,
         SimpleAssignmentTarget, UnaryOperator, UpdateOperator,
     },
-    match_simple_assignment_target,
+    AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -12,7 +11,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::GetPrecedence;
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_member_expression};
+use crate::{context::LintContext, rule::Rule, utils::is_same_member_expression, AstNode};
 
 fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> OxcDiagnostic {
     let msg = if Mode::Never == mode {
@@ -32,7 +31,11 @@ enum Mode {
 
 impl Mode {
     pub fn from(raw: &str) -> Self {
-        if raw == "never" { Self::Never } else { Self::Always }
+        if raw == "never" {
+            Self::Never
+        } else {
+            Self::Always
+        }
     }
 }
 
@@ -43,10 +46,16 @@ pub struct OperatorAssignment {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule requires or disallows assignment operator shorthand where possible.
+    /// It encourages the use of shorthand assignment operators like `+=`, `-=`, `*=`, `/=`, etc.
+    /// to make the code more concise and readable.
     ///
     /// ### Why is this bad?
-    /// JavaScript provides shorthand operators that combine variable assignment and some simple mathematical operations.
+    ///
+    /// JavaScript provides shorthand operators that combine variable assignment and simple
+    /// mathematical operations. Failing to use these shorthand operators can lead to unnecessarily
+    /// verbose code and can be seen as a missed opportunity for clarity and simplicity.
     ///
     /// ### Examples
     ///
@@ -67,6 +76,7 @@ declare_oxc_lint!(
     /// x[0] /= y;
     /// x[foo()] = x[foo()] % 2;
     /// x = y + x; // `+` is not always commutative (e.g. x = "abc")
+    /// ```
     ///
     /// Examples of **incorrect** code for this rule with the `never` option:
     /// ```js
@@ -81,15 +91,15 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ### Options
+    ///
     /// This rule has a single string option:
     ///
-    /// `{ type: String, default: 'always' }`
+    /// `{ type: string, default: "always" }`
     ///
     /// * `always` requires assignment operator shorthand where possible
     /// * `never` disallows assignment operator shorthand
     ///
     /// Example:
-    ///
     /// ```json
     /// "eslint/max-nested-callbacks": ["error", "always"]
     ///
@@ -219,7 +229,7 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str()),
                         // For the rest
                         _ => {
                             let temp_right_text = Span::new(operator_span.end, right_expr.span().end).source_text(ctx.source_text());
-                            let no_gap: bool = right_expr.span().start == operator_span.end;
+                            let no_gap = right_expr.span().start == operator_span.end;
                             // we match the binary operator to determine whether right_text_prefix needs to be preceded by a space
                             let need_fill_space = match new_operator {
                                 BinaryOperator::Division => {
@@ -257,37 +267,31 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str()),
 }
 
 fn can_be_fixed(target: &AssignmentTarget) -> bool {
-    match target {
-        match_simple_assignment_target!(AssignmentTarget) => {
-            let simple_assignment_target = target.to_simple_assignment_target();
-
-            if matches!(
-                simple_assignment_target,
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(_)
-            ) {
-                return true;
-            }
-            let Some(expr) = simple_assignment_target.as_member_expression() else {
-                return false;
-            };
-            match expr {
-                MemberExpression::ComputedMemberExpression(computed_expr) => {
-                    matches!(
-                        computed_expr.object,
-                        Expression::Identifier(_) | Expression::ThisExpression(_)
-                    ) && computed_expr.expression.is_literal()
-                }
-                MemberExpression::StaticMemberExpression(static_expr) => {
-                    matches!(
-                        static_expr.object,
-                        Expression::Identifier(_) | Expression::ThisExpression(_)
-                    )
-                }
-                MemberExpression::PrivateFieldExpression(_) => false,
-            }
+    if let Some(simple_assignment_target) = target.as_simple_assignment_target() {
+        if matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(_))
+        {
+            return true;
         }
-        _ => false,
+        let Some(expr) = simple_assignment_target.as_member_expression() else {
+            return false;
+        };
+        return match expr {
+            MemberExpression::ComputedMemberExpression(computed_expr) => {
+                matches!(
+                    computed_expr.object,
+                    Expression::Identifier(_) | Expression::ThisExpression(_)
+                ) && computed_expr.expression.is_literal()
+            }
+            MemberExpression::StaticMemberExpression(static_expr) => {
+                matches!(
+                    static_expr.object,
+                    Expression::Identifier(_) | Expression::ThisExpression(_)
+                )
+            }
+            MemberExpression::PrivateFieldExpression(_) => false,
+        };
     }
+    false
 }
 
 #[expect(clippy::cast_possible_truncation)]
@@ -298,40 +302,29 @@ fn get_operator_span(init_span: Span, operator: &str, ctx: &LintContext) -> Span
 }
 
 fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &LintContext) -> bool {
-    match left {
-        match_simple_assignment_target!(AssignmentTarget) => {
-            let simple_assignment_target = left.to_simple_assignment_target();
-            if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) =
-                simple_assignment_target
-            {
-                return matches!(right, Expression::Identifier(id2) if id2.name == id1.name);
-            }
-
-            if let Some(left_member_expr) = simple_assignment_target.as_member_expression() {
-                if let Some(right_member_expr) = right.without_parentheses().get_member_expr() {
-                    // x.y vs x['y']
-                    if (matches!(left_member_expr, MemberExpression::ComputedMemberExpression(_))
-                        && !matches!(
-                            right_member_expr,
-                            MemberExpression::ComputedMemberExpression(_)
-                        ))
-                        || (!matches!(
-                            left_member_expr,
-                            MemberExpression::ComputedMemberExpression(_)
-                        ) && matches!(
-                            right_member_expr,
-                            MemberExpression::ComputedMemberExpression(_)
-                        ))
-                    {
-                        return false;
-                    }
-                    return is_same_member_expression(left_member_expr, right_member_expr, ctx);
-                }
-            }
-            false
+    if let Some(simple_assignment_target) = left.as_simple_assignment_target() {
+        if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) = simple_assignment_target {
+            return matches!(right, Expression::Identifier(id2) if id2.name == id1.name);
         }
-        _ => false,
+
+        if let Some(left_member_expr) = simple_assignment_target.as_member_expression() {
+            if let Some(right_member_expr) = right.without_parentheses().get_member_expr() {
+                // x.y vs x['y']
+                if (matches!(left_member_expr, MemberExpression::ComputedMemberExpression(_))
+                    && !matches!(right_member_expr, MemberExpression::ComputedMemberExpression(_)))
+                    || (!matches!(left_member_expr, MemberExpression::ComputedMemberExpression(_))
+                        && matches!(
+                            right_member_expr,
+                            MemberExpression::ComputedMemberExpression(_)
+                        ))
+                {
+                    return false;
+                }
+                return is_same_member_expression(left_member_expr, right_member_expr, ctx);
+            }
+        }
     }
+    false
 }
 
 fn is_commutative_operator_with_shorthand(operator: BinaryOperator) -> bool {
@@ -361,6 +354,7 @@ fn is_non_commutative_operator_with_shorthand(operator: BinaryOperator) -> bool 
 #[test]
 fn test() {
     use crate::tester::Tester;
+
     let pass = vec![
         ("x = y", None),
         ("x = y + x", None),
@@ -414,6 +408,7 @@ fn test() {
         ("x ??= y", Some(serde_json::json!(["never"]))),
         ("x = () => {};", Some(serde_json::json!(["never"]))),
     ];
+
     let fail = vec![
         ("x = x + y", None),
         ("x = x - y", None),
@@ -527,6 +522,7 @@ fn test() {
         ("x += + (() => {})", Some(serde_json::json!(["never"]))),
         ("x += + /** fooo */ (() => {})", Some(serde_json::json!(["never"]))),
     ];
+
     let fix = vec![
         ("x = x + y", "x += y", None),
         ("x = x - y", "x -= y", None),
