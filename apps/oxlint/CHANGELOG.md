@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.12] - 2025-02-23
+
+### Features
+
+- 9bc3017 linter: Add support for nested config files (#9153) (camchenry)
+- cc8dd48 linter: Add unicorn/no-invalid-fetch-options rule (#9212) (Mikhail Baev)
+- af13b1b linter: Promote `eslint/no-eval` to `correctness` (#9231) (dalaoshu)
+- 542bbd7 linter: Support `import-x` plugin name (#9074) (Sysix)
+- cded0ad oxlint: Add `--experimental-nested-config` option (#9152) (camchenry)
+
+### Bug Fixes
+
+- 4ed9d76 linter: Do not use nested configs with `--config` option (#9155) (camchenry)
+
+### Refactor
+
+- 63bb214 oxc: Apply `clippy::redundant_clone` (#9252) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
+### Testing
+
+- e49c92d linter: Ensure CLI filters take precedence over nested configs (#9156) (camchenry)
+
 ## [0.15.11] - 2025-02-16
 
 ### Features
