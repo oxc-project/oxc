@@ -1,9 +1,10 @@
 use oxc_ast::{
+    AstKind,
     ast::{
         AssignmentExpression, AssignmentTarget, BinaryOperator, Expression, MemberExpression,
         SimpleAssignmentTarget, UnaryOperator, UpdateOperator,
     },
-    match_simple_assignment_target, AstKind,
+    match_simple_assignment_target,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,7 +12,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::GetPrecedence;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_member_expression, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_member_expression};
 
 fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> OxcDiagnostic {
     let msg = if Mode::Never == mode {
@@ -31,11 +32,7 @@ enum Mode {
 
 impl Mode {
     pub fn from(raw: &str) -> Self {
-        if raw == "never" {
-            Self::Never
-        } else {
-            Self::Always
-        }
+        if raw == "never" { Self::Never } else { Self::Always }
     }
 }
 
