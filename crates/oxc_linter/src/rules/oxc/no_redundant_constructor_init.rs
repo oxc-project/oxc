@@ -63,10 +63,9 @@ impl Rule for NoRedundantConstructorInit {
             .params
             .items
             .iter()
-            .filter_map(|param| match param.is_public() {
-                true => param.pattern.get_identifier_name(),
-                _ => None,
-            })
+            .filter_map(
+                |param| if param.is_public() { param.pattern.get_identifier_name() } else { None },
+            )
             .collect::<Vec<_>>();
         if public_members.is_empty() {
             return;
@@ -114,50 +113,50 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"
+        r"
         class Foo {
           constructor(public name: unknown) {}
         }
-        "#,
-        r#"
+        ",
+        r"
         class Foo {
           constructor(public name: unknown, other: unknown) {
             this.other = other;
           }
         }
-        "#,
-        r#"
+        ",
+        r"
         class Foo {
           constructor(public name: unknown) {
             this.other = name;
           }
         }
-        "#,
-        r#"
+        ",
+        r"
         class Foo {
           constructor(name: unknown) {
             this.name = name;
           }
         }
-        "#,
+        ",
     ];
 
     let fail = vec![
-        r#"
+        r"
         class Foo {
           constructor(public name: unknown) {
             this.name = name;
           }
         }
-        "#,
-        r#"
+        ",
+        r"
         class Foo {
           constructor(other: unknown, public name: unknown) {
             this.other = other;
             this.name = name;
           }
         }
-        "#,
+        ",
     ];
 
     Tester::new(NoRedundantConstructorInit::NAME, NoRedundantConstructorInit::PLUGIN, pass, fail)
