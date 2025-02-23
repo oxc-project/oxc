@@ -116,7 +116,6 @@ mod eslint {
     pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
-    pub mod no_redundant_constructor_init;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
     pub mod no_restricted_imports;
@@ -461,6 +460,7 @@ mod oxc {
     pub mod no_const_enum;
     pub mod no_map_spread;
     pub mod no_optional_chaining;
+    pub mod no_redundant_constructor_init;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
@@ -631,7 +631,6 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_proto,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
-    eslint::no_redundant_constructor_init,
     eslint::no_regex_spaces,
     eslint::no_restricted_globals,
     eslint::no_return_assign,
@@ -840,6 +839,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_const_enum,
     oxc::no_map_spread,
     oxc::no_optional_chaining,
+    oxc::no_redundant_constructor_init,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,

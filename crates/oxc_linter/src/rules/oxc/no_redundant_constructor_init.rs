@@ -45,7 +45,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoRedundantConstructorInit,
-    eslint,
+    oxc,
     style,
     pending,
 );

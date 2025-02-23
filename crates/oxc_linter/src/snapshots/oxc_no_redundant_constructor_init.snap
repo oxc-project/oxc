@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-redundant-constructor-init): Explicit initialization of public members is redundant
+  ⚠ oxc(no-redundant-constructor-init): Explicit initialization of public members is redundant
    ╭─[no_redundant_constructor_init.tsx:4:13]
  3 │           constructor(public name: unknown) {
  4 │             this.name = name;
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the explicit initialization
 
-  ⚠ eslint(no-redundant-constructor-init): Explicit initialization of public members is redundant
+  ⚠ oxc(no-redundant-constructor-init): Explicit initialization of public members is redundant
    ╭─[no_redundant_constructor_init.tsx:5:13]
  4 │             this.other = other;
  5 │             this.name = name;
