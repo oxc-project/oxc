@@ -17,34 +17,34 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:6:35]
- 5 │             
+ 5 │ 
  6 │             interface Derived extends Base {}
    ·                                            ──
- 7 │             
+ 7 │ 
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:6:35]
- 5 │             
+ 5 │ 
  6 │             interface Derived extends Base {}
    ·                                            ──
- 7 │             
+ 7 │ 
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:6:35]
- 5 │             
+ 5 │ 
  6 │             interface Derived extends Base {}
    ·                                            ──
- 7 │             
+ 7 │ 
    ╰────
   help: To avoid confusion around the {} type allowing any non-nullish value, this rule bans usage of the {} type.
 
   ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:6:35]
- 5 │             
+ 5 │ 
  6 │             interface Derived extends Base {}
    ·                                            ──
  7 │                   
