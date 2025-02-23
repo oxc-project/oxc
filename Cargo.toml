@@ -24,7 +24,7 @@ non_ascii_idents = "warn"
 unit-bindings = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
 tail_expr_drop_order = "warn"
-unsafe_op_in_unsafe_fn = "allow" # FIXME
+unsafe_op_in_unsafe_fn = "warn"
 unused_unsafe = "allow"
 
 [workspace.lints.clippy]

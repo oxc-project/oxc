@@ -7,7 +7,8 @@
     clippy::ptr_as_ptr,
     clippy::ref_as_ptr,
     clippy::cast_ptr_alignment,
-    clippy::borrow_as_ptr
+    clippy::borrow_as_ptr,
+    unsafe_op_in_unsafe_fn
 )]
 
 use std::{cell::Cell, marker::PhantomData};
