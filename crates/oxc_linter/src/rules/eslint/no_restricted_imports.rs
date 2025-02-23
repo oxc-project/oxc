@@ -352,67 +352,6 @@ enum NameSpanAllowedResult {
     NameDisallowed,
 }
 
-fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> NameSpanAllowedResult {
-    // fast check if this name is allowed
-    if path.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
-        return NameSpanAllowedResult::Allowed;
-    }
-
-    if path.import_names.as_ref().is_none() {
-        // when no importNames and no allowImportNames option is provided, no import in general is allowed
-        if path.allow_import_names.is_some() {
-            return NameSpanAllowedResult::NameDisallowed;
-        }
-
-        return NameSpanAllowedResult::GeneralDisallowed;
-    }
-
-    // the name is found is the importNames list
-    if path.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
-        return NameSpanAllowedResult::NameDisallowed;
-    }
-
-    // we allow it
-    NameSpanAllowedResult::Allowed
-}
-
-fn is_name_span_allowed_in_pattern(
-    name: &CompactStr,
-    pattern: &RestrictedPattern,
-) -> NameSpanAllowedResult {
-    // fast check if this name is allowed
-    if pattern.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
-        return NameSpanAllowedResult::Allowed;
-    }
-
-    // fast check if this name is allowed
-    if pattern.get_allow_import_name_pattern_result(name) {
-        return NameSpanAllowedResult::Allowed;
-    }
-
-    // when no importNames or importNamePattern option is provided, no import in general is allowed
-    if pattern.import_names.as_ref().is_none() && pattern.import_name_pattern.is_none() {
-        if pattern.allow_import_names.is_some() || pattern.allow_import_name_pattern.is_some() {
-            return NameSpanAllowedResult::NameDisallowed;
-        }
-
-        return NameSpanAllowedResult::GeneralDisallowed;
-    }
-
-    // the name is found is the importNames list
-    if pattern.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
-        return NameSpanAllowedResult::NameDisallowed;
-    }
-
-    // the name is found is the importNamePattern
-    if pattern.get_import_name_pattern_result(name) {
-        return NameSpanAllowedResult::NameDisallowed;
-    }
-
-    // we allow it
-    NameSpanAllowedResult::Allowed
-}
-
 #[derive(PartialEq, Debug)]
 enum ImportNameResult {
     Allowed,
@@ -422,25 +361,47 @@ enum ImportNameResult {
 }
 
 impl RestrictedPath {
+    fn is_name_span_allowed(&self, name: &CompactStr) -> NameSpanAllowedResult {
+        // fast check if this name is allowed
+        if self.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
+            return NameSpanAllowedResult::Allowed;
+        }
+
+        if self.import_names.as_ref().is_none() {
+            // when no importNames and no allowImportNames option is provided, no import in general is allowed
+            if self.allow_import_names.is_some() {
+                return NameSpanAllowedResult::NameDisallowed;
+            }
+
+            return NameSpanAllowedResult::GeneralDisallowed;
+        }
+
+        // the name is found is the importNames list
+        if self.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
+            return NameSpanAllowedResult::NameDisallowed;
+        }
+
+        // we allow it
+        NameSpanAllowedResult::Allowed
+    }
+
     fn get_import_name_result(&self, name: &ImportImportName, is_type: bool) -> ImportNameResult {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return ImportNameResult::Allowed;
         }
 
         match &name {
-            ImportImportName::Name(import) => {
-                match is_name_span_allowed_in_path(&import.name, self) {
-                    NameSpanAllowedResult::NameDisallowed => {
-                        ImportNameResult::NameDisallowed(import.clone())
-                    }
-                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            ImportImportName::Name(import) => match self.is_name_span_allowed(&import.name) {
+                NameSpanAllowedResult::NameDisallowed => {
+                    ImportNameResult::NameDisallowed(import.clone())
                 }
-            }
+                NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            },
             ImportImportName::Default(span) => {
                 let name = CompactStr::new("default");
 
-                match is_name_span_allowed_in_path(&name, self) {
+                match self.is_name_span_allowed(&name) {
                     NameSpanAllowedResult::NameDisallowed => {
                         ImportNameResult::NameDisallowed(NameSpan::new(name, *span))
                     }
@@ -458,15 +419,13 @@ impl RestrictedPath {
         }
 
         match &name {
-            ExportImportName::Name(import) => {
-                match is_name_span_allowed_in_path(&import.name, self) {
-                    NameSpanAllowedResult::NameDisallowed => {
-                        ImportNameResult::NameDisallowed(import.clone())
-                    }
-                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            ExportImportName::Name(import) => match self.is_name_span_allowed(&import.name) {
+                NameSpanAllowedResult::NameDisallowed => {
+                    ImportNameResult::NameDisallowed(import.clone())
                 }
-            }
+                NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            },
             ExportImportName::All | ExportImportName::AllButDefault => {
                 ImportNameResult::DefaultDisallowed
             }
@@ -486,7 +445,7 @@ impl RestrictedPath {
         let name = literal.value.into_compact_str();
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
-        match is_name_span_allowed_in_path(unused_name, self) {
+        match self.is_name_span_allowed(unused_name) {
             NameSpanAllowedResult::NameDisallowed => {
                 ImportNameResult::NameDisallowed(NameSpan::new(name, literal.span))
             }
@@ -497,24 +456,56 @@ impl RestrictedPath {
 }
 
 impl RestrictedPattern {
+    fn is_name_span_allowed(&self, name: &CompactStr) -> NameSpanAllowedResult {
+        // fast check if this name is allowed
+        if self.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
+            return NameSpanAllowedResult::Allowed;
+        }
+
+        // fast check if this name is allowed
+        if self.get_allow_import_name_pattern_result(name) {
+            return NameSpanAllowedResult::Allowed;
+        }
+
+        // when no importNames or importNamePattern option is provided, no import in general is allowed
+        if self.import_names.as_ref().is_none() && self.import_name_pattern.is_none() {
+            if self.allow_import_names.is_some() || self.allow_import_name_pattern.is_some() {
+                return NameSpanAllowedResult::NameDisallowed;
+            }
+
+            return NameSpanAllowedResult::GeneralDisallowed;
+        }
+
+        // the name is found is the importNames list
+        if self.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
+            return NameSpanAllowedResult::NameDisallowed;
+        }
+
+        // the name is found is the importNamePattern
+        if self.get_import_name_pattern_result(name) {
+            return NameSpanAllowedResult::NameDisallowed;
+        }
+
+        // we allow it
+        NameSpanAllowedResult::Allowed
+    }
+
     fn get_import_name_result(&self, name: &ImportImportName, is_type: bool) -> ImportNameResult {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return ImportNameResult::Allowed;
         }
 
         match &name {
-            ImportImportName::Name(import) => {
-                match is_name_span_allowed_in_pattern(&import.name, self) {
-                    NameSpanAllowedResult::NameDisallowed => {
-                        ImportNameResult::NameDisallowed(import.clone())
-                    }
-                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            ImportImportName::Name(import) => match self.is_name_span_allowed(&import.name) {
+                NameSpanAllowedResult::NameDisallowed => {
+                    ImportNameResult::NameDisallowed(import.clone())
                 }
-            }
+                NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            },
             ImportImportName::Default(span) => {
                 let name: CompactStr = CompactStr::new("default");
-                match is_name_span_allowed_in_pattern(&name, self) {
+                match self.is_name_span_allowed(&name) {
                     NameSpanAllowedResult::NameDisallowed => {
                         ImportNameResult::NameDisallowed(NameSpan::new(name, *span))
                     }
@@ -532,15 +523,13 @@ impl RestrictedPattern {
         }
 
         match &name {
-            ExportImportName::Name(import) => {
-                match is_name_span_allowed_in_pattern(&import.name, self) {
-                    NameSpanAllowedResult::NameDisallowed => {
-                        ImportNameResult::NameDisallowed(import.clone())
-                    }
-                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            ExportImportName::Name(import) => match self.is_name_span_allowed(&import.name) {
+                NameSpanAllowedResult::NameDisallowed => {
+                    ImportNameResult::NameDisallowed(import.clone())
                 }
-            }
+                NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
+                NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            },
             ExportImportName::All | ExportImportName::AllButDefault => {
                 ImportNameResult::DefaultDisallowed
             }
@@ -560,7 +549,7 @@ impl RestrictedPattern {
         let name = literal.value.into_compact_str();
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
-        match is_name_span_allowed_in_pattern(unused_name, self) {
+        match self.is_name_span_allowed(unused_name) {
             NameSpanAllowedResult::NameDisallowed => {
                 ImportNameResult::NameDisallowed(NameSpan::new(name, literal.span))
             }
