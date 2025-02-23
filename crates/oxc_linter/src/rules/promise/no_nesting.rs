@@ -1,11 +1,16 @@
+use oxc_ast::{
+    ast::{CallExpression, FormalParameters, MemberExpression},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
+    utils::is_promise,
     AstNode,
 };
 
@@ -47,8 +52,74 @@ declare_oxc_lint!(
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 );
 
+fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
+        return false;
+    }
+
+    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+        return false;
+    };
+    if !matches!(ctx.nodes().kind(parent.id()), AstKind::Argument(_)) {
+        return false;
+    };
+
+    let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(parent.id()) else {
+        return false;
+    };
+
+    matches!(call_expr.callee_name(), Some("then" | "catch"))
+}
+
+fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
+    if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        || !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::Argument(_)))
+    {
+        return false;
+    }
+
+    ctx.nodes()
+        .ancestors(node.id())
+        .nth(2)
+        .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
+}
+
+fn has_promise_callback(call_expr: &CallExpression) -> bool {
+    matches!(
+        call_expr.callee.as_member_expression().and_then(MemberExpression::static_property_name),
+        Some("then" | "catch")
+    )
+}
+
+fn is_promise_then_catch_fin(call_expr: &CallExpression) -> Option<String> {
+    let member_expr = call_expr.callee.get_member_expr()?;
+    let prop_name = member_expr.static_property_name()?;
+
+    // hello.then(), hello.catch(), hello.finally()
+    if matches!(prop_name, "then" | "catch" | "finally") {
+        return Some(prop_name.into());
+    }
+
+    None
+}
+
 impl Rule for NoNesting {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        let Some(prop_name) = is_promise_then_catch_fin(call_expr) else {
+            return;
+        };
+
+        println!("yayyyyy  {call_expr:?}");
+
+        let mut ancestors = ctx.nodes().ancestors(node.id());
+        if ancestors.any(|node| is_inside_promise(node, ctx)) {
+            ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
+        }
+    }
 }
 
 #[test]
