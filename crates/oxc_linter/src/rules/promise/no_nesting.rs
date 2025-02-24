@@ -89,67 +89,17 @@ fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
         .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
 }
 
-// .skip(1) useful too
 fn closest_promise_callback_def_vars<'a, 'b>(
     node: &'a AstNode<'b>,
     ctx: &'a LintContext<'b>,
 ) -> Option<&'a CallExpression<'b>> {
-    println!("111oo");
-
-    //if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-    //    || !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::Argument(_)))
-    //{
-    //    return None;
-    //}
-
-    let a = ctx
-        .nodes()
+    ctx.nodes()
         .ancestors(node.id())
         .filter_map(|node| node.kind().as_call_expression())
         .filter(|a| has_promise_callback(a))
-        //.map(|)
-        //        .map(|s| s.arguments.iter().map(|arg|))
-        .nth(1);
-    //  .nth(0);
-
-    a
-    //  .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
+        .nth(1)
 }
 
-/*
-
-fn get_arg_names<'b>(call: &CallExpression<'b>) -> Vec<CompactStr> {
-    let mut a = vec![];
-    call.arguments.iter().for_each(|new_expr| {
-        //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
-
-        //  for argument in &new_expr.arguments {
-        let Some(arg_expr) = new_expr.as_expression() else {
-            return;
-        };
-        match arg_expr {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
-                for param in &arrow_expr.params.items {
-                    if let BindingPatternKind::BindingIdentifier(param_ident) = &param.pattern.kind
-                    {
-                        //  let n = param_ident.name;
-                        a.push(param_ident.name.to_compact_str());
-                        //     println!("arg {n}");
-                        //   arg_names.push(&n.to_compact_str())
-                        //   v.push(param_ident.name.to_compact_str());
-                    };
-                }
-                //   self.check_parameter_names(&arrow_expr.params, ctx);
-            }
-            Expression::FunctionExpression(func_expr) => {
-                // self.check_parameter_names(&func_expr.params, ctx);
-            }
-            _ => return,
-        }
-        //     }
-    });
-}
-*/
 fn has_promise_callback(call_expr: &CallExpression) -> bool {
     matches!(
         call_expr.callee.as_member_expression().and_then(MemberExpression::static_property_name),
@@ -161,7 +111,7 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
     let member_expr = call_expr.callee.get_member_expr()?;
     let prop_name = member_expr.static_property_name()?;
 
-    // hello.then(), hello.catch()
+    // For example: hello.then(), hello.catch()
     if matches!(prop_name, "then" | "catch") {
         return Some(prop_name.into());
     }
@@ -195,15 +145,11 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 /// in the nested promise callback. Because of this reference, this nesting
 /// isn't a rule violation.
 fn can_safely_unnest<'a>(
-    node: &AstNode<'a>,
     call_expr: &CallExpression,
+    closest: &CallExpression,
     ctx: &LintContext<'a>,
     alloc: &Allocator,
 ) -> bool {
-    let Some(closest) = closest_promise_callback_def_vars(node, ctx) else {
-        return;
-    };
-
     let mut closest_cb_scope_bindings: &HashMap<'_, &str, SymbolId> = &HashMap::new_in(alloc);
 
     closest.arguments.iter().for_each(|new_expr| {
@@ -253,31 +199,37 @@ fn can_safely_unnest<'a>(
                 };
             }
         }
-
-        return true;
     }
 
-    impl Rule for NoNesting {
-        fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-            let AstKind::CallExpression(call_expr) = node.kind() else {
-                return;
-            };
+    return true;
+}
 
-            let Some(prop_name) = is_promise_then_or_catch(call_expr) else {
-                return;
-            };
+impl Rule for NoNesting {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
-            let allocator = Allocator::default();
+        let Some(prop_name) = is_promise_then_or_catch(call_expr) else {
+            return;
+        };
 
-            let mut ancestors = ctx.nodes().ancestors(node.id());
-            if ancestors.any(|node| is_inside_promise(node, ctx)) {
-                if can_safely_unnest(node, call_expr, ctx, &allocator) {
-                    ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
-                } else {
-                    return;
+        let allocator = Allocator::default();
+
+        let mut ancestors = ctx.nodes().ancestors(node.id());
+        if ancestors.any(|node| is_inside_promise(node, ctx)) {
+            //       let Some(closest) =
+            match closest_promise_callback_def_vars(node, ctx) {
+                Some(closest) => {
+                    if can_safely_unnest(call_expr, closest, ctx, &allocator) {
+                        ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
+                    } else {
+                        return;
+                    }
                 }
-            };
-        }
+                None => ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span())),
+            }
+        };
     }
 }
 
