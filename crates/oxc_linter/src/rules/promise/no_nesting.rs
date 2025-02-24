@@ -169,205 +169,113 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
     None
 }
 
-/// Get closest callback function scope outside of current callback.
-/// ```
+/// Checks if we can safely unnest the promise callback.
+///
+/// 1. Gets names of variables defined in closest parent promise callback function scope.
+/// 2. Checks if the argument callback of the nested promise call uses any of these variables from 1.
+///
+/// ```javascript
 /// doThing()
-///  .then(a => getB(a) <---- get this scopes args
-///    .then(b => getC(a, b)) <--- when here
+///  .then(a => getB(a) <---- 1. Get this scopes bound variables
+///    .then(b => getC(a, b)) <--- 2. Check for references to the bound variables from 1.
 ///  )
 /// ```
-/// We don't want a violation of this rule in such cases
-/// because we cannot unnest the above as `a` would be undefined.
-/// Here is the unnested version where would be `a` `undefined`
-/// in the second `then` callback:
-/// ```
+///
+/// We don't want a violation of this rule in the above case as unnesting would
+/// result in the following code where `getC(a, b` would be referencing an
+/// undefined `a`.
+///
+/// ```javascript
 /// doThing()
 ///  .then(a => getB(a))
 ///  .then(b => getC(a, b))
 /// ```
 ///
-fn get_closest_promise_callback_def_vars<'a>(
+/// We then see that both `a` and `b` has a reference
+/// in the nested promise callback. Because of this reference, this nesting
+/// isn't a rule violation.
+fn can_safely_unnest<'a>(
     node: &AstNode<'a>,
+    call_expr: &CallExpression,
     ctx: &LintContext<'a>,
-) -> Option<&'a Vec<'a, Argument<'a>>> {
-    let closest_prom_cb_args = ctx.semantic().nodes().ancestors(node.id()).find_map(|node| {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return None;
+    alloc: &Allocator,
+) -> bool {
+    let Some(closest) = closest_promise_callback_def_vars(node, ctx) else {
+        return;
+    };
+
+    let mut closest_cb_scope_bindings: &HashMap<'_, &str, SymbolId> = &HashMap::new_in(alloc);
+
+    closest.arguments.iter().for_each(|new_expr| {
+        let Some(arg_expr) = new_expr.as_expression() else {
+            return;
         };
 
-        if let Some(prop_name) = is_promise_then_or_catch(call_expr) {
-            if prop_name == "then" {
-                return Some(&call_expr.arguments);
-            } else {
-                return None;
+        match arg_expr {
+            Expression::ArrowFunctionExpression(arrow_expr) => {
+                let func_scope = arrow_expr.scope_id();
+                println!("scope id {func_scope:?}");
+
+                let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
+                closest_cb_scope_bindings = bound_vars_for_scope;
             }
-        } else {
-            return None;
-        };
+            Expression::FunctionExpression(func_expr) => {
+                let func_scope = func_expr.scope_id();
+                println!("scope id {func_scope:?}");
+
+                let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
+                closest_cb_scope_bindings = bound_vars_for_scope;
+            }
+            _ => {}
+        }
     });
 
-    closest_prom_cb_args
-}
-
-impl Rule for NoNesting {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-
-        let Some(prop_name) = is_promise_then_or_catch(call_expr) else {
-            return;
-        };
-
-        let allocator = Allocator::default();
-        /*
-        if let Some(args) = get_closest_promise_callback_def_vars(node, ctx) {
-            //println!("args  {call_expr:?}");
-            match args.first() {
-                Some(Argument::Identifier(identifier_reference)) => {
-                    let name = identifier_reference.name;
-                    println!("args id name  {name:?}");
-                }
-                Some(Argument::ArrowFunctionExpression(arrow)) => {
-                    let p = &arrow.params.items;
-                    println!("looo {p:?}");
-                }
-                a => {
-                    println!("dooo {a:?}");
-                }
-            }
-        } else {
-            println!("dooo");
-        }
-        */
-
-        let mut ancestors = ctx.nodes().ancestors(node.id());
-        if ancestors.any(|node| is_inside_promise(node, ctx)) {
-            // get the args passed into the nested promise call.
-            let mut nested_call_args = vec![];
-            call_expr.arguments.iter().for_each(|arg| {
-                let Some(arg_expr) = arg.as_expression() else {
-                    return;
+    if let Some(cb_span) = call_expr.arguments.get(0).map(|a| a.span()) {
+        // Now check for references in cb_span to variables defined in the closest parent cb scope.
+        // In the given example we would loop through all bindings in the closest
+        // parent scope a,b,c,d.
+        //
+        // ```javascript
+        //  .then((a,b,c) => {
+        //    const d = 5;
+        //    getB(a).then(d => getC(a, b))
+        //             // ^^^^^^^^^^^^^^^^ <- cb_span
+        // };
+        // ```
+        for (binding_name, binding_symbol_id) in closest_cb_scope_bindings {
+            for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
+                let usage_span: Span = ctx.reference_span(usage);
+                if cb_span.contains_inclusive(usage_span) {
+                    // Cannot unnest this nested promise as the nested cb refers to a variable
+                    // defined in the parent promise callback scope. Unnesting would result in
+                    // reference to an undefined variable.
+                    return false;
                 };
-                match arg_expr {
-                    Expression::ArrowFunctionExpression(arrow_expr) => {
-                        for param in &arrow_expr.params.items {
-                            if let BindingPatternKind::BindingIdentifier(param_ident) =
-                                &param.pattern.kind
-                            {
-                                //  let n = param_ident.name;
-                                nested_call_args.push(param_ident.name.to_compact_str());
-                                //     println!("arg {n}");
-                                //   arg_names.push(&n.to_compact_str())
-                                //   v.push(param_ident.name.to_compact_str());
-                            };
-                        }
-                        //   self.check_parameter_names(&arrow_expr.params, ctx);
-                    }
-                    _ => {}
+            }
+        }
+
+        return true;
+    }
+
+    impl Rule for NoNesting {
+        fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+            let AstKind::CallExpression(call_expr) = node.kind() else {
+                return;
+            };
+
+            let Some(prop_name) = is_promise_then_or_catch(call_expr) else {
+                return;
+            };
+
+            let allocator = Allocator::default();
+
+            let mut ancestors = ctx.nodes().ancestors(node.id());
+            if ancestors.any(|node| is_inside_promise(node, ctx)) {
+                if can_safely_unnest(node, call_expr, ctx, &allocator) {
+                    ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
+                } else {
+                    return;
                 }
-            });
-            println!("nested call args {nested_call_args:?}");
-
-            // Extract out this logic into two parts
-            // 1. Gets names of variables defined in closest parent promise callback function scope.
-            // 2. Checks if the argument callback of the nesteted promise call uses any of these variables from 1.
-
-            if let Some(closest) = closest_promise_callback_def_vars(node, ctx) {
-                // Compare the arg identifier names of the nested promise
-                //
-                // .then(a => getB(a)  <--- we need to get the args defined in this cb
-                //   .then(b => getC(a, b)) <--- to see if they are used here in this cb scope
-                // because if any are then we cannot unnest and so don't flag as rule violation.
-                //      let mut closest_promise_cb_def_vars = vec![];
-                // let mut closest_promise_cb_def_vars_symbols = vec![];
-                //               let mut closest_cb_scope_bindings: Vec<(&str, SymbolId)>  = vec![];
-                let mut closest_cb_scope_bindings: &HashMap<'_, &str, SymbolId> =
-                    &HashMap::new_in(&allocator);
-
-                closest.arguments.iter().for_each(|new_expr| {
-                    //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
-
-                    //  for argument in &new_expr.arguments {
-                    let Some(arg_expr) = new_expr.as_expression() else {
-                        return;
-                    };
-                    match arg_expr {
-                        Expression::ArrowFunctionExpression(arrow_expr) => {
-                            let func_scope = arrow_expr.scope_id();
-                            println!("scope id {func_scope:?}");
-
-                            let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
-                            closest_cb_scope_bindings = bound_vars_for_scope;
-                            // .closest_promise_cb_def_vars_symbols
-                            // .push(param_ident.symbol_id());
-
-                            //       for param in &arrow_expr.params.items {
-                            //           if let BindingPatternKind::BindingIdentifier(param_ident) =
-                            //               &param.pattern.kind
-                            //           {
-                            //               //  let n = param_ident.name;
-                            //               closest_promise_cb_def_vars
-                            //                   .push(param_ident.name.to_compact_str());
-                            //               //closest_promise_cb_def_vars_symbols
-                            //               //    .push(param_ident.symbol_id());
-                            //
-                            //               //param_ident.name.to_compact_str());
-                            //               //     println!("arg {n}");
-                            //               //   arg_names.push(&n.to_compact_str())
-                            //               //   v.push(param_ident.name.to_compact_str());
-                            //           };
-                            //       }
-                            //   self.check_parameter_names(&arrow_expr.params, ctx);
-                        }
-                        Expression::FunctionExpression(func_expr) => {
-                            let func_scope = func_expr.scope_id();
-                            println!("scope id {func_scope:?}");
-
-                            let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
-                            closest_cb_scope_bindings = bound_vars_for_scope;
-                        }
-                        _ => return,
-                    }
-                    //     }
-                });
-
-                //                println!("argys {closest_promise_cb_def_vars:?}");
-
-                // Now check for references in cb_span to variables defined in the closest parent cb scope.
-                if let Some(cb_span) = call_expr.arguments.get(0).map(|a| a.span()) {
-                    //  .then((a,b,c) => getB(a)
-                    //      // ^^^^^ closest_parent_cb_args_span
-                    //    .then(d => getC(a, b))
-                    //   // cb_span: ^^^^^^^^^^^ <- get this expression so we can check for usages of a,b,c there
-
-                    // test
-                    //  ctx.diagnostic(no_nesting_diagnostic(cb_span));
-
-                    // now check in the cb_span for usage of variables defined in closest_parent_cb_args_span
-                    for (binding_name, binding_symbol_id) in closest_cb_scope_bindings {
-                        // Loop through a,b,c in:
-                        //  .then((a,b,c) => getB(a)
-                        //    .then(d => getC(a, b))
-                        println!("checking binding name {binding_name:?} and symbol_id {binding_symbol_id:?}");
-                        for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
-                            let usage_span: Span = ctx.reference_span(usage);
-                            println!("ref span where used {usage_span:?}");
-
-                            // test
-                            //   ctx.diagnostic(no_nesting_diagnostic(usage_span));
-
-                            if cb_span.contains_inclusive(usage_span) {
-                                // Cannot unnest this nested promise as the nested cb refers to a variable
-                                // defined in the parent promise callback scope. Unnesting would result in
-                                // reference to an undefined variable.
-                                return;
-                            };
-                        }
-                    }
-                }
-
-                ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
             };
         }
     }
