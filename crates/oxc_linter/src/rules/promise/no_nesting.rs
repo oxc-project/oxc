@@ -319,30 +319,32 @@ impl Rule for NoNesting {
                 //  .then((a,b,c) => getB(a)
                 //    .then(d => getC(a, b))
                 //              ^^^^^^^^^^^ <- get this expression so we can check for usages of a,b,c there
-                let cb_span = call_expr.arguments.get(0).unwrap().span();
+                println!("argys {call_expr:?}");
 
-                // test
-                //  ctx.diagnostic(no_nesting_diagnostic(cb_span));
+                if let Some(cb_span) = call_expr.arguments.get(0).map(|a| a.span()) {
+                    // test
+                    //  ctx.diagnostic(no_nesting_diagnostic(cb_span));
 
-                // now check in the nested cb scope for references to variables defined
-                // in the args of closest parent cb args.
-                for parent_arg_symb in closest_promise_cb_args_symbols {
-                    // Loop through a,b,c in:
-                    //  .then((a,b,c) => getB(a)
-                    //    .then(d => getC(a, b))
-                    for usage in ctx.semantic().symbol_references(parent_arg_symb) {
-                        let usage_span: Span = ctx.reference_span(usage);
-                        println!("ref span where used {usage_span:?}");
+                    // now check in the nested cb scope for references to variables defined
+                    // in the args of closest parent cb args.
+                    for parent_arg_symb in closest_promise_cb_args_symbols {
+                        // Loop through a,b,c in:
+                        //  .then((a,b,c) => getB(a)
+                        //    .then(d => getC(a, b))
+                        for usage in ctx.semantic().symbol_references(parent_arg_symb) {
+                            let usage_span: Span = ctx.reference_span(usage);
+                            println!("ref span where used {usage_span:?}");
 
-                        // test
-                        //   ctx.diagnostic(no_nesting_diagnostic(usage_span));
+                            // test
+                            //   ctx.diagnostic(no_nesting_diagnostic(usage_span));
 
-                        if cb_span.contains_inclusive(usage_span) {
-                            // Cannot unnest this nested promise as the nested cb refers to a variable
-                            // defined in the parent promise callback scope. Unnesting would result in
-                            // reference to an undefined variable.
-                            return;
-                        };
+                            if cb_span.contains_inclusive(usage_span) {
+                                // Cannot unnest this nested promise as the nested cb refers to a variable
+                                // defined in the parent promise callback scope. Unnesting would result in
+                                // reference to an undefined variable.
+                                return;
+                            };
+                        }
                     }
                 }
 
