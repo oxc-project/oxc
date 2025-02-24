@@ -32,10 +32,8 @@ impl ScopeId {
     /// # SAFETY
     /// `idx` must not be `u32::MAX`.
     pub const unsafe fn new_unchecked(idx: u32) -> Self {
-        unsafe {
-            // SAFETY: Caller must ensure `idx` is not `u32::MAX`
-            Self(NonMaxU32::new_unchecked(idx))
-        }
+        // SAFETY: Caller must ensure `idx` is not `u32::MAX`
+        unsafe { Self(NonMaxU32::new_unchecked(idx)) }
     }
 }
 
