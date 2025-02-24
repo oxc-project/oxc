@@ -316,6 +316,12 @@ impl Rule for NoNesting {
 
                 println!("argys {closest_promise_cb_args:?}");
 
+                //  .then((a,b,c) => getB(a)
+                //    .then(d => getC(a, b))
+                //              ^^^^^^^^^^^ <- get this expression so we can check for usages of a,b,c there
+                let cb_span = call_expr.arguments.get(0).unwrap().span();
+                ctx.diagnostic(no_nesting_diagnostic(cb_span));
+
                 // now check in the nested cb scope for references to variables defined
                 // in the args of closest parent cb args.
                 for parent_arg_symb in closest_promise_cb_args_symbols {
