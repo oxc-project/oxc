@@ -316,29 +316,17 @@ impl Rule for NoNesting {
 
                 println!("argys {closest_promise_cb_args:?}");
 
-                // probs redundant as maybe already have this
-                let cb_node_id = ctx
-                    .nodes()
-                    .ancestors(node.id())
-                    //.filter_map(|node| node.kind().as_call_expression())
-                    .filter(|a| has_promise_callback(a))
-                    //.map(|)
-                    //        .map(|s| s.arguments.iter().map(|arg|))
-                    .nth(0)
-                    .unwrap()
-                    .id();
-
                 // now check in the nested cb scope for references to variables defined
                 // in the args of closest parent cb args.
                 if let Some(symbol_id) = closest_promise_cb_args_symbols.iter().nth(0) {
-                    let mut references = ctx.semantic().symbol_references(*symbol_id).peekable();
-                    
-                    reference_span.contains_inclusive
-                    for reference in references {
-                        let node_id_where_arg_used = reference.node_id();
-                        let node_where_arg_used = ctx.nodes().get_node(node_id_where_arg_used);
-                        let is_within_cb = 
-                        print!(node_where_arg_used.parent)
+                    let mut references =
+                        ctx.semantic().symbol_references(*symbol_id).nth(0).unwrap();
+                    //let mut reference = ctx.semantic().symbol_references(areferences);
+                    println!("ppppppp {references:?}");
+                    let contains_arg_from_closest_parent_cb = false; //todo!();
+
+                    if contains_arg_from_closest_parent_cb {
+                        return; // cannot unnest promise as references variable defined in closest parent scope and this
                     }
                 };
 
