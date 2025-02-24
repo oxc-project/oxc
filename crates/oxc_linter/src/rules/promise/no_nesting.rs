@@ -1,23 +1,14 @@
-use oxc_allocator::{Allocator, Box, CloneIn, GetAddress, HashMap, Vec};
+use oxc_allocator::{Allocator, HashMap};
 use oxc_ast::{
-    ast::{
-        Argument, ArrowFunctionExpression, BindingPatternKind, CallExpression, Expression,
-        FormalParameters, MemberExpression,
-    },
+    ast::{CallExpression, Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
-use crate::{
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-    utils::is_promise,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_nesting_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
@@ -32,6 +23,7 @@ pub struct NoNesting;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow nested then() or catch() statements.
     ///
     /// ### Why is this bad?
     ///
@@ -49,9 +41,7 @@ declare_oxc_lint!(
     /// ```
     NoNesting,
     promise,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
+    style,
     pending  // TODO: describe fix capabilities. Remove if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
@@ -165,7 +155,7 @@ fn can_safely_unnest<'a>(
         //             // ^^^^^^^^^^^^^^^^ <- cb_span
         // };
         // ```
-        for (_name, binding_symbol_id) in closest_cb_scope_bindings {
+        for (_, binding_symbol_id) in closest_cb_scope_bindings {
             for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
                 let usage_span: Span = ctx.reference_span(usage);
                 if cb_span.contains_inclusive(usage_span) {
@@ -187,7 +177,7 @@ impl Rule for NoNesting {
             return;
         };
 
-        let Some(prop_name) = is_promise_then_or_catch(call_expr) else {
+        if is_promise_then_or_catch(call_expr).is_none() {
             return;
         };
 
