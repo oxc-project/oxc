@@ -271,7 +271,7 @@ unsafe fn grow(
     let new_ptr = unsafe { alloc::realloc(old_start.as_ptr(), old_layout, new_capacity_bytes) };
     let Some(new_start) = NonNull::new(new_ptr) else {
         let new_layout =
-            unsafe { Layout::from_size_align_unchecked(old_capacity_bytes, old_layout.align()) };
+            unsafe { Layout::from_size_align_unchecked(new_capacity_bytes, old_layout.align()) };
         alloc::handle_alloc_error(new_layout);
     };
 
