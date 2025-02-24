@@ -10,9 +10,10 @@ fn mangle(source_text: &str, top_level: bool) -> String {
     let allocator = Allocator::default();
     let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = ret.program;
-    let symbol_table =
-        Mangler::new().with_options(MangleOptions { debug: false, top_level }).build(&program);
+    let mut program = ret.program;
+    let symbol_table = Mangler::new()
+        .with_options(MangleOptions { debug: false, top_level, mangle_private_class_names: true })
+        .build(&allocator, &mut program);
     CodeGenerator::new().with_symbol_table(Some(symbol_table)).build(&program).code
 }
 

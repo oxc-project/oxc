@@ -37,9 +37,13 @@ fn main() -> std::io::Result<()> {
 
 fn mangler(source_text: &str, source_type: SourceType, debug: bool) -> String {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let mut ret = Parser::new(&allocator, source_text, source_type).parse();
     let symbol_table = Mangler::new()
-        .with_options(MangleOptions { debug, top_level: source_type.is_module() })
-        .build(&ret.program);
+        .with_options(MangleOptions {
+            debug,
+            top_level: source_type.is_module(),
+            mangle_private_class_names: true,
+        })
+        .build(&allocator, &mut ret.program);
     CodeGenerator::new().with_symbol_table(Some(symbol_table)).build(&ret.program).code
 }
