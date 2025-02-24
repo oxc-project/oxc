@@ -15,9 +15,15 @@ fn no_eval_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eval can be harmful.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoEval {
     allow_indirect: bool,
+}
+
+impl Default for NoEval {
+    fn default() -> Self {
+        NoEval { allow_indirect: true }
+    }
 }
 
 declare_oxc_lint!(
