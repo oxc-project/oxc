@@ -1,3 +1,5 @@
+//! A string builder for constructing source code.
+
 use std::iter;
 
 use assert_unchecked::assert_unchecked;
@@ -12,7 +14,7 @@ use assert_unchecked::assert_unchecked;
 ///
 /// # Example
 /// ```
-/// use oxc_codegen::CodeBuffer;
+/// # use oxc_data_structures::CodeBuffer;
 /// let mut code = CodeBuffer::new();
 ///
 /// // mock settings
@@ -40,7 +42,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// // use `code` to build new source text
@@ -90,7 +92,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// assert!(code.is_empty());
     ///
@@ -113,7 +115,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::default();
     /// code.reserve(10);
     /// ```
@@ -129,7 +131,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     ///
@@ -151,7 +153,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     ///
@@ -185,7 +187,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_ascii_byte(b'f');
     /// code.print_ascii_byte(b'o');
@@ -222,7 +224,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// // Safe: 'a' is a valid ASCII character. Its UTF-8 representation only
     /// // requires a single byte.
@@ -283,7 +285,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// code.print_char('f');
@@ -305,7 +307,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("function main() { console.log('Hello, world!') }");
     /// ```
@@ -321,7 +323,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// code.print_ascii_bytes([b'f', b'o', b'o']);
@@ -353,7 +355,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// // Indent to a dynamic level.
@@ -425,7 +427,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     /// assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
@@ -439,13 +441,14 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// use oxc_codegen::CodeBuffer;
+    /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("console.log('foo');");
     ///
     /// let source = code.into_string();
     /// assert_eq!(source, "console.log('foo');");
     /// ```
+    #[expect(clippy::missing_panics_doc)]
     #[must_use]
     #[inline]
     pub fn into_string(self) -> String {
