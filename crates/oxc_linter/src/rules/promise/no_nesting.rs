@@ -318,17 +318,23 @@ impl Rule for NoNesting {
 
                 // now check in the nested cb scope for references to variables defined
                 // in the args of closest parent cb args.
-                if let Some(symbol_id) = closest_promise_cb_args_symbols.iter().nth(0) {
-                    let mut references =
-                        ctx.semantic().symbol_references(*symbol_id).nth(0).unwrap();
-                    //let mut reference = ctx.semantic().symbol_references(areferences);
-                    println!("ppppppp {references:?}");
+                for parent_arg_symb in closest_promise_cb_args_symbols {
+                    // Loop through a,b,c in:
+                    //  .then((a,b,c) => getB(a)
+                    //    .then(d => getC(a, b))
+                    let usage = ctx.semantic().symbol_references(parent_arg_symb).nth(0).unwrap();
+                    let usage_span: Span = ctx.reference_span(usage);
+                    println!("ref span where used {usage_span:?}");
+
+                    // TODO - the the span of the nested cb
+                    ctx.diagnostic(no_nesting_diagnostic(usage_span));
+
                     let contains_arg_from_closest_parent_cb = false; //todo!();
 
                     if contains_arg_from_closest_parent_cb {
                         return; // cannot unnest promise as references variable defined in closest parent scope and this
                     }
-                };
+                }
 
                 ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
             };
