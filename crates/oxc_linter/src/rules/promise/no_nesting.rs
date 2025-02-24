@@ -12,8 +12,8 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_nesting_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+    OxcDiagnostic::warn("Avoid nesting promises.")
+        .with_help("Refactor so that promises are chained in a flat manner.")
         .with_label(span)
 }
 
