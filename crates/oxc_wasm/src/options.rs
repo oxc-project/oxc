@@ -86,6 +86,8 @@ pub struct OxcCodegenOptions {
     pub indentation: Option<u8>,
     #[tsify(optional)]
     pub enable_typescript: Option<bool>,
+    #[tsify(optional)]
+    pub enable_sourcemap: Option<bool>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
