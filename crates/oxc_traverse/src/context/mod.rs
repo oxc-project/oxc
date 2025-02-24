@@ -649,9 +649,7 @@ impl<'a> TraverseCtx<'a> {
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
-        unsafe {
-            self.ancestry.retag_stack(ty);
-        }
+        unsafe { self.ancestry.retag_stack(ty) };
     }
 
     /// Shortcut for `ctx.scoping.set_current_scope_id`, to make `walk_*` methods less verbose.

@@ -193,10 +193,8 @@ impl<'a> TraverseAncestry<'a> {
     #[inline]
     #[expect(clippy::ptr_as_ptr, clippy::ref_as_ptr)]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
-        unsafe {
-            debug_assert!(self.stack.len() >= 2);
-            *(self.stack.last_mut() as *mut _ as *mut AncestorType) = ty;
-        }
+        debug_assert!(self.stack.len() >= 2);
+        unsafe { *(self.stack.last_mut() as *mut _ as *mut AncestorType) = ty };
     }
 }
 
