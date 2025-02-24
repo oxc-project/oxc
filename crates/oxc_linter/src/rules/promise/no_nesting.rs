@@ -144,10 +144,10 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 /// We then see that both `a` and `b` has a reference
 /// in the nested promise callback. Because of this reference, this nesting
 /// isn't a rule violation.
-fn can_safely_unnest<'a>(
+fn can_safely_unnest(
     call_expr: &CallExpression,
     closest: &CallExpression,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext,
     alloc: &Allocator,
 ) -> bool {
     let mut closest_cb_scope_bindings: &HashMap<'_, &str, SymbolId> = &HashMap::new_in(alloc);
@@ -172,7 +172,7 @@ fn can_safely_unnest<'a>(
         }
     });
 
-    if let Some(cb_span) = call_expr.arguments.get(0).map(|a| a.span()) {
+    if let Some(cb_span) = call_expr.arguments.first().map(GetSpan::span) {
         // Now check for references in cb_span to variables defined in the closest parent cb scope.
         // In the given example we would loop through all bindings in the closest
         // parent scope a,b,c,d.
@@ -194,7 +194,7 @@ fn can_safely_unnest<'a>(
         }
     }
 
-    return true;
+    true
 }
 
 impl Rule for NoNesting {
@@ -215,8 +215,6 @@ impl Rule for NoNesting {
                 Some(closest) => {
                     if can_safely_unnest(call_expr, closest, ctx, &allocator) {
                         ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
-                    } else {
-                        return;
                     }
                 }
                 None => ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span())),
