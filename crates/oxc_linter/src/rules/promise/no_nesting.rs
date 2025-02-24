@@ -161,13 +161,11 @@ fn can_safely_unnest(
         match arg_expr {
             Expression::ArrowFunctionExpression(arrow_expr) => {
                 let func_scope = arrow_expr.scope_id();
-                let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
-                closest_cb_scope_bindings = bound_vars_for_scope;
+                closest_cb_scope_bindings = ctx.scopes().get_bindings(func_scope);
             }
             Expression::FunctionExpression(func_expr) => {
                 let func_scope = func_expr.scope_id();
-                let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
-                closest_cb_scope_bindings = bound_vars_for_scope;
+                closest_cb_scope_bindings = ctx.scopes().get_bindings(func_scope);
             }
             _ => {}
         }
@@ -182,7 +180,7 @@ fn can_safely_unnest(
         //    const d = 5;
         //    getB(a).then(d => getC(a, b)) });
         //                // ^^^^^^^^^^^^^^ <- `cb_span`
-        for (_, binding_symbol_id) in closest_cb_scope_bindings {
+        for binding_symbol_id in closest_cb_scope_bindings.values() {
             for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
                 let usage_span: Span = ctx.reference_span(usage);
                 if cb_span.contains_inclusive(usage_span) {
