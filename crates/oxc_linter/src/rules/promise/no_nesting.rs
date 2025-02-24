@@ -11,7 +11,6 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_nesting_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Avoid nesting promises.")
         .with_help("Refactor so that promises are chained in a flat manner.")
         .with_label(span)
@@ -27,24 +26,54 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
+    /// Nesting promises makes code harder to read and understand.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```javascript
+    /// doThing().then(() => a.then())
+    /// ```
+    ///
+    /// ```javascript
+    /// doThing().then(function() { a.then() })
+    /// ```
+    ///
+    /// ```javascript
+    /// doThing().then(() => { b.catch() })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```javascript
+    /// doThing().then(() => 4)
+    /// ```
+    ///
+    /// ```javascript
+    /// doThing().then(function() { return 4 })
+    /// ```
+    ///
+    /// ```javascript
+    /// doThing().catch(() => 4)
+    /// ```
+    ///
+    /// ```javascript
+    /// doThing()
+    ///   .then(() => Promise.resolve(1))
+    ///   .then(() => Promise.resolve(2))
+    /// ```
+    ///
+    /// This example is not a rule violation as unnesting here would
+    /// result in `a` being undefined in the expression `getC(a, b)`.
+    /// ```javascript
+    /// doThing()
+    ///	  .then(a => getB(a)
+    ///      .then(b => getC(a, b))
+    ///    )
     /// ```
     NoNesting,
     promise,
     style,
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    pending
 );
 
 fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
@@ -103,7 +132,7 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 /// ```
 ///
 /// We don't want a violation of this rule in the above case as unnesting would
-/// result in the following code where `getC(a, b` would be referencing an
+/// result in the following code where `getC(a, b)` would be referencing an
 /// undefined `a`.
 ///
 /// ```javascript
@@ -148,13 +177,10 @@ fn can_safely_unnest<'a>(
         // In the given example we would loop through all bindings in the closest
         // parent scope a,b,c,d.
         //
-        // ```javascript
         //  .then((a,b,c) => {
         //    const d = 5;
-        //    getB(a).then(d => getC(a, b))
-        //             // ^^^^^^^^^^^^^^^^ <- cb_span
-        // };
-        // ```
+        //    getB(a).then(d => getC(a, b)) });
+        //                // ^^^^^^^^^^^^^^ <- `cb_span`
         for (_, binding_symbol_id) in closest_cb_scope_bindings {
             for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
                 let usage_span: Span = ctx.reference_span(usage);
