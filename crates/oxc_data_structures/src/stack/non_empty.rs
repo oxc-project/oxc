@@ -172,7 +172,7 @@ impl<T> NonEmptyStack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
@@ -326,7 +326,7 @@ impl<T> NonEmptyStack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must have at least 2 entries, so that after pop, it still has at least 1.
     #[inline]

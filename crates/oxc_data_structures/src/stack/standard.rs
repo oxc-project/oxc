@@ -146,7 +146,7 @@ impl<T> Stack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
@@ -204,7 +204,7 @@ impl<T> Stack<T> {
 
     /// Get reference to last value on stack, without checking stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must not be empty.
     #[inline]
@@ -233,7 +233,7 @@ impl<T> Stack<T> {
 
     /// Get mutable reference to last value on stack, without checking stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must not be empty.
     #[inline]
@@ -317,7 +317,7 @@ impl<T> Stack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must not be empty.
     #[inline]
