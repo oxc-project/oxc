@@ -178,12 +178,9 @@ impl Mangler {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
     ) {
-        println!("Mangler::mangle_private_class_names");
-        dbg!(self.options);
         if !self.options.mangle_private_class_names {
             return;
         }
-        println!("Mangler::mangle_private_class_names");
         if self.options.debug {
             PrivateClassNameMangler::new(allocator, debug_name).build(program);
         } else {
@@ -199,7 +196,6 @@ impl Mangler {
     /// Panics if the child_ids does not exist in scope_tree.
     #[must_use]
     pub fn build<'a>(&self, allocator: &'a Allocator, program: &mut Program<'a>) -> SymbolTable {
-        dbg!(self.options);
         let semantic_builder = SemanticBuilder::new().with_scope_tree_child_ids(true);
         let semantic_builder = if let Some(stats) = self.stats {
             semantic_builder.with_stats(stats)
