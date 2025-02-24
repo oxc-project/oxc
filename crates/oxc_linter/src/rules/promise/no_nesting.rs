@@ -267,13 +267,11 @@ impl Rule for NoNesting {
             });
             println!("nested call args {nested_call_args:?}");
 
-            // now check to see if args of .then() reference any args that aren't defined
-            // in the callback scope the given .then() lives in.
+            // Extract out this logic into two parts
+            // 1. Gets arg identifier names of closest parent promise callback function scope.
+            // 2. Checks if the argument callback of the nesteted promise call uses any of these variables from 1.
 
             if let Some(closest) = closest_promise_callback_args(node, ctx) {
-                //    let v = get_arg_names(closest);
-                // println!("closest {closest:?}");
-
                 // Compare the arg identifier names of the nested promise
                 //
                 // .then(a => getB(a)  <--- we need to get the args defined in this cb
