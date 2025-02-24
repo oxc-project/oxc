@@ -1,6 +1,6 @@
 [package]
 name = "oxc_language_server"
-version = "0.0.1"
+version = "0.15.12"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
