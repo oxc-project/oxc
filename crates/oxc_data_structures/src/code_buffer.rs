@@ -358,20 +358,16 @@ impl CodeBuffer {
     /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
-    /// // Indent to a dynamic level.
-    /// // Sound because all elements in this iterator are ASCII characters.
+    /// // Sound because all bytes in this byte slice are ASCII characters
     /// unsafe {
-    ///     code.print_bytes_unchecked(std::iter::repeat(b' ').take(4));
+    ///     code.print_bytes_unchecked("abcd".as_bytes());
     /// }
     /// ```
     ///
     /// [`print_byte_unchecked`]: CodeBuffer::print_byte_unchecked
     #[inline]
-    pub unsafe fn print_bytes_unchecked<I>(&mut self, bytes: I)
-    where
-        I: IntoIterator<Item = u8>,
-    {
-        self.buf.extend(bytes);
+    pub unsafe fn print_bytes_unchecked(&mut self, bytes: &[u8]) {
+        self.buf.extend_from_slice(bytes);
     }
 
     /// Print `n` tab characters into the buffer (indentation).
