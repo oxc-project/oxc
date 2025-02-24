@@ -324,7 +324,8 @@ impl Rule for NoNesting {
                             let func_scope = func_expr.scope_id();
                             println!("scope id {func_scope:?}");
 
-                            // self.check_parameter_names(&func_expr.params, ctx);
+                            let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
+                            closest_cb_scope_bindings = bound_vars_for_scope;
                         }
                         _ => return,
                     }
@@ -402,18 +403,23 @@ fn test() {
         "doThing().then(() => Promise.resolve(4))",
         "doThing().then(() => Promise.all([a]))",
         "doThing()
-			      .then(a => getB(a)
-			        .then(b => getC(a, b))
-			      )",
+		  .then(a => getB(a)
+			.then(b => getC(a, b))
+		  )",
         "doThing()
-			      .then(a => getB(a)
-			        .then(function(b) { getC(a, b) })
-			      )",
+		  .then(a => getB(a)
+		    .then(function(b) { getC(a, b) })
+		  )",
         "doThing()
-            .then(a => {
-              const c = a * 2;
-              return getB(c).then(b => getC(c, b))
-            })",
+          .then(a => {
+            const c = a * 2;
+            return getB(c).then(b => getC(c, b))
+          })",
+        "doThing()
+          .then(function (a) {
+            const c = a * 2;
+            return getB(c).then(function () { getC(c, b) } )
+          })",
     ];
 
     let fail = vec![
@@ -425,18 +431,16 @@ fn test() {
         "doThing().then(() => { b.catch() })",
         "doThing().then(() => a.then())",
         "doThing().then(() => b.catch())",
-        "
-			      doThing()
-			        .then(a => getB(a)
-			          .then(b => getC(b))
-			        )",
-        "
-			      doThing()
-			        .then(a => getB(a)
-			          .then(b => getC(a, b)
-			            .then(c => getD(a, c))
-			          )
-			        )",
+        "doThing()
+		  .then(a => getB(a)
+		    .then(b => getC(b))
+		  )",
+        "doThing()
+		  .then(a => getB(a)
+		    .then(b => getC(a, b)
+		      .then(c => getD(a, c))
+			)
+		  )",
     ];
 
     Tester::new(NoNesting::NAME, NoNesting::PLUGIN, pass, fail).test_and_snapshot();
