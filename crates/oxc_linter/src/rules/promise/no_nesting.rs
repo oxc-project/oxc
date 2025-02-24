@@ -227,6 +227,9 @@ fn test() {
         "doThing().then(function() { return Promise.all([a,b,c]) })",
         "doThing().then(function() { return Promise.resolve(4) })",
         "doThing().then(() => Promise.resolve(4))",
+        "doThing()
+          .then(() => Promise.resolve(1))
+          .then(() => Promise.resolve(2))",
         "doThing().then(() => Promise.all([a]))",
         "doThing()
 		  .then(a => getB(a)
@@ -257,6 +260,9 @@ fn test() {
         "doThing().then(() => { b.catch() })",
         "doThing().then(() => a.then())",
         "doThing().then(() => b.catch())",
+        "doThing()
+          .then(() =>
+            a.then(() => Promise.resolve(1)))",
         "doThing()
 		  .then(a => getB(a)
 		    .then(b => getC(b))
