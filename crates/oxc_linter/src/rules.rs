@@ -37,6 +37,8 @@ mod eslint {
     pub mod default_case_last;
     pub mod default_param_last;
     pub mod eqeqeq;
+    pub mod complexity;
+    pub mod no_warning_comments;
     pub mod for_direction;
     pub mod func_names;
     pub mod func_style;
@@ -681,6 +683,8 @@ oxc_macros::declare_all_lint_rules! {
     eslint::valid_typeof,
     eslint::vars_on_top,
     eslint::yoda,
+    eslint::complexity,
+    eslint::no_warning_comments,
     import::default,
     import::export,
     import::first,
