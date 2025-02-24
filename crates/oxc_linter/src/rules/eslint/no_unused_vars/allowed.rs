@@ -97,6 +97,11 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, 'a>,
         decl: &VariableDeclarator<'a>,
     ) -> bool {
+        // early short-circuit when no argument checking should be performed
+        if self.vars.is_none() {
+            return true;
+        }
+
         if decl.kind.is_var() && self.vars.is_local() && symbol.is_root() {
             return true;
         }

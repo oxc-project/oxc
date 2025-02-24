@@ -323,15 +323,23 @@ impl Default for NoUnusedVarsOptions {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum VarsOption {
     /// All variables are checked for usage, including those in the global scope.
-    #[default]
     All,
     /// Checks only that locally-declared variables are used but will allow
     /// global variables to be unused.
     Local,
+    
+    #[default]
+    None,
 }
 impl VarsOption {
+    #[inline]
     pub const fn is_local(&self) -> bool {
         matches!(self, Self::Local)
+    }
+
+    #[inline]
+    pub const fn is_none(&self) -> bool {
+        matches!(self, Self::None)
     }
 }
 
@@ -430,7 +438,8 @@ impl TryFrom<&String> for VarsOption {
         match value.as_str() {
             "all" => Ok(Self::All),
             "local" => Ok(Self::Local),
-            v => Err(invalid_option_mismatch_error("vars", ["all", "local"], v)),
+            "none" => Ok(Self::None),
+            v => Err(invalid_option_mismatch_error("vars", ["all", "local", "none"], v)),
         }
     }
 }
