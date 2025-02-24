@@ -170,7 +170,7 @@ jobs:
           chmod +x ./target/codspeed/instrumentation/oxc_benchmark/*
 
       - name: Install codspeed
-        uses: taiki-e/install-action@e03236526ace47fa2e04bebcfc6da471ebd4690c # v2.49.0
+        uses: taiki-e/install-action@ae97ff9daf1cd2e216671a047d80ff48461e30bb # v2.49.1
         with:
           tool: cargo-codspeed
 
