@@ -96,7 +96,8 @@ fn closest_promise_cb<'a, 'b>(
 ) -> Option<&'a CallExpression<'b>> {
     ctx.nodes()
         .ancestors(node.id())
-        .filter_map(|node| node.kind().as_call_expression().filter(|&c| has_promise_callback(c)))
+        .filter_map(|node| node.kind().as_call_expression())
+        .filter(|a| has_promise_callback(a))
         .nth(1)
 }
 
