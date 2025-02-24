@@ -89,7 +89,7 @@ fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
 }
 
 // .skip(1) useful too
-fn closest_promise_callback_args<'a, 'b>(
+fn closest_promise_callback_def_vars<'a, 'b>(
     node: &'a AstNode<'b>,
     ctx: &'a LintContext<'b>,
 ) -> Option<&'a CallExpression<'b>> {
@@ -185,7 +185,7 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 ///  .then(b => getC(a, b))
 /// ```
 ///
-fn get_closest_promise_callback_args<'a>(
+fn get_closest_promise_callback_def_vars<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<&'a Vec<'a, Argument<'a>>> {
@@ -219,7 +219,7 @@ impl Rule for NoNesting {
         };
 
         /*
-        if let Some(args) = get_closest_promise_callback_args(node, ctx) {
+        if let Some(args) = get_closest_promise_callback_def_vars(node, ctx) {
             //println!("args  {call_expr:?}");
             match args.first() {
                 Some(Argument::Identifier(identifier_reference)) => {
@@ -268,17 +268,17 @@ impl Rule for NoNesting {
             println!("nested call args {nested_call_args:?}");
 
             // Extract out this logic into two parts
-            // 1. Gets arg identifier names of closest parent promise callback function scope.
+            // 1. Gets names of variables defined in closest parent promise callback function scope.
             // 2. Checks if the argument callback of the nesteted promise call uses any of these variables from 1.
 
-            if let Some(closest) = closest_promise_callback_args(node, ctx) {
+            if let Some(closest) = closest_promise_callback_def_vars(node, ctx) {
                 // Compare the arg identifier names of the nested promise
                 //
                 // .then(a => getB(a)  <--- we need to get the args defined in this cb
                 //   .then(b => getC(a, b)) <--- to see if they are used here in this cb scope
                 // because if any are then we cannot unnest and so don't flag as rule violation.
-                let mut closest_promise_cb_args = vec![];
-                let mut closest_promise_cb_args_symbols = vec![];
+                let mut closest_promise_cb_def_vars = vec![];
+                let mut closest_promise_cb_def_vars_symbols = vec![];
 
                 closest.arguments.iter().for_each(|new_expr| {
                     //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
@@ -294,8 +294,10 @@ impl Rule for NoNesting {
                                     &param.pattern.kind
                                 {
                                     //  let n = param_ident.name;
-                                    closest_promise_cb_args.push(param_ident.name.to_compact_str());
-                                    closest_promise_cb_args_symbols.push(param_ident.symbol_id());
+                                    closest_promise_cb_def_vars
+                                        .push(param_ident.name.to_compact_str());
+                                    closest_promise_cb_def_vars_symbols
+                                        .push(param_ident.symbol_id());
                                     //param_ident.name.to_compact_str());
                                     //     println!("arg {n}");
                                     //   arg_names.push(&n.to_compact_str())
@@ -312,9 +314,7 @@ impl Rule for NoNesting {
                     //     }
                 });
 
-                println!("argys {closest_promise_cb_args:?}");
-
-                //                println!("argys {call_expr:?}");
+                println!("argys {closest_promise_cb_def_vars:?}");
 
                 // Now check for references in cb_span to variables defined in the closest parent cb scope.
                 if let Some(cb_span) = call_expr.arguments.get(0).map(|a| a.span()) {
@@ -326,9 +326,8 @@ impl Rule for NoNesting {
                     // test
                     //  ctx.diagnostic(no_nesting_diagnostic(cb_span));
 
-                    // now check in the cb_span  variables defined closest_parent_cb_args_span
-                    // in the args of closest parent cb args.
-                    for parent_arg_symb in closest_promise_cb_args_symbols {
+                    // now check in the cb_span for usage of variables defined in closest_parent_cb_args_span
+                    for parent_arg_symb in closest_promise_cb_def_vars_symbols {
                         // Loop through a,b,c in:
                         //  .then((a,b,c) => getB(a)
                         //    .then(d => getC(a, b))
@@ -392,11 +391,11 @@ fn test() {
 			      .then(a => getB(a)
 			        .then(function(b) { getC(a, b) })
 			      )",
-        //    "doThing()
-        //	      .then(a => {
-        //	        const c = a * 2;
-        //	        return getB(c).then(b => getC(c, b))
-        //	      })",
+        "doThing()
+            .then(a => {
+              const c = a * 2;
+              return getB(c).then(b => getC(c, b))
+            })",
     ];
 
     let fail = vec![
