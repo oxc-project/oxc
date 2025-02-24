@@ -1,14 +1,14 @@
 use oxc_allocator::{Allocator, HashMap};
 use oxc_ast::{
-    ast::{CallExpression, Expression, MemberExpression},
     AstKind,
+    ast::{CallExpression, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_nesting_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid nesting promises.")
