@@ -1,3 +1,5 @@
+use std::iter;
+
 use oxc_data_structures::code_buffer::CodeBuffer;
 
 /// Formatter trait.
@@ -77,7 +79,7 @@ impl Formatter for PrettyFormatter {
     }
 
     fn before_first_element(&mut self, buffer: &mut CodeBuffer) {
-        self.indent += 1;
+        self.indent += 2;
         self.push_new_line_and_indent(buffer);
     }
 
@@ -90,7 +92,7 @@ impl Formatter for PrettyFormatter {
     }
 
     fn after_last_element(&mut self, buffer: &mut CodeBuffer) {
-        self.indent -= 1;
+        self.indent -= 2;
         self.push_new_line_and_indent(buffer);
     }
 }
@@ -99,6 +101,6 @@ impl PrettyFormatter {
     fn push_new_line_and_indent(&self, buffer: &mut CodeBuffer) {
         buffer.print_ascii_byte(b'\n');
         // SAFETY: Spaces are ASCII
-        unsafe { buffer.print_bytes_unchecked(&b"  ".repeat(self.indent)) };
+        unsafe { buffer.print_bytes_iter_unchecked(iter::repeat_n(b' ', self.indent)) };
     }
 }

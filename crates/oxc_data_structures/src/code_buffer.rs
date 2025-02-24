@@ -370,6 +370,35 @@ impl CodeBuffer {
         self.buf.extend_from_slice(bytes);
     }
 
+    /// Print a sequence of bytes without checking that the buffer still
+    /// represents a valid UTF-8 string.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that, after this method call, the buffer represents
+    /// a valid UTF-8 string. In practice, this means only two cases are valid:
+    ///
+    /// 1. The sequence of bytes yielded by `bytes` iterator forms a valid UTF-8 string. or
+    /// 2. The buffer became invalid after a call to [`print_byte_unchecked`] and `bytes` completes
+    ///    any incomplete Unicode characters, returning the buffer to a valid state.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_data_structures::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    ///
+    /// // SAFETY: All values yielded by this iterator are ASCII bytes
+    /// unsafe {
+    ///     code.print_bytes_iter_unchecked(std::iter::repeat_n(b' ', 20));
+    /// }
+    /// ```
+    ///
+    /// [`print_byte_unchecked`]: CodeBuffer::print_byte_unchecked
+    #[inline]
+    pub unsafe fn print_bytes_iter_unchecked<I: IntoIterator<Item = u8>>(&mut self, bytes: I) {
+        self.buf.extend(bytes);
+    }
+
     /// Print `n` tab characters into the buffer (indentation).
     ///
     /// Optimized on assumption that more that 16 levels of indentation is rare.
