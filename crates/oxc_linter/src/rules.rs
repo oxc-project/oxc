@@ -36,6 +36,7 @@ mod eslint {
     pub mod default_case;
     pub mod default_case_last;
     pub mod default_param_last;
+    pub mod dot_notation;
     pub mod eqeqeq;
     pub mod for_direction;
     pub mod func_names;
@@ -548,6 +549,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::default_case,
     eslint::default_case_last,
     eslint::default_param_last,
+    eslint::dot_notation,
     eslint::eqeqeq,
     eslint::for_direction,
     eslint::func_style,
