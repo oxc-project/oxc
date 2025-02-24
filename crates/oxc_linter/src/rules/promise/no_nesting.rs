@@ -332,14 +332,14 @@ impl Rule for NoNesting {
                     let usage_span: Span = ctx.reference_span(usage);
                     println!("ref span where used {usage_span:?}");
 
-                    // TODO - the the span of the nested cb
                     ctx.diagnostic(no_nesting_diagnostic(usage_span));
 
-                    let contains_arg_from_closest_parent_cb = false; //todo!();
-
-                    if contains_arg_from_closest_parent_cb {
-                        return; // cannot unnest promise as references variable defined in closest parent scope and this
-                    }
+                    if cb_span.contains_inclusive(usage_span) {
+                        // Cannot unnest this nested promise as the nested cb refers to a variable
+                        // defined in the parent promise callback scope. Unnesting would result in
+                        // reference to an undefined variable.
+                        return;
+                    };
                 }
 
                 ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
@@ -380,6 +380,10 @@ fn test() {
         "doThing()
 			      .then(a => getB(a)
 			        .then(b => getC(a, b))
+			      )",
+        "doThing()
+			      .then(a => getB(a)
+			        .then(function(b) { getC(a, b) })
 			      )",
         "doThing()
 			      .then(a => {
