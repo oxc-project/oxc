@@ -16,16 +16,30 @@ pub struct EmptyBraceSpaces;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Removes the extra spaces or new line characters inside a pair of braces that does not contain additional code.
+    ///
+    /// Removes the extra spaces or new line characters inside a pair of braces
+    /// that does not contain additional code. This ensures that braces are clean
+    /// and do not contain unnecessary spaces or newlines.
     ///
     /// ### Why is this bad?
-    /// There should be no spaces inside a pair of braces as it affects the overall readability of the code.
     ///
-    /// ### Example
+    /// Extra spaces inside braces can negatively impact the readability of the code.
+    /// Keeping braces clean and free of unnecessary characters improves consistency and
+    /// makes the code easier to understand and maintain.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// const a = {  };
     /// class A {
     /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// const a = {};
+    /// class A {}
     /// ```
     EmptyBraceSpaces,
     unicorn,
@@ -34,59 +48,45 @@ declare_oxc_lint!(
 );
 
 impl Rule for EmptyBraceSpaces {
+    #[expect(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+        let (is_empty_body, span) = match node.kind() {
             AstKind::StaticBlock(static_block) => {
-                let start = static_block.span.start;
-                let end = static_block.span.end;
+                let span = static_block.span;
 
-                let static_leading_count = get_static_leading_count(static_block.span, ctx);
+                if static_block.body.is_empty() && !ctx.semantic().has_comments_between(span) {
+                    // Skip the first 6 chars (static block prefix)
+                    let static_block_src = &span.source_text(ctx.source_text())[6..];
+                    let left_curly_brace = static_block_src.find('{').unwrap();
+                    let static_block_body = &static_block_src[left_curly_brace..];
 
-                if static_block.body.is_empty()
-                    && end - start > static_leading_count + 2
-                    && !ctx.semantic().has_comments_between(static_block.span)
-                {
-                    ctx.diagnostic_with_fix(
-                        empty_brace_spaces_diagnostic(static_block.span),
-                        |fixer| fixer.replace(static_block.span, "static {}"),
-                    );
+                    let whitespace_count =
+                        static_block_body.chars().take_while(|c| c.is_whitespace()).count();
+                    let static_leading_count = (whitespace_count + left_curly_brace + 8) as u32;
+
+                    if span.end - span.start > static_leading_count {
+                        ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), |fixer| {
+                            fixer.replace(span, "static {}")
+                        });
+                    }
                 }
+
+                return;
             }
-            AstKind::ObjectExpression(obj) => {
-                remove_empty_braces_spaces(ctx, obj.properties.is_empty(), obj.span);
-            }
-            AstKind::FunctionBody(fb) => {
-                remove_empty_braces_spaces(ctx, fb.is_empty(), fb.span);
-            }
-            AstKind::Class(class) => {
-                remove_empty_braces_spaces(ctx, class.body.body.is_empty(), class.body.span);
-            }
-            AstKind::BlockStatement(block_stmt) => {
-                remove_empty_braces_spaces(ctx, block_stmt.body.is_empty(), block_stmt.span);
-            }
-            _ => (),
+            AstKind::ObjectExpression(obj) => (obj.properties.is_empty(), obj.span),
+            AstKind::FunctionBody(fb) => (fb.is_empty(), fb.span),
+            AstKind::Class(class) => (class.body.body.is_empty(), class.body.span),
+            AstKind::BlockStatement(block_stmt) => (block_stmt.body.is_empty(), block_stmt.span),
+            _ => return,
         };
+
+        if is_empty_body && span.end - span.start > 2 && !ctx.semantic().has_comments_between(span)
+        {
+            ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), |fixer| {
+                fixer.replace(span, "{}")
+            });
+        }
     }
-}
-
-fn remove_empty_braces_spaces(ctx: &LintContext, is_empty_body: bool, span: Span) {
-    let start = span.start;
-    let end = span.end;
-
-    if is_empty_body && end - start > 2 && !ctx.semantic().has_comments_between(span) {
-        // length of "{}"
-        ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), |fixer| {
-            fixer.replace(span, "{}")
-        });
-    }
-}
-
-#[expect(clippy::cast_possible_truncation)]
-fn get_static_leading_count(span: Span, ctx: &LintContext) -> u32 {
-    let src = span.source_text(ctx.source_text());
-
-    let src = &src[7..];
-    (src.chars().take_while(|c| c.is_whitespace()).count() + 7) as u32
 }
 
 #[test]
@@ -329,6 +329,7 @@ fn test() {
         ("function a(){ }", "function a(){}", None),
         ("do { }while(true)", "do {}while(true)", None),
         ("class A {\nstatic { }\n}", "class A {\nstatic {}\n}", None),
+        ("class A {\nstatic{ }\n}", "class A {\nstatic {}\n}", None),
         ("with (foo) {   }", "with (foo) {}", None),
         ("\nif (true) {\n}", "\nif (true) {}", None),
         ("\nif (true) {   }", "\nif (true) {}", None),
