@@ -89,7 +89,8 @@ fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
         .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
 }
 
-fn closest_promise_callback_def_vars<'a, 'b>(
+/// Gets the closest promise callback function of the nested promise.
+fn closest_promise_cb<'a, 'b>(
     node: &'a AstNode<'b>,
     ctx: &'a LintContext<'b>,
 ) -> Option<&'a CallExpression<'b>> {
@@ -211,7 +212,7 @@ impl Rule for NoNesting {
 
         let mut ancestors = ctx.nodes().ancestors(node.id());
         if ancestors.any(|node| is_inside_promise(node, ctx)) {
-            match closest_promise_callback_def_vars(node, ctx) {
+            match closest_promise_cb(node, ctx) {
                 Some(closest) => {
                     if can_safely_unnest(call_expr, closest, ctx, &allocator) {
                         ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
