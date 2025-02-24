@@ -1,8 +1,6 @@
-use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_parser::{ParseOptions, Parser};
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -19,16 +17,17 @@ pub struct NoTemplateCurlyInString;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow template literal placeholder syntax in regular strings
+    /// Disallow template literal placeholder syntax in regular strings. This rule ensures that
+    /// expressions like `${variable}` are only used within template literals, avoiding incorrect
+    /// usage in regular strings.
     ///
     /// ### Why is this bad?
     ///
-    /// ECMAScript 6 allows programmers to create strings containing variable or
-    /// expressions using template literals, instead of string concatenation, by
-    /// writing expressions like `${variable}` between two backtick quotes. It
-    /// can be easy to use the wrong quotes when wanting to use template literals,
-    /// by writing `"${variable}"`, and end up with the literal value `"${variable}"`
-    /// instead of a string containing the value of the injected expressions.
+    /// ECMAScript 6 allows programmers to create strings containing variables or expressions using
+    /// template literals. This is done by embedding expressions like `${variable}` between backticks.
+    /// If regular quotes (`'` or `"`) are used with template literal syntax, it results in the literal
+    /// string `"${variable}"` instead of evaluating the expression. This rule helps to avoid this mistake,
+    /// ensuring that expressions are correctly evaluated inside template literals.
     ///
     /// ### Examples
     ///
@@ -48,7 +47,7 @@ declare_oxc_lint!(
     NoTemplateCurlyInString,
     eslint,
     style,
-    conditional_fix
+    dangerous_fix
 );
 
 impl Rule for NoTemplateCurlyInString {
@@ -62,24 +61,10 @@ impl Rule for NoTemplateCurlyInString {
 
         if text[start + 2..].contains('}') {
             let template = format!("`{text}`");
-            let allocator = Allocator::new();
-            let ret = Parser::new(&allocator, template.as_str(), *ctx.source_type())
-                .with_options(ParseOptions {
-                    parse_regular_expression: true,
-                    allow_return_outside_function: true,
-                    ..ParseOptions::default()
-                })
-                .parse();
-
-            if !ret.panicked {
-                ctx.diagnostic_with_fix(
-                    no_template_curly_in_string_diagnostic(literal.span),
-                    |fixer| fixer.replace(literal.span, template),
-                );
-                return;
-            }
-
-            ctx.diagnostic(no_template_curly_in_string_diagnostic(literal.span));
+            ctx.diagnostic_with_dangerous_fix(
+                no_template_curly_in_string_diagnostic(literal.span),
+                |fixer| fixer.replace(literal.span, template),
+            );
         }
     }
 }
@@ -119,6 +104,7 @@ fn test() {
 
     let fix = vec![
         ("'Hello, ${name}'", "`Hello, ${name}`"),
+        ("'Hello, ${{name}'", "`Hello, ${{name}`"),
         (r#""Hello, ${name}""#, r"`Hello, ${name}`"),
         ("'${greeting}, ${name}'", "`${greeting}, ${name}`"),
         ("'Hello, ${index + 1}'", "`Hello, ${index + 1}`"),
