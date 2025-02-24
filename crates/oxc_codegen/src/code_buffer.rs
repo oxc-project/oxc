@@ -1,3 +1,5 @@
+use std::iter;
+
 use assert_unchecked::assert_unchecked;
 
 /// A string builder for constructing source code.
@@ -392,7 +394,7 @@ impl CodeBuffer {
         #[cold]
         #[inline(never)]
         fn write_slow(code_buffer: &mut CodeBuffer, n: usize) {
-            code_buffer.buf.extend(std::iter::repeat(b'\t').take(n));
+            code_buffer.buf.extend(iter::repeat_n(b'\t', n));
         }
 
         let len = self.len();
