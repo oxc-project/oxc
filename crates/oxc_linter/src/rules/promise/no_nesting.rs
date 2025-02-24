@@ -121,9 +121,13 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 
 /// Checks if we can safely unnest the promise callback.
 ///
-/// 1. Gets names of variables defined in closest parent promise callback function scope.
-/// 2. Checks if the argument callback of the nested promise call uses any of these variables from 1.
+/// 1. This function gets variable bindings defined in closest parent promise callback function
+///    scope.
 ///
+/// 2. Checks if the argument callback of the nested promise call uses any of these variables
+///    and if so returns `false` to denote that the promises cannot be safely unnested.
+///
+/// Here is an example of a nested promise which isn't safe to nest without further refactoring.
 /// ```javascript
 /// doThing()
 ///  .then(a => getB(a) <---- 1. Get this scopes bound variables
@@ -131,19 +135,13 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 ///  )
 /// ```
 ///
-/// We don't want a violation of this rule in the above case as unnesting would
-/// result in the following code where `getC(a, b)` would be referencing an
-/// undefined `a`.
-///
+/// In this case unnesting is not safe as doing so would result in `a` being undefined in the
+/// expression `getC(a, b)`, as seen below:
 /// ```javascript
 /// doThing()
 ///  .then(a => getB(a))
 ///  .then(b => getC(a, b))
 /// ```
-///
-/// We then see that both `a` and `b` has a reference
-/// in the nested promise callback. Because of this reference, this nesting
-/// isn't a rule violation.
 fn can_safely_unnest(
     call_expr: &CallExpression,
     closest: &CallExpression,
