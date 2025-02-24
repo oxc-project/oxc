@@ -57,25 +57,6 @@ declare_oxc_lint!(
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 );
 
-fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
-        return false;
-    }
-
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-        return false;
-    };
-    if !matches!(ctx.nodes().kind(parent.id()), AstKind::Argument(_)) {
-        return false;
-    };
-
-    let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(parent.id()) else {
-        return false;
-    };
-
-    matches!(call_expr.callee_name(), Some("then" | "catch"))
-}
-
 fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
     if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
         || !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::Argument(_)))
@@ -160,15 +141,11 @@ fn can_safely_unnest<'a>(
         match arg_expr {
             Expression::ArrowFunctionExpression(arrow_expr) => {
                 let func_scope = arrow_expr.scope_id();
-                println!("scope id {func_scope:?}");
-
                 let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
                 closest_cb_scope_bindings = bound_vars_for_scope;
             }
             Expression::FunctionExpression(func_expr) => {
                 let func_scope = func_expr.scope_id();
-                println!("scope id {func_scope:?}");
-
                 let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
                 closest_cb_scope_bindings = bound_vars_for_scope;
             }
@@ -188,7 +165,7 @@ fn can_safely_unnest<'a>(
         //             // ^^^^^^^^^^^^^^^^ <- cb_span
         // };
         // ```
-        for (binding_name, binding_symbol_id) in closest_cb_scope_bindings {
+        for (_name, binding_symbol_id) in closest_cb_scope_bindings {
             for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
                 let usage_span: Span = ctx.reference_span(usage);
                 if cb_span.contains_inclusive(usage_span) {
@@ -218,7 +195,6 @@ impl Rule for NoNesting {
 
         let mut ancestors = ctx.nodes().ancestors(node.id());
         if ancestors.any(|node| is_inside_promise(node, ctx)) {
-            //       let Some(closest) =
             match closest_promise_callback_def_vars(node, ctx) {
                 Some(closest) => {
                     if can_safely_unnest(call_expr, closest, ctx, &allocator) {
