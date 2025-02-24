@@ -39,9 +39,15 @@ fn format_github(diagnostic: &Error) -> String {
     let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
     let filename = escape_property(&filename);
     let message = escape_data(&message);
+    let code = escape_data(&diagnostic.code().map_or_else(String::new, |c| c.to_string()));
+    
     format!(
-        "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
-        start.line, end.line, start.column, end.column
+        "::{severity} file={filename},line={},endLine={},col={},endColumn={},code={},title={title}::{message}\n",
+        start.line,
+        end.line,
+        start.column,
+        end.column,
+        code
     )
 }
 
@@ -110,7 +116,7 @@ mod test {
         assert!(result.is_some());
         assert_eq!(
             result.unwrap(),
-            "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n"
+            "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,code=,title=oxlint::error message\n"
         );
     }
 }
