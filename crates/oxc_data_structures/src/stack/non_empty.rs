@@ -202,7 +202,7 @@ impl<T> NonEmptyStack<T> {
     #[inline]
     unsafe fn new_with_capacity_bytes_unchecked(capacity_bytes: usize, initial_value: T) -> Self {
         // ZSTs are not supported for simplicity
-        assert!(size_of::<T>() > 0, "Zero sized types are not supported");
+        const { assert!(size_of::<T>() > 0, "Zero sized types are not supported") };
 
         // SAFETY: Caller guarantees `capacity_bytes` satisfies requirements
         let (start, end) = unsafe { Self::allocate(capacity_bytes) };
