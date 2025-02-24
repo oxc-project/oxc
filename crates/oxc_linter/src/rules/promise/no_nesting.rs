@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Box, CloneIn, GetAddress, Vec};
+use oxc_allocator::{Allocator, Box, CloneIn, GetAddress, HashMap, Vec};
 use oxc_ast::{
     ast::{
         Argument, ArrowFunctionExpression, BindingPatternKind, CallExpression, Expression,
@@ -8,6 +8,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
@@ -218,6 +219,7 @@ impl Rule for NoNesting {
             return;
         };
 
+        let allocator = Allocator::default();
         /*
         if let Some(args) = get_closest_promise_callback_def_vars(node, ctx) {
             //println!("args  {call_expr:?}");
@@ -277,8 +279,11 @@ impl Rule for NoNesting {
                 // .then(a => getB(a)  <--- we need to get the args defined in this cb
                 //   .then(b => getC(a, b)) <--- to see if they are used here in this cb scope
                 // because if any are then we cannot unnest and so don't flag as rule violation.
-                let mut closest_promise_cb_def_vars = vec![];
-                let mut closest_promise_cb_def_vars_symbols = vec![];
+                //      let mut closest_promise_cb_def_vars = vec![];
+                // let mut closest_promise_cb_def_vars_symbols = vec![];
+                //               let mut closest_cb_scope_bindings: Vec<(&str, SymbolId)>  = vec![];
+                let mut closest_cb_scope_bindings: &HashMap<'_, &str, SymbolId> =
+                    &HashMap::new_in(&allocator);
 
                 closest.arguments.iter().for_each(|new_expr| {
                     //            let mut v: Vec<&CompactStr> = Vec::new_in(allocator);
@@ -289,24 +294,36 @@ impl Rule for NoNesting {
                     };
                     match arg_expr {
                         Expression::ArrowFunctionExpression(arrow_expr) => {
-                            for param in &arrow_expr.params.items {
-                                if let BindingPatternKind::BindingIdentifier(param_ident) =
-                                    &param.pattern.kind
-                                {
-                                    //  let n = param_ident.name;
-                                    closest_promise_cb_def_vars
-                                        .push(param_ident.name.to_compact_str());
-                                    closest_promise_cb_def_vars_symbols
-                                        .push(param_ident.symbol_id());
-                                    //param_ident.name.to_compact_str());
-                                    //     println!("arg {n}");
-                                    //   arg_names.push(&n.to_compact_str())
-                                    //   v.push(param_ident.name.to_compact_str());
-                                };
-                            }
+                            let func_scope = arrow_expr.scope_id();
+                            println!("scope id {func_scope:?}");
+
+                            let bound_vars_for_scope = ctx.scopes().get_bindings(func_scope);
+                            closest_cb_scope_bindings = bound_vars_for_scope;
+                            // .closest_promise_cb_def_vars_symbols
+                            // .push(param_ident.symbol_id());
+
+                            //       for param in &arrow_expr.params.items {
+                            //           if let BindingPatternKind::BindingIdentifier(param_ident) =
+                            //               &param.pattern.kind
+                            //           {
+                            //               //  let n = param_ident.name;
+                            //               closest_promise_cb_def_vars
+                            //                   .push(param_ident.name.to_compact_str());
+                            //               //closest_promise_cb_def_vars_symbols
+                            //               //    .push(param_ident.symbol_id());
+                            //
+                            //               //param_ident.name.to_compact_str());
+                            //               //     println!("arg {n}");
+                            //               //   arg_names.push(&n.to_compact_str())
+                            //               //   v.push(param_ident.name.to_compact_str());
+                            //           };
+                            //       }
                             //   self.check_parameter_names(&arrow_expr.params, ctx);
                         }
                         Expression::FunctionExpression(func_expr) => {
+                            let func_scope = func_expr.scope_id();
+                            println!("scope id {func_scope:?}");
+
                             // self.check_parameter_names(&func_expr.params, ctx);
                         }
                         _ => return,
@@ -314,7 +331,7 @@ impl Rule for NoNesting {
                     //     }
                 });
 
-                println!("argys {closest_promise_cb_def_vars:?}");
+                //                println!("argys {closest_promise_cb_def_vars:?}");
 
                 // Now check for references in cb_span to variables defined in the closest parent cb scope.
                 if let Some(cb_span) = call_expr.arguments.get(0).map(|a| a.span()) {
@@ -327,11 +344,12 @@ impl Rule for NoNesting {
                     //  ctx.diagnostic(no_nesting_diagnostic(cb_span));
 
                     // now check in the cb_span for usage of variables defined in closest_parent_cb_args_span
-                    for parent_arg_symb in closest_promise_cb_def_vars_symbols {
+                    for (binding_name, binding_symbol_id) in closest_cb_scope_bindings {
                         // Loop through a,b,c in:
                         //  .then((a,b,c) => getB(a)
                         //    .then(d => getC(a, b))
-                        for usage in ctx.semantic().symbol_references(parent_arg_symb) {
+                        println!("checking binding name {binding_name:?} and symbol_id {binding_symbol_id:?}");
+                        for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
                             let usage_span: Span = ctx.reference_span(usage);
                             println!("ref span where used {usage_span:?}");
 
