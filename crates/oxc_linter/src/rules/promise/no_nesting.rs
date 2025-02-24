@@ -136,7 +136,7 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 /// ```
 ///
 /// In this case unnesting is not safe as doing so would result in `a` being undefined in the
-/// expression `getC(a, b)`, as seen below:
+/// expression `getC(a, b)`, as seen below in the unnested version of the example:
 /// ```javascript
 /// doThing()
 ///  .then(a => getB(a))
