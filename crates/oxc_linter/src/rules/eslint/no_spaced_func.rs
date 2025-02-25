@@ -140,7 +140,6 @@ impl Rule for NoSpacedFunc {
             }
             // f.a ()
             Expression::StaticMemberExpression(exp) => {
-                //  let span_end = exp.span().end;
                 let ident_name_span_end = exp.property.span().end;
 
                 match get_substring_to_lparens(ctx, Span::new(ident_name_span_end, callee_end)) {
