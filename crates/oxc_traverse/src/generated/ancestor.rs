@@ -182,8 +182,8 @@ pub(crate) enum AncestorType {
     ExportNamedDeclarationSpecifiers = 159,
     ExportNamedDeclarationSource = 160,
     ExportNamedDeclarationWithClause = 161,
-    ExportDefaultDeclarationDeclaration = 162,
-    ExportDefaultDeclarationExported = 163,
+    ExportDefaultDeclarationExported = 162,
+    ExportDefaultDeclarationDeclaration = 163,
     ExportAllDeclarationExported = 164,
     ExportAllDeclarationSource = 165,
     ExportAllDeclarationWithClause = 166,
@@ -624,10 +624,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::ExportNamedDeclarationSource as u16,
     ExportNamedDeclarationWithClause(ExportNamedDeclarationWithoutWithClause<'a, 't>) =
         AncestorType::ExportNamedDeclarationWithClause as u16,
-    ExportDefaultDeclarationDeclaration(ExportDefaultDeclarationWithoutDeclaration<'a, 't>) =
-        AncestorType::ExportDefaultDeclarationDeclaration as u16,
     ExportDefaultDeclarationExported(ExportDefaultDeclarationWithoutExported<'a, 't>) =
         AncestorType::ExportDefaultDeclarationExported as u16,
+    ExportDefaultDeclarationDeclaration(ExportDefaultDeclarationWithoutDeclaration<'a, 't>) =
+        AncestorType::ExportDefaultDeclarationDeclaration as u16,
     ExportAllDeclarationExported(ExportAllDeclarationWithoutExported<'a, 't>) =
         AncestorType::ExportAllDeclarationExported as u16,
     ExportAllDeclarationSource(ExportAllDeclarationWithoutSource<'a, 't>) =
@@ -1404,8 +1404,8 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_export_default_declaration(self) -> bool {
         matches!(
             self,
-            Self::ExportDefaultDeclarationDeclaration(_)
-                | Self::ExportDefaultDeclarationExported(_)
+            Self::ExportDefaultDeclarationExported(_)
+                | Self::ExportDefaultDeclarationDeclaration(_)
         )
     }
 
@@ -2367,8 +2367,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::ExportNamedDeclarationSpecifiers(a) => a.address(),
             Self::ExportNamedDeclarationSource(a) => a.address(),
             Self::ExportNamedDeclarationWithClause(a) => a.address(),
-            Self::ExportDefaultDeclarationDeclaration(a) => a.address(),
             Self::ExportDefaultDeclarationExported(a) => a.address(),
+            Self::ExportDefaultDeclarationDeclaration(a) => a.address(),
             Self::ExportAllDeclarationExported(a) => a.address(),
             Self::ExportAllDeclarationSource(a) => a.address(),
             Self::ExportAllDeclarationWithClause(a) => a.address(),
@@ -10009,41 +10009,10 @@ impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutWithClause<'a, 't> {
 
 pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN: usize =
     offset_of!(ExportDefaultDeclaration, span);
-pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION: usize =
-    offset_of!(ExportDefaultDeclaration, declaration);
 pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED: usize =
     offset_of!(ExportDefaultDeclaration, exported);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct ExportDefaultDeclarationWithoutDeclaration<'a, 't>(
-    pub(crate) *const ExportDefaultDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn exported(self) -> &'t ModuleExportName<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED)
-                as *const ModuleExportName<'a>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
+pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION: usize =
+    offset_of!(ExportDefaultDeclaration, declaration);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10070,6 +10039,37 @@ impl<'a, 't> ExportDefaultDeclarationWithoutExported<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutExported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportDefaultDeclarationWithoutDeclaration<'a, 't>(
+    pub(crate) *const ExportDefaultDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn exported(self) -> &'t ModuleExportName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED)
+                as *const ModuleExportName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

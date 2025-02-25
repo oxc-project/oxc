@@ -419,7 +419,7 @@ impl<'a> ParserImpl<'a> {
         };
         let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
-        Ok(self.ast.alloc_export_default_declaration(span, declaration, exported))
+        Ok(self.ast.alloc_export_default_declaration(span, exported, declaration))
     }
 
     // export ExportFromClause FromClause ;

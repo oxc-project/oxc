@@ -2273,8 +2273,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclaration<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ExportDefaultDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
-            declaration: CloneIn::clone_in(&self.declaration, allocator),
             exported: CloneIn::clone_in(&self.exported, allocator),
+            declaration: CloneIn::clone_in(&self.declaration, allocator),
         }
     }
 }

@@ -2474,9 +2474,9 @@ pub struct ExportNamedDeclaration<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportDefaultDeclaration<'a> {
     pub span: Span,
-    pub declaration: ExportDefaultDeclarationKind<'a>,
     #[estree(skip)]
     pub exported: ModuleExportName<'a>, // the `default` Keyword
+    pub declaration: ExportDefaultDeclarationKind<'a>,
 }
 
 /// Export All Declaration

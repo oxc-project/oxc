@@ -6431,19 +6431,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn module_declaration_export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ModuleDeclaration<'a> {
         ModuleDeclaration::ExportDefaultDeclaration(self.alloc_export_default_declaration(
             span,
-            declaration,
             exported,
+            declaration,
         ))
     }
 
@@ -7060,16 +7060,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ExportDefaultDeclaration<'a> {
-        ExportDefaultDeclaration { span, declaration, exported }
+        ExportDefaultDeclaration { span, exported, declaration }
     }
 
     /// Build an [`ExportDefaultDeclaration`], and store it in the memory arena.
@@ -7078,16 +7078,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn alloc_export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        Box::new_in(self.export_default_declaration(span, declaration, exported), self.allocator)
+        Box::new_in(self.export_default_declaration(span, exported, declaration), self.allocator)
     }
 
     /// Build an [`ExportAllDeclaration`].

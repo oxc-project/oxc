@@ -2994,20 +2994,20 @@ unsafe fn walk_export_default_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_default_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationDeclaration(
-        ancestor::ExportDefaultDeclarationWithoutDeclaration(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationExported(
+        ancestor::ExportDefaultDeclarationWithoutExported(node, PhantomData),
     ));
-    walk_export_default_declaration_kind(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION)
-            as *mut ExportDefaultDeclarationKind,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::ExportDefaultDeclarationExported);
     walk_module_export_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED)
             as *mut ModuleExportName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ExportDefaultDeclarationDeclaration);
+    walk_export_default_declaration_kind(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION)
+            as *mut ExportDefaultDeclarationKind,
         ctx,
     );
     ctx.pop_stack(pop_token);
