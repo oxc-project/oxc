@@ -16,11 +16,16 @@ pub struct ConsistentDateClone;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// The Date constructor can clone a `Date` object directly when passed as an argument, making
-    /// timestamp conversion unnecessary.
+    ///
+    /// The Date constructor can clone a `Date` object directly when passed as an argument,
+    /// making timestamp conversion unnecessary. This rule enforces the use of the
+    /// direct `Date` cloning instead of using `.getTime()` for conversion.
     ///
     /// ### Why is this bad?
-    /// Doing the timestamp conversion using `.getTime()` is unnecessary.
+    ///
+    /// Using `.getTime()` to convert a `Date` object to a timestamp and then back to a
+    /// `Date` is redundant and unnecessary. Simply passing the `Date` object to the
+    /// `Date` constructor is cleaner and more efficient.
     ///
     /// ### Examples
     ///
@@ -87,6 +92,7 @@ fn test() {
         "new Date(date[getTime]())",
         "new Date(date.getTime(extraArgument))",
         "Date(date.getTime())",
+        // TODO: We may support these cases in future
         "new Date(
 				date.getFullYear(),
 				date.getMonth(),
