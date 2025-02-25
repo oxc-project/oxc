@@ -7763,6 +7763,50 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`JSXOpeningFragment`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_opening_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
+        JSXOpeningFragment { span }
+    }
+
+    /// Build a [`JSXOpeningFragment`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_opening_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn alloc_jsx_opening_fragment(self, span: Span) -> Box<'a, JSXOpeningFragment> {
+        Box::new_in(self.jsx_opening_fragment(span), self.allocator)
+    }
+
+    /// Build a [`JSXClosingFragment`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_closing_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
+        JSXClosingFragment { span }
+    }
+
+    /// Build a [`JSXClosingFragment`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_closing_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn alloc_jsx_closing_fragment(self, span: Span) -> Box<'a, JSXClosingFragment> {
+        Box::new_in(self.jsx_closing_fragment(span), self.allocator)
+    }
+
     /// Build a [`JSXElementName::Identifier`].
     ///
     /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.

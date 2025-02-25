@@ -668,6 +668,16 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_jsx_opening_fragment(&mut self, it: &mut JSXOpeningFragment) {
+        walk_jsx_opening_fragment(self, it);
+    }
+
+    #[inline]
+    fn visit_jsx_closing_fragment(&mut self, it: &mut JSXClosingFragment) {
+        walk_jsx_closing_fragment(self, it);
+    }
+
+    #[inline]
     fn visit_jsx_element_name(&mut self, it: &mut JSXElementName<'a>) {
         walk_jsx_element_name(self, it);
     }
@@ -3075,8 +3085,28 @@ pub mod walk_mut {
         let kind = AstType::JSXFragment;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.visit_jsx_opening_fragment(&mut it.opening_fragment);
+        visitor.visit_jsx_closing_fragment(&mut it.closing_fragment);
         visitor.visit_jsx_children(&mut it.children);
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_jsx_opening_fragment<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut JSXOpeningFragment,
+    ) {
+        // No `AstType` for this type
+        visitor.visit_span(&mut it.span);
+    }
+
+    #[inline]
+    pub fn walk_jsx_closing_fragment<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut JSXClosingFragment,
+    ) {
+        // No `AstType` for this type
+        visitor.visit_span(&mut it.span);
     }
 
     #[inline]

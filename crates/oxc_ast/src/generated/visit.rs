@@ -676,6 +676,16 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_jsx_opening_fragment(&mut self, it: &JSXOpeningFragment) {
+        walk_jsx_opening_fragment(self, it);
+    }
+
+    #[inline]
+    fn visit_jsx_closing_fragment(&mut self, it: &JSXClosingFragment) {
+        walk_jsx_closing_fragment(self, it);
+    }
+
+    #[inline]
     fn visit_jsx_element_name(&mut self, it: &JSXElementName<'a>) {
         walk_jsx_element_name(self, it);
     }
@@ -2953,8 +2963,22 @@ pub mod walk {
         let kind = AstKind::JSXFragment(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.visit_jsx_opening_fragment(&it.opening_fragment);
+        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.visit_jsx_children(&it.children);
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_jsx_opening_fragment<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXOpeningFragment) {
+        // No `AstKind` for this type
+        visitor.visit_span(&it.span);
+    }
+
+    #[inline]
+    pub fn walk_jsx_closing_fragment<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXClosingFragment) {
+        // No `AstKind` for this type
+        visitor.visit_span(&it.span);
     }
 
     #[inline]

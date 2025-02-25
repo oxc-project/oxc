@@ -334,16 +334,4 @@ impl<'a> AstBuilder<'a> {
             self.allocator,
         )
     }
-
-    /// Create an [`JSXOpeningElement`].
-    #[inline]
-    pub fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
-        JSXOpeningFragment { span }
-    }
-
-    /// Create an [`JSXClosingElement`].
-    #[inline]
-    pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
-        JSXClosingFragment { span }
-    }
 }
