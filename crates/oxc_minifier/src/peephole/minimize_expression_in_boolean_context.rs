@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, DetermineValueType};
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsInt32OrUint32};
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
@@ -53,7 +53,7 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(e)
                 if e.operator.is_equality()
                     && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
-                    && e.left.value_type(&ctx).is_number() =>
+                    && e.left.is_int32_or_uint32(&ctx) =>
             {
                 let argument = ctx.ast.move_expression(&mut e.left);
                 *expr = if matches!(
@@ -151,5 +151,6 @@ mod test {
         test("if (anything1 ? anything2 : (0, true));", "!anything1 || anything2");
         test("if (anything1 ? anything2 : (0, false));", "anything1 && anything2");
         test("if(!![]);", "");
+        test("if (+a === 0) { b } else { c }", "+a == 0 ? b : c"); // should not be folded to `a ? b : c` (`+a` might be NaN)
     }
 }

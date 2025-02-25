@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
     AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
-    LogicalExpression,
+    LogicalExpression, UnaryExpression,
 };
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
@@ -100,25 +100,7 @@ impl DetermineValueType for Expression<'_> {
                     ValueType::Undetermined
                 }
             }
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
-                UnaryOperator::Void => ValueType::Undefined,
-                UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
-                    let argument_ty = unary_expr.argument.value_type(is_global_reference);
-                    match argument_ty {
-                        ValueType::BigInt => ValueType::BigInt,
-                        // non-object values other than BigInt are converted to number by `ToNumber`
-                        ValueType::Number
-                        | ValueType::Boolean
-                        | ValueType::String
-                        | ValueType::Null
-                        | ValueType::Undefined => ValueType::Number,
-                        ValueType::Undetermined | ValueType::Object => ValueType::Undetermined,
-                    }
-                }
-                UnaryOperator::UnaryPlus => ValueType::Number,
-                UnaryOperator::LogicalNot | UnaryOperator::Delete => ValueType::Boolean,
-                UnaryOperator::Typeof => ValueType::String,
-            },
+            Expression::UnaryExpression(e) => e.value_type(is_global_reference),
             Expression::BinaryExpression(e) => e.value_type(is_global_reference),
             Expression::SequenceExpression(e) => e
                 .expressions
@@ -186,6 +168,30 @@ impl DetermineValueType for BinaryExpression<'_> {
             | BinaryOperator::GreaterThan
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterEqualThan => ValueType::Boolean,
+        }
+    }
+}
+
+impl DetermineValueType for UnaryExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        match self.operator {
+            UnaryOperator::Void => ValueType::Undefined,
+            UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
+                let argument_ty = self.argument.value_type(is_global_reference);
+                match argument_ty {
+                    ValueType::BigInt => ValueType::BigInt,
+                    // non-object values other than BigInt are converted to number by `ToNumber`
+                    ValueType::Number
+                    | ValueType::Boolean
+                    | ValueType::String
+                    | ValueType::Null
+                    | ValueType::Undefined => ValueType::Number,
+                    ValueType::Undetermined | ValueType::Object => ValueType::Undetermined,
+                }
+            }
+            UnaryOperator::UnaryPlus => ValueType::Number,
+            UnaryOperator::LogicalNot | UnaryOperator::Delete => ValueType::Boolean,
+            UnaryOperator::Typeof => ValueType::String,
         }
     }
 }
