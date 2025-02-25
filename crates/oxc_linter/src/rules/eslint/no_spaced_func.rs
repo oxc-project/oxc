@@ -163,6 +163,7 @@ fn test() {
     let pass = vec![
         "foo(1);",
         "f();",
+        "f( );", // I added
         "f(a, b);",
         "a.b",  // I added
         "a. b", // I added
@@ -193,6 +194,7 @@ fn test() {
         "f.b().c ();",
         "f.b().c().d ();", // I added
         "f() ()",
+        "f( )( ) ( )", // I added
         "(function() {} ())",
         "var f = new Foo ()",
         "f ( (0) )",
