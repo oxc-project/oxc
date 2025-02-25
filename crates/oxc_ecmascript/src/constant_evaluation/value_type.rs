@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
     AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
-    LogicalExpression, UnaryExpression,
+    LogicalExpression, LogicalOperator, UnaryExpression,
 };
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
@@ -247,14 +247,28 @@ impl DetermineValueType for ConditionalExpression<'_> {
 
 impl DetermineValueType for LogicalExpression<'_> {
     fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
-        let left = self.left.value_type(is_global_reference);
-        if !left.is_boolean() {
-            return ValueType::Undetermined;
+        match self.operator {
+            LogicalOperator::And | LogicalOperator::Or => {
+                let left = self.left.value_type(is_global_reference);
+                if left.is_undetermined() {
+                    return ValueType::Undetermined;
+                }
+                let right = self.right.value_type(is_global_reference);
+                if left == right {
+                    return left;
+                }
+                ValueType::Undetermined
+            }
+            LogicalOperator::Coalesce => {
+                let left = self.left.value_type(is_global_reference);
+                match left {
+                    ValueType::Undefined | ValueType::Null => {
+                        self.right.value_type(is_global_reference)
+                    }
+                    ValueType::Undetermined => ValueType::Undetermined,
+                    _ => left,
+                }
+            }
         }
-        let right = self.right.value_type(is_global_reference);
-        if left == right {
-            return left;
-        }
-        ValueType::Undetermined
     }
 }

@@ -229,7 +229,8 @@ fn logical_tests() {
 
     test("foo ?? bar", ValueType::Undetermined);
     test("foo1 === foo2 ?? bar1 !== bar2", ValueType::Boolean);
-    // test("+foo ?? (bar1 !== bar2)", ValueType::Number);
+    test("+foo ?? (bar1 !== bar2)", ValueType::Number);
+    test("(void foo) ?? (bar1 !== bar2)", ValueType::Boolean);
 }
 
 #[test]
