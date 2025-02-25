@@ -1,17 +1,11 @@
 use memchr::memchr;
-use oxc_ast::AstKind::IdentifierName;
+use oxc_ast::AstKind;
 use oxc_ast::ast::Expression;
-use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_spaced_func_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -92,9 +86,9 @@ fn get_substring_to_lparens(ctx: &LintContext, search_span: Span) -> FuncSpace {
     }
 
     if src_to_l_parens.trim().is_empty() {
-        return FuncSpace::Spaced(span_to_l_parens);
+        FuncSpace::Spaced(span_to_l_parens)
     } else {
-        return FuncSpace::NotSpaced;
+        FuncSpace::NotSpaced
     }
 }
 
@@ -127,14 +121,13 @@ impl Rule for NoSpacedFunc {
         match &call_expr.callee {
             // f ()
             Expression::Identifier(ident) => {
-                check_identifier_callee(ctx, ident.span().end, callee_end)
+                check_identifier_callee(ctx, ident.span().end, callee_end);
             }
-            Expression::ParenthesizedExpression(paren_exp) => match &paren_exp.expression {
-                Expression::Identifier(ident) => {
-                    check_identifier_callee(ctx, paren_exp.span().end, callee_end)
+            Expression::ParenthesizedExpression(paren_exp) => {
+                if let Expression::Identifier(_ident) = &paren_exp.expression {
+                    check_identifier_callee(ctx, paren_exp.span().end, callee_end);
                 }
-                _ => {}
-            },
+            }
             // f() () <-- second parens
             Expression::CallExpression(c) => {
                 match get_substring_to_lparens(ctx, Span::new(c.span().end, callee_end)) {
@@ -144,7 +137,7 @@ impl Rule for NoSpacedFunc {
             }
             // f.a ()
             Expression::StaticMemberExpression(exp) => {
-                let span_end = exp.span().end;
+                //  let span_end = exp.span().end;
                 let ident_name_span_end = exp.property.span().end;
 
                 match get_substring_to_lparens(ctx, Span::new(ident_name_span_end, callee_end)) {
