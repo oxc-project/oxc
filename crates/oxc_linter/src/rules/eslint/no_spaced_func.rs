@@ -1,6 +1,8 @@
 use memchr::memchr;
 use oxc_ast::AstKind;
+use oxc_ast::AstKind::IdentifierName;
 use oxc_ast::ast::Expression;
+//use oxc_ast::ast::ModuleExportName::IdentifierName;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -102,6 +104,16 @@ impl Rule for NoSpacedFunc {
                     ctx.diagnostic(no_spaced_func_diagnostic(span_to_l_parens));
                 }
             }
+            Expression::StaticMemberExpression(exp) => {
+                let span_end = exp.span().end;
+                let ident = &exp.property;
+                let ident_name_span = ident.span().end;
+
+                println!("static ident span {ident_name_span:?}");
+                println!("static ident name {0:?}", ident.name);
+                // need to check each method call in the chain i.e =f.a().b ()`
+                //let fst_method_call;
+            }
             _ => {} //     Expression::StaticMemberExpression(static_member_expression) => todo!(),
         }
         //let Expression::FunctionExpression(func) = call_expr.callee else {
@@ -126,9 +138,13 @@ fn test() {
         "foo(1);",
         "f();",
         "f(a, b);",
+        "a.b",  // I added
+        "a. b", // I added
         "f.b();",
         "f.b().c();",
+        "f.b(1).c( );", // I added
         "f()()",
+        "f()( )()", // I added
         "(function() {}())",
         "var f = new Foo()",
         "var f = new Foo",
@@ -149,6 +165,7 @@ fn test() {
 			();",
         "f.b ();",
         "f.b().c ();",
+        "f.b().c().d ();", // I added
         "f() ()",
         "(function() {} ())",
         "var f = new Foo ()",
