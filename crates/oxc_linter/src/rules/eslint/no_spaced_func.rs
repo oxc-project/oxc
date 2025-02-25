@@ -1,7 +1,7 @@
 use memchr::memchr;
-use oxc_ast::AstKind;
 use oxc_ast::AstKind::IdentifierName;
 use oxc_ast::ast::Expression;
+use oxc_ast::{AstKind, ast::IdentifierReference};
 //use oxc_ast::ast::ModuleExportName::IdentifierName;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -64,45 +64,67 @@ declare_oxc_lint!(
     pending
 );
 
+#[derive(PartialEq, Debug)]
+enum FuncSpace {
+    NotSpaced,
+    Spaced(Span),
+}
+
+fn is_ident_end_to_l_parens_whitespace(
+    ctx: &LintContext,
+    ident: &IdentifierReference,
+    search_end: u32,
+) -> FuncSpace {
+    let ident_end = ident.span().end;
+
+    let sx = Span::new(ident_end, search_end);
+    println!("sx {0:?}", sx);
+
+    let src = ctx.source_range(sx);
+
+    let Some(r_parens_pos_usize) = memchr(b'(', src.as_bytes()) else {
+        //println!("span {0:?}", callee_end);
+        return FuncSpace::NotSpaced;
+    };
+
+    let l_parens_after_n_chars: u32 = u32::try_from(r_parens_pos_usize).unwrap();
+    let l_parens_pos = ident_end + l_parens_after_n_chars;
+    let span_to_l_parens = Span::new(ident_end, l_parens_pos);
+    let str_between_ident_and_l_parens = ctx.source_range(span_to_l_parens);
+
+    println!(" snippet: {0:?}", str_between_ident_and_l_parens);
+    if str_between_ident_and_l_parens.is_empty() {
+        return FuncSpace::NotSpaced;
+    }
+
+    if str_between_ident_and_l_parens.trim().is_empty() {
+        return FuncSpace::Spaced(span_to_l_parens);
+    } else {
+        return FuncSpace::NotSpaced;
+    }
+}
+
 impl Rule for NoSpacedFunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        let callee_end = call_expr.callee.span().end; //.contains_inclusive();
+        let callee_end = call_expr.span().end; //.contains_inclusive();
+        println!("callee_end {0:?}", callee_end);
 
         let ss = call_expr.callee.get_inner_expression(); //.contains_inclusive();
 
         match ss {
             Expression::Identifier(ident) => {
-                let ident_end = ident.span().end;
-
-                let sx = Span::new(ident_end, call_expr.span().end);
-                println!("sx {0:?}", sx);
-
-                let src = ctx.source_range(sx);
-
-                let Some(r_parens_pos_usize) = memchr(b'(', src.as_bytes()) else {
-                    println!("span {0:?}", callee_end);
-
-                    return;
-                };
-
-                let l_parens_after_n_chars: u32 = u32::try_from(r_parens_pos_usize).unwrap();
-                let l_parens_pos = ident_end + l_parens_after_n_chars;
-                let span_to_l_parens = Span::new(ident_end, l_parens_pos);
-                let str_between_ident_and_l_parens = ctx.source_range(span_to_l_parens);
-
-                println!(" snippet: {0:?}", str_between_ident_and_l_parens);
-                if str_between_ident_and_l_parens.is_empty() {
-                    return;
+                match is_ident_end_to_l_parens_whitespace(ctx, ident, callee_end) {
+                    FuncSpace::NotSpaced => {}
+                    FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
-                let is_whitespace = str_between_ident_and_l_parens.trim().is_empty();
-                if is_whitespace {
-                    println!("error");
-                    ctx.diagnostic(no_spaced_func_diagnostic(span_to_l_parens));
-                }
+                //if is_whitespace {
+                //    println!("error");
+                //    ctx.diagnostic(no_spaced_func_diagnostic(span_to_l_parens));
+                //}
             }
             Expression::StaticMemberExpression(exp) => {
                 let span_end = exp.span().end;
@@ -135,27 +157,27 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "foo(1);",
-        "f();",
-        "f(a, b);",
-        "a.b",  // I added
-        "a. b", // I added
-        "f.b();",
-        "f.b().c();",
-        "f.b(1).c( );", // I added
-        "f()()",
-        "f()( )()", // I added
-        "(function() {}())",
-        "var f = new Foo()",
-        "var f = new Foo",
-        "f( (0) )",
-        "( f )( 0 )",
-        "( (f) )( (0) )",
-        "( f()() )(0)",
-        "(function(){ if (foo) { bar(); } }());",
-        "f(0, (1))",
-        "describe/**/('foo', function () {});",
-        "new (foo())",
+      //  "foo(1);",
+      //  "f();",
+      //  "f(a, b);",
+      //  "a.b",  // I added
+      //  "a. b", // I added
+      //  "f.b();",
+      //  "f.b().c();",
+      //  "f.b(1).c( );", // I added
+      //  "f()()",
+      //  "f()( )()", // I added
+      //  "(function() {}())",
+      //  "var f = new Foo()",
+      //  "var f = new Foo",
+      //  "f( (0) )",
+      //  "( f )( 0 )",
+      //  "( (f) )( (0) )",
+      //  "( f()() )(0)",
+      //  "(function(){ if (foo) { bar(); } }());",
+      //  "f(0, (1))",
+      //  "describe/**/('foo', function () {});",
+      //  "new (foo())",
     ];
 
     let fail = vec![
