@@ -78,11 +78,9 @@ enum FuncSpace {
 /// where span refers to the whitespace between `foo` and `()`.
 fn is_ident_end_to_l_parens_whitespace(
     ctx: &LintContext,
-    ident: &IdentifierReference,
+    ident_end: u32,
     search_end: u32,
 ) -> FuncSpace {
-    let ident_end = ident.span().end;
-
     let sx = Span::new(ident_end, search_end);
     println!("sx {0:?}", sx);
 
@@ -123,7 +121,9 @@ impl Rule for NoSpacedFunc {
 
         match ss {
             Expression::Identifier(ident) => {
-                match is_ident_end_to_l_parens_whitespace(ctx, ident, callee_end) {
+                let ident_end = ident.span().end;
+
+                match is_ident_end_to_l_parens_whitespace(ctx, ident_end, callee_end) {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
@@ -131,12 +131,17 @@ impl Rule for NoSpacedFunc {
             Expression::StaticMemberExpression(exp) => {
                 let span_end = exp.span().end;
                 let ident = &exp.property;
-                let ident_name_span = ident.span().end;
+                let ident_name_span_end = ident.span().end;
 
-                println!("static ident span {ident_name_span:?}");
+                println!("static ident span {ident_name_span_end:?}");
                 println!("static ident name {0:?}", ident.name);
-                // need to check each method call in the chain i.e =f.a().b ()`
-                //let fst_method_call;
+
+                match is_ident_end_to_l_parens_whitespace(ctx, ident_name_span_end, callee_end) {
+                    FuncSpace::NotSpaced => {}
+                    FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
+                }
+                // need to check each method call in the chain i.e =f.b().a()`
+                // works from right to left, so `a()` then `b()` will be checked
             }
             _ => {} //     Expression::StaticMemberExpression(static_member_expression) => todo!(),
         }
@@ -148,27 +153,27 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-      //  "foo(1);",
-      //  "f();",
-      //  "f(a, b);",
-      //  "a.b",  // I added
-      //  "a. b", // I added
-      //  "f.b();",
-      //  "f.b().c();",
-      //  "f.b(1).c( );", // I added
-      //  "f()()",
-      //  "f()( )()", // I added
-      //  "(function() {}())",
-      //  "var f = new Foo()",
-      //  "var f = new Foo",
-      //  "f( (0) )",
-      //  "( f )( 0 )",
-      //  "( (f) )( (0) )",
-      //  "( f()() )(0)",
-      //  "(function(){ if (foo) { bar(); } }());",
-      //  "f(0, (1))",
-      //  "describe/**/('foo', function () {});",
-      //  "new (foo())",
+        "foo(1);",
+        "f();",
+        "f(a, b);",
+        "a.b",  // I added
+        "a. b", // I added
+        "f.b();",
+        "f.b().c();",
+        "f.b(1).c( );", // I added
+        "f()()",
+        "f()( )()", // I added
+        "(function() {}())",
+        "var f = new Foo()",
+        "var f = new Foo",
+        "f( (0) )",
+        "( f )( 0 )",
+        "( (f) )( (0) )",
+        "( f()() )(0)",
+        "(function(){ if (foo) { bar(); } }());",
+        "f(0, (1))",
+        "describe/**/('foo', function () {});",
+        "new (foo())",
     ];
 
     let fail = vec![
