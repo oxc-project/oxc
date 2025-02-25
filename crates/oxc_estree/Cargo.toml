@@ -19,9 +19,9 @@ workspace = true
 doctest = false
 
 [dependencies]
-itoa = { workspace = true }
+itoa = { workspace = true, optional = true }
 ryu-js = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:ryu-js"]
+serialize = ["dep:itoa", "dep:ryu-js"]
