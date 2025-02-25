@@ -95,8 +95,8 @@ fn get_substring_to_lparens(ctx: &LintContext, search_span: Span) -> FuncSpace {
     }
 }
 
-fn check_identifier_callee(ctx: &LintContext, ident_end: u32, callee_end: u32) {
-    match get_substring_to_lparens(ctx, Span::new(ident_end, callee_end)) {
+fn check_ident_to_application(ctx: &LintContext, span: Span) {
+    match get_substring_to_lparens(ctx, span) {
         FuncSpace::NotSpaced => {}
         FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
     }
@@ -108,11 +108,9 @@ impl Rule for NoSpacedFunc {
             // new Foo ()
             let callee = new_expr.callee.without_parentheses();
             let callee_end = callee.span().end;
+            let span = Span::new(callee_end, new_expr.span().end);
 
-            match get_substring_to_lparens(ctx, Span::new(callee_end, new_expr.span().end)) {
-                FuncSpace::NotSpaced => {}
-                FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
-            }
+            check_ident_to_application(ctx, span);
         };
 
         let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -124,35 +122,31 @@ impl Rule for NoSpacedFunc {
         match &call_expr.callee {
             // f ()
             Expression::Identifier(ident) => {
-                check_identifier_callee(ctx, ident.span().end, callee_end);
+                let span = Span::new(ident.span().end, callee_end);
+                check_ident_to_application(ctx, span);
             }
             Expression::ParenthesizedExpression(paren_exp) => {
                 if let Expression::Identifier(_ident) = &paren_exp.expression {
-                    check_identifier_callee(ctx, paren_exp.span().end, callee_end);
+                    let span = Span::new(paren_exp.span().end, callee_end);
+                    check_ident_to_application(ctx, span);
                 }
             }
             // f() () <-- second parens
             Expression::CallExpression(c) => {
-                match get_substring_to_lparens(ctx, Span::new(c.span().end, callee_end)) {
-                    FuncSpace::NotSpaced => {}
-                    FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
-                }
+                let span = Span::new(c.span().end, callee_end);
+                check_ident_to_application(ctx, span);
             }
             // f.a ()
             Expression::StaticMemberExpression(exp) => {
                 let ident_name_span_end = exp.property.span().end;
+                let span = Span::new(ident_name_span_end, callee_end);
 
-                match get_substring_to_lparens(ctx, Span::new(ident_name_span_end, callee_end)) {
-                    FuncSpace::NotSpaced => {}
-                    FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
-                }
+                check_ident_to_application(ctx, span);
             }
             // function(){ } ()
             Expression::FunctionExpression(func) => {
-                match get_substring_to_lparens(ctx, Span::new(func.span().end, callee_end)) {
-                    FuncSpace::NotSpaced => {}
-                    FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
-                }
+                let span = Span::new(func.span().end, callee_end);
+                check_ident_to_application(ctx, span);
             }
             _ => {}
         }
