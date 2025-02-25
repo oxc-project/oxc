@@ -14,10 +14,7 @@ fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
     let only_msg = if allow.is_empty() {
         String::new()
     } else {
-        format!(
-            "Only supported methods: {}",
-            allow.iter().map(oxc_span::CompactStr::as_str).join(",")
-        )
+        format!("Only supported methods: {}", allow.join(","))
     };
 
     OxcDiagnostic::warn(format!("eslint(no-console): Unexpected console statement. {only_msg}"))

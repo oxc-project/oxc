@@ -79,28 +79,28 @@ assertion_line: 357
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn, info
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn,info
    ╭─[no_console.tsx:1:1]
  1 │ console.log(foo)
    · ───────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn, info, log
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn,info,log
    ╭─[no_console.tsx:1:1]
  1 │ console.error(foo)
    · ─────────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn, error, log
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn,error,log
    ╭─[no_console.tsx:1:1]
  1 │ console.info(foo)
    · ────────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: info, log
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: info,log
    ╭─[no_console.tsx:1:1]
  1 │ console.warn(foo)
    · ────────────
