@@ -1,0 +1,192 @@
+use memchr::memchr;
+use oxc_ast::AstKind;
+use oxc_ast::ast::Expression;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
+
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
+
+fn no_spaced_func_diagnostic(span: Span) -> OxcDiagnostic {
+    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
+    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
+        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+        .with_label(span)
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct NoSpacedFunc;
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// This rule disallows spacing between function identifiers and their applications.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// While it’s possible to have whitespace between the name of a function and the parentheses
+    /// that execute it, such patterns tend to look more like errors.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// fn ()
+    /// ```
+    ///
+    /// ```javascript
+    /// fn
+    /// ()
+    /// ```
+    ///
+    /// ```javascript
+    /// f.b ()
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// fn()
+    /// ```
+    ///
+    /// ```javascript
+    /// f.b()
+    /// ```
+    NoSpacedFunc,
+    eslint,
+    style,
+    pending
+);
+
+impl Rule for NoSpacedFunc {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        let callee_end = call_expr.callee.span().end; //.contains_inclusive();
+
+        let ss = call_expr.callee.get_inner_expression(); //.contains_inclusive();
+
+        match ss {
+            Expression::Identifier(ident) => {
+                let ident_end = ident.span().end;
+
+                let sx = Span::new(ident_end, call_expr.span().end);
+                println!("sx {0:?}", sx);
+
+                let src = ctx.source_range(sx);
+
+                let Some(r_parens_pos_usize) = memchr(b'(', src.as_bytes()) else {
+                    println!("span {0:?}", callee_end);
+
+                    return;
+                };
+
+                let l_parens_after_n_chars: u32 = u32::try_from(r_parens_pos_usize).unwrap();
+                let l_parens_pos = ident_end + l_parens_after_n_chars;
+                let span_to_l_parens = Span::new(ident_end, l_parens_pos);
+                let str_between_ident_and_l_parens = ctx.source_range(span_to_l_parens);
+
+                println!(" snippet: {0:?}", str_between_ident_and_l_parens);
+                if str_between_ident_and_l_parens.is_empty() {
+                    return;
+                }
+                let is_whitespace = str_between_ident_and_l_parens.trim().is_empty();
+                if is_whitespace {
+                    println!("error");
+                    ctx.diagnostic(no_spaced_func_diagnostic(span_to_l_parens));
+                }
+            }
+            _ => {} //     Expression::StaticMemberExpression(static_member_expression) => todo!(),
+        }
+        //let Expression::FunctionExpression(func) = call_expr.callee else {
+        //    return;
+        //};
+        //println!("call_expr span {0:?}", func);
+
+        //        if let
+        // match on func call expression
+        // `foo  ( )`
+        //  ^^^
+        //let callee_ident_end: u32 =
+        //get call
+    }
+}
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "foo(1);",
+        "f();",
+        "f(a, b);",
+        "f.b();",
+        "f.b().c();",
+        "f()()",
+        "(function() {}())",
+        "var f = new Foo()",
+        "var f = new Foo",
+        "f( (0) )",
+        "( f )( 0 )",
+        "( (f) )( (0) )",
+        "( f()() )(0)",
+        "(function(){ if (foo) { bar(); } }());",
+        "f(0, (1))",
+        "describe/**/('foo', function () {});",
+        "new (foo())",
+    ];
+
+    let fail = vec![
+        "f ();",
+        "f (a, b);",
+        "f
+			();",
+        "f.b ();",
+        "f.b().c ();",
+        "f() ()",
+        "(function() {} ())",
+        "var f = new Foo ()",
+        "f ( (0) )",
+        "f(0) (1)",
+        "(f) (0)",
+        "f ();
+			 t   ();",
+    ];
+
+    /*
+    Fix pending.
+    let fix = vec![
+        ("f ();", "f();", None),
+        ("f (a, b);", "f(a, b);", None),
+        (
+            "f
+            ();", "f();", None,
+        ),
+        ("f.b ();", "f.b();", None),
+        ("f.b().c ();", "f.b().c();", None),
+        ("f() ()", "f()()", None),
+        ("(function() {} ())", "(function() {}())", None),
+        ("var f = new Foo ()", "var f = new Foo()", None),
+        ("f ( (0) )", "f( (0) )", None),
+        ("f(0) (1)", "f(0)(1)", None),
+        ("(f) (0)", "(f)(0)", None),
+        (
+            "f ();
+             t   ();",
+            "f();
+             t();",
+            None,
+        ),
+    ];
+    */
+
+    Tester::new(NoSpacedFunc::NAME, NoSpacedFunc::PLUGIN, pass, fail)
+        //.expect_fix(fix)
+        .test_and_snapshot();
+}
