@@ -309,9 +309,44 @@ impl<'a> PeepholeOptimizations {
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
 
-        if let Expression::TemplateLiteral(left) = &mut e.left {
+        if let Some(expr) = Self::try_fold_add_op(&mut e.left, &mut e.right, ctx) {
+            return Some(expr);
+        }
+
+        // a + 'b' + 'c' -> a + 'bc'
+        if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
+            if left_binary_expr.right.value_type(&ctx).is_string() {
+                if let (Some(left_str), Some(right_str)) = (
+                    left_binary_expr.right.get_side_free_string_value(&ctx),
+                    e.right.get_side_free_string_value(&ctx),
+                ) {
+                    let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
+                    let value = left_str.into_owned() + &right_str;
+                    let right = ctx.ast.expression_string_literal(span, value, None);
+                    let left = ctx.ast.move_expression(&mut left_binary_expr.left);
+                    return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
+                }
+
+                if let Some(new_right) =
+                    Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, ctx)
+                {
+                    let left = ctx.ast.move_expression(&mut left_binary_expr.left);
+                    return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
+                }
+            }
+        }
+
+        None
+    }
+
+    fn try_fold_add_op(
+        left_expr: &mut Expression<'a>,
+        right_expr: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
-            if let Expression::TemplateLiteral(right) = &mut e.right {
+            if let Expression::TemplateLiteral(right) = right_expr {
                 left.span = Span::new(left.span.start, right.span.end);
                 let left_last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
@@ -334,12 +369,12 @@ impl<'a> PeepholeOptimizations {
                 }
                 left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
                 left.expressions.extend(right.expressions.drain(..));
-                return Some(ctx.ast.move_expression(&mut e.left));
+                return Some(ctx.ast.move_expression(left_expr));
             }
 
             // "`${x}y` + 'z'" => "`${x}yz`"
-            if let Some(right_str) = e.right.get_side_free_string_value(&ctx) {
-                left.span = Span::new(left.span.start, e.right.span().end);
+            if let Some(right_str) = right_expr.get_side_free_string_value(&ctx) {
+                left.span = Span::new(left.span.start, right_expr.span().end);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
                 let new_raw = last_quasi.value.raw.to_string()
@@ -350,12 +385,12 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.atom(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
-                return Some(ctx.ast.move_expression(&mut e.left));
+                return Some(ctx.ast.move_expression(left_expr));
             }
-        } else if let Expression::TemplateLiteral(right) = &mut e.right {
+        } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
-            if let Some(left_str) = e.left.get_side_free_string_value(&ctx) {
-                right.span = Span::new(e.left.span().start, right.span.end);
+            if let Some(left_str) = left_expr.get_side_free_string_value(&ctx) {
+                right.span = Span::new(left_expr.span().start, right.span.end);
                 let first_quasi = right
                     .quasis
                     .first_mut()
@@ -368,31 +403,17 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
-                return Some(ctx.ast.move_expression(&mut e.right));
-            }
-        }
-
-        // a + 'b' + 'c' -> a + 'bc'
-        if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
-            if left_binary_expr.right.value_type(&ctx).is_string() {
-                if let (Some(left_str), Some(right_str)) = (
-                    left_binary_expr.right.get_side_free_string_value(&ctx),
-                    e.right.get_side_free_string_value(&ctx),
-                ) {
-                    let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
-                    let value = left_str.into_owned() + &right_str;
-                    let right = ctx.ast.expression_string_literal(span, value, None);
-                    let left = ctx.ast.move_expression(&mut left_binary_expr.left);
-                    return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
-                }
+                return Some(ctx.ast.move_expression(right_expr));
             }
         }
 
         // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
-        if e.left.is_specific_string_literal("") && e.right.value_type(&ctx).is_string() {
-            return Some(ctx.ast.move_expression(&mut e.right));
-        } else if e.right.is_specific_string_literal("") && e.left.value_type(&ctx).is_string() {
-            return Some(ctx.ast.move_expression(&mut e.left));
+        if left_expr.is_specific_string_literal("") && right_expr.value_type(&ctx).is_string() {
+            return Some(ctx.ast.move_expression(right_expr));
+        } else if right_expr.is_specific_string_literal("")
+            && left_expr.value_type(&ctx).is_string()
+        {
+            return Some(ctx.ast.move_expression(left_expr));
         }
 
         None
@@ -1497,6 +1518,7 @@ mod test {
         fold("`a${a}` + `${b}`", "`a${a}${b}`");
         fold("`a${a}` + `${b}b`", "`a${a}${b}b`");
         fold("`a${a}` + `b${b}`", "`a${a}b${b}`");
+        fold("foo() + `${a}` + `${b}`", "foo() + `${a}${b}`");
 
         fold_same("x = 'a' + (4 + p1 + 'a')");
         fold_same("x = p1 / 3 + 4");
