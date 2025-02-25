@@ -381,6 +381,36 @@ impl CodeBuffer {
         self.buf.extend_from_slice(bytes);
     }
 
+    /// Print a sequence of bytes, without checking that the buffer still contains a valid UTF-8 string.
+    ///
+    /// # SAFETY
+    ///
+    /// The caller must ensure that, after 1 or more sequential calls, the buffer represents
+    /// a valid UTF-8 string.
+    ///
+    /// It is OK for a single call to temporarily result in the buffer containing invalid UTF-8, as long
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
+    ///
+    /// This requirement is easily satisfied if buffer contained valid UTF-8, and the `bytes` iterator
+    /// also yields a valid UTF-8 string.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_data_structures::CodeBuffer;
+    /// let mut code = CodeBuffer::new();
+    ///
+    /// // SAFETY: All values yielded by this iterator are ASCII bytes
+    /// unsafe {
+    ///     code.print_bytes_iter_unchecked(std::iter::repeat_n(b' ', 20));
+    /// }
+    /// ```
+    ///
+    /// [`into_string`]: CodeBuffer::into_string
+    #[inline]
+    pub unsafe fn print_bytes_iter_unchecked<I: IntoIterator<Item = u8>>(&mut self, bytes: I) {
+        self.buf.extend(bytes);
+    }
+
     /// Print `n` tab characters into the buffer (indentation).
     ///
     /// Optimized on assumption that more that 16 levels of indentation is rare.
@@ -534,6 +564,30 @@ mod test {
             code.print_byte_unchecked(b'o');
             code.print_byte_unchecked(b'o');
         }
+
+        assert_eq!(code.len(), 3);
+        assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
+        assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    #[expect(clippy::byte_char_slices)]
+    fn print_bytes_unchecked() {
+        let mut code = CodeBuffer::new();
+        // SAFETY: These bytes are all ASCII
+        unsafe { code.print_bytes_unchecked(b"foo") };
+
+        assert_eq!(code.len(), 3);
+        assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
+        assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    #[expect(clippy::byte_char_slices)]
+    fn print_bytes_iter_unchecked() {
+        let mut code = CodeBuffer::new();
+        // SAFETY: These bytes are all ASCII
+        unsafe { code.print_bytes_iter_unchecked([b'f', b'o', b'o']) };
 
         assert_eq!(code.len(), 3);
         assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
