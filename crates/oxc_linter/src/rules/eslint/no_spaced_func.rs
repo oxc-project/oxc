@@ -70,6 +70,12 @@ enum FuncSpace {
     Spaced(Span),
 }
 
+/// Given an identifier reference will determine
+/// if there is spacing in the span from the end of the
+/// identifier name to the next `(` char.
+///
+/// For example `foo  ()` would return `FuncSpace::Spaced(span)`
+/// where span refers to the whitespace between `foo` and `()`.
 fn is_ident_end_to_l_parens_whitespace(
     ctx: &LintContext,
     ident: &IdentifierReference,
@@ -121,10 +127,6 @@ impl Rule for NoSpacedFunc {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
-                //if is_whitespace {
-                //    println!("error");
-                //    ctx.diagnostic(no_spaced_func_diagnostic(span_to_l_parens));
-                //}
             }
             Expression::StaticMemberExpression(exp) => {
                 let span_end = exp.span().end;
@@ -138,17 +140,6 @@ impl Rule for NoSpacedFunc {
             }
             _ => {} //     Expression::StaticMemberExpression(static_member_expression) => todo!(),
         }
-        //let Expression::FunctionExpression(func) = call_expr.callee else {
-        //    return;
-        //};
-        //println!("call_expr span {0:?}", func);
-
-        //        if let
-        // match on func call expression
-        // `foo  ( )`
-        //  ^^^
-        //let callee_ident_end: u32 =
-        //get call
     }
 }
 
