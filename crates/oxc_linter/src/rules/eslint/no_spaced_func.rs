@@ -116,7 +116,7 @@ impl Rule for NoSpacedFunc {
 
         let callee_end = call_expr.span().end; //.contains_inclusive();
         println!("callee_end {0:?}", callee_end);
-
+        println!("{node:?}");
         let ss = call_expr.callee.get_inner_expression(); //.contains_inclusive();
 
         match ss {
