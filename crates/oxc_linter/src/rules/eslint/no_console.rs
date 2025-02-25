@@ -16,7 +16,7 @@ fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
     } else {
         format!(
             "Only supported methods: {}",
-            allow.iter().map(ToString::to_string).collect::<Vec<String>>().join(", ")
+            allow.iter().map(oxc_span::CompactStr::as_str).join(",")
         )
     };
 
