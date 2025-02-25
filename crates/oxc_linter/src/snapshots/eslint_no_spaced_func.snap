@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 357
 ---
   ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
    ╭─[no_spaced_func.tsx:1:2]
