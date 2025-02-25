@@ -79,6 +79,11 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
         Self { buffer: CodeBuffer::new(), formatter: F::new(), config: C::new() }
     }
 
+    /// Create new [`ESTreeSerializer`] with specified buffer capacity.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self { buffer: CodeBuffer::with_capacity(capacity), formatter: F::new(), config: C::new() }
+    }
+
     /// Consume this [`ESTreeSerializer`] and convert buffer to string.
     pub fn into_string(self) -> String {
         self.buffer.into_string()
