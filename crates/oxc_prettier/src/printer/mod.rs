@@ -1,13 +1,8 @@
-//! [Doc] Printer
-//!
-//! References:
-//! * <https://github.com/prettier/prettier/blob/3.3.3/src/document/printer.js>
-
 mod command;
 
 use std::collections::VecDeque;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -19,15 +14,15 @@ use crate::{
 pub struct Printer<'a> {
     options: PrettierOptions,
     /// The final output string in bytes
-    out: Vec<u8>,
+    out: std::vec::Vec<u8>,
     /// The current position in the output
     pos: usize,
     /// cmds is basically a stack. We've turned a recursive call into a
     /// while loop which is much faster. The while loop below adds new
     /// cmds to the array instead of recursively calling `print`.
-    cmds: Vec<Command<'a>>,
+    cmds: std::vec::Vec<Command<'a>>,
 
-    line_suffix: Vec<Command<'a>>,
+    line_suffix: std::vec::Vec<Command<'a>>,
     group_mode_map: FxHashMap<GroupId, Mode>,
 
     // states
@@ -45,7 +40,7 @@ impl<'a> Printer<'a> {
     ) -> Self {
         // Preallocate for performance because the output will very likely
         // be the same size as the original text.
-        let out = Vec::with_capacity(source_text.len());
+        let out = std::vec::Vec::with_capacity(source_text.len());
         let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
         Self {
             options,
@@ -62,7 +57,6 @@ impl<'a> Printer<'a> {
     pub fn build(mut self) -> String {
         self.print_doc_to_string();
         // SAFETY: We should have constructed valid UTF8 strings
-
         unsafe { String::from_utf8_unchecked(self.out) }
     }
 
@@ -72,7 +66,9 @@ impl<'a> Printer<'a> {
     /// * <https://github.com/prettier/prettier/blob/0176a33db442e498fdb577784deaa77d7c9ae723/src/document/printer.js#L302>
     pub fn print_doc_to_string(&mut self) {
         while let Some(Command { indent, mut doc, mode }) = self.cmds.pop() {
-            Self::propagate_breaks(&mut doc);
+            // NOTE: In Prettier, they perform this before the loop
+            propagate_breaks(&mut doc);
+
             match doc {
                 Doc::Str(s) => self.handle_str(s),
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
@@ -103,11 +99,11 @@ impl<'a> Printer<'a> {
         self.pos += s.len();
     }
 
-    fn handle_array(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
+    fn handle_array(&mut self, indent: Indent, mode: Mode, docs: Vec<'a, Doc<'a>>) {
         self.cmds.extend(docs.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
     }
 
-    fn handle_indent(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
+    fn handle_indent(&mut self, indent: Indent, mode: Mode, docs: Vec<'a, Doc<'a>>) {
         self.cmds.extend(
             docs.into_iter()
                 .rev()
@@ -218,12 +214,7 @@ impl<'a> Printer<'a> {
         }
     }
 
-    fn handle_line_suffix(
-        &mut self,
-        indent: Indent,
-        mode: Mode,
-        docs: oxc_allocator::Vec<'a, Doc<'a>>,
-    ) {
+    fn handle_line_suffix(&mut self, indent: Indent, mode: Mode, docs: Vec<'a, Doc<'a>>) {
         self.line_suffix.push(Command { indent, mode, doc: Doc::Array(docs) });
     }
 
@@ -295,7 +286,7 @@ impl<'a> Printer<'a> {
         let Some(second_content) = fill.dequeue() else {
             return;
         };
-        let mut docs = oxc_allocator::Vec::new_in(self.allocator);
+        let mut docs = Vec::new_in(self.allocator);
         let content = content_flat_cmd.doc;
         docs.push(content);
         docs.push(whitespace_flat_cmd.doc);
@@ -356,8 +347,12 @@ impl<'a> Printer<'a> {
     }
 
     fn set_group_mode_from_last_cmd(&mut self, id: Option<GroupId>) {
-        let Some(id) = id else { return };
-        let Some(mode) = self.cmds.last().map(|cmd| cmd.mode) else { return };
+        let Some(id) = id else {
+            return;
+        };
+        let Some(mode) = self.cmds.last().map(|cmd| cmd.mode) else {
+            return;
+        };
         self.group_mode_map.insert(id, mode);
     }
 
@@ -446,33 +441,40 @@ impl<'a> Printer<'a> {
 
         true
     }
+}
 
-    /// Reference:
-    /// * <https://github.com/prettier/prettier/blob/3.3.3/src/document/utils.js#L156-L185>
-    pub fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
-        let check_array = |arr: &mut oxc_allocator::Vec<'_, Doc<'_>>| {
-            arr.iter_mut().rev().any(|doc| Self::propagate_breaks(doc))
-        };
+// TODO: I tried to write a similar code in Prettier, there was a test that failed
+// - Almost all tests pass, but for some reason, only a few cases in the `jsx/text-wrap` fails
+// - I'm not sure whether this logic has a problem or the `Doc` printing logic has a problem
+// PERF: When taking a `Doc` other than `Group` as a target, unnecessary traversal occurs
+// - In this implementation, `should_break` is updated only when the argument is `Group`
+// - This can be resolved by separating the recursive part from the entry, but it can be done later
+// PERF: When `Group` is nested, intermediate results should be reused
+// - This occurs when the structure is like `Group > Group > BreakParent`
+// - When processing the 1st `Group`, it should be known that the 2nd `Group` also breaks
+fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
+    let apply_vec = |arr: &mut Vec<'_, Doc<'_>>| arr.iter_mut().any(propagate_breaks);
 
-        match doc {
-            Doc::BreakParent => true,
-            Doc::Group(group) => {
-                let mut should_break = false;
-                if let Some(expanded_states) = &mut group.expanded_states {
-                    should_break = expanded_states.iter_mut().rev().any(Self::propagate_breaks);
-                }
-                if !should_break {
-                    should_break = check_array(&mut group.contents);
-                }
-                if group.expanded_states.is_none() && should_break {
-                    group.should_break = should_break;
-                }
-                group.should_break
+    match doc {
+        Doc::BreakParent => true,
+        Doc::Group(group) => {
+            // NOTE: This is important, propagating breaks
+            if group.expanded_states.is_none() && apply_vec(&mut group.contents) {
+                // In Prettier, they seem to use a string `"propagated"`(as truthy value)
+                // to distinguish from original `shouldBreak: true` for `printDocToDebug()`
+                group.should_break = true;
             }
-            Doc::IfBreak(d) => Self::propagate_breaks(&mut d.break_contents),
-            Doc::Array(arr) | Doc::Indent(arr) => check_array(arr),
-            Doc::IndentIfBreak(IndentIfBreak { contents, .. }) => Self::propagate_breaks(contents),
-            _ => false,
+            group.should_break
         }
+        // TODO: | Doc::Align(arr)
+        Doc::Array(arr)
+        | Doc::Fill(Fill { parts: arr })
+        | Doc::Indent(arr)
+        | Doc::LineSuffix(arr) => apply_vec(arr),
+        Doc::IndentIfBreak(IndentIfBreak { contents, .. }) => propagate_breaks(contents),
+        Doc::IfBreak(IfBreak { break_contents, flat_contents, .. }) => {
+            propagate_breaks(flat_contents) || propagate_breaks(break_contents)
+        }
+        _ => false,
     }
 }
