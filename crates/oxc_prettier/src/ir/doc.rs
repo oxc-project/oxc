@@ -53,31 +53,6 @@ pub struct IndentIfBreak<'a> {
     pub group_id: GroupId,
 }
 
-// Printer utils
-impl<'a> Fill<'a> {
-    pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
-        let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
-        let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
-        (content, whitespace)
-    }
-
-    pub fn dequeue(&mut self) -> Option<Doc<'a>> {
-        if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None }
-    }
-
-    pub fn enqueue(&mut self, doc: Doc<'a>) {
-        self.parts.insert(0, doc);
-    }
-
-    pub fn parts(&self) -> &[Doc<'a>] {
-        &self.parts
-    }
-
-    pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
-        self.parts
-    }
-}
-
 // NOTE: Really needed? Just use `Doc` as a separator?
 #[derive(Clone, Copy)]
 pub enum JoinSeparator {

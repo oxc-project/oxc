@@ -7,25 +7,22 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     GroupId, PrettierOptions,
-    ir::{Doc, Fill, IfBreak, IndentIfBreak, Line},
+    ir::{Doc, Fill, Group, IfBreak, IndentIfBreak, Line},
     printer::command::{Command, Indent, Mode},
 };
 
 pub struct Printer<'a> {
     options: PrettierOptions,
+
     /// The final output string in bytes
     out: std::vec::Vec<u8>,
-    /// The current position in the output
     pos: usize,
-    /// cmds is basically a stack. We've turned a recursive call into a
-    /// while loop which is much faster. The while loop below adds new
-    /// cmds to the array instead of recursively calling `print`.
     cmds: std::vec::Vec<Command<'a>>,
+    should_remeasure: bool,
 
     line_suffix: std::vec::Vec<Command<'a>>,
     group_mode_map: FxHashMap<GroupId, Mode>,
 
-    // states
     new_line: &'static str,
 
     allocator: &'a Allocator,
@@ -38,15 +35,16 @@ impl<'a> Printer<'a> {
         options: PrettierOptions,
         allocator: &'a Allocator,
     ) -> Self {
-        // Preallocate for performance because the output will very likely
-        // be the same size as the original text.
-        let out = std::vec::Vec::with_capacity(source_text.len());
         let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
+
         Self {
             options,
-            out,
+            // Preallocate for performance
+            // the output will very likely be the same size as the original text
+            out: std::vec::Vec::with_capacity(source_text.len()),
             pos: 0,
             cmds,
+            should_remeasure: false,
             line_suffix: vec![],
             group_mode_map: FxHashMap::default(),
             new_line: options.end_of_line.as_str(),
@@ -60,11 +58,7 @@ impl<'a> Printer<'a> {
         unsafe { String::from_utf8_unchecked(self.out) }
     }
 
-    /// Turn Doc into a string
-    ///
-    /// Reference:
-    /// * <https://github.com/prettier/prettier/blob/0176a33db442e498fdb577784deaa77d7c9ae723/src/document/printer.js#L302>
-    pub fn print_doc_to_string(&mut self) {
+    fn print_doc_to_string(&mut self) {
         while let Some(Command { indent, mut doc, mode }) = self.cmds.pop() {
             // NOTE: In Prettier, they perform this before the loop
             propagate_breaks(&mut doc);
@@ -73,13 +67,17 @@ impl<'a> Printer<'a> {
                 Doc::Str(s) => self.handle_str(s),
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
                 Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
-                Doc::Group(_) => self.handle_group(indent, mode, doc),
-                Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
-                Doc::Line(line) => self.handle_line(line, indent, mode, doc),
+                // TODO: Doc::Align
+                Doc::Group(group) => self.handle_group(indent, mode, group),
+                Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
+                Doc::IfBreak(if_break) => self.handle_if_break(indent, mode, if_break),
+                Doc::IndentIfBreak(indent_if_break) => {
+                    self.handle_indent_if_break(indent, mode, indent_if_break);
+                }
                 Doc::LineSuffix(docs) => self.handle_line_suffix(indent, mode, docs),
                 Doc::LineSuffixBoundary => self.handle_line_suffix_boundary(indent, mode),
-                Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
-                Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
+                Doc::Line(line) => self.handle_line(indent, mode, line),
+                // TODO: Doc::Label
                 Doc::BreakParent => { /* No op */ }
             }
 
@@ -89,12 +87,10 @@ impl<'a> Printer<'a> {
         }
     }
 
-    #[expect(clippy::cast_possible_wrap)]
-    fn remaining_width(&self) -> isize {
-        (self.options.print_width as isize) - (self.pos as isize)
-    }
-
     fn handle_str(&mut self, s: &str) {
+        // TODO: In Prettier, they replace `\r\n` and `\r` with `\n` before formatting
+        // Then, they replace `\n` with `self.new_line(= options.endOfLine)` here if needed
+        // And `tests/format/**` is not aware of this!
         self.out.extend(s.as_bytes());
         self.pos += s.len();
     }
@@ -111,26 +107,33 @@ impl<'a> Printer<'a> {
         );
     }
 
-    fn handle_group(&mut self, indent: Indent, mode: Mode, doc: Doc<'a>) {
+    // TODO: fn handle_align
+    // cmds.push({ ind: makeAlign(ind, doc.n, options), mode, doc: doc.contents });
+
+    fn handle_group(&mut self, indent: Indent, mode: Mode, group: Group<'a>) {
+        let mut set_group_mode = |this: &mut Self, id| {
+            let Some(id) = id else {
+                return;
+            };
+            let Some(mode) = this.cmds.last().map(|cmd| cmd.mode) else {
+                return;
+            };
+            this.group_mode_map.insert(id, mode);
+        };
+
         match mode {
             Mode::Flat => {
-                let Doc::Group(group) = doc else {
-                    unreachable!();
-                };
                 self.cmds.extend(group.contents.into_iter().rev().map(|doc| {
                     Command::new(indent, if group.should_break { Mode::Break } else { mode }, doc)
                 }));
 
-                self.set_group_mode_from_last_cmd(group.group_id);
+                set_group_mode(self, group.group_id);
             }
             Mode::Break => {
                 let remaining_width = self.remaining_width();
-                let Doc::Group(group) = &doc else {
-                    unreachable!();
-                };
                 let should_break = group.should_break;
                 let group_id = group.group_id;
-                let cmd = Command::new(indent, Mode::Flat, doc);
+                let cmd = Command::new(indent, Mode::Flat, Doc::Group(group));
                 if !should_break && self.fits(&cmd, remaining_width) {
                     self.cmds.push(Command::new(indent, Mode::Flat, cmd.doc));
                 } else {
@@ -159,94 +162,35 @@ impl<'a> Printer<'a> {
                         ));
                     }
                 }
-                self.set_group_mode_from_last_cmd(group_id);
+
+                set_group_mode(self, group_id);
             }
         }
     }
 
-    fn handle_indent_if_break(&mut self, indent: Indent, mode: Mode, doc: IndentIfBreak<'a>) {
-        let IndentIfBreak { contents, group_id } = doc;
-        let group_mode = self.group_mode_map.get(&group_id).copied();
-
-        match group_mode {
-            Some(Mode::Flat) => {
-                self.cmds.push(Command::new(indent, mode, contents.unbox()));
-            }
-            Some(Mode::Break) => {
-                self.cmds.push(Command::new(
-                    Indent::new(indent.length + 1),
-                    mode,
-                    contents.unbox(),
-                ));
-            }
-            None => {}
-        }
-    }
-
-    fn handle_line(&mut self, line: Line, indent: Indent, mode: Mode, doc: Doc<'a>) {
-        if mode.is_flat() {
-            if line.hard {
-                // shouldRemeasure = true;
-            } else {
-                if !line.soft {
-                    self.out.push(b' ');
-                    self.pos += 1;
-                }
-                return;
-            }
-        }
-
-        if !self.line_suffix.is_empty() {
-            self.cmds.push(Command::new(indent, mode, doc));
-            self.cmds.extend(self.line_suffix.drain(..).rev());
-            return;
-        }
-
-        if line.literal {
-            self.out.extend(self.new_line.as_bytes());
-            if !indent.root {
-                self.pos = 0;
-            }
-        } else {
-            self.trim();
-            self.out.extend(self.new_line.as_bytes());
-            self.pos = self.indent(indent.length);
-        }
-    }
-
-    fn handle_line_suffix(&mut self, indent: Indent, mode: Mode, docs: Vec<'a, Doc<'a>>) {
-        self.line_suffix.push(Command { indent, mode, doc: Doc::Array(docs) });
-    }
-
-    fn handle_line_suffix_boundary(&mut self, indent: Indent, mode: Mode) {
-        if !self.line_suffix.is_empty() {
-            self.cmds.push(Command {
-                indent,
-                mode,
-                doc: Doc::Line(Line { hard: true, ..Line::default() }),
-            });
-        }
-    }
-
-    fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
-        let IfBreak { break_contents, flat_contents, group_id } = if_break;
-        let group_mode = group_id.map_or(Some(mode), |id| self.group_mode_map.get(&id).copied());
-
-        match group_mode {
-            Some(Mode::Flat) => {
-                self.cmds.push(Command::new(indent, Mode::Flat, flat_contents.unbox()));
-            }
-            Some(Mode::Break) => {
-                self.cmds.push(Command::new(indent, Mode::Break, break_contents.unbox()));
-            }
-            None => {}
-        }
-    }
-
+    // Fills each line with as much code as possible before moving to a new line with the same indentation.
+    //
+    // Expects doc.parts to be an array of alternating content and whitespace.
+    // The whitespace contains the linebreaks.
+    //
+    // For example:
+    //   ["I", line, "love", line, "monkeys"]
+    // or
+    //   [{ type: group, ... }, softline, { type: group, ... }]
+    //
+    // It uses this parts structure to handle three main layout cases:
+    // - The first two content items fit on the same line without breaking
+    //   -> output the first content item and the whitespace "flat".
+    // - Only the first content item fits on the line without breaking
+    //   -> output the first content item "flat" and the whitespace with
+    //   "break".
+    // - Neither content item fits on the line without breaking
+    //   -> output the first content item and the whitespace with "break".
     fn handle_fill(&mut self, indent: Indent, mode: Mode, fill: Fill<'a>) {
         let mut fill = fill;
+
         let remaining_width = self.remaining_width();
-        let original_parts_len = fill.parts().len();
+        let original_parts_len = fill.len();
         let (content, whitespace) = fill.drain_out_pair();
 
         let Some(content) = content else {
@@ -286,9 +230,9 @@ impl<'a> Printer<'a> {
         let Some(second_content) = fill.dequeue() else {
             return;
         };
+
         let mut docs = Vec::new_in(self.allocator);
-        let content = content_flat_cmd.doc;
-        docs.push(content);
+        docs.push(content_flat_cmd.doc);
         docs.push(whitespace_flat_cmd.doc);
         docs.push(second_content);
 
@@ -325,36 +269,119 @@ impl<'a> Printer<'a> {
         };
     }
 
-    fn indent(&mut self, size: usize) -> usize {
-        if self.options.use_tabs {
-            self.out.extend("\t".repeat(size).as_bytes());
-            size
-        } else {
-            let count = self.options.tab_width * size;
-            self.out.extend(" ".repeat(count).as_bytes());
-            count
-        }
-    }
+    fn handle_if_break(&mut self, indent: Indent, mode: Mode, if_break: IfBreak<'a>) {
+        let IfBreak { break_contents, flat_contents, group_id } = if_break;
+        let group_mode = group_id
+            .map_or(Some(mode), |id| self.group_mode_map.get(&id).copied())
+            .expect("`group_mode` should be exists");
 
-    fn trim(&mut self) {
-        while let Some(&last) = self.out.last() {
-            if last == b' ' || last == b'\t' {
-                self.out.pop();
-            } else {
-                break;
+        match group_mode {
+            Mode::Break => {
+                self.cmds.push(Command::new(indent, mode, break_contents.unbox()));
+            }
+            Mode::Flat => {
+                self.cmds.push(Command::new(indent, mode, flat_contents.unbox()));
             }
         }
     }
 
-    fn set_group_mode_from_last_cmd(&mut self, id: Option<GroupId>) {
-        let Some(id) = id else {
-            return;
-        };
-        let Some(mode) = self.cmds.last().map(|cmd| cmd.mode) else {
-            return;
-        };
-        self.group_mode_map.insert(id, mode);
+    fn handle_indent_if_break(
+        &mut self,
+        indent: Indent,
+        mode: Mode,
+        indent_if_break: IndentIfBreak<'a>,
+    ) {
+        let IndentIfBreak { contents, group_id } = indent_if_break;
+        let group_mode =
+            self.group_mode_map.get(&group_id).copied().expect("`group_mode` should be exists");
+
+        match group_mode {
+            Mode::Break => {
+                // Same effect as doing:
+                // `self.cmds.push(Command::new(indent, mode, crates::indent!(self, [contents.unbox()])))`
+                self.cmds.push(Command::new(
+                    Indent::new(indent.length + 1),
+                    mode,
+                    contents.unbox(),
+                ));
+            }
+            Mode::Flat => {
+                self.cmds.push(Command::new(indent, mode, contents.unbox()));
+            }
+        }
     }
+
+    fn handle_line_suffix(&mut self, indent: Indent, mode: Mode, docs: Vec<'a, Doc<'a>>) {
+        self.line_suffix.push(Command { indent, mode, doc: Doc::Array(docs) });
+    }
+
+    fn handle_line_suffix_boundary(&mut self, indent: Indent, mode: Mode) {
+        if !self.line_suffix.is_empty() {
+            let hardline_without_break_parent = Doc::Line(Line { hard: true, ..Line::default() });
+            self.cmds.push(Command { indent, mode, doc: hardline_without_break_parent });
+        }
+    }
+
+    fn handle_line(&mut self, indent: Indent, mode: Mode, line: Line) {
+        let Line { hard, soft, literal } = line;
+
+        if matches!(mode, Mode::Flat) {
+            if hard {
+                // This line was forced into the output even if we were in flattened mode,
+                // so we need to tell the next group that no matter what, it needs to remeasure
+                // because the previous measurement didn't accurately capture the entire expression.
+                // (this is necessary for nested groups)
+                self.should_remeasure = true;
+            } else {
+                if !soft {
+                    self.out.push(b' ');
+                    self.pos += 1;
+                }
+                return;
+            }
+        }
+
+        // `Mode::Break` or `Mode:Flat` w/ `should_remeasure`
+
+        if !self.line_suffix.is_empty() {
+            self.cmds.push(Command::new(indent, mode, Doc::Line(line)));
+            self.cmds.extend(self.line_suffix.drain(..).rev());
+            return;
+        }
+
+        if literal {
+            self.out.extend(self.new_line.as_bytes());
+            if !indent.root {
+                self.pos = 0;
+            }
+        } else {
+            // Trim `Tab(U+0009)` and `Space(U+0020)` at the end of line
+            while let Some(&last) = self.out.last() {
+                if last == b' ' || last == b'\t' {
+                    self.out.pop();
+                } else {
+                    break;
+                }
+            }
+
+            self.out.extend(self.new_line.as_bytes());
+            // Resolve indent type and value
+            let size = indent.length;
+            if self.options.use_tabs {
+                self.out.extend("\t".repeat(size).as_bytes());
+                self.pos = size;
+            } else {
+                let count = self.options.tab_width * size;
+                self.out.extend(" ".repeat(count).as_bytes());
+                self.pos = count;
+            }
+        }
+    }
+
+    // TODO: fn handle_label
+    // cmds.push({ ind, mode, doc: doc.contents });
+
+    // ---
 
     #[expect(clippy::cast_possible_wrap)]
     fn fits(&self, next: &Command<'a>, width: isize) -> bool {
@@ -379,7 +406,7 @@ impl<'a> Printer<'a> {
                 }
                 Doc::Group(group) => {
                     let mode = if group.should_break { Mode::Break } else { mode };
-                    if group.expanded_states.is_some() && mode.is_break() {
+                    if group.expanded_states.is_some() && matches!(mode, Mode::Break) {
                         queue.push_front((
                             mode,
                             group.expanded_states.as_ref().unwrap().last().unwrap(),
@@ -395,7 +422,7 @@ impl<'a> Printer<'a> {
                         .group_id
                         .map_or(mode, |id| *self.group_mode_map.get(&id).unwrap_or(&Mode::Flat));
 
-                    let contents = if group_mode.is_break() {
+                    let contents = if matches!(group_mode, Mode::Break) {
                         &if_break_doc.break_contents
                     } else {
                         &if_break_doc.flat_contents
@@ -404,7 +431,7 @@ impl<'a> Printer<'a> {
                     queue.push_front((mode, contents));
                 }
                 Doc::Line(line) => {
-                    if mode.is_break() || line.hard {
+                    if matches!(mode, Mode::Break) || line.hard {
                         return true;
                     }
                     if !line.soft {
@@ -412,7 +439,7 @@ impl<'a> Printer<'a> {
                     }
                 }
                 Doc::Fill(fill) => {
-                    for part in fill.parts().iter().rev() {
+                    for part in fill.parts.iter().rev() {
                         queue.push_front((mode, part));
                     }
                 }
@@ -440,6 +467,11 @@ impl<'a> Printer<'a> {
         }
 
         true
+    }
+
+    #[expect(clippy::cast_possible_wrap)]
+    fn remaining_width(&self) -> isize {
+        (self.options.print_width as isize) - (self.pos as isize)
     }
 }
 
@@ -476,5 +508,25 @@ fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
             propagate_breaks(flat_contents) || propagate_breaks(break_contents)
         }
         _ => false,
+    }
+}
+
+impl<'a> Fill<'a> {
+    pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
+        let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
+        let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
+        (content, whitespace)
+    }
+
+    pub fn dequeue(&mut self) -> Option<Doc<'a>> {
+        if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None }
+    }
+
+    pub fn enqueue(&mut self, doc: Doc<'a>) {
+        self.parts.insert(0, doc);
+    }
+
+    pub fn len(&self) -> usize {
+        self.parts.len()
     }
 }
