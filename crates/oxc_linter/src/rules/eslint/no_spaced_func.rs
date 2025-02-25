@@ -76,7 +76,10 @@ fn get_substring_to_lparens(ctx: &LintContext, search_span: Span) -> FuncSpace {
         return FuncSpace::NotSpaced;
     };
 
-    let char_count_to_l_parens: u32 = u32::try_from(char_count).unwrap();
+    let Ok(char_count_to_l_parens) = u32::try_from(char_count) else {
+        return FuncSpace::NotSpaced;
+    };
+
     let l_parens_pos = search_span.start + char_count_to_l_parens;
     let span_to_l_parens = Span::new(search_span.start, l_parens_pos);
     let src_to_l_parens = ctx.source_range(span_to_l_parens);
