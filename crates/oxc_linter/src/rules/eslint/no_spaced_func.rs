@@ -80,24 +80,23 @@ fn is_ident_end_to_l_parens_whitespace(
     ident_end: u32,
     search_end: u32,
 ) -> FuncSpace {
-    let sx = Span::new(ident_end, search_end);
+    let source_span = Span::new(ident_end, search_end);
+    let src = ctx.source_range(source_span);
 
-    let src = ctx.source_range(sx);
-
-    let Some(r_parens_pos_usize) = memchr(b'(', src.as_bytes()) else {
+    let Some(char_count) = memchr(b'(', src.as_bytes()) else {
         return FuncSpace::NotSpaced;
     };
 
-    let l_parens_after_n_chars: u32 = u32::try_from(r_parens_pos_usize).unwrap();
-    let l_parens_pos = ident_end + l_parens_after_n_chars;
+    let char_count_to_l_parens: u32 = u32::try_from(char_count).unwrap();
+    let l_parens_pos = ident_end + char_count_to_l_parens;
     let span_to_l_parens = Span::new(ident_end, l_parens_pos);
-    let str_between_ident_and_l_parens = ctx.source_range(span_to_l_parens);
+    let src_to_l_parens = ctx.source_range(span_to_l_parens);
 
-    if str_between_ident_and_l_parens.is_empty() {
+    if src_to_l_parens.is_empty() {
         return FuncSpace::NotSpaced;
     }
 
-    if str_between_ident_and_l_parens.trim().is_empty() {
+    if src_to_l_parens.trim().is_empty() {
         return FuncSpace::Spaced(span_to_l_parens);
     } else {
         return FuncSpace::NotSpaced;
