@@ -10,17 +10,17 @@ use crate::{
     rule::Rule,
 };
 
-fn no_console_diagnostic(span: Span, allow: &Vec<CompactStr>) -> OxcDiagnostic {
+fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
     let only_msg = if allow.is_empty() {
-        "".to_string()
+        String::new()
     } else {
         format!(
             "Only supported methods: {}",
-            allow.iter().map(|s| s.to_string()).collect::<Vec<String>>().join(", ")
+            allow.iter().map(ToString::to_string).collect::<Vec<String>>().join(", ")
         )
     };
 
-    OxcDiagnostic::warn(format!("eslint(no-console): Unexpected console statement. {}", only_msg))
+    OxcDiagnostic::warn(format!("eslint(no-console): Unexpected console statement. {only_msg}"))
         .with_label(span)
         .with_help("Delete this console statement.")
 }
