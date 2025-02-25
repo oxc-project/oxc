@@ -2,4 +2,25 @@
 source: crates/oxc_linter/src/tester.rs
 assertion_line: 357
 ---
+  ⚠ eslint(no-spaced-func): Should be an imperative statement about what is wrong
+   ╭─[no_spaced_func.tsx:1:3]
+ 1 │ (f) (0)
+   ·   ──
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
 
+  ⚠ eslint(no-spaced-func): Should be an imperative statement about what is wrong
+   ╭─[no_spaced_func.tsx:1:2]
+ 1 │ f ();
+   ·  ─
+ 2 │              t   ();
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(no-spaced-func): Should be an imperative statement about what is wrong
+   ╭─[no_spaced_func.tsx:2:6]
+ 1 │ f ();
+ 2 │              t   ();
+   ·               ───
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue

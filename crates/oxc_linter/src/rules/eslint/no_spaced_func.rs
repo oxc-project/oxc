@@ -108,25 +108,57 @@ fn is_ident_end_to_l_parens_whitespace(
     }
 }
 
+fn check_identifier_callee(ctx: &LintContext, ident_end: u32, callee_end: u32) {
+    match is_ident_end_to_l_parens_whitespace(ctx, ident_end, callee_end) {
+        FuncSpace::NotSpaced => {}
+        FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
+    }
+}
+
 impl Rule for NoSpacedFunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::NewExpression(new_expr) = node.kind() {
+            // new Foo ()
+            let callee = new_expr.callee.without_parentheses();
+            let callee_end = callee.span().end;
+
+            println!("cc {callee:?}");
+            match is_ident_end_to_l_parens_whitespace(ctx, callee_end, new_expr.span().end) {
+                FuncSpace::NotSpaced => {}
+                FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
+            }
+        };
+
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        let callee_end = call_expr.span().end; //.contains_inclusive();
+        let callee_end = call_expr.span().end;
         println!("callee_end {0:?}", callee_end);
         println!("{node:?}");
-        let callee = call_expr.callee.get_inner_expression(); //.contains_inclusive();
+        let callee = call_expr.callee.get_inner_expression();
 
         match callee.without_parentheses() {
-            // f()
+            // f ()
             Expression::Identifier(ident) => {
-                let ident_end = ident.span().end;
+                check_identifier_callee(ctx, ident.span().end, callee_end)
+            }
+            Expression::ParenthesizedExpression(paren_exp) => {
+                println!("aaaaaaxxxxo");
+                println!("aaaaaaxxxxo");
+                println!("aaaaaaxxxxo");
+                println!("aaaaaaxxxxo");
 
-                match is_ident_end_to_l_parens_whitespace(ctx, ident_end, callee_end) {
-                    FuncSpace::NotSpaced => {}
-                    FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
+                match &paren_exp.expression {
+                    Expression::Identifier(ident) => {
+                        println!("fooooooo");
+                        println!("fooooooo");
+
+                        println!("fooooooo");
+
+                        check_identifier_callee(ctx, paren_exp.span().end, callee_end)
+                    }
+                    _ => {}
                 }
             }
             // f() () <-- second parens
@@ -150,14 +182,14 @@ impl Rule for NoSpacedFunc {
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
             }
-            // function(){ }() <-- second parens
+            // function(){ } ()
             Expression::FunctionExpression(func) => {
                 match is_ident_end_to_l_parens_whitespace(ctx, func.span().end, callee_end) {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
             }
-            _ => {} //     Expression::StaticMemberExpression(static_member_expression) => todo!(),
+            _ => {}
         }
     }
 }
@@ -195,7 +227,7 @@ fn test() {
         "f ();",
         "f (a, b);",
         "f
-			();",
+         	();",
         "f.b ();",
         "f.b().c ();",
         "f.b().c().d ();", // I added
@@ -211,7 +243,7 @@ fn test() {
     ];
 
     /*
-    Fix pending. Fix is just to delete at the problematic span.
+    Fix pending. Fix is just to delete the problematic span.
     let fix = vec![
         ("f ();", "f();", None),
         ("f (a, b);", "f(a, b);", None),
