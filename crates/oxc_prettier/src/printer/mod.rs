@@ -12,43 +12,36 @@ use crate::{
 };
 
 pub struct Printer<'a> {
+    allocator: &'a Allocator,
     options: PrettierOptions,
-
+    new_line: &'static str,
     /// The final output string in bytes
     out: std::vec::Vec<u8>,
+    // States for `print_doc_to_string()`
     pos: usize,
     cmds: std::vec::Vec<Command<'a>>,
-    should_remeasure: bool,
-
     line_suffix: std::vec::Vec<Command<'a>>,
     group_mode_map: FxHashMap<GroupId, Mode>,
-
-    new_line: &'static str,
-
-    allocator: &'a Allocator,
 }
 
 impl<'a> Printer<'a> {
     pub fn new(
-        doc: Doc<'a>,
-        source_text: &str,
-        options: PrettierOptions,
         allocator: &'a Allocator,
+        doc: Doc<'a>,
+        options: PrettierOptions,
+        out_size_hint: usize,
     ) -> Self {
-        let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
-
         Self {
+            allocator,
             options,
             // Preallocate for performance
             // the output will very likely be the same size as the original text
-            out: std::vec::Vec::with_capacity(source_text.len()),
+            out: std::vec::Vec::with_capacity(out_size_hint),
             pos: 0,
-            cmds,
-            should_remeasure: false,
+            cmds: vec![Command::new(Indent::root(), Mode::Break, doc)],
             line_suffix: vec![],
             group_mode_map: FxHashMap::default(),
             new_line: options.end_of_line.as_str(),
-            allocator,
         }
     }
 
@@ -60,7 +53,7 @@ impl<'a> Printer<'a> {
 
     fn print_doc_to_string(&mut self) {
         while let Some(Command { indent, mut doc, mode }) = self.cmds.pop() {
-            // NOTE: In Prettier, they perform this before the loop
+            // TODO: In Prettier, they perform this before the loop
             propagate_breaks(&mut doc);
 
             match doc {
@@ -108,63 +101,58 @@ impl<'a> Printer<'a> {
     }
 
     // TODO: fn handle_align
+    // Current implementation resolves indent values manually, instead of using `makeAlign()` in Prettier.
+    // See also the last part of `handle_line`, may need to rework.
     // cmds.push({ ind: makeAlign(ind, doc.n, options), mode, doc: doc.contents });
 
     fn handle_group(&mut self, indent: Indent, mode: Mode, group: Group<'a>) {
-        let mut set_group_mode = |this: &mut Self, id| {
-            let Some(id) = id else {
-                return;
-            };
-            let Some(mode) = this.cmds.last().map(|cmd| cmd.mode) else {
-                return;
-            };
-            this.group_mode_map.insert(id, mode);
-        };
+        let Group { contents, should_break, expanded_states, group_id } = group;
 
         match mode {
             Mode::Flat => {
-                self.cmds.extend(group.contents.into_iter().rev().map(|doc| {
-                    Command::new(indent, if group.should_break { Mode::Break } else { mode }, doc)
+                self.cmds.extend(contents.into_iter().rev().map(|doc| {
+                    Command::new(indent, if should_break { Mode::Break } else { Mode::Flat }, doc)
                 }));
-
-                set_group_mode(self, group.group_id);
             }
             Mode::Break => {
-                let remaining_width = self.remaining_width();
-                let should_break = group.should_break;
-                let group_id = group.group_id;
-                let cmd = Command::new(indent, Mode::Flat, Doc::Group(group));
-                if !should_break && self.fits(&cmd, remaining_width) {
-                    self.cmds.push(Command::new(indent, Mode::Flat, cmd.doc));
+                let cmd = Command::new(indent, Mode::Flat, Doc::Array(contents));
+
+                if !should_break && self.fits(&cmd, false) {
+                    self.cmds.push(cmd);
                 } else {
-                    let Doc::Group(group) = cmd.doc else {
-                        unreachable!();
-                    };
-                    if let Some(mut expanded_states) = group.expanded_states {
-                        let most_expanded = expanded_states.pop().unwrap();
-                        if group.should_break {
+                    // Expanded states are a rare case
+                    // where a document can manually provide multiple representations of itself.
+                    // It provides an array of documents going from
+                    // the least expanded (most flattened) representation first to the most expanded.
+                    // If a group has these,
+                    // we need to manually go through these states and find the first one that fits.
+                    if let Some(mut expanded_states) = expanded_states {
+                        let most_expanded =
+                            expanded_states.pop().expect("`expanded_states` should not be empty");
+
+                        if should_break {
                             self.cmds.push(Command::new(indent, Mode::Break, most_expanded));
                             return;
                         }
+
                         for state in expanded_states {
                             let cmd = Command::new(indent, Mode::Flat, state);
-                            if self.fits(&cmd, remaining_width) {
+                            if self.fits(&cmd, false) {
                                 self.cmds.push(cmd);
                                 return;
                             }
                         }
+
                         self.cmds.push(Command::new(indent, Mode::Break, most_expanded));
                     } else {
-                        self.cmds.push(Command::new(
-                            indent,
-                            Mode::Break,
-                            Doc::Array(group.contents),
-                        ));
+                        self.cmds.push(cmd.with_mode(Mode::Break));
                     }
                 }
-
-                set_group_mode(self, group_id);
             }
+        }
+
+        if let (Some(id), Some(mode)) = (group_id, self.cmds.last().map(|cmd| cmd.mode)) {
+            self.group_mode_map.insert(id, mode);
         }
     }
 
@@ -189,7 +177,6 @@ impl<'a> Printer<'a> {
     fn handle_fill(&mut self, indent: Indent, mode: Mode, fill: Fill<'a>) {
         let mut fill = fill;
 
-        let remaining_width = self.remaining_width();
         let original_parts_len = fill.len();
         let (content, whitespace) = fill.drain_out_pair();
 
@@ -197,7 +184,7 @@ impl<'a> Printer<'a> {
             return;
         };
         let content_flat_cmd = Command::new(indent, Mode::Flat, content);
-        let content_fits = self.fits(&content_flat_cmd, remaining_width);
+        let content_fits = self.fits(&content_flat_cmd, true);
 
         if original_parts_len == 1 {
             if content_fits {
@@ -237,8 +224,7 @@ impl<'a> Printer<'a> {
         docs.push(second_content);
 
         let first_and_second_content_fit_cmd = Command::new(indent, Mode::Flat, Doc::Array(docs));
-        let first_and_second_content_fits =
-            self.fits(&first_and_second_content_fit_cmd, remaining_width);
+        let first_and_second_content_fits = self.fits(&first_and_second_content_fit_cmd, true);
         let Doc::Array(mut doc) = first_and_second_content_fit_cmd.doc else {
             return;
         };
@@ -327,11 +313,8 @@ impl<'a> Printer<'a> {
 
         if matches!(mode, Mode::Flat) {
             if hard {
-                // This line was forced into the output even if we were in flattened mode,
-                // so we need to tell the next group that no matter what, it needs to remeasure
-                // because the previous measurement didn't accurately capture the entire expression.
-                // (this is necessary for nested groups)
-                self.should_remeasure = true;
+                // This is defined in Prettier but it does not seem to take effect?
+                // self.should_remeasure = true;
             } else {
                 if !soft {
                     self.out.push(b' ');
@@ -359,6 +342,7 @@ impl<'a> Printer<'a> {
             while let Some(&last) = self.out.last() {
                 if last == b' ' || last == b'\t' {
                     self.out.pop();
+                    self.pos -= 1;
                 } else {
                     break;
                 }
@@ -383,71 +367,74 @@ impl<'a> Printer<'a> {
 
     // ---
 
-    #[expect(clippy::cast_possible_wrap)]
-    fn fits(&self, next: &Command<'a>, width: isize) -> bool {
-        let mut remaining_width = width;
+    fn fits(&self, next: &Command<'a>, in_fill: bool) -> bool {
+        #[expect(clippy::cast_possible_wrap)]
+        let mut remaining_width = (self.options.print_width as isize) - (self.pos as isize);
+        let mut has_line_suffix = !self.line_suffix.is_empty();
+        let mut cmds = self.cmds.iter().rev();
+
         let mut queue: VecDeque<(Mode, &Doc)> = VecDeque::new();
         queue.push_front((next.mode, &next.doc));
-        let mut cmds = self.cmds.iter().rev();
 
         while let Some((mode, doc)) = queue.pop_front() {
             match doc {
-                Doc::Str(string) => {
-                    remaining_width -= string.len() as isize;
+                #[expect(clippy::cast_possible_wrap)]
+                Doc::Str(s) => {
+                    remaining_width -= s.len() as isize;
+                }
+                // TODO: Doc::Align
+                // TODO: Doc::Label
+                Doc::Array(docs) | Doc::Fill(Fill { parts: docs }) | Doc::Indent(docs) => {
+                    // In Prettier, `DOC_FILL_PRINTED_LENGTH` is used for `Fill`, but always returns `0`?
+                    for doc in docs.iter().rev() {
+                        queue.push_front((mode, doc));
+                    }
                 }
                 Doc::IndentIfBreak(IndentIfBreak { contents, .. }) => {
                     queue.push_front((mode, contents));
                 }
-                Doc::Indent(docs) | Doc::Array(docs) => {
-                    // Prepend docs to the queue
-                    for d in docs.iter().rev() {
-                        queue.push_front((mode, d));
+                Doc::Group(Group { contents, should_break, expanded_states, .. }) => {
+                    if in_fill && *should_break {
+                        return false;
                     }
-                }
-                Doc::Group(group) => {
-                    let mode = if group.should_break { Mode::Break } else { mode };
-                    if group.expanded_states.is_some() && matches!(mode, Mode::Break) {
-                        queue.push_front((
-                            mode,
-                            group.expanded_states.as_ref().unwrap().last().unwrap(),
-                        ));
+
+                    let mode = if *should_break { Mode::Break } else { mode };
+
+                    // The most expanded state takes up the least space on the current line.
+                    if expanded_states.is_some() && matches!(mode, Mode::Break) {
+                        queue.push_front((mode, expanded_states.as_ref().unwrap().last().unwrap()));
                     } else {
-                        for d in group.contents.iter().rev() {
-                            queue.push_front((mode, d));
+                        for doc in contents.iter().rev() {
+                            queue.push_front((mode, doc));
                         }
                     };
                 }
-                Doc::IfBreak(if_break_doc) => {
-                    let group_mode = if_break_doc
-                        .group_id
+                Doc::IfBreak(IfBreak { break_contents, flat_contents, group_id }) => {
+                    let group_mode = group_id
                         .map_or(mode, |id| *self.group_mode_map.get(&id).unwrap_or(&Mode::Flat));
-
-                    let contents = if matches!(group_mode, Mode::Break) {
-                        &if_break_doc.break_contents
+                    let doc = if matches!(group_mode, Mode::Break) {
+                        &break_contents
                     } else {
-                        &if_break_doc.flat_contents
+                        &flat_contents
                     };
 
-                    queue.push_front((mode, contents));
+                    queue.push_front((mode, doc));
                 }
                 Doc::Line(line) => {
                     if matches!(mode, Mode::Break) || line.hard {
                         return true;
                     }
+
                     if !line.soft {
                         remaining_width -= 1_isize;
                     }
                 }
-                Doc::Fill(fill) => {
-                    for part in fill.parts.iter().rev() {
-                        queue.push_front((mode, part));
-                    }
-                }
                 Doc::LineSuffix(_) => {
+                    has_line_suffix = true;
                     break;
                 }
                 Doc::LineSuffixBoundary => {
-                    if !self.line_suffix.is_empty() {
+                    if has_line_suffix {
                         return false;
                     }
                     break;
@@ -459,31 +446,18 @@ impl<'a> Printer<'a> {
                 return false;
             }
 
-            if queue.is_empty() {
-                if let Some(cmd) = cmds.next() {
-                    queue.push_back((cmd.mode, &cmd.doc));
-                }
+            if in_fill && queue.is_empty() {
+                return true;
+            }
+            if let Some(cmd) = cmds.next() {
+                queue.push_back((cmd.mode, &cmd.doc));
             }
         }
 
         true
     }
-
-    #[expect(clippy::cast_possible_wrap)]
-    fn remaining_width(&self) -> isize {
-        (self.options.print_width as isize) - (self.pos as isize)
-    }
 }
 
-// TODO: I tried to write a similar code in Prettier, there was a test that failed
-// - Almost all tests pass, but for some reason, only a few cases in the `jsx/text-wrap` fails
-// - I'm not sure whether this logic has a problem or the `Doc` printing logic has a problem
-// PERF: When taking a `Doc` other than `Group` as a target, unnecessary traversal occurs
-// - In this implementation, `should_break` is updated only when the argument is `Group`
-// - This can be resolved by separating the recursive part from the entry, but it can be done later
-// PERF: When `Group` is nested, intermediate results should be reused
-// - This occurs when the structure is like `Group > Group > BreakParent`
-// - When processing the 1st `Group`, it should be known that the 2nd `Group` also breaks
 fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
     let apply_vec = |arr: &mut Vec<'_, Doc<'_>>| arr.iter_mut().any(propagate_breaks);
 
@@ -511,6 +485,10 @@ fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
     }
 }
 
+// NOTE: In Prettier, the secret property `DOC_FILL_PRINTED_LENGTH` is used for `Fill`.
+// It stores the offset already printed in the former `handle_fill` and used in later
+// However, we do not maange this property and directly update `parts` itself.
+// The following is a utility for this.
 impl<'a> Fill<'a> {
     pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
         let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };

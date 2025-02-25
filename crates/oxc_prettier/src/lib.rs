@@ -69,12 +69,20 @@ impl<'a> Prettier<'a> {
         }
     }
 
+    /// Main entry, AST -> String
     pub fn build(&mut self, program: &Program<'a>) -> String {
         self.source_text = program.source_text;
         let doc = program.format(self);
-        Printer::new(doc, program.source_text, self.options, self.allocator).build()
+
+        Printer::new(
+            self.allocator,
+            doc,
+            self.options,
+            program.source_text.len(),
+        ).build()
     }
 
+    /// Debug entry, AST -> Doc
     pub fn doc(mut self, program: &Program<'a>) -> Doc<'a> {
         self.source_text = program.source_text;
         program.format(&mut self)
