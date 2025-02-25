@@ -75,21 +75,16 @@ enum FuncSpace {
 ///
 /// For example `foo  ()` would return `FuncSpace::Spaced(span)`
 /// where span refers to the whitespace between `foo` and `()`.
-fn is_ident_end_to_l_parens_whitespace(
-    ctx: &LintContext,
-    ident_end: u32,
-    search_end: u32,
-) -> FuncSpace {
-    let source_span = Span::new(ident_end, search_end);
-    let src = ctx.source_range(source_span);
+fn get_substring_to_lparens(ctx: &LintContext, search_span: Span) -> FuncSpace {
+    let src = ctx.source_range(search_span);
 
     let Some(char_count) = memchr(b'(', src.as_bytes()) else {
         return FuncSpace::NotSpaced;
     };
 
     let char_count_to_l_parens: u32 = u32::try_from(char_count).unwrap();
-    let l_parens_pos = ident_end + char_count_to_l_parens;
-    let span_to_l_parens = Span::new(ident_end, l_parens_pos);
+    let l_parens_pos = search_span.start + char_count_to_l_parens;
+    let span_to_l_parens = Span::new(search_span.start, l_parens_pos);
     let src_to_l_parens = ctx.source_range(span_to_l_parens);
 
     if src_to_l_parens.is_empty() {
@@ -104,7 +99,7 @@ fn is_ident_end_to_l_parens_whitespace(
 }
 
 fn check_identifier_callee(ctx: &LintContext, ident_end: u32, callee_end: u32) {
-    match is_ident_end_to_l_parens_whitespace(ctx, ident_end, callee_end) {
+    match get_substring_to_lparens(ctx, Span::new(ident_end, callee_end)) {
         FuncSpace::NotSpaced => {}
         FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
     }
@@ -117,7 +112,7 @@ impl Rule for NoSpacedFunc {
             let callee = new_expr.callee.without_parentheses();
             let callee_end = callee.span().end;
 
-            match is_ident_end_to_l_parens_whitespace(ctx, callee_end, new_expr.span().end) {
+            match get_substring_to_lparens(ctx, Span::new(callee_end, new_expr.span().end)) {
                 FuncSpace::NotSpaced => {}
                 FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
             }
@@ -142,7 +137,7 @@ impl Rule for NoSpacedFunc {
             },
             // f() () <-- second parens
             Expression::CallExpression(c) => {
-                match is_ident_end_to_l_parens_whitespace(ctx, c.span().end, callee_end) {
+                match get_substring_to_lparens(ctx, Span::new(c.span().end, callee_end)) {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
@@ -152,14 +147,14 @@ impl Rule for NoSpacedFunc {
                 let span_end = exp.span().end;
                 let ident_name_span_end = exp.property.span().end;
 
-                match is_ident_end_to_l_parens_whitespace(ctx, ident_name_span_end, callee_end) {
+                match get_substring_to_lparens(ctx, Span::new(ident_name_span_end, callee_end)) {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
             }
             // function(){ } ()
             Expression::FunctionExpression(func) => {
-                match is_ident_end_to_l_parens_whitespace(ctx, func.span().end, callee_end) {
+                match get_substring_to_lparens(ctx, Span::new(func.span().end, callee_end)) {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
