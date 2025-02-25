@@ -117,9 +117,9 @@ impl Rule for NoSpacedFunc {
         let callee_end = call_expr.span().end; //.contains_inclusive();
         println!("callee_end {0:?}", callee_end);
         println!("{node:?}");
-        let ss = call_expr.callee.get_inner_expression(); //.contains_inclusive();
+        let callee = call_expr.callee.get_inner_expression(); //.contains_inclusive();
 
-        match ss.without_parentheses() {
+        match callee.without_parentheses() {
             // f()
             Expression::Identifier(ident) => {
                 let ident_end = ident.span().end;
@@ -146,6 +146,13 @@ impl Rule for NoSpacedFunc {
                 println!("static ident name {0:?}", ident.name);
 
                 match is_ident_end_to_l_parens_whitespace(ctx, ident_name_span_end, callee_end) {
+                    FuncSpace::NotSpaced => {}
+                    FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
+                }
+            }
+            // function(){ }() <-- second parens
+            Expression::FunctionExpression(func) => {
+                match is_ident_end_to_l_parens_whitespace(ctx, func.span().end, callee_end) {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
