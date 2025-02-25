@@ -2,25 +2,94 @@
 source: crates/oxc_linter/src/tester.rs
 assertion_line: 357
 ---
-  ⚠ eslint(no-spaced-func): Should be an imperative statement about what is wrong
-   ╭─[no_spaced_func.tsx:1:3]
- 1 │ (f) (0)
-   ·   ──
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:2]
+ 1 │ f ();
+   ·  ─
    ╰────
-  help: Should be a command-like statement that tells the user how to fix the issue
 
-  ⚠ eslint(no-spaced-func): Should be an imperative statement about what is wrong
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:2]
+ 1 │ f (a, b);
+   ·  ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:2]
+ 1 │ ╭─▶ f
+ 2 │ ╰─▶             ();
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:4]
+ 1 │ f.b ();
+   ·    ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:8]
+ 1 │ f.b().c ();
+   ·        ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:12]
+ 1 │ f.b().c().d ();
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:4]
+ 1 │ f() ()
+   ·    ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:6]
+ 1 │ f()() ()
+   ·      ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:15]
+ 1 │ (function() {} ())
+   ·               ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:16]
+ 1 │ var f = new Foo ()
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:2]
+ 1 │ f ( (0) )
+   ·  ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:5]
+ 1 │ f(0) (1)
+   ·     ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
+   ╭─[no_spaced_func.tsx:1:4]
+ 1 │ (f) (0)
+   ·    ─
+   ╰────
+
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
    ╭─[no_spaced_func.tsx:1:2]
  1 │ f ();
    ·  ─
  2 │              t   ();
    ╰────
-  help: Should be a command-like statement that tells the user how to fix the issue
 
-  ⚠ eslint(no-spaced-func): Should be an imperative statement about what is wrong
+  ⚠ eslint(no-spaced-func): Spacing between function identifiers and their applications is disallowed.
    ╭─[no_spaced_func.tsx:2:6]
  1 │ f ();
  2 │              t   ();
    ·               ───
    ╰────
-  help: Should be a command-like statement that tells the user how to fix the issue

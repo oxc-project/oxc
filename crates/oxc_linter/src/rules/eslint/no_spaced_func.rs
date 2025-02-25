@@ -2,7 +2,6 @@ use memchr::memchr;
 use oxc_ast::AstKind::IdentifierName;
 use oxc_ast::ast::Expression;
 use oxc_ast::{AstKind, ast::IdentifierReference};
-//use oxc_ast::ast::ModuleExportName::IdentifierName;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -15,10 +14,10 @@ use crate::{
 };
 
 fn no_spaced_func_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
-        .with_label(span)
+    OxcDiagnostic::warn(
+        "Spacing between function identifiers and their applications is disallowed.",
+    )
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -82,12 +81,10 @@ fn is_ident_end_to_l_parens_whitespace(
     search_end: u32,
 ) -> FuncSpace {
     let sx = Span::new(ident_end, search_end);
-    println!("sx {0:?}", sx);
 
     let src = ctx.source_range(sx);
 
     let Some(r_parens_pos_usize) = memchr(b'(', src.as_bytes()) else {
-        //println!("span {0:?}", callee_end);
         return FuncSpace::NotSpaced;
     };
 
@@ -96,7 +93,6 @@ fn is_ident_end_to_l_parens_whitespace(
     let span_to_l_parens = Span::new(ident_end, l_parens_pos);
     let str_between_ident_and_l_parens = ctx.source_range(span_to_l_parens);
 
-    println!(" snippet: {0:?}", str_between_ident_and_l_parens);
     if str_between_ident_and_l_parens.is_empty() {
         return FuncSpace::NotSpaced;
     }
@@ -122,7 +118,6 @@ impl Rule for NoSpacedFunc {
             let callee = new_expr.callee.without_parentheses();
             let callee_end = callee.span().end;
 
-            println!("cc {callee:?}");
             match is_ident_end_to_l_parens_whitespace(ctx, callee_end, new_expr.span().end) {
                 FuncSpace::NotSpaced => {}
                 FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
@@ -134,33 +129,18 @@ impl Rule for NoSpacedFunc {
         };
 
         let callee_end = call_expr.span().end;
-        println!("callee_end {0:?}", callee_end);
-        println!("{node:?}");
-        let callee = call_expr.callee.get_inner_expression();
 
-        match callee.without_parentheses() {
+        match &call_expr.callee {
             // f ()
             Expression::Identifier(ident) => {
                 check_identifier_callee(ctx, ident.span().end, callee_end)
             }
-            Expression::ParenthesizedExpression(paren_exp) => {
-                println!("aaaaaaxxxxo");
-                println!("aaaaaaxxxxo");
-                println!("aaaaaaxxxxo");
-                println!("aaaaaaxxxxo");
-
-                match &paren_exp.expression {
-                    Expression::Identifier(ident) => {
-                        println!("fooooooo");
-                        println!("fooooooo");
-
-                        println!("fooooooo");
-
-                        check_identifier_callee(ctx, paren_exp.span().end, callee_end)
-                    }
-                    _ => {}
+            Expression::ParenthesizedExpression(paren_exp) => match &paren_exp.expression {
+                Expression::Identifier(ident) => {
+                    check_identifier_callee(ctx, paren_exp.span().end, callee_end)
                 }
-            }
+                _ => {}
+            },
             // f() () <-- second parens
             Expression::CallExpression(c) => {
                 match is_ident_end_to_l_parens_whitespace(ctx, c.span().end, callee_end) {
@@ -171,11 +151,7 @@ impl Rule for NoSpacedFunc {
             // f.a ()
             Expression::StaticMemberExpression(exp) => {
                 let span_end = exp.span().end;
-                let ident = &exp.property;
-                let ident_name_span_end = ident.span().end;
-
-                println!("static ident span {ident_name_span_end:?}");
-                println!("static ident name {0:?}", ident.name);
+                let ident_name_span_end = exp.property.span().end;
 
                 match is_ident_end_to_l_parens_whitespace(ctx, ident_name_span_end, callee_end) {
                     FuncSpace::NotSpaced => {}
@@ -201,15 +177,15 @@ fn test() {
     let pass = vec![
         "foo(1);",
         "f();",
-        "f( );", // I added
+        "f( );",
         "f(a, b);",
-        "a.b",  // I added
-        "a. b", // I added
+        "a.b",
+        "a. b",
         "f.b();",
         "f.b().c();",
-        "f.b(1).c( );", // I added
+        "f.b(1).c( );",
         "f()()",
-        "f()( )()", // I added
+        "f()( )()",
         "(function() {}())",
         "var f = new Foo()",
         "var f = new Foo",
@@ -230,9 +206,9 @@ fn test() {
          	();",
         "f.b ();",
         "f.b().c ();",
-        "f.b().c().d ();", // I added
+        "f.b().c().d ();",
         "f() ()",
-        "f()() ()", // I added
+        "f()() ()",
         "(function() {} ())",
         "var f = new Foo ()",
         "f ( (0) )",
@@ -243,7 +219,7 @@ fn test() {
     ];
 
     /*
-    Fix pending. Fix is just to delete the problematic span.
+    Fix pending.
     let fix = vec![
         ("f ();", "f();", None),
         ("f (a, b);", "f(a, b);", None),
