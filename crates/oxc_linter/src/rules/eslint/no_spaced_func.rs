@@ -119,7 +119,8 @@ impl Rule for NoSpacedFunc {
         println!("{node:?}");
         let ss = call_expr.callee.get_inner_expression(); //.contains_inclusive();
 
-        match ss {
+        match ss.without_parentheses() {
+            // f()
             Expression::Identifier(ident) => {
                 let ident_end = ident.span().end;
 
@@ -128,14 +129,14 @@ impl Rule for NoSpacedFunc {
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
             }
-            // f() () <- case where the AST node if the second parens
-            // and we are matching on the first parens below.
+            // f() () <-- second parens
             Expression::CallExpression(c) => {
                 match is_ident_end_to_l_parens_whitespace(ctx, c.span().end, callee_end) {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
             }
+            // f.a ()
             Expression::StaticMemberExpression(exp) => {
                 let span_end = exp.span().end;
                 let ident = &exp.property;
@@ -148,8 +149,6 @@ impl Rule for NoSpacedFunc {
                     FuncSpace::NotSpaced => {}
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
-                // need to check each method call in the chain i.e =f.b().a()`
-                // works from right to left, so `a()` then `b()` will be checked
             }
             _ => {} //     Expression::StaticMemberExpression(static_member_expression) => todo!(),
         }
@@ -194,7 +193,7 @@ fn test() {
         "f.b().c ();",
         "f.b().c().d ();", // I added
         "f() ()",
-        "f( )( ) ( )", // I added
+        "f()() ()", // I added
         "(function() {} ())",
         "var f = new Foo ()",
         "f ( (0) )",
@@ -205,7 +204,7 @@ fn test() {
     ];
 
     /*
-    Fix pending.
+    Fix pending. Fix is just to delete at the problematic span.
     let fix = vec![
         ("f ();", "f();", None),
         ("f (a, b);", "f(a, b);", None),
