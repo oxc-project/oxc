@@ -45,7 +45,7 @@ pub use crate::{
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
-use crate::{
+pub use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
     context::ContextHost,
     fixer::{Fixer, Message},

@@ -6,7 +6,7 @@
 //! are inside a proc macro.
 
 /// <https://github.com/import-js/eslint-plugin-import>
-mod import {
+pub mod import {
     // pub mod no_deprecated;
     // pub mod no_unused_modules;
     pub mod default;
@@ -30,7 +30,7 @@ mod import {
     pub mod unambiguous;
 }
 
-mod eslint {
+pub mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
     pub mod default_case;
@@ -172,7 +172,7 @@ mod eslint {
     pub mod yoda;
 }
 
-mod typescript {
+pub mod typescript {
     pub mod adjacent_overload_signatures;
     pub mod array_type;
     pub mod ban_ts_comment;
@@ -217,7 +217,7 @@ mod typescript {
     pub mod triple_slash_reference;
 }
 
-mod jest {
+pub mod jest {
     pub mod consistent_test_it;
     pub mod expect_expect;
     pub mod max_expects;
@@ -269,7 +269,7 @@ mod jest {
     pub mod valid_title;
 }
 
-mod react {
+pub mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
     pub mod exhaustive_deps;
@@ -305,14 +305,14 @@ mod react {
     pub mod void_dom_elements_no_children;
 }
 
-mod react_perf {
+pub mod react_perf {
     pub mod jsx_no_jsx_as_prop;
     pub mod jsx_no_new_array_as_prop;
     pub mod jsx_no_new_function_as_prop;
     pub mod jsx_no_new_object_as_prop;
 }
 
-mod unicorn {
+pub mod unicorn {
     pub mod catch_error_name;
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
@@ -407,7 +407,7 @@ mod unicorn {
     pub mod throw_new_error;
 }
 
-mod jsx_a11y {
+pub mod jsx_a11y {
     pub mod alt_text;
     pub mod anchor_ambiguous_text;
     pub mod anchor_has_content;
@@ -439,7 +439,7 @@ mod jsx_a11y {
     pub mod tabindex_no_positive;
 }
 
-mod oxc {
+pub mod oxc {
     pub mod approx_constant;
     pub mod bad_array_method_on_arguments;
     pub mod bad_bitwise_operator;
@@ -467,7 +467,7 @@ mod oxc {
     pub mod uninvoked_array_callback;
 }
 
-mod nextjs {
+pub mod nextjs {
     pub mod google_font_display;
     pub mod google_font_preconnect;
     pub mod inline_script_id;
@@ -491,7 +491,7 @@ mod nextjs {
 }
 
 /// <https://github.com/gajus/eslint-plugin-jsdoc>
-mod jsdoc {
+pub mod jsdoc {
     pub mod check_access;
     pub mod check_property_names;
     pub mod check_tag_names;
@@ -512,7 +512,7 @@ mod jsdoc {
     pub mod require_yields;
 }
 
-mod promise {
+pub mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
@@ -526,7 +526,7 @@ mod promise {
     pub mod valid_params;
 }
 
-mod vitest {
+pub mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_to_be_falsy;
@@ -535,7 +535,7 @@ mod vitest {
     pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
-mod node {
+pub mod node {
     pub mod no_exports_assign;
     pub mod no_new_require;
 }
