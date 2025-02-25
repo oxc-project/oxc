@@ -314,6 +314,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
@@ -934,6 +935,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_date_clone,
     unicorn::consistent_empty_array_spread,
     unicorn::consistent_existence_index_check,
     unicorn::consistent_function_scoping,
