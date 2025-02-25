@@ -97,7 +97,7 @@ impl Rule for NoUnsafeNegation {
                         let operator = expr.operator.as_str();
                         let right = ctx.source_range(expr.right.span());
 
-                        format!("!({} {} {})", left, operator, right)
+                        format!("!({left} {operator} {right})")
                     };
                     fixer.replace(expr.span, modified_code)
                 };
