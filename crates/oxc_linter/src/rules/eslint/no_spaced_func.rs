@@ -128,6 +128,14 @@ impl Rule for NoSpacedFunc {
                     FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
                 }
             }
+            // f() () <- case where the AST node if the second parens
+            // and we are matching on the first parens below.
+            Expression::CallExpression(c) => {
+                match is_ident_end_to_l_parens_whitespace(ctx, c.span().end, callee_end) {
+                    FuncSpace::NotSpaced => {}
+                    FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
+                }
+            }
             Expression::StaticMemberExpression(exp) => {
                 let span_end = exp.span().end;
                 let ident = &exp.property;
