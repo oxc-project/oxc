@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 357
 ---
   ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:1]
@@ -50,56 +51,56 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: error
    ╭─[no_console.tsx:1:1]
  1 │ console.log(foo)
    · ───────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn
    ╭─[no_console.tsx:1:1]
  1 │ console.error(foo)
    · ─────────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: log
    ╭─[no_console.tsx:1:1]
  1 │ console.info(foo)
    · ────────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: error
    ╭─[no_console.tsx:1:1]
  1 │ console.warn(foo)
    · ────────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn, info
    ╭─[no_console.tsx:1:1]
  1 │ console.log(foo)
    · ───────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn, info, log
    ╭─[no_console.tsx:1:1]
  1 │ console.error(foo)
    · ─────────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: warn, error, log
    ╭─[no_console.tsx:1:1]
  1 │ console.info(foo)
    · ────────────
    ╰────
   help: Delete this console statement.
 
-  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement.
+  ⚠ eslint(no-console): eslint(no-console): Unexpected console statement. Only supported methods: info, log
    ╭─[no_console.tsx:1:1]
  1 │ console.warn(foo)
    · ────────────
