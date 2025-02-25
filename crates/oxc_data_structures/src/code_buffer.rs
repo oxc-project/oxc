@@ -141,9 +141,16 @@ impl CodeBuffer {
     /// ```
     #[inline]
     #[must_use = "Peeking is pointless if the peeked char isn't used"]
+    #[expect(clippy::missing_panics_doc)] // No panic possible in release mode
     pub fn peek_nth_char_back(&self, n: usize) -> Option<char> {
-        // SAFETY: All methods of `CodeBuffer` ensure `buf` is valid UTF-8
-        unsafe { std::str::from_utf8_unchecked(&self.buf) }.chars().nth_back(n)
+        let s = if cfg!(debug_assertions) {
+            std::str::from_utf8(&self.buf).unwrap()
+        } else {
+            // SAFETY: All safe methods of `CodeBuffer` ensure `buf` is valid UTF-8
+            unsafe { std::str::from_utf8_unchecked(&self.buf) }
+        };
+
+        s.chars().nth_back(n)
     }
 
     /// Peek the `n`th byte from the end of the buffer.
@@ -209,18 +216,21 @@ impl CodeBuffer {
     /// Push a byte to the buffer, without checking that the buffer still represents a valid
     /// UTF-8 string.
     ///
-    /// If you are looking to print a byte you know is valid ASCII, prefer [`print_ascii_byte`].
+    /// If you are looking to print a byte that is statically provable to be valid ASCII,
+    /// prefer safe method [`print_ascii_byte`]. The assertion that byte is ASCII in that function
+    /// will be elided be elided by compiler if it's trivially provable
+    /// e.g. `buffer.print_ascii_byte(b'x')`. So the safe method costs nothing extra in that case.
+    ///
     /// If you are not certain, you may use [`print_char`] as a safe alternative.
     ///
     /// # SAFETY
     /// The caller must ensure that, after 1 or more sequential calls, the buffer represents
     /// a valid UTF-8 string.
     ///
-    /// It is safe for a single call to temporarily result in invalid UTF-8, as long as
-    /// UTF-8 integrity is restored before calls to any other `print_*` method or
-    /// [`into_string`]. This lets you, for example, print an 4-byte Unicode character
-    /// using 4 separate calls to this method. However, consider using [`print_bytes_unchecked`]
-    /// instead for that use case.
+    /// It is OK for a single call to temporarily result in the buffer containsing invalid UTF-8, as long
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
+    /// This lets you, for example, print an 4-byte Unicode character using 4 separate calls to this method.
+    /// However, consider using [`print_bytes_unchecked`] instead for that use case.
     ///
     /// # Example
     /// ```
@@ -341,30 +351,31 @@ impl CodeBuffer {
         }
     }
 
-    /// Print a sequence of bytes without checking that the buffer still
-    /// represents a valid UTF-8 string.
+    /// Print a slice of bytes, without checking that the buffer still contains a valid UTF-8 string.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
-    /// The caller must ensure that, after this method call, the buffer represents
-    /// a valid UTF-8 string. In practice, this means only two cases are valid:
+    /// The caller must ensure that, after 1 or more sequential calls, the buffer represents
+    /// a valid UTF-8 string.
     ///
-    /// 1. Both the buffer and the byte sequence are valid UTF-8,
-    /// 2. The buffer became invalid after a call to [`print_byte_unchecked`] and `bytes` completes
-    ///    any incomplete Unicode characters, returning the buffer to a valid state.
+    /// It is OK for a single call to temporarily result in the buffer containing invalid UTF-8, as long
+    /// as UTF-8 integrity is restored before calls to any other `print_*` method or [`into_string`].
+    ///
+    /// This requirement is easily satisfied if buffer contained valid UTF-8, and the `bytes` slice
+    /// also contains a valid UTF-8 string.
     ///
     /// # Example
     /// ```
     /// # use oxc_data_structures::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
-    /// // Sound because all bytes in this byte slice are ASCII characters
+    /// // SAFETY: All bytes in this slice are ASCII
     /// unsafe {
     ///     code.print_bytes_unchecked("abcd".as_bytes());
     /// }
     /// ```
     ///
-    /// [`print_byte_unchecked`]: CodeBuffer::print_byte_unchecked
+    /// [`into_string`]: CodeBuffer::into_string
     #[inline]
     pub unsafe fn print_bytes_unchecked(&mut self, bytes: &[u8]) {
         self.buf.extend_from_slice(bytes);
@@ -414,9 +425,7 @@ impl CodeBuffer {
         // SAFETY: We checked there's at least 16 bytes spare capacity, and `n <= 16`,
         // so `len + n` cannot exceed capacity.
         // `len` cannot exceed `isize::MAX`, so `len + n` cannot wrap around.
-        unsafe {
-            self.buf.set_len(len + n);
-        }
+        unsafe { self.buf.set_len(len + n) };
     }
 
     /// Get contents of buffer as a byte slice.
