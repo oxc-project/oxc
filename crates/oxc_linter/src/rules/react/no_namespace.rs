@@ -10,7 +10,7 @@ use crate::{AstNode, context::LintContext, rule::Rule, utils::is_create_element_
 
 fn no_namespace_diagnostic(span: Span, component_name: &str) -> OxcDiagnostic {
     let message = format!(
-        r#"React component {component_name} must not be in a namespace, as React does not support them."#
+        r"React component {component_name} must not be in a namespace, as React does not support them."
     );
 
     OxcDiagnostic::warn(message).with_label(span)
@@ -66,7 +66,7 @@ impl Rule for NoNamespace {
                         return;
                     };
 
-                    if str_lit.value.contains(":") {
+                    if str_lit.value.contains(':') {
                         ctx.diagnostic(no_namespace_diagnostic(str_lit.span, &str_lit.value));
                     }
                 }
