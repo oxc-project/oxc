@@ -1,6 +1,6 @@
 use oxc_codegen::CodegenOptions;
 
-use crate::tester::{test, test_minify, test_minify_same, test_options};
+use crate::tester::{test, test_minify, test_minify_same, test_options, test_same};
 
 #[test]
 fn decl() {
@@ -354,6 +354,29 @@ fn vite_special_comments() {
         "import(/* @vite-ignore */ module1Url).then((module1) => {\nself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL)})",
         "import(\n\t/* @vite-ignore */\n\tmodule1Url\n).then((module1) => {\n\tself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL);\n});\n",
     );
+}
+
+// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md#semantics>
+#[test]
+fn pure_comment() {
+    test_same("/* @__PURE__ */ pureOperation();\n");
+    test_same("/* @__PURE__ */ new PureConsutrctor();\n");
+    test("/* @__PURE__ */\npureOperation();\n", "/* @__PURE__ */ pureOperation();\n");
+    test(
+        "/* @__PURE__ The comment may contain additional text */ pureOperation();\n",
+        "/* @__PURE__ */ pureOperation();\n",
+    );
+    test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
+
+    test_same("/* #__PURE__ */ function foo() {}\n"); // FIXME: can be removed. // INVALID: Only allowed for calls
+
+    test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
+    test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
+    test("/*#__PURE__*/ (foo(), bar());", "foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+
+    test_same("/* @__PURE__ */ a.b().c.d();\n");
+    test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
+    test_same("(/* @__PURE__ */ a()).b;\n");
 }
 
 // followup from https://github.com/oxc-project/oxc/pull/6422

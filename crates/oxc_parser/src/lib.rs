@@ -343,7 +343,7 @@ use parser_parse::UniquePromise;
 struct ParserImpl<'a> {
     options: ParseOptions,
 
-    lexer: Lexer<'a>,
+    pub(crate) lexer: Lexer<'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,

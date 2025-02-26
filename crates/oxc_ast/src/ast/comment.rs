@@ -125,6 +125,17 @@ impl Comment {
             || source_text.contains("@preserve")
     }
 
+    /// `#__PURE__` Notation Specification
+    ///
+    /// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/c14f7e197cb225c9eee877143536665ce3150712/pure-notation-spec.md>
+    #[inline] // inline because code path is hot.
+    pub fn is_pure(&self, source_text: &str) -> bool {
+        source_text[(self.span.start + 2) as usize..]
+            .trim_ascii_start()
+            .strip_prefix(['@', '#'])
+            .is_some_and(|s| s.starts_with("__PURE__"))
+    }
+
     /// Gets the span of the comment content.
     pub fn content_span(&self) -> Span {
         match self.kind {
