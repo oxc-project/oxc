@@ -155,22 +155,24 @@ macro_rules! inherit_variants {
                 YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
                 /// Inherited from [`Expression`]
                 PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
+                /// See [`V8InstrinsicExpression`] for AST node details.
+                V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 32,
 
                 /// Inherited from [`Expression`]
-                JSXElement(Box<'a, JSXElement<'a>>) = 32,
+                JSXElement(Box<'a, JSXElement<'a>>) = 33,
                 /// Inherited from [`Expression`]
-                JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
+                JSXFragment(Box<'a, JSXFragment<'a>>) = 34,
 
                 /// Inherited from [`Expression`]
-                TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+                TSAsExpression(Box<'a, TSAsExpression<'a>>) = 35,
                 /// Inherited from [`Expression`]
-                TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+                TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 36,
                 /// Inherited from [`Expression`]
-                TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+                TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 37,
                 /// Inherited from [`Expression`]
-                TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+                TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 38,
                 /// Inherited from [`Expression`]
-                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 39,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -221,6 +223,7 @@ macro_rules! inherit_variants {
                 UpdateExpression,
                 YieldExpression,
                 PrivateInExpression,
+                V8IntrinsicExpression,
                 JSXElement,
                 JSXFragment,
                 TSAsExpression,

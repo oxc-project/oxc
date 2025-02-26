@@ -87,6 +87,7 @@ export type Expression =
   | UpdateExpression
   | YieldExpression
   | PrivateInExpression
+  | V8IntrinsicExpression
   | JSXElement
   | JSXFragment
   | TSAsExpression
@@ -179,6 +180,7 @@ export type PropertyKey =
   | UpdateExpression
   | YieldExpression
   | PrivateInExpression
+  | V8IntrinsicExpression
   | JSXElement
   | JSXFragment
   | TSAsExpression
@@ -299,6 +301,7 @@ export type Argument =
   | UpdateExpression
   | YieldExpression
   | PrivateInExpression
+  | V8IntrinsicExpression
   | JSXElement
   | JSXFragment
   | TSAsExpression
@@ -335,6 +338,12 @@ export interface PrivateInExpression extends Span {
   left: PrivateIdentifier;
   operator: BinaryOperator;
   right: Expression;
+}
+
+export interface V8IntrinsicExpression extends Span {
+  type: 'V8IntrinsicExpression';
+  name: IdentifierReference;
+  arguments: Array<Argument>;
 }
 
 export interface LogicalExpression extends Span {
@@ -610,6 +619,7 @@ export type ForStatementInit =
   | UpdateExpression
   | YieldExpression
   | PrivateInExpression
+  | V8IntrinsicExpression
   | JSXElement
   | JSXFragment
   | TSAsExpression
@@ -1018,6 +1028,7 @@ export type ExportDefaultDeclarationKind =
   | UpdateExpression
   | YieldExpression
   | PrivateInExpression
+  | V8IntrinsicExpression
   | JSXElement
   | JSXFragment
   | TSAsExpression
@@ -1667,6 +1678,7 @@ export type JSXExpression =
   | UpdateExpression
   | YieldExpression
   | PrivateInExpression
+  | V8IntrinsicExpression
   | JSXElement
   | JSXFragment
   | TSAsExpression

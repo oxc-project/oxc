@@ -198,6 +198,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
             Self::PrivateInExpression(it) => {
                 Expression::PrivateInExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                Expression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::JSXElement(it) => Expression::JSXElement(CloneIn::clone_in(it, allocator)),
             Self::JSXFragment(it) => Expression::JSXFragment(CloneIn::clone_in(it, allocator)),
             Self::TSAsExpression(it) => {
@@ -390,6 +393,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
             Self::PrivateInExpression(it) => {
                 ArrayExpressionElement::PrivateInExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                ArrayExpressionElement::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::JSXElement(it) => {
                 ArrayExpressionElement::JSXElement(CloneIn::clone_in(it, allocator))
             }
@@ -560,6 +566,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
             }
             Self::PrivateInExpression(it) => {
                 PropertyKey::PrivateInExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                PropertyKey::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::JSXElement(it) => PropertyKey::JSXElement(CloneIn::clone_in(it, allocator)),
             Self::JSXFragment(it) => PropertyKey::JSXFragment(CloneIn::clone_in(it, allocator)),
@@ -822,6 +831,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
             Self::PrivateInExpression(it) => {
                 Argument::PrivateInExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                Argument::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::JSXElement(it) => Argument::JSXElement(CloneIn::clone_in(it, allocator)),
             Self::JSXFragment(it) => Argument::JSXFragment(CloneIn::clone_in(it, allocator)),
             Self::TSAsExpression(it) => Argument::TSAsExpression(CloneIn::clone_in(it, allocator)),
@@ -893,6 +905,17 @@ impl<'new_alloc> CloneIn<'new_alloc> for PrivateInExpression<'_> {
             left: CloneIn::clone_in(&self.left, allocator),
             operator: CloneIn::clone_in(&self.operator, allocator),
             right: CloneIn::clone_in(&self.right, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for V8IntrinsicExpression<'_> {
+    type Cloned = V8IntrinsicExpression<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        V8IntrinsicExpression {
+            span: CloneIn::clone_in(&self.span, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+            arguments: CloneIn::clone_in(&self.arguments, allocator),
         }
     }
 }
@@ -1582,6 +1605,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             }
             Self::PrivateInExpression(it) => {
                 ForStatementInit::PrivateInExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                ForStatementInit::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::JSXElement(it) => ForStatementInit::JSXElement(CloneIn::clone_in(it, allocator)),
             Self::JSXFragment(it) => {
@@ -2508,6 +2534,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
             Self::PrivateInExpression(it) => {
                 ExportDefaultDeclarationKind::PrivateInExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => ExportDefaultDeclarationKind::V8IntrinsicExpression(
+                CloneIn::clone_in(it, allocator),
+            ),
             Self::JSXElement(it) => {
                 ExportDefaultDeclarationKind::JSXElement(CloneIn::clone_in(it, allocator))
             }
@@ -3964,6 +3993,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
             }
             Self::PrivateInExpression(it) => {
                 JSXExpression::PrivateInExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                JSXExpression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::JSXElement(it) => JSXExpression::JSXElement(CloneIn::clone_in(it, allocator)),
             Self::JSXFragment(it) => JSXExpression::JSXFragment(CloneIn::clone_in(it, allocator)),

@@ -97,6 +97,7 @@ impl GetSpan for Expression<'_> {
             Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
             Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(it.as_ref()),
             Self::JSXElement(it) => GetSpan::span(it.as_ref()),
             Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
             Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
@@ -190,6 +191,7 @@ impl GetSpan for ArrayExpressionElement<'_> {
             Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
             Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(it.as_ref()),
             Self::JSXElement(it) => GetSpan::span(it.as_ref()),
             Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
             Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
@@ -271,6 +273,7 @@ impl GetSpan for PropertyKey<'_> {
             Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
             Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(it.as_ref()),
             Self::JSXElement(it) => GetSpan::span(it.as_ref()),
             Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
             Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
@@ -401,6 +404,7 @@ impl GetSpan for Argument<'_> {
             Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
             Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(it.as_ref()),
             Self::JSXElement(it) => GetSpan::span(it.as_ref()),
             Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
             Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
@@ -437,6 +441,13 @@ impl GetSpan for BinaryExpression<'_> {
 }
 
 impl GetSpan for PrivateInExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for V8IntrinsicExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -791,6 +802,7 @@ impl GetSpan for ForStatementInit<'_> {
             Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
             Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(it.as_ref()),
             Self::JSXElement(it) => GetSpan::span(it.as_ref()),
             Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
             Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
@@ -1225,6 +1237,7 @@ impl GetSpan for ExportDefaultDeclarationKind<'_> {
             Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
             Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(it.as_ref()),
             Self::JSXElement(it) => GetSpan::span(it.as_ref()),
             Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
             Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),
@@ -2067,6 +2080,7 @@ impl GetSpan for JSXExpression<'_> {
             Self::UpdateExpression(it) => GetSpan::span(it.as_ref()),
             Self::YieldExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateInExpression(it) => GetSpan::span(it.as_ref()),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(it.as_ref()),
             Self::JSXElement(it) => GetSpan::span(it.as_ref()),
             Self::JSXFragment(it) => GetSpan::span(it.as_ref()),
             Self::TSAsExpression(it) => GetSpan::span(it.as_ref()),

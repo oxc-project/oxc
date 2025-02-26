@@ -926,6 +926,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_v_8_intrinsic_expression(&mut self, it: &V8IntrinsicExpression<'a>) {
+        walk_v_8_intrinsic_expression(self, it);
+    }
+
+    #[inline]
     fn visit_jsx_element(&mut self, it: &JSXElement<'a>) {
         walk_jsx_element(self, it);
     }
@@ -1530,6 +1535,7 @@ pub mod walk {
             Expression::UpdateExpression(it) => visitor.visit_update_expression(it),
             Expression::YieldExpression(it) => visitor.visit_yield_expression(it),
             Expression::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
+            Expression::V8IntrinsicExpression(it) => visitor.visit_v_8_intrinsic_expression(it),
             Expression::JSXElement(it) => visitor.visit_jsx_element(it),
             Expression::JSXFragment(it) => visitor.visit_jsx_fragment(it),
             Expression::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
@@ -3380,6 +3386,19 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_private_identifier(&it.left);
         visitor.visit_expression(&it.right);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_v_8_intrinsic_expression<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &V8IntrinsicExpression<'a>,
+    ) {
+        let kind = AstKind::V8IntrinsicExpression(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_identifier_reference(&it.name);
+        visitor.visit_arguments(&it.arguments);
         visitor.leave_node(kind);
     }
 

@@ -233,6 +233,12 @@ const _: () = {
     assert!(offset_of!(PrivateInExpression, operator) == 32usize);
     assert!(offset_of!(PrivateInExpression, right) == 40usize);
 
+    assert!(size_of::<V8IntrinsicExpression>() == 72usize);
+    assert!(align_of::<V8IntrinsicExpression>() == 8usize);
+    assert!(offset_of!(V8IntrinsicExpression, span) == 0usize);
+    assert!(offset_of!(V8IntrinsicExpression, name) == 8usize);
+    assert!(offset_of!(V8IntrinsicExpression, arguments) == 40usize);
+
     assert!(size_of::<LogicalExpression>() == 48usize);
     assert!(align_of::<LogicalExpression>() == 8usize);
     assert!(offset_of!(LogicalExpression, span) == 0usize);
@@ -1794,6 +1800,12 @@ const _: () = {
     assert!(offset_of!(PrivateInExpression, left) == 8usize);
     assert!(offset_of!(PrivateInExpression, operator) == 24usize);
     assert!(offset_of!(PrivateInExpression, right) == 28usize);
+
+    assert!(size_of::<V8IntrinsicExpression>() == 44usize);
+    assert!(align_of::<V8IntrinsicExpression>() == 4usize);
+    assert!(offset_of!(V8IntrinsicExpression, span) == 0usize);
+    assert!(offset_of!(V8IntrinsicExpression, name) == 8usize);
+    assert!(offset_of!(V8IntrinsicExpression, arguments) == 28usize);
 
     assert!(size_of::<LogicalExpression>() == 28usize);
     assert!(align_of::<LogicalExpression>() == 4usize);

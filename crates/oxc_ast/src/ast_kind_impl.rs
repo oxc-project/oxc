@@ -160,6 +160,7 @@ impl<'a> AstKind<'a> {
             Expression::UpdateExpression(e) => Self::UpdateExpression(e),
             Expression::YieldExpression(e) => Self::YieldExpression(e),
             Expression::PrivateInExpression(e) => Self::PrivateInExpression(e),
+            Expression::V8IntrinsicExpression(e) => Self::V8IntrinsicExpression(e),
             Expression::JSXElement(e) => Self::JSXElement(e),
             Expression::JSXFragment(e) => Self::JSXFragment(e),
             Expression::TSAsExpression(e) => Self::TSAsExpression(e),
@@ -281,6 +282,7 @@ impl AstKind<'_> {
             Self::YieldExpression(_) => "YieldExpression".into(),
             Self::ImportExpression(_) => "ImportExpression".into(),
             Self::PrivateInExpression(_) => "PrivateInExpression".into(),
+            Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
 
             Self::ObjectProperty(p) => {
                 format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()

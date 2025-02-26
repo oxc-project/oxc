@@ -224,6 +224,10 @@ impl ContentEq for Expression<'_> {
                 Self::PrivateInExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
+            Self::V8IntrinsicExpression(it) => match other {
+                Self::V8IntrinsicExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
             Self::JSXElement(it) => match other {
                 Self::JSXElement(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
@@ -441,6 +445,10 @@ impl ContentEq for ArrayExpressionElement<'_> {
             },
             Self::PrivateInExpression(it) => match other {
                 Self::PrivateInExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
+            Self::V8IntrinsicExpression(it) => match other {
+                Self::V8IntrinsicExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
             Self::JSXElement(it) => match other {
@@ -662,6 +670,10 @@ impl ContentEq for PropertyKey<'_> {
             },
             Self::PrivateInExpression(it) => match other {
                 Self::PrivateInExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
+            Self::V8IntrinsicExpression(it) => match other {
+                Self::V8IntrinsicExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
             Self::JSXElement(it) => match other {
@@ -951,6 +963,10 @@ impl ContentEq for Argument<'_> {
                 Self::PrivateInExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
+            Self::V8IntrinsicExpression(it) => match other {
+                Self::V8IntrinsicExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
             Self::JSXElement(it) => match other {
                 Self::JSXElement(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
@@ -1023,6 +1039,13 @@ impl ContentEq for PrivateInExpression<'_> {
         ContentEq::content_eq(&self.left, &other.left)
             && ContentEq::content_eq(&self.operator, &other.operator)
             && ContentEq::content_eq(&self.right, &other.right)
+    }
+}
+
+impl ContentEq for V8IntrinsicExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.name, &other.name)
+            && ContentEq::content_eq(&self.arguments, &other.arguments)
     }
 }
 
@@ -1731,6 +1754,10 @@ impl ContentEq for ForStatementInit<'_> {
             },
             Self::PrivateInExpression(it) => match other {
                 Self::PrivateInExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
+            Self::V8IntrinsicExpression(it) => match other {
+                Self::V8IntrinsicExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
             Self::JSXElement(it) => match other {
@@ -2502,6 +2529,10 @@ impl ContentEq for ExportDefaultDeclarationKind<'_> {
             },
             Self::PrivateInExpression(it) => match other {
                 Self::PrivateInExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
+            Self::V8IntrinsicExpression(it) => match other {
+                Self::V8IntrinsicExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
             Self::JSXElement(it) => match other {
@@ -3880,6 +3911,10 @@ impl ContentEq for JSXExpression<'_> {
             },
             Self::PrivateInExpression(it) => match other {
                 Self::PrivateInExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
+            Self::V8IntrinsicExpression(it) => match other {
+                Self::V8IntrinsicExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
             Self::JSXElement(it) => match other {

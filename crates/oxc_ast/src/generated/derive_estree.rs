@@ -116,6 +116,7 @@ impl Serialize for Expression<'_> {
             Expression::UpdateExpression(x) => Serialize::serialize(x, serializer),
             Expression::YieldExpression(x) => Serialize::serialize(x, serializer),
             Expression::PrivateInExpression(x) => Serialize::serialize(x, serializer),
+            Expression::V8IntrinsicExpression(x) => Serialize::serialize(x, serializer),
             Expression::JSXElement(x) => Serialize::serialize(x, serializer),
             Expression::JSXFragment(x) => Serialize::serialize(x, serializer),
             Expression::TSAsExpression(x) => Serialize::serialize(x, serializer),
@@ -232,6 +233,7 @@ impl Serialize for ArrayExpressionElement<'_> {
             ArrayExpressionElement::UpdateExpression(x) => Serialize::serialize(x, serializer),
             ArrayExpressionElement::YieldExpression(x) => Serialize::serialize(x, serializer),
             ArrayExpressionElement::PrivateInExpression(x) => Serialize::serialize(x, serializer),
+            ArrayExpressionElement::V8IntrinsicExpression(x) => Serialize::serialize(x, serializer),
             ArrayExpressionElement::JSXElement(x) => Serialize::serialize(x, serializer),
             ArrayExpressionElement::JSXFragment(x) => Serialize::serialize(x, serializer),
             ArrayExpressionElement::TSAsExpression(x) => Serialize::serialize(x, serializer),
@@ -325,6 +327,7 @@ impl Serialize for PropertyKey<'_> {
             PropertyKey::UpdateExpression(x) => Serialize::serialize(x, serializer),
             PropertyKey::YieldExpression(x) => Serialize::serialize(x, serializer),
             PropertyKey::PrivateInExpression(x) => Serialize::serialize(x, serializer),
+            PropertyKey::V8IntrinsicExpression(x) => Serialize::serialize(x, serializer),
             PropertyKey::JSXElement(x) => Serialize::serialize(x, serializer),
             PropertyKey::JSXFragment(x) => Serialize::serialize(x, serializer),
             PropertyKey::TSAsExpression(x) => Serialize::serialize(x, serializer),
@@ -520,6 +523,7 @@ impl Serialize for Argument<'_> {
             Argument::UpdateExpression(x) => Serialize::serialize(x, serializer),
             Argument::YieldExpression(x) => Serialize::serialize(x, serializer),
             Argument::PrivateInExpression(x) => Serialize::serialize(x, serializer),
+            Argument::V8IntrinsicExpression(x) => Serialize::serialize(x, serializer),
             Argument::JSXElement(x) => Serialize::serialize(x, serializer),
             Argument::JSXFragment(x) => Serialize::serialize(x, serializer),
             Argument::TSAsExpression(x) => Serialize::serialize(x, serializer),
@@ -577,6 +581,17 @@ impl Serialize for PrivateInExpression<'_> {
         map.serialize_entry("left", &self.left)?;
         map.serialize_entry("operator", &self.operator)?;
         map.serialize_entry("right", &self.right)?;
+        map.end()
+    }
+}
+
+impl Serialize for V8IntrinsicExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "V8IntrinsicExpression")?;
+        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("arguments", &self.arguments)?;
         map.end()
     }
 }
@@ -1089,6 +1104,7 @@ impl Serialize for ForStatementInit<'_> {
             ForStatementInit::UpdateExpression(x) => Serialize::serialize(x, serializer),
             ForStatementInit::YieldExpression(x) => Serialize::serialize(x, serializer),
             ForStatementInit::PrivateInExpression(x) => Serialize::serialize(x, serializer),
+            ForStatementInit::V8IntrinsicExpression(x) => Serialize::serialize(x, serializer),
             ForStatementInit::JSXElement(x) => Serialize::serialize(x, serializer),
             ForStatementInit::JSXFragment(x) => Serialize::serialize(x, serializer),
             ForStatementInit::TSAsExpression(x) => Serialize::serialize(x, serializer),
@@ -1908,6 +1924,9 @@ impl Serialize for ExportDefaultDeclarationKind<'_> {
             }
             ExportDefaultDeclarationKind::YieldExpression(x) => Serialize::serialize(x, serializer),
             ExportDefaultDeclarationKind::PrivateInExpression(x) => {
+                Serialize::serialize(x, serializer)
+            }
+            ExportDefaultDeclarationKind::V8IntrinsicExpression(x) => {
                 Serialize::serialize(x, serializer)
             }
             ExportDefaultDeclarationKind::JSXElement(x) => Serialize::serialize(x, serializer),
@@ -3141,6 +3160,7 @@ impl Serialize for JSXExpression<'_> {
             JSXExpression::UpdateExpression(x) => Serialize::serialize(x, serializer),
             JSXExpression::YieldExpression(x) => Serialize::serialize(x, serializer),
             JSXExpression::PrivateInExpression(x) => Serialize::serialize(x, serializer),
+            JSXExpression::V8IntrinsicExpression(x) => Serialize::serialize(x, serializer),
             JSXExpression::JSXElement(x) => Serialize::serialize(x, serializer),
             JSXExpression::JSXFragment(x) => Serialize::serialize(x, serializer),
             JSXExpression::TSAsExpression(x) => Serialize::serialize(x, serializer),

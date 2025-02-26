@@ -40,6 +40,7 @@ pub enum AstType {
     UnaryExpression,
     BinaryExpression,
     PrivateInExpression,
+    V8IntrinsicExpression,
     LogicalExpression,
     ConditionalExpression,
     AssignmentExpression,
@@ -210,6 +211,7 @@ pub enum AstKind<'a> {
     UnaryExpression(&'a UnaryExpression<'a>),
     BinaryExpression(&'a BinaryExpression<'a>),
     PrivateInExpression(&'a PrivateInExpression<'a>),
+    V8IntrinsicExpression(&'a V8IntrinsicExpression<'a>),
     LogicalExpression(&'a LogicalExpression<'a>),
     ConditionalExpression(&'a ConditionalExpression<'a>),
     AssignmentExpression(&'a AssignmentExpression<'a>),
@@ -381,6 +383,7 @@ impl GetSpan for AstKind<'_> {
             Self::UnaryExpression(it) => it.span(),
             Self::BinaryExpression(it) => it.span(),
             Self::PrivateInExpression(it) => it.span(),
+            Self::V8IntrinsicExpression(it) => it.span(),
             Self::LogicalExpression(it) => it.span(),
             Self::ConditionalExpression(it) => it.span(),
             Self::AssignmentExpression(it) => it.span(),
@@ -785,6 +788,15 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_private_in_expression(self) -> Option<&'a PrivateInExpression<'a>> {
         if let Self::PrivateInExpression(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_v_8_intrinsic_expression(self) -> Option<&'a V8IntrinsicExpression<'a>> {
+        if let Self::V8IntrinsicExpression(v) = self {
             Some(v)
         } else {
             None

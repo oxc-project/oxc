@@ -165,6 +165,9 @@ pub(crate) unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         Expression::PrivateInExpression(node) => {
             walk_private_in_expression(traverser, (&mut **node) as *mut _, ctx)
         }
+        Expression::V8IntrinsicExpression(node) => {
+            walk_v8_intrinsic_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
         Expression::JSXElement(node) => walk_jsx_element(traverser, (&mut **node) as *mut _, ctx),
         Expression::JSXFragment(node) => walk_jsx_fragment(traverser, (&mut **node) as *mut _, ctx),
         Expression::TSAsExpression(node) => {
@@ -298,6 +301,7 @@ pub(crate) unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
         | ArrayExpressionElement::UpdateExpression(_)
         | ArrayExpressionElement::YieldExpression(_)
         | ArrayExpressionElement::PrivateInExpression(_)
+        | ArrayExpressionElement::V8IntrinsicExpression(_)
         | ArrayExpressionElement::JSXElement(_)
         | ArrayExpressionElement::JSXFragment(_)
         | ArrayExpressionElement::TSAsExpression(_)
@@ -428,6 +432,7 @@ pub(crate) unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
         | PropertyKey::UpdateExpression(_)
         | PropertyKey::YieldExpression(_)
         | PropertyKey::PrivateInExpression(_)
+        | PropertyKey::V8IntrinsicExpression(_)
         | PropertyKey::JSXElement(_)
         | PropertyKey::JSXFragment(_)
         | PropertyKey::TSAsExpression(_)
@@ -754,6 +759,7 @@ pub(crate) unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
         | Argument::UpdateExpression(_)
         | Argument::YieldExpression(_)
         | Argument::PrivateInExpression(_)
+        | Argument::V8IntrinsicExpression(_)
         | Argument::JSXElement(_)
         | Argument::JSXFragment(_)
         | Argument::TSAsExpression(_)
@@ -852,6 +858,32 @@ pub(crate) unsafe fn walk_private_in_expression<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack(pop_token);
     traverser.exit_private_in_expression(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_v8_intrinsic_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut V8IntrinsicExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_v8_intrinsic_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::V8IntrinsicExpressionName(
+        ancestor::V8IntrinsicExpressionWithoutName(node, PhantomData),
+    ));
+    walk_identifier_reference(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_V8_INTRINSIC_EXPRESSION_NAME)
+            as *mut IdentifierReference,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::V8IntrinsicExpressionArguments);
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_V8_INTRINSIC_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>))
+        .iter_mut()
+    {
+        walk_argument(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_v8_intrinsic_expression(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_logical_expression<'a, Tr: Traverse<'a>>(
@@ -1710,6 +1742,7 @@ pub(crate) unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
         | ForStatementInit::UpdateExpression(_)
         | ForStatementInit::YieldExpression(_)
         | ForStatementInit::PrivateInExpression(_)
+        | ForStatementInit::V8IntrinsicExpression(_)
         | ForStatementInit::JSXElement(_)
         | ForStatementInit::JSXFragment(_)
         | ForStatementInit::TSAsExpression(_)
@@ -3128,6 +3161,7 @@ pub(crate) unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
         | ExportDefaultDeclarationKind::UpdateExpression(_)
         | ExportDefaultDeclarationKind::YieldExpression(_)
         | ExportDefaultDeclarationKind::PrivateInExpression(_)
+        | ExportDefaultDeclarationKind::V8IntrinsicExpression(_)
         | ExportDefaultDeclarationKind::JSXElement(_)
         | ExportDefaultDeclarationKind::JSXFragment(_)
         | ExportDefaultDeclarationKind::TSAsExpression(_)
@@ -3422,6 +3456,7 @@ pub(crate) unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
         | JSXExpression::UpdateExpression(_)
         | JSXExpression::YieldExpression(_)
         | JSXExpression::PrivateInExpression(_)
+        | JSXExpression::V8IntrinsicExpression(_)
         | JSXExpression::JSXElement(_)
         | JSXExpression::JSXFragment(_)
         | JSXExpression::TSAsExpression(_)

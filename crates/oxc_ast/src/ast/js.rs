@@ -123,22 +123,24 @@ pub enum Expression<'a> {
     YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
     /// See [`PrivateInExpression`] for AST node details.
     PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
+    /// See [`V8InstrinsicExpression`] for AST node details.
+    V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 32,
 
     /// See [`JSXElement`] for AST node details.
-    JSXElement(Box<'a, JSXElement<'a>>) = 32,
+    JSXElement(Box<'a, JSXElement<'a>>) = 33,
     /// See [`JSXFragment`] for AST node details.
-    JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
+    JSXFragment(Box<'a, JSXFragment<'a>>) = 34,
 
     /// See [`TSAsExpression`] for AST node details.
-    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 35,
     /// See [`TSSatisfiesExpression`] for AST node details.
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 36,
     /// See [`TSTypeAssertion`] for AST node details.
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 37,
     /// See [`TSNonNullExpression`] for AST node details.
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 38,
     /// See [`TSInstantiationExpression`] for AST node details.
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 39,
 
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
@@ -182,6 +184,7 @@ macro_rules! match_expression {
             | $ty::UpdateExpression(_)
             | $ty::YieldExpression(_)
             | $ty::PrivateInExpression(_)
+            | $ty::V8IntrinsicExpression(_)
             | $ty::JSXElement(_)
             | $ty::JSXFragment(_)
             | $ty::TSAsExpression(_)
@@ -663,6 +666,17 @@ pub struct PrivateInExpression<'a> {
     pub left: PrivateIdentifier<'a>,
     pub operator: BinaryOperator, // BinaryOperator::In
     pub right: Expression<'a>,
+}
+
+/// Intrinsics in Google's V8 engine `%GetOptimizationStatus`.
+/// See: https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+pub struct V8IntrinsicExpression<'a> {
+    pub span: Span,
+    pub name: IdentifierReference<'a>,
+    pub arguments: Vec<'a, Argument<'a>>,
 }
 
 /// `||` in `const foo = bar || 2;`

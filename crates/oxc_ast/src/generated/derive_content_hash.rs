@@ -109,6 +109,7 @@ impl ContentHash for Expression<'_> {
             Self::UpdateExpression(it) => ContentHash::content_hash(it, state),
             Self::YieldExpression(it) => ContentHash::content_hash(it, state),
             Self::PrivateInExpression(it) => ContentHash::content_hash(it, state),
+            Self::V8IntrinsicExpression(it) => ContentHash::content_hash(it, state),
             Self::JSXElement(it) => ContentHash::content_hash(it, state),
             Self::JSXFragment(it) => ContentHash::content_hash(it, state),
             Self::TSAsExpression(it) => ContentHash::content_hash(it, state),
@@ -195,6 +196,7 @@ impl ContentHash for ArrayExpressionElement<'_> {
             Self::UpdateExpression(it) => ContentHash::content_hash(it, state),
             Self::YieldExpression(it) => ContentHash::content_hash(it, state),
             Self::PrivateInExpression(it) => ContentHash::content_hash(it, state),
+            Self::V8IntrinsicExpression(it) => ContentHash::content_hash(it, state),
             Self::JSXElement(it) => ContentHash::content_hash(it, state),
             Self::JSXFragment(it) => ContentHash::content_hash(it, state),
             Self::TSAsExpression(it) => ContentHash::content_hash(it, state),
@@ -278,6 +280,7 @@ impl ContentHash for PropertyKey<'_> {
             Self::UpdateExpression(it) => ContentHash::content_hash(it, state),
             Self::YieldExpression(it) => ContentHash::content_hash(it, state),
             Self::PrivateInExpression(it) => ContentHash::content_hash(it, state),
+            Self::V8IntrinsicExpression(it) => ContentHash::content_hash(it, state),
             Self::JSXElement(it) => ContentHash::content_hash(it, state),
             Self::JSXFragment(it) => ContentHash::content_hash(it, state),
             Self::TSAsExpression(it) => ContentHash::content_hash(it, state),
@@ -429,6 +432,7 @@ impl ContentHash for Argument<'_> {
             Self::UpdateExpression(it) => ContentHash::content_hash(it, state),
             Self::YieldExpression(it) => ContentHash::content_hash(it, state),
             Self::PrivateInExpression(it) => ContentHash::content_hash(it, state),
+            Self::V8IntrinsicExpression(it) => ContentHash::content_hash(it, state),
             Self::JSXElement(it) => ContentHash::content_hash(it, state),
             Self::JSXFragment(it) => ContentHash::content_hash(it, state),
             Self::TSAsExpression(it) => ContentHash::content_hash(it, state),
@@ -471,6 +475,13 @@ impl ContentHash for PrivateInExpression<'_> {
         ContentHash::content_hash(&self.left, state);
         ContentHash::content_hash(&self.operator, state);
         ContentHash::content_hash(&self.right, state);
+    }
+}
+
+impl ContentHash for V8IntrinsicExpression<'_> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.name, state);
+        ContentHash::content_hash(&self.arguments, state);
     }
 }
 
@@ -832,6 +843,7 @@ impl ContentHash for ForStatementInit<'_> {
             Self::UpdateExpression(it) => ContentHash::content_hash(it, state),
             Self::YieldExpression(it) => ContentHash::content_hash(it, state),
             Self::PrivateInExpression(it) => ContentHash::content_hash(it, state),
+            Self::V8IntrinsicExpression(it) => ContentHash::content_hash(it, state),
             Self::JSXElement(it) => ContentHash::content_hash(it, state),
             Self::JSXFragment(it) => ContentHash::content_hash(it, state),
             Self::TSAsExpression(it) => ContentHash::content_hash(it, state),
@@ -1375,6 +1387,7 @@ impl ContentHash for ExportDefaultDeclarationKind<'_> {
             Self::UpdateExpression(it) => ContentHash::content_hash(it, state),
             Self::YieldExpression(it) => ContentHash::content_hash(it, state),
             Self::PrivateInExpression(it) => ContentHash::content_hash(it, state),
+            Self::V8IntrinsicExpression(it) => ContentHash::content_hash(it, state),
             Self::JSXElement(it) => ContentHash::content_hash(it, state),
             Self::JSXFragment(it) => ContentHash::content_hash(it, state),
             Self::TSAsExpression(it) => ContentHash::content_hash(it, state),
@@ -2242,6 +2255,7 @@ impl ContentHash for JSXExpression<'_> {
             Self::UpdateExpression(it) => ContentHash::content_hash(it, state),
             Self::YieldExpression(it) => ContentHash::content_hash(it, state),
             Self::PrivateInExpression(it) => ContentHash::content_hash(it, state),
+            Self::V8IntrinsicExpression(it) => ContentHash::content_hash(it, state),
             Self::JSXElement(it) => ContentHash::content_hash(it, state),
             Self::JSXFragment(it) => ContentHash::content_hash(it, state),
             Self::TSAsExpression(it) => ContentHash::content_hash(it, state),
