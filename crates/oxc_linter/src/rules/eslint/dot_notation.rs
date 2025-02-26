@@ -1,5 +1,4 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use lazy_static::lazy_static;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{Expression, MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
@@ -83,70 +82,35 @@ declare_oxc_lint!(
     pending
 );
 
-/// List of ES3 keywords.
-const KEYWORDS: &[&str] = &[
-    "abstract",
-    "boolean",
-    "break",
-    "byte",
-    "case",
-    "catch",
-    "char",
-    "class",
-    "const",
-    "continue",
-    "debugger",
-    "default",
-    "delete",
-    "do",
-    "double",
-    "else",
-    "enum",
-    "export",
-    "extends",
-    "false",
-    "final",
-    "finally",
-    "float",
-    "for",
-    "function",
-    "goto",
-    "if",
-    "implements",
-    "import",
-    "in",
-    "instanceof",
-    "int",
-    "interface",
-    "long",
-    "native",
-    "new",
-    "null",
-    "package",
-    "private",
-    "protected",
-    "public",
-    "return",
-    "short",
-    "static",
-    "super",
-    "switch",
-    "synchronized",
-    "this",
-    "throw",
-    "throws",
-    "transient",
-    "true",
-    "try",
-    "typeof",
-    "var",
-    "void",
-    "volatile",
-    "while",
-    "with",
-];
-lazy_static! {
-    static ref VALID_IDENTIFER: Regex = Regex::new(r"^[a-zA-Z_$][a-zA-Z0-9_$]*$").unwrap();
+fn is_keyword(s: &str) -> bool {
+    match s {
+        "abstract" | "boolean" | "break" | "byte" | "case" | "catch" | "char" | "class"
+        | "const" | "continue" | "debugger" | "default" | "delete" | "do" | "double" | "else"
+        | "enum" | "export" | "extends" | "false" | "final" | "finally" | "float" | "for"
+        | "function" | "goto" | "if" | "implements" | "import" | "in" | "instanceof" | "int"
+        | "interface" | "long" | "native" | "new" | "null" | "package" | "private"
+        | "protected" | "public" | "return" | "short" | "static" | "super" | "switch"
+        | "synchronized" | "this" | "throw" | "throws" | "transient" | "true" | "try"
+        | "typeof" | "var" | "void" | "volatile" | "while" | "with" => true,
+        _ => false,
+    }
+}
+
+fn is_valid_identifier(s: &str) -> bool {
+    let mut chars = s.bytes();
+    chars.next().map_or(false, |c|
+        /* a-zA-Z_$ */ c.is_ascii_alphabetic() || c == b'_' || c == b'$')
+        && chars.all(|c| /* a-zA-Z0-9_$ */ c.is_ascii_alphanumeric() || c == b'_' || c == b'$')
+}
+
+#[test]
+fn test_is_valid_identifier() {
+    assert!(is_valid_identifier("fooFOO_123$"));
+    assert!(is_valid_identifier("_FOO"));
+    assert!(is_valid_identifier("$FOO"));
+    assert!(!is_valid_identifier("😊"));
+    assert!(!is_valid_identifier("123abc"));
+    assert!(!is_valid_identifier("abc%%^"));
 }
 
 impl Rule for DotNotation {
@@ -166,51 +130,44 @@ impl Rule for DotNotation {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::MemberExpression(node) = &node.kind() {
-            match &node {
-                MemberExpression::ComputedMemberExpression(expr) => {
-                    let inner_expr =
-                        if let Expression::ParenthesizedExpression(inner_expr) = &expr.expression {
-                            &inner_expr.expression
+        let AstKind::MemberExpression(node) = &node.kind() else { return };
+        match &node {
+            MemberExpression::ComputedMemberExpression(expr) => {
+                let value = match expr.expression.get_inner_expression() {
+                    Expression::NullLiteral(x) => x.to_string(),
+                    Expression::BooleanLiteral(x) => x.to_string(),
+                    Expression::StringLiteral(x) => x.to_string(),
+                    Expression::TemplateLiteral(x) => {
+                        if x.expressions.len() == 0 && x.quasis.len() == 1 {
+                            x.quasis[0].value.cooked.unwrap().to_string()
                         } else {
-                            &expr.expression
-                        };
-
-                    if let Some((before, after)) = match &inner_expr {
-                        Expression::NullLiteral(x) => Some((x.to_string(), x.to_string())),
-                        Expression::BooleanLiteral(x) => Some((x.to_string(), x.to_string())),
-                        Expression::StringLiteral(x) => Some((x.to_string(), x.to_string())),
-                        Expression::TemplateLiteral(x) => {
-                            if x.expressions.len() == 0 && x.quasis.len() == 1 {
-                                let s = x.quasis[0].value.cooked.unwrap().into_string();
-                                Some((s.clone(), s))
-                            } else {
-                                None
-                            }
-                        }
-                        _ => None,
-                    } {
-                        if VALID_IDENTIFER.is_match(&after)
-                            && (self.0.allow_keywords || !KEYWORDS.contains(&after.as_str()))
-                            && !(self.0.allow_pattern.is_some()
-                                && self.0.allow_pattern.as_ref().unwrap().is_match(&after))
-                        {
-                            ctx.diagnostic(dot_notation_use_dot_diagnostic(
-                                expr.span, &before, &after,
-                            ))
+                            return;
                         }
                     }
+                    _ => return,
+                };
+                if !is_valid_identifier(&value) {
+                    return;
                 }
-                MemberExpression::StaticMemberExpression(expr) => {
-                    if !self.0.allow_keywords && KEYWORDS.contains(&expr.property.name.as_str()) {
-                        ctx.diagnostic(dot_notation_use_brackets_diagnostic(
-                            expr.span,
-                            &expr.property.name,
-                        ))
+                if !self.0.allow_keywords && is_keyword(&value.as_str()) {
+                    return;
+                }
+                if let Some(pattern) = &self.0.allow_pattern {
+                    if pattern.is_match(&value) {
+                        return;
                     }
                 }
-                _ => {}
+                ctx.diagnostic(dot_notation_use_dot_diagnostic(expr.span, &value, &value));
             }
+            MemberExpression::StaticMemberExpression(expr) => {
+                if !self.0.allow_keywords && is_keyword(&expr.property.name.as_str()) {
+                    ctx.diagnostic(dot_notation_use_brackets_diagnostic(
+                        expr.span,
+                        &expr.property.name,
+                    ))
+                }
+            }
+            _ => {}
         }
     }
 }
