@@ -358,9 +358,11 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
-        let mut new_stmts = self
-            .ast
-            .vec_with_capacity(stmts.len() + usize::from(extra_export_var_statement.is_some()));
+        let mut new_stmts = self.ast.vec_with_capacity(
+            stmts.len()
+                + usize::from(extra_export_var_statement.is_some())
+                + usize::from(need_empty_export_marker),
+        );
         stmts.iter().for_each(|stmt| {
             if transformed_spans.contains(&stmt.span()) {
                 let new_stmt = transformed_stmts
