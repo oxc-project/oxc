@@ -5,15 +5,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_new_object_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Calling Object constructors with new is disallowed.")
         .with_help("The object literal notation {} is preferable.")
         .with_label(span)
@@ -100,13 +94,15 @@ impl Rule for NoNewObject {
             return;
         };
 
+        if ident.name != "Object" {
+            return;
+        }
+
         // If `Object` refers to a custom identifier defined in the source code then the use of the `new`
         // constructor is allowed.
         let is_custom_object_id: bool = !ident.is_global_reference_name("Object", ctx.symbols());
 
         if is_custom_object_id {
-            return;
-        } else if ident.name != "Object" {
             return;
         }
 
