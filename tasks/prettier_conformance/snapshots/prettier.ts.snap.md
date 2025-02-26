@@ -57,7 +57,7 @@ ts compatibility: 202/573 (35.25%)
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 38.46% |
 | typescript/angular-component-examples/15969-computed.component.ts | 💥💥 | 75.00% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
-| typescript/argument-expansion/argument_expansion.ts | 💥 | 92.56% |
+| typescript/argument-expansion/argument_expansion.ts | 💥 | 69.06% |
 | typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 21.21% |
 | typescript/array/comment.ts | 💥 | 76.92% |
 | typescript/arrow/16067.ts | 💥💥 | 21.88% |
@@ -306,7 +306,7 @@ ts compatibility: 202/573 (35.25%)
 | typescript/private-fields-in-in/basic.ts | 💥 | 70.97% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 58.33% |
-| typescript/satisfies-operators/argument-expansion.ts | 💥💥 | 86.15% |
+| typescript/satisfies-operators/argument-expansion.ts | 💥💥 | 64.00% |
 | typescript/satisfies-operators/assignment.ts | 💥💥 | 68.09% |
 | typescript/satisfies-operators/basic.ts | 💥💥 | 87.93% |
 | typescript/satisfies-operators/comments-unstable.ts | 💥💥 | 72.73% |

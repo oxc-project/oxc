@@ -12,7 +12,7 @@ js compatibility: 252/643 (39.19%)
 | js/arrays/numbers-with-tricky-comments.js | 💥 | 40.00% |
 | js/arrays/numbers2.js | 💥 | 93.62% |
 | js/arrays/numbers3.js | 💥 | 66.67% |
-| js/arrays/preserve_empty_lines.js | 💥 | 62.81% |
+| js/arrays/preserve_empty_lines.js | 💥 | 73.60% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 40.40% |
 | js/arrow-call/class-property.js | 💥💥💥 | 0.00% |
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 6.67% |
@@ -243,7 +243,7 @@ js compatibility: 252/643 (39.19%)
 | js/method-chain/computed-merge.js | 💥 | 41.38% |
 | js/method-chain/computed.js | 💥 | 0.00% |
 | js/method-chain/conditional.js | 💥 | 78.43% |
-| js/method-chain/d3.js | 💥 | 40.00% |
+| js/method-chain/d3.js | 💥 | 30.77% |
 | js/method-chain/first_long.js | 💥 | 57.14% |
 | js/method-chain/fluent-configuration.js | 💥 | 37.50% |
 | js/method-chain/inline_merge.js | 💥 | 64.29% |
@@ -331,7 +331,7 @@ js compatibility: 252/643 (39.19%)
 | js/test-declarations/angular_waitForAsync.js | 💥💥 | 27.12% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 27.12% |
 | js/test-declarations/jest-each-template-string.js | 💥💥 | 25.00% |
-| js/test-declarations/jest-each.js | 💥💥 | 59.15% |
+| js/test-declarations/jest-each.js | 💥💥 | 56.94% |
 | js/test-declarations/test_declarations.js | 💥💥 | 39.68% |
 | js/throw_statement/binaryish.js | 💥 | 40.74% |
 | js/throw_statement/comment.js | 💥 | 47.06% |
