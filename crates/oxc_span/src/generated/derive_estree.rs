@@ -4,7 +4,7 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ESTree, FlatStructSerializer, Serializer, StructSerializer,
+    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
     ser::{AppendTo, AppendToConcat},
 };
 
@@ -31,9 +31,9 @@ impl ESTree for SourceType {
 impl ESTree for ModuleKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Script => "script".serialize(serializer),
-            Self::Module => "module".serialize(serializer),
-            Self::Unambiguous => "unambiguous".serialize(serializer),
+            Self::Script => JsonSafeString("script").serialize(serializer),
+            Self::Module => JsonSafeString("module").serialize(serializer),
+            Self::Unambiguous => JsonSafeString("unambiguous").serialize(serializer),
         }
     }
 }

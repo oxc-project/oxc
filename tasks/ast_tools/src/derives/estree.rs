@@ -65,7 +65,7 @@ impl Derive for DeriveESTree {
             ///@@line_break
             use oxc_estree::{
                 ser::{AppendTo, AppendToConcat},
-                ESTree, FlatStructSerializer, Serializer, StructSerializer,
+                ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
             };
         }
     }
@@ -248,9 +248,8 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
 
     let type_field = if g.add_type_field {
         let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
-        quote! {
-            state.serialize_field("type", #type_name);
-        }
+        let type_name = string_to_tokens(type_name, true);
+        quote!( state.serialize_field("type", #type_name); )
     } else {
         quote!()
     };
@@ -408,6 +407,7 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         let variant_ident = variant.ident();
         if variant.is_fieldless() {
             let value = get_fieldless_variant_value(enum_def, variant);
+            let value = string_to_tokens(value.as_ref(), false);
             quote! {
                 Self::#variant_ident => #value.serialize(serializer),
             }
@@ -522,5 +522,23 @@ pub fn get_struct_field_name(field: &FieldDef) -> Cow<'_, str> {
         Cow::Borrowed(field_name)
     } else {
         Cow::Owned(field.camel_name())
+    }
+}
+
+/// Convert string to [`TokenStream`] representing string literal.
+///
+/// If the string contains no characters which need escaping in JSON,
+/// returns tokens for `JsonSafeString("string")`, which is faster to serialize.
+///
+/// If `as_ref` is `true`, and string is JSON-safe, returns tokens for `&JsonSafeString("string")`.
+fn string_to_tokens(str: &str, as_ref: bool) -> TokenStream {
+    let contains_chars_needing_escaping =
+        str.as_bytes().iter().any(|&b| b < 32 || b == b'"' || b == b'\\');
+    if contains_chars_needing_escaping {
+        quote!(#str)
+    } else if as_ref {
+        quote!( &JsonSafeString(#str) )
+    } else {
+        quote!( JsonSafeString(#str) )
     }
 }

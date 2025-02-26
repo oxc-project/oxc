@@ -2,8 +2,8 @@ use cow_utils::CowUtils;
 
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactJSSerializer, CompactTSSerializer, ESTree, PrettyJSSerializer, PrettyTSSerializer,
-    SequenceSerializer, Serializer, StructSerializer,
+    CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, PrettyJSSerializer,
+    PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
 };
 
 use crate::ast::*;
@@ -113,7 +113,7 @@ pub struct In<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for In<'_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        "in".serialize(serializer);
+        JsonSafeString("in").serialize(serializer);
     }
 }
 
@@ -124,7 +124,7 @@ pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for Init<'_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        "init".serialize(serializer);
+        JsonSafeString("init").serialize(serializer);
     }
 }
 
@@ -143,9 +143,9 @@ impl ESTree for BooleanLiteralRaw<'_> {
         let raw = if self.0.span.is_unspanned() {
             None
         } else if self.0.value {
-            Some("true")
+            Some(JsonSafeString("true"))
         } else {
-            Some("false")
+            Some(JsonSafeString("false"))
         };
         raw.serialize(serializer);
     }
@@ -159,7 +159,7 @@ pub struct NullLiteralRaw<'b>(pub &'b NullLiteral);
 impl ESTree for NullLiteralRaw<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         #[expect(clippy::collection_is_never_read)] // Clippy is wrong!
-        let raw = if self.0.span.is_unspanned() { None } else { Some("null") };
+        let raw = if self.0.span.is_unspanned() { None } else { Some(JsonSafeString("null")) };
         raw.serialize(serializer);
     }
 }
@@ -171,8 +171,8 @@ pub struct BigIntLiteralBigint<'a, 'b>(pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralBigint<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let bigint = self.0.raw.strip_suffix('n').unwrap().cow_replace('_', "");
-        bigint.serialize(serializer);
+        let bigint = self.0.raw[..self.0.raw.len() - 1].cow_replace('_', "");
+        JsonSafeString(bigint.as_ref()).serialize(serializer);
     }
 }
 
@@ -206,7 +206,7 @@ impl ESTree for RegExpLiteralRegex<'_, '_> {
         if let Some(raw) = &self.0.raw {
             let flags_count = flags.bits().count_ones() as usize;
             let flags_index = raw.len() - flags_count;
-            state.serialize_field("flags", &raw[flags_index..]);
+            state.serialize_field("flags", &JsonSafeString(&raw[flags_index..]));
         } else {
             state.serialize_field("flags", &flags);
         }
@@ -243,7 +243,7 @@ pub struct RegExpFlagsConverter<'b>(pub &'b RegExpFlags);
 
 impl ESTree for RegExpFlagsConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.to_string().serialize(serializer);
+        JsonSafeString(self.0.to_string().as_str()).serialize(serializer);
     }
 }
 
@@ -289,7 +289,7 @@ impl ESTree for FormalParametersRest<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let rest = self.0;
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "RestElement");
+        state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_field("start", &rest.span.start);
         state.serialize_field("end", &rest.span.end);
         state.serialize_field("argument", &rest.argument.kind);
@@ -324,7 +324,7 @@ impl ESTree for ObjectPropertyConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let prop = self.0;
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Property");
+        state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &prop.span.start);
         state.serialize_field("end", &prop.span.end);
         state.serialize_field("method", &prop.method);
@@ -351,7 +351,7 @@ impl ESTree for BindingPropertyConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let prop = self.0;
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Property");
+        state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &prop.span.start);
         state.serialize_field("end", &prop.span.end);
         state.serialize_field("method", &false);
@@ -360,11 +360,11 @@ impl ESTree for BindingPropertyConverter<'_, '_> {
         state.serialize_field("key", &prop.key);
         // Acorn has `kind` field before `value` for shorthand properties
         if prop.shorthand {
-            state.serialize_field("kind", "init");
+            state.serialize_field("kind", &JsonSafeString("init"));
             state.serialize_field("value", &prop.value);
         } else {
             state.serialize_field("value", &prop.value);
-            state.serialize_field("kind", "init");
+            state.serialize_field("kind", &JsonSafeString("init"));
         }
         state.end();
     }
@@ -400,7 +400,7 @@ impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(init) = &self.0.init {
             let mut state = serializer.serialize_struct();
-            state.serialize_field("type", "AssignmentPattern");
+            state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
             state.serialize_field("start", &self.0.span.start);
             state.serialize_field("end", &self.0.span.end);
             state.serialize_field("left", &self.0.binding);
@@ -441,7 +441,7 @@ impl ESTree for ExportNamedDeclarationConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let decl = self.0;
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ExportNamedDeclaration");
+        state.serialize_field("type", &JsonSafeString("ExportNamedDeclaration"));
         state.serialize_field("start", &decl.span.start);
         state.serialize_field("end", &decl.span.end);
         state.serialize_field("declaration", &decl.declaration);

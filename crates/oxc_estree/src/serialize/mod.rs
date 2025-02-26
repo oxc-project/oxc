@@ -16,6 +16,7 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use sequences::SequenceSerializer;
+pub use strings::JsonSafeString;
 pub use structs::{FlatStructSerializer, StructSerializer};
 
 /// Trait for types which can be serialized to ESTree.
