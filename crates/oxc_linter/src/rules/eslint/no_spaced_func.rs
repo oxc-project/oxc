@@ -54,7 +54,7 @@ declare_oxc_lint!(
     NoSpacedFunc,
     eslint,
     style,
-    pending
+    fix
 );
 
 #[derive(PartialEq, Debug)]
@@ -98,7 +98,9 @@ fn get_substring_to_lparens(ctx: &LintContext, search_span: Span) -> FuncSpace {
 fn check_ident_to_application(ctx: &LintContext, span: Span) {
     match get_substring_to_lparens(ctx, span) {
         FuncSpace::NotSpaced => {}
-        FuncSpace::Spaced(span) => ctx.diagnostic(no_spaced_func_diagnostic(span)),
+        FuncSpace::Spaced(span) => {
+            ctx.diagnostic_with_fix(no_spaced_func_diagnostic(span), |fixer| fixer.delete(&span));
+        }
     }
 }
 
@@ -201,14 +203,14 @@ fn test() {
 			 t   ();",
     ];
 
-    /*
-    Fix pending.
     let fix = vec![
         ("f ();", "f();", None),
         ("f (a, b);", "f(a, b);", None),
         (
             "f
-            ();", "f();", None,
+            ();",
+            "f();",
+            None,
         ),
         ("f.b ();", "f.b();", None),
         ("f.b().c ();", "f.b().c();", None),
@@ -226,9 +228,8 @@ fn test() {
             None,
         ),
     ];
-    */
 
     Tester::new(NoSpacedFunc::NAME, NoSpacedFunc::PLUGIN, pass, fail)
-        //.expect_fix(fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
