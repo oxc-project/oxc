@@ -169,7 +169,7 @@ criterion2 = { version = "3.0.0", default-features = false }
 encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.6", default-features = false }
-fast-glob = "0.4.3"
+fast-glob = "0.4.4"
 fixedbitset = "0.5.7"
 flate2 = "1.0.35"
 futures = "0.3.31"
