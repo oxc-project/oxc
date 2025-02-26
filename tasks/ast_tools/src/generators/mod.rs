@@ -9,6 +9,7 @@ mod ast_builder;
 mod ast_kind;
 mod get_id;
 mod typescript;
+mod utf8_to_utf16;
 mod visit;
 
 pub use assert_layouts::AssertLayouts;
@@ -16,6 +17,7 @@ pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
 pub use get_id::GetIdGenerator;
 pub use typescript::TypescriptGenerator;
+pub use utf8_to_utf16::Utf8ToUtf16ConverterGenerator;
 pub use visit::VisitGenerator;
 
 /// Trait to define a generator.

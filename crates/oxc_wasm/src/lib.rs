@@ -491,22 +491,37 @@ impl Oxc {
     }
 
     fn convert_ast(&mut self, program: &mut Program) {
-        Utf8ToUtf16::new().convert(program);
+        let span_converter = Utf8ToUtf16::new(program.source_text);
+        span_converter.convert_program(program);
         self.ast_json = program.to_pretty_estree_ts_json();
-        self.comments = Self::map_comments(program.source_text, &program.comments);
+
+        self.comments = Self::map_comments(program.source_text, &program.comments, &span_converter);
     }
 
-    fn map_comments(source_text: &str, comments: &[OxcComment]) -> Vec<Comment> {
+    fn map_comments(
+        source_text: &str,
+        comments: &[OxcComment],
+        span_converter: &Utf8ToUtf16,
+    ) -> Vec<Comment> {
+        let mut offset_converter = span_converter.converter();
+
         comments
             .iter()
-            .map(|comment| Comment {
-                r#type: match comment.kind {
-                    CommentKind::Line => CommentType::Line,
-                    CommentKind::Block => CommentType::Block,
-                },
-                value: comment.content_span().source_text(source_text).to_string(),
-                start: comment.span.start,
-                end: comment.span.end,
+            .map(|comment| {
+                let value = comment.content_span().source_text(source_text).to_string();
+                let mut span = comment.span;
+                if let Some(converter) = &mut offset_converter {
+                    converter.convert_span(&mut span);
+                }
+                Comment {
+                    r#type: match comment.kind {
+                        CommentKind::Line => CommentType::Line,
+                        CommentKind::Block => CommentType::Block,
+                    },
+                    value,
+                    start: span.start,
+                    end: span.end,
+                }
             })
             .collect()
     }
