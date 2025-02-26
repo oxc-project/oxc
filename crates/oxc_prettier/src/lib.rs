@@ -74,12 +74,7 @@ impl<'a> Prettier<'a> {
         self.source_text = program.source_text;
         let doc = program.format(self);
 
-        Printer::new(
-            self.allocator,
-            doc,
-            self.options,
-            program.source_text.len(),
-        ).build()
+        Printer::new(self.allocator, doc, self.options, program.source_text.len()).build()
     }
 
     /// Debug entry, AST -> Doc
