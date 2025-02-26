@@ -13,16 +13,19 @@
 /// but it already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifier,
 /// dynamic import and meta property.
 use compact_str::ToCompactString;
+use oxc_ecmascript::BoundNames;
 use oxc_syntax::identifier::is_identifier_name;
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
-use oxc_semantic::{ReferenceFlags, SymbolFlags, SymbolId};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::utils::ast_builder::{create_compute_property_access, create_property_access};
+use crate::utils::ast_builder::{
+    create_compute_property_access, create_member_callee, create_property_access,
+};
 
 pub struct ModuleRunnerTransform<'a> {
     import_uid: u32,
@@ -59,26 +62,34 @@ impl<'a> Traverse<'a> for ModuleRunnerTransform<'a> {
 }
 
 impl<'a> ModuleRunnerTransform<'a> {
-    #[inline]
     fn transform_imports_and_exports(
         &mut self,
         program: &mut Program<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        for stmt in &mut program.body {
-            if Self::should_transform_statement(stmt) {
-                match ctx.ast.move_statement(stmt) {
-                    Statement::ImportDeclaration(import) => {
-                        let ImportDeclaration { span, source, specifiers, .. } = import.unbox();
-                        *stmt = self.transform_import(span, source, specifiers, ctx);
-                    }
-                    Statement::ExportAllDeclaration(export) => {}
-                    Statement::ExportNamedDeclaration(export) => {}
-                    Statement::ExportDefaultDeclaration(export) => {}
-                    _ => {}
+        let should_transform = program.body.iter().any(Self::should_transform_statement);
+        if !should_transform {
+            return;
+        }
+        // Reserve enough space for new statements
+        let mut new_stmts: ArenaVec<'a, Statement<'a>> =
+            ctx.ast.vec_with_capacity(program.body.len() * 2);
+        for stmt in &mut program.body.drain(..) {
+            match stmt {
+                Statement::ImportDeclaration(import) => {
+                    let ImportDeclaration { span, source, specifiers, .. } = import.unbox();
+                    new_stmts.push(self.transform_import(span, source, specifiers, ctx));
                 }
+                Statement::ExportNamedDeclaration(export) => {
+                    self.transform_export_named_declaration(&mut new_stmts, export, ctx);
+                }
+                Statement::ExportDefaultDeclaration(export) => {}
+                Statement::ExportAllDeclaration(export) => {}
+                _ => new_stmts.push(stmt),
             }
         }
+
+        program.body = new_stmts;
     }
 
     #[inline]
@@ -134,21 +145,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        self.import_uid += 1;
-        let uid = self.import_uid.to_compact_string();
-        let capacity = 20 + uid.len();
-        let mut string = ArenaString::with_capacity_in(capacity, ctx.ast.allocator);
-        string.push_str("__vite_ssr_import_");
-        string.push_str(&uid);
-        string.push_str("__");
-        let string = Atom::from(string);
-
-        // `await __vite_ssr_import__('vue', {importedNames: ['foo']});`
-        let callee =
-            ctx.create_unbound_ident_expr(SPAN, Atom::from(SSR_IMPORT_KEY), ReferenceFlags::Read);
+        // ['vue', { importedNames: ['foo'] }]`
         let mut arguments = ctx.ast.vec_with_capacity(1 + usize::from(specifiers.is_some()));
         arguments.push(Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))));
-
         let pattern = if let Some(mut specifiers) = specifiers {
             // `import * as vue from 'vue';` -> `const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');`
             if matches!(
@@ -163,7 +162,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
                 // Reuse the `vue` binding identifier by renaming it to `__vite_ssr_import_1__`
                 let mut local = specifier.unbox().local;
-                local.name = string;
+                local.name = self.generate_import_binding_name(ctx);
                 let binding = BoundIdentifier::from_binding_ident(&local);
                 ctx.symbols_mut().set_name(binding.symbol_id, &binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
@@ -171,24 +170,102 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let binding_pattern_kind = BindingPatternKind::BindingIdentifier(ctx.alloc(local));
                 ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
             } else {
-                let binding =
-                    ctx.generate_binding_in_current_scope(string, SymbolFlags::BlockScopedVariable);
+                let binding = self.generate_import_binding(ctx);
                 arguments.push(self.transform_import_metadata(&binding, specifiers, ctx));
                 binding.create_binding_pattern(ctx)
             }
         } else {
-            ctx.generate_binding_in_current_scope(string, SymbolFlags::BlockScopedVariable)
-                .create_binding_pattern(ctx)
+            let binding = self.generate_import_binding(ctx);
+            binding.create_binding_pattern(ctx)
         };
 
-        let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
-        let init = ctx.ast.expression_await(SPAN, call);
+        Self::create_imports(span, pattern, arguments, ctx)
+    }
 
-        // `const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
-        let kind = VariableDeclarationKind::Const;
-        let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, Some(init), false);
-        let declaration = ctx.ast.declaration_variable(span, kind, ctx.ast.vec1(declarator), false);
-        Statement::from(declaration)
+    fn transform_export_named_declaration(
+        &mut self,
+        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        export: ArenaBox<'a, ExportNamedDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let ExportNamedDeclaration { span, source, specifiers, declaration, .. } = export.unbox();
+
+        if let Some(declaration) = declaration {
+            let export_expression = match &declaration {
+                Declaration::VariableDeclaration(variable) => {
+                    let new_stmts_index = new_stmts.len();
+                    variable.bound_names(&mut |binding| {
+                        let binding = BoundIdentifier::from_binding_ident(binding);
+                        let ident = binding.create_read_expression(ctx);
+                        new_stmts.push(ctx.ast.statement_expression(
+                            SPAN,
+                            Self::create_exports(ident, &binding.name, ctx),
+                        ));
+                    });
+                    // Should be inserted before the exports
+                    new_stmts.insert(new_stmts_index, Statement::from(declaration));
+                    return;
+                }
+                Declaration::FunctionDeclaration(func) => {
+                    let binding = BoundIdentifier::from_binding_ident(func.id.as_ref().unwrap());
+                    let ident = binding.create_read_expression(ctx);
+                    Self::create_exports(ident, &binding.name, ctx)
+                }
+                Declaration::ClassDeclaration(class) => {
+                    let binding = BoundIdentifier::from_binding_ident(class.id.as_ref().unwrap());
+                    let ident = binding.create_read_expression(ctx);
+                    Self::create_exports(ident, &binding.name, ctx)
+                }
+                _ => {
+                    unreachable!(
+                        "Unsupported for transforming typescript declaration in named export"
+                    );
+                }
+            };
+            new_stmts.extend([
+                Statement::from(declaration),
+                ctx.ast.statement_expression(SPAN, export_expression),
+            ]);
+        } else {
+            // ```js
+            // export { foo, bar } from 'vue';
+            // // to
+            // const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['foo', 'bar'] });
+            // Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_1__.foo } });
+            // Object.defineProperty(__vite_ssr_exports__, 'bar', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_1__.bar } });
+            // ```
+            let import_binding = source.map(|source| {
+                let binding = self.generate_import_binding(ctx);
+                let pattern = binding.create_binding_pattern(ctx);
+                let imported_names = ctx.ast.vec_from_iter(specifiers.iter().map(|specifier| {
+                    let local_name = specifier.local.name();
+                    let local_name_expr = ctx.ast.expression_string_literal(SPAN, local_name, None);
+                    ArrayExpressionElement::from(local_name_expr)
+                }));
+                let arguments = ctx.ast.vec_from_array([
+                    Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))),
+                    Self::create_imported_names_object(imported_names, ctx),
+                ]);
+                new_stmts.push(Self::create_imports(SPAN, pattern, arguments, ctx));
+                binding
+            });
+
+            new_stmts.extend(specifiers.into_iter().map(|specifier| {
+                let ExportSpecifier { span, exported, local, .. } = specifier;
+                let export = if let Some(import_binding) = &import_binding {
+                    let object = import_binding.create_read_expression(ctx);
+                    let expr = create_property_access(SPAN, object, &local.name(), ctx);
+                    Self::create_exports(expr, &exported.name(), ctx)
+                } else {
+                    let ModuleExportName::IdentifierReference(ident) = local else {
+                        unreachable!()
+                    };
+                    let expr = Expression::Identifier(ctx.ast.alloc(ident));
+                    Self::create_exports(expr, &exported.name(), ctx)
+                };
+                ctx.ast.statement_expression(span, export)
+            }));
+        }
     }
 
     fn transform_import_metadata(
@@ -212,19 +289,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 }
             }));
         let elements = ctx.ast.vec_from_iter(elements_iter);
-        let value = ctx.ast.expression_array(SPAN, elements, None);
-        let key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("importedNames"));
-        let imported_names = ctx.ast.object_property_kind_object_property(
-            SPAN,
-            PropertyKind::Init,
-            key,
-            value,
-            false,
-            false,
-            false,
-        );
-        // { importedNames: ['foo', 'bar'] }
-        Argument::from(ctx.ast.expression_object(SPAN, ctx.ast.vec1(imported_names), None))
+        Self::create_imported_names_object(elements, ctx)
     }
 
     /// Insert an import binding into the import bindings map and then return an imported name.
@@ -258,6 +323,149 @@ impl<'a> ModuleRunnerTransform<'a> {
                 | Statement::ExportNamedDeclaration(_)
                 | Statement::ExportDefaultDeclaration(_)
         )
+    }
+
+    /// Generate a unique import binding name like `__vite_ssr_import_{uid}__`.
+    fn generate_import_binding_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+        self.import_uid += 1;
+        let uid = self.import_uid.to_compact_string();
+        let capacity = 20 + uid.len();
+        let mut string = ArenaString::with_capacity_in(capacity, ctx.ast.allocator);
+        string.push_str("__vite_ssr_import_");
+        string.push_str(&uid);
+        string.push_str("__");
+        Atom::from(string)
+    }
+
+    /// Generate a unique import binding whose name is like `__vite_ssr_import_{uid}__`.
+    #[inline]
+    fn generate_import_binding(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
+        let name = self.generate_import_binding_name(ctx);
+        ctx.generate_binding_in_current_scope(name, SymbolFlags::BlockScopedVariable)
+    }
+
+    // { importedNames: ['foo', 'bar'] }
+    fn create_imported_names_object(
+        elements: ArenaVec<'a, ArrayExpressionElement<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Argument<'a> {
+        let value = ctx.ast.expression_array(SPAN, elements, None);
+        let key = ctx.ast.property_key_static_identifier(SPAN, Atom::from("importedNames"));
+        let imported_names = ctx.ast.object_property_kind_object_property(
+            SPAN,
+            PropertyKind::Init,
+            key,
+            value,
+            false,
+            false,
+            false,
+        );
+        Argument::from(ctx.ast.expression_object(SPAN, ctx.ast.vec1(imported_names), None))
+    }
+
+    // `const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
+    fn create_imports(
+        span: Span,
+        pattern: BindingPattern<'a>,
+        arguments: ArenaVec<'a, Argument<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let callee =
+            ctx.create_unbound_ident_expr(SPAN, Atom::from(SSR_IMPORT_KEY), ReferenceFlags::Read);
+        let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let init = ctx.ast.expression_await(SPAN, call);
+
+        let kind = VariableDeclarationKind::Const;
+        let declarator = ctx.ast.variable_declarator(SPAN, kind, pattern, Some(init), false);
+        let declaration = ctx.ast.declaration_variable(span, kind, ctx.ast.vec1(declarator), false);
+        Statement::from(declaration)
+    }
+
+    // `Object.defineProperty(...arguments)`
+    fn create_define_property(
+        arguments: ArenaVec<'a, Argument<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let object =
+            ctx.create_unbound_ident_expr(SPAN, Atom::from("Object"), ReferenceFlags::Read);
+        let member = create_member_callee(object, "defineProperty", ctx);
+        ctx.ast.expression_call(SPAN, member, NONE, arguments, false)
+    }
+
+    // `key: value` or `key() {}`
+    fn create_object_property(
+        key: &str,
+        value: Option<Expression<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> ObjectPropertyKind<'a> {
+        let is_method = value.is_some();
+        ctx.ast.object_property_kind_object_property(
+            SPAN,
+            PropertyKind::Init,
+            ctx.ast.property_key_static_identifier(SPAN, key),
+            value.unwrap_or_else(|| ctx.ast.expression_boolean_literal(SPAN, true)),
+            is_method,
+            false,
+            false,
+        )
+    }
+
+    /// `{ enumerable: true, configurable: true, get(){ return expr } }`
+    fn create_function_with_return_statement(
+        expr: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let kind = FormalParameterKind::FormalParameter;
+        let params = ctx.ast.formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
+        let statement = ctx.ast.statement_return(SPAN, Some(expr));
+        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(statement));
+        let r#type = FunctionType::FunctionExpression;
+        let scope_id = ctx.create_child_scope(ctx.scopes().root_scope_id(), ScopeFlags::Function);
+        let function = ctx.ast.alloc_function_with_scope_id(
+            SPAN,
+            r#type,
+            None,
+            false,
+            false,
+            false,
+            NONE,
+            NONE,
+            params,
+            NONE,
+            Some(body),
+            scope_id,
+        );
+        Expression::FunctionExpression(function)
+    }
+
+    // `Object.defineProperty(__vite_ssr_exports__, 'foo', {enumerable: true, configurable: true, get(){ return foo }});`
+    fn create_exports(
+        expr: Expression<'a>,
+        exported_name: &str,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let getter = Self::create_function_with_return_statement(expr, ctx);
+        let object = ctx.ast.expression_object(
+            SPAN,
+            ctx.ast.vec_from_array([
+                Self::create_object_property("enumerable", None, ctx),
+                Self::create_object_property("configurable", None, ctx),
+                Self::create_object_property("get", Some(getter), ctx),
+            ]),
+            None,
+        );
+
+        let arguments = ctx.ast.vec_from_array([
+            Argument::from(ctx.create_unbound_ident_expr(
+                SPAN,
+                Atom::from(SSR_MODULE_EXPORTS_KEY),
+                ReferenceFlags::Read,
+            )),
+            Argument::from(ctx.ast.expression_string_literal(SPAN, exported_name, None)),
+            Argument::from(object),
+        ]);
+
+        Self::create_define_property(arguments, ctx)
     }
 }
 
@@ -326,6 +534,62 @@ mod test {
         test_same(
             "import * as vue from 'vue';function foo() { return vue.ref(0) }",
             "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');\nfunction foo() {\n\treturn __vite_ssr_import_1__.ref(0);\n}\n",
+        );
+    }
+
+    #[test]
+    fn export_function_declaration() {
+        test_same(
+            "export function foo() {}",
+            "function foo() {}\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn foo;\n\t}\n});\n",
+        );
+    }
+
+    #[test]
+    fn export_class_declaration() {
+        test_same(
+            "export class foo {}",
+            "class foo {}\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn foo;\n\t}\n});\n",
+        );
+    }
+
+    #[test]
+    fn export_var_declaration() {
+        test_same(
+            "export const a = 1, b = 2",
+            "const a = 1, b = 2;\nObject.defineProperty(__vite_ssr_exports__, 'a', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn a;\n\t}\n});\nObject.defineProperty(__vite_ssr_exports__, 'b', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn b;\n\t}\n});\n",
+        );
+    }
+
+    #[test]
+    fn export_named() {
+        test_same(
+            "const a = 1, b = 2; export { a, b as c }",
+            "const a = 1, b = 2;\nObject.defineProperty(__vite_ssr_exports__, 'a', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn a;\n\t}\n});\nObject.defineProperty(__vite_ssr_exports__, 'c', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn b;\n\t}\n});\n",
+        );
+    }
+
+    #[test]
+    fn export_named_from() {
+        test_same(
+            "export { ref, computed as c } from 'vue'",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['ref', 'computed'] });\nObject.defineProperty(__vite_ssr_exports__, 'ref', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_1__.ref;\n\t}\n});\nObject.defineProperty(__vite_ssr_exports__, 'c', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_1__.computed;\n\t}\n});\n",
+        );
+    }
+
+    #[test]
+    fn export_star_from() {
+        test_same(
+            "export * from 'vue'\nexport * from 'react'",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');\n__vite_ssr_exportAll__(__vite_ssr_import_1__);\nconst __vite_ssr_import_2__ = await __vite_ssr_import__('react');\n__vite_ssr_exportAll__(__vite_ssr_import_2__);\n",
+        );
+    }
+
+    #[test]
+    fn export_star_as_from() {
+        test_same(
+            "export * as foo from 'vue'",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true, \n\t\n\tconfigurable: true, \n\tget(){ return __vite_ssr_import_1__ }});\n",
         );
     }
 }
