@@ -576,6 +576,10 @@ pub struct CallExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
+    /// `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// `new C()` in `class C {}; new C();`
@@ -599,6 +603,10 @@ pub struct NewExpression<'a> {
     pub arguments: Vec<'a, Argument<'a>>,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// `import.meta` in `console.log(import.meta);`
@@ -1701,6 +1709,10 @@ pub struct Function<'a> {
     /// ```
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
+    /// `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 #[ast]

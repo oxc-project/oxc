@@ -341,6 +341,7 @@ impl ContentEq for CallExpression<'_> {
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.arguments, &other.arguments)
             && ContentEq::content_eq(&self.optional, &other.optional)
+            && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
 
@@ -349,6 +350,7 @@ impl ContentEq for NewExpression<'_> {
         ContentEq::content_eq(&self.callee, &other.callee)
             && ContentEq::content_eq(&self.arguments, &other.arguments)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
 
@@ -1061,6 +1063,7 @@ impl ContentEq for Function<'_> {
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
             && ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
 
