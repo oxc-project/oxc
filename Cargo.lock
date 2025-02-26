@@ -2198,7 +2198,6 @@ dependencies = [
  "indexmap",
  "insta",
  "itoa",
- "lazy_static",
  "oxc-browserslist",
  "oxc_allocator",
  "oxc_ast",

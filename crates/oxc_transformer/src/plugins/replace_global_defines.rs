@@ -1,6 +1,5 @@
 use std::{cmp::Ordering, sync::Arc};
 
-use lazy_static::lazy_static;
 use oxc_allocator::{Address, Allocator, GetAddress};
 use oxc_ast::{VisitMut, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
@@ -20,9 +19,7 @@ use rustc_hash::FxHashSet;
 #[derive(Debug, Clone)]
 pub struct ReplaceGlobalDefinesConfig(Arc<ReplaceGlobalDefinesConfigImpl>);
 
-lazy_static! {
-    static ref THIS_ATOM: Atom<'static> = Atom::from("this");
-}
+static THIS_ATOM: Atom<'static> = Atom::new_const("this");
 
 #[derive(Debug)]
 struct IdentifierDefine {

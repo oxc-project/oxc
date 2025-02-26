@@ -39,7 +39,6 @@ compact_str = { workspace = true }
 cow-utils = { workspace = true }
 indexmap = { workspace = true }
 itoa = { workspace = true }
-lazy_static = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
