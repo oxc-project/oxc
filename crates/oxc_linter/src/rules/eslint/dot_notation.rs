@@ -7,14 +7,14 @@ use oxc_span::Span;
 use regex::{Regex, RegexBuilder};
 
 fn dot_notation_use_dot_diagnostic(span: Span, incorrect: &str, correct: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("[{}] is better written in dot notation", incorrect))
-        .with_help(format!("Write it as .{}", correct))
+    OxcDiagnostic::warn(format!("[{incorrect}] is better written in dot notation"))
+        .with_help(format!("Write it as .{correct}"))
         .with_label(span)
 }
 
 fn dot_notation_use_brackets_diagnostic(span: Span, key: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(".{} is a syntax error", key))
-        .with_help(format!("Write it using bracket notation [\"{}\"]", key))
+    OxcDiagnostic::warn(format!(".{key} is a syntax error"))
+        .with_help(format!("Write it using bracket notation [\"{key}\"]"))
         .with_label(span)
 }
 
@@ -83,22 +83,73 @@ declare_oxc_lint!(
 );
 
 fn is_keyword(s: &str) -> bool {
-    match s {
-        "abstract" | "boolean" | "break" | "byte" | "case" | "catch" | "char" | "class"
-        | "const" | "continue" | "debugger" | "default" | "delete" | "do" | "double" | "else"
-        | "enum" | "export" | "extends" | "false" | "final" | "finally" | "float" | "for"
-        | "function" | "goto" | "if" | "implements" | "import" | "in" | "instanceof" | "int"
-        | "interface" | "long" | "native" | "new" | "null" | "package" | "private"
-        | "protected" | "public" | "return" | "short" | "static" | "super" | "switch"
-        | "synchronized" | "this" | "throw" | "throws" | "transient" | "true" | "try"
-        | "typeof" | "var" | "void" | "volatile" | "while" | "with" => true,
-        _ => false,
-    }
+    matches!(
+        s,
+        "abstract"
+            | "boolean"
+            | "break"
+            | "byte"
+            | "case"
+            | "catch"
+            | "char"
+            | "class"
+            | "const"
+            | "continue"
+            | "debugger"
+            | "default"
+            | "delete"
+            | "do"
+            | "double"
+            | "else"
+            | "enum"
+            | "export"
+            | "extends"
+            | "false"
+            | "final"
+            | "finally"
+            | "float"
+            | "for"
+            | "function"
+            | "goto"
+            | "if"
+            | "implements"
+            | "import"
+            | "in"
+            | "instanceof"
+            | "int"
+            | "interface"
+            | "long"
+            | "native"
+            | "new"
+            | "null"
+            | "package"
+            | "private"
+            | "protected"
+            | "public"
+            | "return"
+            | "short"
+            | "static"
+            | "super"
+            | "switch"
+            | "synchronized"
+            | "this"
+            | "throw"
+            | "throws"
+            | "transient"
+            | "true"
+            | "try"
+            | "typeof"
+            | "var"
+            | "void"
+            | "volatile"
+            | "while"
+            | "with"
+    )
 }
 
 fn is_valid_identifier(s: &str) -> bool {
     let mut chars = s.bytes();
-    chars.next().map_or(false, |c|
+    chars.next().is_some_and(|c|
         /* a-zA-Z_$ */ c.is_ascii_alphabetic() || c == b'_' || c == b'$')
         && chars.all(|c| /* a-zA-Z0-9_$ */ c.is_ascii_alphanumeric() || c == b'_' || c == b'$')
 }
@@ -149,7 +200,7 @@ impl Rule for DotNotation {
                 if !is_valid_identifier(&value) {
                     return;
                 }
-                if !self.0.allow_keywords && is_keyword(&value.as_str()) {
+                if !self.0.allow_keywords && is_keyword(value.as_str()) {
                     return;
                 }
                 if let Some(pattern) = &self.0.allow_pattern {
@@ -160,14 +211,14 @@ impl Rule for DotNotation {
                 ctx.diagnostic(dot_notation_use_dot_diagnostic(expr.span, &value, &value));
             }
             MemberExpression::StaticMemberExpression(expr) => {
-                if !self.0.allow_keywords && is_keyword(&expr.property.name.as_str()) {
+                if !self.0.allow_keywords && is_keyword(expr.property.name.as_str()) {
                     ctx.diagnostic(dot_notation_use_brackets_diagnostic(
                         expr.span,
                         &expr.property.name,
-                    ))
+                    ));
                 }
             }
-            _ => {}
+            MemberExpression::PrivateFieldExpression(_) => {}
         }
     }
 }
