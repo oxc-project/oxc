@@ -49,7 +49,13 @@ impl<'a> PeepholeOptimizations {
             }
             // Do not fold big int.
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => None,
-            _ => e.evaluate_value(&ctx).map(|v| ctx.value_to_expr(e.span, v)),
+            _ => {
+                if e.may_have_side_effects(&ctx) {
+                    None
+                } else {
+                    e.evaluate_value(&ctx).map(|v| ctx.value_to_expr(e.span, v))
+                }
+            }
         }
     }
 
@@ -58,7 +64,11 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
-        e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
+        if e.object.may_have_side_effects(&ctx) {
+            None
+        } else {
+            e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
+        }
     }
 
     fn try_fold_computed_member_expr(
@@ -66,7 +76,11 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
-        e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
+        if e.object.may_have_side_effects(&ctx) || e.expression.may_have_side_effects(&ctx) {
+            None
+        } else {
+            e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
+        }
     }
 
     fn try_fold_logical_expr(
@@ -304,8 +318,10 @@ impl<'a> PeepholeOptimizations {
 
     // Simplified version of `tryFoldAdd` from closure compiler.
     fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
-        if let Some(v) = e.evaluate_value(&ctx) {
-            return Some(ctx.value_to_expr(e.span, v));
+        if !e.may_have_side_effects(&ctx) {
+            if let Some(v) = e.evaluate_value(&ctx) {
+                return Some(ctx.value_to_expr(e.span, v));
+            }
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
 
