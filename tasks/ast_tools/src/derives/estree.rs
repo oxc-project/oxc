@@ -4,11 +4,10 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Expr, parse_str};
 
 use crate::{
     Result,
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
+    schema::{Def, EnumDef, FieldDef, File, Schema, StructDef, TypeDef, VariantDef, Visibility},
     utils::create_safe_ident,
 };
 
@@ -86,7 +85,6 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("skip") => struct_def.estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
-            AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
             AttrPart::Tag("no_ts_def") => struct_def.estree.custom_ts_def = Some(String::new()),
             AttrPart::List("add_fields", list) => {
                 for list_element in list {
@@ -129,13 +127,13 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::Enum(enum_def) => match part {
             AttrPart::Tag("skip") => enum_def.estree.skip = true,
             AttrPart::Tag("no_rename_variants") => enum_def.estree.no_rename_variants = true,
-            AttrPart::Tag("custom_serialize") => enum_def.estree.custom_serialize = true,
             AttrPart::Tag("no_ts_def") => enum_def.estree.custom_ts_def = Some(String::new()),
             AttrPart::String("custom_ts_def", value) => enum_def.estree.custom_ts_def = Some(value),
             AttrPart::String("ts_alias", value) => enum_def.estree.ts_alias = Some(value),
             AttrPart::String("add_ts_def", value) => {
                 enum_def.estree.add_ts_def = Some(value);
             }
+            AttrPart::String("via", value) => enum_def.estree.via = Some(value),
             _ => return Err(()),
         },
         // `#[estree]` attr on struct field
@@ -216,16 +214,18 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
 fn generate_impl_for_type(type_def: StructOrEnum, schema: &Schema) -> TokenStream {
     let body = match type_def {
         StructOrEnum::Struct(struct_def) => {
-            if struct_def.estree.custom_serialize {
-                return quote!();
+            if let Some(converter_name) = &struct_def.estree.via {
+                generate_body_for_via_override(converter_name, struct_def.file(schema), schema)
+            } else {
+                generate_body_for_struct(struct_def, schema)
             }
-            generate_body_for_struct(struct_def, schema)
         }
         StructOrEnum::Enum(enum_def) => {
-            if enum_def.estree.custom_serialize {
-                return quote!();
+            if let Some(converter_name) = &enum_def.estree.via {
+                generate_body_for_via_override(converter_name, enum_def.file(schema), schema)
+            } else {
+                generate_body_for_enum(enum_def, schema)
             }
-            generate_body_for_enum(enum_def, schema)
         }
     };
 
@@ -242,13 +242,6 @@ fn generate_impl_for_type(type_def: StructOrEnum, schema: &Schema) -> TokenStrea
 
 /// Generate body of `serialize` method for a struct.
 fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
-    if let Some(via_str) = struct_def.estree.via.as_deref() {
-        let via_expr = parse_str::<Expr>(via_str).unwrap();
-        return quote! {
-            #via_expr.serialize(serializer)
-        };
-    }
-
     let krate = struct_def.file(schema).krate();
     let mut g = StructSerializerGenerator::new(!struct_def.estree.no_type, krate, schema);
     g.generate_stmts_for_struct(struct_def, &quote!(self));
@@ -430,6 +423,17 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
             #(#match_branches)*
         }
     }
+}
+
+/// Generate body of `serialize` method for a struct or enum with `#[estree(via = ...)]` attribute.
+fn generate_body_for_via_override(
+    converter_name: &str,
+    file: &File,
+    schema: &Schema,
+) -> TokenStream {
+    let converter = schema.meta_by_name(converter_name);
+    let converter_path = converter.import_path_from_crate(file.krate(), schema);
+    quote!( #converter_path(self).serialize(serializer) )
 }
 
 /// Get if a struct field should be skipped when serializing.

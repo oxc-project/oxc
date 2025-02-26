@@ -104,7 +104,6 @@ impl EnumDef {
     }
 
     /// Get the [`File`] which this struct is defined in.
-    #[expect(dead_code)]
     pub fn file<'s>(&self, schema: &'s Schema) -> &'s File {
         &schema.files[self.file_id]
     }

@@ -148,7 +148,7 @@ pub struct JSXClosingFragment {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 #[estree(
-    custom_serialize,
+    via = JSXElementNameConverter,
     custom_ts_def = "type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpression"
 )]
 pub enum JSXElementName<'a> {
@@ -230,7 +230,7 @@ pub struct JSXMemberExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 #[estree(
-    custom_serialize,
+    via = JSXMemberExpressionObjectConverter,
     custom_ts_def = "type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression"
 )]
 pub enum JSXMemberExpressionObject<'a> {

@@ -324,7 +324,7 @@ pub enum ArrayExpressionElement<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize, ts_alias = "null")]
+#[estree(via = ElisionConverter)]
 pub struct Elision {
     pub span: Span,
 }
@@ -365,8 +365,8 @@ pub enum ObjectPropertyKind<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
+    via = ObjectPropertyConverter,
     field_order(span, method, shorthand, computed, key, kind, value),
-    custom_serialize
 )]
 pub struct ObjectProperty<'a> {
     pub span: Span,
@@ -1551,9 +1551,9 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
+    via = BindingPropertyConverter,
     add_fields(method = False, kind = Init),
     field_order(span, method, shorthand, computed, key, kind, value),
-    custom_serialize,
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,
@@ -1683,7 +1683,6 @@ pub struct Function<'a> {
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     /// The TypeScript return type annotation.
     #[ts]
@@ -1721,7 +1720,7 @@ pub enum FunctionType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
-    custom_serialize,
+    via = FormalParametersConverter,
     add_ts_def = "
         interface FormalParameterRest extends Span {
             type: 'RestElement';
@@ -1808,7 +1807,6 @@ pub struct ArrowFunctionExpression<'a> {
     pub r#async: bool,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
@@ -2446,7 +2444,7 @@ pub enum ImportAttributeKey<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize)]
+#[estree(via = ExportNamedDeclarationConverter)]
 pub struct ExportNamedDeclaration<'a> {
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,

@@ -227,15 +227,23 @@ impl ESTree for RegExpLiteralValue<'_, '_> {
     }
 }
 
-impl ESTree for RegExpFlags {
+#[ast_meta]
+#[estree(ts_type = "string")]
+pub struct RegExpPatternConverter<'a, 'b>(pub &'b RegExpPattern<'a>);
+
+impl ESTree for RegExpPatternConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        self.to_string().as_str().serialize(serializer);
+        self.0.to_string().serialize(serializer);
     }
 }
 
-impl ESTree for RegExpPattern<'_> {
+#[ast_meta]
+#[estree(ts_type = "string")]
+pub struct RegExpFlagsConverter<'b>(pub &'b RegExpFlags);
+
+impl ESTree for RegExpFlagsConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        self.to_string().as_str().serialize(serializer);
+        self.0.to_string().serialize(serializer);
     }
 }
 
@@ -244,7 +252,11 @@ impl ESTree for RegExpPattern<'_> {
 // --------------------
 
 /// Serialize `ArrayExpressionElement::Elision` variant as `null`.
-impl ESTree for Elision {
+#[ast_meta]
+#[estree(ts_type = "null")]
+pub struct ElisionConverter<'b>(#[expect(dead_code)] pub &'b Elision);
+
+impl ESTree for ElisionConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         ().serialize(serializer);
     }
@@ -252,14 +264,18 @@ impl ESTree for Elision {
 
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined
 /// and `argument` field flattened.
-impl ESTree for FormalParameters<'_> {
+#[ast_meta]
+#[estree(ts_type = "ParamPattern[]")]
+pub struct FormalParametersConverter<'a, 'b>(pub &'b FormalParameters<'a>);
+
+impl ESTree for FormalParametersConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut seq = serializer.serialize_sequence();
-        for item in &self.items {
+        for item in &self.0.items {
             seq.serialize_element(item);
         }
 
-        if let Some(rest) = &self.rest {
+        if let Some(rest) = &self.0.rest {
             seq.serialize_element(&FormalParametersRest(rest));
         }
 
@@ -301,45 +317,53 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
 }
 
 /// Serialize `ObjectProperty` with fields in same order as Acorn.
-impl ESTree for ObjectProperty<'_> {
+#[ast_meta]
+pub struct ObjectPropertyConverter<'a, 'b>(pub &'b ObjectProperty<'a>);
+
+impl ESTree for ObjectPropertyConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
+        let prop = self.0;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", "Property");
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("method", &self.method);
-        state.serialize_field("shorthand", &self.shorthand);
-        state.serialize_field("computed", &self.computed);
-        state.serialize_field("key", &self.key);
+        state.serialize_field("start", &prop.span.start);
+        state.serialize_field("end", &prop.span.end);
+        state.serialize_field("method", &prop.method);
+        state.serialize_field("shorthand", &prop.shorthand);
+        state.serialize_field("computed", &prop.computed);
+        state.serialize_field("key", &prop.key);
         // Acorn has `kind` field before `value` for methods and shorthand properties
-        if self.method || self.kind != PropertyKind::Init || self.shorthand {
-            state.serialize_field("kind", &self.kind);
-            state.serialize_field("value", &self.value);
+        if prop.method || prop.kind != PropertyKind::Init || prop.shorthand {
+            state.serialize_field("kind", &prop.kind);
+            state.serialize_field("value", &prop.value);
         } else {
-            state.serialize_field("value", &self.value);
-            state.serialize_field("kind", &self.kind);
+            state.serialize_field("value", &prop.value);
+            state.serialize_field("kind", &prop.kind);
         }
         state.end();
     }
 }
 
 /// Serialize `BindingProperty` with fields in same order as Acorn.
-impl ESTree for BindingProperty<'_> {
+#[ast_meta]
+pub struct BindingPropertyConverter<'a, 'b>(pub &'b BindingProperty<'a>);
+
+impl ESTree for BindingPropertyConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
+        let prop = self.0;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", "Property");
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
+        state.serialize_field("start", &prop.span.start);
+        state.serialize_field("end", &prop.span.end);
         state.serialize_field("method", &false);
-        state.serialize_field("shorthand", &self.shorthand);
-        state.serialize_field("computed", &self.computed);
-        state.serialize_field("key", &self.key);
+        state.serialize_field("shorthand", &prop.shorthand);
+        state.serialize_field("computed", &prop.computed);
+        state.serialize_field("key", &prop.key);
         // Acorn has `kind` field before `value` for shorthand properties
-        if self.shorthand {
+        if prop.shorthand {
             state.serialize_field("kind", "init");
-            state.serialize_field("value", &self.value);
+            state.serialize_field("value", &prop.value);
         } else {
-            state.serialize_field("value", &self.value);
+            state.serialize_field("value", &prop.value);
             state.serialize_field("kind", "init");
         }
         state.end();
@@ -410,20 +434,24 @@ impl ESTree for ImportExpressionArguments<'_> {
 ///
 /// Omit `with_clause` field (which is renamed to `attributes` in ESTree)
 /// unless `source` field is `Some`.
-impl ESTree for ExportNamedDeclaration<'_> {
+#[ast_meta]
+pub struct ExportNamedDeclarationConverter<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
+
+impl ESTree for ExportNamedDeclarationConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
+        let decl = self.0;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", "ExportNamedDeclaration");
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("declaration", &self.declaration);
-        state.serialize_field("specifiers", &self.specifiers);
-        state.serialize_field("source", &self.source);
-        state.serialize_ts_field("exportKind", &self.export_kind);
-        if self.source.is_some() {
+        state.serialize_field("start", &decl.span.start);
+        state.serialize_field("end", &decl.span.end);
+        state.serialize_field("declaration", &decl.declaration);
+        state.serialize_field("specifiers", &decl.specifiers);
+        state.serialize_field("source", &decl.source);
+        state.serialize_ts_field("exportKind", &decl.export_kind);
+        if decl.source.is_some() {
             state.serialize_field(
                 "attributes",
-                &crate::serialize::ExportNamedDeclarationWithClause(self),
+                &crate::serialize::ExportNamedDeclarationWithClause(decl),
             );
         }
         state.end();
@@ -484,30 +512,36 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 // JSX
 // --------------------
 
-impl ESTree for JSXElementName<'_> {
+#[ast_meta]
+pub struct JSXElementNameConverter<'a, 'b>(pub &'b JSXElementName<'a>);
+
+impl ESTree for JSXElementNameConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::Identifier(ident) => ident.serialize(serializer),
-            Self::IdentifierReference(ident) => {
+        match self.0 {
+            JSXElementName::Identifier(ident) => ident.serialize(serializer),
+            JSXElementName::IdentifierReference(ident) => {
                 JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer);
             }
-            Self::NamespacedName(name) => name.serialize(serializer),
-            Self::MemberExpression(expr) => expr.serialize(serializer),
-            Self::ThisExpression(expr) => {
+            JSXElementName::NamespacedName(name) => name.serialize(serializer),
+            JSXElementName::MemberExpression(expr) => expr.serialize(serializer),
+            JSXElementName::ThisExpression(expr) => {
                 JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer);
             }
         }
     }
 }
 
-impl ESTree for JSXMemberExpressionObject<'_> {
+#[ast_meta]
+pub struct JSXMemberExpressionObjectConverter<'a, 'b>(pub &'b JSXMemberExpressionObject<'a>);
+
+impl ESTree for JSXMemberExpressionObjectConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::IdentifierReference(ident) => {
+        match self.0 {
+            JSXMemberExpressionObject::IdentifierReference(ident) => {
                 JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer);
             }
-            Self::MemberExpression(expr) => expr.serialize(serializer),
-            Self::ThisExpression(expr) => {
+            JSXMemberExpressionObject::MemberExpression(expr) => expr.serialize(serializer),
+            JSXMemberExpressionObject::ThisExpression(expr) => {
                 JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer);
             }
         }

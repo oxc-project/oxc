@@ -194,6 +194,12 @@ impl ESTree for ArrayExpressionElement<'_> {
     }
 }
 
+impl ESTree for Elision {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ElisionConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for ObjectExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
@@ -211,6 +217,12 @@ impl ESTree for ObjectPropertyKind<'_> {
             Self::ObjectProperty(it) => it.serialize(serializer),
             Self::SpreadProperty(it) => it.serialize(serializer),
         }
+    }
+}
+
+impl ESTree for ObjectProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ObjectPropertyConverter(self).serialize(serializer)
     }
 }
 
@@ -1262,6 +1274,12 @@ impl ESTree for ObjectPattern<'_> {
     }
 }
 
+impl ESTree for BindingProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::BindingPropertyConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for ArrayPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
@@ -1314,6 +1332,12 @@ impl ESTree for FunctionType {
                 "TSEmptyBodyFunctionExpression".serialize(serializer)
             }
         }
+    }
+}
+
+impl ESTree for FormalParameters<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::FormalParametersConverter(self).serialize(serializer)
     }
 }
 
@@ -1684,6 +1708,12 @@ impl ESTree for ImportAttributeKey<'_> {
     }
 }
 
+impl ESTree for ExportNamedDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ExportNamedDeclarationConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for ExportDefaultDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
@@ -1868,6 +1898,18 @@ impl ESTree for RegExp<'_> {
     }
 }
 
+impl ESTree for RegExpPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::RegExpPatternConverter(self).serialize(serializer)
+    }
+}
+
+impl ESTree for RegExpFlags {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::RegExpFlagsConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for JSXElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
@@ -1939,6 +1981,12 @@ impl ESTree for JSXClosingFragment {
     }
 }
 
+impl ESTree for JSXElementName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::JSXElementNameConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for JSXNamespacedName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
@@ -1960,6 +2008,12 @@ impl ESTree for JSXMemberExpression<'_> {
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.property);
         state.end();
+    }
+}
+
+impl ESTree for JSXMemberExpressionObject<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::JSXMemberExpressionObjectConverter(self).serialize(serializer)
     }
 }
 
