@@ -571,8 +571,6 @@ export type FormalParameter =
   })
   & BindingPattern;
 
-export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
-
 export interface FunctionBody extends Span {
   type: 'BlockStatement';
   body: Array<Directive | Statement>;
