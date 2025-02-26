@@ -649,6 +649,7 @@ impl<'a> TraverseCtx<'a> {
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
+        // SAFETY: Caller muct uphold safety constraints
         unsafe { self.ancestry.retag_stack(ty) };
     }
 
