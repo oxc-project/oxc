@@ -47,6 +47,7 @@ impl Case for EstreeTest262Case {
         // in order to match Oxc's output.
         // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
         // field is (correctly) not `null` in these cases.
+        // `napi/parser` contains tests for correct parsing of hashbangs.
         if self.path().starts_with("test262/test/language/comments/hashbang/") {
             return true;
         }
