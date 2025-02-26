@@ -11,6 +11,7 @@ impl Lexer<'_> {
     /// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
     /// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
     pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
+        // SAFETY: Caller guarantees to uphold safety invariants
         unsafe { BYTE_HANDLERS[byte as usize](self) }
     }
 }

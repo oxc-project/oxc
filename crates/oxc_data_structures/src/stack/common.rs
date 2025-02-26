@@ -61,6 +61,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         let old_layout = unsafe { Self::layout_for(self.capacity_bytes()) };
 
         // Grow allocation.
+        // SAFETY:
         // `start` and `end` are boundaries of the allocation (`alloc` and `grow` ensure that).
         // So `old_start_ptr` and `old_layout` accurately describe the current allocation.
         // `grow` creates new allocation with byte size double what it currently is, or caps it
@@ -270,6 +271,7 @@ unsafe fn grow(
     // `layout_for` produces a layout with `T`'s alignment, so `new_ptr` is aligned for `T`.
     let new_ptr = unsafe { alloc::realloc(old_start.as_ptr(), old_layout, new_capacity_bytes) };
     let Some(new_start) = NonNull::new(new_ptr) else {
+        // SAFETY: See above
         let new_layout =
             unsafe { Layout::from_size_align_unchecked(new_capacity_bytes, old_layout.align()) };
         alloc::handle_alloc_error(new_layout);

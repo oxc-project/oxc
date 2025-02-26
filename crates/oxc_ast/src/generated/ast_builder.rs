@@ -6431,19 +6431,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn module_declaration_export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ModuleDeclaration<'a> {
         ModuleDeclaration::ExportDefaultDeclaration(self.alloc_export_default_declaration(
             span,
-            declaration,
             exported,
+            declaration,
         ))
     }
 
@@ -7060,16 +7060,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ExportDefaultDeclaration<'a> {
-        ExportDefaultDeclaration { span, declaration, exported }
+        ExportDefaultDeclaration { span, exported, declaration }
     }
 
     /// Build an [`ExportDefaultDeclaration`], and store it in the memory arena.
@@ -7078,16 +7078,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `exported`
+    /// * `declaration`
     #[inline]
     pub fn alloc_export_default_declaration(
         self,
         span: Span,
-        declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
+        declaration: ExportDefaultDeclarationKind<'a>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        Box::new_in(self.export_default_declaration(span, declaration, exported), self.allocator)
+        Box::new_in(self.export_default_declaration(span, exported, declaration), self.allocator)
     }
 
     /// Build an [`ExportAllDeclaration`].
@@ -7761,6 +7761,50 @@ impl<'a> AstBuilder<'a> {
             self.jsx_fragment(span, opening_fragment, closing_fragment, children),
             self.allocator,
         )
+    }
+
+    /// Build a [`JSXOpeningFragment`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_opening_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
+        JSXOpeningFragment { span }
+    }
+
+    /// Build a [`JSXOpeningFragment`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_opening_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn alloc_jsx_opening_fragment(self, span: Span) -> Box<'a, JSXOpeningFragment> {
+        Box::new_in(self.jsx_opening_fragment(span), self.allocator)
+    }
+
+    /// Build a [`JSXClosingFragment`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_closing_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
+        JSXClosingFragment { span }
+    }
+
+    /// Build a [`JSXClosingFragment`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::jsx_closing_fragment`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    #[inline]
+    pub fn alloc_jsx_closing_fragment(self, span: Span) -> Box<'a, JSXClosingFragment> {
+        Box::new_in(self.jsx_closing_fragment(span), self.allocator)
     }
 
     /// Build a [`JSXElementName::Identifier`].

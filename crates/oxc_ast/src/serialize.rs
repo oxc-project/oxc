@@ -16,31 +16,54 @@ use crate::ast::*;
 ///
 /// Most consumers (and Oxc crates) will use only 1 of these methods, so we don't want to needlessly
 /// compile all 4 serializers when only 1 is used.
+///
+/// Initial capacity for serializer's buffer is an estimate based on our benchmark fixtures
+/// of ratio of source text size to JSON size.
+///
+/// | File                       | Compact TS | Compact JS | Pretty TS | Pretty JS |
+/// |----------------------------|------------|------------|-----------|-----------|
+/// | antd.js                    |         10 |          9 |        76 |        72 |
+/// | cal.com.tsx                |         10 |          9 |        40 |        37 |
+/// | checker.ts                 |          7 |          6 |        27 |        24 |
+/// | pdf.mjs                    |         13 |         12 |        71 |        67 |
+/// | RadixUIAdoptionSection.jsx |         10 |          9 |        45 |        44 |
+/// |----------------------------|------------|------------|-----------|-----------|
+/// | Maximum                    |         13 |         12 |        76 |        72 |
+///
+/// It's better to over-estimate than under-estimate, as having to grow the buffer is expensive,
+/// so have gone on the generous side.
+const JSON_CAPACITY_RATIO_COMPACT: usize = 16;
+const JSON_CAPACITY_RATIO_PRETTY: usize = 80;
+
 impl Program<'_> {
     /// Serialize AST to ESTree JSON, including TypeScript fields.
     pub fn to_estree_ts_json(&self) -> String {
-        let mut serializer = CompactTSSerializer::new();
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let mut serializer = CompactTSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to ESTree JSON, without TypeScript fields.
     pub fn to_estree_js_json(&self) -> String {
-        let mut serializer = CompactJSSerializer::new();
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let mut serializer = CompactJSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields.
     pub fn to_pretty_estree_ts_json(&self) -> String {
-        let mut serializer = PrettyTSSerializer::new();
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
+        let mut serializer = PrettyTSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields.
     pub fn to_pretty_estree_js_json(&self) -> String {
-        let mut serializer = PrettyJSSerializer::new();
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
+        let mut serializer = PrettyJSSerializer::with_capacity(capacity);
         self.serialize(&mut serializer);
         serializer.into_string()
     }

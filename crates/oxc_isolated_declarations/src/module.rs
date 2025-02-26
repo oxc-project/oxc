@@ -61,8 +61,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 ModuleExportName::IdentifierName(self.ast.identifier_name(SPAN, "default"));
             let declaration = self.ast.module_declaration_export_default_declaration(
                 decl.span,
-                declaration,
                 exported,
+                declaration,
             );
             (var_decl, Statement::from(declaration))
         })

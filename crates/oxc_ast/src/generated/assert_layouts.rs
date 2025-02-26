@@ -724,8 +724,8 @@ const _: () = {
     assert!(size_of::<ExportDefaultDeclaration>() == 72);
     assert!(align_of::<ExportDefaultDeclaration>() == 8);
     assert!(offset_of!(ExportDefaultDeclaration, span) == 0);
-    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 8);
-    assert!(offset_of!(ExportDefaultDeclaration, exported) == 24);
+    assert!(offset_of!(ExportDefaultDeclaration, exported) == 8);
+    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 56);
 
     assert!(size_of::<ExportAllDeclaration>() == 112);
     assert!(align_of::<ExportAllDeclaration>() == 8);
@@ -2301,8 +2301,8 @@ const _: () = {
     assert!(size_of::<ExportDefaultDeclaration>() == 44);
     assert!(align_of::<ExportDefaultDeclaration>() == 4);
     assert!(offset_of!(ExportDefaultDeclaration, span) == 0);
-    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 8);
-    assert!(offset_of!(ExportDefaultDeclaration, exported) == 16);
+    assert!(offset_of!(ExportDefaultDeclaration, exported) == 8);
+    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 36);
 
     assert!(size_of::<ExportAllDeclaration>() == 68);
     assert!(align_of::<ExportAllDeclaration>() == 4);

@@ -23,7 +23,7 @@ pub struct ESTreeSequenceSerializer<'s, C: Config, F: Formatter> {
 impl<'s, C: Config, F: Formatter> ESTreeSequenceSerializer<'s, C, F> {
     /// Create new [`ESTreeSequenceSerializer`].
     pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<C, F>) -> Self {
-        serializer.buffer_mut().push_ascii_byte(b'[');
+        serializer.buffer_mut().print_ascii_byte(b'[');
         Self { serializer, state: SequenceState::Empty }
     }
 }
@@ -36,7 +36,7 @@ impl<C: Config, F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_
             self.state = SequenceState::HasEntries;
             formatter.before_first_element(buffer);
         } else {
-            buffer.push_ascii_byte(b',');
+            buffer.print_ascii_byte(b',');
             formatter.before_later_element(buffer);
         }
 
@@ -49,7 +49,7 @@ impl<C: Config, F: Formatter> SequenceSerializer for ESTreeSequenceSerializer<'_
         if self.state == SequenceState::HasEntries {
             formatter.after_last_element(buffer);
         }
-        buffer.push_ascii_byte(b']');
+        buffer.print_ascii_byte(b']');
     }
 }
 

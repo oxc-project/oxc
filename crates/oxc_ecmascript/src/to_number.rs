@@ -1,6 +1,9 @@
 use oxc_ast::ast::*;
 
-use crate::is_global_reference::IsGlobalReference;
+use crate::{
+    is_global_reference::IsGlobalReference,
+    to_primitive::maybe_object_with_to_primitive_related_properties_overridden,
+};
 
 /// `ToNumber`
 ///
@@ -40,10 +43,16 @@ impl<'a> ToNumber<'a> for Expression<'a> {
                 let number = unary.argument.to_number(is_global_reference)?;
                 Some(if number == 0.0 { 1.0 } else { 0.0 })
             }
-            // If the object is empty, `toString` / `valueOf` / `Symbol.toPrimitive` is not overridden.
-            // (assuming that those methods in Object.prototype are not modified)
-            // In that case, `ToPrimitive` returns `"[object Object]"`
-            Expression::ObjectExpression(e) if e.properties.is_empty() => Some(f64::NAN),
+            Expression::ObjectExpression(obj) => {
+                // If `toString` / `valueOf` / `Symbol.toPrimitive` is not overridden,
+                // (assuming that those methods in Object.prototype are not modified)
+                // `ToPrimitive` returns `"[object Object]"`
+                if maybe_object_with_to_primitive_related_properties_overridden(obj) {
+                    None
+                } else {
+                    Some(f64::NAN)
+                }
+            }
             // `ToPrimitive` for RegExp object returns `"/regexp/"`
             Expression::RegExpLiteral(_) => Some(f64::NAN),
             Expression::ArrayExpression(arr) => {

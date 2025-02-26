@@ -49,7 +49,13 @@ impl<'a> PeepholeOptimizations {
             }
             // Do not fold big int.
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => None,
-            _ => e.evaluate_value(&ctx).map(|v| ctx.value_to_expr(e.span, v)),
+            _ => {
+                if e.may_have_side_effects(&ctx) {
+                    None
+                } else {
+                    e.evaluate_value(&ctx).map(|v| ctx.value_to_expr(e.span, v))
+                }
+            }
         }
     }
 
@@ -58,7 +64,11 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
-        e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
+        if e.object.may_have_side_effects(&ctx) {
+            None
+        } else {
+            e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
+        }
     }
 
     fn try_fold_computed_member_expr(
@@ -66,7 +76,11 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
-        e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
+        if e.object.may_have_side_effects(&ctx) || e.expression.may_have_side_effects(&ctx) {
+            None
+        } else {
+            e.evaluate_value(&ctx).map(|value| ctx.value_to_expr(e.span, value))
+        }
     }
 
     fn try_fold_logical_expr(
@@ -304,10 +318,16 @@ impl<'a> PeepholeOptimizations {
 
     // Simplified version of `tryFoldAdd` from closure compiler.
     fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
-        if let Some(v) = e.evaluate_value(&ctx) {
-            return Some(ctx.value_to_expr(e.span, v));
+        if !e.may_have_side_effects(&ctx) {
+            if let Some(v) = e.evaluate_value(&ctx) {
+                return Some(ctx.value_to_expr(e.span, v));
+            }
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
+
+        if let Some(expr) = Self::try_fold_add_op(&mut e.left, &mut e.right, ctx) {
+            return Some(expr);
+        }
 
         // a + 'b' + 'c' -> a + 'bc'
         if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
@@ -322,14 +342,94 @@ impl<'a> PeepholeOptimizations {
                     let left = ctx.ast.move_expression(&mut left_binary_expr.left);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
                 }
+
+                if let Some(new_right) =
+                    Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, ctx)
+                {
+                    let left = ctx.ast.move_expression(&mut left_binary_expr.left);
+                    return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
+                }
+            }
+        }
+
+        None
+    }
+
+    fn try_fold_add_op(
+        left_expr: &mut Expression<'a>,
+        right_expr: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if let Expression::TemplateLiteral(left) = left_expr {
+            // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
+            if let Expression::TemplateLiteral(right) = right_expr {
+                left.span = Span::new(left.span.start, right.span.end);
+                let left_last_quasi =
+                    left.quasis.last_mut().expect("template literal must have at least one quasi");
+                let right_first_quasi = right
+                    .quasis
+                    .first_mut()
+                    .expect("template literal must have at least one quasi");
+                let new_raw = left_last_quasi.value.raw.to_string() + &right_first_quasi.value.raw;
+                left_last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                let new_cooked = if let (Some(cooked1), Some(cooked2)) =
+                    (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
+                {
+                    Some(ctx.ast.atom(&(cooked1.into_string() + cooked2.as_str())))
+                } else {
+                    None
+                };
+                left_last_quasi.value.cooked = new_cooked;
+                if right.quasis.len() > 0 {
+                    left_last_quasi.tail = false;
+                }
+                left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
+                left.expressions.extend(right.expressions.drain(..));
+                return Some(ctx.ast.move_expression(left_expr));
+            }
+
+            // "`${x}y` + 'z'" => "`${x}yz`"
+            if let Some(right_str) = right_expr.get_side_free_string_value(&ctx) {
+                left.span = Span::new(left.span.start, right_expr.span().end);
+                let last_quasi =
+                    left.quasis.last_mut().expect("template literal must have at least one quasi");
+                let new_raw = last_quasi.value.raw.to_string()
+                    + &Self::escape_string_for_template_literal(&right_str);
+                last_quasi.value.raw = ctx.ast.atom(&new_raw);
+                let new_cooked = last_quasi
+                    .value
+                    .cooked
+                    .map(|cooked| ctx.ast.atom(&(cooked.as_str().to_string() + &right_str)));
+                last_quasi.value.cooked = new_cooked;
+                return Some(ctx.ast.move_expression(left_expr));
+            }
+        } else if let Expression::TemplateLiteral(right) = right_expr {
+            // "'x' + `y${z}`" => "`xy${z}`"
+            if let Some(left_str) = left_expr.get_side_free_string_value(&ctx) {
+                right.span = Span::new(left_expr.span().start, right.span.end);
+                let first_quasi = right
+                    .quasis
+                    .first_mut()
+                    .expect("template literal must have at least one quasi");
+                let new_raw = Self::escape_string_for_template_literal(&left_str).into_owned()
+                    + first_quasi.value.raw.as_str();
+                first_quasi.value.raw = ctx.ast.atom(&new_raw);
+                let new_cooked = first_quasi
+                    .value
+                    .cooked
+                    .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
+                first_quasi.value.cooked = new_cooked;
+                return Some(ctx.ast.move_expression(right_expr));
             }
         }
 
         // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
-        if e.left.is_specific_string_literal("") && e.right.value_type(&ctx).is_string() {
-            return Some(ctx.ast.move_expression(&mut e.right));
-        } else if e.right.is_specific_string_literal("") && e.left.value_type(&ctx).is_string() {
-            return Some(ctx.ast.move_expression(&mut e.left));
+        if left_expr.is_specific_string_literal("") && right_expr.value_type(&ctx).is_string() {
+            return Some(ctx.ast.move_expression(right_expr));
+        } else if right_expr.is_specific_string_literal("")
+            && left_expr.value_type(&ctx).is_string()
+        {
+            return Some(ctx.ast.move_expression(left_expr));
         }
 
         None
@@ -1424,6 +1524,17 @@ mod test {
         // fold("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
         // fold("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + (p1 + 'c')");
         fold("void 0 + ''", "'undefined'");
+
+        fold("`${a}` + `${b}`", "`${a}${b}`");
+        fold("`${a}` + `${b}b`", "`${a}${b}b`");
+        fold("`${a}` + `b${b}`", "`${a}b${b}`");
+        fold("`${a}a` + `${b}`", "`${a}a${b}`");
+        fold("`${a}a` + `${b}b`", "`${a}a${b}b`");
+        fold("`${a}a` + `b${b}`", "`${a}ab${b}`");
+        fold("`a${a}` + `${b}`", "`a${a}${b}`");
+        fold("`a${a}` + `${b}b`", "`a${a}${b}b`");
+        fold("`a${a}` + `b${b}`", "`a${a}b${b}`");
+        fold("foo() + `${a}` + `${b}`", "foo() + `${a}${b}`");
 
         fold_same("x = 'a' + (4 + p1 + 'a')");
         fold_same("x = p1 / 3 + 4");

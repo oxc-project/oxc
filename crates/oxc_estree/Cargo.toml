@@ -19,9 +19,11 @@ workspace = true
 doctest = false
 
 [dependencies]
-itoa = { workspace = true }
+oxc_data_structures = { workspace = true, optional = true }
+
+itoa = { workspace = true, optional = true }
 ryu-js = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:ryu-js"]
+serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:ryu-js"]

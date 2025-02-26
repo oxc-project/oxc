@@ -48,7 +48,10 @@ fn bench_estree(criterion: &mut Criterion) {
                     .parse()
                     .program;
                 runner.run(|| {
-                    Utf8ToUtf16::new().convert(&mut program);
+                    let span_converter = Utf8ToUtf16::new(program.source_text);
+                    span_converter.convert_program(&mut program);
+                    span_converter.convert_comments(&mut program.comments);
+
                     program.to_estree_ts_json();
                     program
                 });

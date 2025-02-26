@@ -136,9 +136,8 @@ impl Case for EstreeTest262Case {
         }
 
         // Convert spans to UTF16
-        Utf8ToUtf16::new().convert(&mut program);
+        Utf8ToUtf16::new(source_text).convert_program(&mut program);
 
-        // Remove extra properties from Oxc AST where there is no corresponding property in Acorn AST
         let acorn_json = match fs::read_to_string(&self.acorn_json_path) {
             Ok(acorn_json) => acorn_json,
             Err(e) => {
