@@ -158,7 +158,20 @@ impl Case for EstreeTest262Case {
             return;
         }
 
-        // Mismatch found
+        // Mismatch found.
+        // Write diff to `acorn-test262-diff` directory, unless running on CI.
+        let is_ci = std::option_env!("CI") == Some("true");
+        if !is_ci {
+            self.write_diff(&oxc_json, &acorn_json);
+        }
+
+        self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
+    }
+}
+
+impl EstreeTest262Case {
+    /// Write diff to `acorn-test262-diff` directory.
+    fn write_diff(&self, oxc_json: &str, acorn_json: &str) {
         let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
             .join(self.path().strip_prefix("test262").unwrap())
             .with_extension("diff");
@@ -166,11 +179,10 @@ impl Case for EstreeTest262Case {
         write!(
             std::fs::File::create(diff_path).unwrap(),
             "{}",
-            similar::TextDiff::from_lines(&acorn_json, &oxc_json)
+            similar::TextDiff::from_lines(acorn_json, oxc_json)
                 .unified_diff()
                 .missing_newline_hint(false)
         )
         .unwrap();
-        self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
     }
 }
