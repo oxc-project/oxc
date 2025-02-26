@@ -73,30 +73,7 @@ impl Derive for DeriveESTree {
 
     /// Generate implementation of `ESTree` for a struct or enum.
     fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
-        let body = match type_def {
-            StructOrEnum::Struct(struct_def) => {
-                if struct_def.estree.custom_serialize {
-                    return quote!();
-                }
-                generate_body_for_struct(struct_def, schema)
-            }
-            StructOrEnum::Enum(enum_def) => {
-                if enum_def.estree.custom_serialize {
-                    return quote!();
-                }
-                generate_body_for_enum(enum_def, schema)
-            }
-        };
-
-        let ty = type_def.ty_anon(schema);
-
-        quote! {
-            impl ESTree for #ty {
-                fn serialize<S: Serializer>(&self, serializer: S) {
-                    #body
-                }
-            }
-        }
+        generate_impl_for_type(type_def, schema)
     }
 }
 
@@ -233,6 +210,34 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Generate implementation of `ESTree` for a struct or enum.
+fn generate_impl_for_type(type_def: StructOrEnum, schema: &Schema) -> TokenStream {
+    let body = match type_def {
+        StructOrEnum::Struct(struct_def) => {
+            if struct_def.estree.custom_serialize {
+                return quote!();
+            }
+            generate_body_for_struct(struct_def, schema)
+        }
+        StructOrEnum::Enum(enum_def) => {
+            if enum_def.estree.custom_serialize {
+                return quote!();
+            }
+            generate_body_for_enum(enum_def, schema)
+        }
+    };
+
+    let ty = type_def.ty_anon(schema);
+
+    quote! {
+        impl ESTree for #ty {
+            fn serialize<S: Serializer>(&self, serializer: S) {
+                #body
+            }
+        }
+    }
 }
 
 /// Generate body of `serialize` method for a struct.
