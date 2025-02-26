@@ -84,7 +84,7 @@ impl ESTree for IdentifierName<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -95,7 +95,7 @@ impl ESTree for IdentifierReference<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -106,7 +106,7 @@ impl ESTree for BindingIdentifier<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -117,7 +117,7 @@ impl ESTree for LabelIdentifier<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -2156,7 +2156,7 @@ impl ESTree for JSXIdentifier<'_> {
         state.serialize_field("type", &JsonSafeString("JSXIdentifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -2879,7 +2879,7 @@ impl ESTree for TSIndexSignatureName<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
     }

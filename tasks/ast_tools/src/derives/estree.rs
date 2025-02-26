@@ -140,6 +140,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::StructField(struct_def, field_index) => match part {
             AttrPart::Tag("skip") => struct_def.fields[field_index].estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.fields[field_index].estree.flatten = true,
+            AttrPart::Tag("json_safe") => struct_def.fields[field_index].estree.json_safe = true,
             AttrPart::String("rename", value) => {
                 struct_def.fields[field_index].estree.rename = Some(value);
             }
@@ -371,6 +372,17 @@ impl<'s> StructSerializerGenerator<'s> {
             let wrapper_ident = create_safe_ident(wrapper_name);
             quote! {
                 #wrapper_ident { array: &#self_path.#field_name_ident, after: &#self_path.#append_from_ident  }
+            }
+        } else if field.estree.json_safe {
+            // Wrap value in `JsonSafeString(...)` if field is tagged `#[estree(json_safe)]`
+            match field.type_def(self.schema).name() {
+                "&str" => quote!( JsonSafeString(#self_path.#field_name_ident) ),
+                "Atom" => quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) ),
+                _ => panic!(
+                    "`#[estree(json_safe)]` is only valid on struct fields containing a `&str` or `Atom`: {}::{}",
+                    struct_def.name(),
+                    field.name(),
+                ),
             }
         } else {
             quote!( #self_path.#field_name_ident )

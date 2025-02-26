@@ -209,6 +209,7 @@ pub use match_expression;
 #[estree(rename = "Identifier")]
 pub struct IdentifierName<'a> {
     pub span: Span,
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 
@@ -224,6 +225,7 @@ pub struct IdentifierName<'a> {
 pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
     /// Reference ID
     ///
@@ -246,6 +248,7 @@ pub struct IdentifierReference<'a> {
 pub struct BindingIdentifier<'a> {
     pub span: Span,
     /// The identifier name being bound.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
     /// Unique identifier for this binding.
     ///
@@ -267,6 +270,7 @@ pub struct BindingIdentifier<'a> {
 #[estree(rename = "Identifier")]
 pub struct LabelIdentifier<'a> {
     pub span: Span,
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 

@@ -1029,6 +1029,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[estree(rename = "Identifier")]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
+    #[estree(json_safe)]
     pub name: Atom<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }

@@ -430,6 +430,7 @@ pub struct JSXIdentifier<'a> {
     /// Node location in source code
     pub span: Span,
     /// The name of the identifier.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 

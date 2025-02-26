@@ -56,6 +56,8 @@ pub struct ESTreeStructField {
     pub append_field_index: Option<usize>,
     pub skip: bool,
     pub flatten: bool,
+    // `true` for fields containing a `&str` or `Atom` which does not need escaping in JSON
+    pub json_safe: bool,
     pub is_ts: bool,
 }
 
