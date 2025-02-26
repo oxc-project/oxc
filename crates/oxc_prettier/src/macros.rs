@@ -1,6 +1,6 @@
 //! Prettier IR builder macros
 //! Ref: <https://github.com/prettier/prettier/blob/3.5.2/commands.md>
-//! Ref: <https://github.com/prettier/prettier/blob/3.5.2/src/document/builders.js
+//! Ref: <https://github.com/prettier/prettier/blob/3.5.2/src/document/builders.js>
 
 // NOTE: In addition to those defined here, there are still some that are not yet implemented.
 // In terms of macro implementation, there are 2 forms: the most frequently used form and the most flexible form.
