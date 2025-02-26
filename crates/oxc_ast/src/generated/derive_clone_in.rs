@@ -128,6 +128,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
             Self::TSInstantiationExpression(it) => {
                 Expression::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                Expression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::ComputedMemberExpression(it) => {
                 Expression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
@@ -324,6 +327,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
             Self::TSInstantiationExpression(it) => {
                 ArrayExpressionElement::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                ArrayExpressionElement::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::ComputedMemberExpression(it) => {
                 ArrayExpressionElement::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
@@ -490,6 +496,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
             }
             Self::TSInstantiationExpression(it) => {
                 PropertyKey::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                PropertyKey::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 PropertyKey::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
@@ -751,6 +760,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
             }
             Self::TSInstantiationExpression(it) => {
                 Argument::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                Argument::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 Argument::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
@@ -1516,6 +1528,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             }
             Self::TSInstantiationExpression(it) => {
                 ForStatementInit::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                ForStatementInit::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 ForStatementInit::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
@@ -2447,6 +2462,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
                     it, allocator,
                 ))
             }
+            Self::V8IntrinsicExpression(it) => ExportDefaultDeclarationKind::V8IntrinsicExpression(
+                CloneIn::clone_in(it, allocator),
+            ),
             Self::ComputedMemberExpression(it) => {
                 ExportDefaultDeclarationKind::ComputedMemberExpression(CloneIn::clone_in(
                     it, allocator,
@@ -2479,6 +2497,17 @@ impl<'new_alloc> CloneIn<'new_alloc> for ModuleExportName<'_> {
             Self::StringLiteral(it) => {
                 ModuleExportName::StringLiteral(CloneIn::clone_in(it, allocator))
             }
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for V8IntrinsicExpression<'_> {
+    type Cloned = V8IntrinsicExpression<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        V8IntrinsicExpression {
+            span: CloneIn::clone_in(&self.span, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+            arguments: CloneIn::clone_in(&self.arguments, allocator),
         }
     }
 }
@@ -2808,6 +2837,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
             }
             Self::TSInstantiationExpression(it) => {
                 JSXExpression::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                JSXExpression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 JSXExpression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))

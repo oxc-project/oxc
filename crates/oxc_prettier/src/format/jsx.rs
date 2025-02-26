@@ -123,6 +123,7 @@ impl<'a> Format<'a> for JSXExpression<'a> {
             JSXExpression::TSTypeAssertion(it) => it.format(p),
             JSXExpression::TSNonNullExpression(it) => it.format(p),
             JSXExpression::TSInstantiationExpression(it) => it.format(p),
+            JSXExpression::V8IntrinsicExpression(it) => it.format(p),
         }
     }
 }

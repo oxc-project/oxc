@@ -54,6 +54,8 @@ pub struct OxcParserOptions {
     pub allow_return_outside_function: Option<bool>,
     #[tsify(optional)]
     pub preserve_parens: Option<bool>,
+    #[tsify(optional)]
+    pub allow_v8_intrinsics: Option<bool>,
     #[tsify(optional, type = "\"script\" | \"module\"")]
     pub source_type: Option<String>,
     #[tsify(optional)]

@@ -1,7 +1,15 @@
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
+
+pub fn test_with_parse_options(source_text: &str, expected: &str, parse_options: ParseOptions) {
+    let allocator = Allocator::default();
+    let ret =
+        Parser::new(&allocator, source_text, SourceType::jsx()).with_options(parse_options).parse();
+    let result = CodeGenerator::new().build(&ret.program).code;
+    assert_eq!(result, expected, "\nfor source: {source_text}");
+}
 
 pub fn test(source_text: &str, expected: &str) {
     test_options(source_text, expected, CodegenOptions::default());

@@ -9,6 +9,30 @@ use crate::{
 pub enum CallExpressionLike<'a, 'b> {
     CallExpression(&'b CallExpression<'a>),
     NewExpression(&'b NewExpression<'a>),
+    V8Intrinsic(&'b V8IntrinsicExpression<'a>),
+}
+
+pub enum Callee<'a, 'b> {
+    Expression(&'b Expression<'a>),
+    V8IntrinsicName(&'b IdentifierName<'a>),
+}
+
+impl<'b> Callee<'b, '_> {
+    fn format<'a>(&self, p: &mut Prettier<'a>) -> Doc<'a>
+    where
+        'b: 'a,
+    {
+        match self {
+            Callee::Expression(expr) => expr.format(p),
+            Callee::V8IntrinsicName(name) => {
+                array!(p, [text!("%"), dynamic_text!(p, &name.name)])
+            }
+        }
+    }
+
+    fn is_call_expression(&self) -> bool {
+        matches!(self, Callee::Expression(Expression::CallExpression(_)))
+    }
 }
 
 impl<'a> CallExpressionLike<'a, '_> {
@@ -16,10 +40,11 @@ impl<'a> CallExpressionLike<'a, '_> {
         matches!(self, CallExpressionLike::NewExpression(_))
     }
 
-    pub fn callee(&self) -> &Expression<'a> {
+    pub fn callee(&self) -> Callee<'a, '_> {
         match self {
-            CallExpressionLike::CallExpression(call) => &call.callee,
-            CallExpressionLike::NewExpression(new) => &new.callee,
+            CallExpressionLike::CallExpression(call) => Callee::Expression(&call.callee),
+            CallExpressionLike::NewExpression(new) => Callee::Expression(&new.callee),
+            CallExpressionLike::V8Intrinsic(expr) => Callee::V8IntrinsicName(&expr.name),
         }
     }
 
@@ -27,6 +52,7 @@ impl<'a> CallExpressionLike<'a, '_> {
         match self {
             CallExpressionLike::CallExpression(call) => call.optional,
             CallExpressionLike::NewExpression(new) => false,
+            CallExpressionLike::V8Intrinsic(_) => false,
         }
     }
 
@@ -34,6 +60,7 @@ impl<'a> CallExpressionLike<'a, '_> {
         match self {
             CallExpressionLike::CallExpression(call) => &call.arguments,
             CallExpressionLike::NewExpression(new) => &new.arguments,
+            CallExpressionLike::V8Intrinsic(expr) => &expr.arguments,
         }
     }
 
@@ -41,6 +68,7 @@ impl<'a> CallExpressionLike<'a, '_> {
         match self {
             CallExpressionLike::CallExpression(call) => call.type_parameters.as_ref(),
             CallExpressionLike::NewExpression(new) => new.type_parameters.as_ref(),
+            CallExpressionLike::V8Intrinsic(_) => None,
         }
     }
 }

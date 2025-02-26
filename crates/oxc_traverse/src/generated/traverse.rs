@@ -1268,6 +1268,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_v8_intrinsic_expression(
+        &mut self,
+        node: &mut V8IntrinsicExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_v8_intrinsic_expression(
+        &mut self,
+        node: &mut V8IntrinsicExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {}

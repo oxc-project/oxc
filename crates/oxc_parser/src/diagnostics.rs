@@ -378,6 +378,12 @@ pub fn expect_catch_finally(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn v8_intrinsic_spread_elem(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("V8 runtime calls cannot have spread elements as arguments")
+        .with_label(span)
+}
+
+#[cold]
 pub fn a_set_accessor_cannot_have_a_return_type_annotation(span: Span) -> OxcDiagnostic {
     ts_error("1095", " A 'set' accessor cannot have a return type annotation.").with_label(span)
 }
