@@ -71,10 +71,9 @@ impl Rule for NoRedundantConstructorInit {
                     continue;
                 }
 
-                let Some(parent_node) = ctx.nodes().parent_node(reference.node_id()) else {
-                    continue;
-                };
-                let AstKind::AssignmentExpression(assignment_expr) = parent_node.kind() else {
+                let Some(AstKind::AssignmentExpression(assignment_expr)) =
+                    ctx.nodes().parent_kind(reference.node_id())
+                else {
                     continue;
                 };
 
