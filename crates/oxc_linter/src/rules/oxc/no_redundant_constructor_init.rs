@@ -84,9 +84,9 @@ impl Rule for NoRedundantConstructorInit {
                 else {
                     continue;
                 };
-                let Expression::ThisExpression(_this_expr) = &static_member_expr.object else {
+                if !matches!(&static_member_expr.object, Expression::ThisExpression(_)) {
                     continue;
-                };
+                }
                 let assignment_name = static_member_expr.property.name;
 
                 // check both sides of assignment have the same name: this.x = x
