@@ -1,7 +1,8 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
+    constant_evaluation::DetermineValueType, is_global_reference::IsGlobalReference,
+    to_numeric::ToNumeric, to_primitive::ToPrimitive,
 };
 
 /// Returns true if subtree changes application state.
@@ -121,8 +122,26 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
                 self.left.may_have_side_effects(is_global_reference)
                     || self.right.may_have_side_effects(is_global_reference)
             }
-            BinaryOperator::In | BinaryOperator::Instanceof => {
-                // instanceof and in can throw `TypeError`
+            BinaryOperator::Instanceof => {
+                // When the following conditions are met, instanceof won't throw `TypeError`.
+                // - the right hand side is a known global reference which is a function
+                // - the left hand side is not a proxy
+                if let Expression::Identifier(right_ident) = &self.right {
+                    let name = right_ident.name.as_str();
+                    // Any known global non-constructor functions can be allowed here.
+                    // But because non-constructor functions are not likely to be used, we ignore them.
+                    if is_known_global_constructor(name)
+                        && is_global_reference.is_global_reference(right_ident) == Some(true)
+                        && !self.left.value_type(is_global_reference).is_undetermined()
+                    {
+                        return false;
+                    }
+                }
+                // instanceof can throw `TypeError`
+                true
+            }
+            BinaryOperator::In => {
+                // in can throw `TypeError`
                 true
             }
             BinaryOperator::Addition => {
@@ -198,6 +217,56 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
             }
         }
     }
+}
+
+/// Whether the name matches any known global constructors.
+///
+/// <https://tc39.es/ecma262/multipage/global-object.html#sec-constructor-properties-of-the-global-object>
+fn is_known_global_constructor(name: &str) -> bool {
+    // technically, we need to exclude the constructors that are not supported by the target
+    matches!(
+        name,
+        "AggregateError"
+            | "Array"
+            | "ArrayBuffer"
+            | "BigInt"
+            | "BigInt64Array"
+            | "BitUint64Array"
+            | "Boolean"
+            | "DataView"
+            | "Date"
+            | "Error"
+            | "EvalError"
+            | "FinalizationRegistry"
+            | "Float32Array"
+            | "Float64Array"
+            | "Function"
+            | "Int8Array"
+            | "Int16Array"
+            | "Int32Array"
+            | "Iterator"
+            | "Map"
+            | "Number"
+            | "Object"
+            | "Promise"
+            | "Proxy"
+            | "RangeError"
+            | "ReferenceError"
+            | "RegExp"
+            | "Set"
+            | "SharedArrayBuffer"
+            | "String"
+            | "Symbol"
+            | "SyntaxError"
+            | "TypeError"
+            | "Uint8Array"
+            | "Uint8ClampedArray"
+            | "Uint16Array"
+            | "Uint32Array"
+            | "URIError"
+            | "WeakMap"
+            | "WeakSet"
+    )
 }
 
 impl MayHaveSideEffects for LogicalExpression<'_> {

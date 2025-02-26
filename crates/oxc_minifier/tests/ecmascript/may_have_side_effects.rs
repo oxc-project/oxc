@@ -526,13 +526,14 @@ fn test_binary_expressions() {
     test("1n % 0n", true); // `%` throws an error when the right operand is zero
     test("0n >>> 1n", true); // `>>>` throws an error even when both operands are bigint
 
+    test("[] instanceof 1", true); // throws an error
+    test("[] instanceof { [Symbol.hasInstance]() { throw 'foo' } }", true);
+    test_with_global_variables("[] instanceof Object", vec!["Object".to_string()], false);
+    test_with_global_variables("a instanceof Object", vec!["Object".to_string()], true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
+
     // b maybe not a object
     // b maybe a proxy that has a side effectful "has" trap
     test("a in b", true);
-    // b maybe not a function
-    // b[Symbol.hasInstance] may have a side effect
-    // a maybe a proxy that has a side effectful "getPrototypeOf" trap
-    test("a instanceof b", true);
 }
 
 #[test]
