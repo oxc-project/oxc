@@ -53,7 +53,8 @@ impl<'a> Printer<'a> {
 
     fn print_doc_to_string(&mut self) {
         while let Some(Command { indent, mut doc, mode }) = self.cmds.pop() {
-            // TODO: In Prettier, they perform this before the loop
+            // TODO: In Prettier, they perform this once before the loop
+            // I tried to reproduce this in Prettier, but many tests failed
             propagate_breaks(&mut doc);
 
             match doc {
@@ -466,7 +467,7 @@ fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
         Doc::Group(group) => {
             // NOTE: This is important, propagating breaks
             if group.expanded_states.is_none() && apply_vec(&mut group.contents) {
-                // In Prettier, they seem to use a string `"propagated"`(as truthy value)
+                // In Prettier, they use a string `"propagated"`(as truthy value)
                 // to distinguish from original `shouldBreak: true` for `printDocToDebug()`
                 group.should_break = true;
             }
@@ -486,8 +487,8 @@ fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
 }
 
 // NOTE: In Prettier, the secret property `DOC_FILL_PRINTED_LENGTH` is used for `Fill`.
-// It stores the offset already printed in the former `handle_fill` and used in later
-// However, we do not maange this property and directly update `parts` itself.
+// It stores the offset already printed in the former printing and used in later printing.
+// However, we do not maange this and directly update `parts` itself.
 // The following is a utility for this.
 impl<'a> Fill<'a> {
     pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
