@@ -35,6 +35,8 @@ The compressor is responsible for rewriting statements and expressions for minim
   - Examples that breaks this assumption: `{ toString() { console.log('sideeffect') } }`
 - Errors thrown when creating a String or an Array that exceeds the maximum length can disappear or moved
   - Examples that breaks this assumption: `try { new Array(Number(2n**53n)) } catch { console.log('log') }`
+- Invalid super class error does not happen
+  - Examples that breaks this assumption: `const v = []; class A extends v {}`
 
 ## Terser Tests
 

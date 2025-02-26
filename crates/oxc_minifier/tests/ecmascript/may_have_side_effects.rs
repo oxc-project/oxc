@@ -71,10 +71,10 @@ fn closure_compiler_tests() {
     test("[function a(){}]", false);
     test("(class { })", false);
     test("(class { method() { i++ } })", false);
-    test("(class { [computedName()]() {} })", false); // computedName is called when constructed
+    test("(class { [computedName()]() {} })", true);
     test("(class { [computedName]() {} })", false);
     test("(class Foo extends Bar { })", false);
-    test("(class extends foo() { })", false); // foo() is called when constructed
+    test("(class extends foo() { })", true);
     test("a", false);
     test("a.b", true);
     test("a.b.c", true);
@@ -223,14 +223,14 @@ fn closure_compiler_tests() {
 
     // COMPUTED_PROP - CLASS
     test("(class C { [a]() {} })", false);
-    test("(class C { [a()]() {} })", false); // a is called when constructed
+    test("(class C { [a()]() {} })", true);
 
     // computed property getters and setters are modeled as COMPUTED_PROP with an
     // annotation to indicate getter or setter.
     test("(class C { get [a]() {} })", false);
-    test("(class C { get [a()]() {} })", false); // a is called when constructed
+    test("(class C { get [a()]() {} })", true);
     test("(class C { set [a](x) {} })", false);
-    test("(class C { set [a()](x) {} })", false); // a is called when constructed
+    test("(class C { set [a()](x) {} })", true);
 
     // GETTER_DEF
     test("({ get a() {} })", false);
@@ -575,16 +575,24 @@ fn test_array_expression() {
 #[test]
 fn test_class_expression() {
     test("(class {})", false);
-    test("(class extends a {})", false);
-    test("(class extends foo() {})", false); // foo() is called when constructed
+    test("(@foo class {})", true);
+    test("(class extends a {})", false); // this may have a side effect, but ignored by the assumption
+    test("(class extends foo() {})", true);
     test("(class { static {} })", false);
     test("(class { static { foo(); } })", true);
+    test("(class { a() {} })", false);
+    test("(class { [1]() {} })", false);
+    test("(class { [1n]() {} })", false);
+    test("(class { #a() {} })", false);
+    test("(class { [foo()]() {} })", true);
+    test("(class { @foo a() {} })", true);
     test("(class { a; })", false);
     test("(class { 1; })", false);
     test("(class { [1]; })", false);
     test("(class { [1n]; })", false);
     test("(class { #a; })", false);
-    test("(class { [foo()] = 1 })", false); // foo() is called when constructed
+    test("(class { @foo a; })", true);
+    test("(class { [foo()] = 1 })", true);
     test("(class { a = foo() })", false); // foo() is called when constructed
     test("(class { static a; })", false);
     test("(class { static 1; })", false);
@@ -593,7 +601,7 @@ fn test_class_expression() {
     test("(class { static #a; })", false);
     test("(class { static [foo()] = 1 })", true);
     test("(class { static a = foo() })", true);
-    test("(class { accessor [foo()]; })", false);
+    test("(class { accessor [foo()]; })", true);
     test("(class { static accessor [foo()]; })", true);
 }
 

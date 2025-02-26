@@ -340,7 +340,25 @@ impl MayHaveSideEffects for PropertyKey<'_> {
 }
 
 impl MayHaveSideEffects for Class<'_> {
+    /// Based on <https://github.com/evanw/esbuild/blob/v0.25.0/internal/js_ast/js_ast_helpers.go#L2320>
     fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        if !self.decorators.is_empty() {
+            return true;
+        }
+
+        // NOTE: extending a value that is neither constructors nor null, throws an error
+        // but that error is ignored here (it is included in the assumption)
+        // Example cases: `class A extends 0 {}`, `class A extends (async function() {}) {}`
+        // Considering these cases is difficult and requires to de-opt most classes with a super class.
+        // To allow classes with a super class to be removed, we ignore this side effect.
+        if self
+            .super_class
+            .as_ref()
+            .is_some_and(|sup| sup.may_have_side_effects(is_global_reference))
+        {
+            return true;
+        }
+
         self.body.body.iter().any(|element| element.may_have_side_effects(is_global_reference))
     }
 }
@@ -351,17 +369,18 @@ impl MayHaveSideEffects for ClassElement<'_> {
             // TODO: check side effects inside the block
             ClassElement::StaticBlock(block) => !block.body.is_empty(),
             ClassElement::MethodDefinition(e) => {
-                e.r#static && e.key.may_have_side_effects(is_global_reference)
+                !e.decorators.is_empty() || e.key.may_have_side_effects(is_global_reference)
             }
             ClassElement::PropertyDefinition(e) => {
-                e.r#static
-                    && (e.key.may_have_side_effects(is_global_reference)
-                        || e.value
+                !e.decorators.is_empty()
+                    || e.key.may_have_side_effects(is_global_reference)
+                    || (e.r#static
+                        && e.value
                             .as_ref()
                             .is_some_and(|v| v.may_have_side_effects(is_global_reference)))
             }
             ClassElement::AccessorProperty(e) => {
-                e.r#static && e.key.may_have_side_effects(is_global_reference)
+                !e.decorators.is_empty() || e.key.may_have_side_effects(is_global_reference)
             }
             ClassElement::TSIndexSignature(_) => false,
         }
