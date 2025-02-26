@@ -2,7 +2,6 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
 use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
@@ -240,6 +239,8 @@ console.log(
 #[cfg(not(miri))]
 #[test]
 fn test_sourcemap() {
+    use oxc_sourcemap::SourcemapVisualizer;
+
     let config = ReplaceGlobalDefinesConfig::new(&[
         ("__OBJECT__", r#"{"hello": "test"}"#),
         ("__STRING__", r#""development""#),
