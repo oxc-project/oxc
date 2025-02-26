@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.53.0] - 2025-02-26
+
+### Bug Fixes
+
+- e303767 ast/estree: Fix ESTree AST for imports and exports (#9282) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 ### Bug Fixes

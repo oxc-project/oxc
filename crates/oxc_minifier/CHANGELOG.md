@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.53.0] - 2025-02-26
+
+### Features
+
+- e10fb97 ecmascript: Improve may_have_side_effects for `.length` (#9366) (sapphi-red)
+- 35e5ca9 ecmascript: Improve may_have_side_effects for `instanceof` (#9365) (sapphi-red)
+- 11012c6 ecmascript: Improve ValueType for coalesce operator (#9354) (sapphi-red)
+- b7998fd ecmascript: To_number for object without toString (#9353) (sapphi-red)
+- e51d563 minifier: Concatenate strings with template literals on right side (#9356) (sapphi-red)
+- 9d7db54 minifier: Concatenate strings with template literals (#9355) (sapphi-red)
+
+### Bug Fixes
+
+- f5c8698 ecmascript: Correct may_have_side_effects for classes (#9367) (sapphi-red)
+- d3ed128 minifier: Do not remove `=== 0` if the lhs can be NaN (#9352) (sapphi-red)
+
+### Refactor
+
+- faf966f ecmascript: Don't check side effects in constant_evaluation (#9122) (sapphi-red)
+
 ## [0.52.0] - 2025-02-21
 
 ### Features
