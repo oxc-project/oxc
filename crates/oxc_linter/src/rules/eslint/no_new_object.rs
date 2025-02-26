@@ -1,5 +1,8 @@
+use oxc_ast::AstKind;
+use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
 use crate::{
@@ -22,7 +25,7 @@ pub struct NoNewObject;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    ///  This rule disallows calling the Object constructor with new
+    /// This rule disallows calling the Object constructor with new
     ///
     /// ### Why is this bad?
     ///
@@ -38,32 +41,77 @@ declare_oxc_lint!(
     /// var myObject = {};
     /// ```
     ///
-    /// For this reason, many prefer to always use the object literal syntax and never use the Object constructor.
+    /// For this reason, many prefer to always use the object literal syntax and never use the
+    /// Object constructor.
     ///
-    /// While there are no performance differences between the two approaches, the byte savings and conciseness of the object literal form is what has made it the de facto way of creating new objects.
-    ///
+    /// While there are no performance differences between the two approaches, the byte savings and
+    /// conciseness of the object literal form is what has made it the de facto way of creating new
+    /// objects.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```javascript
+    /// var foo = new Object()
+    /// ```
+    ///
+    /// ```javascript
+    /// new Object()
+    /// ```
+    ///
+    /// ```javascript
+    /// const a = new Object()
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```javascript
+    /// var myObject = {};
+    /// ```
+    ///
+    /// ```javascript
+    /// var Object = function Object() {};
+    /// new Object();
+    /// ```
+    ///
+    /// ```javascript
+    /// class Object {
+    ///     constructor(){}
+    /// }
+    /// new Object();
+    /// ```
+    ///
+    /// ```javascript
+    /// import { Object } from './'
+    /// new Object();
     /// ```
     NoNewObject,
     eslint,
     style,
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    pending
 );
 
 impl Rule for NoNewObject {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::NewExpression(new_expr) = node.kind() else {
+            return;
+        };
+
+        let Expression::Identifier(ident) = &new_expr.callee else {
+            return;
+        };
+
+        // If `Object` refers to a custom identifier defined in the source code then the use of the `new`
+        // constructor is allowed.
+        let is_custom_object_id: bool = !ident.is_global_reference_name("Object", ctx.symbols());
+
+        if is_custom_object_id {
+            return;
+        } else if ident.name != "Object" {
+            return;
+        }
+
+        ctx.diagnostic(no_new_object_diagnostic(new_expr.span));
+    }
 }
 
 #[test]

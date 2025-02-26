@@ -1,0 +1,23 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-new-object): Calling Object constructors with new is disallowed.
+   ╭─[no_new_object.tsx:1:11]
+ 1 │ var foo = new Object()
+   ·           ────────────
+   ╰────
+  help: The object literal notation {} is preferable.
+
+  ⚠ eslint(no-new-object): Calling Object constructors with new is disallowed.
+   ╭─[no_new_object.tsx:1:1]
+ 1 │ new Object();
+   · ────────────
+   ╰────
+  help: The object literal notation {} is preferable.
+
+  ⚠ eslint(no-new-object): Calling Object constructors with new is disallowed.
+   ╭─[no_new_object.tsx:1:11]
+ 1 │ const a = new Object()
+   ·           ────────────
+   ╰────
+  help: The object literal notation {} is preferable.
