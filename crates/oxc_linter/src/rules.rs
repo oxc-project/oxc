@@ -109,6 +109,7 @@ mod eslint {
     pub mod no_new;
     pub mod no_new_func;
     pub mod no_new_native_nonconstructor;
+    pub mod no_new_object;
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
@@ -569,6 +570,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_new_object,
     eslint::no_spaced_func,
     eslint::no_useless_call,
     eslint::no_unneeded_ternary,
