@@ -598,10 +598,16 @@ fn test_class_expression() {
 }
 
 #[test]
-fn test_side_effectful_expressions() {
-    test("a.b", true);
+fn test_property_access() {
+    test("a.length", true);
+    test("a?.length", true);
+    test("'a'.length", false);
+    test("'a'?.length", false);
+    test("[].length", false);
+    test("[]['length']", false);
+    test("[][`length`]", false);
+
     test("a[0]", true);
-    test("a?.b", true);
 }
 
 #[test]

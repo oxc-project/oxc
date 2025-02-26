@@ -59,8 +59,12 @@ impl MayHaveSideEffects for Expression<'_> {
             Expression::ArrayExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::ClassExpression(e) => e.may_have_side_effects(is_global_reference),
             // NOTE: private in can throw `TypeError`
-            Expression::StaticMemberExpression(e) => e.may_have_side_effects(is_global_reference),
-            Expression::ComputedMemberExpression(e) => e.may_have_side_effects(is_global_reference),
+            Expression::ChainExpression(e) => {
+                e.expression.may_have_side_effects(is_global_reference)
+            }
+            match_member_expression!(Expression) => {
+                self.to_member_expression().may_have_side_effects(is_global_reference)
+            }
             _ => true,
         }
     }
@@ -364,14 +368,72 @@ impl MayHaveSideEffects for ClassElement<'_> {
     }
 }
 
+impl MayHaveSideEffects for ChainElement<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
+            ChainElement::CallExpression(_) => true,
+            ChainElement::TSNonNullExpression(e) => {
+                e.expression.may_have_side_effects(is_global_reference)
+            }
+            match_member_expression!(ChainElement) => {
+                self.to_member_expression().may_have_side_effects(is_global_reference)
+            }
+        }
+    }
+}
+
+impl MayHaveSideEffects for MemberExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
+            MemberExpression::ComputedMemberExpression(e) => {
+                e.may_have_side_effects(is_global_reference)
+            }
+            MemberExpression::StaticMemberExpression(e) => {
+                e.may_have_side_effects(is_global_reference)
+            }
+            MemberExpression::PrivateFieldExpression(_) => true,
+        }
+    }
+}
+
 impl MayHaveSideEffects for StaticMemberExpression<'_> {
-    fn may_have_side_effects(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
-        true
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        property_access_may_have_side_effects(
+            &self.object,
+            &self.property.name,
+            is_global_reference,
+        )
     }
 }
 
 impl MayHaveSideEffects for ComputedMemberExpression<'_> {
-    fn may_have_side_effects(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
-        true
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match &self.expression {
+            Expression::StringLiteral(s) => {
+                property_access_may_have_side_effects(&self.object, &s.value, is_global_reference)
+            }
+            Expression::TemplateLiteral(t) if t.is_no_substitution_template() => {
+                property_access_may_have_side_effects(
+                    &self.object,
+                    &t.quasi().expect("template literal must have at least one quasi"),
+                    is_global_reference,
+                )
+            }
+            _ => true,
+        }
+    }
+}
+
+fn property_access_may_have_side_effects(
+    object: &Expression,
+    property: &str,
+    is_global_reference: &impl IsGlobalReference,
+) -> bool {
+    match property {
+        "length" => {
+            !(matches!(object, Expression::ArrayExpression(_))
+                || object.value_type(is_global_reference).is_string())
+        }
+        _ => true,
     }
 }
