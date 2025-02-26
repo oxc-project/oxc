@@ -7,6 +7,8 @@ use oxc_syntax::precedence::Precedence;
 use super::Tristate;
 use crate::{ParserImpl, diagnostics, lexer::Kind};
 
+// Dummy comment to run Miri
+
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     params: Box<'a, FormalParameters<'a>>,
