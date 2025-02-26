@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, CloneIn, Vec};
+use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{Atom, GetSpan, SPAN};
 
@@ -116,7 +116,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_import_declaration(
         &self,
         decl: &ImportDeclaration<'a>,
-    ) -> Option<Box<'a, ImportDeclaration<'a>>> {
+    ) -> Option<ArenaBox<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
 
         let mut new_specifiers = self.ast.vec_with_capacity(specifiers.len());
@@ -163,7 +163,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// const a = 1;
     /// function b() {}
     /// ```
-    pub(crate) fn strip_export_keyword(&self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub(crate) fn strip_export_keyword(&self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         stmts.iter_mut().for_each(|stmt| {
             if let Statement::ExportNamedDeclaration(decl) = stmt {
                 if let Some(declaration) = &mut decl.declaration {

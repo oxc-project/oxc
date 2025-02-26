@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use oxc_allocator::{Box, CloneIn, Vec};
+use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
 use oxc_ast::{Visit, VisitMut, ast::*, visit::walk_mut::walk_ts_signatures};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, SPAN};
@@ -20,7 +20,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         decl: &VariableDeclaration<'a>,
         check_binding: bool,
-    ) -> Option<Box<'a, VariableDeclaration<'a>>> {
+    ) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if decl.declare {
             None
         } else {
@@ -35,8 +35,8 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_variable_declaration_with_new_declarations(
         &self,
         decl: &VariableDeclaration<'a>,
-        declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
-    ) -> Box<'a, VariableDeclaration<'a>> {
+        declarations: ArenaVec<'a, VariableDeclarator<'a>>,
+    ) -> ArenaBox<'a, VariableDeclaration<'a>> {
         self.ast.alloc_variable_declaration(decl.span, decl.kind, declarations, self.is_declare())
     }
 
@@ -104,8 +104,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn transform_ts_module_block(
         &mut self,
-        block: &Box<'a, TSModuleBlock<'a>>,
-    ) -> Box<'a, TSModuleBlock<'a>> {
+        block: &ArenaBox<'a, TSModuleBlock<'a>>,
+    ) -> ArenaBox<'a, TSModuleBlock<'a>> {
         // We need to enter a new scope for the module block, avoid add binding to the parent scope
         // TODO: doesn't have a scope_id!
         self.scope.enter_scope(ScopeFlags::TsModuleBlock, &Cell::default());
@@ -116,8 +116,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub(crate) fn transform_ts_module_declaration(
         &mut self,
-        decl: &Box<'a, TSModuleDeclaration<'a>>,
-    ) -> Box<'a, TSModuleDeclaration<'a>> {
+        decl: &ArenaBox<'a, TSModuleDeclaration<'a>>,
+    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         if decl.declare {
             return decl.clone_in(self.ast.allocator);
         }
@@ -241,7 +241,7 @@ impl<'a> IsolatedDeclarations<'a> {
 }
 
 impl<'a> VisitMut<'a> for IsolatedDeclarations<'a> {
-    fn visit_ts_signatures(&mut self, signatures: &mut Vec<'a, TSSignature<'a>>) {
+    fn visit_ts_signatures(&mut self, signatures: &mut ArenaVec<'a, TSSignature<'a>>) {
         self.transform_ts_signatures(signatures);
         walk_ts_signatures(self, signatures);
     }

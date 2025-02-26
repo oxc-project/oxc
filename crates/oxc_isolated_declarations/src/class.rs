@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_allocator::{Box, CloneIn};
+use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use rustc_hash::FxHashMap;
@@ -133,8 +133,8 @@ impl<'a> IsolatedDeclarations<'a> {
     fn transform_class_method_definition(
         &self,
         definition: &MethodDefinition<'a>,
-        params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     ) -> ClassElement<'a> {
         let function = &definition.value;
 
@@ -197,7 +197,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn transform_formal_parameter_to_class_property(
         &self,
         param: &FormalParameter<'a>,
-        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     ) -> Option<ClassElement<'a>> {
         let Some(ident_name) = param.pattern.get_identifier_name() else {
             // A parameter property may not be declared using a binding pattern.(1187)
@@ -264,7 +264,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         function: &Function<'a>,
         params: &FormalParameters<'a>,
-    ) -> oxc_allocator::Vec<'a, ClassElement<'a>> {
+    ) -> ArenaVec<'a, ClassElement<'a>> {
         let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
             if param.accessibility.is_some() || param.readonly {
@@ -299,7 +299,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn collect_getter_or_setter_annotations(
         &self,
         decl: &Class<'a>,
-    ) -> FxHashMap<Cow<str>, Box<'a, TSTypeAnnotation<'a>>> {
+    ) -> FxHashMap<Cow<str>, ArenaBox<'a, TSTypeAnnotation<'a>>> {
         let mut method_annotations = FxHashMap::default();
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
@@ -347,7 +347,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         decl: &Class<'a>,
         declare: Option<bool>,
-    ) -> Box<'a, Class<'a>> {
+    ) -> ArenaBox<'a, Class<'a>> {
         if let Some(super_class) = &decl.super_class {
             let is_not_allowed = match super_class {
                 Expression::Identifier(_) => false,
@@ -569,7 +569,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn create_formal_parameters(
         &self,
         kind: BindingPatternKind<'a>,
-    ) -> Box<'a, FormalParameters<'a>> {
+    ) -> ArenaBox<'a, FormalParameters<'a>> {
         let pattern = self.ast.binding_pattern(kind, NONE, false);
         let parameter =
             self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);

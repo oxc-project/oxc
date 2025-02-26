@@ -9,7 +9,7 @@ use std::{cell::RefCell, mem};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, Visit, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SPAN, SourceType};
@@ -131,10 +131,7 @@ impl<'a> IsolatedDeclarations<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    fn transform_program(
-        &mut self,
-        program: &Program<'a>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+    fn transform_program(&mut self, program: &Program<'a>) -> ArenaVec<'a, Statement<'a>> {
         let has_import_or_export = program.body.iter().any(Statement::is_module_declaration);
 
         if has_import_or_export {
@@ -146,8 +143,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn transform_program_without_module_declaration(
         &mut self,
-        stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        stmts: &ArenaVec<'a, Statement<'a>>,
+    ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
         let mut stmts =
@@ -168,8 +165,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn transform_statements_on_demand(
         &mut self,
-        stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        stmts: &ArenaVec<'a, Statement<'a>>,
+    ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
         let mut stmts = self.ast.vec_from_iter(stmts.iter().filter(|stmt| {
@@ -426,9 +423,7 @@ impl<'a> IsolatedDeclarations<'a> {
         new_stm
     }
 
-    fn remove_function_overloads_implementation(
-        stmts: &mut oxc_allocator::Vec<'a, &Statement<'a>>,
-    ) {
+    fn remove_function_overloads_implementation(stmts: &mut ArenaVec<'a, &Statement<'a>>) {
         let mut last_function_name: Option<Atom<'a>> = None;
         let mut is_export_default_function_overloads = false;
 
@@ -494,7 +489,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn get_assignable_properties_for_namespaces(
-        stmts: &'a oxc_allocator::Vec<'a, Statement<'a>>,
+        stmts: &'a ArenaVec<'a, Statement<'a>>,
     ) -> FxHashMap<&'a str, FxHashSet<Atom<'a>>> {
         let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
         for stmt in stmts {
@@ -559,7 +554,7 @@ impl<'a> IsolatedDeclarations<'a> {
         assignable_properties_for_namespace
     }
 
-    fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    fn report_error_for_expando_function(&self, stmts: &ArenaVec<'a, Statement<'a>>) {
         let assignable_properties_for_namespace =
             IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 
