@@ -1,10 +1,10 @@
-use itertools::Itertools;
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -147,51 +147,59 @@ fn can_safely_unnest(
     closest: &CallExpression,
     ctx: &LintContext,
 ) -> bool {
-    let mut closest_cb_scope_bindings = vec![];
+    let mut safe_to_unnest: bool = true;
 
     closest.arguments.iter().for_each(|new_expr| {
-        let Some(arg_expr) = new_expr.as_expression() else {
-            return;
+        if let Some(arg_expr) = new_expr.as_expression() {
+            match arg_expr {
+                Expression::ArrowFunctionExpression(arrow_expr) => {
+                    let scope = arrow_expr.scope_id();
+                    if usage_of_closest_cb_vars(scope, call_expr, ctx) {
+                        safe_to_unnest = false;
+                    }
+                }
+                Expression::FunctionExpression(func_expr) => {
+                    let scope = func_expr.scope_id();
+                    if usage_of_closest_cb_vars(scope, call_expr, ctx) {
+                        safe_to_unnest = false;
+                    }
+                }
+                _ => {}
+            }
         };
-
-        match arg_expr {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
-                let func_scope = arrow_expr.scope_id();
-                closest_cb_scope_bindings =
-                    ctx.scopes().get_bindings(func_scope).iter().collect_vec();
-            }
-            Expression::FunctionExpression(func_expr) => {
-                let func_scope = func_expr.scope_id();
-                closest_cb_scope_bindings =
-                    ctx.scopes().get_bindings(func_scope).iter().collect_vec();
-            }
-            _ => {}
-        }
     });
 
-    if let Some(cb_span) = call_expr.arguments.first().map(GetSpan::span) {
-        // Now check for references in cb_span to variables defined in the closest parent cb scope.
-        // In the given example we would loop through all bindings in the closest
-        // parent scope a,b,c,d.
-        //
-        //  .then((a,b,c) => {
-        //    const d = 5;
-        //    getB(a).then(d => getC(a, b)) });
-        //                // ^^^^^^^^^^^^^^ <- `cb_span`
-        for (_, binding_symbol_id) in closest_cb_scope_bindings {
+    safe_to_unnest
+}
+
+/// Check check for references in cb_span to variables defined in the closest parent cb scope.
+/// In the given example we would loop through all bindings in the closest
+/// parent scope a,b,c,d.
+///
+///  .then((a,b,c) => { // closest_cb_scope_id
+///    const d = 5;
+///    getB(a).then(d => getC(a, b)) });
+///                // ^^^^^^^^^^^^^^ <- `cb_span`
+fn usage_of_closest_cb_vars(
+    closest_cb_scope_id: ScopeId,
+    cb_call_expr: &CallExpression,
+    ctx: &LintContext,
+) -> bool {
+    if let Some(cb_span) = cb_call_expr.arguments.first().map(GetSpan::span) {
+        for (_, binding_symbol_id) in ctx.scopes().get_bindings(closest_cb_scope_id).iter() {
             for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
                 let usage_span: Span = ctx.reference_span(usage);
                 if cb_span.contains_inclusive(usage_span) {
                     // Cannot unnest this nested promise as the nested cb refers to a variable
                     // defined in the parent promise callback scope. Unnesting would result in
                     // reference to an undefined variable.
-                    return false;
+                    return true;
                 };
             }
         }
     }
 
-    true
+    false
 }
 
 impl Rule for NoNesting {
