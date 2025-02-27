@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
 use oxc_allocator::Box;
 use oxc_ast::{
@@ -13,9 +14,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
-
-use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
+use oxc_span::{CompactStr, Span};
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);
@@ -122,8 +121,6 @@ fn is_invalid_fetch_options<'a>(
                 body_span = key_ident.span;
             }
         } else if key_ident_name == "method" {
-            // println!("&obj_prop.valuet : {0:?}", obj_prop.value); // Issue is that the num Method.Post is "GET" in the method_name here
-
             match &obj_prop.value {
                 Expression::StaticMemberExpression(s) => {
                     let symbols = ctx.semantic().symbols();
@@ -131,59 +128,32 @@ fn is_invalid_fetch_options<'a>(
                         continue;
                     };
                     let reference_id = ident_ref.reference_id();
-                    // Check if static member object is an enum and get the enum value to
-                    // determine if the value equals "GET".
+                    // Check if reference is to an enum and if so then get the string literal initialiser
+                    // for the enum value being referenced.
                     let reference = symbols.get_reference(reference_id);
 
                     if let Some(symbol_id) = reference.symbol_id() {
                         if ctx.symbols().get_flags(symbol_id).is_enum() {
-
                             let decl = ctx.semantic().symbol_declaration(symbol_id);
-
-                            // Look up enum member value by identifier ref
-                          //  let enum_node_id = reference.node_id();
-                        //    let enum_node = ctx.nodes().parent_node(enum_node_id).unwrap();
-                            //    let enum_node = ctx.nodes().parent(enum_node_id).unwrap();
-
-                            // todo Make sure the `x` in `MyEnum.x` is actually an enum member.
-
-                            //println!("aaaaaaaaa {0:?}", ctx.nodes().parent_node(enum_node_id)enum_node.parent());
-                            println!("aaaaaaaaa {0:?}", reference);
-
-                            //let Some(parent) = ctx.nodes().parent_node(enum_node_id) else {
-                            //    continue;
-                            //};
-
-                            let enum_member_res = match decl.kind() {
+                            let enum_member_res: Option<CompactStr> = match decl.kind() {
                                 AstKind::TSEnumDeclaration(enum_decl) => {
-                                    let prop_ident = s.property.name.to_compact_str();
-
-                                    println!("fooooo {tsenum_decl:?}");
-
-                                    for ts_enum_member in  &enum_decl.members {
-
-                                        let Identifier(ident) = ts_enum_member.id;
-                                    }
-                                    None
-
-//tsenum_decl.members.iter().find_map(|m| match &m.id {
-//    oxc_ast::ast::TSEnumMemberName::Identifier(
-//        identifier_name,
-//    ) => None,
-//    oxc_ast::ast::TSEnumMemberName::String(str_lit) => {
-//        Some(str_lit)
-//    }
-//})
+                                    let member_string_lit: Option<CompactStr> =
+                                        enum_decl.members.iter().find_map(|m| {
+                                            if let Some(Expression::StringLiteral(str_lit)) =
+                                                &m.initializer
+                                            {
+                                                Some(str_lit.value.to_compact_str())
+                                            } else {
+                                                None
+                                            }
+                                        });
+                                    member_string_lit
                                 }
-                                d => {
-                                    println!("unknown {d:?}");
-
-                                    None
-                                }
+                                _ => None,
                             };
 
                             if let Some(value_ident) = enum_member_res {
-                                method_name = value_ident.value.cow_to_ascii_uppercase();
+                                method_name = value_ident.into();
                             }
                         }
                     }
@@ -283,7 +253,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        /*
         r#"fetch(url, {method: "POST", body})"#,
         r#"new Request(url, {method: "POST", body})"#,
         r"fetch(url, {})",
@@ -321,7 +290,6 @@ fn test() {
         "function foo(method: string, body: string) {
             return new Request(url, {method, body});
         }",
-         */
         r#"enum Method {
           Post = "POST",
         }
