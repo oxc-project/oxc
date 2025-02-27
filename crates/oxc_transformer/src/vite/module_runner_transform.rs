@@ -29,7 +29,11 @@ use crate::utils::ast_builder::{
 };
 
 pub struct ModuleRunnerTransform<'a> {
+    /// Uid for generating import binding names.
     import_uid: u32,
+    /// Import bindings used to determine which identifiers should be transformed.
+    /// The key is a symbol id that belongs to the import binding.
+    /// The value is a tuple of (Binding, Property).
     import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Atom<'a>>)>,
 }
 
@@ -44,6 +48,7 @@ const SSR_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import__");
 const SSR_DYNAMIC_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_dynamic_import__");
 const SSR_EXPORT_ALL_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exportAll__");
 const SSR_IMPORT_META_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import_meta__");
+const DEFAULT: Atom<'static> = Atom::new_const("default");
 
 impl<'a> Traverse<'a> for ModuleRunnerTransform<'a> {
     #[inline]
@@ -56,13 +61,14 @@ impl<'a> Traverse<'a> for ModuleRunnerTransform<'a> {
         match expr {
             Expression::Identifier(_) => self.transform_identifier(expr, ctx),
             Expression::MetaProperty(_) => self.transform_meta_property(expr, ctx),
-            Expression::ImportExpression(_) => self.transform_import_expression(expr, ctx),
+            Expression::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
             _ => {}
         }
     }
 }
 
 impl<'a> ModuleRunnerTransform<'a> {
+    /// Transform import and export declarations.
     fn transform_imports_and_exports(
         &mut self,
         program: &mut Program<'a>,
@@ -72,10 +78,10 @@ impl<'a> ModuleRunnerTransform<'a> {
         if !should_transform {
             return;
         }
+
         // Reserve enough space for new statements
         let mut new_stmts: ArenaVec<'a, Statement<'a>> =
             ctx.ast.vec_with_capacity(program.body.len() * 2);
-
         let mut hoist_index = None;
 
         for stmt in program.body.drain(..) {
@@ -83,7 +89,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Statement::ImportDeclaration(import) => {
                     let ImportDeclaration { span, source, specifiers, .. } = import.unbox();
                     let import_statement = self.transform_import(span, source, specifiers, ctx);
-                    // Need to hoist import statements to the above of the other statements
+                    // Needs to hoist import statements to the above of the other statements
                     if let Some(index) = hoist_index {
                         new_stmts.insert(index, import_statement);
                         hoist_index.replace(index + 1);
@@ -92,21 +98,22 @@ impl<'a> ModuleRunnerTransform<'a> {
                     }
                     continue;
                 }
-                Statement::ExportNamedDeclaration(export) => {
-                    self.transform_export_named_declaration(&mut new_stmts, export, ctx);
-                }
                 Statement::ExportAllDeclaration(export) => {
                     self.transform_export_all_declaration(&mut new_stmts, export, ctx);
                     continue;
                 }
+                Statement::ExportNamedDeclaration(export) => {
+                    self.transform_export_named_declaration(&mut new_stmts, export, ctx);
+                }
                 Statement::ExportDefaultDeclaration(export) => {
                     self.transform_export_default_declaration(&mut new_stmts, export, ctx);
-                    continue;
                 }
                 _ => {
                     new_stmts.push(stmt);
                 }
             }
+
+            // Found that non-import statements, we can start hoisting import statements after this
             if hoist_index.is_none() {
                 hoist_index.replace(new_stmts.len() - 1);
             }
@@ -115,12 +122,75 @@ impl<'a> ModuleRunnerTransform<'a> {
         program.body = new_stmts;
     }
 
+    /// Transform `identifier` to point correctly imported binding.
+    ///
+    /// - Import without renaming
+    /// ```js
+    /// import { foo } from 'vue';
+    /// foo;
+    /// // to
+    /// __vite_ssr_import_0__.foo;
+    /// ```
+    ///
+    /// - Import with renaming
+    /// ```js
+    /// import { "arbitrary string" as bar } from 'vue';
+    /// bar;
+    /// // to
+    /// __vite_ssr_import_0__["arbitrary string"];
+    /// ```
+    ///
+    /// - The identifier is a callee of a call expression
+    /// ```js
+    /// import { foo } from 'vue';
+    /// foo();
+    /// // to
+    /// (0, __vite_ssr_import_0__.foo)();
+    /// ```
+    fn transform_identifier(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::Identifier(ident) = expr else {
+            unreachable!();
+        };
+
+        let Some((binding, property)) = ident
+            .reference_id
+            .get()
+            .and_then(|id| ctx.symbols().get_reference(id).symbol_id())
+            .and_then(|id| self.import_bindings.get(&id))
+        else {
+            return;
+        };
+
+        let object = binding.create_read_expression(ctx);
+        *expr = if let Some(property) = property {
+            // TODO(improvement): It looks like here could always return a computed member expression,
+            //                    so that we don't need to check if it's an identifier name.
+            // __vite_ssr_import_0__.foo
+            let expr = if is_identifier_name(property) {
+                create_property_access(ident.span, object, property, ctx)
+            } else {
+                // __vite_ssr_import_0__['arbitrary string']
+                create_compute_property_access(ident.span, object, property, ctx)
+            };
+
+            if matches!(ctx.parent(), Ancestor::CallExpressionCallee(_)) {
+                // wrap with (0, ...) to avoid method binding `this`
+                // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
+                let zero =
+                    ctx.ast.expression_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal);
+                let expressions = ctx.ast.vec_from_array([zero, expr]);
+                ctx.ast.expression_sequence(ident.span, expressions)
+            } else {
+                expr
+            }
+        } else {
+            object
+        };
+    }
+
+    /// Transform `import(source, ...arguments)` to `__vite_ssr_dynamic_import__(source, ...arguments)`.
     #[inline]
-    fn transform_import_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn transform_dynamic_import(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ImportExpression(import_expr) = ctx.ast.move_expression(expr) else {
             unreachable!();
         };
@@ -133,45 +203,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         *expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
     }
 
-    #[inline]
-    fn transform_identifier(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::Identifier(ident) = expr else {
-            unreachable!();
-        };
-
-        let Some(reference_id) = ident.reference_id.get() else {
-            return;
-        };
-        let Some(symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id() else {
-            return;
-        };
-        if let Some((binding, property)) = self.import_bindings.get(&symbol_id) {
-            let object = binding.create_read_expression(ctx);
-            let object = if let Some(property) = property {
-                // TODO(improvement): It looks like here could always return a computed member expression,
-                //                    so that we don't need to check if it's an identifier name.
-                if is_identifier_name(property) {
-                    create_property_access(ident.span, object, property, ctx)
-                } else {
-                    create_compute_property_access(ident.span, object, property, ctx)
-                }
-            } else {
-                object
-            };
-
-            if matches!(ctx.parent(), Ancestor::CallExpressionCallee(_)) {
-                // wrap with (0, ...) to avoid method binding `this`
-                // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
-                let zero =
-                    ctx.ast.expression_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal);
-                let expressions = ctx.ast.vec_from_array([zero, object]);
-                *expr = ctx.ast.expression_sequence(ident.span, expressions);
-            } else {
-                *expr = object;
-            }
-        }
-    }
-
+    /// Transform `import.meta` to `__vite_ssr_import_meta__`.
     #[inline]
     fn transform_meta_property(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::MetaProperty(meta) = expr else {
@@ -181,6 +213,28 @@ impl<'a> ModuleRunnerTransform<'a> {
         *expr = ctx.create_unbound_ident_expr(meta.span, SSR_IMPORT_META_KEY, ReferenceFlags::Read);
     }
 
+    /// Transform import declaration (`import { foo } from 'vue'`).
+    ///
+    /// - Import specifier
+    /// ```js
+    /// import { foo, bar } from 'vue';
+    /// // to
+    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo', 'bar'] });
+    /// ```
+    ///
+    /// - Import default specifier
+    /// ```js
+    /// import vue from 'vue';
+    /// // to
+    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['default'] });
+    /// ```
+    ///
+    /// - Import namespace specifier
+    /// ```js
+    /// import * as vue from 'vue';
+    /// // to
+    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+    /// ```
     fn transform_import(
         &mut self,
         span: Span,
@@ -210,11 +264,11 @@ impl<'a> ModuleRunnerTransform<'a> {
                 ctx.symbols_mut().set_name(binding.symbol_id, &binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
 
-                let binding_pattern_kind = BindingPatternKind::BindingIdentifier(ctx.alloc(local));
-                ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
+                let kind = BindingPatternKind::BindingIdentifier(ctx.alloc(local));
+                ctx.ast.binding_pattern(kind, NONE, false)
             } else {
                 let binding = self.generate_import_binding(ctx);
-                arguments.push(self.transform_import_metadata(&binding, specifiers, ctx));
+                arguments.push(self.transform_import_specifiers(&binding, specifiers, ctx));
                 binding.create_binding_pattern(ctx)
             }
         } else {
@@ -225,6 +279,39 @@ impl<'a> ModuleRunnerTransform<'a> {
         Self::create_import(span, pattern, arguments, ctx)
     }
 
+    /// Transform named export declaration (`export function foo() {}`).
+    ///
+    /// - Export a declaration
+    /// ```js
+    /// export function foo() {}
+    /// // to
+    /// function foo() {}
+    /// Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get() { return foo; }});
+    /// ```
+    ///
+    /// - Export specifiers
+    /// ```js
+    /// export { foo, bar };
+    /// // to
+    /// Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get() { return foo; }});
+    /// Object.defineProperty(__vite_ssr_exports__, 'bar', { enumerable: true, configurable: true, get() { return bar; }});
+    /// ```
+    ///
+    /// - Export specifiers from module
+    /// ```js
+    /// export { foo, bar } from 'vue';
+    /// // to
+    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo', 'bar'] });
+    /// Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get() { return __vite_ssr_import_0__.foo; }});
+    /// Object.defineProperty(__vite_ssr_exports__, 'bar', { enumerable: true, configurable: true, get() { return __vite_ssr_import_0__.bar; }});
+    /// ```
+    ///
+    /// - Export specifiers with renaming
+    /// ```js
+    /// export { foo as bar };
+    /// // to
+    /// Object.defineProperty(__vite_ssr_exports__, 'bar', { enumerable: true, configurable: true, get() { return foo; }});
+    /// ```
     fn transform_export_named_declaration(
         &mut self,
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -235,6 +322,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         if let Some(declaration) = declaration {
             let export_expression = match &declaration {
+                // `export const [foo, bar] = [1, 2];`
                 Declaration::VariableDeclaration(variable) => {
                     let new_stmts_index = new_stmts.len();
                     variable.bound_names(&mut |ident| {
@@ -246,11 +334,13 @@ impl<'a> ModuleRunnerTransform<'a> {
                     new_stmts.insert(new_stmts_index, Statement::from(declaration));
                     return;
                 }
+                // `export function foo() {}`
                 Declaration::FunctionDeclaration(func) => {
                     let binding = BoundIdentifier::from_binding_ident(func.id.as_ref().unwrap());
                     let ident = binding.create_read_expression(ctx);
                     Self::create_export(span, ident, binding.name, ctx)
                 }
+                // `export class Foo {}`
                 Declaration::ClassDeclaration(class) => {
                     let binding = BoundIdentifier::from_binding_ident(class.id.as_ref().unwrap());
                     let ident = binding.create_read_expression(ctx);
@@ -264,13 +354,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             };
             new_stmts.extend([Statement::from(declaration), export_expression]);
         } else {
-            // ```js
-            // export { foo, bar } from 'vue';
-            // // to
-            // const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo', 'bar'] });
-            // Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__.foo } });
-            // Object.defineProperty(__vite_ssr_exports__, 'bar', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__.bar } });
-            // ```
+            // If the source is Some, then we need to import the module first and then export them.
             let import_binding = source.map(|source| {
                 let binding = self.generate_import_binding(ctx);
                 let pattern = binding.create_binding_pattern(ctx);
@@ -310,6 +394,23 @@ impl<'a> ModuleRunnerTransform<'a> {
         }
     }
 
+    /// Transform export all declaration (`export * from 'vue'`).
+    ///
+    /// - Without renamed export:
+    /// ```js
+    /// export * from 'vue';
+    /// // to
+    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+    /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });
+    /// ```
+    ///
+    /// - Renamed export:
+    /// ```js
+    /// export * as foo from 'vue';
+    /// // to
+    /// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+    /// Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });
+    /// ```
     fn transform_export_all_declaration(
         &mut self,
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -321,7 +422,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let pattern = binding.create_binding_pattern(ctx);
         let arguments =
             ctx.ast.vec1(Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))));
-        new_stmts.push(Self::create_import(span, pattern, arguments, ctx));
+        let import = Self::create_import(span, pattern, arguments, ctx);
 
         let ident = binding.create_read_expression(ctx);
 
@@ -336,59 +437,82 @@ impl<'a> ModuleRunnerTransform<'a> {
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
             ctx.ast.statement_expression(span, call)
         };
-        new_stmts.push(export);
+        new_stmts.extend([import, export]);
     }
 
+    /// Transform export default declaration (`export default function foo() {}`).
+    ///
+    /// - Named function declaration
+    /// ```js
+    /// export default function foo() {}
+    /// // to
+    /// function foo() {}
+    /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return foo } });
+    /// ```
+    ///
+    /// - Named class declaration
+    /// ```js
+    /// export default class Foo {}
+    /// // to
+    /// class Foo {}
+    /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return Foo } });
+    /// ```
+    ///
+    /// - Without named declaration and expression
+    /// ```js
+    /// export default function () {}
+    /// export default {}
+    /// // to
+    /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return expr } });
+    /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return {} } });
+    /// ```
     fn transform_export_default_declaration(
         &self,
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let default = Atom::new_const("default");
         let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
         let expr = match declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
-                // `export default function foo() {}` ->
-                // `function foo() {}; Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return foo } });`
                 if let Some(id) = &func.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                     new_stmts.extend([
                         Statement::FunctionDeclaration(func),
-                        Self::create_export(span, ident, default, ctx),
+                        Self::create_export(span, ident, DEFAULT, ctx),
                     ]);
                     return;
                 }
-
+                // Without name, treat it as an expression
                 func.r#type = FunctionType::FunctionExpression;
                 Expression::FunctionExpression(func)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(mut class) => {
-                // `export default class Foo {}` ->
-                // `class Foo {}; Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return Foo } });`
                 if let Some(id) = &class.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                     new_stmts.extend([
                         Statement::ClassDeclaration(class),
-                        Self::create_export(span, ident, default, ctx),
+                        Self::create_export(span, ident, DEFAULT, ctx),
                     ]);
                     return;
                 }
 
+                // Without name, treat it as an expression
                 class.r#type = ClassType::ClassExpression;
                 Expression::ClassExpression(class)
             }
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
-                // Do nothing for `interface Foo {}`
+                // Do nothing for `export default interface Foo {}`
                 return;
             }
             expr @ match_expression!(ExportDefaultDeclarationKind) => expr.into_expression(),
         };
-        // `export default expr` -> `Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return expr } });`
-        new_stmts.push(Self::create_export(span, expr, default, ctx));
+
+        new_stmts.push(Self::create_export(span, expr, DEFAULT, ctx));
     }
 
-    fn transform_import_metadata(
+    /// Transform import specifiers, and return an imported names object.
+    fn transform_import_specifiers(
         &mut self,
         binding: &BoundIdentifier<'a>,
         specifiers: ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
@@ -402,7 +526,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 }
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
                     let ImportDefaultSpecifier { span, local } = specifier.unbox();
-                    self.insert_import_binding(span, binding, local, Atom::from("default"), ctx)
+                    self.insert_import_binding(span, binding, local, DEFAULT, ctx)
                 }
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
                     unreachable!()
@@ -427,6 +551,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         scopes.remove_binding(scopes.root_scope_id(), &name);
 
         let symbol_id = symbol_id.get().unwrap();
+        // Do not need to insert if there no identifiers that point to this symbol
         if !ctx.symbols().get_resolved_reference_ids(symbol_id).is_empty() {
             self.import_bindings.insert(symbol_id, (binding.clone(), Some(key)));
         }
@@ -454,6 +579,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         string.push_str("__vite_ssr_import_");
         string.push_str(&uid);
         string.push_str("__");
+        debug_assert_eq!(string.len(), capacity);
         Atom::from(string)
     }
 
