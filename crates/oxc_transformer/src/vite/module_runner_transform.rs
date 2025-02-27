@@ -38,11 +38,11 @@ impl ModuleRunnerTransform<'_> {
     }
 }
 
-const SSR_MODULE_EXPORTS_KEY: &str = "__vite_ssr_exports__";
-const SSR_IMPORT_KEY: &str = "__vite_ssr_import__";
-const SSR_DYNAMIC_IMPORT_KEY: &str = "__vite_ssr_dynamic_import__";
-const SSR_EXPORT_ALL_KEY: &str = "__vite_ssr_exportAll__";
-const SSR_IMPORT_META_KEY: &str = "__vite_ssr_import_meta__";
+const SSR_MODULE_EXPORTS_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exports__");
+const SSR_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import__");
+const SSR_DYNAMIC_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_dynamic_import__");
+const SSR_EXPORT_ALL_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exportAll__");
+const SSR_IMPORT_META_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import_meta__");
 
 impl<'a> Traverse<'a> for ModuleRunnerTransform<'a> {
     #[inline]
@@ -157,8 +157,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             unreachable!();
         };
 
-        let name = Atom::from(SSR_IMPORT_META_KEY);
-        *expr = ctx.create_unbound_ident_expr(meta.span, name, ReferenceFlags::Read);
+        *expr = ctx.create_unbound_ident_expr(meta.span, SSR_IMPORT_META_KEY, ReferenceFlags::Read);
     }
 
     fn transform_import(
@@ -318,7 +317,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             // `defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_1__ } });`
             Self::create_exports(ident, &exported.name(), ctx)
         } else {
-            let callee = ctx.ast.expression_identifier(SPAN, Atom::from(SSR_EXPORT_ALL_KEY));
+            let callee = ctx.ast.expression_identifier(SPAN, SSR_EXPORT_ALL_KEY);
             let arguments = ctx.ast.vec1(Argument::from(ident));
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_1__);`
             ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
@@ -478,8 +477,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let callee =
-            ctx.create_unbound_ident_expr(SPAN, Atom::from(SSR_IMPORT_KEY), ReferenceFlags::Read);
+        let callee = ctx.create_unbound_ident_expr(SPAN, SSR_IMPORT_KEY, ReferenceFlags::Read);
         let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         let init = ctx.ast.expression_await(SPAN, call);
 
@@ -566,7 +564,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.create_unbound_ident_expr(
                 SPAN,
-                Atom::from(SSR_MODULE_EXPORTS_KEY),
+                SSR_MODULE_EXPORTS_KEY,
                 ReferenceFlags::Read,
             )),
             Argument::from(ctx.ast.expression_string_literal(SPAN, exported_name, None)),
