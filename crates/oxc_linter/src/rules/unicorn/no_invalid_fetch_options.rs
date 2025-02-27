@@ -134,36 +134,46 @@ fn is_invalid_fetch_options<'a>(
                     // Check if static member object is an enum and get the enum value to
                     // determine if the value equals "GET".
                     let reference = symbols.get_reference(reference_id);
+
                     if let Some(symbol_id) = reference.symbol_id() {
                         if ctx.symbols().get_flags(symbol_id).is_enum() {
+
+                            let decl = ctx.semantic().symbol_declaration(symbol_id);
+
                             // Look up enum member value by identifier ref
-                            let enum_node_id = reference.node_id();
-                            let enum_node = ctx.nodes().parent_node(enum_node_id).unwrap();
+                          //  let enum_node_id = reference.node_id();
+                        //    let enum_node = ctx.nodes().parent_node(enum_node_id).unwrap();
                             //    let enum_node = ctx.nodes().parent(enum_node_id).unwrap();
 
                             // todo Make sure the `x` in `MyEnum.x` is actually an enum member.
 
                             //println!("aaaaaaaaa {0:?}", ctx.nodes().parent_node(enum_node_id)enum_node.parent());
-                            println!("aaaaaaaaa {0:?}", enum_node_id);
+                            println!("aaaaaaaaa {0:?}", reference);
 
                             //let Some(parent) = ctx.nodes().parent_node(enum_node_id) else {
                             //    continue;
                             //};
 
-                            let enum_member_res = match enum_node.kind() {
-                                AstKind::TSEnumDeclaration(tsenum_decl) => {
+                            let enum_member_res = match decl.kind() {
+                                AstKind::TSEnumDeclaration(enum_decl) => {
                                     let prop_ident = s.property.name.to_compact_str();
 
                                     println!("fooooo {tsenum_decl:?}");
 
-                                    tsenum_decl.members.iter().find_map(|m| match &m.id {
-                                        oxc_ast::ast::TSEnumMemberName::Identifier(
-                                            identifier_name,
-                                        ) => None,
-                                        oxc_ast::ast::TSEnumMemberName::String(str_lit) => {
-                                            Some(str_lit)
-                                        }
-                                    })
+                                    for ts_enum_member in  &enum_decl.members {
+
+                                        let Identifier(ident) = ts_enum_member.id;
+                                    }
+                                    None
+
+//tsenum_decl.members.iter().find_map(|m| match &m.id {
+//    oxc_ast::ast::TSEnumMemberName::Identifier(
+//        identifier_name,
+//    ) => None,
+//    oxc_ast::ast::TSEnumMemberName::String(str_lit) => {
+//        Some(str_lit)
+//    }
+//})
                                 }
                                 d => {
                                     println!("unknown {d:?}");
