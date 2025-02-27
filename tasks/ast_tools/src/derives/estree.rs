@@ -4,11 +4,10 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Expr, parse_str};
 
 use crate::{
     Result,
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef, Visibility},
+    schema::{Def, EnumDef, FieldDef, File, Schema, StructDef, TypeDef, VariantDef, Visibility},
     utils::create_safe_ident,
 };
 
@@ -66,37 +65,14 @@ impl Derive for DeriveESTree {
             ///@@line_break
             use oxc_estree::{
                 ser::{AppendTo, AppendToConcat},
-                ESTree, FlatStructSerializer, Serializer, StructSerializer,
+                ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
             };
         }
     }
 
     /// Generate implementation of `ESTree` for a struct or enum.
     fn derive(&self, type_def: StructOrEnum, schema: &Schema) -> TokenStream {
-        let body = match type_def {
-            StructOrEnum::Struct(struct_def) => {
-                if struct_def.estree.custom_serialize {
-                    return quote!();
-                }
-                generate_body_for_struct(struct_def, schema)
-            }
-            StructOrEnum::Enum(enum_def) => {
-                if enum_def.estree.custom_serialize {
-                    return quote!();
-                }
-                generate_body_for_enum(enum_def, schema)
-            }
-        };
-
-        let ty = type_def.ty_anon(schema);
-
-        quote! {
-            impl ESTree for #ty {
-                fn serialize<S: Serializer>(&self, serializer: S) {
-                    #body
-                }
-            }
-        }
+        generate_impl_for_type(type_def, schema)
     }
 }
 
@@ -109,7 +85,6 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("skip") => struct_def.estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
-            AttrPart::Tag("custom_serialize") => struct_def.estree.custom_serialize = true,
             AttrPart::Tag("no_ts_def") => struct_def.estree.custom_ts_def = Some(String::new()),
             AttrPart::List("add_fields", list) => {
                 for list_element in list {
@@ -152,19 +127,20 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::Enum(enum_def) => match part {
             AttrPart::Tag("skip") => enum_def.estree.skip = true,
             AttrPart::Tag("no_rename_variants") => enum_def.estree.no_rename_variants = true,
-            AttrPart::Tag("custom_serialize") => enum_def.estree.custom_serialize = true,
             AttrPart::Tag("no_ts_def") => enum_def.estree.custom_ts_def = Some(String::new()),
             AttrPart::String("custom_ts_def", value) => enum_def.estree.custom_ts_def = Some(value),
             AttrPart::String("ts_alias", value) => enum_def.estree.ts_alias = Some(value),
             AttrPart::String("add_ts_def", value) => {
                 enum_def.estree.add_ts_def = Some(value);
             }
+            AttrPart::String("via", value) => enum_def.estree.via = Some(value),
             _ => return Err(()),
         },
         // `#[estree]` attr on struct field
         AttrLocation::StructField(struct_def, field_index) => match part {
             AttrPart::Tag("skip") => struct_def.fields[field_index].estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.fields[field_index].estree.flatten = true,
+            AttrPart::Tag("json_safe") => struct_def.fields[field_index].estree.json_safe = true,
             AttrPart::String("rename", value) => {
                 struct_def.fields[field_index].estree.rename = Some(value);
             }
@@ -235,24 +211,46 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
     Ok(())
 }
 
+/// Generate implementation of `ESTree` for a struct or enum.
+fn generate_impl_for_type(type_def: StructOrEnum, schema: &Schema) -> TokenStream {
+    let body = match type_def {
+        StructOrEnum::Struct(struct_def) => {
+            if let Some(converter_name) = &struct_def.estree.via {
+                generate_body_for_via_override(converter_name, struct_def.file(schema), schema)
+            } else {
+                generate_body_for_struct(struct_def, schema)
+            }
+        }
+        StructOrEnum::Enum(enum_def) => {
+            if let Some(converter_name) = &enum_def.estree.via {
+                generate_body_for_via_override(converter_name, enum_def.file(schema), schema)
+            } else {
+                generate_body_for_enum(enum_def, schema)
+            }
+        }
+    };
+
+    let ty = type_def.ty_anon(schema);
+
+    quote! {
+        impl ESTree for #ty {
+            fn serialize<S: Serializer>(&self, serializer: S) {
+                #body
+            }
+        }
+    }
+}
+
 /// Generate body of `serialize` method for a struct.
 fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
-    if let Some(via_str) = struct_def.estree.via.as_deref() {
-        let via_expr = parse_str::<Expr>(via_str).unwrap();
-        return quote! {
-            #via_expr.serialize(serializer)
-        };
-    }
-
     let krate = struct_def.file(schema).krate();
     let mut g = StructSerializerGenerator::new(!struct_def.estree.no_type, krate, schema);
     g.generate_stmts_for_struct(struct_def, &quote!(self));
 
     let type_field = if g.add_type_field {
         let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
-        quote! {
-            state.serialize_field("type", #type_name);
-        }
+        let type_name = string_to_tokens(type_name, true);
+        quote!( state.serialize_field("type", #type_name); )
     } else {
         quote!()
     };
@@ -375,6 +373,17 @@ impl<'s> StructSerializerGenerator<'s> {
             quote! {
                 #wrapper_ident { array: &#self_path.#field_name_ident, after: &#self_path.#append_from_ident  }
             }
+        } else if field.estree.json_safe {
+            // Wrap value in `JsonSafeString(...)` if field is tagged `#[estree(json_safe)]`
+            match field.type_def(self.schema).name() {
+                "&str" => quote!( JsonSafeString(#self_path.#field_name_ident) ),
+                "Atom" => quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) ),
+                _ => panic!(
+                    "`#[estree(json_safe)]` is only valid on struct fields containing a `&str` or `Atom`: {}::{}",
+                    struct_def.name(),
+                    field.name(),
+                ),
+            }
         } else {
             quote!( #self_path.#field_name_ident )
         };
@@ -410,6 +419,7 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         let variant_ident = variant.ident();
         if variant.is_fieldless() {
             let value = get_fieldless_variant_value(enum_def, variant);
+            let value = string_to_tokens(value.as_ref(), false);
             quote! {
                 Self::#variant_ident => #value.serialize(serializer),
             }
@@ -425,6 +435,17 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
             #(#match_branches)*
         }
     }
+}
+
+/// Generate body of `serialize` method for a struct or enum with `#[estree(via = ...)]` attribute.
+fn generate_body_for_via_override(
+    converter_name: &str,
+    file: &File,
+    schema: &Schema,
+) -> TokenStream {
+    let converter = schema.meta_by_name(converter_name);
+    let converter_path = converter.import_path_from_crate(file.krate(), schema);
+    quote!( #converter_path(self).serialize(serializer) )
 }
 
 /// Get if a struct field should be skipped when serializing.
@@ -513,5 +534,23 @@ pub fn get_struct_field_name(field: &FieldDef) -> Cow<'_, str> {
         Cow::Borrowed(field_name)
     } else {
         Cow::Owned(field.camel_name())
+    }
+}
+
+/// Convert string to [`TokenStream`] representing string literal.
+///
+/// If the string contains no characters which need escaping in JSON,
+/// returns tokens for `JsonSafeString("string")`, which is faster to serialize.
+///
+/// If `as_ref` is `true`, and string is JSON-safe, returns tokens for `&JsonSafeString("string")`.
+fn string_to_tokens(str: &str, as_ref: bool) -> TokenStream {
+    let contains_chars_needing_escaping =
+        str.as_bytes().iter().any(|&b| b < 32 || b == b'"' || b == b'\\');
+    if contains_chars_needing_escaping {
+        quote!(#str)
+    } else if as_ref {
+        quote!( &JsonSafeString(#str) )
+    } else {
+        quote!( JsonSafeString(#str) )
     }
 }

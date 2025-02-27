@@ -109,6 +109,27 @@ describe('parse', () => {
       });
     });
   });
+
+  describe('hashbang', () => {
+    it('is `null` when no hashbang', () => {
+      const ret = parseSync('test.js', 'let x;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.hashbang).toBeNull();
+    });
+
+    it('is defined when hashbang', () => {
+      const ret = parseSync('test.js', '#!/usr/bin/env node\nlet x;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.hashbang).toEqual({
+        type: 'Hashbang',
+        start: 0,
+        end: 19,
+        value: '/usr/bin/env node',
+      });
+    });
+  });
 });
 
 describe('UTF-16 span', () => {

@@ -1843,6 +1843,7 @@ impl<'a> AstBuilder<'a> {
             type_parameters: type_parameters.into_in(self.allocator),
             arguments,
             optional,
+            pure: Default::default(),
         }
     }
 
@@ -1874,6 +1875,77 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`CallExpression`] with `pure`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_call_expression_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_parameters`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn call_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        type_parameters: T1,
+        arguments: Vec<'a, Argument<'a>>,
+        optional: bool,
+        pure: bool,
+    ) -> CallExpression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        CallExpression {
+            span,
+            callee,
+            type_parameters: type_parameters.into_in(self.allocator),
+            arguments,
+            optional,
+            pure,
+        }
+    }
+
+    /// Build a [`CallExpression`] with `pure`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::call_expression_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `type_parameters`
+    /// * `arguments`
+    /// * `optional`
+    /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn alloc_call_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        type_parameters: T1,
+        arguments: Vec<'a, Argument<'a>>,
+        optional: bool,
+        pure: bool,
+    ) -> Box<'a, CallExpression<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        Box::new_in(
+            self.call_expression_with_pure(
+                span,
+                callee,
+                type_parameters,
+                arguments,
+                optional,
+                pure,
+            ),
+            self.allocator,
+        )
+    }
+
     /// Build a [`NewExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_new_expression`] instead.
@@ -1899,6 +1971,7 @@ impl<'a> AstBuilder<'a> {
             callee,
             arguments,
             type_parameters: type_parameters.into_in(self.allocator),
+            pure: Default::default(),
         }
     }
 
@@ -1923,6 +1996,65 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(self.new_expression(span, callee, arguments, type_parameters), self.allocator)
+    }
+
+    /// Build a [`NewExpression`] with `pure`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_new_expression_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `arguments`
+    /// * `type_parameters`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn new_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+        type_parameters: T1,
+        pure: bool,
+    ) -> NewExpression<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        NewExpression {
+            span,
+            callee,
+            arguments,
+            type_parameters: type_parameters.into_in(self.allocator),
+            pure,
+        }
+    }
+
+    /// Build a [`NewExpression`] with `pure`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::new_expression_with_pure`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `callee`
+    /// * `arguments`
+    /// * `type_parameters`
+    /// * `pure`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[inline]
+    pub fn alloc_new_expression_with_pure<T1>(
+        self,
+        span: Span,
+        callee: Expression<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+        type_parameters: T1,
+        pure: bool,
+    ) -> Box<'a, NewExpression<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+    {
+        Box::new_in(
+            self.new_expression_with_pure(span, callee, arguments, type_parameters, pure),
+            self.allocator,
+        )
     }
 
     /// Build a [`MetaProperty`].
@@ -5085,6 +5217,7 @@ impl<'a> AstBuilder<'a> {
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
             scope_id: Default::default(),
+            pure: Default::default(),
         }
     }
 
@@ -5144,9 +5277,9 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Function`] with `scope_id`.
+    /// Build a [`Function`] with `scope_id` and `pure`.
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_function_with_scope_id`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_function_with_scope_id_and_pure`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5161,8 +5294,9 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[inline]
-    pub fn function_with_scope_id<T1, T2, T3, T4, T5>(
+    pub fn function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -5176,6 +5310,7 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
         body: T5,
         scope_id: ScopeId,
+        pure: bool,
     ) -> Function<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5197,12 +5332,13 @@ impl<'a> AstBuilder<'a> {
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
             scope_id: Cell::new(Some(scope_id)),
+            pure,
         }
     }
 
-    /// Build a [`Function`] with `scope_id`, and store it in the memory arena.
+    /// Build a [`Function`] with `scope_id` and `pure`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id`] instead.
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id_and_pure`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5217,8 +5353,9 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[inline]
-    pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
+    pub fn alloc_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -5232,6 +5369,7 @@ impl<'a> AstBuilder<'a> {
         return_type: T4,
         body: T5,
         scope_id: ScopeId,
+        pure: bool,
     ) -> Box<'a, Function<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5241,7 +5379,7 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Box::new_in(
-            self.function_with_scope_id(
+            self.function_with_scope_id_and_pure(
                 span,
                 r#type,
                 id,
@@ -5254,6 +5392,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 body,
                 scope_id,
+                pure,
             ),
             self.allocator,
         )

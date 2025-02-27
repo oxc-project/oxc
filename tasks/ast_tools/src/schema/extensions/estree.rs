@@ -6,8 +6,6 @@ pub struct ESTreeStruct {
     pub skip: bool,
     pub flatten: bool,
     pub no_type: bool,
-    /// `true` if serializer is implemented manually and should not be generated
-    pub custom_serialize: bool,
     /// Additional fields to add to struct in ESTree AST.
     /// `(name, converter)` where `name` is the name of the field, and `converter` is name of
     /// a converter meta type.
@@ -33,10 +31,9 @@ pub struct ESTreeStruct {
 /// Configuration for ESTree generator on an enum.
 #[derive(Default, Debug)]
 pub struct ESTreeEnum {
+    pub via: Option<String>,
     pub skip: bool,
     pub no_rename_variants: bool,
-    /// `true` if serializer is implemented manually and should not be generated
-    pub custom_serialize: bool,
     /// TS alias.
     /// e.g. `#[estree(ts_alias = "null")]` means this type won't have a type def generated,
     /// and any struct / enum referencing it will substitute `null` as the type.
@@ -59,6 +56,8 @@ pub struct ESTreeStructField {
     pub append_field_index: Option<usize>,
     pub skip: bool,
     pub flatten: bool,
+    // `true` for fields containing a `&str` or `Atom` which does not need escaping in JSON
+    pub json_safe: bool,
     pub is_ts: bool,
 }
 

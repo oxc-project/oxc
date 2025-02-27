@@ -1430,12 +1430,15 @@ impl GenExpr for CallExpression<'_> {
         let is_statement = p.start_of_stmt == p.code_len();
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
+        let pure = p.options.print_annotation_comments() && self.pure;
+        if precedence >= Precedence::Postfix && pure {
             wrap = true;
         }
 
         p.wrap(wrap, |p| {
-            p.print_annotation_comments(self.span.start);
+            if pure {
+                p.print_str("/* @__PURE__ */ ");
+            }
             if is_export_default {
                 p.start_of_default_export = p.code_len();
             } else if is_statement {
@@ -2198,11 +2201,14 @@ impl GenExpr for ChainExpression<'_> {
 impl GenExpr for NewExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
+        let pure = p.options.print_annotation_comments() && self.pure;
+        if precedence >= Precedence::Postfix && pure {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            p.print_annotation_comments(self.span.start);
+            if pure {
+                p.print_str("/* @__PURE__ */ ");
+            }
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
             p.print_str("new");

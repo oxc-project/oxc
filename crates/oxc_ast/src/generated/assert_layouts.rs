@@ -145,13 +145,15 @@ const _: () = {
     assert!(offset_of!(CallExpression, type_parameters) == 24);
     assert!(offset_of!(CallExpression, arguments) == 32);
     assert!(offset_of!(CallExpression, optional) == 64);
+    assert!(offset_of!(CallExpression, pure) == 65);
 
-    assert!(size_of::<NewExpression>() == 64);
+    assert!(size_of::<NewExpression>() == 72);
     assert!(align_of::<NewExpression>() == 8);
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
     assert!(offset_of!(NewExpression, arguments) == 24);
     assert!(offset_of!(NewExpression, type_parameters) == 56);
+    assert!(offset_of!(NewExpression, pure) == 64);
 
     assert!(size_of::<MetaProperty>() == 56);
     assert!(align_of::<MetaProperty>() == 8);
@@ -516,6 +518,7 @@ const _: () = {
     assert!(offset_of!(Function, return_type) == 80);
     assert!(offset_of!(Function, body) == 88);
     assert!(offset_of!(Function, scope_id) == 96);
+    assert!(offset_of!(Function, pure) == 100);
 
     assert!(size_of::<FunctionType>() == 1);
     assert!(align_of::<FunctionType>() == 1);
@@ -1722,13 +1725,15 @@ const _: () = {
     assert!(offset_of!(CallExpression, type_parameters) == 16);
     assert!(offset_of!(CallExpression, arguments) == 20);
     assert!(offset_of!(CallExpression, optional) == 36);
+    assert!(offset_of!(CallExpression, pure) == 37);
 
-    assert!(size_of::<NewExpression>() == 36);
+    assert!(size_of::<NewExpression>() == 40);
     assert!(align_of::<NewExpression>() == 4);
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
     assert!(offset_of!(NewExpression, arguments) == 16);
     assert!(offset_of!(NewExpression, type_parameters) == 32);
+    assert!(offset_of!(NewExpression, pure) == 36);
 
     assert!(size_of::<MetaProperty>() == 40);
     assert!(align_of::<MetaProperty>() == 4);
@@ -2079,7 +2084,7 @@ const _: () = {
     assert!(offset_of!(BindingRestElement, span) == 0);
     assert!(offset_of!(BindingRestElement, argument) == 8);
 
-    assert!(size_of::<Function>() == 60);
+    assert!(size_of::<Function>() == 64);
     assert!(align_of::<Function>() == 4);
     assert!(offset_of!(Function, span) == 0);
     assert!(offset_of!(Function, r#type) == 8);
@@ -2093,6 +2098,7 @@ const _: () = {
     assert!(offset_of!(Function, return_type) == 48);
     assert!(offset_of!(Function, body) == 52);
     assert!(offset_of!(Function, scope_id) == 56);
+    assert!(offset_of!(Function, pure) == 60);
 
     assert!(size_of::<FunctionType>() == 1);
     assert!(align_of::<FunctionType>() == 1);

@@ -2,6 +2,24 @@ use oxc_data_structures::code_buffer::CodeBuffer;
 
 use super::{ESTree, Serializer};
 
+/// A string which does not need any escaping in JSON.
+///
+/// This provides better performance when you know that the string definitely contains no characters
+/// that require escaping, as it avoids the cost of checking that.
+///
+/// If the string does in fact contain characters that did need escaping, it will result in invalid JSON.
+pub struct JsonSafeString<'s>(pub &'s str);
+
+impl ESTree for JsonSafeString<'_> {
+    #[inline(always)]
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        let buffer = serializer.buffer_mut();
+        buffer.print_ascii_byte(b'"');
+        buffer.print_str(self.0);
+        buffer.print_ascii_byte(b'"');
+    }
+}
+
 /// [`ESTree`] implementation for string slice.
 impl ESTree for str {
     fn serialize<S: Serializer>(&self, mut serializer: S) {

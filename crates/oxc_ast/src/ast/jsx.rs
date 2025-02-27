@@ -148,7 +148,7 @@ pub struct JSXClosingFragment {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 #[estree(
-    custom_serialize,
+    via = JSXElementNameConverter,
     custom_ts_def = "type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpression"
 )]
 pub enum JSXElementName<'a> {
@@ -230,7 +230,7 @@ pub struct JSXMemberExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 #[estree(
-    custom_serialize,
+    via = JSXMemberExpressionObjectConverter,
     custom_ts_def = "type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression"
 )]
 pub enum JSXMemberExpressionObject<'a> {
@@ -430,6 +430,7 @@ pub struct JSXIdentifier<'a> {
     /// Node location in source code
     pub span: Span,
     /// The name of the identifier.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 

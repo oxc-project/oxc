@@ -41,9 +41,21 @@ impl Case for EstreeTest262Case {
     }
 
     fn skip_test_case(&self) -> bool {
-        // In an ideal world, we would not ignore these tests as we should be able to pass them.
-        // But ignoring them for now just to reduce noise in the conformance snapshot file.
-        // TODO: Re-enable these tests.
+        // Skip tests where fixture starts with a hashbang.
+        // We intentionally diverge from Acorn, by including an extra `hashbang` field on `Program`.
+        // `acorn-test262` adapts Acorn's AST to add a `hashbang: null` field to `Program`,
+        // in order to match Oxc's output.
+        // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
+        // field is (correctly) not `null` in these cases.
+        // `napi/parser` contains tests for correct parsing of hashbangs.
+        if self.path().starts_with("test262/test/language/comments/hashbang/") {
+            return true;
+        }
+
+        // These tests fail, due to lack of support in Oxc's parser.
+        // We don't filter them out because they are genuine test fails, but leaving this list here so
+        // can uncomment this block when debugging any new test failures, to filter out "known bad".
+        /*
         static IGNORE_PATHS: &[&str] = &[
             // Missing `ParenthesizedExpression` on left side of assignment.
             // Oxc's parser does not support this, and we do not intend to fix.
@@ -57,6 +69,7 @@ impl Case for EstreeTest262Case {
             "test262/test/language/statements/for-in/head-lhs-cover.js",
             "test262/test/language/statements/for-of/head-lhs-async-parens.js",
             "test262/test/language/statements/for-of/head-lhs-cover.js",
+
             // Lone surrogates in strings.
             // We cannot pass these tests at present, as Oxc's parser does not handle them correctly.
             // https://github.com/oxc-project/oxc/issues/3526#issuecomment-2650260735
@@ -96,24 +109,13 @@ impl Case for EstreeTest262Case {
             "test262/test/language/literals/regexp/u-surrogate-pairs-atom-char-class.js",
             "test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js",
             "test262/test/language/statements/for-of/string-astral-truncated.js",
-            // Hashbangs.
-            // We intentionally diverge from Acorn, by including an extra `hashbang` field on `Program`.
-            // `acorn-test262` adapts Acorn's AST to add a `hashbang: null` field to `Program`,
-            // in order to match Oxc's output.
-            // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
-            // field is (correctly) not `null` in these cases.
-            "test262/test/language/comments/hashbang/line-terminator-carriage-return.js",
-            "test262/test/language/comments/hashbang/line-terminator-line-separator.js",
-            "test262/test/language/comments/hashbang/line-terminator-paragraph-separator.js",
-            "test262/test/language/comments/hashbang/module.js",
-            "test262/test/language/comments/hashbang/not-empty.js",
-            "test262/test/language/comments/hashbang/use-strict.js",
         ];
 
         let path = &*self.path().to_string_lossy();
         if IGNORE_PATHS.contains(&path) {
             return true;
         }
+        */
 
         // Skip tests where no Acorn JSON file
         matches!(fs::exists(&self.acorn_json_path), Ok(false))
@@ -156,7 +158,20 @@ impl Case for EstreeTest262Case {
             return;
         }
 
-        // Mismatch found
+        // Mismatch found.
+        // Write diff to `acorn-test262-diff` directory, unless running on CI.
+        let is_ci = std::option_env!("CI") == Some("true");
+        if !is_ci {
+            self.write_diff(&oxc_json, &acorn_json);
+        }
+
+        self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
+    }
+}
+
+impl EstreeTest262Case {
+    /// Write diff to `acorn-test262-diff` directory.
+    fn write_diff(&self, oxc_json: &str, acorn_json: &str) {
         let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
             .join(self.path().strip_prefix("test262").unwrap())
             .with_extension("diff");
@@ -164,11 +179,10 @@ impl Case for EstreeTest262Case {
         write!(
             std::fs::File::create(diff_path).unwrap(),
             "{}",
-            similar::TextDiff::from_lines(&acorn_json, &oxc_json)
+            similar::TextDiff::from_lines(acorn_json, oxc_json)
                 .unified_diff()
                 .missing_newline_hint(false)
         )
         .unwrap();
-        self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
     }
 }

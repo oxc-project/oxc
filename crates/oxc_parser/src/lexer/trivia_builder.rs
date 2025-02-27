@@ -21,6 +21,8 @@ pub struct TriviaBuilder {
 
     /// Previous token kind, used to indicates comments are trailing from what kind
     previous_kind: Kind,
+
+    pub(super) has_pure_comment: bool,
 }
 
 impl Default for TriviaBuilder {
@@ -31,21 +33,26 @@ impl Default for TriviaBuilder {
             processed: 0,
             saw_newline: true,
             previous_kind: Kind::Undetermined,
+            has_pure_comment: false,
         }
     }
 }
 
 impl TriviaBuilder {
+    pub fn previous_token_has_pure_comment(&self) -> bool {
+        self.has_pure_comment
+    }
+
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
-    pub fn add_line_comment(&mut self, start: u32, end: u32) {
-        self.add_comment(Comment::new(start, end, CommentKind::Line));
+    pub fn add_line_comment(&mut self, start: u32, end: u32, source_text: &str) {
+        self.add_comment(Comment::new(start, end, CommentKind::Line), source_text);
     }
 
-    pub fn add_block_comment(&mut self, start: u32, end: u32) {
-        self.add_comment(Comment::new(start, end, CommentKind::Block));
+    pub fn add_block_comment(&mut self, start: u32, end: u32, source_text: &str) {
+        self.add_comment(Comment::new(start, end, CommentKind::Block), source_text);
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
@@ -105,7 +112,10 @@ impl TriviaBuilder {
         !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
     }
 
-    fn add_comment(&mut self, comment: Comment) {
+    fn add_comment(&mut self, comment: Comment, source_text: &str) {
+        if comment.is_pure(source_text) {
+            self.has_pure_comment = true;
+        }
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last() {

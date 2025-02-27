@@ -83,6 +83,14 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> O
         return None;
     }
 
+    // If struct has a converter defined with `#[estree(via = Converter)]` and that converter defines
+    // a type alias, then it needs no type def
+    if let Some(converter_name) = &struct_def.estree.via {
+        if get_ts_type_for_converter(converter_name, schema).is_some() {
+            return None;
+        }
+    }
+
     // If struct is marked as `#[estree(flatten)]`, and only has a single field which isn't skipped,
     // don't generate a type def. That single field will be inserted inline into structs which include
     // this one rather than them extending this type.
@@ -237,7 +245,10 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
 
         Cow::Owned(field_type_name)
     } else if let Some(converter_name) = &field.estree.via {
-        Cow::Borrowed(get_ts_type_for_converter(converter_name, schema))
+        let Some(ts_type) = get_ts_type_for_converter(converter_name, schema) else {
+            panic!("No `ts_type` provided for ESTree converter `{converter_name}`");
+        };
+        Cow::Borrowed(ts_type)
     } else {
         get_field_type_name(field, schema)
     };
@@ -278,7 +289,9 @@ fn generate_ts_type_def_for_added_struct_field(
     fields_str: &mut String,
     schema: &Schema,
 ) {
-    let ts_type = get_ts_type_for_converter(converter_name, schema);
+    let Some(ts_type) = get_ts_type_for_converter(converter_name, schema) else {
+        panic!("No `ts_type` provided for ESTree converter `{converter_name}`");
+    };
     fields_str.push_str(&format!("\n\t{field_name}: {ts_type};"));
 }
 
@@ -286,12 +299,9 @@ fn generate_ts_type_def_for_added_struct_field(
 ///
 /// Converters are specified with `#[estree(add_fields(field_name = converter_name))]`
 /// and `#[estree(via = converter_name)]`.
-fn get_ts_type_for_converter<'s>(converter_name: &str, schema: &'s Schema) -> &'s str {
+fn get_ts_type_for_converter<'s>(converter_name: &str, schema: &'s Schema) -> Option<&'s str> {
     let converter = schema.meta_by_name(converter_name);
-    let Some(ts_type) = &converter.estree.ts_type else {
-        panic!("No `ts_type` provided for ESTree converter `{}`", converter.name());
-    };
-    ts_type
+    converter.estree.ts_type.as_deref()
 }
 
 /// Generate Typescript type definition for an enum.
@@ -299,6 +309,14 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<
     // If enum marked with `#[estree(ts_alias = "...")]`, then it needs no type def
     if enum_def.estree.ts_alias.is_some() {
         return None;
+    }
+
+    // If enum has a converter defined with `#[estree(via = Converter)]` and that converter defines
+    // a type alias, then it needs no type def
+    if let Some(converter_name) = &enum_def.estree.via {
+        if get_ts_type_for_converter(converter_name, schema).is_some() {
+            return None;
+        }
     }
 
     let own_variants_type_names = enum_def.variants.iter().map(|variant| {
@@ -325,6 +343,11 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             if let Some(ts_alias) = &struct_def.estree.ts_alias {
                 Cow::Borrowed(ts_alias)
             } else {
+                if let Some(converter_name) = &struct_def.estree.via {
+                    if let Some(type_name) = get_ts_type_for_converter(converter_name, schema) {
+                        return Cow::Borrowed(type_name);
+                    }
+                }
                 Cow::Borrowed(struct_def.name())
             }
         }
@@ -332,6 +355,11 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             if let Some(ts_alias) = &enum_def.estree.ts_alias {
                 Cow::Borrowed(ts_alias)
             } else {
+                if let Some(converter_name) = &enum_def.estree.via {
+                    if let Some(type_name) = get_ts_type_for_converter(converter_name, schema) {
+                        return Cow::Borrowed(type_name);
+                    }
+                }
                 Cow::Borrowed(enum_def.name())
             }
         }

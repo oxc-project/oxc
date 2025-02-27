@@ -3310,6 +3310,7 @@ pub(crate) const OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS: usize =
     offset_of!(CallExpression, type_parameters);
 pub(crate) const OFFSET_CALL_EXPRESSION_ARGUMENTS: usize = offset_of!(CallExpression, arguments);
 pub(crate) const OFFSET_CALL_EXPRESSION_OPTIONAL: usize = offset_of!(CallExpression, optional);
+pub(crate) const OFFSET_CALL_EXPRESSION_PURE: usize = offset_of!(CallExpression, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -3343,6 +3344,11 @@ impl<'a, 't> CallExpressionWithoutCallee<'a, 't> {
     #[inline]
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
     }
 }
 
@@ -3385,6 +3391,11 @@ impl<'a, 't> CallExpressionWithoutTypeParameters<'a, 't> {
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for CallExpressionWithoutTypeParameters<'a, 't> {
@@ -3426,6 +3437,11 @@ impl<'a, 't> CallExpressionWithoutArguments<'a, 't> {
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for CallExpressionWithoutArguments<'a, 't> {
@@ -3440,6 +3456,7 @@ pub(crate) const OFFSET_NEW_EXPRESSION_CALLEE: usize = offset_of!(NewExpression,
 pub(crate) const OFFSET_NEW_EXPRESSION_ARGUMENTS: usize = offset_of!(NewExpression, arguments);
 pub(crate) const OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS: usize =
     offset_of!(NewExpression, type_parameters);
+pub(crate) const OFFSET_NEW_EXPRESSION_PURE: usize = offset_of!(NewExpression, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -3468,6 +3485,11 @@ impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
     }
 }
 
@@ -3505,6 +3527,11 @@ impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
@@ -3540,6 +3567,11 @@ impl<'a, 't> NewExpressionWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_ARGUMENTS)
                 as *const Vec<'a, Argument<'a>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
     }
 }
 
@@ -6523,6 +6555,7 @@ pub(crate) const OFFSET_FUNCTION_PARAMS: usize = offset_of!(Function, params);
 pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, return_type);
 pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
+pub(crate) const OFFSET_FUNCTION_PURE: usize = offset_of!(Function, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -6602,6 +6635,11 @@ impl<'a, 't> FunctionWithoutId<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
 }
 
@@ -6691,6 +6729,11 @@ impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutTypeParameters<'a, 't> {
@@ -6778,6 +6821,11 @@ impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
 }
 
@@ -6867,6 +6915,11 @@ impl<'a, 't> FunctionWithoutParams<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutParams<'a, 't> {
@@ -6955,6 +7008,11 @@ impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutReturnType<'a, 't> {
@@ -7042,6 +7100,11 @@ impl<'a, 't> FunctionWithoutBody<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
 }
 

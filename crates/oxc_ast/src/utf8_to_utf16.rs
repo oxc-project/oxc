@@ -1,6 +1,6 @@
 //! Convert UTF-8 span offsets to UTF-16.
 
-use std::cmp::min;
+use std::{cmp::min, slice};
 
 use oxc_span::Span;
 use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
@@ -33,40 +33,10 @@ impl Utf8ToUtf16 {
     /// Create new [`Utf8ToUtf16`] conversion table from source text.
     pub fn new(source_text: &str) -> Self {
         let mut translations = Vec::with_capacity(16);
+
         translations.push(Translation { utf8_offset: 0, utf16_difference: 0 });
 
-        // Translation from UTF-8 byte offset to UTF-16 char offset:
-        //
-        // * 1-byte UTF-8 sequence
-        //   = 1st byte 0xxxxxxx (0 - 0x7F)
-        //   -> 1 x UTF-16 char
-        //   UTF-16 len = UTF-8 len
-        // * 2-byte UTF-8 sequence
-        //   = 1st byte 110xxxxx (0xC0 - 0xDF), remaining bytes 10xxxxxx (0x80 - 0xBF)
-        //   -> 1 x UTF-16
-        //   UTF-16 len = UTF-8 len - 1
-        // * 3-byte UTF-8 sequence
-        //   = 1st byte 1110xxxx (0xE0 - 0xEF), remaining bytes 10xxxxxx (0x80 - 0xBF)
-        //   -> 1 x UTF-16
-        //   UTF-16 len = UTF-8 len - 2
-        // * 4-byte UTF-8 sequence
-        //   = 1st byte 1111xxxx (0xF0 - 0xFF), remaining bytes 10xxxxxx (0x80 - 0xBF)
-        //   -> 2 x UTF-16
-        //   UTF-16 len = UTF-8 len - 2
-        //
-        // So UTF-16 offset = UTF-8 offset - count of bytes `>= 0xC0` - count of bytes `>= 0xE0`
-        let mut utf16_difference = 0;
-        #[expect(clippy::cast_possible_truncation)]
-        for (utf8_offset, &byte) in source_text.as_bytes().iter().enumerate() {
-            if byte >= 0xC0 {
-                let difference_for_this_byte = u32::from(byte >= 0xE0) + 1;
-                utf16_difference += difference_for_this_byte;
-                // Record `utf8_offset + 1` not `utf8_offset`, because it's only offsets *after* this
-                // Unicode character that need to be shifted
-                translations
-                    .push(Translation { utf8_offset: utf8_offset as u32 + 1, utf16_difference });
-            }
-        }
+        build_translations(source_text, &mut translations);
 
         // If no translations have been added after the first `0, 0` dummy, then source is entirely ASCII.
         // Remove the dummy entry.
@@ -377,6 +347,186 @@ impl VisitMutModuleRecord for Utf8ToUtf16Converter<'_> {
     }
 }
 
+const CHUNK_SIZE: usize = 32;
+const CHUNK_ALIGNMENT: usize = align_of::<AlignedChunk>();
+const _: () = {
+    assert!(CHUNK_SIZE >= CHUNK_ALIGNMENT);
+    assert!(CHUNK_SIZE % CHUNK_ALIGNMENT == 0);
+    assert!(CHUNK_SIZE == size_of::<AlignedChunk>());
+};
+
+#[repr(C, align(16))]
+struct AlignedChunk([u8; CHUNK_SIZE]);
+
+impl AlignedChunk {
+    /// Check if chunk contains any non-ASCII bytes.
+    ///
+    /// This boils down to 3 x SIMD ops to check 32 bytes in one go.
+    /// <https://godbolt.org/z/E7jc51Mf5>
+    #[inline]
+    fn contains_unicode(&self) -> bool {
+        for index in 0..CHUNK_SIZE {
+            if !self.0[index].is_ascii() {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Get contents of chunk as a `&[u8]` slice.
+    #[inline]
+    fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+/// Build table of translations from UTF-8 offsets to UTF-16 offsets.
+///
+/// Process bulk of source text in chunks of 32 bytes, using SIMD instructions.
+/// This should be much faster than byte-by-byte processing, assuming non-ASCII chars are rare in source code.
+///
+/// Translation as follows:
+///
+/// * 1-byte UTF-8 sequence
+///   = 1st byte 0xxxxxxx (0 - 0x7F)
+///   -> 1 x UTF-16 char
+///   UTF-16 len = UTF-8 len
+/// * 2-byte UTF-8 sequence
+///   = 1st byte 110xxxxx (0xC0 - 0xDF), remaining bytes 10xxxxxx (0x80 - 0xBF)
+///   -> 1 x UTF-16
+///   UTF-16 len = UTF-8 len - 1
+/// * 3-byte UTF-8 sequence
+///   = 1st byte 1110xxxx (0xE0 - 0xEF), remaining bytes 10xxxxxx (0x80 - 0xBF)
+///   -> 1 x UTF-16
+///   UTF-16 len = UTF-8 len - 2
+/// * 4-byte UTF-8 sequence
+///   = 1st byte 1111xxxx (0xF0 - 0xFF), remaining bytes 10xxxxxx (0x80 - 0xBF)
+///   -> 2 x UTF-16
+///   UTF-16 len = UTF-8 len - 2
+///
+/// So UTF-16 offset = UTF-8 offset - count of bytes `>= 0xC0` - count of bytes `>= 0xE0`
+fn build_translations(source_text: &str, translations: &mut Vec<Translation>) {
+    // Running counter of difference between UTF-8 and UTF-16 offset
+    let mut utf16_difference = 0;
+
+    // Closure that processes a slice of bytes
+    let mut process_slice = |slice: &[u8], start_offset: usize| {
+        for (index, &byte) in slice.iter().enumerate() {
+            #[expect(clippy::cast_possible_truncation)]
+            if byte >= 0xC0 {
+                let difference_for_this_byte = u32::from(byte >= 0xE0) + 1;
+                utf16_difference += difference_for_this_byte;
+                // Record `offset + 1` not `offset`, because it's only offsets *after* this
+                // Unicode character that need to be shifted.
+                // `offset + 1` cannot overflow, because source is limited to `u32::MAX` bytes,
+                // so a multi-byte Unicode character can't start at offset `u32::MAX`, because there
+                // isn't space to complete the multi-byte sequence, which would not be a valid `&str`.
+                let offset = start_offset + index;
+                let utf8_offset = (offset + 1) as u32;
+                translations.push(Translation { utf8_offset, utf16_difference });
+            }
+        }
+    };
+
+    // If source text is short, just process byte-by-byte
+    let bytes = source_text.as_bytes();
+    if bytes.len() < CHUNK_SIZE {
+        process_slice(bytes, 0);
+        return;
+    }
+
+    // Process first few bytes of source
+    let start_ptr = bytes.as_ptr();
+    let mut remaining_len = bytes.len();
+
+    let mut ptr = start_ptr;
+
+    let first_chunk_len = ptr.align_offset(CHUNK_ALIGNMENT);
+    if first_chunk_len > 0 {
+        // SAFETY: `first_chunk_len` is less than `CHUNK_ALIGNMENT`, which in turn is no bigger than
+        // `CHUNK_SIZE`. We already exited if source is shorter than `CHUNK_SIZE` bytes,
+        // so there must be at least `first_chunk_len` bytes in source.
+        let first_chunk = unsafe { slice::from_raw_parts(ptr, first_chunk_len) };
+        process_slice(first_chunk, 0);
+        // SAFETY: For reasons given above, `first_chunk_len` must be in bounds
+        ptr = unsafe { ptr.add(first_chunk_len) };
+        remaining_len -= first_chunk_len;
+    }
+
+    debug_assert!((ptr as usize) % CHUNK_ALIGNMENT == 0);
+
+    // Process main body as aligned chunks of 32 bytes.
+    //
+    // We've aligned `ptr` to `CHUNK_ALIGNMENT`, so can now read the rest of source as `AlignedChunk`s
+    // (apart from a few bytes on end which may not be enough to make a whole `AlignedChunk`).
+    //
+    // Do a fast check for any non-ASCII bytes in each chunk using SIMD.
+    // Only if that finds non-ASCII bytes, process the chunk byte-by-byte.
+
+    // Get length of body of `bytes` which we can process as `AlignedChunk`s.
+    // Round down remaining length to a multiple of `CHUNK_SIZE`.
+    let body_len = remaining_len & !(CHUNK_SIZE - 1);
+    remaining_len -= body_len;
+    // SAFETY: `body_len` is less than number of bytes remaining in `bytes`, so in bounds
+    let body_end_ptr = unsafe { ptr.add(body_len) };
+
+    debug_assert!(body_end_ptr as usize <= start_ptr as usize + bytes.len());
+    debug_assert!((body_end_ptr as usize - ptr as usize) % CHUNK_SIZE == 0);
+
+    while ptr < body_end_ptr {
+        // SAFETY: `ptr` was aligned to `CHUNK_ALIGNMENT` after processing 1st chunk.
+        // It is incremented in this loop by `CHUNK_SIZE`, which is a multiple of `CHUNK_ALIGNMENT`,
+        // so `ptr` remains always aligned for `CHUNK_ALIGNMENT`.
+        // `ptr < body_end_ptr` check ensures it's valid to read `CHUNK_SIZE` bytes starting at `ptr`.
+        #[expect(clippy::cast_ptr_alignment)]
+        let chunk = unsafe { ptr.cast::<AlignedChunk>().as_ref().unwrap_unchecked() };
+        if chunk.contains_unicode() {
+            // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
+            // `ptr` is derived from `start_ptr`.
+            let offset = unsafe { offset_from(ptr, start_ptr) };
+            process_slice(chunk.as_slice(), offset);
+        }
+
+        // SAFETY: `ptr` and `body_end_ptr` are within bounds at start of this loop.
+        // Distance between `ptr` and `body_end_ptr` is always a multiple of `CHUNK_SIZE`.
+        // So `ptr + CHUNK_SIZE` is either equal to `body_end_ptr` or before it. So is within bounds.
+        ptr = unsafe { ptr.add(CHUNK_SIZE) };
+    }
+
+    debug_assert!(ptr == body_end_ptr);
+
+    // Process last chunk
+    if remaining_len > 0 {
+        debug_assert!(ptr as usize + remaining_len == bytes.as_ptr() as usize + bytes.len());
+
+        // SAFETY: `ptr` is within `bytes` and `ptr + remaining_len` is end of `bytes`.
+        // `bytes` is a `&[u8]`, so guaranteed initialized and valid for reads.
+        let last_chunk = unsafe { slice::from_raw_parts(ptr, remaining_len) };
+        // SAFETY: `ptr` is after `start_ptr`. Both are within bounds of `bytes`.
+        // `ptr` is derived from `start_ptr`.
+        let offset = unsafe { offset_from(ptr, start_ptr) };
+        process_slice(last_chunk, offset);
+    }
+}
+
+/// Calculate distance in bytes from `from_ptr` to `to_ptr`.
+///
+/// # SAFETY
+/// * `from_ptr` must be before or equal to `to_ptr`.
+/// * Both pointers must point to within the same object (or the end of the object).
+/// * Both pointers must be derived from the same original pointer.
+#[inline]
+unsafe fn offset_from(to_ptr: *const u8, from_ptr: *const u8) -> usize {
+    debug_assert!(to_ptr as usize >= from_ptr as usize);
+
+    // SAFETY: Caller `from_ptr` and `to_ptr` are both derived from same original pointer,
+    // and in bounds of same object.
+    // Both pointers are `*const u8`, so alignment and stride requirements are not relevant.
+    let offset = unsafe { to_ptr.offset_from(from_ptr) };
+    // SAFETY: Caller guarantees `from_ptr` is before or equal to `to_ptr`, so `offset >= 0`
+    unsafe { usize::try_from(offset).unwrap_unchecked() }
+}
+
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
@@ -459,12 +609,55 @@ mod test {
             ("_🤨_🤨_", &[(0, 0), (1, 1), (5, 3), (6, 4), (10, 6), (11, 7)]),
         ];
 
+        // Convert cases to `Vec`
+        let mut cases_vec = cases
+            .iter()
+            .map(|&(text, translations)| (text, translations.to_vec()))
+            .collect::<Vec<_>>();
+
+        // Create 1 long string containing 99 repeats of each test case, concatenated
+        let repeats = 99u32;
+        let mut texts = String::new();
+        for (text, _) in cases {
+            for _i in 0..repeats {
+                texts.push_str(text);
+            }
+        }
+
+        // Generate more test cases for each of the defined cases repeated 99 times.
+        // Each case references a slice of the large `texts` string.
+        // Reason we do that is so that these string slices have uneven alignments, to exercise all parts
+        // of `build_translations`, which handles unaligned header/tail differently from the main body
+        // of the source text.
+        // The number of repeats is 99, for the same reason - to ensure each string slice begins at
+        // a memory address which is not evenly aligned.
+        let mut offset = 0;
         for &(text, translations) in cases {
+            let end_offset = offset + text.len() * (repeats as usize);
+            let repeated_text = &texts[offset..end_offset];
+
+            let (len_utf8, len_utf16) = *translations.last().unwrap();
+            assert_eq!(text.len(), len_utf8 as usize);
+
+            let mut repeated_translations = vec![];
+            for i in 0..repeats {
+                for &(offset_utf8, offset_utf16) in translations {
+                    repeated_translations
+                        .push((offset_utf8 + len_utf8 * i, offset_utf16 + len_utf16 * i));
+                }
+            }
+
+            cases_vec.push((repeated_text, repeated_translations));
+
+            offset = end_offset;
+        }
+
+        for (text, translations) in cases_vec {
             let table = Utf8ToUtf16::new(text);
             let converter = table.converter();
             if let Some(mut converter) = converter {
                 // Iterate in forwards order
-                for &(utf8_offset, expected_utf16_offset) in translations {
+                for &(utf8_offset, expected_utf16_offset) in &translations {
                     let mut utf16_offset = utf8_offset;
                     converter.convert_offset(&mut utf16_offset);
                     assert_eq!(utf16_offset, expected_utf16_offset);
@@ -478,7 +671,7 @@ mod test {
                 }
             } else {
                 // No Unicode chars. All offsets should be the same.
-                for &(utf8_offset, expected_utf16_offset) in translations {
+                for &(utf8_offset, expected_utf16_offset) in &translations {
                     assert_eq!(utf8_offset, expected_utf16_offset);
                 }
             }

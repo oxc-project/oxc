@@ -209,6 +209,7 @@ pub use match_expression;
 #[estree(rename = "Identifier")]
 pub struct IdentifierName<'a> {
     pub span: Span,
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 
@@ -224,6 +225,7 @@ pub struct IdentifierName<'a> {
 pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
     /// Reference ID
     ///
@@ -246,6 +248,7 @@ pub struct IdentifierReference<'a> {
 pub struct BindingIdentifier<'a> {
     pub span: Span,
     /// The identifier name being bound.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
     /// Unique identifier for this binding.
     ///
@@ -267,6 +270,7 @@ pub struct BindingIdentifier<'a> {
 #[estree(rename = "Identifier")]
 pub struct LabelIdentifier<'a> {
     pub span: Span,
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 
@@ -324,7 +328,7 @@ pub enum ArrayExpressionElement<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize, ts_alias = "null")]
+#[estree(via = ElisionConverter)]
 pub struct Elision {
     pub span: Span,
 }
@@ -365,8 +369,8 @@ pub enum ObjectPropertyKind<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
+    via = ObjectPropertyConverter,
     field_order(span, method, shorthand, computed, key, kind, value),
-    custom_serialize
 )]
 pub struct ObjectProperty<'a> {
     pub span: Span,
@@ -576,6 +580,10 @@ pub struct CallExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
+    /// `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// `new C()` in `class C {}; new C();`
@@ -599,6 +607,10 @@ pub struct NewExpression<'a> {
     pub arguments: Vec<'a, Argument<'a>>,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// `import.meta` in `console.log(import.meta);`
@@ -1551,9 +1563,9 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
+    via = BindingPropertyConverter,
     add_fields(method = False, kind = Init),
     field_order(span, method, shorthand, computed, key, kind, value),
-    custom_serialize,
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,
@@ -1683,7 +1695,6 @@ pub struct Function<'a> {
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     /// The TypeScript return type annotation.
     #[ts]
@@ -1702,6 +1713,10 @@ pub struct Function<'a> {
     /// ```
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
+    /// `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 #[ast]
@@ -1721,7 +1736,7 @@ pub enum FunctionType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
-    custom_serialize,
+    via = FormalParametersConverter,
     add_ts_def = "
         interface FormalParameterRest extends Span {
             type: 'RestElement';
@@ -1764,7 +1779,7 @@ pub struct FormalParameter<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
-#[estree(no_rename_variants)]
+#[estree(no_rename_variants, no_ts_def)]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter = 0,
@@ -1808,7 +1823,6 @@ pub struct ArrowFunctionExpression<'a> {
     pub r#async: bool,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
@@ -2446,7 +2460,7 @@ pub enum ImportAttributeKey<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize)]
+#[estree(via = ExportNamedDeclarationConverter)]
 pub struct ExportNamedDeclaration<'a> {
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,
