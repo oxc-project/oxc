@@ -158,12 +158,12 @@ fn can_safely_unnest(
             Expression::ArrowFunctionExpression(arrow_expr) => {
                 let func_scope = arrow_expr.scope_id();
                 closest_cb_scope_bindings =
-                    ctx.scopes().get_bindings(func_scope).into_iter().collect_vec();
+                    ctx.scopes().get_bindings(func_scope).iter().collect_vec();
             }
             Expression::FunctionExpression(func_expr) => {
                 let func_scope = func_expr.scope_id();
                 closest_cb_scope_bindings =
-                    ctx.scopes().get_bindings(func_scope).into_iter().collect_vec();
+                    ctx.scopes().get_bindings(func_scope).iter().collect_vec();
             }
             _ => {}
         }
