@@ -143,31 +143,33 @@ fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
 ///  .then(b => getC(a, b))
 /// ```
 fn can_safely_unnest(
-    call_expr: &CallExpression,
+    cb_call_expr: &CallExpression,
     closest: &CallExpression,
     ctx: &LintContext,
 ) -> bool {
     let mut safe_to_unnest: bool = true;
 
-    closest.arguments.iter().for_each(|new_expr| {
-        if let Some(arg_expr) = new_expr.as_expression() {
-            match arg_expr {
-                Expression::ArrowFunctionExpression(arrow_expr) => {
-                    let scope = arrow_expr.scope_id();
-                    if uses_closest_cb_vars(scope, call_expr, ctx) {
-                        safe_to_unnest = false;
+    if let Some(cb_span) = cb_call_expr.arguments.first().map(GetSpan::span) {
+        closest.arguments.iter().for_each(|new_expr| {
+            if let Some(arg_expr) = new_expr.as_expression() {
+                match arg_expr {
+                    Expression::ArrowFunctionExpression(arrow_expr) => {
+                        let scope = arrow_expr.scope_id();
+                        if uses_closest_cb_vars(scope, cb_span, ctx) {
+                            safe_to_unnest = false;
+                        }
                     }
-                }
-                Expression::FunctionExpression(func_expr) => {
-                    let scope = func_expr.scope_id();
-                    if uses_closest_cb_vars(scope, call_expr, ctx) {
-                        safe_to_unnest = false;
+                    Expression::FunctionExpression(func_expr) => {
+                        let scope = func_expr.scope_id();
+                        if uses_closest_cb_vars(scope, cb_span, ctx) {
+                            safe_to_unnest = false;
+                        }
                     }
+                    _ => {}
                 }
-                _ => {}
-            }
-        };
-    });
+            };
+        });
+    };
 
     safe_to_unnest
 }
@@ -183,22 +185,16 @@ fn can_safely_unnest(
 ///    const d = 5;
 ///    getB(a).then(d => getC(a, b)) });
 ///                // ^^^^^^^^^^^^^^ <- `cb_span`
-fn uses_closest_cb_vars(
-    closest_cb_scope_id: ScopeId,
-    cb_call_expr: &CallExpression,
-    ctx: &LintContext,
-) -> bool {
-    if let Some(cb_span) = cb_call_expr.arguments.first().map(GetSpan::span) {
-        for (_, binding_symbol_id) in ctx.scopes().get_bindings(closest_cb_scope_id).iter() {
-            for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
-                let usage_span: Span = ctx.reference_span(usage);
-                if cb_span.contains_inclusive(usage_span) {
-                    // Cannot unnest this nested promise as the nested cb refers to a variable
-                    // defined in the parent promise callback scope. Unnesting would result in
-                    // reference to an undefined variable.
-                    return true;
-                };
-            }
+fn uses_closest_cb_vars(closest_cb_scope_id: ScopeId, cb_span: Span, ctx: &LintContext) -> bool {
+    for (_, binding_symbol_id) in ctx.scopes().get_bindings(closest_cb_scope_id) {
+        for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
+            let usage_span: Span = ctx.reference_span(usage);
+            if cb_span.contains_inclusive(usage_span) {
+                // Cannot unnest this nested promise as the nested cb refers to a variable
+                // defined in the parent promise callback scope. Unnesting would result in
+                // reference to an undefined variable.
+                return true;
+            };
         }
     }
 
