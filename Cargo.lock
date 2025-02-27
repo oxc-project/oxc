@@ -2228,12 +2228,14 @@ dependencies = [
  "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
+ "oxc_tasks_common",
  "oxc_traverse",
  "pico-args",
  "rustc-hash",
  "serde",
  "serde_json",
  "sha1",
+ "similar",
 ]
 
 [[package]]
