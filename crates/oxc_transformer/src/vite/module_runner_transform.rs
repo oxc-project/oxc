@@ -22,7 +22,7 @@ use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::utils::ast_builder::{
     create_compute_property_access, create_member_callee, create_property_access,
@@ -147,14 +147,25 @@ impl<'a> ModuleRunnerTransform<'a> {
         };
         if let Some((binding, property)) = self.import_bindings.get(&symbol_id) {
             let object = binding.create_read_expression(ctx);
-            if let Some(property) = property {
+            let object = if let Some(property) = property {
                 // TODO(improvement): It looks like here could always return a computed member expression,
                 //                    so that we don't need to check if it's an identifier name.
-                *expr = if is_identifier_name(property) {
+                if is_identifier_name(property) {
                     create_property_access(ident.span, object, property, ctx)
                 } else {
                     create_compute_property_access(ident.span, object, property, ctx)
-                };
+                }
+            } else {
+                object
+            };
+
+            if matches!(ctx.parent(), Ancestor::CallExpressionCallee(_)) {
+                // wrap with (0, ...) to avoid method binding `this`
+                // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
+                let zero =
+                    ctx.ast.expression_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal);
+                let expressions = ctx.ast.vec_from_array([zero, object]);
+                *expr = ctx.ast.expression_sequence(ident.span, expressions);
             } else {
                 *expr = object;
             }
@@ -1538,13 +1549,13 @@ const foo = {};
         x;
         (0,__vite_ssr_import_0__.f)();
         break
-    };
+    }
 
-    if(0){};(0,__vite_ssr_import_0__.f)();
+    if(0){}(0,__vite_ssr_import_0__.f)();
 
-    if(0){}else{};(0,__vite_ssr_import_0__.f)();
+    if(0){}else{}(0,__vite_ssr_import_0__.f)();
 
-    switch(1){};(0,__vite_ssr_import_0__.f)();
+    switch(1){}(0,__vite_ssr_import_0__.f)();
 
     {}(0,__vite_ssr_import_0__.f)(1)
     ";
