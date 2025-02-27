@@ -154,13 +154,13 @@ fn can_safely_unnest(
             match arg_expr {
                 Expression::ArrowFunctionExpression(arrow_expr) => {
                     let scope = arrow_expr.scope_id();
-                    if usage_of_closest_cb_vars(scope, call_expr, ctx) {
+                    if uses_closest_cb_vars(scope, call_expr, ctx) {
                         safe_to_unnest = false;
                     }
                 }
                 Expression::FunctionExpression(func_expr) => {
                     let scope = func_expr.scope_id();
-                    if usage_of_closest_cb_vars(scope, call_expr, ctx) {
+                    if uses_closest_cb_vars(scope, call_expr, ctx) {
                         safe_to_unnest = false;
                     }
                 }
@@ -172,7 +172,10 @@ fn can_safely_unnest(
     safe_to_unnest
 }
 
-/// Check for references in cb_span to variables defined in the closest parent cb scope.
+/// Check for references in cb_span to variables defined in the closest parent cb scope
+/// and returns true if the nested promise callback uses references that are bound in
+/// the closest parent callback scope.
+///
 /// In the given example we would loop through all bindings in the closest
 /// parent scope a,b,c,d.
 ///
@@ -180,7 +183,7 @@ fn can_safely_unnest(
 ///    const d = 5;
 ///    getB(a).then(d => getC(a, b)) });
 ///                // ^^^^^^^^^^^^^^ <- `cb_span`
-fn usage_of_closest_cb_vars(
+fn uses_closest_cb_vars(
     closest_cb_scope_id: ScopeId,
     cb_call_expr: &CallExpression,
     ctx: &LintContext,
