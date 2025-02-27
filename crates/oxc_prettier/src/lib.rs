@@ -44,15 +44,11 @@ pub struct PrettierArgs {
 
 pub struct Prettier<'a> {
     allocator: &'a Allocator,
-
     source_text: &'a str,
-
     options: PrettierOptions,
-
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/3.3.3/src/common/ast-path.js>
     stack: Vec<'a, AstKind<'a>>,
-
     group_id_builder: GroupIdBuilder,
     args: PrettierArgs,
 }
@@ -82,6 +78,8 @@ impl<'a> Prettier<'a> {
         self.source_text = program.source_text;
         program.format(&mut self)
     }
+
+    // ---
 
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.stack.push(kind);
@@ -114,21 +112,24 @@ impl<'a> Prettier<'a> {
         self.stack.iter().rev().skip(1).find(|&&kind| predicate(kind)).copied()
     }
 
+    // ---
+
     /// A hack for erasing the lifetime requirement.
     #[expect(clippy::unused_self)]
     fn alloc<T>(&self, t: &T) -> &'a T {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
         // But honestly, I'm not really sure if this is safe.
-
         unsafe { std::mem::transmute(t) }
     }
 
-    pub fn semi(&self) -> Option<Doc<'a>> {
+    // ---
+
+    fn semi(&self) -> Option<Doc<'a>> {
         self.options.semi.then_some(Doc::Str(";"))
     }
 
-    pub fn should_print_es5_comma(&self) -> bool {
+    fn should_print_es5_comma(&self) -> bool {
         self.should_print_comma_impl(false)
     }
 
@@ -140,6 +141,8 @@ impl<'a> Prettier<'a> {
         let trailing_comma = self.options.trailing_comma;
         trailing_comma.is_all() || (trailing_comma.is_es5() && !level_all)
     }
+
+    // ---
 
     fn is_next_line_empty(&self, span: Span) -> bool {
         self.is_next_line_empty_after_index(span.end)
@@ -254,6 +257,8 @@ impl<'a> Prettier<'a> {
         let idx2 = self.skip_newline(idx, true);
         idx != idx2
     }
+
+    // ---
 
     fn next_id(&mut self) -> GroupId {
         self.group_id_builder.next_id()
