@@ -36,7 +36,6 @@ mod typescript;
 
 mod decorator;
 mod plugins;
-mod vite;
 
 use common::Common;
 use context::TransformCtx;
