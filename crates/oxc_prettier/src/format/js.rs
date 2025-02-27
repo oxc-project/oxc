@@ -859,7 +859,7 @@ impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         utils::replace_end_of_line(
             p,
-            literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote),
+            &literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote),
         )
     }
 }
@@ -1314,7 +1314,7 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
 
 impl<'a> Format<'a> for TemplateElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        utils::replace_end_of_line(p, dynamic_text!(p, self.value.raw.as_str()))
+        utils::replace_end_of_line(p, &dynamic_text!(p, self.value.raw.as_str()))
     }
 }
 
