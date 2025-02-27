@@ -1148,14 +1148,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d75a2a4b1b190afb6f5425f10f6a8f959d2ea0b9c2b1d79553551850539e4674"
 
 [[package]]
-name = "javascript_globals"
-version = "0.0.0"
+name = "javascript-globals"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1801f93e5ec6ff0967c1efb67824146b8c5750c316ef3b5ff9d3754e933dfbfa"
 dependencies = [
- "handlebars",
- "lazy_static",
- "oxc_tasks_common",
- "rustc-hash",
- "serde",
+ "phf",
 ]
 
 [[package]]
@@ -1826,6 +1824,7 @@ dependencies = [
  "ignore",
  "insta",
  "itertools",
+ "javascript-globals",
  "json-strip-comments",
  "language-tags",
  "lazy_static",
