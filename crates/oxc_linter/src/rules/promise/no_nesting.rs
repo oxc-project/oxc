@@ -107,16 +107,14 @@ fn has_promise_callback(call_expr: &CallExpression) -> bool {
     )
 }
 
-fn is_promise_then_or_catch(call_expr: &CallExpression) -> Option<String> {
-    let member_expr = call_expr.callee.get_member_expr()?;
-    let prop_name = member_expr.static_property_name()?;
+fn is_promise_then_or_catch(call_expr: &CallExpression) -> bool {
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
 
-    // For example: hello.then(), hello.catch()
-    if matches!(prop_name, "then" | "catch") {
-        return Some(prop_name.into());
-    }
-
-    None
+    member_expr
+        .static_property_name()
+        .map_or_else(|| false, |prop_name| matches!(prop_name, "then" | "catch"))
 }
 
 /// Checks if we can safely unnest the promise callback.
@@ -207,7 +205,7 @@ impl Rule for NoNesting {
             return;
         };
 
-        if is_promise_then_or_catch(call_expr).is_none() {
+        if !is_promise_then_or_catch(call_expr) {
             return;
         };
 
