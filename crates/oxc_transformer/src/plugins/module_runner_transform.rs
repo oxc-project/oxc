@@ -60,6 +60,7 @@ use crate::utils::ast_builder::{
     create_compute_property_access, create_member_callee, create_property_access,
 };
 
+#[derive(Debug, Default)]
 pub struct ModuleRunnerTransform<'a> {
     /// Uid for generating import binding names.
     import_uid: u32,
@@ -798,7 +799,7 @@ mod test {
 
             (symbols, scopes) = traverse_mut(&mut jsx, &allocator, &mut program, symbols, scopes);
         }
-        let mut module_runner_transform = ModuleRunnerTransform::new();
+        let mut module_runner_transform = ModuleRunnerTransform::default();
         traverse_mut(&mut module_runner_transform, &allocator, &mut program, symbols, scopes);
 
         if !ret.errors.is_empty() {
