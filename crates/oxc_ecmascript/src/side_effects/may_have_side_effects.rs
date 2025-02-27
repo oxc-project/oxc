@@ -65,6 +65,8 @@ impl MayHaveSideEffects for Expression<'_> {
             match_member_expression!(Expression) => {
                 self.to_member_expression().may_have_side_effects(is_global_reference)
             }
+            Expression::CallExpression(e) => e.may_have_side_effects(is_global_reference),
+            Expression::NewExpression(e) => e.may_have_side_effects(is_global_reference),
             _ => true,
         }
     }
@@ -454,5 +456,43 @@ fn property_access_may_have_side_effects(
                 || object.value_type(is_global_reference).is_string())
         }
         _ => true,
+    }
+}
+
+impl MayHaveSideEffects for CallExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        if self.pure {
+            self.arguments.iter().any(|e| e.may_have_side_effects(is_global_reference))
+        } else {
+            true
+        }
+    }
+}
+
+impl MayHaveSideEffects for NewExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        if self.pure {
+            self.arguments.iter().any(|e| e.may_have_side_effects(is_global_reference))
+        } else {
+            true
+        }
+    }
+}
+
+impl MayHaveSideEffects for Argument<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
+            Argument::SpreadElement(e) => match &e.argument {
+                Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
+                Expression::StringLiteral(_) => false,
+                Expression::TemplateLiteral(t) => {
+                    t.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
+                }
+                _ => true,
+            },
+            match_expression!(Argument) => {
+                self.to_expression().may_have_side_effects(is_global_reference)
+            }
+        }
     }
 }
