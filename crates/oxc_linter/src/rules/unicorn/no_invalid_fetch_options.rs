@@ -326,6 +326,13 @@ fn test() {
            method: Method.Get,
            body: "",
           });"#,
+        r#"enum Method {
+            Foo = "GET",
+          }
+          const response = await fetch("/", {
+           method: Method.Foo,
+           body: "",
+          });"#,
     ];
 
     Tester::new(NoInvalidFetchOptions::NAME, NoInvalidFetchOptions::PLUGIN, pass, fail)
