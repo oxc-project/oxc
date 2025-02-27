@@ -293,7 +293,7 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_field("start", &rest.span.start);
         state.serialize_field("end", &rest.span.end);
         state.serialize_field("argument", &rest.argument.kind);
-        state.serialize_ts_field("type_annotation", &rest.argument.type_annotation);
+        state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("optional", &rest.argument.optional);
         state.end();
     }
