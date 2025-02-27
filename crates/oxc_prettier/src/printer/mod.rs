@@ -20,6 +20,7 @@ pub struct Printer<'a> {
     // States for `print_doc_to_string()`
     pos: usize,
     cmds: std::vec::Vec<Command<'a>>,
+    cmds2: std::vec::Vec<Command<'a>>,
     line_suffix: std::vec::Vec<Command<'a>>,
     group_mode_map: FxHashMap<GroupId, Mode>,
 }
@@ -39,6 +40,7 @@ impl<'a> Printer<'a> {
             out: std::vec::Vec::with_capacity(out_size_hint),
             pos: 0,
             cmds: vec![Command::new(Indent::root(), Mode::Break, doc)],
+            cmds2: vec![],
             line_suffix: vec![],
             group_mode_map: FxHashMap::default(),
             new_line: options.end_of_line.as_str(),
@@ -53,8 +55,12 @@ impl<'a> Printer<'a> {
 
     fn print_doc_to_string(&mut self) {
         while let Some(Command { indent, mut doc, mode }) = self.cmds.pop() {
-            // TODO: In Prettier, they perform this once before the loop
-            // I tried to reproduce this in Prettier, but many tests failed
+            // TODO: In Prettier, this process is done outside the loop first. (P1)
+            // When I try to rewrite the Prettier code to do this inside the loop like us(P2), some of the `jsx/text-wrap` tests fail.
+            // By the way, in P1 and P2, the structure of `Doc` after propagation is the same!
+            // It means that there is a timing in this printing process where
+            // what should originally be `break: true` is not judged as `true`, and that leads to differences in behavior.
+            // We may have no choice but to implement it like Prettier?
             propagate_breaks(&mut doc);
 
             match doc {
