@@ -1,7 +1,7 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::{
-    ast::{Statement, VariableDeclarationKind},
     AstKind,
+    ast::{Statement, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -257,11 +257,7 @@ fn should_have_braces<'a>(
     } else if options.contains(&CurlyType::Multi) {
         Some(false)
     } else if options.contains(&CurlyType::MultiLine) {
-        if is_collapsed_one_liner(body, ctx) {
-            None
-        } else {
-            Some(true)
-        }
+        if is_collapsed_one_liner(body, ctx) { None } else { Some(true) }
     } else if options.contains(&CurlyType::MultiOrNest) {
         Some(if is_block {
             let stmt = match body {
