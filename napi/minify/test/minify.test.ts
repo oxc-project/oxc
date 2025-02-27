@@ -1,3 +1,4 @@
+import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
 
 import { minify } from '../index';
@@ -30,5 +31,20 @@ describe('simple', () => {
     expect(ret).toStrictEqual({
       'code': 'function foo() {\n\tvar bar;\n\tbar(undefined);\n}\nfoo();\n',
     });
+  });
+});
+
+describe('worker', () => {
+  it('should run', async () => {
+    const code = await new Promise((resolve, reject) => {
+      const worker = new Worker('./test/worker.mjs');
+      worker.on('error', (err) => {
+        reject(err);
+      });
+      worker.on('exit', (code) => {
+        resolve(code);
+      });
+    });
+    expect(code).toBe(0);
   });
 });

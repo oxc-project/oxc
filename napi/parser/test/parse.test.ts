@@ -1,3 +1,4 @@
+import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
@@ -273,5 +274,20 @@ describe('error', () => {
       'message': 'Expected a semicolon or an implicit semicolon after a statement, but found none',
       'severity': 'Error',
     });
+  });
+});
+
+describe('worker', () => {
+  it('should run', async () => {
+    const code = await new Promise((resolve, reject) => {
+      const worker = new Worker('./test/worker.mjs');
+      worker.on('error', (err) => {
+        reject(err);
+      });
+      worker.on('exit', (code) => {
+        resolve(code);
+      });
+    });
+    expect(code).toBe(0);
   });
 });
