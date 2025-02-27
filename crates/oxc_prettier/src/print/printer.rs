@@ -1,5 +1,3 @@
-mod command;
-
 use std::collections::VecDeque;
 
 use oxc_allocator::{Allocator, Vec};
@@ -8,19 +6,18 @@ use rustc_hash::FxHashMap;
 use crate::{
     GroupId, PrettierOptions,
     ir::{Doc, Fill, Group, IfBreak, IndentIfBreak, Line},
-    printer::command::{Command, Indent, Mode},
+    print::command::{Command, Indent, Mode},
 };
 
 pub struct Printer<'a> {
+    // This is needed to create temporary `Doc<'a>` in `handle_fill()`
     allocator: &'a Allocator,
     options: PrettierOptions,
-    new_line: &'static str,
     /// The final output string in bytes
     out: std::vec::Vec<u8>,
     // States for `print_doc_to_string()`
     pos: usize,
     cmds: std::vec::Vec<Command<'a>>,
-    cmds2: std::vec::Vec<Command<'a>>,
     line_suffix: std::vec::Vec<Command<'a>>,
     group_mode_map: FxHashMap<GroupId, Mode>,
 }
@@ -40,10 +37,8 @@ impl<'a> Printer<'a> {
             out: std::vec::Vec::with_capacity(out_size_hint),
             pos: 0,
             cmds: vec![Command::new(Indent::root(), Mode::Break, doc)],
-            cmds2: vec![],
             line_suffix: vec![],
             group_mode_map: FxHashMap::default(),
-            new_line: options.end_of_line.as_str(),
         }
     }
 
@@ -108,8 +103,8 @@ impl<'a> Printer<'a> {
     }
 
     // TODO: fn handle_align
-    // Current implementation resolves indent values manually, instead of using `makeAlign()` in Prettier.
-    // See also the last part of `handle_line`, may need to rework.
+    // Current implementation resolves indent values manually instead of using `makeAlign()` in Prettier, may need to rework.
+    // See also `handle_indent()` and the last part of `handle_line`
     // cmds.push({ ind: makeAlign(ind, doc.n, options), mode, doc: doc.contents });
 
     fn handle_group(&mut self, indent: Indent, mode: Mode, group: Group<'a>) {
@@ -317,6 +312,7 @@ impl<'a> Printer<'a> {
 
     fn handle_line(&mut self, indent: Indent, mode: Mode, line: Line) {
         let Line { hard, soft, literal } = line;
+        let new_line = self.options.end_of_line.as_str().as_bytes();
 
         if matches!(mode, Mode::Flat) {
             if hard {
@@ -331,7 +327,7 @@ impl<'a> Printer<'a> {
             }
         }
 
-        // `Mode::Break` or `Mode:Flat` w/ `should_remeasure`
+        // `Mode::Break` or `Mode:Flat` w/ `hard: true`
 
         if !self.line_suffix.is_empty() {
             self.cmds.push(Command::new(indent, mode, Doc::Line(line)));
@@ -340,7 +336,7 @@ impl<'a> Printer<'a> {
         }
 
         if literal {
-            self.out.extend(self.new_line.as_bytes());
+            self.out.extend(new_line);
             if !indent.root {
                 self.pos = 0;
             }
@@ -355,7 +351,7 @@ impl<'a> Printer<'a> {
                 }
             }
 
-            self.out.extend(self.new_line.as_bytes());
+            self.out.extend(new_line);
             // Resolve indent type and value
             let size = indent.length;
             if self.options.use_tabs {
