@@ -673,7 +673,8 @@ mod test {
     fn default_import() {
         test_same(
             "import foo from 'vue';console.log(foo.bar)",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['default'] });\nconsole.log(__vite_ssr_import_0__.default.bar);\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['default'] });
+console.log(__vite_ssr_import_0__.default.bar);",
         );
     }
 
@@ -681,7 +682,10 @@ mod test {
     fn named_import() {
         test_same(
             "import { ref } from 'vue';function foo() { return ref(0) }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['ref'] });\nfunction foo() {\n\treturn __vite_ssr_import_0__.ref(0);\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['ref'] });
+function foo() {
+  return (0, __vite_ssr_import_0__.ref)(0);
+}",
         );
     }
 
@@ -689,7 +693,10 @@ mod test {
     fn named_import_arbitrary_module_namespace() {
         test_same(
             "import { \"some thing\" as ref } from 'vue';function foo() { return ref(0) }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['some thing'] });\nfunction foo() {\n\treturn __vite_ssr_import_0__['some thing'](0);\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['some thing'] });
+function foo() {
+  return (0, __vite_ssr_import_0__['some thing'])(0);
+}",
         );
     }
 
@@ -697,7 +704,10 @@ mod test {
     fn namespace_import() {
         test_same(
             "import * as vue from 'vue';function foo() { return vue.ref(0) }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');\nfunction foo() {\n\treturn __vite_ssr_import_0__.ref(0);\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+function foo() {
+  return __vite_ssr_import_0__.ref(0);
+}",
         );
     }
 
@@ -705,7 +715,14 @@ mod test {
     fn export_function_declaration() {
         test_same(
             "export function foo() {}",
-            "function foo() {}\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn foo;\n\t}\n});\n",
+            "function foo() {}
+Object.defineProperty(__vite_ssr_exports__, 'foo', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return foo;
+  }
+});",
         );
     }
 
@@ -713,7 +730,14 @@ mod test {
     fn export_class_declaration() {
         test_same(
             "export class foo {}",
-            "class foo {}\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn foo;\n\t}\n});\n",
+            "class foo {}
+Object.defineProperty(__vite_ssr_exports__, 'foo', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return foo;
+  }
+});",
         );
     }
 
@@ -721,7 +745,21 @@ mod test {
     fn export_var_declaration() {
         test_same(
             "export const a = 1, b = 2",
-            "const a = 1, b = 2;\nObject.defineProperty(__vite_ssr_exports__, 'a', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn a;\n\t}\n});\nObject.defineProperty(__vite_ssr_exports__, 'b', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn b;\n\t}\n});\n",
+            "const a = 1, b = 2;
+Object.defineProperty(__vite_ssr_exports__, 'a', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return a;
+  }
+});
+Object.defineProperty(__vite_ssr_exports__, 'b', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return b;
+  }
+});",
         );
     }
 
@@ -729,7 +767,21 @@ mod test {
     fn export_named() {
         test_same(
             "const a = 1, b = 2; export { a, b as c }",
-            "const a = 1, b = 2;\nObject.defineProperty(__vite_ssr_exports__, 'a', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn a;\n\t}\n});\nObject.defineProperty(__vite_ssr_exports__, 'c', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn b;\n\t}\n});\n",
+            "const a = 1, b = 2;
+Object.defineProperty(__vite_ssr_exports__, 'a', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return a;
+  }
+});
+Object.defineProperty(__vite_ssr_exports__, 'c', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return b;
+  }
+});",
         );
     }
 
@@ -737,7 +789,21 @@ mod test {
     fn export_named_from() {
         test_same(
             "export { ref, computed as c } from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['ref', 'computed'] });\nObject.defineProperty(__vite_ssr_exports__, 'ref', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_0__.ref;\n\t}\n});\nObject.defineProperty(__vite_ssr_exports__, 'c', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_0__.computed;\n\t}\n});\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['ref', 'computed'] });
+Object.defineProperty(__vite_ssr_exports__, 'ref', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return __vite_ssr_import_0__.ref;
+  }
+});
+Object.defineProperty(__vite_ssr_exports__, 'c', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return __vite_ssr_import_0__.computed;
+  }
+});",
         );
     }
 
@@ -745,7 +811,10 @@ mod test {
     fn export_star_from() {
         test_same(
             "export * from 'vue'\nexport * from 'react'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');\n__vite_ssr_exportAll__(__vite_ssr_import_0__);\nconst __vite_ssr_import_1__ = await __vite_ssr_import__('react');\n__vite_ssr_exportAll__(__vite_ssr_import_1__);\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+__vite_ssr_exportAll__(__vite_ssr_import_0__);
+const __vite_ssr_import_1__ = await __vite_ssr_import__('react');
+__vite_ssr_exportAll__(__vite_ssr_import_1__);",
         );
     }
 
@@ -753,7 +822,14 @@ mod test {
     fn export_star_as_from() {
         test_same(
             "export * as foo from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_0__;\n\t}\n});\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+Object.defineProperty(__vite_ssr_exports__, 'foo', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return __vite_ssr_import_0__;
+  }
+});",
         );
     }
 
@@ -761,12 +837,28 @@ mod test {
     fn re_export_by_imported_name() {
         test_same(
             "import * as foo from 'foo'; export * as foo from 'foo'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo');\nconst __vite_ssr_import_1__ = await __vite_ssr_import__('foo');\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_1__;\n\t}\n});\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo');
+const __vite_ssr_import_1__ = await __vite_ssr_import__('foo');
+Object.defineProperty(__vite_ssr_exports__, 'foo', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return __vite_ssr_import_1__;
+  }
+});",
         );
 
         test_same(
             "import { foo } from 'foo'; export { foo } from 'foo'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });\nconst __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_1__.foo;\n\t}\n});\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });
+const __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });
+Object.defineProperty(__vite_ssr_exports__, 'foo', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return __vite_ssr_import_1__.foo;
+  }
+});",
         );
     }
 
@@ -774,17 +866,38 @@ mod test {
     fn export_arbitrary_namespace() {
         test_same(
             "export * as \"arbitrary string\" from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');\nObject.defineProperty(__vite_ssr_exports__, 'arbitrary string', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_0__;\n\t}\n});\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+Object.defineProperty(__vite_ssr_exports__, 'arbitrary string', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return __vite_ssr_import_0__;
+  }
+});",
         );
 
         test_same(
             "const something = \"Something\"; export { something as \"arbitrary string\" }",
-            "const something = 'Something';\nObject.defineProperty(__vite_ssr_exports__, 'arbitrary string', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn something;\n\t}\n});\n",
+            "const something = 'Something';
+Object.defineProperty(__vite_ssr_exports__, 'arbitrary string', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return something;
+  }
+});",
         );
 
         test_same(
             "export { \"arbitrary string2\" as \"arbitrary string\" } from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['arbitrary string2'] });\nObject.defineProperty(__vite_ssr_exports__, 'arbitrary string', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_0__['arbitrary string2'];\n\t}\n});\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['arbitrary string2'] });
+Object.defineProperty(__vite_ssr_exports__, 'arbitrary string', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return __vite_ssr_import_0__['arbitrary string2'];
+  }
+});",
         );
     }
 
@@ -792,7 +905,13 @@ mod test {
     fn export_default() {
         test_same(
             "export default {}",
-            "Object.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn {};\n\t}\n});\n",
+            "Object.defineProperty(__vite_ssr_exports__, 'default', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return {};
+  }
+});",
         );
     }
 
@@ -800,7 +919,9 @@ mod test {
     fn export_then_import_minified() {
         test_same(
             "export * from 'vue';import {createApp} from 'vue'",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');\n__vite_ssr_exportAll__(__vite_ssr_import_0__);\nconst __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue');
+__vite_ssr_exportAll__(__vite_ssr_import_0__);
+const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });",
         );
     }
 
@@ -808,20 +929,28 @@ mod test {
     fn hoist_import_to_top() {
         test_same(
             "path.resolve('server.js');import path from 'node:path';",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('node:path', { importedNames: ['default'] });\n__vite_ssr_import_0__.default.resolve('server.js');\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('node:path', { importedNames: ['default'] });
+__vite_ssr_import_0__.default.resolve('server.js');",
         );
     }
 
     #[test]
     fn import_meta() {
-        test_same("console.log(import.meta.url)", "console.log(__vite_ssr_import_meta__.url);\n");
+        test_same("console.log(import.meta.url)", "console.log(__vite_ssr_import_meta__.url);");
     }
 
     #[test]
     fn dynamic_import() {
         test_same(
             "export const i = () => import('./foo')",
-            "const i = () => __vite_ssr_dynamic_import__('./foo');\nObject.defineProperty(__vite_ssr_exports__, 'i', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn i;\n\t}\n});\n",
+            "const i = () => __vite_ssr_dynamic_import__('./foo');
+Object.defineProperty(__vite_ssr_exports__, 'i', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return i;
+  }
+});",
         );
     }
 
@@ -829,7 +958,12 @@ mod test {
     fn do_not_rewrite_method_definition() {
         test_same(
             "import { fn } from 'vue';class A { fn() { fn() } }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });\nclass A {\n\tfn() {\n\t\t__vite_ssr_import_0__.fn();\n\t}\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
+class A {
+  fn() {
+    (0, __vite_ssr_import_0__.fn)();
+  }
+}",
         );
     }
 
@@ -837,7 +971,11 @@ mod test {
     fn do_not_rewrite_when_variable_in_scope() {
         test_same(
             "import { fn } from 'vue';function A(){ const fn = () => {}; return { fn }; }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });\nfunction A() {\n\tconst fn = () => {};\n\treturn { fn };\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
+function A() {
+  const fn = () => {};
+  return { fn };
+}",
         );
     }
 
@@ -845,7 +983,14 @@ mod test {
     fn do_not_rewrite_destructuring_object() {
         test_same(
             "import { fn } from 'vue';function A(){ let {fn, test} = {fn: 'foo', test: 'bar'}; return { fn }; }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });\nfunction A() {\n\tlet { fn, test } = {\n\t\tfn: 'foo',\n\t\ttest: 'bar'\n\t};\n\treturn { fn };\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
+function A() {
+  let { fn, test } = {
+    fn: 'foo',
+    test: 'bar'
+  };
+  return { fn };
+}",
         );
     }
 
@@ -853,7 +998,11 @@ mod test {
     fn do_not_rewrite_destructuring_array() {
         test_same(
             "import { fn } from 'vue';function A(){ let [fn, test] = ['foo', 'bar']; return { fn }; }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });\nfunction A() {\n\tlet [fn, test] = ['foo', 'bar'];\n\treturn { fn };\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
+function A() {
+  let [fn, test] = ['foo', 'bar'];
+  return { fn };
+}",
         );
     }
 
@@ -861,7 +1010,8 @@ mod test {
     fn do_not_rewrite_catch_clause() {
         test_same(
             "import {error} from './dependency';try {} catch(error) {}",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['error'] });\ntry {} catch (error) {}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['error'] });
+try {} catch (error) {}",
         );
     }
 
@@ -869,7 +1019,8 @@ mod test {
     fn should_declare_imported_super_class() {
         test_same(
             "import { Foo } from './dependency'; class A extends Foo {}",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['Foo'] });\nclass A extends __vite_ssr_import_0__.Foo {}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['Foo'] });
+class A extends __vite_ssr_import_0__.Foo {}",
         );
     }
 
@@ -877,7 +1028,23 @@ mod test {
     fn should_declare_exported_super_class() {
         test_same(
             "import { Foo } from './dependency'; export default class A extends Foo {} export class B extends Foo {}",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['Foo'] });\nclass A extends __vite_ssr_import_0__.Foo {}\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn A;\n\t}\n});\nclass B extends __vite_ssr_import_0__.Foo {}\nObject.defineProperty(__vite_ssr_exports__, 'B', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn B;\n\t}\n});\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['Foo'] });
+class A extends __vite_ssr_import_0__.Foo {}
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return A;
+  }
+});
+class B extends __vite_ssr_import_0__.Foo {}
+Object.defineProperty(__vite_ssr_exports__, 'B', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return B;
+  }
+});",
         );
     }
 
@@ -887,27 +1054,60 @@ mod test {
         // default anonymous functions
         test_same(
             "export default function() {}",
-            "Object.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn function() {};\n\t}\n});\n",
+            "Object.defineProperty(__vite_ssr_exports__, 'default', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return function() {};
+  }
+});",
         );
 
         // default anonymous class
         test_same(
             "export default class {}",
-            "Object.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn class {};\n\t}\n});\n",
+            "Object.defineProperty(__vite_ssr_exports__, 'default', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return class {};
+  }
+});",
         );
 
         // default named functions
         test_same(
             "export default function foo() {}\nfoo.prototype = Object.prototype;",
-            // "function foo() {}\nfoo.prototype = Object.prototype;\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn foo;\n\t}\n});\n",
-            "function foo() {}\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn foo;\n\t}\n});\nfoo.prototype = Object.prototype;\n",
+            "function foo() {}
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return foo;
+  }
+});
+foo.prototype = Object.prototype;",
         );
 
         // default named classes
         test_same(
             "export default class A {}\nexport class B extends A {}",
-            // "class A {}\nclass B extends A {}\nObject.defineProperty(__vite_ssr_exports__, 'B', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn B;\n\t}\n});\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn A;\n\t}\n});\n",
-            "class A {}\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn A;\n\t}\n});\nclass B extends A {}\nObject.defineProperty(__vite_ssr_exports__, 'B', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn B;\n\t}\n});\n",
+            "class A {}
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return A;
+  }
+});
+class B extends A {}
+Object.defineProperty(__vite_ssr_exports__, 'B', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return B;
+  }
+});",
         );
     }
 
@@ -922,13 +1122,32 @@ mod test {
             function f() { console.log(inject) }
             function e() { const { inject } = { inject: true } }
             function g() { const f = () => { const inject = true }; console.log(inject) }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['inject'] });\nconst a = { inject: __vite_ssr_import_0__.inject };\nconst b = { test: __vite_ssr_import_0__.inject };\nfunction c() {\n\tconst { test: inject } = { test: true };\n\tconsole.log(inject);\n}\nconst d = __vite_ssr_import_0__.inject;\nfunction f() {\n\tconsole.log(__vite_ssr_import_0__.inject);\n}\nfunction e() {\n\tconst { inject } = { inject: true };\n}\nfunction g() {\n\tconst f = () => {\n\t\tconst inject = true;\n\t};\n\tconsole.log(__vite_ssr_import_0__.inject);\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['inject'] });
+const a = { inject: __vite_ssr_import_0__.inject };
+const b = { test: __vite_ssr_import_0__.inject };
+function c() {
+  const { test: inject } = { test: true };
+  console.log(inject);
+}
+const d = __vite_ssr_import_0__.inject;
+function f() {
+  console.log(__vite_ssr_import_0__.inject);
+}
+function e() {
+  const { inject } = { inject: true };
+}
+function g() {
+  const f = () => {
+    const inject = true;
+  };
+  console.log(__vite_ssr_import_0__.inject);
+}",
         );
     }
 
     #[test]
     fn empty_array_pattern() {
-        test_same("const [, LHS, RHS] = inMatch;", "const [, LHS, RHS] = inMatch;\n");
+        test_same("const [, LHS, RHS] = inMatch;", "const [, LHS, RHS] = inMatch;");
     }
 
     #[test]
@@ -940,9 +1159,9 @@ mod test {
     function b({ _ = bar() }) {}
     function c({ _ = bar() + foo() }) {}",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['foo', 'bar'] });
-const a = ({ _ = __vite_ssr_import_0__.foo() }) => {};
-function b({ _ = __vite_ssr_import_0__.bar() }) {}
-function c({ _ = __vite_ssr_import_0__.bar() + __vite_ssr_import_0__.foo() }) {}\n",
+const a = ({ _ = (0, __vite_ssr_import_0__.foo)() }) => {};
+function b({ _ = (0, __vite_ssr_import_0__.bar)() }) {}
+function c({ _ = (0, __vite_ssr_import_0__.bar)() + (0, __vite_ssr_import_0__.foo)() }) {}",
         );
     }
 
@@ -957,9 +1176,9 @@ function c({ _ = __vite_ssr_import_0__.bar() + __vite_ssr_import_0__.foo() }) {}
     }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['n'] });
 const a = () => {
-\tconst { type: n = 'bar' } = {};
-\tconsole.log(n);
-};\n",
+  const { type: n = 'bar' } = {};
+  console.log(n);
+};",
         );
 
         // https://github.com/vitejs/vite/issues/9585
@@ -970,11 +1189,11 @@ const a = () => {
     {
       const { [n]: m } = foo
     }",
-        "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['n', 'm'] });
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['n', 'm'] });
 const foo = {};
 {
-\tconst { [__vite_ssr_import_0__.n]: m } = foo;
-}\n",
+  const { [__vite_ssr_import_0__.n]: m } = foo;
+}",
         );
     }
 
@@ -1007,28 +1226,29 @@ const foo = {};
     objRest()",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['remove', 'add', 'get', 'set', 'rest', 'objRest'] });
 
-    function a() {
-        const {
-            o: { remove },
-            a: { b: { c: [ add ] }},
-            d: [{ get }, set, ...rest],
-            ...objRest
-        } = foo;
+function a() {
+  const {
+    o: { remove },
+    a: { b: { c: [ add ] }},
+    d: [{ get }, set, ...rest],
+    ...objRest
+  } = foo;
 
-        remove();
-        add();
-        get();
-        set();
-        rest();
-        objRest();
-    }
+  remove();
+  add();
+  get();
+  set();
+  rest();
+  objRest();
+}
 
-    __vite_ssr_import_0__.remove();
-    __vite_ssr_import_0__.add();
-    __vite_ssr_import_0__.get();
-    __vite_ssr_import_0__.set();
-    __vite_ssr_import_0__.rest();
-    __vite_ssr_import_0__.objRest();",
+(0, __vite_ssr_import_0__.remove)();
+(0, __vite_ssr_import_0__.add)();
+(0, __vite_ssr_import_0__.get)();
+(0, __vite_ssr_import_0__.set)();
+(0, __vite_ssr_import_0__.rest)();
+(0, __vite_ssr_import_0__.objRest)();
+",
         );
     }
 
@@ -1050,17 +1270,17 @@ const foo = {};
     }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['default'] });
 
-    const bar = 'bar';
+const bar = 'bar';
 
-    const obj = {
-        foo() {},
-        [__vite_ssr_import_0__.default]() {},
-        [bar]() {},
-        foo: () => {},
-        [__vite_ssr_import_0__.default]: () => {},
-        [bar]: () => {},
-        bar(foo) {}
-    };",
+const obj = {
+  foo() {},
+  [__vite_ssr_import_0__.default]() {},
+  [bar]() {},
+  foo: () => {},
+  [__vite_ssr_import_0__.default]: () => {},
+  [bar]: () => {},
+  bar(foo) {}
+};",
         );
     }
 
@@ -1076,12 +1296,12 @@ const foo = {};
     }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['remove', 'add'] });
 
-    // const add = __vite_ssr_import_0__.add;
-    // const remove = __vite_ssr_import_0__.remove;
-    class A {
-        remove = 1;
-        add = null;
-    }",
+// const add = __vite_ssr_import_0__.add;
+// const remove = __vite_ssr_import_0__.remove;
+class A {
+  remove = 1;
+  add = null;
+}",
         );
     }
 
@@ -1101,15 +1321,15 @@ const foo = {};
     }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['default'] });
 
-    const bar = 'bar';
+const bar = 'bar';
 
-    class A {
-        foo() {}
-        [__vite_ssr_import_0__.default]() {}
-        [bar]() {}
-        #foo() {}
-        bar(foo) {}
-    }",
+class A {
+  foo() {}
+  [__vite_ssr_import_0__.default]() {}
+  [bar]() {}
+  #foo() {}
+  bar(foo) {}
+}",
         );
     }
 
@@ -1138,28 +1358,29 @@ const foo = {};
 
     aaa()
     bbb()",
-            r"const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['aaa', 'bbb', 'ccc', 'ddd'] });
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['aaa', 'bbb', 'ccc', 'ddd'] });
 
-    function foobar() {
-        ddd();
+function foobar() {
+  ddd();
 
-        const aaa = () => {
-            bbb(ccc);
-            ddd();
-        };
-        const bbb = () => {
-            console.log('hi');
-        };
-        const ccc = 1;
-        function ddd() {}
+  const aaa = () => {
+    bbb(ccc);
+    ddd();
+  };
+  const bbb = () => {
+    console.log('hi');
+  };
+  const ccc = 1;
+  function ddd() {}
 
-        aaa();
-        bbb();
-        ccc();
-    }
+  aaa();
+  bbb();
+  ccc();
+}
 
-    __vite_ssr_import_0__.aaa();
-    __vite_ssr_import_0__.bbb();",
+(0, __vite_ssr_import_0__.aaa)();
+(0, __vite_ssr_import_0__.bbb)();
+",
         );
     }
 
@@ -1177,10 +1398,10 @@ const foo = {};
       )
     }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('react', { importedNames: ['default'] });
-    const __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['Foo', 'Slot'] });
-    function Bar({ Slot = __vite_ssr_import_0__.default.createElement(__vite_ssr_import_1__.Foo, null) }) {
-    \treturn __vite_ssr_import_0__.default.createElement(__vite_ssr_import_0__.default.Fragment, null, __vite_ssr_import_0__.default.createElement(Slot, null));
-    }\n",
+const __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['Foo', 'Slot'] });
+function Bar({ Slot = __vite_ssr_import_0__.default.createElement(__vite_ssr_import_1__.Foo, null) }) {
+  return __vite_ssr_import_0__.default.createElement(__vite_ssr_import_0__.default.Fragment, null, __vite_ssr_import_0__.default.createElement(Slot, null));
+}",
         );
     }
 
@@ -1191,22 +1412,23 @@ const foo = {};
     }export function fn2() {
     }",
             "function fn1() {
-    }
-    Object.defineProperty(__vite_ssr_exports__, 'fn1', {
-    \tenumerable: true,
-    \tconfigurable: true,
-    \tget() {
-    \t\treturn fn1;
-    \t}
-    });\nfunction fn2() {
-    }
-    Object.defineProperty(__vite_ssr_exports__, 'fn2', {
-    \tenumerable: true,
-    \tconfigurable: true,
-    \tget() {
-    \t\treturn fn2;
-    \t}
-    });\n",
+}
+Object.defineProperty(__vite_ssr_exports__, 'fn1', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return fn1;
+  }
+});
+function fn2() {
+}
+Object.defineProperty(__vite_ssr_exports__, 'fn2', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return fn2;
+  }
+});",
         );
     }
 
@@ -1222,25 +1444,25 @@ const foo = {};
       return Math.random();
     });",
             "Object.defineProperty(__vite_ssr_exports__, 'default', {
-    \tenumerable: true,
-    \tconfigurable: true,
-    \tget() {
-    \t\treturn function getRandom() {
-    \t\t\treturn Math.random();
-    \t\t};
-    \t}
-    });\n",
+  enumerable: true,
+  configurable: true,
+  get() {
+    return function getRandom() {
+      return Math.random();
+    };
+  }
+});",
         );
 
         test_same(
             "export default (class A {});",
             "Object.defineProperty(__vite_ssr_exports__, 'default', {
-    \tenumerable: true,
-    \tconfigurable: true,
-    \tget() {
-    \t\treturn class A {};
-    \t}
-    });\n",
+  enumerable: true,
+  configurable: true,
+  get() {
+    return class A {};
+  }
+});",
         );
     }
 
@@ -1251,7 +1473,7 @@ const foo = {};
             "#!/usr/bin/env node
     console.log(\"it can parse the hashbang\")",
             "#!/usr/bin/env node
-    console.log(\"it can parse the hashbang\");\n",
+console.log(\"it can parse the hashbang\");",
         );
     }
 
@@ -1260,9 +1482,11 @@ const foo = {};
         test_same(
             "#!/usr/bin/env node
     console.log(foo);
-    import foo from \"foo\"",
+    import foo from 'foo'",
             "#!/usr/bin/env node
-    const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['default'] });\nconsole.log(__vite_ssr_import_0__.default);\n",
+            const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['default'] });
+            console.log(__vite_ssr_import_0__.default);
+            ",
         );
     }
 
@@ -1270,10 +1494,12 @@ const foo = {};
     fn identity_function_helper_injected_after_hashbang() {
         test_same(
             "#!/usr/bin/env node
-    import { foo } from \"foo\"
-    foo()",
+            import { foo } from 'foo';
+            foo();",
             "#!/usr/bin/env node
-    const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });\n__vite_ssr_import_0__.foo();\n",
+            const __vite_ssr_import_0__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });
+            (0, __vite_ssr_import_0__.foo)();
+            ",
         );
     }
 
@@ -1306,7 +1532,38 @@ const foo = {};
         }
       }
     }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foobar', { importedNames: ['foo', 'bar'] });\nif (false) {\n\tconst foo = 'foo';\n\tconsole.log(foo);\n} else if (false) {\n\tconst [bar] = ['bar'];\n\tconsole.log(bar);\n} else {\n\tconsole.log(__vite_ssr_import_0__.foo);\n\tconsole.log(__vite_ssr_import_0__.bar);\n}\nclass Test {\n\tconstructor() {\n\t\tif (false) {\n\t\t\tconst foo = 'foo';\n\t\t\tconsole.log(foo);\n\t\t} else if (false) {\n\t\t\tconst [bar] = ['bar'];\n\t\t\tconsole.log(bar);\n\t\t} else {\n\t\t\tconsole.log(__vite_ssr_import_0__.foo);\n\t\t\tconsole.log(__vite_ssr_import_0__.bar);\n\t\t}\n\t}\n}\nObject.defineProperty(__vite_ssr_exports__, 'Test', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn Test;\n\t}\n});\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foobar', { importedNames: ['foo', 'bar'] });
+if (false) {
+  const foo = 'foo';
+  console.log(foo);
+} else if (false) {
+  const [bar] = ['bar'];
+  console.log(bar);
+} else {
+  console.log(__vite_ssr_import_0__.foo);
+  console.log(__vite_ssr_import_0__.bar);
+}
+class Test {
+  constructor() {
+    if (false) {
+      const foo = 'foo';
+      console.log(foo);
+    } else if (false) {
+      const [bar] = ['bar'];
+      console.log(bar);
+    } else {
+      console.log(__vite_ssr_import_0__.foo);
+      console.log(__vite_ssr_import_0__.bar);
+    }
+  }
+}
+Object.defineProperty(__vite_ssr_exports__, 'Test', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return Test;
+  }
+});",
         );
     }
 
@@ -1321,7 +1578,13 @@ const foo = {};
       }
       return [foo, bar]
     }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foobar', { importedNames: ['foo', 'bar'] });\nfunction test() {\n\tif (true) {\n\t\tvar foo = () => { var why = 'would'; }, bar = 'someone';\n\t}\n\treturn [foo, bar];\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foobar', { importedNames: ['foo', 'bar'] });
+function test() {
+  if (true) {
+    var foo = () => { var why = 'would'; }, bar = 'someone';
+  }
+  return [foo, bar];
+}",
         );
     }
 
@@ -1339,7 +1602,16 @@ const foo = {};
       try {} catch (baz){ baz }
       return bar;
     }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foobar', { importedNames: ['foo', 'bar', 'baz'] });\nfunction test() {\n\t[__vite_ssr_import_0__.foo];\n\t{\n\t\tlet foo = 10;\n\t\tlet bar = 10;\n\t}\n\ttry {} catch (baz) { baz; }\n\treturn __vite_ssr_import_0__.bar;\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('foobar', { importedNames: ['foo', 'bar', 'baz'] });
+function test() {
+  [__vite_ssr_import_0__.foo];
+  {
+    let foo = 10;
+    let bar = 10;
+  }
+  try {} catch (baz) { baz; }
+  return __vite_ssr_import_0__.bar;
+}",
         );
     }
 
@@ -1359,7 +1631,16 @@ const foo = {};
     for (const test in tests) {
       console.log(test)
     }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./test.js', { importedNames: ['test'] });\nfor (const test of tests) {\n\tconsole.log(test);\n}\nfor (let test = 0; test < 10; test++) {\n\tconsole.log(test);\n}\nfor (const test in tests) {\n\tconsole.log(test);\n}\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./test.js', { importedNames: ['test'] });
+for (const test of tests) {
+  console.log(test);
+}
+for (let test = 0; test < 10; test++) {
+  console.log(test);
+}
+for (const test in tests) {
+  console.log(test);
+}",
         );
     }
 
@@ -1374,7 +1655,13 @@ const foo = {};
       bar: class Bar {}
     }
     const Baz = class extends Foo {}",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo', { importedNames: ['default', 'Bar'] });\nconsole.log(__vite_ssr_import_0__.default, __vite_ssr_import_0__.Bar);\nconst obj = {\n\tfoo: class Foo {},\n\tbar: class Bar {}\n};\nconst Baz = class extends __vite_ssr_import_0__.default {};\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo', { importedNames: ['default', 'Bar'] });
+console.log(__vite_ssr_import_0__.default, __vite_ssr_import_0__.Bar);
+const obj = {
+  foo: class Foo {},
+  bar: class Bar {}
+};
+const Baz = class extends __vite_ssr_import_0__.default {};",
         );
     }
 
@@ -1383,7 +1670,8 @@ const foo = {};
         test_same(
             "import * as foo from './foo.json' with { type: 'json' };
     import('./bar.json', { with: { type: 'json' } });",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo.json');\n__vite_ssr_dynamic_import__('./bar.json', { with: { type: 'json' } });\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo.json');
+__vite_ssr_dynamic_import__('./bar.json', { with: { type: 'json' } });",
         );
     }
 
@@ -1398,13 +1686,11 @@ const foo = {};
     import { foo } from './foo'
     export * from './b'
     console.log(foo + 2)",
-            "
-    const __vite_ssr_import_1__ = await __vite_ssr_import__('./foo', { importedNames: ['foo']});
-    console.log(__vite_ssr_import_1__.foo + 1);
-    const __vite_ssr_import_0__ = await __vite_ssr_import__('./a');__vite_ssr_exportAll__(__vite_ssr_import_0__);
-    const __vite_ssr_import_2__ = await __vite_ssr_import__('./b');__vite_ssr_exportAll__(__vite_ssr_import_2__);
-    console.log(__vite_ssr_import_1__.foo + 2)
-            ",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('./foo', { importedNames: ['foo']});
+console.log(__vite_ssr_import_1__.foo + 1);
+const __vite_ssr_import_0__ = await __vite_ssr_import__('./a');__vite_ssr_exportAll__(__vite_ssr_import_0__);
+const __vite_ssr_import_2__ = await __vite_ssr_import__('./b');__vite_ssr_exportAll__(__vite_ssr_import_2__);
+console.log(__vite_ssr_import_1__.foo + 2);",
         );
     }
 
@@ -1415,7 +1701,23 @@ const foo = {};
     export default foo()
     export * as bar from './bar'
     console.log(bar)",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo', { importedNames: ['foo'] });\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_0__.foo();\n\t}\n});\nconst __vite_ssr_import_1__ = await __vite_ssr_import__('./bar');\nObject.defineProperty(__vite_ssr_exports__, 'bar', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_1__;\n\t}\n});\nconsole.log(bar);\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo', { importedNames: ['foo'] });
+Object.defineProperty(__vite_ssr_exports__, 'default', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return (0, __vite_ssr_import_0__.foo)();
+  }
+});
+const __vite_ssr_import_1__ = await __vite_ssr_import__('./bar');
+Object.defineProperty(__vite_ssr_exports__, 'bar', {
+  enumerable: true,
+  configurable: true,
+  get() {
+    return __vite_ssr_import_1__;
+  }
+});
+console.log(bar);",
         );
     }
 
@@ -1570,7 +1872,13 @@ const foo = {};
     const c = () => {
       if(true){return}O(1,{})
     }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('a', { importedNames: ['default'] });\nconst c = () => {\n\tif (true) {\n\t\treturn;\n\t}\n\t__vite_ssr_import_0__.default(1, {});\n};\n",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('a', { importedNames: ['default'] });
+const c = () => {
+  if (true) {
+    return;
+  }
+  (0, __vite_ssr_import_0__.default)(1, {});
+};",
         );
     }
 }
