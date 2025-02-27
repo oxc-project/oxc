@@ -1,7 +1,6 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -66,7 +65,8 @@ impl Rule for NoObjectConstructor {
             return;
         };
 
-        if ident.is_global_reference_name("Object", ctx.symbols())
+        if ident.name == "Object"
+            && ctx.is_reference_to_global_variable(ident)
             && arguments.len() == 0
             && type_parameters.is_none()
         {
@@ -80,98 +80,189 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "new Object(x)",
-        "Object(x)",
-        "new globalThis.Object",
-        "const createObject = Object => new Object()",
-        "var Object; new Object;",
-        // Disabled because the eslint-test uses languageOptions: { globals: { Object: "off" } }
-        // "new Object()",
+        ("new Object(x)", None, None),
+        ("Object(x)", None, None),
+        ("new globalThis.Object", None, None),
+        ("const createObject = Object => new Object()", None, None),
+        ("var Object; new Object;", None, None),
+        ("new Object()", None, Some(serde_json::json!({"globals": {"Object": "off"} }))),
     ];
 
     let fail = vec![
-        "new Object",
-        "Object()",
-        "const fn = () => Object();",
-        "Object() instanceof Object;",
-        "const obj = Object?.();",
-        "(new Object() instanceof Object);",
+        ("new Object", None, None),
+        ("Object()", None, None),
+        ("const fn = () => Object();", None, None),
+        ("Object() instanceof Object;", None, None),
+        ("const obj = Object?.();", None, None),
+        ("(new Object() instanceof Object);", None, None),
         // Semicolon required before `({})` to compensate for ASI
-        "Object()",
-        "foo()
+        ("Object()", None, None),
+        (
+            "foo()
         Object()",
-        "var yield = bar.yield
+            None,
+            None,
+        ),
+        (
+            "var yield = bar.yield
         Object()",
-        "var foo = { bar: baz }
+            None,
+            None,
+        ),
+        (
+            "var foo = { bar: baz }
         Object()",
-        "<foo />
+            None,
+            None,
+        ),
+        (
+            "<foo />
         Object()",
-        "<foo></foo>
+            None,
+            None,
+        ),
+        (
+            "<foo></foo>
         Object()",
+            None,
+            None,
+        ),
         // No semicolon required before `({})` because ASI does not occur
-        "Object()",
-        "{}
+        ("Object()", None, None),
+        (
+            "{}
         Object()",
-        "function foo() {}
+            None,
+            None,
+        ),
+        (
+            "function foo() {}
         Object()",
-        "class Foo {}
+            None,
+            None,
+        ),
+        (
+            "class Foo {}
         Object()",
-        "foo: Object();",
-        "foo();Object();",
-        "{ Object(); }",
-        "if (a) Object();",
-        "if (a); else Object();",
-        "while (a) Object();",
-        "do Object(); while (a);",
-        "for (let i = 0; i < 10; i++) Object();",
-        "for (const prop in obj) Object();",
-        "for (const element of iterable) Object();",
-        "with (obj) Object();",
+            None,
+            None,
+        ),
+        ("foo: Object();", None, None),
+        ("foo();Object();", None, None),
+        ("{ Object(); }", None, None),
+        ("if (a) Object();", None, None),
+        ("if (a); else Object();", None, None),
+        ("while (a) Object();", None, None),
+        ("do Object(); while (a);", None, None),
+        ("for (let i = 0; i < 10; i++) Object();", None, None),
+        ("for (const prop in obj) Object();", None, None),
+        ("for (const element of iterable) Object();", None, None),
+        ("with (obj) Object();", None, None),
         // No semicolon required before `({})` because ASI still occurs
-        "const foo = () => {}
+        (
+            "const foo = () => {}
         Object()",
-        "a++
+            None,
+            None,
+        ),
+        (
+            "a++
         Object()",
-        "a--
+            None,
+            None,
+        ),
+        (
+            "a--
         Object()",
-        "function foo() {
+            None,
+            None,
+        ),
+        (
+            "function foo() {
             return
             Object();
         }",
-        "function * foo() {
+            None,
+            None,
+        ),
+        (
+            "function * foo() {
             yield
             Object();
         }",
-        "do {} while (a) Object()",
-        "debugger
+            None,
+            None,
+        ),
+        ("do {} while (a) Object()", None, None),
+        (
+            "debugger
         Object()",
-        "for (;;) {
+            None,
+            None,
+        ),
+        (
+            "for (;;) {
             break
             Object()
         }",
-        r"for (;;) {
+            None,
+            None,
+        ),
+        (
+            r"for (;;) {
             continue
             Object()
         }",
-        "foo: break foo
+            None,
+            None,
+        ),
+        (
+            "foo: break foo
         Object()",
-        "foo: while (true) continue foo
+            None,
+            None,
+        ),
+        (
+            "foo: while (true) continue foo
         Object()",
-        "const foo = bar
+            None,
+            None,
+        ),
+        (
+            "const foo = bar
         export { foo }
         Object()",
-        "export { foo } from 'bar'
+            None,
+            None,
+        ),
+        (
+            "export { foo } from 'bar'
         Object()",
-        r"export * as foo from 'bar'
+            None,
+            None,
+        ),
+        (
+            r"export * as foo from 'bar'
         Object()",
-        "import foo from 'bar
+            None,
+            None,
+        ),
+        (
+            "import foo from 'bar
          Object()",
-        "var yield = 5;
+            None,
+            None,
+        ),
+        (
+            "var yield = 5;
         yield: while (foo) {
             if (bar)
                 break yield
             new Object();
         }",
+            None,
+            None,
+        ),
     ];
 
     Tester::new(NoObjectConstructor::NAME, NoObjectConstructor::PLUGIN, pass, fail)
