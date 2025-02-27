@@ -1409,24 +1409,21 @@ const obj = {
         );
     }
 
-    // FIXME: The output has adjusted, need to confirm if it's correct
     #[test]
     fn class_props() {
         test_same(
             "import { remove, add } from 'vue'
-
-    class A {
-        remove = 1
-        add = null
-    }",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['remove', 'add'] });
-
-// const add = __vite_ssr_import_0__.add;
-// const remove = __vite_ssr_import_0__.remove;
-class A {
-  remove = 1;
-  add = null;
-}",
+            class A {
+                remove = 1
+                add = null
+            }",
+            "
+            const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['remove', 'add'] });
+            class A {
+              remove = 1;
+              add = null;
+            }
+            ",
         );
     }
 
