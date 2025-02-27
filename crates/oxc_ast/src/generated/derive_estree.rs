@@ -4,7 +4,7 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ESTree, FlatStructSerializer, Serializer, StructSerializer,
+    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
     ser::{AppendTo, AppendToConcat},
 };
 
@@ -16,7 +16,7 @@ use crate::ast::ts::*;
 impl ESTree for Program<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Program");
+        state.serialize_field("type", &JsonSafeString("Program"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field(
@@ -81,10 +81,10 @@ impl ESTree for Expression<'_> {
 impl ESTree for IdentifierName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Identifier");
+        state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -92,10 +92,10 @@ impl ESTree for IdentifierName<'_> {
 impl ESTree for IdentifierReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Identifier");
+        state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -103,10 +103,10 @@ impl ESTree for IdentifierReference<'_> {
 impl ESTree for BindingIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Identifier");
+        state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -114,10 +114,10 @@ impl ESTree for BindingIdentifier<'_> {
 impl ESTree for LabelIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Identifier");
+        state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -125,7 +125,7 @@ impl ESTree for LabelIdentifier<'_> {
 impl ESTree for ThisExpression {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ThisExpression");
+        state.serialize_field("type", &JsonSafeString("ThisExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -135,7 +135,7 @@ impl ESTree for ThisExpression {
 impl ESTree for ArrayExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ArrayExpression");
+        state.serialize_field("type", &JsonSafeString("ArrayExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("elements", &self.elements);
@@ -194,10 +194,16 @@ impl ESTree for ArrayExpressionElement<'_> {
     }
 }
 
+impl ESTree for Elision {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ElisionConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for ObjectExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ObjectExpression");
+        state.serialize_field("type", &JsonSafeString("ObjectExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("properties", &self.properties);
@@ -211,6 +217,12 @@ impl ESTree for ObjectPropertyKind<'_> {
             Self::ObjectProperty(it) => it.serialize(serializer),
             Self::SpreadProperty(it) => it.serialize(serializer),
         }
+    }
+}
+
+impl ESTree for ObjectProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ObjectPropertyConverter(self).serialize(serializer)
     }
 }
 
@@ -268,9 +280,9 @@ impl ESTree for PropertyKey<'_> {
 impl ESTree for PropertyKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Init => "init".serialize(serializer),
-            Self::Get => "get".serialize(serializer),
-            Self::Set => "set".serialize(serializer),
+            Self::Init => JsonSafeString("init").serialize(serializer),
+            Self::Get => JsonSafeString("get").serialize(serializer),
+            Self::Set => JsonSafeString("set").serialize(serializer),
         }
     }
 }
@@ -278,7 +290,7 @@ impl ESTree for PropertyKind {
 impl ESTree for TemplateLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TemplateLiteral");
+        state.serialize_field("type", &JsonSafeString("TemplateLiteral"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expressions", &self.expressions);
@@ -290,7 +302,7 @@ impl ESTree for TemplateLiteral<'_> {
 impl ESTree for TaggedTemplateExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TaggedTemplateExpression");
+        state.serialize_field("type", &JsonSafeString("TaggedTemplateExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("tag", &self.tag);
@@ -303,7 +315,7 @@ impl ESTree for TaggedTemplateExpression<'_> {
 impl ESTree for TemplateElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TemplateElement");
+        state.serialize_field("type", &JsonSafeString("TemplateElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
@@ -334,7 +346,7 @@ impl ESTree for MemberExpression<'_> {
 impl ESTree for ComputedMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "MemberExpression");
+        state.serialize_field("type", &JsonSafeString("MemberExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("object", &self.object);
@@ -348,7 +360,7 @@ impl ESTree for ComputedMemberExpression<'_> {
 impl ESTree for StaticMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "MemberExpression");
+        state.serialize_field("type", &JsonSafeString("MemberExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("object", &self.object);
@@ -362,7 +374,7 @@ impl ESTree for StaticMemberExpression<'_> {
 impl ESTree for PrivateFieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "MemberExpression");
+        state.serialize_field("type", &JsonSafeString("MemberExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("object", &self.object);
@@ -376,7 +388,7 @@ impl ESTree for PrivateFieldExpression<'_> {
 impl ESTree for CallExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "CallExpression");
+        state.serialize_field("type", &JsonSafeString("CallExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("callee", &self.callee);
@@ -390,7 +402,7 @@ impl ESTree for CallExpression<'_> {
 impl ESTree for NewExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "NewExpression");
+        state.serialize_field("type", &JsonSafeString("NewExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("callee", &self.callee);
@@ -403,7 +415,7 @@ impl ESTree for NewExpression<'_> {
 impl ESTree for MetaProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "MetaProperty");
+        state.serialize_field("type", &JsonSafeString("MetaProperty"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("meta", &self.meta);
@@ -415,7 +427,7 @@ impl ESTree for MetaProperty<'_> {
 impl ESTree for SpreadElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "SpreadElement");
+        state.serialize_field("type", &JsonSafeString("SpreadElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
@@ -476,7 +488,7 @@ impl ESTree for Argument<'_> {
 impl ESTree for UpdateExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "UpdateExpression");
+        state.serialize_field("type", &JsonSafeString("UpdateExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("operator", &self.operator);
@@ -489,7 +501,7 @@ impl ESTree for UpdateExpression<'_> {
 impl ESTree for UnaryExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "UnaryExpression");
+        state.serialize_field("type", &JsonSafeString("UnaryExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("operator", &self.operator);
@@ -502,7 +514,7 @@ impl ESTree for UnaryExpression<'_> {
 impl ESTree for BinaryExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "BinaryExpression");
+        state.serialize_field("type", &JsonSafeString("BinaryExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.left);
@@ -515,7 +527,7 @@ impl ESTree for BinaryExpression<'_> {
 impl ESTree for PrivateInExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "BinaryExpression");
+        state.serialize_field("type", &JsonSafeString("BinaryExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.left);
@@ -528,7 +540,7 @@ impl ESTree for PrivateInExpression<'_> {
 impl ESTree for LogicalExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "LogicalExpression");
+        state.serialize_field("type", &JsonSafeString("LogicalExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.left);
@@ -541,7 +553,7 @@ impl ESTree for LogicalExpression<'_> {
 impl ESTree for ConditionalExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ConditionalExpression");
+        state.serialize_field("type", &JsonSafeString("ConditionalExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("test", &self.test);
@@ -554,7 +566,7 @@ impl ESTree for ConditionalExpression<'_> {
 impl ESTree for AssignmentExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "AssignmentExpression");
+        state.serialize_field("type", &JsonSafeString("AssignmentExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("operator", &self.operator);
@@ -610,7 +622,7 @@ impl ESTree for AssignmentTargetPattern<'_> {
 impl ESTree for ArrayAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ArrayPattern");
+        state.serialize_field("type", &JsonSafeString("ArrayPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("elements", &AppendTo { array: &self.elements, after: &self.rest });
@@ -621,7 +633,7 @@ impl ESTree for ArrayAssignmentTarget<'_> {
 impl ESTree for ObjectAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ObjectPattern");
+        state.serialize_field("type", &JsonSafeString("ObjectPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field(
@@ -635,7 +647,7 @@ impl ESTree for ObjectAssignmentTarget<'_> {
 impl ESTree for AssignmentTargetRest<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "RestElement");
+        state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.target);
@@ -665,7 +677,7 @@ impl ESTree for AssignmentTargetMaybeDefault<'_> {
 impl ESTree for AssignmentTargetWithDefault<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "AssignmentPattern");
+        state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.binding);
@@ -686,7 +698,7 @@ impl ESTree for AssignmentTargetProperty<'_> {
 impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Property");
+        state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("method", &crate::serialize::False(self));
@@ -705,7 +717,7 @@ impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
 impl ESTree for AssignmentTargetPropertyProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Property");
+        state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("method", &crate::serialize::False(self));
@@ -721,7 +733,7 @@ impl ESTree for AssignmentTargetPropertyProperty<'_> {
 impl ESTree for SequenceExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "SequenceExpression");
+        state.serialize_field("type", &JsonSafeString("SequenceExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expressions", &self.expressions);
@@ -732,7 +744,7 @@ impl ESTree for SequenceExpression<'_> {
 impl ESTree for Super {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Super");
+        state.serialize_field("type", &JsonSafeString("Super"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -742,7 +754,7 @@ impl ESTree for Super {
 impl ESTree for AwaitExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "AwaitExpression");
+        state.serialize_field("type", &JsonSafeString("AwaitExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
@@ -753,7 +765,7 @@ impl ESTree for AwaitExpression<'_> {
 impl ESTree for ChainExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ChainExpression");
+        state.serialize_field("type", &JsonSafeString("ChainExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -776,7 +788,7 @@ impl ESTree for ChainElement<'_> {
 impl ESTree for ParenthesizedExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ParenthesizedExpression");
+        state.serialize_field("type", &JsonSafeString("ParenthesizedExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -826,7 +838,7 @@ impl ESTree for Statement<'_> {
 impl ESTree for Directive<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ExpressionStatement");
+        state.serialize_field("type", &JsonSafeString("ExpressionStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -838,7 +850,7 @@ impl ESTree for Directive<'_> {
 impl ESTree for Hashbang<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Hashbang");
+        state.serialize_field("type", &JsonSafeString("Hashbang"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
@@ -849,7 +861,7 @@ impl ESTree for Hashbang<'_> {
 impl ESTree for BlockStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "BlockStatement");
+        state.serialize_field("type", &JsonSafeString("BlockStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -875,7 +887,7 @@ impl ESTree for Declaration<'_> {
 impl ESTree for VariableDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "VariableDeclaration");
+        state.serialize_field("type", &JsonSafeString("VariableDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("declarations", &self.declarations);
@@ -888,11 +900,11 @@ impl ESTree for VariableDeclaration<'_> {
 impl ESTree for VariableDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Var => "var".serialize(serializer),
-            Self::Const => "const".serialize(serializer),
-            Self::Let => "let".serialize(serializer),
-            Self::Using => "using".serialize(serializer),
-            Self::AwaitUsing => "await using".serialize(serializer),
+            Self::Var => JsonSafeString("var").serialize(serializer),
+            Self::Const => JsonSafeString("const").serialize(serializer),
+            Self::Let => JsonSafeString("let").serialize(serializer),
+            Self::Using => JsonSafeString("using").serialize(serializer),
+            Self::AwaitUsing => JsonSafeString("await using").serialize(serializer),
         }
     }
 }
@@ -900,7 +912,7 @@ impl ESTree for VariableDeclarationKind {
 impl ESTree for VariableDeclarator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "VariableDeclarator");
+        state.serialize_field("type", &JsonSafeString("VariableDeclarator"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
@@ -913,7 +925,7 @@ impl ESTree for VariableDeclarator<'_> {
 impl ESTree for EmptyStatement {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "EmptyStatement");
+        state.serialize_field("type", &JsonSafeString("EmptyStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -923,7 +935,7 @@ impl ESTree for EmptyStatement {
 impl ESTree for ExpressionStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ExpressionStatement");
+        state.serialize_field("type", &JsonSafeString("ExpressionStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -934,7 +946,7 @@ impl ESTree for ExpressionStatement<'_> {
 impl ESTree for IfStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "IfStatement");
+        state.serialize_field("type", &JsonSafeString("IfStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("test", &self.test);
@@ -947,7 +959,7 @@ impl ESTree for IfStatement<'_> {
 impl ESTree for DoWhileStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "DoWhileStatement");
+        state.serialize_field("type", &JsonSafeString("DoWhileStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -959,7 +971,7 @@ impl ESTree for DoWhileStatement<'_> {
 impl ESTree for WhileStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "WhileStatement");
+        state.serialize_field("type", &JsonSafeString("WhileStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("test", &self.test);
@@ -971,7 +983,7 @@ impl ESTree for WhileStatement<'_> {
 impl ESTree for ForStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ForStatement");
+        state.serialize_field("type", &JsonSafeString("ForStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("init", &self.init);
@@ -1035,7 +1047,7 @@ impl ESTree for ForStatementInit<'_> {
 impl ESTree for ForInStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ForInStatement");
+        state.serialize_field("type", &JsonSafeString("ForInStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.left);
@@ -1067,7 +1079,7 @@ impl ESTree for ForStatementLeft<'_> {
 impl ESTree for ForOfStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ForOfStatement");
+        state.serialize_field("type", &JsonSafeString("ForOfStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("await", &self.r#await);
@@ -1081,7 +1093,7 @@ impl ESTree for ForOfStatement<'_> {
 impl ESTree for ContinueStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ContinueStatement");
+        state.serialize_field("type", &JsonSafeString("ContinueStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("label", &self.label);
@@ -1092,7 +1104,7 @@ impl ESTree for ContinueStatement<'_> {
 impl ESTree for BreakStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "BreakStatement");
+        state.serialize_field("type", &JsonSafeString("BreakStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("label", &self.label);
@@ -1103,7 +1115,7 @@ impl ESTree for BreakStatement<'_> {
 impl ESTree for ReturnStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ReturnStatement");
+        state.serialize_field("type", &JsonSafeString("ReturnStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
@@ -1114,7 +1126,7 @@ impl ESTree for ReturnStatement<'_> {
 impl ESTree for WithStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "WithStatement");
+        state.serialize_field("type", &JsonSafeString("WithStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("object", &self.object);
@@ -1126,7 +1138,7 @@ impl ESTree for WithStatement<'_> {
 impl ESTree for SwitchStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "SwitchStatement");
+        state.serialize_field("type", &JsonSafeString("SwitchStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("discriminant", &self.discriminant);
@@ -1138,7 +1150,7 @@ impl ESTree for SwitchStatement<'_> {
 impl ESTree for SwitchCase<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "SwitchCase");
+        state.serialize_field("type", &JsonSafeString("SwitchCase"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("consequent", &self.consequent);
@@ -1150,7 +1162,7 @@ impl ESTree for SwitchCase<'_> {
 impl ESTree for LabeledStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "LabeledStatement");
+        state.serialize_field("type", &JsonSafeString("LabeledStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -1162,7 +1174,7 @@ impl ESTree for LabeledStatement<'_> {
 impl ESTree for ThrowStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ThrowStatement");
+        state.serialize_field("type", &JsonSafeString("ThrowStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
@@ -1173,7 +1185,7 @@ impl ESTree for ThrowStatement<'_> {
 impl ESTree for TryStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TryStatement");
+        state.serialize_field("type", &JsonSafeString("TryStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("block", &self.block);
@@ -1186,7 +1198,7 @@ impl ESTree for TryStatement<'_> {
 impl ESTree for CatchClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "CatchClause");
+        state.serialize_field("type", &JsonSafeString("CatchClause"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("param", &self.param);
@@ -1208,7 +1220,7 @@ impl ESTree for CatchParameter<'_> {
 impl ESTree for DebuggerStatement {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "DebuggerStatement");
+        state.serialize_field("type", &JsonSafeString("DebuggerStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -1239,7 +1251,7 @@ impl ESTree for BindingPatternKind<'_> {
 impl ESTree for AssignmentPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "AssignmentPattern");
+        state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.left);
@@ -1251,7 +1263,7 @@ impl ESTree for AssignmentPattern<'_> {
 impl ESTree for ObjectPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ObjectPattern");
+        state.serialize_field("type", &JsonSafeString("ObjectPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field(
@@ -1262,10 +1274,16 @@ impl ESTree for ObjectPattern<'_> {
     }
 }
 
+impl ESTree for BindingProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::BindingPropertyConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for ArrayPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ArrayPattern");
+        state.serialize_field("type", &JsonSafeString("ArrayPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("elements", &AppendTo { array: &self.elements, after: &self.rest });
@@ -1276,7 +1294,7 @@ impl ESTree for ArrayPattern<'_> {
 impl ESTree for BindingRestElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "RestElement");
+        state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
@@ -1307,13 +1325,21 @@ impl ESTree for Function<'_> {
 impl ESTree for FunctionType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::FunctionDeclaration => "FunctionDeclaration".serialize(serializer),
-            Self::FunctionExpression => "FunctionExpression".serialize(serializer),
-            Self::TSDeclareFunction => "TSDeclareFunction".serialize(serializer),
+            Self::FunctionDeclaration => {
+                JsonSafeString("FunctionDeclaration").serialize(serializer)
+            }
+            Self::FunctionExpression => JsonSafeString("FunctionExpression").serialize(serializer),
+            Self::TSDeclareFunction => JsonSafeString("TSDeclareFunction").serialize(serializer),
             Self::TSEmptyBodyFunctionExpression => {
-                "TSEmptyBodyFunctionExpression".serialize(serializer)
+                JsonSafeString("TSEmptyBodyFunctionExpression").serialize(serializer)
             }
         }
+    }
+}
+
+impl ESTree for FormalParameters<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::FormalParametersConverter(self).serialize(serializer)
     }
 }
 
@@ -1334,10 +1360,14 @@ impl ESTree for FormalParameter<'_> {
 impl ESTree for FormalParameterKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::FormalParameter => "FormalParameter".serialize(serializer),
-            Self::UniqueFormalParameters => "UniqueFormalParameters".serialize(serializer),
-            Self::ArrowFormalParameters => "ArrowFormalParameters".serialize(serializer),
-            Self::Signature => "Signature".serialize(serializer),
+            Self::FormalParameter => JsonSafeString("FormalParameter").serialize(serializer),
+            Self::UniqueFormalParameters => {
+                JsonSafeString("UniqueFormalParameters").serialize(serializer)
+            }
+            Self::ArrowFormalParameters => {
+                JsonSafeString("ArrowFormalParameters").serialize(serializer)
+            }
+            Self::Signature => JsonSafeString("Signature").serialize(serializer),
         }
     }
 }
@@ -1345,7 +1375,7 @@ impl ESTree for FormalParameterKind {
 impl ESTree for FunctionBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "BlockStatement");
+        state.serialize_field("type", &JsonSafeString("BlockStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field(
@@ -1359,7 +1389,7 @@ impl ESTree for FunctionBody<'_> {
 impl ESTree for ArrowFunctionExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ArrowFunctionExpression");
+        state.serialize_field("type", &JsonSafeString("ArrowFunctionExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &crate::serialize::Null(self));
@@ -1377,7 +1407,7 @@ impl ESTree for ArrowFunctionExpression<'_> {
 impl ESTree for YieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "YieldExpression");
+        state.serialize_field("type", &JsonSafeString("YieldExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("delegate", &self.delegate);
@@ -1408,8 +1438,8 @@ impl ESTree for Class<'_> {
 impl ESTree for ClassType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::ClassDeclaration => "ClassDeclaration".serialize(serializer),
-            Self::ClassExpression => "ClassExpression".serialize(serializer),
+            Self::ClassDeclaration => JsonSafeString("ClassDeclaration").serialize(serializer),
+            Self::ClassExpression => JsonSafeString("ClassExpression").serialize(serializer),
         }
     }
 }
@@ -1417,7 +1447,7 @@ impl ESTree for ClassType {
 impl ESTree for ClassBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ClassBody");
+        state.serialize_field("type", &JsonSafeString("ClassBody"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -1459,8 +1489,10 @@ impl ESTree for MethodDefinition<'_> {
 impl ESTree for MethodDefinitionType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::MethodDefinition => "MethodDefinition".serialize(serializer),
-            Self::TSAbstractMethodDefinition => "TSAbstractMethodDefinition".serialize(serializer),
+            Self::MethodDefinition => JsonSafeString("MethodDefinition").serialize(serializer),
+            Self::TSAbstractMethodDefinition => {
+                JsonSafeString("TSAbstractMethodDefinition").serialize(serializer)
+            }
         }
     }
 }
@@ -1490,9 +1522,9 @@ impl ESTree for PropertyDefinition<'_> {
 impl ESTree for PropertyDefinitionType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::PropertyDefinition => "PropertyDefinition".serialize(serializer),
+            Self::PropertyDefinition => JsonSafeString("PropertyDefinition").serialize(serializer),
             Self::TSAbstractPropertyDefinition => {
-                "TSAbstractPropertyDefinition".serialize(serializer)
+                JsonSafeString("TSAbstractPropertyDefinition").serialize(serializer)
             }
         }
     }
@@ -1501,10 +1533,10 @@ impl ESTree for PropertyDefinitionType {
 impl ESTree for MethodDefinitionKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Constructor => "constructor".serialize(serializer),
-            Self::Method => "method".serialize(serializer),
-            Self::Get => "get".serialize(serializer),
-            Self::Set => "set".serialize(serializer),
+            Self::Constructor => JsonSafeString("constructor").serialize(serializer),
+            Self::Method => JsonSafeString("method").serialize(serializer),
+            Self::Get => JsonSafeString("get").serialize(serializer),
+            Self::Set => JsonSafeString("set").serialize(serializer),
         }
     }
 }
@@ -1512,7 +1544,7 @@ impl ESTree for MethodDefinitionKind {
 impl ESTree for PrivateIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "PrivateIdentifier");
+        state.serialize_field("type", &JsonSafeString("PrivateIdentifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &self.name);
@@ -1523,7 +1555,7 @@ impl ESTree for PrivateIdentifier<'_> {
 impl ESTree for StaticBlock<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "StaticBlock");
+        state.serialize_field("type", &JsonSafeString("StaticBlock"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -1547,8 +1579,10 @@ impl ESTree for ModuleDeclaration<'_> {
 impl ESTree for AccessorPropertyType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::AccessorProperty => "AccessorProperty".serialize(serializer),
-            Self::TSAbstractAccessorProperty => "TSAbstractAccessorProperty".serialize(serializer),
+            Self::AccessorProperty => JsonSafeString("AccessorProperty").serialize(serializer),
+            Self::TSAbstractAccessorProperty => {
+                JsonSafeString("TSAbstractAccessorProperty").serialize(serializer)
+            }
         }
     }
 }
@@ -1574,7 +1608,7 @@ impl ESTree for AccessorProperty<'_> {
 impl ESTree for ImportExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ImportExpression");
+        state.serialize_field("type", &JsonSafeString("ImportExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("source", &self.source);
@@ -1586,7 +1620,7 @@ impl ESTree for ImportExpression<'_> {
 impl ESTree for ImportDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ImportDeclaration");
+        state.serialize_field("type", &JsonSafeString("ImportDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("specifiers", &crate::serialize::ImportDeclarationSpecifiers(self));
@@ -1600,8 +1634,8 @@ impl ESTree for ImportDeclaration<'_> {
 impl ESTree for ImportPhase {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Source => "source".serialize(serializer),
-            Self::Defer => "defer".serialize(serializer),
+            Self::Source => JsonSafeString("source").serialize(serializer),
+            Self::Defer => JsonSafeString("defer").serialize(serializer),
         }
     }
 }
@@ -1619,7 +1653,7 @@ impl ESTree for ImportDeclarationSpecifier<'_> {
 impl ESTree for ImportSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ImportSpecifier");
+        state.serialize_field("type", &JsonSafeString("ImportSpecifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("imported", &self.imported);
@@ -1632,7 +1666,7 @@ impl ESTree for ImportSpecifier<'_> {
 impl ESTree for ImportDefaultSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ImportDefaultSpecifier");
+        state.serialize_field("type", &JsonSafeString("ImportDefaultSpecifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("local", &self.local);
@@ -1643,7 +1677,7 @@ impl ESTree for ImportDefaultSpecifier<'_> {
 impl ESTree for ImportNamespaceSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ImportNamespaceSpecifier");
+        state.serialize_field("type", &JsonSafeString("ImportNamespaceSpecifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("local", &self.local);
@@ -1654,7 +1688,7 @@ impl ESTree for ImportNamespaceSpecifier<'_> {
 impl ESTree for WithClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "WithClause");
+        state.serialize_field("type", &JsonSafeString("WithClause"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("attributesKeyword", &self.attributes_keyword);
@@ -1666,7 +1700,7 @@ impl ESTree for WithClause<'_> {
 impl ESTree for ImportAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ImportAttribute");
+        state.serialize_field("type", &JsonSafeString("ImportAttribute"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("key", &self.key);
@@ -1684,10 +1718,16 @@ impl ESTree for ImportAttributeKey<'_> {
     }
 }
 
+impl ESTree for ExportNamedDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ExportNamedDeclarationConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for ExportDefaultDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ExportDefaultDeclaration");
+        state.serialize_field("type", &JsonSafeString("ExportDefaultDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("declaration", &self.declaration);
@@ -1698,7 +1738,7 @@ impl ESTree for ExportDefaultDeclaration<'_> {
 impl ESTree for ExportAllDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ExportAllDeclaration");
+        state.serialize_field("type", &JsonSafeString("ExportAllDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("exported", &self.exported);
@@ -1713,7 +1753,7 @@ impl ESTree for ExportAllDeclaration<'_> {
 impl ESTree for ExportSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ExportSpecifier");
+        state.serialize_field("type", &JsonSafeString("ExportSpecifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("local", &self.local);
@@ -1788,7 +1828,7 @@ impl ESTree for ModuleExportName<'_> {
 impl ESTree for BooleanLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Literal");
+        state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
@@ -1800,7 +1840,7 @@ impl ESTree for BooleanLiteral {
 impl ESTree for NullLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Literal");
+        state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::Null(self));
@@ -1812,7 +1852,7 @@ impl ESTree for NullLiteral {
 impl ESTree for NumericLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Literal");
+        state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
@@ -1824,7 +1864,7 @@ impl ESTree for NumericLiteral<'_> {
 impl ESTree for StringLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Literal");
+        state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
@@ -1836,7 +1876,7 @@ impl ESTree for StringLiteral<'_> {
 impl ESTree for BigIntLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Literal");
+        state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::BigIntLiteralValue(self));
@@ -1849,7 +1889,7 @@ impl ESTree for BigIntLiteral<'_> {
 impl ESTree for RegExpLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Literal");
+        state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::RegExpLiteralValue(self));
@@ -1868,10 +1908,22 @@ impl ESTree for RegExp<'_> {
     }
 }
 
+impl ESTree for RegExpPattern<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::RegExpPatternConverter(self).serialize(serializer)
+    }
+}
+
+impl ESTree for RegExpFlags {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::RegExpFlagsConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for JSXElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXElement");
+        state.serialize_field("type", &JsonSafeString("JSXElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("openingElement", &self.opening_element);
@@ -1884,7 +1936,7 @@ impl ESTree for JSXElement<'_> {
 impl ESTree for JSXOpeningElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXOpeningElement");
+        state.serialize_field("type", &JsonSafeString("JSXOpeningElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("selfClosing", &self.self_closing);
@@ -1898,7 +1950,7 @@ impl ESTree for JSXOpeningElement<'_> {
 impl ESTree for JSXClosingElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXClosingElement");
+        state.serialize_field("type", &JsonSafeString("JSXClosingElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &self.name);
@@ -1909,7 +1961,7 @@ impl ESTree for JSXClosingElement<'_> {
 impl ESTree for JSXFragment<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXFragment");
+        state.serialize_field("type", &JsonSafeString("JSXFragment"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("openingFragment", &self.opening_fragment);
@@ -1922,7 +1974,7 @@ impl ESTree for JSXFragment<'_> {
 impl ESTree for JSXOpeningFragment {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXOpeningFragment");
+        state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -1932,17 +1984,23 @@ impl ESTree for JSXOpeningFragment {
 impl ESTree for JSXClosingFragment {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXClosingFragment");
+        state.serialize_field("type", &JsonSafeString("JSXClosingFragment"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
     }
 }
 
+impl ESTree for JSXElementName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::JSXElementNameConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for JSXNamespacedName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXNamespacedName");
+        state.serialize_field("type", &JsonSafeString("JSXNamespacedName"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("namespace", &self.namespace);
@@ -1954,7 +2012,7 @@ impl ESTree for JSXNamespacedName<'_> {
 impl ESTree for JSXMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXMemberExpression");
+        state.serialize_field("type", &JsonSafeString("JSXMemberExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("object", &self.object);
@@ -1963,10 +2021,16 @@ impl ESTree for JSXMemberExpression<'_> {
     }
 }
 
+impl ESTree for JSXMemberExpressionObject<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::JSXMemberExpressionObjectConverter(self).serialize(serializer)
+    }
+}
+
 impl ESTree for JSXExpressionContainer<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXExpressionContainer");
+        state.serialize_field("type", &JsonSafeString("JSXExpressionContainer"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -2027,7 +2091,7 @@ impl ESTree for JSXExpression<'_> {
 impl ESTree for JSXEmptyExpression {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXEmptyExpression");
+        state.serialize_field("type", &JsonSafeString("JSXEmptyExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2046,7 +2110,7 @@ impl ESTree for JSXAttributeItem<'_> {
 impl ESTree for JSXAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXAttribute");
+        state.serialize_field("type", &JsonSafeString("JSXAttribute"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &self.name);
@@ -2058,7 +2122,7 @@ impl ESTree for JSXAttribute<'_> {
 impl ESTree for JSXSpreadAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXSpreadAttribute");
+        state.serialize_field("type", &JsonSafeString("JSXSpreadAttribute"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("argument", &self.argument);
@@ -2089,10 +2153,10 @@ impl ESTree for JSXAttributeValue<'_> {
 impl ESTree for JSXIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXIdentifier");
+        state.serialize_field("type", &JsonSafeString("JSXIdentifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
 }
@@ -2112,7 +2176,7 @@ impl ESTree for JSXChild<'_> {
 impl ESTree for JSXSpreadChild<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXSpreadChild");
+        state.serialize_field("type", &JsonSafeString("JSXSpreadChild"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -2123,7 +2187,7 @@ impl ESTree for JSXSpreadChild<'_> {
 impl ESTree for JSXText<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSXText");
+        state.serialize_field("type", &JsonSafeString("JSXText"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
@@ -2134,7 +2198,7 @@ impl ESTree for JSXText<'_> {
 impl ESTree for TSThisParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSThisParameter");
+        state.serialize_field("type", &JsonSafeString("TSThisParameter"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -2145,7 +2209,7 @@ impl ESTree for TSThisParameter<'_> {
 impl ESTree for TSEnumDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSEnumDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSEnumDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
@@ -2159,7 +2223,7 @@ impl ESTree for TSEnumDeclaration<'_> {
 impl ESTree for TSEnumMember<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSEnumMember");
+        state.serialize_field("type", &JsonSafeString("TSEnumMember"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
@@ -2180,7 +2244,7 @@ impl ESTree for TSEnumMemberName<'_> {
 impl ESTree for TSTypeAnnotation<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeAnnotation");
+        state.serialize_field("type", &JsonSafeString("TSTypeAnnotation"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -2191,7 +2255,7 @@ impl ESTree for TSTypeAnnotation<'_> {
 impl ESTree for TSLiteralType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSLiteralType");
+        state.serialize_field("type", &JsonSafeString("TSLiteralType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("literal", &self.literal);
@@ -2259,7 +2323,7 @@ impl ESTree for TSType<'_> {
 impl ESTree for TSConditionalType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSConditionalType");
+        state.serialize_field("type", &JsonSafeString("TSConditionalType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("checkType", &self.check_type);
@@ -2273,7 +2337,7 @@ impl ESTree for TSConditionalType<'_> {
 impl ESTree for TSUnionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSUnionType");
+        state.serialize_field("type", &JsonSafeString("TSUnionType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("types", &self.types);
@@ -2284,7 +2348,7 @@ impl ESTree for TSUnionType<'_> {
 impl ESTree for TSIntersectionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSIntersectionType");
+        state.serialize_field("type", &JsonSafeString("TSIntersectionType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("types", &self.types);
@@ -2295,7 +2359,7 @@ impl ESTree for TSIntersectionType<'_> {
 impl ESTree for TSParenthesizedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSParenthesizedType");
+        state.serialize_field("type", &JsonSafeString("TSParenthesizedType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -2306,7 +2370,7 @@ impl ESTree for TSParenthesizedType<'_> {
 impl ESTree for TSTypeOperator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeOperator");
+        state.serialize_field("type", &JsonSafeString("TSTypeOperator"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("operator", &self.operator);
@@ -2318,9 +2382,9 @@ impl ESTree for TSTypeOperator<'_> {
 impl ESTree for TSTypeOperatorOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Keyof => "keyof".serialize(serializer),
-            Self::Unique => "unique".serialize(serializer),
-            Self::Readonly => "readonly".serialize(serializer),
+            Self::Keyof => JsonSafeString("keyof").serialize(serializer),
+            Self::Unique => JsonSafeString("unique").serialize(serializer),
+            Self::Readonly => JsonSafeString("readonly").serialize(serializer),
         }
     }
 }
@@ -2328,7 +2392,7 @@ impl ESTree for TSTypeOperatorOperator {
 impl ESTree for TSArrayType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSArrayType");
+        state.serialize_field("type", &JsonSafeString("TSArrayType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("elementType", &self.element_type);
@@ -2339,7 +2403,7 @@ impl ESTree for TSArrayType<'_> {
 impl ESTree for TSIndexedAccessType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSIndexedAccessType");
+        state.serialize_field("type", &JsonSafeString("TSIndexedAccessType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("objectType", &self.object_type);
@@ -2351,7 +2415,7 @@ impl ESTree for TSIndexedAccessType<'_> {
 impl ESTree for TSTupleType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTupleType");
+        state.serialize_field("type", &JsonSafeString("TSTupleType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("elementTypes", &self.element_types);
@@ -2362,7 +2426,7 @@ impl ESTree for TSTupleType<'_> {
 impl ESTree for TSNamedTupleMember<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSNamedTupleMember");
+        state.serialize_field("type", &JsonSafeString("TSNamedTupleMember"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("elementType", &self.element_type);
@@ -2375,7 +2439,7 @@ impl ESTree for TSNamedTupleMember<'_> {
 impl ESTree for TSOptionalType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSOptionalType");
+        state.serialize_field("type", &JsonSafeString("TSOptionalType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -2386,7 +2450,7 @@ impl ESTree for TSOptionalType<'_> {
 impl ESTree for TSRestType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSRestType");
+        state.serialize_field("type", &JsonSafeString("TSRestType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -2443,7 +2507,7 @@ impl ESTree for TSTupleElement<'_> {
 impl ESTree for TSAnyKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSAnyKeyword");
+        state.serialize_field("type", &JsonSafeString("TSAnyKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2453,7 +2517,7 @@ impl ESTree for TSAnyKeyword {
 impl ESTree for TSStringKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSStringKeyword");
+        state.serialize_field("type", &JsonSafeString("TSStringKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2463,7 +2527,7 @@ impl ESTree for TSStringKeyword {
 impl ESTree for TSBooleanKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSBooleanKeyword");
+        state.serialize_field("type", &JsonSafeString("TSBooleanKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2473,7 +2537,7 @@ impl ESTree for TSBooleanKeyword {
 impl ESTree for TSNumberKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSNumberKeyword");
+        state.serialize_field("type", &JsonSafeString("TSNumberKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2483,7 +2547,7 @@ impl ESTree for TSNumberKeyword {
 impl ESTree for TSNeverKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSNeverKeyword");
+        state.serialize_field("type", &JsonSafeString("TSNeverKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2493,7 +2557,7 @@ impl ESTree for TSNeverKeyword {
 impl ESTree for TSIntrinsicKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSIntrinsicKeyword");
+        state.serialize_field("type", &JsonSafeString("TSIntrinsicKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2503,7 +2567,7 @@ impl ESTree for TSIntrinsicKeyword {
 impl ESTree for TSUnknownKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSUnknownKeyword");
+        state.serialize_field("type", &JsonSafeString("TSUnknownKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2513,7 +2577,7 @@ impl ESTree for TSUnknownKeyword {
 impl ESTree for TSNullKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSNullKeyword");
+        state.serialize_field("type", &JsonSafeString("TSNullKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2523,7 +2587,7 @@ impl ESTree for TSNullKeyword {
 impl ESTree for TSUndefinedKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSUndefinedKeyword");
+        state.serialize_field("type", &JsonSafeString("TSUndefinedKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2533,7 +2597,7 @@ impl ESTree for TSUndefinedKeyword {
 impl ESTree for TSVoidKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSVoidKeyword");
+        state.serialize_field("type", &JsonSafeString("TSVoidKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2543,7 +2607,7 @@ impl ESTree for TSVoidKeyword {
 impl ESTree for TSSymbolKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSSymbolKeyword");
+        state.serialize_field("type", &JsonSafeString("TSSymbolKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2553,7 +2617,7 @@ impl ESTree for TSSymbolKeyword {
 impl ESTree for TSThisType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSThisType");
+        state.serialize_field("type", &JsonSafeString("TSThisType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2563,7 +2627,7 @@ impl ESTree for TSThisType {
 impl ESTree for TSObjectKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSObjectKeyword");
+        state.serialize_field("type", &JsonSafeString("TSObjectKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2573,7 +2637,7 @@ impl ESTree for TSObjectKeyword {
 impl ESTree for TSBigIntKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSBigIntKeyword");
+        state.serialize_field("type", &JsonSafeString("TSBigIntKeyword"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -2583,7 +2647,7 @@ impl ESTree for TSBigIntKeyword {
 impl ESTree for TSTypeReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeReference");
+        state.serialize_field("type", &JsonSafeString("TSTypeReference"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeName", &self.type_name);
@@ -2604,7 +2668,7 @@ impl ESTree for TSTypeName<'_> {
 impl ESTree for TSQualifiedName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSQualifiedName");
+        state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("left", &self.left);
@@ -2616,7 +2680,7 @@ impl ESTree for TSQualifiedName<'_> {
 impl ESTree for TSTypeParameterInstantiation<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeParameterInstantiation");
+        state.serialize_field("type", &JsonSafeString("TSTypeParameterInstantiation"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("params", &self.params);
@@ -2627,7 +2691,7 @@ impl ESTree for TSTypeParameterInstantiation<'_> {
 impl ESTree for TSTypeParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeParameter");
+        state.serialize_field("type", &JsonSafeString("TSTypeParameter"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &self.name);
@@ -2643,7 +2707,7 @@ impl ESTree for TSTypeParameter<'_> {
 impl ESTree for TSTypeParameterDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeParameterDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSTypeParameterDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("params", &self.params);
@@ -2654,7 +2718,7 @@ impl ESTree for TSTypeParameterDeclaration<'_> {
 impl ESTree for TSTypeAliasDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeAliasDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSTypeAliasDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
@@ -2668,9 +2732,9 @@ impl ESTree for TSTypeAliasDeclaration<'_> {
 impl ESTree for TSAccessibility {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Private => "private".serialize(serializer),
-            Self::Protected => "protected".serialize(serializer),
-            Self::Public => "public".serialize(serializer),
+            Self::Private => JsonSafeString("private").serialize(serializer),
+            Self::Protected => JsonSafeString("protected").serialize(serializer),
+            Self::Public => JsonSafeString("public").serialize(serializer),
         }
     }
 }
@@ -2678,7 +2742,7 @@ impl ESTree for TSAccessibility {
 impl ESTree for TSClassImplements<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSClassImplements");
+        state.serialize_field("type", &JsonSafeString("TSClassImplements"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -2690,7 +2754,7 @@ impl ESTree for TSClassImplements<'_> {
 impl ESTree for TSInterfaceDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSInterfaceDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSInterfaceDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
@@ -2705,7 +2769,7 @@ impl ESTree for TSInterfaceDeclaration<'_> {
 impl ESTree for TSInterfaceBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSInterfaceBody");
+        state.serialize_field("type", &JsonSafeString("TSInterfaceBody"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -2716,7 +2780,7 @@ impl ESTree for TSInterfaceBody<'_> {
 impl ESTree for TSPropertySignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSPropertySignature");
+        state.serialize_field("type", &JsonSafeString("TSPropertySignature"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("computed", &self.computed);
@@ -2743,7 +2807,7 @@ impl ESTree for TSSignature<'_> {
 impl ESTree for TSIndexSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSIndexSignature");
+        state.serialize_field("type", &JsonSafeString("TSIndexSignature"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("parameters", &self.parameters);
@@ -2757,7 +2821,7 @@ impl ESTree for TSIndexSignature<'_> {
 impl ESTree for TSCallSignatureDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSCallSignatureDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSCallSignatureDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameters", &self.type_parameters);
@@ -2771,9 +2835,9 @@ impl ESTree for TSCallSignatureDeclaration<'_> {
 impl ESTree for TSMethodSignatureKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Method => "method".serialize(serializer),
-            Self::Get => "get".serialize(serializer),
-            Self::Set => "set".serialize(serializer),
+            Self::Method => JsonSafeString("method").serialize(serializer),
+            Self::Get => JsonSafeString("get").serialize(serializer),
+            Self::Set => JsonSafeString("set").serialize(serializer),
         }
     }
 }
@@ -2781,7 +2845,7 @@ impl ESTree for TSMethodSignatureKind {
 impl ESTree for TSMethodSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSMethodSignature");
+        state.serialize_field("type", &JsonSafeString("TSMethodSignature"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("key", &self.key);
@@ -2799,7 +2863,7 @@ impl ESTree for TSMethodSignature<'_> {
 impl ESTree for TSConstructSignatureDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSConstructSignatureDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSConstructSignatureDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameters", &self.type_parameters);
@@ -2812,10 +2876,10 @@ impl ESTree for TSConstructSignatureDeclaration<'_> {
 impl ESTree for TSIndexSignatureName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Identifier");
+        state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
     }
@@ -2824,7 +2888,7 @@ impl ESTree for TSIndexSignatureName<'_> {
 impl ESTree for TSInterfaceHeritage<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSInterfaceHeritage");
+        state.serialize_field("type", &JsonSafeString("TSInterfaceHeritage"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -2836,7 +2900,7 @@ impl ESTree for TSInterfaceHeritage<'_> {
 impl ESTree for TSTypePredicate<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypePredicate");
+        state.serialize_field("type", &JsonSafeString("TSTypePredicate"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("parameterName", &self.parameter_name);
@@ -2858,7 +2922,7 @@ impl ESTree for TSTypePredicateName<'_> {
 impl ESTree for TSModuleDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSModuleDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
@@ -2872,9 +2936,9 @@ impl ESTree for TSModuleDeclaration<'_> {
 impl ESTree for TSModuleDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Global => "global".serialize(serializer),
-            Self::Module => "module".serialize(serializer),
-            Self::Namespace => "namespace".serialize(serializer),
+            Self::Global => JsonSafeString("global").serialize(serializer),
+            Self::Module => JsonSafeString("module").serialize(serializer),
+            Self::Namespace => JsonSafeString("namespace").serialize(serializer),
         }
     }
 }
@@ -2900,7 +2964,7 @@ impl ESTree for TSModuleDeclarationBody<'_> {
 impl ESTree for TSModuleBlock<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSModuleBlock");
+        state.serialize_field("type", &JsonSafeString("TSModuleBlock"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field(
@@ -2914,7 +2978,7 @@ impl ESTree for TSModuleBlock<'_> {
 impl ESTree for TSTypeLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeLiteral");
+        state.serialize_field("type", &JsonSafeString("TSTypeLiteral"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("members", &self.members);
@@ -2925,7 +2989,7 @@ impl ESTree for TSTypeLiteral<'_> {
 impl ESTree for TSInferType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSInferType");
+        state.serialize_field("type", &JsonSafeString("TSInferType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameter", &self.type_parameter);
@@ -2936,7 +3000,7 @@ impl ESTree for TSInferType<'_> {
 impl ESTree for TSTypeQuery<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeQuery");
+        state.serialize_field("type", &JsonSafeString("TSTypeQuery"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("exprName", &self.expr_name);
@@ -2958,7 +3022,7 @@ impl ESTree for TSTypeQueryExprName<'_> {
 impl ESTree for TSImportType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSImportType");
+        state.serialize_field("type", &JsonSafeString("TSImportType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("isTypeOf", &self.is_type_of);
@@ -2973,7 +3037,7 @@ impl ESTree for TSImportType<'_> {
 impl ESTree for TSImportAttributes<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSImportAttributes");
+        state.serialize_field("type", &JsonSafeString("TSImportAttributes"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("attributesKeyword", &self.attributes_keyword);
@@ -2985,7 +3049,7 @@ impl ESTree for TSImportAttributes<'_> {
 impl ESTree for TSImportAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSImportAttribute");
+        state.serialize_field("type", &JsonSafeString("TSImportAttribute"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &self.name);
@@ -3006,7 +3070,7 @@ impl ESTree for TSImportAttributeName<'_> {
 impl ESTree for TSFunctionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSFunctionType");
+        state.serialize_field("type", &JsonSafeString("TSFunctionType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameters", &self.type_parameters);
@@ -3020,7 +3084,7 @@ impl ESTree for TSFunctionType<'_> {
 impl ESTree for TSConstructorType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSConstructorType");
+        state.serialize_field("type", &JsonSafeString("TSConstructorType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("abstract", &self.r#abstract);
@@ -3034,7 +3098,7 @@ impl ESTree for TSConstructorType<'_> {
 impl ESTree for TSMappedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSMappedType");
+        state.serialize_field("type", &JsonSafeString("TSMappedType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeParameter", &self.type_parameter);
@@ -3049,10 +3113,10 @@ impl ESTree for TSMappedType<'_> {
 impl ESTree for TSMappedTypeModifierOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::True => "true".serialize(serializer),
-            Self::Plus => "+".serialize(serializer),
-            Self::Minus => "-".serialize(serializer),
-            Self::None => "none".serialize(serializer),
+            Self::True => JsonSafeString("true").serialize(serializer),
+            Self::Plus => JsonSafeString("+").serialize(serializer),
+            Self::Minus => JsonSafeString("-").serialize(serializer),
+            Self::None => JsonSafeString("none").serialize(serializer),
         }
     }
 }
@@ -3060,7 +3124,7 @@ impl ESTree for TSMappedTypeModifierOperator {
 impl ESTree for TSTemplateLiteralType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTemplateLiteralType");
+        state.serialize_field("type", &JsonSafeString("TSTemplateLiteralType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("quasis", &self.quasis);
@@ -3072,7 +3136,7 @@ impl ESTree for TSTemplateLiteralType<'_> {
 impl ESTree for TSAsExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSAsExpression");
+        state.serialize_field("type", &JsonSafeString("TSAsExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -3084,7 +3148,7 @@ impl ESTree for TSAsExpression<'_> {
 impl ESTree for TSSatisfiesExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSSatisfiesExpression");
+        state.serialize_field("type", &JsonSafeString("TSSatisfiesExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -3096,7 +3160,7 @@ impl ESTree for TSSatisfiesExpression<'_> {
 impl ESTree for TSTypeAssertion<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSTypeAssertion");
+        state.serialize_field("type", &JsonSafeString("TSTypeAssertion"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -3108,7 +3172,7 @@ impl ESTree for TSTypeAssertion<'_> {
 impl ESTree for TSImportEqualsDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSImportEqualsDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSImportEqualsDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
@@ -3131,7 +3195,7 @@ impl ESTree for TSModuleReference<'_> {
 impl ESTree for TSExternalModuleReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSExternalModuleReference");
+        state.serialize_field("type", &JsonSafeString("TSExternalModuleReference"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -3142,7 +3206,7 @@ impl ESTree for TSExternalModuleReference<'_> {
 impl ESTree for TSNonNullExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSNonNullExpression");
+        state.serialize_field("type", &JsonSafeString("TSNonNullExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -3153,7 +3217,7 @@ impl ESTree for TSNonNullExpression<'_> {
 impl ESTree for Decorator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Decorator");
+        state.serialize_field("type", &JsonSafeString("Decorator"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -3164,7 +3228,7 @@ impl ESTree for Decorator<'_> {
 impl ESTree for TSExportAssignment<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSExportAssignment");
+        state.serialize_field("type", &JsonSafeString("TSExportAssignment"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -3175,7 +3239,7 @@ impl ESTree for TSExportAssignment<'_> {
 impl ESTree for TSNamespaceExportDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSNamespaceExportDeclaration");
+        state.serialize_field("type", &JsonSafeString("TSNamespaceExportDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
@@ -3186,7 +3250,7 @@ impl ESTree for TSNamespaceExportDeclaration<'_> {
 impl ESTree for TSInstantiationExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "TSInstantiationExpression");
+        state.serialize_field("type", &JsonSafeString("TSInstantiationExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
@@ -3198,8 +3262,8 @@ impl ESTree for TSInstantiationExpression<'_> {
 impl ESTree for ImportOrExportKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Value => "value".serialize(serializer),
-            Self::Type => "type".serialize(serializer),
+            Self::Value => JsonSafeString("value").serialize(serializer),
+            Self::Type => JsonSafeString("type").serialize(serializer),
         }
     }
 }
@@ -3207,7 +3271,7 @@ impl ESTree for ImportOrExportKind {
 impl ESTree for JSDocNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSDocNullableType");
+        state.serialize_field("type", &JsonSafeString("JSDocNullableType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -3219,7 +3283,7 @@ impl ESTree for JSDocNullableType<'_> {
 impl ESTree for JSDocNonNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSDocNonNullableType");
+        state.serialize_field("type", &JsonSafeString("JSDocNonNullableType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -3231,7 +3295,7 @@ impl ESTree for JSDocNonNullableType<'_> {
 impl ESTree for JSDocUnknownType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "JSDocUnknownType");
+        state.serialize_field("type", &JsonSafeString("JSDocUnknownType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();

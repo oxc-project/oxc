@@ -5,7 +5,6 @@
 #![warn(missing_docs)]
 
 mod binary_expr_visitor;
-mod code_buffer;
 mod comment;
 mod context;
 mod r#gen;
@@ -19,7 +18,7 @@ use oxc_ast::ast::{
     BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
     Statement, StringLiteral,
 };
-use oxc_data_structures::stack::Stack;
+use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::SymbolTable;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
@@ -29,8 +28,8 @@ use oxc_syntax::{
 };
 
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, code_buffer::CodeBuffer, comment::CommentsMap,
-    operator::Operator, sourcemap_builder::SourcemapBuilder,
+    binary_expr_visitor::BinaryExpressionVisitor, comment::CommentsMap, operator::Operator,
+    sourcemap_builder::SourcemapBuilder,
 };
 pub use crate::{
     context::Context,

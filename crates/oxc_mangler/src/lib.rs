@@ -491,13 +491,12 @@ impl<const CAPACITY: usize> InlineString<CAPACITY> {
     /// * `byte` must be < 128 (an ASCII character).
     #[inline]
     unsafe fn push_unchecked(&mut self, byte: u8) {
-        unsafe {
-            debug_assert!((self.len as usize) < CAPACITY);
-            debug_assert!(byte.is_ascii());
+        debug_assert!((self.len as usize) < CAPACITY);
+        debug_assert!(byte.is_ascii());
 
-            *self.bytes.get_unchecked_mut(self.len as usize) = byte;
-            self.len += 1;
-        }
+        // SAFETY: Caller guarantees not pushing more than `CAPACITY` bytes, so `len` is in bounds
+        unsafe { *self.bytes.get_unchecked_mut(self.len as usize) = byte };
+        self.len += 1;
     }
 
     /// Get length of string as `u32`.

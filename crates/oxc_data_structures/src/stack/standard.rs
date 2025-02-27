@@ -112,7 +112,7 @@ impl<T> Stack<T> {
     #[inline]
     pub const fn new() -> Self {
         // ZSTs are not supported for simplicity
-        assert!(size_of::<T>() > 0, "Zero sized types are not supported");
+        const { assert!(size_of::<T>() > 0, "Zero sized types are not supported") };
 
         // Create stack with equal `start` and `end`
         let dangling = NonNull::dangling();
@@ -146,21 +146,21 @@ impl<T> Stack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
     #[inline]
     pub unsafe fn with_capacity_unchecked(capacity: usize) -> Self {
-        unsafe {
-            debug_assert!(capacity > 0);
-            debug_assert!(capacity <= Self::MAX_CAPACITY);
-            // Cannot overflow if `capacity <= MAX_CAPACITY`
-            let capacity_bytes = capacity * size_of::<T>();
-            // SAFETY: Safety invariants which caller must satisfy guarantee that `capacity_bytes`
-            // satisfies requirements
-            Self::new_with_capacity_bytes_unchecked(capacity_bytes)
-        }
+        debug_assert!(capacity > 0);
+        debug_assert!(capacity <= Self::MAX_CAPACITY);
+
+        // Cannot overflow if `capacity <= MAX_CAPACITY`
+        let capacity_bytes = capacity * size_of::<T>();
+
+        // SAFETY: Safety invariants which caller must satisfy guarantee that `capacity_bytes`
+        // satisfies requirements
+        unsafe { Self::new_with_capacity_bytes_unchecked(capacity_bytes) }
     }
 
     /// Create new `Stack` with provided capacity in bytes, without checks.
@@ -174,16 +174,14 @@ impl<T> Stack<T> {
     /// * `capacity_bytes` must not exceed [`Self::MAX_CAPACITY_BYTES`].
     #[inline]
     unsafe fn new_with_capacity_bytes_unchecked(capacity_bytes: usize) -> Self {
-        unsafe {
-            // ZSTs are not supported for simplicity
-            assert!(size_of::<T>() > 0, "Zero sized types are not supported");
+        // ZSTs are not supported for simplicity
+        const { assert!(size_of::<T>() > 0, "Zero sized types are not supported") };
 
-            // SAFETY: Caller guarantees `capacity_bytes` satisfies requirements
-            let (start, end) = Self::allocate(capacity_bytes);
+        // SAFETY: Caller guarantees `capacity_bytes` satisfies requirements
+        let (start, end) = unsafe { Self::allocate(capacity_bytes) };
 
-            // `cursor` is positioned at start
-            Self { cursor: start, start, end }
-        }
+        // `cursor` is positioned at start
+        Self { cursor: start, start, end }
     }
 
     // Note: There is no need to implement `first` and `first_mut` methods.
@@ -206,20 +204,19 @@ impl<T> Stack<T> {
 
     /// Get reference to last value on stack, without checking stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must not be empty.
     #[inline]
     pub unsafe fn last_unchecked(&self) -> &T {
-        unsafe {
-            debug_assert!(self.end > self.start);
-            debug_assert!(self.cursor > self.start);
-            debug_assert!(self.cursor <= self.end);
-            // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
-            // and `self.current.sub(1)` points to a valid initialized `T`, if stack is not empty.
-            // Caller guarantees stack is not empty.
-            self.cursor.sub(1).as_ref()
-        }
+        debug_assert!(self.end > self.start);
+        debug_assert!(self.cursor > self.start);
+        debug_assert!(self.cursor <= self.end);
+
+        // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
+        // and `self.current.sub(1)` points to a valid initialized `T`, if stack is not empty.
+        // Caller guarantees stack is not empty.
+        unsafe { self.cursor.sub(1).as_ref() }
     }
 
     /// Get mutable reference to last value on stack.
@@ -236,20 +233,19 @@ impl<T> Stack<T> {
 
     /// Get mutable reference to last value on stack, without checking stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must not be empty.
     #[inline]
     pub unsafe fn last_unchecked_mut(&mut self) -> &mut T {
-        unsafe {
-            debug_assert!(self.end > self.start);
-            debug_assert!(self.cursor > self.start);
-            debug_assert!(self.cursor <= self.end);
-            // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
-            // and `self.current.sub(1)` points to a valid initialized `T`, if stack is not empty.
-            // Caller guarantees stack is not empty.
-            self.cursor.sub(1).as_mut()
-        }
+        debug_assert!(self.end > self.start);
+        debug_assert!(self.cursor > self.start);
+        debug_assert!(self.cursor <= self.end);
+
+        // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
+        // and `self.current.sub(1)` points to a valid initialized `T`, if stack is not empty.
+        // Caller guarantees stack is not empty.
+        unsafe { self.cursor.sub(1).as_mut() }
     }
 
     /// Push value to stack.
@@ -285,28 +281,26 @@ impl<T> Stack<T> {
     #[cold]
     #[inline(never)]
     unsafe fn push_slow(&mut self, value: T) {
-        unsafe {
-            #[expect(clippy::if_not_else)]
-            if self.end != self.start {
-                // Stack was already allocated. Grow capacity.
-                // SAFETY: Checked above that is already allocated.
-                self.grow();
-            } else {
-                // Stack was not allocated yet.
-                // SAFETY: `DEFAULT_CAPACITY_BYTES` satisfies requirements.
-                let (start, end) = Self::allocate(Self::DEFAULT_CAPACITY_BYTES);
-                self.start = start;
-                self.cursor = start;
-                self.end = end;
-            }
-
-            // Write value + increment cursor.
-            // SAFETY: We just allocated additional capacity, so `self.cursor` is in bounds.
-            // `self.cursor` is aligned for `T`.
-            unsafe { self.cursor.as_ptr().write(value) }
-            // SAFETY: Cursor is not at end, so advancing by a `T` cannot be out of bounds
-            self.cursor = unsafe { self.cursor.add(1) };
+        #[expect(clippy::if_not_else)]
+        if self.end != self.start {
+            // Stack was already allocated. Grow capacity.
+            // SAFETY: Checked above that is already allocated.
+            unsafe { self.grow() };
+        } else {
+            // Stack was not allocated yet.
+            // SAFETY: `DEFAULT_CAPACITY_BYTES` satisfies requirements.
+            let (start, end) = unsafe { Self::allocate(Self::DEFAULT_CAPACITY_BYTES) };
+            self.start = start;
+            self.cursor = start;
+            self.end = end;
         }
+
+        // Write value + increment cursor.
+        // SAFETY: We just allocated additional capacity, so `self.cursor` is in bounds.
+        // `self.cursor` is aligned for `T`.
+        unsafe { self.cursor.as_ptr().write(value) }
+        // SAFETY: Cursor is not at end, so advancing by a `T` cannot be out of bounds
+        self.cursor = unsafe { self.cursor.add(1) };
     }
 
     /// Pop value from stack.
@@ -323,22 +317,21 @@ impl<T> Stack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must not be empty.
     #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> T {
-        unsafe {
-            debug_assert!(self.end > self.start);
-            debug_assert!(self.cursor > self.start);
-            debug_assert!(self.cursor <= self.end);
-            // SAFETY: Caller guarantees stack is not empty, so subtracting 1 cannot be out of bounds
-            self.cursor = self.cursor.sub(1);
-            // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
-            // and points to a valid initialized `T`, if stack is not empty.
-            // Caller guarantees stack was not empty.
-            self.cursor.read()
-        }
+        debug_assert!(self.end > self.start);
+        debug_assert!(self.cursor > self.start);
+        debug_assert!(self.cursor <= self.end);
+
+        // SAFETY: Caller guarantees stack is not empty, so subtracting 1 cannot be out of bounds
+        self.cursor = unsafe { self.cursor.sub(1) };
+        // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
+        // and points to a valid initialized `T`, if stack is not empty.
+        // Caller guarantees stack was not empty.
+        unsafe { self.cursor.read() }
     }
 
     /// Get number of entries on stack.

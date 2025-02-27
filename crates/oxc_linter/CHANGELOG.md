@@ -4,6 +4,41 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.12] - 2025-02-23
+
+### Features
+
+- 9bc3017 linter: Add support for nested config files (#9153) (camchenry)
+- 914dd46 linter: Add eslint/max-depth (#9173) (ikkz)
+- 0b08159 linter: Add eslint/max-lines-per-function (#9161) (ikkz)
+- cc8dd48 linter: Add unicorn/no-invalid-fetch-options rule (#9212) (Mikhail Baev)
+- af13b1b linter: Promote `eslint/no-eval` to `correctness` (#9231) (dalaoshu)
+- 542bbd7 linter: Support `import-x` plugin name (#9074) (Sysix)
+- d266c29 linter: Add eslint/max-nested-callbacks (#9172) (ikkz)
+- 86795d0 linter: Implement grouped-accessor-pairs (#9065) (yefan)
+- d70bad3 linter: Add eslint/no-unneeded-ternary rule (#9160) (Cédric DIRAND)
+- 4bd86e6 linter: Add `fixer` for `unicorn/catch-error-name` (#9165) (dalaoshu)
+
+### Bug Fixes
+
+- 3031845 linter: Add option "allowTypeImports" for rule "no-restricted-imports" (#7894) (Alexander S.)
+
+### Performance
+
+- e2eb849 linter: Use concurrent hashmap `papaya` (#9218) (Boshen)
+
+### Documentation
+
+- 6c0f006 linter: Improve the documentation of eslint/no-useless-concat (#9179) (Tom)
+- 3414824 oxc: Enable `clippy::too_long_first_doc_paragraph` (#9237) (Boshen)
+
+### Refactor
+
+- e32d6e2 allocator, linter: Shorten `serde` impls (#9254) (overlookmotel)
+- b6fc0f6 linter: Improve `unicorn/consistent-function-scoping` (#9163) (dalaoshu)
+- 63bb214 oxc: Apply `clippy::redundant_clone` (#9252) (Boshen)
+- 9f36181 rust: Apply `cllippy::nursery` rules (#9232) (Boshen)
+
 ## [0.15.11] - 2025-02-16
 
 - 21a9476 ast: [**BREAKING**] Remove `TSLiteral::RegExpLiteral` (#9056) (Dunqing)

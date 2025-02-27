@@ -101,7 +101,7 @@ jobs:
 
       - name: Install cargo-zigbuild
         if: ${{ contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@54b836426b3fa9aef432e760885ea0419ab50dab # v2.48.15
+        uses: taiki-e/install-action@ae97ff9daf1cd2e216671a047d80ff48461e30bb # v2.49.1
         with:
           tool: cargo-zigbuild
 
@@ -109,7 +109,7 @@ jobs:
 
       - name: Install cross
         if: ${{ !contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@54b836426b3fa9aef432e760885ea0419ab50dab # v2.48.15
+        uses: taiki-e/install-action@ae97ff9daf1cd2e216671a047d80ff48461e30bb # v2.49.1
         with:
           tool: cross
 
@@ -156,7 +156,7 @@ jobs:
         run: tar czf ${{ matrix.code-target }}.tar.gz napi/${name}/${name}.${{ matrix.code-target }}.node
 
       - name: Upload artifact
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           if-no-files-found: error
           name: binaries-${{ matrix.code-target }}

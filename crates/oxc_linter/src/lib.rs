@@ -11,7 +11,6 @@ mod disable_directives;
 mod fixer;
 mod frameworks;
 mod globals;
-mod javascript_globals;
 mod module_graph_visitor;
 mod module_record;
 mod options;

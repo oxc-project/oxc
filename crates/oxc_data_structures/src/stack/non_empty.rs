@@ -172,21 +172,21 @@ impl<T> NonEmptyStack<T> {
     /// # Panics
     /// Panics if `T` is a zero-sized type.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * `capacity` must not be 0.
     /// * `capacity` must not exceed [`Self::MAX_CAPACITY`].
     #[inline]
     pub unsafe fn with_capacity_unchecked(capacity: usize, initial_value: T) -> Self {
-        unsafe {
-            debug_assert!(capacity > 0);
-            debug_assert!(capacity <= Self::MAX_CAPACITY);
-            // Cannot overflow if `capacity <= MAX_CAPACITY`
-            let capacity_bytes = capacity * size_of::<T>();
-            // SAFETY: Safety invariants which caller must satisfy guarantee that `capacity_bytes`
-            // satisfies requirements
-            Self::new_with_capacity_bytes_unchecked(capacity_bytes, initial_value)
-        }
+        debug_assert!(capacity > 0);
+        debug_assert!(capacity <= Self::MAX_CAPACITY);
+
+        // Cannot overflow if `capacity <= MAX_CAPACITY`
+        let capacity_bytes = capacity * size_of::<T>();
+
+        // SAFETY: Safety invariants which caller must satisfy guarantee that `capacity_bytes`
+        // satisfies requirements
+        unsafe { Self::new_with_capacity_bytes_unchecked(capacity_bytes, initial_value) }
     }
 
     /// Create new [`NonEmptyStack`] with provided capacity in bytes, and initial value `initial_value`,
@@ -201,21 +201,19 @@ impl<T> NonEmptyStack<T> {
     /// * `capacity_bytes` must not exceed [`Self::MAX_CAPACITY_BYTES`].
     #[inline]
     unsafe fn new_with_capacity_bytes_unchecked(capacity_bytes: usize, initial_value: T) -> Self {
-        unsafe {
-            // ZSTs are not supported for simplicity
-            assert!(size_of::<T>() > 0, "Zero sized types are not supported");
+        // ZSTs are not supported for simplicity
+        const { assert!(size_of::<T>() > 0, "Zero sized types are not supported") };
 
-            // SAFETY: Caller guarantees `capacity_bytes` satisfies requirements
-            let (start, end) = Self::allocate(capacity_bytes);
+        // SAFETY: Caller guarantees `capacity_bytes` satisfies requirements
+        let (start, end) = unsafe { Self::allocate(capacity_bytes) };
 
-            // Write initial value to start of allocation.
-            // SAFETY: Allocation was created with alignment of `T`, and with capacity for at least 1 entry,
-            // so `start` is valid for writing a `T`.
-            start.as_ptr().write(initial_value);
+        // Write initial value to start of allocation.
+        // SAFETY: Allocation was created with alignment of `T`, and with capacity for at least 1 entry,
+        // so `start` is valid for writing a `T`.
+        unsafe { start.as_ptr().write(initial_value) };
 
-            // `cursor` is positioned at start i.e. pointing at initial value
-            Self { cursor: start, start, end }
-        }
+        // `cursor` is positioned at start i.e. pointing at initial value
+        Self { cursor: start, start, end }
     }
 
     /// Get reference to first value on stack.
@@ -289,16 +287,14 @@ impl<T> NonEmptyStack<T> {
     #[cold]
     #[inline(never)]
     unsafe fn push_slow(&mut self, value: T) {
-        unsafe {
-            // Grow allocation.
-            // SAFETY: Stack is always allocated.
-            self.grow();
+        // Grow allocation.
+        // SAFETY: Stack is always allocated.
+        unsafe { self.grow() };
 
-            // Write value.
-            // SAFETY: We just allocated additional capacity, so `self.cursor` is in bounds.
-            // `self.cursor` is aligned for `T`.
-            unsafe { self.cursor.as_ptr().write(value) }
-        }
+        // Write value.
+        // SAFETY: We just allocated additional capacity, so `self.cursor` is in bounds.
+        // `self.cursor` is aligned for `T`.
+        unsafe { self.cursor.as_ptr().write(value) };
     }
 
     /// Pop value from stack.
@@ -330,22 +326,23 @@ impl<T> NonEmptyStack<T> {
 
     /// Pop value from stack, without checking that stack isn't empty.
     ///
-    /// # Safety
+    /// # SAFETY
     ///
     /// * Stack must have at least 2 entries, so that after pop, it still has at least 1.
     #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> T {
-        unsafe {
-            debug_assert!(self.cursor > self.start);
-            debug_assert!(self.cursor < self.end);
-            // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
-            // and points to a valid initialized `T`
-            let value = self.cursor.read();
-            // SAFETY: Caller guarantees there's at least 2 entries on stack, so subtracting 1
-            // cannot be out of bounds
-            self.cursor = self.cursor.sub(1);
-            value
-        }
+        debug_assert!(self.cursor > self.start);
+        debug_assert!(self.cursor < self.end);
+
+        // SAFETY: All methods ensure `self.cursor` is always in bounds, is aligned for `T`,
+        // and points to a valid initialized `T`
+        let value = unsafe { self.cursor.read() };
+
+        // SAFETY: Caller guarantees there's at least 2 entries on stack, so subtracting 1
+        // cannot be out of bounds
+        unsafe { self.cursor = self.cursor.sub(1) };
+
+        value
     }
 
     /// Get number of values on stack.

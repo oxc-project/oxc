@@ -24,7 +24,7 @@ pub(super) fn abstract_equality_comparison<'a>(
         if matches!((left, right), (ValueType::Number, ValueType::String))
             || matches!(right, ValueType::Boolean)
         {
-            if let Some(num) = right_expr.get_side_free_number_value(ctx) {
+            if let Some(num) = right_expr.evaluate_value_to_number(ctx) {
                 let number_literal_expr = ctx.ast().expression_numeric_literal(
                     oxc_span::SPAN,
                     num,
@@ -39,7 +39,7 @@ pub(super) fn abstract_equality_comparison<'a>(
         if matches!((left, right), (ValueType::String, ValueType::Number))
             || matches!(left, ValueType::Boolean)
         {
-            if let Some(num) = left_expr.get_side_free_number_value(ctx) {
+            if let Some(num) = left_expr.evaluate_value_to_number(ctx) {
                 let number_literal_expr = ctx.ast().expression_numeric_literal(
                     oxc_span::SPAN,
                     num,
@@ -52,8 +52,8 @@ pub(super) fn abstract_equality_comparison<'a>(
         }
 
         if matches!(left, ValueType::BigInt) || matches!(right, ValueType::BigInt) {
-            let left_bigint = left_expr.get_side_free_bigint_value(ctx);
-            let right_bigint = right_expr.get_side_free_bigint_value(ctx);
+            let left_bigint = left_expr.evaluate_value_to_bigint(ctx);
+            let right_bigint = right_expr.evaluate_value_to_bigint(ctx);
             if let (Some(l_big), Some(r_big)) = (left_bigint, right_bigint) {
                 return Some(l_big.eq(&r_big));
             }

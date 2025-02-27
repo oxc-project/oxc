@@ -97,17 +97,17 @@ fn test() {
     }
 
     let pass = vec![
-        ("<div />", None, None, None),
-        ("<button role='main' />", None, None, None),
-        ("<MyComponent role='button' />", None, None, None),
-        ("<button role={`${foo}button`} />", None, None, None),
-        ("<Button role={`${foo}button`} />", None, Some(settings()), None),
+        ("<div />", None, None),
+        ("<button role='main' />", None, None),
+        ("<MyComponent role='button' />", None, None),
+        ("<button role={`${foo}button`} />", None, None),
+        ("<Button role={`${foo}button`} />", None, Some(settings())),
     ];
 
     let fail = vec![
-        ("<button role='button' />", None, None, None),
-        ("<body role='document' />", None, None, None),
-        ("<Button role='button' />", None, Some(settings()), None),
+        ("<button role='button' />", None, None),
+        ("<body role='document' />", None, None),
+        ("<Button role='button' />", None, Some(settings())),
     ];
 
     let fix = vec![

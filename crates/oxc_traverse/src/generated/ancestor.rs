@@ -182,8 +182,8 @@ pub(crate) enum AncestorType {
     ExportNamedDeclarationSpecifiers = 159,
     ExportNamedDeclarationSource = 160,
     ExportNamedDeclarationWithClause = 161,
-    ExportDefaultDeclarationDeclaration = 162,
-    ExportDefaultDeclarationExported = 163,
+    ExportDefaultDeclarationExported = 162,
+    ExportDefaultDeclarationDeclaration = 163,
     ExportAllDeclarationExported = 164,
     ExportAllDeclarationSource = 165,
     ExportAllDeclarationWithClause = 166,
@@ -196,124 +196,126 @@ pub(crate) enum AncestorType {
     JSXOpeningElementAttributes = 173,
     JSXOpeningElementTypeParameters = 174,
     JSXClosingElementName = 175,
-    JSXFragmentChildren = 176,
-    JSXNamespacedNameNamespace = 177,
-    JSXNamespacedNameProperty = 178,
-    JSXMemberExpressionObject = 179,
-    JSXMemberExpressionProperty = 180,
-    JSXExpressionContainerExpression = 181,
-    JSXAttributeName = 182,
-    JSXAttributeValue = 183,
-    JSXSpreadAttributeArgument = 184,
-    JSXSpreadChildExpression = 185,
-    TSThisParameterTypeAnnotation = 186,
-    TSEnumDeclarationId = 187,
-    TSEnumDeclarationMembers = 188,
-    TSEnumMemberId = 189,
-    TSEnumMemberInitializer = 190,
-    TSTypeAnnotationTypeAnnotation = 191,
-    TSLiteralTypeLiteral = 192,
-    TSConditionalTypeCheckType = 193,
-    TSConditionalTypeExtendsType = 194,
-    TSConditionalTypeTrueType = 195,
-    TSConditionalTypeFalseType = 196,
-    TSUnionTypeTypes = 197,
-    TSIntersectionTypeTypes = 198,
-    TSParenthesizedTypeTypeAnnotation = 199,
-    TSTypeOperatorTypeAnnotation = 200,
-    TSArrayTypeElementType = 201,
-    TSIndexedAccessTypeObjectType = 202,
-    TSIndexedAccessTypeIndexType = 203,
-    TSTupleTypeElementTypes = 204,
-    TSNamedTupleMemberElementType = 205,
-    TSNamedTupleMemberLabel = 206,
-    TSOptionalTypeTypeAnnotation = 207,
-    TSRestTypeTypeAnnotation = 208,
-    TSTypeReferenceTypeName = 209,
-    TSTypeReferenceTypeParameters = 210,
-    TSQualifiedNameLeft = 211,
-    TSQualifiedNameRight = 212,
-    TSTypeParameterInstantiationParams = 213,
-    TSTypeParameterName = 214,
-    TSTypeParameterConstraint = 215,
-    TSTypeParameterDefault = 216,
-    TSTypeParameterDeclarationParams = 217,
-    TSTypeAliasDeclarationId = 218,
-    TSTypeAliasDeclarationTypeParameters = 219,
-    TSTypeAliasDeclarationTypeAnnotation = 220,
-    TSClassImplementsExpression = 221,
-    TSClassImplementsTypeParameters = 222,
-    TSInterfaceDeclarationId = 223,
-    TSInterfaceDeclarationExtends = 224,
-    TSInterfaceDeclarationTypeParameters = 225,
-    TSInterfaceDeclarationBody = 226,
-    TSInterfaceBodyBody = 227,
-    TSPropertySignatureKey = 228,
-    TSPropertySignatureTypeAnnotation = 229,
-    TSIndexSignatureParameters = 230,
-    TSIndexSignatureTypeAnnotation = 231,
-    TSCallSignatureDeclarationTypeParameters = 232,
-    TSCallSignatureDeclarationThisParam = 233,
-    TSCallSignatureDeclarationParams = 234,
-    TSCallSignatureDeclarationReturnType = 235,
-    TSMethodSignatureKey = 236,
-    TSMethodSignatureTypeParameters = 237,
-    TSMethodSignatureThisParam = 238,
-    TSMethodSignatureParams = 239,
-    TSMethodSignatureReturnType = 240,
-    TSConstructSignatureDeclarationTypeParameters = 241,
-    TSConstructSignatureDeclarationParams = 242,
-    TSConstructSignatureDeclarationReturnType = 243,
-    TSIndexSignatureNameTypeAnnotation = 244,
-    TSInterfaceHeritageExpression = 245,
-    TSInterfaceHeritageTypeParameters = 246,
-    TSTypePredicateParameterName = 247,
-    TSTypePredicateTypeAnnotation = 248,
-    TSModuleDeclarationId = 249,
-    TSModuleDeclarationBody = 250,
-    TSModuleBlockDirectives = 251,
-    TSModuleBlockBody = 252,
-    TSTypeLiteralMembers = 253,
-    TSInferTypeTypeParameter = 254,
-    TSTypeQueryExprName = 255,
-    TSTypeQueryTypeParameters = 256,
-    TSImportTypeParameter = 257,
-    TSImportTypeQualifier = 258,
-    TSImportTypeAttributes = 259,
-    TSImportTypeTypeParameters = 260,
-    TSImportAttributesAttributesKeyword = 261,
-    TSImportAttributesElements = 262,
-    TSImportAttributeName = 263,
-    TSImportAttributeValue = 264,
-    TSFunctionTypeTypeParameters = 265,
-    TSFunctionTypeThisParam = 266,
-    TSFunctionTypeParams = 267,
-    TSFunctionTypeReturnType = 268,
-    TSConstructorTypeTypeParameters = 269,
-    TSConstructorTypeParams = 270,
-    TSConstructorTypeReturnType = 271,
-    TSMappedTypeTypeParameter = 272,
-    TSMappedTypeNameType = 273,
-    TSMappedTypeTypeAnnotation = 274,
-    TSTemplateLiteralTypeQuasis = 275,
-    TSTemplateLiteralTypeTypes = 276,
-    TSAsExpressionExpression = 277,
-    TSAsExpressionTypeAnnotation = 278,
-    TSSatisfiesExpressionExpression = 279,
-    TSSatisfiesExpressionTypeAnnotation = 280,
-    TSTypeAssertionExpression = 281,
-    TSTypeAssertionTypeAnnotation = 282,
-    TSImportEqualsDeclarationId = 283,
-    TSImportEqualsDeclarationModuleReference = 284,
-    TSExternalModuleReferenceExpression = 285,
-    TSNonNullExpressionExpression = 286,
-    DecoratorExpression = 287,
-    TSExportAssignmentExpression = 288,
-    TSNamespaceExportDeclarationId = 289,
-    TSInstantiationExpressionExpression = 290,
-    TSInstantiationExpressionTypeParameters = 291,
-    JSDocNullableTypeTypeAnnotation = 292,
-    JSDocNonNullableTypeTypeAnnotation = 293,
+    JSXFragmentOpeningFragment = 176,
+    JSXFragmentClosingFragment = 177,
+    JSXFragmentChildren = 178,
+    JSXNamespacedNameNamespace = 179,
+    JSXNamespacedNameProperty = 180,
+    JSXMemberExpressionObject = 181,
+    JSXMemberExpressionProperty = 182,
+    JSXExpressionContainerExpression = 183,
+    JSXAttributeName = 184,
+    JSXAttributeValue = 185,
+    JSXSpreadAttributeArgument = 186,
+    JSXSpreadChildExpression = 187,
+    TSThisParameterTypeAnnotation = 188,
+    TSEnumDeclarationId = 189,
+    TSEnumDeclarationMembers = 190,
+    TSEnumMemberId = 191,
+    TSEnumMemberInitializer = 192,
+    TSTypeAnnotationTypeAnnotation = 193,
+    TSLiteralTypeLiteral = 194,
+    TSConditionalTypeCheckType = 195,
+    TSConditionalTypeExtendsType = 196,
+    TSConditionalTypeTrueType = 197,
+    TSConditionalTypeFalseType = 198,
+    TSUnionTypeTypes = 199,
+    TSIntersectionTypeTypes = 200,
+    TSParenthesizedTypeTypeAnnotation = 201,
+    TSTypeOperatorTypeAnnotation = 202,
+    TSArrayTypeElementType = 203,
+    TSIndexedAccessTypeObjectType = 204,
+    TSIndexedAccessTypeIndexType = 205,
+    TSTupleTypeElementTypes = 206,
+    TSNamedTupleMemberElementType = 207,
+    TSNamedTupleMemberLabel = 208,
+    TSOptionalTypeTypeAnnotation = 209,
+    TSRestTypeTypeAnnotation = 210,
+    TSTypeReferenceTypeName = 211,
+    TSTypeReferenceTypeParameters = 212,
+    TSQualifiedNameLeft = 213,
+    TSQualifiedNameRight = 214,
+    TSTypeParameterInstantiationParams = 215,
+    TSTypeParameterName = 216,
+    TSTypeParameterConstraint = 217,
+    TSTypeParameterDefault = 218,
+    TSTypeParameterDeclarationParams = 219,
+    TSTypeAliasDeclarationId = 220,
+    TSTypeAliasDeclarationTypeParameters = 221,
+    TSTypeAliasDeclarationTypeAnnotation = 222,
+    TSClassImplementsExpression = 223,
+    TSClassImplementsTypeParameters = 224,
+    TSInterfaceDeclarationId = 225,
+    TSInterfaceDeclarationExtends = 226,
+    TSInterfaceDeclarationTypeParameters = 227,
+    TSInterfaceDeclarationBody = 228,
+    TSInterfaceBodyBody = 229,
+    TSPropertySignatureKey = 230,
+    TSPropertySignatureTypeAnnotation = 231,
+    TSIndexSignatureParameters = 232,
+    TSIndexSignatureTypeAnnotation = 233,
+    TSCallSignatureDeclarationTypeParameters = 234,
+    TSCallSignatureDeclarationThisParam = 235,
+    TSCallSignatureDeclarationParams = 236,
+    TSCallSignatureDeclarationReturnType = 237,
+    TSMethodSignatureKey = 238,
+    TSMethodSignatureTypeParameters = 239,
+    TSMethodSignatureThisParam = 240,
+    TSMethodSignatureParams = 241,
+    TSMethodSignatureReturnType = 242,
+    TSConstructSignatureDeclarationTypeParameters = 243,
+    TSConstructSignatureDeclarationParams = 244,
+    TSConstructSignatureDeclarationReturnType = 245,
+    TSIndexSignatureNameTypeAnnotation = 246,
+    TSInterfaceHeritageExpression = 247,
+    TSInterfaceHeritageTypeParameters = 248,
+    TSTypePredicateParameterName = 249,
+    TSTypePredicateTypeAnnotation = 250,
+    TSModuleDeclarationId = 251,
+    TSModuleDeclarationBody = 252,
+    TSModuleBlockDirectives = 253,
+    TSModuleBlockBody = 254,
+    TSTypeLiteralMembers = 255,
+    TSInferTypeTypeParameter = 256,
+    TSTypeQueryExprName = 257,
+    TSTypeQueryTypeParameters = 258,
+    TSImportTypeParameter = 259,
+    TSImportTypeQualifier = 260,
+    TSImportTypeAttributes = 261,
+    TSImportTypeTypeParameters = 262,
+    TSImportAttributesAttributesKeyword = 263,
+    TSImportAttributesElements = 264,
+    TSImportAttributeName = 265,
+    TSImportAttributeValue = 266,
+    TSFunctionTypeTypeParameters = 267,
+    TSFunctionTypeThisParam = 268,
+    TSFunctionTypeParams = 269,
+    TSFunctionTypeReturnType = 270,
+    TSConstructorTypeTypeParameters = 271,
+    TSConstructorTypeParams = 272,
+    TSConstructorTypeReturnType = 273,
+    TSMappedTypeTypeParameter = 274,
+    TSMappedTypeNameType = 275,
+    TSMappedTypeTypeAnnotation = 276,
+    TSTemplateLiteralTypeQuasis = 277,
+    TSTemplateLiteralTypeTypes = 278,
+    TSAsExpressionExpression = 279,
+    TSAsExpressionTypeAnnotation = 280,
+    TSSatisfiesExpressionExpression = 281,
+    TSSatisfiesExpressionTypeAnnotation = 282,
+    TSTypeAssertionExpression = 283,
+    TSTypeAssertionTypeAnnotation = 284,
+    TSImportEqualsDeclarationId = 285,
+    TSImportEqualsDeclarationModuleReference = 286,
+    TSExternalModuleReferenceExpression = 287,
+    TSNonNullExpressionExpression = 288,
+    DecoratorExpression = 289,
+    TSExportAssignmentExpression = 290,
+    TSNamespaceExportDeclarationId = 291,
+    TSInstantiationExpressionExpression = 292,
+    TSInstantiationExpressionTypeParameters = 293,
+    JSDocNullableTypeTypeAnnotation = 294,
+    JSDocNonNullableTypeTypeAnnotation = 295,
 }
 
 /// Ancestor type used in AST traversal.
@@ -622,10 +624,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::ExportNamedDeclarationSource as u16,
     ExportNamedDeclarationWithClause(ExportNamedDeclarationWithoutWithClause<'a, 't>) =
         AncestorType::ExportNamedDeclarationWithClause as u16,
-    ExportDefaultDeclarationDeclaration(ExportDefaultDeclarationWithoutDeclaration<'a, 't>) =
-        AncestorType::ExportDefaultDeclarationDeclaration as u16,
     ExportDefaultDeclarationExported(ExportDefaultDeclarationWithoutExported<'a, 't>) =
         AncestorType::ExportDefaultDeclarationExported as u16,
+    ExportDefaultDeclarationDeclaration(ExportDefaultDeclarationWithoutDeclaration<'a, 't>) =
+        AncestorType::ExportDefaultDeclarationDeclaration as u16,
     ExportAllDeclarationExported(ExportAllDeclarationWithoutExported<'a, 't>) =
         AncestorType::ExportAllDeclarationExported as u16,
     ExportAllDeclarationSource(ExportAllDeclarationWithoutSource<'a, 't>) =
@@ -649,6 +651,10 @@ pub enum Ancestor<'a, 't> {
         AncestorType::JSXOpeningElementTypeParameters as u16,
     JSXClosingElementName(JSXClosingElementWithoutName<'a, 't>) =
         AncestorType::JSXClosingElementName as u16,
+    JSXFragmentOpeningFragment(JSXFragmentWithoutOpeningFragment<'a, 't>) =
+        AncestorType::JSXFragmentOpeningFragment as u16,
+    JSXFragmentClosingFragment(JSXFragmentWithoutClosingFragment<'a, 't>) =
+        AncestorType::JSXFragmentClosingFragment as u16,
     JSXFragmentChildren(JSXFragmentWithoutChildren<'a, 't>) =
         AncestorType::JSXFragmentChildren as u16,
     JSXNamespacedNameNamespace(JSXNamespacedNameWithoutNamespace<'a, 't>) =
@@ -1398,8 +1404,8 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_export_default_declaration(self) -> bool {
         matches!(
             self,
-            Self::ExportDefaultDeclarationDeclaration(_)
-                | Self::ExportDefaultDeclarationExported(_)
+            Self::ExportDefaultDeclarationExported(_)
+                | Self::ExportDefaultDeclarationDeclaration(_)
         )
     }
 
@@ -1445,7 +1451,12 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_jsx_fragment(self) -> bool {
-        matches!(self, Self::JSXFragmentChildren(_))
+        matches!(
+            self,
+            Self::JSXFragmentOpeningFragment(_)
+                | Self::JSXFragmentClosingFragment(_)
+                | Self::JSXFragmentChildren(_)
+        )
     }
 
     #[inline]
@@ -2356,8 +2367,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::ExportNamedDeclarationSpecifiers(a) => a.address(),
             Self::ExportNamedDeclarationSource(a) => a.address(),
             Self::ExportNamedDeclarationWithClause(a) => a.address(),
-            Self::ExportDefaultDeclarationDeclaration(a) => a.address(),
             Self::ExportDefaultDeclarationExported(a) => a.address(),
+            Self::ExportDefaultDeclarationDeclaration(a) => a.address(),
             Self::ExportAllDeclarationExported(a) => a.address(),
             Self::ExportAllDeclarationSource(a) => a.address(),
             Self::ExportAllDeclarationWithClause(a) => a.address(),
@@ -2370,6 +2381,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::JSXOpeningElementAttributes(a) => a.address(),
             Self::JSXOpeningElementTypeParameters(a) => a.address(),
             Self::JSXClosingElementName(a) => a.address(),
+            Self::JSXFragmentOpeningFragment(a) => a.address(),
+            Self::JSXFragmentClosingFragment(a) => a.address(),
             Self::JSXFragmentChildren(a) => a.address(),
             Self::JSXNamespacedNameNamespace(a) => a.address(),
             Self::JSXNamespacedNameProperty(a) => a.address(),
@@ -3297,6 +3310,7 @@ pub(crate) const OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS: usize =
     offset_of!(CallExpression, type_parameters);
 pub(crate) const OFFSET_CALL_EXPRESSION_ARGUMENTS: usize = offset_of!(CallExpression, arguments);
 pub(crate) const OFFSET_CALL_EXPRESSION_OPTIONAL: usize = offset_of!(CallExpression, optional);
+pub(crate) const OFFSET_CALL_EXPRESSION_PURE: usize = offset_of!(CallExpression, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -3330,6 +3344,11 @@ impl<'a, 't> CallExpressionWithoutCallee<'a, 't> {
     #[inline]
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
     }
 }
 
@@ -3372,6 +3391,11 @@ impl<'a, 't> CallExpressionWithoutTypeParameters<'a, 't> {
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for CallExpressionWithoutTypeParameters<'a, 't> {
@@ -3413,6 +3437,11 @@ impl<'a, 't> CallExpressionWithoutArguments<'a, 't> {
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for CallExpressionWithoutArguments<'a, 't> {
@@ -3427,6 +3456,7 @@ pub(crate) const OFFSET_NEW_EXPRESSION_CALLEE: usize = offset_of!(NewExpression,
 pub(crate) const OFFSET_NEW_EXPRESSION_ARGUMENTS: usize = offset_of!(NewExpression, arguments);
 pub(crate) const OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS: usize =
     offset_of!(NewExpression, type_parameters);
+pub(crate) const OFFSET_NEW_EXPRESSION_PURE: usize = offset_of!(NewExpression, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -3455,6 +3485,11 @@ impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
     }
 }
 
@@ -3492,6 +3527,11 @@ impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
@@ -3527,6 +3567,11 @@ impl<'a, 't> NewExpressionWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_ARGUMENTS)
                 as *const Vec<'a, Argument<'a>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_PURE) as *const bool) }
     }
 }
 
@@ -6510,6 +6555,7 @@ pub(crate) const OFFSET_FUNCTION_PARAMS: usize = offset_of!(Function, params);
 pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, return_type);
 pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
+pub(crate) const OFFSET_FUNCTION_PURE: usize = offset_of!(Function, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -6589,6 +6635,11 @@ impl<'a, 't> FunctionWithoutId<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
 }
 
@@ -6678,6 +6729,11 @@ impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutTypeParameters<'a, 't> {
@@ -6765,6 +6821,11 @@ impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
 }
 
@@ -6854,6 +6915,11 @@ impl<'a, 't> FunctionWithoutParams<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutParams<'a, 't> {
@@ -6942,6 +7008,11 @@ impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionWithoutReturnType<'a, 't> {
@@ -7029,6 +7100,11 @@ impl<'a, 't> FunctionWithoutBody<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_PURE) as *const bool) }
     }
 }
 
@@ -9996,41 +10072,10 @@ impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutWithClause<'a, 't> {
 
 pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN: usize =
     offset_of!(ExportDefaultDeclaration, span);
-pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION: usize =
-    offset_of!(ExportDefaultDeclaration, declaration);
 pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED: usize =
     offset_of!(ExportDefaultDeclaration, exported);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct ExportDefaultDeclarationWithoutDeclaration<'a, 't>(
-    pub(crate) *const ExportDefaultDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn exported(self) -> &'t ModuleExportName<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED)
-                as *const ModuleExportName<'a>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
+pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION: usize =
+    offset_of!(ExportDefaultDeclaration, declaration);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10057,6 +10102,37 @@ impl<'a, 't> ExportDefaultDeclarationWithoutExported<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutExported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ExportDefaultDeclarationWithoutDeclaration<'a, 't>(
+    pub(crate) *const ExportDefaultDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn exported(self) -> &'t ModuleExportName<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED)
+                as *const ModuleExportName<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -10577,6 +10653,80 @@ pub(crate) const OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT: usize =
 pub(crate) const OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT: usize =
     offset_of!(JSXFragment, closing_fragment);
 pub(crate) const OFFSET_JSX_FRAGMENT_CHILDREN: usize = offset_of!(JSXFragment, children);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXFragmentWithoutOpeningFragment<'a, 't>(
+    pub(crate) *const JSXFragment<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXFragmentWithoutOpeningFragment<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn closing_fragment(self) -> &'t JSXClosingFragment {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT)
+                as *const JSXClosingFragment)
+        }
+    }
+
+    #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXFragmentWithoutOpeningFragment<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct JSXFragmentWithoutClosingFragment<'a, 't>(
+    pub(crate) *const JSXFragment<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> JSXFragmentWithoutClosingFragment<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn opening_fragment(self) -> &'t JSXOpeningFragment {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT)
+                as *const JSXOpeningFragment)
+        }
+    }
+
+    #[inline]
+    pub fn children(self) -> &'t Vec<'a, JSXChild<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JSX_FRAGMENT_CHILDREN)
+                as *const Vec<'a, JSXChild<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXFragmentWithoutClosingFragment<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]

@@ -4,6 +4,7 @@ use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::constant_evaluation::{
     ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
 };
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_semantic::{IsGlobalReference, SymbolTable};
 use oxc_traverse::TraverseCtx;
 
@@ -44,7 +45,11 @@ impl<'a> Ctx<'a, '_> {
     }
 
     pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
-        e.evaluate_value(&self).map(|v| self.value_to_expr(e.span, v))
+        if e.may_have_side_effects(&self) {
+            None
+        } else {
+            e.evaluate_value(&self).map(|v| self.value_to_expr(e.span, v))
+        }
     }
 
     pub fn eval_binary_operation(

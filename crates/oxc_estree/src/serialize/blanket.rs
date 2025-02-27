@@ -30,7 +30,7 @@ impl<T: ESTree> ESTree for Option<T> {
         if let Some(value) = self {
             value.serialize(serializer);
         } else {
-            serializer.buffer_mut().push_str("null");
+            serializer.buffer_mut().print_str("null");
         }
     }
 }

@@ -2,6 +2,8 @@
 
 use std::{ops::Deref, path::Path, rc::Rc};
 
+use javascript_globals::GLOBALS;
+
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
@@ -15,7 +17,6 @@ use crate::{
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{FixKind, Message, RuleFix, RuleFixer},
-    javascript_globals::GLOBALS,
 };
 
 mod host;

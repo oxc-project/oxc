@@ -45,5 +45,6 @@ pub use self::{
     to_boolean::ToBoolean,
     to_int_32::ToInt32,
     to_number::ToNumber,
+    to_primitive::ToPrimitive,
     to_string::ToJsString,
 };

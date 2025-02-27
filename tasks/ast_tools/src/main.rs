@@ -253,6 +253,7 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::AstBuilderGenerator,
     &generators::GetIdGenerator,
     &generators::VisitGenerator,
+    &generators::Utf8ToUtf16ConverterGenerator,
     &generators::TypescriptGenerator,
 ];
 

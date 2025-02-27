@@ -151,7 +151,7 @@ pub struct RegExp<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ESTree)]
-#[estree(custom_serialize, ts_alias = "string")]
+#[estree(via = RegExpPatternConverter)]
 pub enum RegExpPattern<'a> {
     /// Unparsed pattern. Contains string slice of the pattern.
     /// Pattern was not parsed, so may be valid or invalid.
@@ -209,6 +209,6 @@ bitflags! {
 /// Dummy type to communicate the content of `RegExpFlags` to `oxc_ast_tools`.
 #[ast(foreign = RegExpFlags)]
 #[generate_derive(ESTree)]
-#[estree(custom_serialize, ts_alias = "string")]
+#[estree(via = RegExpFlagsConverter)]
 #[expect(dead_code)]
 struct RegExpFlagsAlias(u8);

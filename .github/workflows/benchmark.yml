@@ -93,7 +93,7 @@ jobs:
           rm target/codspeed/instrumentation/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@1015f4f828ff74b7a950909897fe581d6ba868cc # v3.3.1
+        uses: CodSpeedHQ/action@63ae6025a0ffee97d7736a37c9192dbd6ed4e75f # v3.4.0
         timeout-minutes: 30
         with:
           # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
@@ -102,7 +102,7 @@ jobs:
           run: cargo codspeed run
 
       - name: Upload bench data artefact
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: result-${{ matrix.component }}
           path: ${{ env.DATA_DIR }} # env.DATA_DIR from `capture.mjs`
@@ -135,7 +135,7 @@ jobs:
           rm target/codspeed/instrumentation/oxc_benchmark/*.d
 
       - name: Upload Binary
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           if-no-files-found: error
           name: benchmark-linter
@@ -170,7 +170,7 @@ jobs:
           chmod +x ./target/codspeed/instrumentation/oxc_benchmark/*
 
       - name: Install codspeed
-        uses: taiki-e/install-action@54b836426b3fa9aef432e760885ea0419ab50dab # v2.48.15
+        uses: taiki-e/install-action@ae97ff9daf1cd2e216671a047d80ff48461e30bb # v2.49.1
         with:
           tool: cargo-codspeed
 
@@ -184,7 +184,7 @@ jobs:
         run: node capture.mjs &
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@1015f4f828ff74b7a950909897fe581d6ba868cc # v3.3.1
+        uses: CodSpeedHQ/action@63ae6025a0ffee97d7736a37c9192dbd6ed4e75f # v3.4.0
         timeout-minutes: 30
         env:
           FIXTURE: ${{ matrix.fixture }}
@@ -195,7 +195,7 @@ jobs:
           run: cargo codspeed run
 
       - name: Upload bench data artefact
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: result-linter${{ matrix.fixture }}
           path: ${{ env.DATA_DIR }} # env.DATA_DIR from `capture.mjs`

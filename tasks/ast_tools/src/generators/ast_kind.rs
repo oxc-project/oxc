@@ -22,7 +22,7 @@ use super::define_generator;
 /// Types to omit creating an `AstKind` for.
 ///
 /// Apart from this list every type with `#[ast(visit)]` attr gets an `AstKind`.
-const BLACK_LIST: [&str; 62] = [
+const BLACK_LIST: [&str; 64] = [
     "Span",
     "Expression",
     "ObjectPropertyKind",
@@ -50,6 +50,8 @@ const BLACK_LIST: [&str; 62] = [
     "ImportAttributeKey",
     "ExportDefaultDeclarationKind",
     "ModuleExportName",
+    "JSXOpeningFragment",
+    "JSXClosingFragment",
     "TSEnumMemberName",
     "TSLiteral",
     "TSType",

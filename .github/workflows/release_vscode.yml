@@ -81,7 +81,7 @@ jobs:
         run: pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@54b836426b3fa9aef432e760885ea0419ab50dab # v2.48.15
+        uses: taiki-e/install-action@ae97ff9daf1cd2e216671a047d80ff48461e30bb # v2.49.1
         with:
           tool: cross
 
@@ -117,7 +117,7 @@ jobs:
           pnpm exec vsce package -o "../../oxc_language_server-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
 
       - name: Upload VSCode extension artifact
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: packages-${{ matrix.code-target }}
           path: ./oxc_language_server-${{ matrix.code-target }}.vsix

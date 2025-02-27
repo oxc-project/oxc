@@ -1,3 +1,4 @@
+import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
@@ -106,6 +107,27 @@ describe('parse', () => {
             flags: '',
           },
         },
+      });
+    });
+  });
+
+  describe('hashbang', () => {
+    it('is `null` when no hashbang', () => {
+      const ret = parseSync('test.js', 'let x;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.hashbang).toBeNull();
+    });
+
+    it('is defined when hashbang', () => {
+      const ret = parseSync('test.js', '#!/usr/bin/env node\nlet x;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.hashbang).toEqual({
+        type: 'Hashbang',
+        start: 0,
+        end: 19,
+        value: '/usr/bin/env node',
       });
     });
   });
@@ -252,5 +274,20 @@ describe('error', () => {
       'message': 'Expected a semicolon or an implicit semicolon after a statement, but found none',
       'severity': 'Error',
     });
+  });
+});
+
+describe('worker', () => {
+  it('should run', async () => {
+    const code = await new Promise((resolve, reject) => {
+      const worker = new Worker('./test/worker.mjs');
+      worker.on('error', (err) => {
+        reject(err);
+      });
+      worker.on('exit', (code) => {
+        resolve(code);
+      });
+    });
+    expect(code).toBe(0);
   });
 });

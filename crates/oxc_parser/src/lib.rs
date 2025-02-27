@@ -343,7 +343,7 @@ use parser_parse::UniquePromise;
 struct ParserImpl<'a> {
     options: ParseOptions,
 
-    lexer: Lexer<'a>,
+    pub(crate) lexer: Lexer<'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,
@@ -714,7 +714,9 @@ mod test {
 
     // Source with length MAX_LEN + 1 fails to parse.
     // Skip this test on 32-bit systems as impossible to allocate a string longer than `isize::MAX`.
+    // Also skip running under Miri since it takes so long.
     #[cfg(target_pointer_width = "64")]
+    #[cfg(not(miri))]
     #[test]
     fn overlong_source() {
         // Build string in 16 KiB chunks for speed
@@ -743,7 +745,9 @@ mod test {
     // Source with length MAX_LEN parses OK.
     // This test takes over 1 minute on an M1 Macbook Pro unless compiled in release mode.
     // `not(debug_assertions)` is a proxy for detecting release mode.
+    // Also skip running under Miri since it takes so long.
     #[cfg(not(debug_assertions))]
+    #[cfg(not(miri))]
     #[test]
     fn legal_length_source() {
         // Build a string MAX_LEN bytes long which doesn't take too long to parse

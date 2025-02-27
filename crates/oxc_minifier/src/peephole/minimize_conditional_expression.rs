@@ -389,11 +389,10 @@ impl<'a> PeepholeOptimizations {
         }
 
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
-            // TODO:
             // "/* @__PURE__ */ a() ? b : b" => "b"
-            // if ctx.ExprCanBeRemovedIfUnused(test) {
-            // return yes
-            // }
+            if !expr.test.may_have_side_effects(&ctx) {
+                return Some(ctx.ast.move_expression(&mut expr.consequent));
+            }
 
             // "a ? b : b" => "a, b"
             let expressions = ctx.ast.vec_from_array([
@@ -636,7 +635,7 @@ mod test {
     fn minimize_conditional_exprs() {
         test("(a, b) ? c : d", "a, b ? c : d");
         test("!a ? b : c", "a ? c : b");
-        // test("/* @__PURE__ */ a() ? b : b", "b");
+        test("/* @__PURE__ */ a() ? b : b", "b");
         test("a ? b : b", "a, b");
         test("a ? true : false", "a");
         test("a ? false : true", "a");

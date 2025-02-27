@@ -7,6 +7,10 @@ pub fn test(source_text: &str, expected: &str) {
     test_options(source_text, expected, CodegenOptions::default());
 }
 
+pub fn test_same(source_text: &str) {
+    test(source_text, source_text);
+}
+
 pub fn test_options(source_text: &str, expected: &str, options: CodegenOptions) {
     test_options_with_source_type(source_text, expected, SourceType::jsx(), options);
 }

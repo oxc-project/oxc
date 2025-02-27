@@ -8,6 +8,7 @@ export const __wbg_get_oxc_controlFlowGraph: (a: number) => [number, number];
 export const __wbg_get_oxc_symbols: (a: number) => any;
 export const __wbg_get_oxc_scopeText: (a: number) => [number, number];
 export const __wbg_get_oxc_codegenText: (a: number) => [number, number];
+export const __wbg_get_oxc_codegenSourcemapText: (a: number) => [number, number];
 export const __wbg_get_oxc_formattedText: (a: number) => [number, number];
 export const __wbg_get_oxc_prettierFormattedText: (a: number) => [number, number];
 export const __wbg_get_oxc_prettierIrText: (a: number) => [number, number];

@@ -7,7 +7,8 @@
     clippy::ptr_as_ptr,
     clippy::ref_as_ptr,
     clippy::cast_ptr_alignment,
-    clippy::borrow_as_ptr
+    clippy::borrow_as_ptr,
+    unsafe_op_in_unsafe_fn
 )]
 
 use std::{cell::Cell, marker::PhantomData};
@@ -2993,20 +2994,20 @@ unsafe fn walk_export_default_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_default_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationDeclaration(
-        ancestor::ExportDefaultDeclarationWithoutDeclaration(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationExported(
+        ancestor::ExportDefaultDeclarationWithoutExported(node, PhantomData),
     ));
-    walk_export_default_declaration_kind(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION)
-            as *mut ExportDefaultDeclarationKind,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::ExportDefaultDeclarationExported);
     walk_module_export_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED)
             as *mut ModuleExportName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ExportDefaultDeclarationDeclaration);
+    walk_export_default_declaration_kind(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION)
+            as *mut ExportDefaultDeclarationKind,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -3239,9 +3240,23 @@ unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_fragment(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXFragmentChildren(
-        ancestor::JSXFragmentWithoutChildren(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::JSXFragmentOpeningFragment(
+        ancestor::JSXFragmentWithoutOpeningFragment(node, PhantomData),
     ));
+    walk_jsx_opening_fragment(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_OPENING_FRAGMENT)
+            as *mut JSXOpeningFragment,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::JSXFragmentClosingFragment);
+    walk_jsx_closing_fragment(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CLOSING_FRAGMENT)
+            as *mut JSXClosingFragment,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::JSXFragmentChildren);
     for item in
         &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
     {
@@ -3249,6 +3264,24 @@ unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_fragment(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_opening_fragment<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXOpeningFragment,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_opening_fragment(&mut *node, ctx);
+    traverser.exit_jsx_opening_fragment(&mut *node, ctx);
+}
+
+unsafe fn walk_jsx_closing_fragment<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSXClosingFragment,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_jsx_closing_fragment(&mut *node, ctx);
+    traverser.exit_jsx_closing_fragment(&mut *node, ctx);
 }
 
 unsafe fn walk_jsx_element_name<'a, Tr: Traverse<'a>>(

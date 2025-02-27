@@ -6,7 +6,7 @@ use super::{ESTree, Serializer};
 /// [`ESTree`] implementation for `bool`.
 impl ESTree for bool {
     fn serialize<S: Serializer>(&self, mut serializer: S) {
-        serializer.buffer_mut().push_str(if *self { "true" } else { "false" });
+        serializer.buffer_mut().print_str(if *self { "true" } else { "false" });
     }
 }
 
@@ -18,17 +18,17 @@ macro_rules! impl_float {
                 if self.is_finite() {
                     let mut buffer = RyuBuffer::new();
                     let s = buffer.format_finite(*self);
-                    serializer.buffer_mut().push_str(s);
+                    serializer.buffer_mut().print_str(s);
                 } else if self.is_nan() {
                     // Serialize `NAN` as `null`
                     // TODO: Throw an error? Use a sentinel value?
-                    serializer.buffer_mut().push_str("null");
+                    serializer.buffer_mut().print_str("null");
                 } else if *self == $ty::INFINITY {
                     // Serialize `INFINITY` as `1e+400. `JSON.parse` deserializes this as `Infinity`.
-                    serializer.buffer_mut().push_str("1e+400");
+                    serializer.buffer_mut().print_str("1e+400");
                 } else {
                     // Serialize `-INFINITY` as `-1e+400`. `JSON.parse` deserializes this as `-Infinity`.
-                    serializer.buffer_mut().push_str("-1e+400");
+                    serializer.buffer_mut().print_str("-1e+400");
                 }
             }
         }
@@ -45,7 +45,7 @@ macro_rules! impl_integer {
             fn serialize<S: Serializer>(&self, mut serializer: S) {
                 let mut buffer = ItoaBuffer::new();
                 let s = buffer.format(*self);
-                serializer.buffer_mut().push_str(s);
+                serializer.buffer_mut().print_str(s);
             }
         }
     };
@@ -67,7 +67,7 @@ impl_integer!(isize);
 /// [`ESTree`] implementation for `()`.
 impl ESTree for () {
     fn serialize<S: Serializer>(&self, mut serializer: S) {
-        serializer.buffer_mut().push_str("null");
+        serializer.buffer_mut().print_str("null");
     }
 }
 

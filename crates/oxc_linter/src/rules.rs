@@ -34,6 +34,7 @@ mod import {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
+    pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
     pub mod default_param_last;
@@ -152,6 +153,7 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
+    pub mod operator_assignment;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
@@ -315,6 +317,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
@@ -461,6 +464,7 @@ mod oxc {
     pub mod no_const_enum;
     pub mod no_map_spread;
     pub mod no_optional_chaining;
+    pub mod no_redundant_constructor_init;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
@@ -545,6 +549,7 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_unused_modules,
     eslint::array_callback_return,
     eslint::constructor_super,
+    eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
     eslint::default_param_last,
@@ -663,6 +668,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::operator_assignment,
     eslint::prefer_promise_reject_errors,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
@@ -840,6 +846,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_const_enum,
     oxc::no_map_spread,
     oxc::no_optional_chaining,
+    oxc::no_redundant_constructor_init,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
@@ -934,6 +941,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_date_clone,
     unicorn::consistent_empty_array_spread,
     unicorn::consistent_existence_index_check,
     unicorn::consistent_function_scoping,

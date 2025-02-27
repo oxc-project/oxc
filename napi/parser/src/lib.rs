@@ -66,45 +66,54 @@ pub fn parse_without_return(filename: String, source_text: String, options: Opti
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type = get_source_type(filename, options);
-    let mut ret = parse(&allocator, source_type, &source_text, options);
+    let ret = parse(&allocator, source_type, &source_text, options);
+    let mut program = ret.program;
+    let mut module_record = ret.module_record;
     let mut errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
 
-    let mut comments = ret
-        .program
+    // Convert spans to UTF-16
+    let span_converter = Utf8ToUtf16::new(&source_text);
+    span_converter.convert_program(&mut program);
+
+    // Convert comments
+    let mut offset_converter = span_converter.converter();
+    let comments = program
         .comments
         .iter()
-        .map(|comment| Comment {
-            r#type: match comment.kind {
-                CommentKind::Line => String::from("Line"),
-                CommentKind::Block => String::from("Block"),
-            },
-            value: comment.content_span().source_text(&source_text).to_string(),
-            start: comment.span.start,
-            end: comment.span.end,
+        .map(|comment| {
+            let value = comment.content_span().source_text(&source_text).to_string();
+            let mut span = comment.span;
+            if let Some(converter) = offset_converter.as_mut() {
+                converter.convert_span(&mut span);
+            }
+
+            Comment {
+                r#type: match comment.kind {
+                    CommentKind::Line => String::from("Line"),
+                    CommentKind::Block => String::from("Block"),
+                },
+                value,
+                start: span.start,
+                end: span.end,
+            }
         })
-        .collect::<Vec<Comment>>();
+        .collect::<Vec<_>>();
 
-    // Empty `comments` so comment spans don't get converted twice
-    ret.program.comments.clear();
+    // Convert spans in module record to UTF-16
+    span_converter.convert_module_record(&mut module_record);
 
-    let mut converter = Utf8ToUtf16::new();
-    converter.convert(&mut ret.program);
-    converter.convert_module_record(&mut ret.module_record);
-
-    for comment in &mut comments {
-        comment.start = converter.convert_offset(comment.start);
-        comment.end = converter.convert_offset(comment.end);
-    }
-
-    for error in &mut errors {
-        for label in &mut error.labels {
-            label.start = converter.convert_offset(label.start);
-            label.end = converter.convert_offset(label.end);
+    // Convert spans in errors to UTF-16
+    if let Some(mut converter) = span_converter.converter() {
+        for error in &mut errors {
+            for label in &mut error.labels {
+                converter.convert_offset(&mut label.start);
+                converter.convert_offset(&mut label.end);
+            }
         }
     }
 
-    let program = ret.program.to_estree_ts_json();
-    let module = EcmaScriptModule::from(&ret.module_record);
+    let program = program.to_estree_ts_json();
+    let module = EcmaScriptModule::from(&module_record);
     ParseResult { program, module, comments, errors }
 }
 

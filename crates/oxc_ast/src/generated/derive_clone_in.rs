@@ -621,6 +621,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for CallExpression<'_> {
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
+            pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
 }
@@ -633,6 +634,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for NewExpression<'_> {
             callee: CloneIn::clone_in(&self.callee, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
 }
@@ -1828,6 +1830,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Function<'_> {
             return_type: CloneIn::clone_in(&self.return_type, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
             scope_id: Default::default(),
+            pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
 }
@@ -2273,8 +2276,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclaration<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ExportDefaultDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
-            declaration: CloneIn::clone_in(&self.declaration, allocator),
             exported: CloneIn::clone_in(&self.exported, allocator),
+            declaration: CloneIn::clone_in(&self.declaration, allocator),
         }
     }
 }

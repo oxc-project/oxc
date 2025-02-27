@@ -48,51 +48,49 @@ impl<'a> Lexer<'a> {
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
     pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
-        unsafe {
-            // Advance past 1st byte.
-            // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
-            let after_first = self.source.position().add(1);
+        // Advance past 1st byte.
+        // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
+        let after_first = unsafe { self.source.position().add(1) };
 
-            // Consume bytes which are part of identifier
-            let next_byte = byte_search! {
-                lexer: self,
-                table: NOT_ASCII_ID_CONTINUE_TABLE,
-                start: after_first,
-                handle_eof: {
-                    // Return identifier minus its first char.
-                    // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
-                    // of `after_first` which could be after current position.
-                    return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
-                },
-            };
+        // Consume bytes which are part of identifier
+        let next_byte = byte_search! {
+            lexer: self,
+            table: NOT_ASCII_ID_CONTINUE_TABLE,
+            start: after_first,
+            handle_eof: {
+                // Return identifier minus its first char.
+                // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
+                // of `after_first` which could be after current position.
+                return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
+            },
+        };
 
-            // Found a matching byte.
-            // Either end of identifier found, or a Unicode char, or `\` escape.
-            // Handle uncommon cases in cold branches to keep the common ASCII path
-            // as fast as possible.
-            if !next_byte.is_ascii() {
-                return cold_branch(|| {
-                    // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                    // makes `start_pos` `source`'s position as it was at start of this function
-                    let start_pos = unsafe { after_first.sub(1) };
-                    &self.identifier_tail_unicode(start_pos)[1..]
-                });
-            }
-            if next_byte == b'\\' {
-                return cold_branch(|| {
-                    // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                    // makes `start_pos` `source`'s position as it was at start of this function
-                    let start_pos = unsafe { after_first.sub(1) };
-                    &self.identifier_backslash(start_pos, false)[1..]
-                });
-            }
-
-            // Return identifier minus its first char.
-            // SAFETY: `after_first` was position of `lexer.source` at start of this search.
-            // Searching only proceeds in forwards direction, so `lexer.source.position()`
-            // cannot be before `after_first`.
-            unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
+        // Found a matching byte.
+        // Either end of identifier found, or a Unicode char, or `\` escape.
+        // Handle uncommon cases in cold branches to keep the common ASCII path
+        // as fast as possible.
+        if !next_byte.is_ascii() {
+            return cold_branch(|| {
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
+                let start_pos = unsafe { after_first.sub(1) };
+                &self.identifier_tail_unicode(start_pos)[1..]
+            });
         }
+        if next_byte == b'\\' {
+            return cold_branch(|| {
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
+                let start_pos = unsafe { after_first.sub(1) };
+                &self.identifier_backslash(start_pos, false)[1..]
+            });
+        }
+
+        // Return identifier minus its first char.
+        // SAFETY: `after_first` was position of `lexer.source` at start of this search.
+        // Searching only proceeds in forwards direction, so `lexer.source.position()`
+        // cannot be before `after_first`.
+        unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.

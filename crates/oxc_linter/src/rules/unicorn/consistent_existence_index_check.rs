@@ -20,12 +20,12 @@ fn consistent_existence_index_check_diagnostic(
         if replacement.replacement_value == "-1" { "non-existence" } else { "existence" };
 
     let label = format!(
-        "Prefer `{replacement_operator} {replacement_value}` over `{original_operator} {original_value}` to check {existenceOrNonExistence}.",
-        replacement_operator = replacement.replacement_operator,
-        replacement_value = replacement.replacement_value,
-        original_operator = replacement.original_operator,
-        original_value = replacement.original_value,
-        existenceOrNonExistence = existence_or_non_existence,
+        "Prefer `{} {}` over `{} {}` to check {}.",
+        replacement.replacement_operator,
+        replacement.replacement_value,
+        replacement.original_operator,
+        replacement.original_value,
+        existence_or_non_existence,
     );
 
     OxcDiagnostic::warn(label).with_label(span)
@@ -35,16 +35,15 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforce consistent style for element existence checks with `indexOf()`,
-    /// `lastIndexOf()`, `findIndex()`, and `findLastIndex()`. This rule ensures
-    /// that comparisons for element presence are made with `-1` rather than other
-    /// comparison operators like `< 0` or `>= 0`, improving clarity and consistency.
+    /// `lastIndexOf()`, `findIndex()`, and `findLastIndex()`. This ensures
+    /// that comparisons are performed in a standard and clear way.
     ///
     /// ### Why is this bad?
     ///
-    /// Using `< 0` or `>= 0` for element existence checks can lead to confusion,
-    /// especially for developers who are not familiar with the specific behavior of
-    /// these methods. The explicit `=== -1` or `!== -1` makes the intent clearer and
-    /// more readable, ensuring consistency across the codebase.
+    /// This rule is meant to enforce a specific style and improve code clarity.
+    /// Using inconsistent comparison styles (e.g., `index < 0`, `index >= 0`)
+    /// can make the intention behind the code unclear, especially in large
+    /// codebases.
     ///
     /// ### Examples
     ///
@@ -116,9 +115,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let replacement = get_replacement(right, operator);
-
-            let Some(replacement) = &replacement else {
+            let Some(replacement) = &get_replacement(right, operator) else {
                 return;
             };
 
@@ -182,42 +179,26 @@ struct GetReplacementOutput {
 
 fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetReplacementOutput> {
     match operator {
-        BinaryOperator::LessThan => {
-            if right.is_number_0() {
-                return Some(GetReplacementOutput {
-                    replacement_operator: "===",
-                    replacement_value: "-1",
-                    original_operator: "<",
-                    original_value: "0",
-                });
-            }
-
-            None
+        BinaryOperator::LessThan if right.is_number_0() => Some(GetReplacementOutput {
+            replacement_operator: "===",
+            replacement_value: "-1",
+            original_operator: "<",
+            original_value: "0",
+        }),
+        BinaryOperator::GreaterThan if is_negative_one(right.get_inner_expression()) => {
+            Some(GetReplacementOutput {
+                replacement_operator: "!==",
+                replacement_value: "-1",
+                original_operator: ">",
+                original_value: "-1",
+            })
         }
-        BinaryOperator::GreaterThan => {
-            if is_negative_one(right.get_inner_expression()) {
-                return Some(GetReplacementOutput {
-                    replacement_operator: "!==",
-                    replacement_value: "-1",
-                    original_operator: ">",
-                    original_value: "-1",
-                });
-            }
-
-            None
-        }
-        BinaryOperator::GreaterEqualThan => {
-            if right.is_number_0() {
-                return Some(GetReplacementOutput {
-                    replacement_operator: "!==",
-                    replacement_value: "-1",
-                    original_operator: ">=",
-                    original_value: "0",
-                });
-            }
-
-            None
-        }
+        BinaryOperator::GreaterEqualThan if right.is_number_0() => Some(GetReplacementOutput {
+            replacement_operator: "!==",
+            replacement_value: "-1",
+            original_operator: ">=",
+            original_value: "0",
+        }),
         _ => None,
     }
 }

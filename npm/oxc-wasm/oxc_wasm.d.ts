@@ -1,6 +1,34 @@
 /* tslint:disable */
 /* eslint-disable */
 export function browserslist(query: string, opts: any): any;
+
+import type { Program, Span } from "@oxc-project/types";
+export * from "@oxc-project/types";
+
+
+export interface Oxc {
+    ast: Program;
+    astJson: string;
+    ir: string;
+    controlFlowGraph: string;
+    symbols: any;
+    scopeText: string;
+    codegenText: string;
+    codegenSourcemapText: string | null;
+    formattedText: string;
+    prettierFormattedText: string;
+    prettierIrText: string;
+}
+
+export interface Comment {
+    type: CommentType;
+    value: string;
+    start: number;
+    end: number;
+}
+
+export type CommentType = "Line" | "Block";
+
 export interface OxcOptions {
     run?: OxcRunOptions;
     parser?: OxcParserOptions;
@@ -40,6 +68,7 @@ export interface OxcTransformerOptions {
 export interface OxcCodegenOptions {
     indentation?: number;
     enableTypescript?: boolean;
+    enableSourcemap?: boolean;
 }
 
 export interface OxcControlFlowOptions {
@@ -64,43 +93,6 @@ export interface OxcCompressOptions {
 }
 
 
-import type { Program, Span } from "@oxc-project/types";
-export * from "@oxc-project/types";
-
-
-export interface Oxc {
-    ast: Program;
-    astJson: string;
-    ir: string;
-    controlFlowGraph: string;
-    symbols: any;
-    scopeText: string;
-    codegenText: string;
-    formattedText: string;
-    prettierFormattedText: string;
-    prettierIrText: string;
-}
-
-export interface Comment {
-    type: CommentType;
-    value: string;
-    start: number;
-    end: number;
-}
-
-export type CommentType = "Line" | "Block";
-
-
-export type NodeId = number;
-export type NodeFlags = {
-    JSDoc: 1,
-    Class: 2,
-    HasYield: 4
-    Parameter: 8
-};
-
-
-
 export type ReferenceId = number;
 export type ReferenceFlags = {
     None: 0,
@@ -112,13 +104,23 @@ export type ReferenceFlags = {
 
 
 
+export type SymbolId = number;
+export type SymbolFlags = unknown;
+export type RedeclarationId = unknown;
+
+
+
 export type ScopeId = number;
 
 
 
-export type SymbolId = number;
-export type SymbolFlags = unknown;
-export type RedeclarationId = unknown;
+export type NodeId = number;
+export type NodeFlags = {
+    JSDoc: 1,
+    Class: 2,
+    HasYield: 4
+    Parameter: 8
+};
 
 
 export class Oxc {
@@ -153,6 +155,7 @@ export interface InitOutput {
   readonly __wbg_get_oxc_symbols: (a: number) => any;
   readonly __wbg_get_oxc_scopeText: (a: number) => [number, number];
   readonly __wbg_get_oxc_codegenText: (a: number) => [number, number];
+  readonly __wbg_get_oxc_codegenSourcemapText: (a: number) => [number, number];
   readonly __wbg_get_oxc_formattedText: (a: number) => [number, number];
   readonly __wbg_get_oxc_prettierFormattedText: (a: number) => [number, number];
   readonly __wbg_get_oxc_prettierIrText: (a: number) => [number, number];

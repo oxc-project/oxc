@@ -555,12 +555,6 @@ export type FunctionType =
   | 'TSDeclareFunction'
   | 'TSEmptyBodyFunctionExpression';
 
-export interface FormalParameters extends Span {
-  type: 'FormalParameters';
-  kind: FormalParameterKind;
-  items: Array<FormalParameter | FormalParameterRest>;
-}
-
 export interface FormalParameterRest extends Span {
   type: 'RestElement';
   argument: BindingPatternKind;
@@ -576,8 +570,6 @@ export type FormalParameter =
     override: boolean;
   })
   & BindingPattern;
-
-export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
 
 export interface FunctionBody extends Span {
   type: 'BlockStatement';

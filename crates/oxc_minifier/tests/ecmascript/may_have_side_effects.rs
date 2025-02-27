@@ -71,10 +71,10 @@ fn closure_compiler_tests() {
     test("[function a(){}]", false);
     test("(class { })", false);
     test("(class { method() { i++ } })", false);
-    test("(class { [computedName()]() {} })", false); // computedName is called when constructed
+    test("(class { [computedName()]() {} })", true);
     test("(class { [computedName]() {} })", false);
     test("(class Foo extends Bar { })", false);
-    test("(class extends foo() { })", false); // foo() is called when constructed
+    test("(class extends foo() { })", true);
     test("a", false);
     test("a.b", true);
     test("a.b.c", true);
@@ -223,14 +223,14 @@ fn closure_compiler_tests() {
 
     // COMPUTED_PROP - CLASS
     test("(class C { [a]() {} })", false);
-    test("(class C { [a()]() {} })", false); // a is called when constructed
+    test("(class C { [a()]() {} })", true);
 
     // computed property getters and setters are modeled as COMPUTED_PROP with an
     // annotation to indicate getter or setter.
     test("(class C { get [a]() {} })", false);
-    test("(class C { get [a()]() {} })", false); // a is called when constructed
+    test("(class C { get [a()]() {} })", true);
     test("(class C { set [a](x) {} })", false);
-    test("(class C { set [a()](x) {} })", false); // a is called when constructed
+    test("(class C { set [a()](x) {} })", true);
 
     // GETTER_DEF
     test("({ get a() {} })", false);
@@ -526,13 +526,14 @@ fn test_binary_expressions() {
     test("1n % 0n", true); // `%` throws an error when the right operand is zero
     test("0n >>> 1n", true); // `>>>` throws an error even when both operands are bigint
 
+    test("[] instanceof 1", true); // throws an error
+    test("[] instanceof { [Symbol.hasInstance]() { throw 'foo' } }", true);
+    test_with_global_variables("[] instanceof Object", vec!["Object".to_string()], false);
+    test_with_global_variables("a instanceof Object", vec!["Object".to_string()], true); // a maybe a proxy that has a side effectful "getPrototypeOf" trap
+
     // b maybe not a object
     // b maybe a proxy that has a side effectful "has" trap
     test("a in b", true);
-    // b maybe not a function
-    // b[Symbol.hasInstance] may have a side effect
-    // a maybe a proxy that has a side effectful "getPrototypeOf" trap
-    test("a instanceof b", true);
 }
 
 #[test]
@@ -574,16 +575,24 @@ fn test_array_expression() {
 #[test]
 fn test_class_expression() {
     test("(class {})", false);
-    test("(class extends a {})", false);
-    test("(class extends foo() {})", false); // foo() is called when constructed
+    test("(@foo class {})", true);
+    test("(class extends a {})", false); // this may have a side effect, but ignored by the assumption
+    test("(class extends foo() {})", true);
     test("(class { static {} })", false);
     test("(class { static { foo(); } })", true);
+    test("(class { a() {} })", false);
+    test("(class { [1]() {} })", false);
+    test("(class { [1n]() {} })", false);
+    test("(class { #a() {} })", false);
+    test("(class { [foo()]() {} })", true);
+    test("(class { @foo a() {} })", true);
     test("(class { a; })", false);
     test("(class { 1; })", false);
     test("(class { [1]; })", false);
     test("(class { [1n]; })", false);
     test("(class { #a; })", false);
-    test("(class { [foo()] = 1 })", false); // foo() is called when constructed
+    test("(class { @foo a; })", true);
+    test("(class { [foo()] = 1 })", true);
     test("(class { a = foo() })", false); // foo() is called when constructed
     test("(class { static a; })", false);
     test("(class { static 1; })", false);
@@ -592,15 +601,44 @@ fn test_class_expression() {
     test("(class { static #a; })", false);
     test("(class { static [foo()] = 1 })", true);
     test("(class { static a = foo() })", true);
-    test("(class { accessor [foo()]; })", false);
+    test("(class { accessor [foo()]; })", true);
     test("(class { static accessor [foo()]; })", true);
 }
 
 #[test]
-fn test_side_effectful_expressions() {
-    test("a.b", true);
+fn test_property_access() {
+    test("a.length", true);
+    test("a?.length", true);
+    test("'a'.length", false);
+    test("'a'?.length", false);
+    test("[].length", false);
+    test("[]['length']", false);
+    test("[][`length`]", false);
+
     test("a[0]", true);
-    test("a?.b", true);
+}
+
+#[test]
+fn test_call_like_expressions() {
+    test("foo()", true);
+    test("/* #__PURE__ */ foo()", false);
+    test("/* #__PURE__ */ foo(1)", false);
+    test("/* #__PURE__ */ foo(bar())", true);
+    test("/* #__PURE__ */ foo(...[])", false);
+    test("/* #__PURE__ */ foo(...[1])", false);
+    test("/* #__PURE__ */ foo(...[bar()])", true);
+    test("/* #__PURE__ */ foo(...bar)", true);
+    test("/* #__PURE__ */ (() => { foo() })()", false);
+
+    test("new Foo()", true);
+    test("/* #__PURE__ */ new Foo()", false);
+    test("/* #__PURE__ */ new Foo(1)", false);
+    test("/* #__PURE__ */ new Foo(bar())", true);
+    test("/* #__PURE__ */ new Foo(...[])", false);
+    test("/* #__PURE__ */ new Foo(...[1])", false);
+    test("/* #__PURE__ */ new Foo(...[bar()])", true);
+    test("/* #__PURE__ */ new Foo(...bar)", true);
+    test("/* #__PURE__ */ new class { constructor() { foo() } }()", false);
 }
 
 #[test]

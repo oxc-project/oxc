@@ -34,8 +34,6 @@ unsafe impl GlobalAlloc for NeverGrowInPlaceAllocator {
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        unsafe {
-            System.dealloc(ptr, layout);
-        }
+        unsafe { System.dealloc(ptr, layout) };
     }
 }

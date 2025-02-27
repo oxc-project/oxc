@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use oxc_ast::ast::{TSMethodSignatureKind, TSSignature};
 use oxc_span::GetSpan;
 
@@ -11,7 +11,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// Infer get accessor return type from set accessor's param type
     /// Infer set accessor parameter type from get accessor return type
-    pub fn transform_ts_signatures(&mut self, signatures: &mut Vec<'a, TSSignature<'a>>) {
+    pub fn transform_ts_signatures(&mut self, signatures: &mut ArenaVec<'a, TSSignature<'a>>) {
         // <name, (requires_inference, first_param_annotation, return_type)>
         let mut method_annotations: FxHashMap<_, (bool, _, _)> = FxHashMap::default();
 

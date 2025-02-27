@@ -175,13 +175,13 @@ isFunction(options)
 : options
                 
 ----------
-isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
+isFunction(options) ? /* @__PURE__ */ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
 
 ########## 10
 isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
         
 ----------
-isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
+isFunction(options) ? /* @__PURE__ */ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
 
 ########## 11
 
@@ -194,18 +194,18 @@ const obj = {
 const p = /*#__PURE__*/ Promise.resolve();
         
 ----------
-const obj = { props: /*#__PURE__*/ extend({}, TransitionPropsValidators, {
+const obj = { props: /* @__PURE__ */ extend({}, TransitionPropsValidators, {
 	tag: String,
 	moveClass: String
 }) };
-const p = /*#__PURE__*/ Promise.resolve();
+const p = /* @__PURE__ */ Promise.resolve();
 
 ########## 12
 
 const staticCacheMap = /*#__PURE__*/ new WeakMap()
         
 ----------
-const staticCacheMap = /*#__PURE__*/ new WeakMap();
+const staticCacheMap = /* @__PURE__ */ new WeakMap();
 
 ########## 13
 
@@ -217,7 +217,7 @@ const builtInSymbols = new Set(
         
 ----------
 const builtInSymbols = new Set(
-	/*#__PURE__*/ Object.getOwnPropertyNames(Symbol).filter((key) => key !== 'arguments' && key !== 'caller')
+	/* @__PURE__ */ Object.getOwnPropertyNames(Symbol).filter((key) => key !== 'arguments' && key !== 'caller')
 );
 
 ########## 14
@@ -267,7 +267,7 @@ const defineSSRCustomElement = () => {
         
 ----------
 const defineSSRCustomElement = () => {
-	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
+	return /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
 };
 
 ########## 20
@@ -276,7 +276,7 @@ const defineSSRCustomElement = () => {
         React.forwardRef((props, ref) => {});
         
 ----------
-const Component = /* #__PURE__*/ React.forwardRef((props, ref) => {});
+const Component = /* @__PURE__ */ React.forwardRef((props, ref) => {});
 
 ########## 21
 
@@ -347,18 +347,18 @@ let at_yes = /* @__PURE__ */ foo(bar);
 let at_no = /* @__PURE__ */ foo(bar());
 let new_at_yes = /* @__PURE__ */ new foo(bar);
 let new_at_no = /* @__PURE__ */ new foo(bar());
-let nospace_at_yes = /*@__PURE__*/ foo(bar);
-let nospace_at_no = /*@__PURE__*/ foo(bar());
-let nospace_new_at_yes = /*@__PURE__*/ new foo(bar);
-let nospace_new_at_no = /*@__PURE__*/ new foo(bar());
-let num_yes = /* #__PURE__ */ foo(bar);
-let num_no = /* #__PURE__ */ foo(bar());
-let new_num_yes = /* #__PURE__ */ new foo(bar);
-let new_num_no = /* #__PURE__ */ new foo(bar());
-let nospace_num_yes = /*#__PURE__*/ foo(bar);
-let nospace_num_no = /*#__PURE__*/ foo(bar());
-let nospace_new_num_yes = /*#__PURE__*/ new foo(bar);
-let nospace_new_num_no = /*#__PURE__*/ new foo(bar());
+let nospace_at_yes = /* @__PURE__ */ foo(bar);
+let nospace_at_no = /* @__PURE__ */ foo(bar());
+let nospace_new_at_yes = /* @__PURE__ */ new foo(bar);
+let nospace_new_at_no = /* @__PURE__ */ new foo(bar());
+let num_yes = /* @__PURE__ */ foo(bar);
+let num_no = /* @__PURE__ */ foo(bar());
+let new_num_yes = /* @__PURE__ */ new foo(bar);
+let new_num_no = /* @__PURE__ */ new foo(bar());
+let nospace_num_yes = /* @__PURE__ */ foo(bar);
+let nospace_num_no = /* @__PURE__ */ foo(bar());
+let nospace_new_num_yes = /* @__PURE__ */ new foo(bar);
+let nospace_new_num_no = /* @__PURE__ */ new foo(bar());
 let dot_yes = /* @__PURE__ */ foo(sideEffect()).dot(bar);
 let dot_no = /* @__PURE__ */ foo(sideEffect()).dot(bar());
 let new_dot_yes = /* @__PURE__ */ new foo(sideEffect()).dot(bar);
@@ -383,14 +383,14 @@ let new_nested_no = [
 	/* @__PURE__ */ new foo(bar()),
 	2
 ];
-let single_at_yes = /* @__PURE__*/ foo(bar);
-let single_at_no = /* @__PURE__*/ foo(bar());
-let new_single_at_yes = /* @__PURE__*/ new foo(bar);
-let new_single_at_no = /* @__PURE__*/ new foo(bar());
-let single_num_yes = /* #__PURE__*/ foo(bar);
-let single_num_no = /* #__PURE__*/ foo(bar());
-let new_single_num_yes = /* #__PURE__*/ new foo(bar);
-let new_single_num_no = /* #__PURE__*/ new foo(bar());
+let single_at_yes = /* @__PURE__ */ foo(bar);
+let single_at_no = /* @__PURE__ */ foo(bar());
+let new_single_at_yes = /* @__PURE__ */ new foo(bar);
+let new_single_at_no = /* @__PURE__ */ new foo(bar());
+let single_num_yes = /* @__PURE__ */ foo(bar);
+let single_num_no = /* @__PURE__ */ foo(bar());
+let new_single_num_yes = /* @__PURE__ */ new foo(bar);
+let new_single_num_no = /* @__PURE__ */ new foo(bar());
 let bad_no = foo(bar);
 let new_bad_no = new foo(bar);
 let parens_no = foo(bar);

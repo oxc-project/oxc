@@ -105,11 +105,11 @@ impl<'alloc> String<'alloc> {
     // `#[inline(always)]` because this is a no-op at runtime
     #[inline(always)]
     pub unsafe fn from_utf8_unchecked(bytes: Vec<'alloc, u8>) -> String<'alloc> {
+        // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
+        // and our inner `Vec` type is `allocator_api2::vec::Vec`.
+        // SAFETY: Conversion is safe because both types store data in arena in same way.
+        // Lifetime of returned `String` is same as lifetime of original `Vec<u8>`.
         unsafe {
-            // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
-            // and our inner `Vec` type is `allocator_api2::vec::Vec`.
-            // SAFETY: Conversion is safe because both types store data in arena in same way.
-            // Lifetime of returned `String` is same as lifetime of original `Vec<u8>`.
             let inner = ManuallyDrop::into_inner(bytes.0);
             let (ptr, len, capacity, bump) = inner.into_raw_parts_with_alloc();
             Self(ManuallyDrop::new(BumpaloString::from_raw_parts_in(ptr, len, capacity, bump)))
@@ -157,11 +157,10 @@ impl<'alloc> String<'alloc> {
         capacity: usize,
         allocator: &'alloc Allocator,
     ) -> String<'alloc> {
-        unsafe {
-            // SAFETY: Safety conditions of this method are the same as `BumpaloString`'s method
-            let inner = BumpaloString::from_raw_parts_in(buf, length, capacity, allocator.bump());
-            Self(ManuallyDrop::new(inner))
-        }
+        // SAFETY: Safety conditions of this method are the same as `BumpaloString`'s method
+        let inner =
+            unsafe { BumpaloString::from_raw_parts_in(buf, length, capacity, allocator.bump()) };
+        Self(ManuallyDrop::new(inner))
     }
 
     /// Convert this `String<'alloc>` into an `&'alloc str`. This is analogous to

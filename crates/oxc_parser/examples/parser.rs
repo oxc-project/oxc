@@ -41,7 +41,7 @@ fn main() -> Result<(), String> {
     if show_ast || show_estree {
         println!("AST:");
         if show_estree {
-            Utf8ToUtf16::new().convert(&mut program);
+            Utf8ToUtf16::new(&source_text).convert_program(&mut program);
         }
         println!("{}", program.to_pretty_estree_ts_json());
     }

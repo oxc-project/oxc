@@ -1,3 +1,5 @@
+use cow_utils::CowUtils;
+
 use crate::ir::{Doc, Fill, Group, IfBreak, IndentIfBreak, Line};
 
 impl std::fmt::Display for Doc<'_> {
@@ -13,7 +15,14 @@ fn print_doc_ast(doc: &Doc<'_>) -> String {
 
     match doc {
         Doc::Str(s) => {
-            json.push_str(&format!("\"{s}\""));
+            let escaped = s.cow_replace('\\', "\\\\");
+            let escaped = escaped.cow_replace('"', "\\\"");
+            let escaped = escaped.cow_replace('\n', "\\n");
+            let escaped = escaped.cow_replace('\r', "\\r");
+            let escaped = escaped.cow_replace('\t', "\\t");
+            let escaped = escaped.cow_replace('\u{000C}', "\\f");
+            let escaped = escaped.cow_replace('\u{0008}', "\\b");
+            json.push_str(&format!("\"{escaped}\""));
         }
         Doc::Array(docs) => {
             json.push_str(&format!(
