@@ -122,7 +122,7 @@ fn is_invalid_fetch_options<'a>(
                 body_span = key_ident.span;
             }
         } else if key_ident_name == "method" {
-            println!("&obj_prop.valuet : {0:?}", obj_prop.value); // Issue is that the num Method.Post is "GET" in the method_name here
+            // println!("&obj_prop.valuet : {0:?}", obj_prop.value); // Issue is that the num Method.Post is "GET" in the method_name here
 
             match &obj_prop.value {
                 Expression::StaticMemberExpression(s) => {
@@ -138,15 +138,45 @@ fn is_invalid_fetch_options<'a>(
                         if ctx.symbols().get_flags(symbol_id).is_enum() {
                             // Look up enum member value by identifier ref
                             let enum_node_id = reference.node_id();
-                            let enum_node = ctx.nodes().get_node(enum_node_id);
+                            let enum_node = ctx.nodes().parent_node(enum_node_id).unwrap();
+                            //    let enum_node = ctx.nodes().parent(enum_node_id).unwrap();
 
+                            // todo Make sure the `x` in `MyEnum.x` is actually an enum member.
 
-                            match enum_node {
+                            //println!("aaaaaaaaa {0:?}", ctx.nodes().parent_node(enum_node_id)enum_node.parent());
+                            println!("aaaaaaaaa {0:?}", enum_node_id);
 
+                            //let Some(parent) = ctx.nodes().parent_node(enum_node_id) else {
+                            //    continue;
+                            //};
+
+                            let enum_member_res = match enum_node.kind() {
+                                AstKind::TSEnumDeclaration(tsenum_decl) => {
+                                    let prop_ident = s.property.name.to_compact_str();
+
+                                    println!("fooooo {tsenum_decl:?}");
+
+                                    tsenum_decl.members.iter().find_map(|m| match &m.id {
+                                        oxc_ast::ast::TSEnumMemberName::Identifier(
+                                            identifier_name,
+                                        ) => None,
+                                        oxc_ast::ast::TSEnumMemberName::String(str_lit) => {
+                                            Some(str_lit)
+                                        }
+                                    })
+                                }
+                                d => {
+                                    println!("unknown {d:?}");
+
+                                    None
+                                }
+                            };
+
+                            if let Some(value_ident) = enum_member_res {
+                                method_name = value_ident.value.cow_to_ascii_uppercase();
                             }
-
                         }
-                    };
+                    }
                 }
                 Expression::StringLiteral(value_ident) => {
                     method_name = value_ident.value.cow_to_ascii_uppercase();
