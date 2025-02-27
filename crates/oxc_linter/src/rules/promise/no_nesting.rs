@@ -1,11 +1,10 @@
-use oxc_allocator::{Allocator, HashMap};
+use itertools::Itertools;
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -147,9 +146,8 @@ fn can_safely_unnest(
     call_expr: &CallExpression,
     closest: &CallExpression,
     ctx: &LintContext,
-    alloc: &Allocator,
 ) -> bool {
-    let mut closest_cb_scope_bindings: &HashMap<'_, &str, SymbolId> = &HashMap::new_in(alloc);
+    let mut closest_cb_scope_bindings = vec![];
 
     closest.arguments.iter().for_each(|new_expr| {
         let Some(arg_expr) = new_expr.as_expression() else {
@@ -159,11 +157,13 @@ fn can_safely_unnest(
         match arg_expr {
             Expression::ArrowFunctionExpression(arrow_expr) => {
                 let func_scope = arrow_expr.scope_id();
-                closest_cb_scope_bindings = ctx.scopes().get_bindings(func_scope);
+                closest_cb_scope_bindings =
+                    ctx.scopes().get_bindings(func_scope).into_iter().collect_vec();
             }
             Expression::FunctionExpression(func_expr) => {
                 let func_scope = func_expr.scope_id();
-                closest_cb_scope_bindings = ctx.scopes().get_bindings(func_scope);
+                closest_cb_scope_bindings =
+                    ctx.scopes().get_bindings(func_scope).into_iter().collect_vec();
             }
             _ => {}
         }
@@ -178,7 +178,7 @@ fn can_safely_unnest(
         //    const d = 5;
         //    getB(a).then(d => getC(a, b)) });
         //                // ^^^^^^^^^^^^^^ <- `cb_span`
-        for binding_symbol_id in closest_cb_scope_bindings.values() {
+        for (_, binding_symbol_id) in closest_cb_scope_bindings {
             for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
                 let usage_span: Span = ctx.reference_span(usage);
                 if cb_span.contains_inclusive(usage_span) {
@@ -204,13 +204,11 @@ impl Rule for NoNesting {
             return;
         };
 
-        let allocator = Allocator::default();
-
         let mut ancestors = ctx.nodes().ancestors(node.id());
         if ancestors.any(|node| is_inside_promise(node, ctx)) {
             match closest_promise_cb(node, ctx) {
                 Some(closest) => {
-                    if can_safely_unnest(call_expr, closest, ctx, &allocator) {
+                    if can_safely_unnest(call_expr, closest, ctx) {
                         ctx.diagnostic(no_nesting_diagnostic(call_expr.callee.span()));
                     }
                 }
