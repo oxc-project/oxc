@@ -201,7 +201,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             binding.create_binding_pattern(ctx)
         };
 
-        Self::create_imports(span, pattern, arguments, ctx)
+        Self::create_import(span, pattern, arguments, ctx)
     }
 
     fn transform_export_named_declaration(
@@ -216,13 +216,10 @@ impl<'a> ModuleRunnerTransform<'a> {
             let export_expression = match &declaration {
                 Declaration::VariableDeclaration(variable) => {
                     let new_stmts_index = new_stmts.len();
-                    variable.bound_names(&mut |binding| {
-                        let binding = BoundIdentifier::from_binding_ident(binding);
+                    variable.bound_names(&mut |ident| {
+                        let binding = BoundIdentifier::from_binding_ident(ident);
                         let ident = binding.create_read_expression(ctx);
-                        new_stmts.push(ctx.ast.statement_expression(
-                            SPAN,
-                            Self::create_exports(ident, &binding.name, ctx),
-                        ));
+                        new_stmts.push(Self::create_export(span, ident, binding.name, ctx));
                     });
                     // Should be inserted before the exports
                     new_stmts.insert(new_stmts_index, Statement::from(declaration));
@@ -231,12 +228,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Declaration::FunctionDeclaration(func) => {
                     let binding = BoundIdentifier::from_binding_ident(func.id.as_ref().unwrap());
                     let ident = binding.create_read_expression(ctx);
-                    Self::create_exports(ident, &binding.name, ctx)
+                    Self::create_export(span, ident, binding.name, ctx)
                 }
                 Declaration::ClassDeclaration(class) => {
                     let binding = BoundIdentifier::from_binding_ident(class.id.as_ref().unwrap());
                     let ident = binding.create_read_expression(ctx);
-                    Self::create_exports(ident, &binding.name, ctx)
+                    Self::create_export(span, ident, binding.name, ctx)
                 }
                 _ => {
                     unreachable!(
@@ -244,10 +241,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     );
                 }
             };
-            new_stmts.extend([
-                Statement::from(declaration),
-                ctx.ast.statement_expression(SPAN, export_expression),
-            ]);
+            new_stmts.extend([Statement::from(declaration), export_expression]);
         } else {
             // ```js
             // export { foo, bar } from 'vue';
@@ -268,31 +262,29 @@ impl<'a> ModuleRunnerTransform<'a> {
                     Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))),
                     Self::create_imported_names_object(imported_names, ctx),
                 ]);
-                new_stmts.push(Self::create_imports(SPAN, pattern, arguments, ctx));
+                new_stmts.push(Self::create_import(SPAN, pattern, arguments, ctx));
                 binding
             });
 
             new_stmts.extend(specifiers.into_iter().map(|specifier| {
                 let ExportSpecifier { span, exported, local, .. } = specifier;
-                let export = if let Some(import_binding) = &import_binding {
+                let expr = if let Some(import_binding) = &import_binding {
                     let object = import_binding.create_read_expression(ctx);
                     let property = local.name();
                     // TODO(improvement): It looks like here could always return a computed member expression,
                     //                    so that we don't need to check if it's an identifier name.
-                    let expr = if is_identifier_name(&property) {
+                    if is_identifier_name(&property) {
                         create_property_access(SPAN, object, &property, ctx)
                     } else {
                         create_compute_property_access(SPAN, object, &property, ctx)
-                    };
-                    Self::create_exports(expr, &exported.name(), ctx)
+                    }
                 } else {
                     let ModuleExportName::IdentifierReference(ident) = local else {
                         unreachable!()
                     };
-                    let expr = Expression::Identifier(ctx.ast.alloc(ident));
-                    Self::create_exports(expr, &exported.name(), ctx)
+                    Expression::Identifier(ctx.ast.alloc(ident))
                 };
-                ctx.ast.statement_expression(span, export)
+                Self::create_export(span, expr, exported.name(), ctx)
             }));
         }
     }
@@ -308,21 +300,22 @@ impl<'a> ModuleRunnerTransform<'a> {
         let pattern = binding.create_binding_pattern(ctx);
         let arguments =
             ctx.ast.vec1(Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))));
-        new_stmts.push(Self::create_imports(span, pattern, arguments, ctx));
+        new_stmts.push(Self::create_import(span, pattern, arguments, ctx));
 
         let ident = binding.create_read_expression(ctx);
 
         let export = if let Some(exported) = exported {
             // `export * as foo from 'vue'` ->
             // `defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_1__ } });`
-            Self::create_exports(ident, &exported.name(), ctx)
+            Self::create_export(span, ident, exported.name(), ctx)
         } else {
             let callee = ctx.ast.expression_identifier(SPAN, SSR_EXPORT_ALL_KEY);
             let arguments = ctx.ast.vec1(Argument::from(ident));
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_1__);`
-            ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+            let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+            ctx.ast.statement_expression(span, call)
         };
-        new_stmts.push(ctx.ast.statement_expression(SPAN, export));
+        new_stmts.push(export);
     }
 
     fn transform_export_default_declaration(
@@ -331,6 +324,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let default = Atom::new_const("default");
         let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
         let expr = match declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
@@ -338,13 +332,13 @@ impl<'a> ModuleRunnerTransform<'a> {
                 // `function foo() {}; Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return foo } });`
                 if let Some(id) = &func.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
-                    let export = Self::create_exports(ident, "default", ctx);
                     new_stmts.extend([
                         Statement::FunctionDeclaration(func),
-                        ctx.ast.statement_expression(span, export),
+                        Self::create_export(span, ident, default, ctx),
                     ]);
                     return;
                 }
+
                 func.r#type = FunctionType::FunctionExpression;
                 Expression::FunctionExpression(func)
             }
@@ -353,10 +347,9 @@ impl<'a> ModuleRunnerTransform<'a> {
                 // `class Foo {}; Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return Foo } });`
                 if let Some(id) = &class.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
-                    let export = Self::create_exports(ident, "default", ctx);
                     new_stmts.extend([
                         Statement::ClassDeclaration(class),
-                        ctx.ast.statement_expression(span, export),
+                        Self::create_export(span, ident, default, ctx),
                     ]);
                     return;
                 }
@@ -371,8 +364,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             expr @ match_expression!(ExportDefaultDeclarationKind) => expr.into_expression(),
         };
         // `export default expr` -> `Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return expr } });`
-        let export = Self::create_exports(expr, "default", ctx);
-        new_stmts.push(ctx.ast.statement_expression(span, export));
+        new_stmts.push(Self::create_export(span, expr, default, ctx));
     }
 
     fn transform_import_metadata(
@@ -471,7 +463,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     }
 
     // `const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
-    fn create_imports(
+    fn create_import(
         span: Span,
         pattern: BindingPattern<'a>,
         arguments: ArenaVec<'a, Argument<'a>>,
@@ -545,11 +537,12 @@ impl<'a> ModuleRunnerTransform<'a> {
     }
 
     // `Object.defineProperty(__vite_ssr_exports__, 'foo', {enumerable: true, configurable: true, get(){ return foo }});`
-    fn create_exports(
+    fn create_export(
+        span: Span,
         expr: Expression<'a>,
-        exported_name: &str,
+        exported_name: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    ) -> Statement<'a> {
         let getter = Self::create_function_with_return_statement(expr, ctx);
         let object = ctx.ast.expression_object(
             SPAN,
@@ -571,7 +564,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             Argument::from(object),
         ]);
 
-        Self::create_define_property(arguments, ctx)
+        ctx.ast.statement_expression(span, Self::create_define_property(arguments, ctx))
     }
 }
 
