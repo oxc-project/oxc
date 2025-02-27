@@ -81,9 +81,6 @@ impl Rule for NoInvalidFetchOptions {
         let result = is_invalid_fetch_options(expr, ctx);
 
         if let Some((method_name, body_span)) = result {
-            println!("method result : {method_name:?}"); // Issue is that the num Method.Post is "GET" in the method_name here
-            // `if let Some((method_name, body_span)) = result {`
-
             ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
         }
     }
