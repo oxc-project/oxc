@@ -1,7 +1,7 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::{
-    ast::{Statement, VariableDeclarationKind},
     AstKind,
+    ast::{Statement, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -257,11 +257,7 @@ fn should_have_braces<'a>(
     } else if options.contains(&CurlyType::Multi) {
         Some(false)
     } else if options.contains(&CurlyType::MultiLine) {
-        if is_collapsed_one_liner(body, ctx) {
-            None
-        } else {
-            Some(true)
-        }
+        if is_collapsed_one_liner(body, ctx) { None } else { Some(true) }
     } else if options.contains(&CurlyType::MultiOrNest) {
         Some(if is_block {
             let stmt = match body {
@@ -272,7 +268,7 @@ fn should_have_braces<'a>(
             let stmt_start = stmt.map_or(body_start, |stmt| stmt.span().start);
             let comments = ctx.comments_range(body_start..stmt_start - 1);
 
-            stmt.map_or(true, |stmt| !is_one_liner(stmt, ctx) || comments.count() > 0)
+            stmt.is_none_or(|stmt| !is_one_liner(stmt, ctx) || comments.count() > 0)
         } else {
             !is_one_liner(body, ctx)
         })
@@ -326,7 +322,7 @@ fn report_if_needed<'a>(
     });
 }
 
-#[allow(clippy::cast_possible_truncation)] // for `as i32`
+#[expect(clippy::cast_possible_truncation)] // for `as i32`
 fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
     let node = get_node_by_statement(node, ctx);
     let span = node.span();
@@ -394,7 +390,7 @@ fn is_lexical_declaration(node: &Statement) -> bool {
     }
 }
 
-#[allow(clippy::cast_possible_truncation)] // for `as i32`
+#[expect(clippy::cast_possible_truncation)] // for `as i32`
 fn is_followed_by_else_keyword(node: &Statement, ctx: &LintContext) -> bool {
     let start = node.span().end + 1;
     let end = ctx.source_text().len() as u32;
@@ -411,7 +407,7 @@ fn is_followed_by_else_keyword(node: &Statement, ctx: &LintContext) -> bool {
 fn has_unsafe_if(node: &Statement) -> bool {
     match node {
         Statement::IfStatement(if_stmt) => {
-            if_stmt.alternate.as_ref().map_or(true, |alt| has_unsafe_if(alt))
+            if_stmt.alternate.as_ref().is_none_or(|alt| has_unsafe_if(alt))
         }
         Statement::ForStatement(for_stmt) => has_unsafe_if(&for_stmt.body),
         Statement::ForInStatement(for_in_stmt) => has_unsafe_if(&for_in_stmt.body),
