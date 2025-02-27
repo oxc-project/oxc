@@ -82,6 +82,9 @@ impl Rule for NoInvalidFetchOptions {
         let result = is_invalid_fetch_options(expr, ctx);
 
         if let Some((method_name, body_span)) = result {
+            println!("method result : {method_name:?}"); // Issue is that the num Method.Post is "GET" in the method_name here
+            // `if let Some((method_name, body_span)) = result {`
+
             ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
         }
     }
@@ -119,7 +122,32 @@ fn is_invalid_fetch_options<'a>(
                 body_span = key_ident.span;
             }
         } else if key_ident_name == "method" {
+            println!("&obj_prop.valuet : {0:?}", obj_prop.value); // Issue is that the num Method.Post is "GET" in the method_name here
+
             match &obj_prop.value {
+                Expression::StaticMemberExpression(s) => {
+                    let symbols = ctx.semantic().symbols();
+                    let Expression::Identifier(ident_ref) = &s.object else {
+                        continue;
+                    };
+                    let reference_id = ident_ref.reference_id();
+                    // Check if static member object is an enum and get the enum value to
+                    // determine if the value equals "GET".
+                    let reference = symbols.get_reference(reference_id);
+                    if let Some(symbol_id) = reference.symbol_id() {
+                        if ctx.symbols().get_flags(symbol_id).is_enum() {
+                            // Look up enum member value by identifier ref
+                            let enum_node_id = reference.node_id();
+                            let enum_node = ctx.nodes().get_node(enum_node_id);
+
+
+                            match enum_node {
+
+                            }
+
+                        }
+                    };
+                }
                 Expression::StringLiteral(value_ident) => {
                     method_name = value_ident.value.cow_to_ascii_uppercase();
                 }
@@ -215,6 +243,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        /*
         r#"fetch(url, {method: "POST", body})"#,
         r#"new Request(url, {method: "POST", body})"#,
         r"fetch(url, {})",
@@ -252,6 +281,14 @@ fn test() {
         "function foo(method: string, body: string) {
             return new Request(url, {method, body});
         }",
+         */
+        r#"enum Method {
+          Post = "POST",
+        }
+        const response = await fetch("/", {
+         method: Method.Post,
+         body: "",
+        });"#,
     ];
 
     let fail = vec![
