@@ -172,7 +172,7 @@ fn can_safely_unnest(
     safe_to_unnest
 }
 
-/// Check check for references in cb_span to variables defined in the closest parent cb scope.
+/// Check for references in cb_span to variables defined in the closest parent cb scope.
 /// In the given example we would loop through all bindings in the closest
 /// parent scope a,b,c,d.
 ///
