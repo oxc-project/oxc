@@ -60,8 +60,8 @@ impl<'a> Traverse<'a> for ModuleRunnerTransform<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::Identifier(_) => self.transform_identifier(expr, ctx),
-            Expression::MetaProperty(_) => self.transform_meta_property(expr, ctx),
-            Expression::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
+            Expression::MetaProperty(_) => Self::transform_meta_property(expr, ctx),
+            Expression::ImportExpression(_) => Self::transform_dynamic_import(expr, ctx),
             _ => {}
         }
     }
@@ -106,7 +106,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     self.transform_export_named_declaration(&mut new_stmts, export, ctx);
                 }
                 Statement::ExportDefaultDeclaration(export) => {
-                    self.transform_export_default_declaration(&mut new_stmts, export, ctx);
+                    Self::transform_export_default_declaration(&mut new_stmts, export, ctx);
                 }
                 _ => {
                     new_stmts.push(stmt);
@@ -190,7 +190,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     /// Transform `import(source, ...arguments)` to `__vite_ssr_dynamic_import__(source, ...arguments)`.
     #[inline]
-    fn transform_dynamic_import(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn transform_dynamic_import(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ImportExpression(import_expr) = ctx.ast.move_expression(expr) else {
             unreachable!();
         };
@@ -205,7 +205,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     /// Transform `import.meta` to `__vite_ssr_import_meta__`.
     #[inline]
-    fn transform_meta_property(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn transform_meta_property(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::MetaProperty(meta) = expr else {
             unreachable!();
         };
@@ -467,7 +467,6 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return {} } });
     /// ```
     fn transform_export_default_declaration(
-        &self,
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
