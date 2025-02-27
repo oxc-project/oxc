@@ -86,7 +86,9 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Statement::ExportAllDeclaration(export) => {
                     self.transform_export_all_declaration(&mut new_stmts, export, ctx);
                 }
-                Statement::ExportDefaultDeclaration(export) => {}
+                Statement::ExportDefaultDeclaration(export) => {
+                    self.transform_export_default_declaration(&mut new_stmts, export, ctx);
+                }
                 _ => new_stmts.push(stmt),
             }
         }
@@ -303,6 +305,56 @@ impl<'a> ModuleRunnerTransform<'a> {
             ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
         };
         new_stmts.push(ctx.ast.statement_expression(SPAN, export));
+    }
+
+    fn transform_export_default_declaration(
+        &self,
+        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
+        let expr = match declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
+                // `export default function foo() {}` ->
+                // `function foo() {}; Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return foo } });`
+                if let Some(id) = &func.id {
+                    let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
+                    let export = Self::create_exports(ident, "default", ctx);
+                    new_stmts.extend([
+                        Statement::FunctionDeclaration(func),
+                        ctx.ast.statement_expression(span, export),
+                    ]);
+                    return;
+                }
+                func.r#type = FunctionType::FunctionExpression;
+                Expression::FunctionExpression(func)
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(mut class) => {
+                // `export default class Foo {}` ->
+                // `class Foo {}; Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return Foo } });`
+                if let Some(id) = &class.id {
+                    let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
+                    let export = Self::create_exports(ident, "default", ctx);
+                    new_stmts.extend([
+                        Statement::ClassDeclaration(class),
+                        ctx.ast.statement_expression(span, export),
+                    ]);
+                    return;
+                }
+
+                class.r#type = ClassType::ClassExpression;
+                Expression::ClassExpression(class)
+            }
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
+                // Do nothing for `interface Foo {}`
+                return;
+            }
+            expr @ match_expression!(ExportDefaultDeclarationKind) => expr.into_expression(),
+        };
+        // `export default expr` -> `Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return expr } });`
+        let export = Self::create_exports(expr, "default", ctx);
+        new_stmts.push(ctx.ast.statement_expression(span, export));
     }
 
     fn transform_import_metadata(
@@ -661,6 +713,49 @@ mod test {
         );
     }
 
+    #[test]
+    fn export_default() {
+        test_same(
+            "export default {}",
+            "Object.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn {};\n\t}\n});\n",
+        );
+    }
+
+    #[test]
+    fn export_then_import() {
+        test_same(
+            "export * from 'vue';import {createApp} from 'vue'",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');\n__vite_ssr_exportAll__(__vite_ssr_import_1__);\nconst __vite_ssr_import_2__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });\n",
+        );
+    }
+
+    /// <https://github.com/vitejs/vite/issues/4049>
+    #[test]
+    fn handle_default_export_variants() {
+        // default anonymous functions
+        test_same(
+            "export default function() {}",
+            "Object.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn function() {};\n\t}\n});\n",
+        );
+
+        // default anonymous class
+        test_same(
+            "export default class {}",
+            "Object.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn class {};\n\t}\n});\n",
+        );
+
+        // default named functions
+        test_same(
+            "export default function foo() {}\nfoo.prototype = Object.prototype;",
+            // "function foo() {}\nfoo.prototype = Object.prototype;\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn foo;\n\t}\n});\n",
+            "function foo() {}\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn foo;\n\t}\n});\nfoo.prototype = Object.prototype;\n",
+        );
+
+        // default named classes
+        test_same(
+            "export default class A {}\nexport class B extends A {}",
+            // "class A {}\nclass B extends A {}\nObject.defineProperty(__vite_ssr_exports__, 'B', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn B;\n\t}\n});\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn A;\n\t}\n});\n",
+            "class A {}\nObject.defineProperty(__vite_ssr_exports__, 'default', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn A;\n\t}\n});\nclass B extends A {}\nObject.defineProperty(__vite_ssr_exports__, 'B', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn B;\n\t}\n});\n",
         );
     }
 }
