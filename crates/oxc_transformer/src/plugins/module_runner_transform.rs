@@ -67,12 +67,20 @@ pub struct ModuleRunnerTransform<'a> {
     /// The key is a symbol id that belongs to the import binding.
     /// The value is a tuple of (Binding, Property).
     import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Atom<'a>>)>,
+
+    // Collect deps and dynamic deps for Vite
+    deps: Vec<String>,
+    dynamic_deps: Vec<String>,
 }
 
 impl ModuleRunnerTransform<'_> {
-    #[expect(unused)]
     pub fn new() -> Self {
-        Self { import_uid: 0, import_bindings: FxHashMap::default() }
+        Self {
+            import_uid: 0,
+            import_bindings: FxHashMap::default(),
+            deps: Vec::default(),
+            dynamic_deps: Vec::default(),
+        }
     }
 }
 
@@ -94,7 +102,7 @@ impl<'a> Traverse<'a> for ModuleRunnerTransform<'a> {
         match expr {
             Expression::Identifier(_) => self.transform_identifier(expr, ctx),
             Expression::MetaProperty(_) => Self::transform_meta_property(expr, ctx),
-            Expression::ImportExpression(_) => Self::transform_dynamic_import(expr, ctx),
+            Expression::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
             _ => {}
         }
     }
@@ -223,12 +231,17 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     /// Transform `import(source, ...arguments)` to `__vite_ssr_dynamic_import__(source, ...arguments)`.
     #[inline]
-    fn transform_dynamic_import(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn transform_dynamic_import(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ImportExpression(import_expr) = ctx.ast.move_expression(expr) else {
             unreachable!();
         };
 
         let ImportExpression { span, source, arguments, .. } = import_expr.unbox();
+
+        if let Expression::StringLiteral(source) = &source {
+            self.dynamic_deps.push(source.value.to_string());
+        }
+
         let flags = ReferenceFlags::Read;
         let callee = ctx.create_unbound_ident_expr(SPAN, SSR_DYNAMIC_IMPORT_KEY, flags);
         let arguments = arguments.into_iter().map(Argument::from);
@@ -275,6 +288,8 @@ impl<'a> ModuleRunnerTransform<'a> {
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
+        self.deps.push(source.value.to_string());
+
         // ['vue', { importedNames: ['foo'] }]`
         let mut arguments = ctx.ast.vec_with_capacity(1 + usize::from(specifiers.is_some()));
         arguments.push(Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))));
