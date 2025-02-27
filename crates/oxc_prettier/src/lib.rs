@@ -10,7 +10,7 @@ mod ir;
 mod macros;
 mod needs_parens;
 mod options;
-mod printer;
+mod print;
 mod utils;
 
 use oxc_allocator::{Allocator, Vec};
@@ -21,7 +21,7 @@ use oxc_syntax::identifier::is_line_terminator;
 pub use crate::options::{
     ArrowParens, EndOfLine, ObjectWrap, PrettierOptions, QuoteProps, TrailingComma,
 };
-use crate::{format::Format, ir::Doc, printer::Printer};
+use crate::{format::Format, ir::Doc, print::print_doc_to_string};
 
 type GroupId = u32;
 #[derive(Default)]
@@ -69,12 +69,15 @@ impl<'a> Prettier<'a> {
         }
     }
 
+    /// Main entry, AST -> String
     pub fn build(&mut self, program: &Program<'a>) -> String {
         self.source_text = program.source_text;
         let doc = program.format(self);
-        Printer::new(doc, program.source_text, self.options, self.allocator).build()
+
+        print_doc_to_string(self.allocator, doc, self.options, program.source_text.len())
     }
 
+    /// Debug entry, AST -> Doc
     pub fn doc(mut self, program: &Program<'a>) -> Doc<'a> {
         self.source_text = program.source_text;
         program.format(&mut self)
