@@ -246,7 +246,10 @@ fn print_module_specifiers<'a, T: Format<'a>>(
                             join!(p, JoinSeparator::CommaLine, specifier_docs)
                         ]
                     ),
-                    if_break!(p, text!(if p.should_print_es5_comma() { "," } else { "" })),
+                    if_break!(
+                        p,
+                        text!(if p.options.trailing_comma.should_print_es5() { "," } else { "" })
+                    ),
                     if p.options.bracket_spacing { line!() } else { softline!() },
                     text!("}"),
                 ]

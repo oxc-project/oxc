@@ -70,7 +70,7 @@ pub fn print_call_arguments<'a>(
             [
                 line!(),
                 array!(p, arguments_doc),
-                if p.should_print_all_comma() { text!(",") } else { text!("") }
+                if p.options.trailing_comma.should_print_all() { text!(",") } else { text!("") }
             ]
         ));
         parts.push(line!());

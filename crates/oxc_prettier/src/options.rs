@@ -171,16 +171,16 @@ pub enum TrailingComma {
 }
 
 impl TrailingComma {
-    pub fn is_all(self) -> bool {
-        self == Self::All
+    pub fn should_print_es5(self) -> bool {
+        self.should_print_comma_impl(false)
     }
 
-    pub fn is_es5(self) -> bool {
-        self == Self::ES5
+    pub fn should_print_all(self) -> bool {
+        self.should_print_comma_impl(true)
     }
 
-    pub fn is_none(self) -> bool {
-        self == Self::None
+    fn should_print_comma_impl(self, level_all: bool) -> bool {
+        matches!(self, Self::All) || (matches!(self, Self::ES5) && !level_all)
     }
 }
 

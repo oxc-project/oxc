@@ -261,7 +261,9 @@ pub fn print_object<'a>(p: &mut Prettier<'a>, obj: &ObjectLike<'a, '_>) -> Doc<'
     parts.push(text!("{"));
 
     parts.push(indent!(p, [bracket_spacing_fn(p), obj.print_properties(p)]));
-    if obj.can_have_trailing_separator() && (obj.is_ts_type() || p.should_print_es5_comma()) {
+    if obj.can_have_trailing_separator()
+        && (obj.is_ts_type() || p.options.trailing_comma.should_print_es5())
+    {
         parts.push(if_break!(p, obj.separator(p)));
     }
     parts.push(bracket_spacing_fn(p));
