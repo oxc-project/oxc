@@ -43,8 +43,8 @@ pub fn print_import_declaration<'a>(p: &mut Prettier<'a>, decl: &ImportDeclarati
         parts.push(print_import_attributes(p, with_clause));
     }
 
-    if let Some(semi) = p.semi() {
-        parts.push(semi);
+    if p.options.semi {
+        parts.push(text!(";"));
     }
 
     array!(p, parts)

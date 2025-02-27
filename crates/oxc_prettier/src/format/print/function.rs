@@ -64,10 +64,8 @@ pub fn print_function<'a>(
         parts.push(text!(" "));
         parts.push(body.format(p));
     }
-    if func.is_ts_declare_function() || func.body.is_none() {
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
-        }
+    if (func.is_ts_declare_function() || func.body.is_none()) && p.options.semi {
+        parts.push(text!(";"));
     }
 
     array!(p, parts)
@@ -196,8 +194,8 @@ pub fn print_return_or_throw_argument<'a>(
         );
     }
 
-    if let Some(semi) = p.semi() {
-        parts.push(semi);
+    if p.options.semi {
+        parts.push(text!(";"));
     }
 
     array!(p, parts)

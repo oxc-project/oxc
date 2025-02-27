@@ -310,8 +310,8 @@ pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassPropertyLike<'
     let mut result =
         assignment::print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
 
-    if let Some(semi) = p.semi() {
-        return array!(p, [result, semi]);
+    if p.options.semi {
+        return array!(p, [result, text!(";")]);
     }
 
     result

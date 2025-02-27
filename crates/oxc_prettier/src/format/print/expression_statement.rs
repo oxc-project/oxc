@@ -17,8 +17,8 @@ pub fn print_expression_statement<'a>(
 
     parts.push(expression_statement.expression.format(p));
 
-    if let Some(semi) = p.semi() {
-        parts.push(semi);
+    if p.options.semi {
+        parts.push(text!(";"));
     }
 
     array!(p, parts)

@@ -70,8 +70,8 @@ impl<'a> Format<'a> for Directive<'a> {
             parts.push(dynamic_text!(p, &not_quoted_raw_text));
             parts.push(enclosing_quote());
         }
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
+        if p.options.semi {
+            parts.push(text!(";"));
         }
 
         array!(p, parts)
@@ -291,8 +291,8 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             parts.push(group!(p, [indent!(p, [softline!(), self.test.format(p)]), softline!()]));
             parts.push(text!(")"));
 
-            if let Some(semi) = p.semi() {
-                parts.push(semi);
+            if p.options.semi {
+                parts.push(text!(";"));
             }
 
             array!(p, parts)
@@ -577,10 +577,8 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 }
             }
 
-            if parent_for_loop_span.is_none_or(|span| span == self.span) {
-                if let Some(semi) = p.semi() {
-                    parts.push(semi);
-                }
+            if parent_for_loop_span.is_none_or(|span| span == self.span) && p.options.semi {
+                parts.push(text!(";"));
             }
 
             group!(p, parts)
