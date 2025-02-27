@@ -83,8 +83,10 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Statement::ExportNamedDeclaration(export) => {
                     self.transform_export_named_declaration(&mut new_stmts, export, ctx);
                 }
+                Statement::ExportAllDeclaration(export) => {
+                    self.transform_export_all_declaration(&mut new_stmts, export, ctx);
+                }
                 Statement::ExportDefaultDeclaration(export) => {}
-                Statement::ExportAllDeclaration(export) => {}
                 _ => new_stmts.push(stmt),
             }
         }
@@ -118,13 +120,13 @@ impl<'a> ModuleRunnerTransform<'a> {
         if let Some((binding, property)) = self.import_bindings.get(&symbol_id) {
             let object = binding.create_read_expression(ctx);
             if let Some(property) = property {
-                // TODO(improvement): It looks like here always return a computed member expression,
-                //                    so that we don't need to check if it's a identifier name
-                if is_identifier_name(property) {
-                    *expr = create_property_access(ident.span, object, property, ctx);
+                // TODO(improvement): It looks like here could always return a computed member expression,
+                //                    so that we don't need to check if it's an identifier name.
+                *expr = if is_identifier_name(property) {
+                    create_property_access(ident.span, object, property, ctx)
                 } else {
-                    *expr = create_compute_property_access(ident.span, object, property, ctx);
-                }
+                    create_compute_property_access(ident.span, object, property, ctx)
+                };
             } else {
                 *expr = object;
             }
@@ -254,7 +256,14 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let ExportSpecifier { span, exported, local, .. } = specifier;
                 let export = if let Some(import_binding) = &import_binding {
                     let object = import_binding.create_read_expression(ctx);
-                    let expr = create_property_access(SPAN, object, &local.name(), ctx);
+                    let property = local.name();
+                    // TODO(improvement): It looks like here could always return a computed member expression,
+                    //                    so that we don't need to check if it's an identifier name.
+                    let expr = if is_identifier_name(&property) {
+                        create_property_access(SPAN, object, &property, ctx)
+                    } else {
+                        create_compute_property_access(SPAN, object, &property, ctx)
+                    };
                     Self::create_exports(expr, &exported.name(), ctx)
                 } else {
                     let ModuleExportName::IdentifierReference(ident) = local else {
@@ -266,6 +275,34 @@ impl<'a> ModuleRunnerTransform<'a> {
                 ctx.ast.statement_expression(span, export)
             }));
         }
+    }
+
+    fn transform_export_all_declaration(
+        &mut self,
+        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        export: ArenaBox<'a, ExportAllDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let ExportAllDeclaration { span, source, exported, .. } = export.unbox();
+        let binding = self.generate_import_binding(ctx);
+        let pattern = binding.create_binding_pattern(ctx);
+        let arguments =
+            ctx.ast.vec1(Argument::from(Expression::StringLiteral(ctx.ast.alloc(source))));
+        new_stmts.push(Self::create_imports(span, pattern, arguments, ctx));
+
+        let ident = binding.create_read_expression(ctx);
+
+        let export = if let Some(exported) = exported {
+            // `export * as foo from 'vue'` ->
+            // `defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_1__ } });`
+            Self::create_exports(ident, &exported.name(), ctx)
+        } else {
+            let callee = ctx.ast.expression_identifier(SPAN, Atom::from(SSR_EXPORT_ALL_KEY));
+            let arguments = ctx.ast.vec1(Argument::from(ident));
+            // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_1__);`
+            ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+        };
+        new_stmts.push(ctx.ast.statement_expression(SPAN, export));
     }
 
     fn transform_import_metadata(
@@ -589,7 +626,41 @@ mod test {
     fn export_star_as_from() {
         test_same(
             "export * as foo from 'vue'",
-            "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true, \n\t\n\tconfigurable: true, \n\tget(){ return __vite_ssr_import_1__ }});\n",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_1__;\n\t}\n});\n",
+        );
+    }
+
+    #[test]
+    fn re_export_by_imported_name() {
+        test_same(
+            "import * as foo from 'foo'; export * as foo from 'foo'",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('foo');\nconst __vite_ssr_import_2__ = await __vite_ssr_import__('foo');\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_2__;\n\t}\n});\n",
+        );
+
+        test_same(
+            "import { foo } from 'foo'; export { foo } from 'foo'",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });\nconst __vite_ssr_import_2__ = await __vite_ssr_import__('foo', { importedNames: ['foo'] });\nObject.defineProperty(__vite_ssr_exports__, 'foo', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_2__.foo;\n\t}\n});\n",
+        );
+    }
+
+    #[test]
+    fn export_arbitrary_namespace() {
+        test_same(
+            "export * as \"arbitrary string\" from 'vue'",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');\nObject.defineProperty(__vite_ssr_exports__, 'arbitrary string', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_1__;\n\t}\n});\n",
+        );
+
+        test_same(
+            "const something = \"Something\"; export { something as \"arbitrary string\" }",
+            "const something = 'Something';\nObject.defineProperty(__vite_ssr_exports__, 'arbitrary string', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn something;\n\t}\n});\n",
+        );
+
+        test_same(
+            "export { \"arbitrary string2\" as \"arbitrary string\" } from 'vue'",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['arbitrary string2'] });\nObject.defineProperty(__vite_ssr_exports__, 'arbitrary string', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn __vite_ssr_import_1__['arbitrary string2'];\n\t}\n});\n",
+        );
+    }
+
         );
     }
 }
