@@ -126,6 +126,7 @@ mod eslint {
     pub mod no_self_compare;
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
+    pub mod no_spaced_func;
     pub mod no_sparse_arrays;
     pub mod no_template_curly_in_string;
     pub mod no_ternary;
@@ -567,6 +568,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_spaced_func,
     eslint::no_useless_call,
     eslint::no_unneeded_ternary,
     eslint::no_extra_label,
