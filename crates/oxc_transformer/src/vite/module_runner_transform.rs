@@ -13,14 +13,15 @@
 /// but it already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifier,
 /// dynamic import and meta property.
 use compact_str::ToCompactString;
-use oxc_ecmascript::BoundNames;
-use oxc_syntax::identifier::is_identifier_name;
 use rustc_hash::FxHashMap;
+use std::iter;
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
+use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
+use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::utils::ast_builder::{
@@ -118,9 +119,16 @@ impl<'a> ModuleRunnerTransform<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ImportExpression(import_expr) = expr else {
+        let Expression::ImportExpression(import_expr) = ctx.ast.move_expression(expr) else {
             unreachable!();
         };
+
+        let ImportExpression { span, source, arguments, .. } = import_expr.unbox();
+        let flags = ReferenceFlags::Read;
+        let callee = ctx.create_unbound_ident_expr(SPAN, SSR_DYNAMIC_IMPORT_KEY, flags);
+        let arguments = arguments.into_iter().map(Argument::from);
+        let arguments = ctx.ast.vec_from_iter(iter::once(Argument::from(source)).chain(arguments));
+        *expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
     }
 
     #[inline]
@@ -750,6 +758,14 @@ mod test {
     #[test]
     fn import_meta() {
         test_same("console.log(import.meta.url)", "console.log(__vite_ssr_import_meta__.url);\n");
+    }
+
+    #[test]
+    fn dynamic_import() {
+        test_same(
+            "export const i = () => import('./foo')",
+            "const i = () => __vite_ssr_dynamic_import__('./foo');\nObject.defineProperty(__vite_ssr_exports__, 'i', {\n\tenumerable: true,\n\tconfigurable: true,\n\tget() {\n\t\treturn i;\n\t}\n});\n",
+        );
     }
 
     /// <https://github.com/vitejs/vite/issues/4049>
