@@ -38,6 +38,7 @@ pub struct ModuleRunnerTransform<'a> {
 }
 
 impl ModuleRunnerTransform<'_> {
+    #[expect(unused)]
     pub fn new() -> Self {
         Self { import_uid: 0, import_bindings: FxHashMap::default() }
     }
