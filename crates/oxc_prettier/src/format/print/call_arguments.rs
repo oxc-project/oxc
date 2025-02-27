@@ -80,10 +80,10 @@ pub fn print_call_arguments<'a>(
 
     if should_expand_first_arg(arguments) {
         p.args.expand_first_arg = true;
-        let mut first_doc = arguments[0].format(p);
+        let first_doc = arguments[0].format(p);
         p.args.expand_first_arg = false;
 
-        if utils::will_break(&mut first_doc) {
+        if utils::will_break(&first_doc) {
             let last_doc = get_printed_arguments(p, 1).pop().unwrap();
             let all_args_broken_out_doc = all_args_broken_out(p);
 
@@ -114,7 +114,7 @@ pub fn print_call_arguments<'a>(
 
     if should_expand_last_arg(arguments) {
         let mut printed_arguments = get_printed_arguments(p, -1);
-        if printed_arguments.iter_mut().any(utils::will_break) {
+        if printed_arguments.iter().any(utils::will_break) {
             return all_args_broken_out(p);
         }
 
@@ -132,7 +132,7 @@ pub fn print_call_arguments<'a>(
 
         let mut last_doc = get_last_doc(p);
 
-        if utils::will_break(&mut last_doc) {
+        if utils::will_break(&last_doc) {
             let all_args_broken_out_doc = all_args_broken_out(p);
             return array!(
                 p,
