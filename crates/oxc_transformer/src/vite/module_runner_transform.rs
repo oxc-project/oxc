@@ -153,9 +153,12 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     #[inline]
     fn transform_meta_property(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::MetaProperty(import_expr) = expr else {
+        let Expression::MetaProperty(meta) = expr else {
             unreachable!();
         };
+
+        let name = Atom::from(SSR_IMPORT_META_KEY);
+        *expr = ctx.create_unbound_ident_expr(meta.span, name, ReferenceFlags::Read);
     }
 
     fn transform_import(
@@ -751,6 +754,11 @@ mod test {
             "path.resolve('server.js');import path from 'node:path';",
             "const __vite_ssr_import_1__ = await __vite_ssr_import__('node:path', { importedNames: ['default'] });\n__vite_ssr_import_1__.default.resolve('server.js');\n",
         );
+    }
+
+    #[test]
+    fn import_meta() {
+        test_same("console.log(import.meta.url)", "console.log(__vite_ssr_import_meta__.url);\n");
     }
 
     /// <https://github.com/vitejs/vite/issues/4049>
