@@ -74,11 +74,22 @@ impl<'a> ModuleRunnerTransform<'a> {
         // Reserve enough space for new statements
         let mut new_stmts: ArenaVec<'a, Statement<'a>> =
             ctx.ast.vec_with_capacity(program.body.len() * 2);
-        for stmt in &mut program.body.drain(..) {
+
+        let mut hoist_index = None;
+
+        for stmt in program.body.drain(..) {
             match stmt {
                 Statement::ImportDeclaration(import) => {
                     let ImportDeclaration { span, source, specifiers, .. } = import.unbox();
-                    new_stmts.push(self.transform_import(span, source, specifiers, ctx));
+                    let import_statement = self.transform_import(span, source, specifiers, ctx);
+                    // Need to hoist import statements to the above of the other statements
+                    if let Some(index) = hoist_index {
+                        new_stmts.insert(index, import_statement);
+                        hoist_index.replace(index + 1);
+                    } else {
+                        new_stmts.push(import_statement);
+                    }
+                    continue;
                 }
                 Statement::ExportNamedDeclaration(export) => {
                     self.transform_export_named_declaration(&mut new_stmts, export, ctx);
@@ -89,7 +100,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Statement::ExportDefaultDeclaration(export) => {
                     self.transform_export_default_declaration(&mut new_stmts, export, ctx);
                 }
-                _ => new_stmts.push(stmt),
+                _ => {
+                    new_stmts.push(stmt);
+                }
+            }
+            if hoist_index.is_none() {
+                hoist_index.replace(new_stmts.len() - 1);
             }
         }
 
@@ -722,10 +738,18 @@ mod test {
     }
 
     #[test]
-    fn export_then_import() {
+    fn export_then_import_minified() {
         test_same(
             "export * from 'vue';import {createApp} from 'vue'",
             "const __vite_ssr_import_1__ = await __vite_ssr_import__('vue');\n__vite_ssr_exportAll__(__vite_ssr_import_1__);\nconst __vite_ssr_import_2__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });\n",
+        );
+    }
+
+    #[test]
+    fn hoist_import_to_top() {
+        test_same(
+            "path.resolve('server.js');import path from 'node:path';",
+            "const __vite_ssr_import_1__ = await __vite_ssr_import__('node:path', { importedNames: ['default'] });\n__vite_ssr_import_1__.default.resolve('server.js');\n",
         );
     }
 
