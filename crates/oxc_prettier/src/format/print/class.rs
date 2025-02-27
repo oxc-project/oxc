@@ -8,7 +8,7 @@ use crate::{
     Format, Prettier, array,
     format::print::{assignment, function, property},
     group, hardline, if_break, indent,
-    ir::{Doc, JoinSeparator},
+    ir::Doc,
     join, line, softline, text,
 };
 
@@ -434,7 +434,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     parts.push(indent!(
         p,
-        [group!(p, [softline!(), join!(p, JoinSeparator::CommaLine, implements_docs)])]
+        [group!(p, [softline!(), join!(p, array!(p, [text!(","), line!()]), implements_docs)])]
     ));
     parts.push(text!(" "));
 

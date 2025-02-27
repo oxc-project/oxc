@@ -204,7 +204,9 @@ macro_rules! break_parent {
 ///
 /// Join an array of docs with a separator.
 /// ```
-/// join!(p, JoinSeparator::Softline, vec);
+/// join!(p, text!(", "), vec);
+/// join!(p, softline!(), vec);
+/// join!(p, array!(p, [text!(","), line!()]), vec);
 /// ```
 #[macro_export]
 macro_rules! join {
@@ -212,15 +214,7 @@ macro_rules! join {
         let mut parts = oxc_allocator::Vec::new_in($p.allocator);
         for (i, doc) in $vec.into_iter().enumerate() {
             if i != 0 {
-                match $sep {
-                    $crate::ir::JoinSeparator::Softline => parts.push($crate::softline!()),
-                    $crate::ir::JoinSeparator::Hardline => parts.push($crate::hardline!($p)),
-                    $crate::ir::JoinSeparator::CommaLine => {
-                        parts.extend([$crate::text!(","), $crate::line!()]);
-                    }
-                    $crate::ir::JoinSeparator::CommaSpace => parts.push($crate::text!(", ")),
-                    $crate::ir::JoinSeparator::Literalline => parts.push($crate::literalline!($p)),
-                }
+                parts.push($sep);
             }
             parts.push(doc);
         }

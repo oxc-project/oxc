@@ -1,7 +1,7 @@
 use crate::{
     Prettier, dynamic_text,
-    ir::{Doc, IndentIfBreak, JoinSeparator},
-    join,
+    ir::{Doc, IndentIfBreak},
+    join, literalline,
 };
 
 pub fn will_break(doc: &mut Doc<'_>) -> bool {
@@ -32,15 +32,11 @@ pub fn will_break(doc: &mut Doc<'_>) -> bool {
 
 /// Handle line continuation.
 /// This does not recursively handle the doc, expects single `Doc::Str`.
-pub fn replace_end_of_line<'a>(
-    p: &Prettier<'a>,
-    doc: Doc<'a>,
-    replacement: JoinSeparator,
-) -> Doc<'a> {
+pub fn replace_end_of_line<'a>(p: &Prettier<'a>, doc: Doc<'a>) -> Doc<'a> {
     let Doc::Str(text) = doc else {
         return doc;
     };
 
     let lines = text.split('\n').map(|line| dynamic_text!(p, line)).collect::<Vec<_>>();
-    join!(p, replacement, lines)
+    join!(p, literalline!(p), lines)
 }

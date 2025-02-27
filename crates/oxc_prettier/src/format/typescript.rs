@@ -9,7 +9,7 @@ use crate::{
         print::{array, object, property, template_literal},
     },
     group, hardline, indent,
-    ir::{Doc, JoinSeparator},
+    ir::Doc,
     join, line, softline, text, wrap,
 };
 

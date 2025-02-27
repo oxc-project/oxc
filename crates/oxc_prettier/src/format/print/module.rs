@@ -2,9 +2,8 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    Format, Prettier, array, dynamic_text, group, if_break, indent,
-    ir::{Doc, JoinSeparator},
-    join, line, softline, text,
+    Format, Prettier, array, dynamic_text, group, if_break, indent, ir::Doc, join, line, softline,
+    text,
 };
 
 pub fn print_import_declaration<'a>(p: &mut Prettier<'a>, decl: &ImportDeclaration<'a>) -> Doc<'a> {
@@ -189,7 +188,7 @@ fn print_import_attributes<'a>(p: &mut Prettier<'a>, with_clause: &WithClause<'a
             .iter()
             .map(|import_attr| import_attr.format(p))
             .collect::<std::vec::Vec<_>>();
-        parts.push(join!(p, JoinSeparator::CommaSpace, attributes_doc));
+        parts.push(join!(p, text!(", "), attributes_doc));
 
         if p.options.bracket_spacing {
             parts.push(text!(" "));
@@ -243,7 +242,7 @@ fn print_module_specifiers<'a, T: Format<'a>>(
                         p,
                         [
                             if p.options.bracket_spacing { line!() } else { softline!() },
-                            join!(p, JoinSeparator::CommaLine, specifier_docs)
+                            join!(p, array!(p, [text!(","), line!()]), specifier_docs)
                         ]
                     ),
                     if_break!(

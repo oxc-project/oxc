@@ -17,7 +17,7 @@ use crate::{
         },
     },
     group, hardline, indent,
-    ir::{Doc, JoinSeparator},
+    ir::Doc,
     join, line, softline, text, utils, wrap,
 };
 
@@ -860,7 +860,6 @@ impl<'a> Format<'a> for StringLiteral<'a> {
         utils::replace_end_of_line(
             p,
             literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote),
-            JoinSeparator::Literalline,
         )
     }
 }
@@ -1267,7 +1266,7 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
             for expr in &self.expressions {
                 parts.push(expr.format(p));
             }
-            group!(p, [join!(p, JoinSeparator::CommaLine, parts)])
+            group!(p, [join!(p, array!(p, [text!(","), line!()]), parts)])
         })
     }
 }
@@ -1315,11 +1314,7 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
 
 impl<'a> Format<'a> for TemplateElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        utils::replace_end_of_line(
-            p,
-            dynamic_text!(p, self.value.raw.as_str()),
-            JoinSeparator::Literalline,
-        )
+        utils::replace_end_of_line(p, dynamic_text!(p, self.value.raw.as_str()))
     }
 }
 
