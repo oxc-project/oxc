@@ -1,4 +1,7 @@
-use std::mem::{align_of, size_of};
+use std::{
+    cmp::max,
+    mem::{align_of, size_of},
+};
 
 /// The layout of a type.
 #[derive(Clone, Default, Debug)]
@@ -24,7 +27,7 @@ impl Layout {
         Self::from_size_align_niche(
             size,
             u32::try_from(align_of::<T>()).unwrap(),
-            Niche::new(0, size, true, 1),
+            Niche::new(0, size, 1, 0),
         )
     }
 
@@ -75,20 +78,41 @@ pub struct Niche {
     /// Byte offset of the niche from start of type
     pub offset: u32,
     /// Size of the niche in bytes
-    #[expect(dead_code)]
     pub size: u32,
-    /// `true` if niche is at start of range (e.g. 0..3).
-    /// `false` if niche is at end of range (e.g. 2..255).
-    #[expect(dead_code)]
-    pub is_range_start: bool,
-    /// Number of niche values in the niche (e.g. 1 for `&str`, 254 for `bool`)
-    pub count: u32,
+    /// Number of values at start of range
+    pub count_start: u32,
+    /// Number of values at end of range
+    pub count_end: u32,
 }
 
 impl Niche {
     /// Create new [`Niche`].
-    pub fn new(offset: u32, size: u32, is_range_start: bool, count: u32) -> Self {
-        Self { offset, size, is_range_start, count }
+    pub fn new(offset: u32, size: u32, count_start: u32, count_end: u32) -> Self {
+        Self { offset, size, count_start, count_end }
+    }
+
+    /// Get size of largest niche range (start or end)
+    pub fn count_max(&self) -> u32 {
+        max(self.count_start, self.count_end)
+    }
+
+    /// Get value of the [`Niche`].
+    #[expect(unused)]
+    pub fn value(&self) -> u128 {
+        // Prefer to consume niches at start of range over end of range
+        if self.count_start > 0 {
+            u128::from(self.count_start - 1)
+        } else {
+            let max_value = match self.size {
+                1 => u128::from(u8::MAX),
+                2 => u128::from(u16::MAX),
+                4 => u128::from(u32::MAX),
+                8 => u128::from(u64::MAX),
+                16 => u128::MAX,
+                size => panic!("Invalid niche size: {size}"),
+            };
+            max_value - u128::from(self.count_end) + 1
+        }
     }
 }
 
