@@ -1,6 +1,9 @@
+use std::iter;
+
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
+    ToPrimitive,
+    constant_evaluation::{DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
@@ -13,29 +16,21 @@ impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
     pub fn remove_unused_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         match e {
-            Expression::NullLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::StringLiteral(_)
-            | Expression::ThisExpression(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::MetaProperty(_) => true,
-            Expression::Identifier(ident) => ctx.symbols().has_binding(ident.reference_id()),
-            Expression::ArrayExpression(_) => Self::fold_array_expression(e, ctx),
+            Expression::ArrayExpression(_) => self.fold_array_expression(e, ctx),
             Expression::UnaryExpression(_) => self.fold_unary_expression(e, ctx),
             Expression::NewExpression(e) => Self::fold_new_constructor(e, ctx),
             Expression::LogicalExpression(_) => self.fold_logical_expression(e, ctx),
             Expression::SequenceExpression(_) => self.fold_sequence_expression(e, ctx),
+            Expression::TemplateLiteral(_) => self.fold_template_literal(e, ctx),
+            Expression::ObjectExpression(_) => self.fold_object_expression(e, ctx),
             // TODO
-            // Expression::TemplateLiteral(_)
-            // | Expression::ObjectExpression(_)
-            // | Expression::ConditionalExpression(_) => {
+            // Expression::ConditionalExpression(_)
+            // | Expression::BinaryExpression(_)
+            // | Expression::CallExpression(_)
+            // | Expression::NewExpression(_) => {
             // false
             // }
-            _ => false,
+            _ => !e.may_have_side_effects(&ctx),
         }
     }
 
@@ -77,70 +72,48 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `([1,2,3, foo()])` -> `foo()`
-    fn fold_array_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_array_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::ArrayExpression(array_expr) = e else {
             return false;
         };
-
-        let mut transformed_elements = ctx.ast.vec();
-        let mut pending_spread_elements = ctx.ast.vec();
-
         if array_expr.elements.len() == 0 {
             return true;
         }
 
-        if array_expr
+        array_expr.elements.retain_mut(|el| match el {
+            ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(&ctx),
+            ArrayExpressionElement::Elision(_) => false,
+            match_expression!(ArrayExpressionElement) => {
+                let el_expr = el.to_expression_mut();
+                !self.remove_unused_expression(el_expr, ctx)
+            }
+        });
+        if array_expr.elements.len() == 0 {
+            return true;
+        }
+
+        // try removing the brackets "[]", if the array does not contain spread elements
+        // `a(), b()` is shorter than `[a(), b()]`,
+        // but `[...a], [...b]` is not shorter than `[...a, ...b]`
+        let keep_as_array = array_expr
             .elements
             .iter()
-            .any(|el| matches!(el, ArrayExpressionElement::SpreadElement(_)))
-        {
+            .any(|el| matches!(el, ArrayExpressionElement::SpreadElement(_)));
+        if keep_as_array {
             return false;
         }
 
-        for el in &mut array_expr.elements {
-            match el {
-                ArrayExpressionElement::SpreadElement(_) => {
-                    let spread_element = ctx.ast.move_array_expression_element(el);
-                    pending_spread_elements.push(spread_element);
-                }
-                ArrayExpressionElement::Elision(_) => {}
-                match_expression!(ArrayExpressionElement) => {
-                    let el = el.to_expression_mut();
-                    let el_expr = ctx.ast.move_expression(el);
-                    if !el_expr.is_literal_value(false)
-                        && !matches!(&el_expr, Expression::Identifier(ident) if !ctx.is_global_reference(ident))
-                    {
-                        if pending_spread_elements.len() > 0 {
-                            // flush pending spread elements
-                            transformed_elements.push(ctx.ast.expression_array(
-                                el_expr.span(),
-                                pending_spread_elements,
-                                None,
-                            ));
-                            pending_spread_elements = ctx.ast.vec();
-                        }
-                        transformed_elements.push(el_expr);
-                    }
-                }
-            }
-        }
-
-        if pending_spread_elements.len() > 0 {
-            transformed_elements.push(ctx.ast.expression_array(
-                array_expr.span,
-                pending_spread_elements,
-                None,
-            ));
-        }
-
-        if transformed_elements.is_empty() {
+        let mut expressions = ctx.ast.vec_from_iter(
+            array_expr.elements.drain(..).map(ArrayExpressionElement::into_expression),
+        );
+        if expressions.is_empty() {
             return true;
-        } else if transformed_elements.len() == 1 {
-            *e = transformed_elements.pop().unwrap();
+        } else if expressions.len() == 1 {
+            *e = expressions.pop().unwrap();
             return false;
         }
 
-        *e = ctx.ast.expression_sequence(array_expr.span, transformed_elements);
+        *e = ctx.ast.expression_sequence(array_expr.span, expressions);
         false
     }
 
@@ -187,6 +160,146 @@ impl<'a> PeepholeOptimizations {
         } {
             return true;
         }
+        false
+    }
+
+    // "`${1}2${foo()}3`" -> "`${foo()}`"
+    fn fold_template_literal(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::TemplateLiteral(temp_lit) = e else { return false };
+        if temp_lit.expressions.is_empty() {
+            return true;
+        }
+
+        let mut transformed_elements = ctx.ast.vec();
+        let mut pending_to_string_required_exprs = ctx.ast.vec();
+
+        for mut e in temp_lit.expressions.drain(..) {
+            if e.to_primitive(&ctx).is_symbol() != Some(false) {
+                pending_to_string_required_exprs.push(e);
+            } else if !self.remove_unused_expression(&mut e, ctx) {
+                if pending_to_string_required_exprs.len() > 0 {
+                    // flush pending to string required expressions
+                    let expressions =
+                        ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
+                    let mut quasis = ctx.ast.vec_from_iter(
+                        iter::repeat_with(|| {
+                            ctx.ast.template_element(
+                                e.span(),
+                                false,
+                                TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                            )
+                        })
+                        .take(expressions.len() + 1),
+                    );
+                    quasis
+                        .last_mut()
+                        .expect("template literal must have at least one quasi")
+                        .tail = true;
+                    transformed_elements.push(ctx.ast.expression_template_literal(
+                        e.span(),
+                        quasis,
+                        expressions,
+                    ));
+                }
+                transformed_elements.push(e);
+            }
+        }
+
+        if pending_to_string_required_exprs.len() > 0 {
+            let expressions = ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
+            let mut quasis = ctx.ast.vec_from_iter(
+                iter::repeat_with(|| {
+                    ctx.ast.template_element(
+                        temp_lit.span,
+                        false,
+                        TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                    )
+                })
+                .take(expressions.len() + 1),
+            );
+            quasis.last_mut().expect("template literal must have at least one quasi").tail = true;
+            transformed_elements.push(ctx.ast.expression_template_literal(
+                temp_lit.span,
+                quasis,
+                expressions,
+            ));
+        }
+
+        if transformed_elements.is_empty() {
+            return true;
+        } else if transformed_elements.len() == 1 {
+            *e = transformed_elements.pop().unwrap();
+            return false;
+        }
+
+        *e = ctx.ast.expression_sequence(temp_lit.span, transformed_elements);
+        false
+    }
+
+    // `({ 1: 1, [foo()]: bar() })` -> `foo(), bar()`
+    fn fold_object_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::ObjectExpression(object_expr) = e else {
+            return false;
+        };
+        if object_expr.properties.is_empty() {
+            return true;
+        }
+
+        let mut transformed_elements = ctx.ast.vec();
+        let mut pending_spread_elements = ctx.ast.vec();
+
+        for prop in object_expr.properties.drain(..) {
+            match prop {
+                ObjectPropertyKind::SpreadProperty(_) => {
+                    pending_spread_elements.push(prop);
+                }
+                ObjectPropertyKind::ObjectProperty(prop) => {
+                    if pending_spread_elements.len() > 0 {
+                        // flush pending spread elements
+                        transformed_elements.push(ctx.ast.expression_object(
+                            prop.span(),
+                            pending_spread_elements,
+                            None,
+                        ));
+                        pending_spread_elements = ctx.ast.vec();
+                    }
+
+                    let ObjectProperty { key, mut value, .. } = prop.unbox();
+                    // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
+                    // But we can ignore that by using the assumption.
+                    match key {
+                        PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {}
+                        match_expression!(PropertyKey) => {
+                            let mut prop_key = key.into_expression();
+                            if !self.remove_unused_expression(&mut prop_key, ctx) {
+                                transformed_elements.push(prop_key);
+                            }
+                        }
+                    }
+
+                    if !self.remove_unused_expression(&mut value, ctx) {
+                        transformed_elements.push(value);
+                    }
+                }
+            }
+        }
+
+        if pending_spread_elements.len() > 0 {
+            transformed_elements.push(ctx.ast.expression_object(
+                object_expr.span,
+                pending_spread_elements,
+                None,
+            ));
+        }
+
+        if transformed_elements.is_empty() {
+            return true;
+        } else if transformed_elements.len() == 1 {
+            *e = transformed_elements.pop().unwrap();
+            return false;
+        }
+
+        *e = ctx.ast.expression_sequence(object_expr.span, transformed_elements);
         false
     }
 }
@@ -258,18 +371,18 @@ mod test {
         test("([a])", "a");
         test("var a; ([a])", "var a;");
         test("([foo()])", "foo()");
+        test("[[foo()]]", "foo()");
         test_same("baz.map((v) => [v])");
     }
 
     #[test]
     fn test_array_literal_containing_spread() {
         test_same("([...c])");
-        // FIXME
-        test_same("([4, ...c, a])");
-        test_same("var a; ([4, ...c, a])");
+        test("([4, ...c, a])", "[...c, a]");
+        test("var a; ([4, ...c, a])", "var a; [...c]");
         test_same("([foo(), ...c, bar()])");
         test_same("([...a, b, ...c])");
-        test_same("var b; ([...a, b, ...c])");
+        test("var b; ([...a, b, ...c])", "var b; [...a, ...c]");
         test_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
     }
 
@@ -313,7 +426,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_object_literal() {
         test("({})", "");
         test("({a:1})", "");
@@ -322,8 +434,25 @@ mod test {
         // Object-spread may trigger getters.
         test_same("({...a})");
         test_same("({...foo()})");
+        test("({ [{ foo: foo() }]: 0 })", "foo()");
+        test("({ foo: { foo: foo() } })", "foo()");
 
         test("({ [bar()]: foo() })", "bar(), foo()");
-        test_same("({ ...baz, [bar()]: foo() })");
+        test("({ ...baz, [bar()]: foo() })", "({ ...baz }), bar(), foo()");
+    }
+
+    #[test]
+    fn test_fold_template_literal() {
+        test("`a${b}c${d}e`", "`${b}${d}`");
+        test("`stuff ${x} ${1}`", "`${x}`");
+        test("`stuff ${1} ${y}`", "`${y}`");
+        test("`stuff ${x} ${y}`", "`${x}${y}`");
+        test("`stuff ${x ? 1 : 2} ${y}`", "x ? 1 : 2, `${y}`"); // can be improved to "x, `${y}`"
+        test("`stuff ${x} ${y ? 1 : 2}`", "`${x}`, y ? 1 : 2"); // can be improved to "`${x}`, y"
+        test("`stuff ${x} ${y ? 1 : 2} ${z}`", "`${x}`, y ? 1 : 2, `${z}`"); // can be improved to "`${x}`, y, `${z}`"
+
+        test("`4${c}${+a}`", "`${c}`, +a");
+        test("`${+foo}${c}${+bar}`", "+foo, `${c}`, +bar");
+        test("`${a}${+b}${c}`", "`${a}`, +b, `${c}`");
     }
 }

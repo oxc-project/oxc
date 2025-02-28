@@ -3,10 +3,8 @@
 
 use std::cell::Cell;
 
-use oxc_ast::{
-    ast::*,
-    visit::{VisitMut, walk_mut},
-};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::TraverseCtx;
 

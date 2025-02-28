@@ -3,13 +3,13 @@ use std::ops::Deref;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind, Visit,
+    AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
         ObjectPropertyKind, ReturnStatement,
     },
-    visit::walk,
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, SymbolId};

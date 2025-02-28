@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
-use oxc_ast::{Visit, ast::*};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_traverse::Ancestor;
 
@@ -470,7 +471,7 @@ mod test {
 
         test("{'hi'}", "");
         test("{x==3}", "x == 3");
-        test("{`hello ${foo}`}", "`hello ${foo}`");
+        test("{`hello ${foo}`}", "`${foo}`");
         test("{ (function(){x++}) }", "");
         test("{ (function foo(){x++; foo()}) }", "");
         test("function f(){return;}", "function f(){}");

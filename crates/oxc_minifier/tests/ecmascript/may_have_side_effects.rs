@@ -96,8 +96,8 @@ fn closure_compiler_tests() {
     test("a ?? b", false);
     // test("'1' + navigator.userAgent", false);
     test("`template`", false);
-    test("`template${name}`", false);
-    test("`${name}template`", false);
+    test("`template${name}`", true);
+    test("`${name}template`", true);
     test("`${naming()}template`", true);
     test("templateFunction`template`", true);
     test("st = `${name}template`", true);
@@ -143,7 +143,7 @@ fn closure_compiler_tests() {
     test("[...[i++]]", true);
     test("[...'string']", false);
     test("[...`templatelit`]", false);
-    test("[...`templatelit ${safe}`]", false);
+    test("[...`templatelit ${safe}`]", true);
     test("[...`templatelit ${unsafe()}`]", true);
     test("[...f()]", true);
     test("[...5]", true);
@@ -156,7 +156,7 @@ fn closure_compiler_tests() {
     test("Math.sin(...[i++])", true);
     // test("Math.sin(...'string')", false);
     // test("Math.sin(...`templatelit`)", false);
-    // test("Math.sin(...`templatelit ${safe}`)", false);
+    // test("Math.sin(...`templatelit ${safe}`)", true);
     test("Math.sin(...`templatelit ${unsafe()}`)", true);
     test("Math.sin(...f())", true);
     test("Math.sin(...5)", true);
@@ -169,7 +169,7 @@ fn closure_compiler_tests() {
     test("new Object(...[i++])", true);
     // test("new Object(...'string')", false);
     // test("new Object(...`templatelit`)", false);
-    // test("new Object(...`templatelit ${safe}`)", false);
+    // test("new Object(...`templatelit ${safe}`)", true);
     test("new Object(...`templatelit ${unsafe()}`)", true);
     test("new Object(...f())", true);
     test("new Object(...5)", true);
@@ -340,6 +340,20 @@ fn test_simple_expressions() {
     test("this", false);
     test("import.meta", false);
     test("(() => {})", false);
+}
+
+#[test]
+fn test_template_literal() {
+    test("``", false);
+    test("`a`", false);
+    test("`${1}`", false);
+    test("`${[]}`", false);
+    test("`${Symbol()}`", true);
+    test("`${{ toString() { console.log('sideeffect') } }}`", true);
+    test("`${{ valueOf() { console.log('sideeffect') } }}`", true);
+    test("`${{ [s]() { console.log('sideeffect') } }}`", true); // assuming s is Symbol.toPrimitive
+    test("`${a}`", true); // a maybe a symbol
+    test("`${a()}`", true);
 }
 
 #[test]
@@ -546,6 +560,11 @@ fn test_object_expression() {
     test("({[1]: 1})", false);
     test("({[1n]: 1})", false);
     test("({['1']: 1})", false);
+    // These actually have a side effect, but this treated as side-effect free.
+    test("({[{ toString() { console.log('sideeffect') } }]: 1})", false);
+    test("({[{ valueOf() { console.log('sideeffect') } }]: 1})", false);
+    test("({[{ [s]() { console.log('sideeffect') } }]: 1})", false); // assuming s is Symbol.toPrimitive
+    test("({[foo]: 1})", false);
     test("({[foo()]: 1 })", true);
     test("({a: foo()})", true);
     test("({...a})", true);
@@ -553,6 +572,8 @@ fn test_object_expression() {
     test("({...[...a]})", true);
     test("({...'foo'})", false);
     test("({...`foo`})", false);
+    test("({...`foo${1}`})", false);
+    test("({...`foo${foo}`})", true);
     test("({...`foo${foo()}`})", true);
     test("({...foo()})", true);
 }
@@ -568,6 +589,8 @@ fn test_array_expression() {
     test("[...[...a]]", true);
     test("[...'foo']", false);
     test("[...`foo`]", false);
+    test("[...`foo${1}`]", false);
+    test("[...`foo${foo}`]", true);
     test("[...`foo${foo()}`]", true);
     test("[...foo()]", true);
 }
@@ -628,6 +651,10 @@ fn test_call_like_expressions() {
     test("/* #__PURE__ */ foo(...[1])", false);
     test("/* #__PURE__ */ foo(...[bar()])", true);
     test("/* #__PURE__ */ foo(...bar)", true);
+    test("/* #__PURE__ */ foo(...`foo`)", false);
+    test("/* #__PURE__ */ foo(...`${1}`)", false);
+    test("/* #__PURE__ */ foo(...`${bar}`)", true);
+    test("/* #__PURE__ */ foo(...`${bar()}`)", true);
     test("/* #__PURE__ */ (() => { foo() })()", false);
 
     test("new Foo()", true);
@@ -638,6 +665,10 @@ fn test_call_like_expressions() {
     test("/* #__PURE__ */ new Foo(...[1])", false);
     test("/* #__PURE__ */ new Foo(...[bar()])", true);
     test("/* #__PURE__ */ new Foo(...bar)", true);
+    test("/* #__PURE__ */ new Foo(...`foo`)", false);
+    test("/* #__PURE__ */ new Foo(...`${1}`)", false);
+    test("/* #__PURE__ */ new Foo(...`${bar}`)", true);
+    test("/* #__PURE__ */ new Foo(...`${bar()}`)", true);
     test("/* #__PURE__ */ new class { constructor() { foo() } }()", false);
 }
 
@@ -658,7 +689,9 @@ fn test_object_with_to_primitive_related_properties_overridden() {
     test("+{ ...[] }", false);
     test("+{ ...'foo' }", false);
     test("+{ ...`foo` }", false);
-    test("+{ ...`foo${foo}` }", false);
+    test("+{ ...`foo${1}` }", false);
+    test("+{ ...`foo${foo}` }", true);
+    test("+{ ...`foo${foo()}` }", true);
     test("+{ ...{ toString() { return Symbol() } } }", true);
     test("+{ ...{ valueOf() { return Symbol() } } }", true);
     test("+{ ...{ [Symbol.toPrimitive]() { return Symbol() } } }", true);

@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;

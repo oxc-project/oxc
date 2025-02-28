@@ -5,7 +5,8 @@ use std::cell::Cell;
 
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, visit::Visit};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_data_structures::stack::Stack;
 use oxc_span::Atom;
 use oxc_syntax::{

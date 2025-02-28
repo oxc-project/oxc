@@ -47,7 +47,7 @@
 //!
 //! # Visitor
 //!
-//! See [oxc_ast::Visit] and [oxc_ast::VisitMut]
+//! See [`Visit`](http://docs.rs/oxc_ast_visit) and [`VisitMut`](http://docs.rs/oxc_ast_visit).
 //!
 //! # Visiting without a visitor
 //!

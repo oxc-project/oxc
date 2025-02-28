@@ -66,6 +66,7 @@ bench = false
 [dependencies]
 oxc_allocator = { workspace = true, optional = true }
 oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
+oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_linter = { workspace = true, optional = true }
@@ -101,8 +102,22 @@ codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
 
 # Features for running each benchmark separately with minimum dependencies that benchmark needs.
 # e.g. `cargo bench -p oxc_benchmark --bench parser --no-default-features --features parser`
-lexer = ["dep:oxc_allocator", "dep:oxc_ast", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
-parser = ["dep:oxc_allocator", "dep:oxc_ast", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
+lexer = [
+  "dep:oxc_allocator",
+  "dep:oxc_ast",
+  "dep:oxc_ast_visit",
+  "dep:oxc_parser",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
+parser = [
+  "dep:oxc_allocator",
+  "dep:oxc_ast",
+  "dep:oxc_ast_visit",
+  "dep:oxc_parser",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
 transformer = [
   "dep:oxc_allocator",
   "dep:oxc_parser",

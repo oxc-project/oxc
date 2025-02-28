@@ -35,9 +35,7 @@ impl MayHaveSideEffects for Expression<'_> {
             | Expression::ArrowFunctionExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::Super(_) => false,
-            Expression::TemplateLiteral(template) => {
-                template.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
-            }
+            Expression::TemplateLiteral(e) => e.may_have_side_effects(is_global_reference),
             Expression::UnaryExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::LogicalExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::ParenthesizedExpression(e) => {
@@ -81,6 +79,17 @@ impl MayHaveSideEffects for IdentifierReference<'_> {
             // NOTE: we ignore TDZ errors
             _ => is_global_reference.is_global_reference(self) != Some(false),
         }
+    }
+}
+
+impl MayHaveSideEffects for TemplateLiteral<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        self.expressions.iter().any(|e| {
+            // ToString is called for each expression.
+            // If the expression is a Symbol or ToPrimitive returns a Symbol, an error is thrown.
+            // ToPrimitive returns the value as-is for non-Object values, so we can use it instead of ToString here.
+            e.to_primitive(is_global_reference).is_symbol() != Some(false)
+        })
     }
 }
 
@@ -294,9 +303,7 @@ impl MayHaveSideEffects for ArrayExpressionElement<'_> {
             ArrayExpressionElement::SpreadElement(e) => match &e.argument {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
                 Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => {
-                    t.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
-                }
+                Expression::TemplateLiteral(t) => t.may_have_side_effects(is_global_reference),
                 _ => true,
             },
             match_expression!(ArrayExpressionElement) => {
@@ -314,9 +321,7 @@ impl MayHaveSideEffects for ObjectPropertyKind<'_> {
             ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
                 Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => {
-                    t.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
-                }
+                Expression::TemplateLiteral(t) => t.may_have_side_effects(is_global_reference),
                 _ => true,
             },
         }
@@ -335,6 +340,8 @@ impl MayHaveSideEffects for PropertyKey<'_> {
         match self {
             PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
+                // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
+                // But we can ignore that by using the assumption.
                 self.to_expression().may_have_side_effects(is_global_reference)
             }
         }
@@ -485,9 +492,7 @@ impl MayHaveSideEffects for Argument<'_> {
             Argument::SpreadElement(e) => match &e.argument {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
                 Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => {
-                    t.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
-                }
+                Expression::TemplateLiteral(t) => t.may_have_side_effects(is_global_reference),
                 _ => true,
             },
             match_expression!(Argument) => {

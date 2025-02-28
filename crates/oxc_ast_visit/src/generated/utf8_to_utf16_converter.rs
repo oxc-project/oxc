@@ -1,14 +1,11 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/utf8_to_utf16.rs`
 
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{
-    ast::*,
-    utf8_to_utf16::Utf8ToUtf16Converter,
-    visit::{VisitMut, walk_mut},
-};
+use crate::{VisitMut, utf8_to_utf16::Utf8ToUtf16Converter, walk_mut};
 
 impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     fn visit_program(&mut self, it: &mut Program<'a>) {

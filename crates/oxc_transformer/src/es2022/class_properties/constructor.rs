@@ -103,7 +103,8 @@ use std::iter;
 
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
 use oxc_syntax::{
     node::NodeId,

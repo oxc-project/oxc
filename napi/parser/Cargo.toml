@@ -22,8 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true }
-oxc_ast = { workspace = true, features = ["serialize"] } # enable feature only
+oxc = { workspace = true, features = ["ast_visit", "serialize"] }
 oxc_napi = { workspace = true }
 
 rustc-hash = { workspace = true }

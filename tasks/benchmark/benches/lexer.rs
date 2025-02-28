@@ -1,6 +1,7 @@
 #![expect(clippy::disallowed_methods)]
 use oxc_allocator::Allocator;
-use oxc_ast::{Visit, ast::*};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{
     Parser,
