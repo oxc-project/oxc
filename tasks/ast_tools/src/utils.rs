@@ -1,7 +1,12 @@
+use indexmap::{IndexMap, IndexSet};
 use phf::{Set as PhfSet, phf_set};
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
+use rustc_hash::FxBuildHasher;
 use syn::{Ident, LitInt};
+
+pub type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
+pub type FxIndexSet<K> = IndexSet<K, FxBuildHasher>;
 
 /// Reserved word in Rust.
 /// From <https://doc.rust-lang.org/reference/keywords.html>.
