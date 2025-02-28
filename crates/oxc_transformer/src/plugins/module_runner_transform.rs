@@ -1247,7 +1247,7 @@ class A extends __vite_ssr_import_0__.Foo {}",
         test_same(
             "
             import { Foo } from './dependency';
-            export default class A extends Foo {};
+            export default class A extends Foo {}
             export class B extends Foo {}
             ",
             "
