@@ -7,6 +7,7 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    pub mod no_absolute_path;
     pub mod no_mutable_exports;
     // pub mod no_deprecated;
     // pub mod no_unused_modules;
@@ -694,6 +695,7 @@ oxc_macros::declare_all_lint_rules! {
     import::default,
     import::export,
     import::first,
+    import::no_absolute_path,
     import::no_mutable_exports,
     import::no_named_default,
     import::no_namespace,
