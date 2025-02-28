@@ -59,24 +59,24 @@ source: crates/oxc_linter/src/tester.rs
   help: Merge the duplicated import into a single import statement
 
   ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
-   ╭─[no_duplicate_imports.tsx:1:10]
+   ╭─[no_duplicate_imports.tsx:1:1]
  1 │ export { os } from "os";
-   ·          ─┬
-   ·           ╰── Can be merged with this
+   · ────────────┬───────────
+   ·             ╰── Can be merged with this
  2 │           export { something } from "os";
-   ·                    ────┬────
-   ·                        ╰── This export is duplicated
-   ╰────
-  help: Merge the duplicated exports into a single export statement
-
-  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
-   ╭─[no_duplicate_imports.tsx:1:16]
- 1 │ import os from "os";
-   ·                ──┬─
-   ·                  ╰── Can be merged with this
- 2 │           export { os as foobar } from "os";
-   ·                    ──────┬─────
+   ·           ───────────────┬───────────────
    ·                          ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:16]
+ 1 │ import os from "os";
+   ·                ──┬─
+   ·                  ╰── Can be merged with this
+ 2 │           export { os as foobar } from "os";
+   ·           ─────────────────┬────────────────
+   ·                            ╰── This export is duplicated
  3 │           export { something } from "os";
    ╰────
   help: Merge the duplicated exports into a single export statement
@@ -88,8 +88,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ╰── Can be merged with this
  2 │           export { os as foobar } from "os";
  3 │           export { something } from "os";
-   ·                    ────┬────
-   ·                        ╰── This export is duplicated
+   ·           ───────────────┬───────────────
+   ·                          ╰── This export is duplicated
    ╰────
   help: Merge the duplicated exports into a single export statement
 
@@ -99,8 +99,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──┬─
    ·                  ╰── Can be merged with this
  2 │           export { something } from "os";
-   ·                    ────┬────
-   ·                        ╰── This export is duplicated
+   ·           ───────────────┬───────────────
+   ·                          ╰── This export is duplicated
    ╰────
   help: Merge the duplicated exports into a single export statement
 

@@ -155,7 +155,7 @@ impl Rule for NoDuplicateImports {
             for entry in &module_record.star_export_entries {
                 if let Some(module_request) = &entry.module_request {
                     let source = &module_request.name;
-                    let span = entry.span;
+                    let span = entry.statement_span;
 
                     if entry.import_name.is_all_but_default() {
                         if let Some(existing) = import_map.get(source) {
@@ -210,7 +210,7 @@ impl Rule for NoDuplicateImports {
             for entry in &module_record.indirect_export_entries {
                 if let Some(module_request) = &entry.module_request {
                     let source = &module_request.name;
-                    let span = entry.span;
+                    let span = entry.statement_span;
 
                     if let Some(existing) = import_map.get(source) {
                         if entry.import_name == ExportImportName::All {

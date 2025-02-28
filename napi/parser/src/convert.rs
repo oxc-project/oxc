@@ -86,8 +86,8 @@ impl From<&oxc::span::Span> for Span {
 impl From<&module_record::ExportEntry<'_>> for StaticExportEntry {
     fn from(e: &module_record::ExportEntry) -> Self {
         Self {
-            start: e.span.start,
-            end: e.span.end,
+            start: e.statement_span.start,
+            end: e.statement_span.end,
             module_request: e.module_request.as_ref().map(ValueSpan::from),
             import_name: ExportImportName::from(&e.import_name),
             export_name: ExportExportName::from(&e.export_name),

@@ -76,7 +76,7 @@ impl Rule for Export {
             if export_names.is_empty() {
                 ctx.diagnostic(no_named_export(module_request.name(), module_request.span()));
             } else {
-                all_export_names.insert(star_export_entry.span, export_names);
+                all_export_names.insert(star_export_entry.statement_span, export_names);
             }
         });
 

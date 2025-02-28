@@ -285,9 +285,6 @@ pub struct ExportEntry {
     /// Span of the export statement.
     pub statement_span: Span,
 
-    /// Span for the entire export entry
-    pub span: Span,
-
     /// The String value of the ModuleSpecifier of the ExportDeclaration.
     /// null if the ExportDeclaration does not have a ModuleSpecifier.
     pub module_request: Option<NameSpan>,
@@ -323,7 +320,6 @@ impl<'a> From<&oxc_syntax::module_record::ExportEntry<'a>> for ExportEntry {
     fn from(other: &oxc_syntax::module_record::ExportEntry<'a>) -> Self {
         Self {
             statement_span: other.statement_span,
-            span: other.span,
             module_request: other.module_request.as_ref().map(NameSpan::from),
             import_name: ExportImportName::from(&other.import_name),
             export_name: ExportExportName::from(&other.export_name),

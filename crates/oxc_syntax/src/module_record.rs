@@ -218,9 +218,6 @@ pub struct ExportEntry<'a> {
     /// Span of the import statement.
     pub statement_span: Span,
 
-    /// Span for the entire export entry
-    pub span: Span,
-
     /// The String value of the ModuleSpecifier of the ExportDeclaration.
     /// null if the ExportDeclaration does not have a ModuleSpecifier.
     pub module_request: Option<NameSpan<'a>>,
@@ -423,7 +420,6 @@ pub trait VisitMutModuleRecord {
 
     fn visit_export_entry(&mut self, export_entry: &mut ExportEntry) {
         self.visit_span(&mut export_entry.statement_span);
-        self.visit_span(&mut export_entry.span);
         if let Some(module_request) = &mut export_entry.module_request {
             self.visit_name_span(module_request);
         }
