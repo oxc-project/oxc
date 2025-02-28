@@ -379,6 +379,14 @@ fn pure_comment() {
     test_same("(/* @__PURE__ */ a()).b;\n");
 }
 
+#[test]
+fn pure_comment_additional() {
+    test_same("/* @__PURE__ */ a() || b;\n");
+    test_same("/* @__PURE__ */ a() && b;\n");
+    test_same("/* @__PURE__ */ a() ?? b;\n");
+    test_same("/* @__PURE__ */ a() ? b : c;\n");
+}
+
 // followup from https://github.com/oxc-project/oxc/pull/6422
 #[test]
 fn in_expr_in_sequence_in_for_loop_init() {

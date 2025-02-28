@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, MethodDefinitionKind, Statement},
+    ast::{AssignmentTarget, Expression, MethodDefinitionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -58,53 +58,47 @@ impl Rule for NoRedundantConstructorInit {
         if method.kind != MethodDefinitionKind::Constructor {
             return;
         }
-        let public_members = method
-            .value
-            .params
-            .items
-            .iter()
-            .filter_map(
-                |param| if param.is_public() { param.pattern.get_identifier_name() } else { None },
-            )
-            .collect::<Vec<_>>();
-        if public_members.is_empty() {
-            return;
+        for param in &method.value.params.items {
+            if !param.is_public() {
+                continue;
+            }
+            let Some(ident) = param.pattern.get_binding_identifier() else {
+                continue;
+            };
+            for reference in ctx.symbol_references(ident.symbol_id()) {
+                // check if the param is being read which would indicate an assignment
+                if !reference.is_read() {
+                    continue;
+                }
+
+                let Some(AstKind::AssignmentExpression(assignment_expr)) =
+                    ctx.nodes().parent_kind(reference.node_id())
+                else {
+                    continue;
+                };
+
+                // check for assigning to this: this.x = ?
+                let AssignmentTarget::StaticMemberExpression(static_member_expr) =
+                    &assignment_expr.left
+                else {
+                    continue;
+                };
+                if !matches!(&static_member_expr.object, Expression::ThisExpression(_)) {
+                    continue;
+                }
+                let assignment_name = static_member_expr.property.name;
+
+                // check both sides of assignment have the same name: this.x = x
+                let Expression::Identifier(assignment_target_ident) = &assignment_expr.right else {
+                    continue;
+                };
+                if assignment_target_ident.name != assignment_name {
+                    continue;
+                }
+
+                ctx.diagnostic(no_redundant_constructor_init_diagnostic(assignment_expr.span));
+            }
         }
-        let Some(body) = method.value.body.as_ref() else {
-            return;
-        };
-        body.statements.iter().for_each(|stmt| {
-            let Statement::ExpressionStatement(expr_stmt) = stmt else {
-                return;
-            };
-            let Expression::AssignmentExpression(assignment_expr) = &expr_stmt.expression else {
-                return;
-            };
-
-            // check for assigning to this: this.x = ?
-            let AssignmentTarget::StaticMemberExpression(static_member_expr) =
-                &assignment_expr.left
-            else {
-                return;
-            };
-            let Expression::ThisExpression(_this_expr) = &static_member_expr.object else {
-                return;
-            };
-            let assignment_name = static_member_expr.property.name;
-
-            // check both sides of assignment have the same name: this.x = x
-            let Expression::Identifier(assignment_target_ident) = &assignment_expr.right else {
-                return;
-            };
-            if assignment_target_ident.name != assignment_name {
-                return;
-            }
-
-            // check if this was a public param
-            if public_members.iter().any(|param| param == &assignment_name) {
-                ctx.diagnostic(no_redundant_constructor_init_diagnostic(expr_stmt.span));
-            }
-        });
     }
 }
 
@@ -139,6 +133,29 @@ fn test() {
           }
         }
         ",
+        r"
+        class Foo {
+          constructor(public name: unknown) {
+            this.name = 'other';
+          }
+        }
+        ",
+        r"
+        class Foo {
+          constructor(public name: unknown) {
+            this.name = name + 'edited';
+          }
+        }
+        ",
+        r"
+        class Foo {
+          constructor(public name: unknown) {
+            if (maybeTrue) {
+              this.name = name + 'edited';
+            }
+          }
+        }
+        ",
     ];
 
     let fail = vec![
@@ -154,6 +171,26 @@ fn test() {
           constructor(other: unknown, public name: unknown) {
             this.other = other;
             this.name = name;
+          }
+        }
+        ",
+        r"
+        class Foo {
+          constructor(public name: unknown) {
+            this.name = name;
+            this.name = name;
+            this.name = name;
+          }
+        }
+        ",
+        r"
+        class Foo {
+          constructor(public name: unknown) {
+            if (maybeTrue) {
+              this.name = name;
+            } else {
+              this.name = name + 'edited';
+            }
           }
         }
         ",

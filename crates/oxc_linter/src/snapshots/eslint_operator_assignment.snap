@@ -1,0 +1,497 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x + y
+   · ─────────
+   ╰────
+  help: Replace `x = x + y` with `x += y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (-=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x - y
+   · ─────────
+   ╰────
+  help: Replace `x = x - y` with `x -= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x * y
+   · ─────────
+   ╰────
+  help: Replace `x = x * y` with `x *= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = y * x
+   · ─────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = (y * z) * x
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (/=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x / y
+   · ─────────
+   ╰────
+  help: Replace `x = x / y` with `x /= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (%=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x % y
+   · ─────────
+   ╰────
+  help: Replace `x = x % y` with `x %= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (<<=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x << y
+   · ──────────
+   ╰────
+  help: Replace `x = x << y` with `x <<= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (>>=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x >> y
+   · ──────────
+   ╰────
+  help: Replace `x = x >> y` with `x >>= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (>>>=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x >>> y
+   · ───────────
+   ╰────
+  help: Replace `x = x >>> y` with `x >>>= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (&=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x & y
+   · ─────────
+   ╰────
+  help: Replace `x = x & y` with `x &= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (^=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x ^ y
+   · ─────────
+   ╰────
+  help: Replace `x = x ^ y` with `x ^= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (|=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x | y
+   · ─────────
+   ╰────
+  help: Replace `x = x | y` with `x |= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (-=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x[0] = x[0] - y
+   · ───────────────
+   ╰────
+  help: Replace `x[0] = x[0] - y` with `x[0] -= y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x.y[z['a']][0].b = x.y[z['a']][0].b * 2
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x + y
+   · ─────────
+   ╰────
+  help: Replace `x = x + y` with `x += y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = (x + y)
+   · ───────────
+   ╰────
+  help: Replace `x = (x + y)` with `x += y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x + (y)
+   · ───────────
+   ╰────
+  help: Replace `x = x + (y)` with `x += (y)`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x += (y)
+   · ────────
+   ╰────
+  help: Replace `x += (y)` with `x = x + (y)`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x += y
+   · ──────
+   ╰────
+  help: Replace `x += y` with `x = x + y`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo.bar = foo.bar + baz
+   · ───────────────────────
+   ╰────
+  help: Replace `foo.bar = foo.bar + baz` with `foo.bar += baz`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo.bar += baz
+   · ──────────────
+   ╰────
+  help: Replace `foo.bar += baz` with `foo.bar = foo.bar + baz`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ this.foo = this.foo + bar
+   · ─────────────────────────
+   ╰────
+  help: Replace `this.foo = this.foo + bar` with `this.foo += bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ this.foo += bar
+   · ───────────────
+   ╰────
+  help: Replace `this.foo += bar` with `this.foo = this.foo + bar`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo.bar.baz = foo.bar.baz + qux
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo.bar.baz += qux
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ this.foo.bar = this.foo.bar + baz
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ this.foo.bar += baz
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo[bar] = foo[bar] + baz
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ this[foo] = this[foo] + bar
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (>>>=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo[bar] >>>= baz
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (>>>=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ this[foo] >>>= bar
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (/=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo[5] = foo[5] / baz
+   · ─────────────────────
+   ╰────
+  help: Replace `foo[5] = foo[5] / baz` with `foo[5] /= baz`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (/=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ this[5] = this[5] / foo
+   · ───────────────────────
+   ╰────
+  help: Replace `this[5] = this[5] / foo` with `this[5] /= foo`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:6]
+ 1 │ /*1*/x/*2*/./*3*/y/*4*/= x.y +/*5*/z/*6*/./*7*/w/*8*/;
+   ·      ───────────────────────────────────────────
+   ╰────
+  help: Replace `x/*2*/./*3*/y/*4*/= x.y +/*5*/z/*6*/./*7*/w` with `x/*2*/./*3*/y/*4*/+=/*5*/z/*6*/./*7*/w`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ ╭─▶ x // 1
+ 2 │ │                . // 2
+ 3 │ │                y // 3
+ 4 │ │                = x.y + //4
+ 5 │ │                z //5
+ 6 │ │                . //6
+ 7 │ ╰─▶              w;
+   ╰────
+  help: Replace `x // 1
+        			 . // 2
+        			 y // 3
+        			 = x.y + //4
+        			 z //5
+        			 . //6
+        			 w` with `x // 1
+        			 . // 2
+        			 y // 3
+        			 += //4
+        			 z //5
+        			 . //6
+        			 w`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = /*1*/ x + y
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ ╭─▶ x = //1
+ 2 │ ╰─▶              x + y
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x.y = x/*1*/.y + z
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ ╭─▶ x.y = x. //1
+ 2 │ ╰─▶              y + z
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x = x /*1*/ + y
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ ╭─▶ x = x //1
+ 2 │ ╰─▶              + y
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:6]
+ 1 │ /*1*/x +=/*2*/y/*3*/;
+   ·      ──────────
+   ╰────
+  help: Replace `x +=/*2*/y` with `x = x +/*2*/y`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ ╭─▶ x +=//1
+ 2 │ ╰─▶              y
+   ╰────
+  help: Replace `x +=//1
+        			 y` with `x = x +//1
+        			 y`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:7]
+ 1 │ (/*1*/x += y)
+   ·       ──────
+   ╰────
+  help: Replace `x += y` with `x = x + y`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x/*1*/+=  y
+   · ───────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ ╭─▶ x //1
+ 2 │ ╰─▶              +=  y
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ (/*1*/x) +=  y
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x/*1*/.y +=  z
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ ╭─▶ x.//1
+ 2 │ ╰─▶              y +=  z
+   ╰────
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (^=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ (foo.bar) ^= ((((((((((((((((baz))))))))))))))))
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Replace `(foo.bar) ^= ((((((((((((((((baz))))))))))))))))` with `(foo.bar) = (foo.bar) ^ ((((((((((((((((baz))))))))))))))))`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (**=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo = foo ** bar
+   · ────────────────
+   ╰────
+  help: Replace `foo = foo ** bar` with `foo **= bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (**=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo **= bar
+   · ───────────
+   ╰────
+  help: Replace `foo **= bar` with `foo = foo ** bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (*=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo *= bar + 1
+   · ──────────────
+   ╰────
+  help: Replace `foo *= bar + 1` with `foo = foo * (bar + 1)`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (-=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo -= bar - baz
+   · ────────────────
+   ╰────
+  help: Replace `foo -= bar - baz` with `foo = foo - (bar - baz)`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo += bar + baz
+   · ────────────────
+   ╰────
+  help: Replace `foo += bar + baz` with `foo = foo + (bar + baz)`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo += bar = 1
+   · ──────────────
+   ╰────
+  help: Replace `foo += bar = 1` with `foo = foo + (bar = 1)`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (*=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo *= (bar + 1)
+   · ────────────────
+   ╰────
+  help: Replace `foo *= (bar + 1)` with `foo = foo * (bar + 1)`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo+=-bar
+   · ─────────
+   ╰────
+  help: Replace `foo+=-bar` with `foo= foo+-bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (/=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo/=bar
+   · ────────
+   ╰────
+  help: Replace `foo/=bar` with `foo= foo/bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (/=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo/=/**/bar
+   · ────────────
+   ╰────
+  help: Replace `foo/=/**/bar` with `foo= foo/ /**/bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (/=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ ╭─▶ foo/=//
+ 2 │ ╰─▶             bar
+   ╰────
+  help: Replace `foo/=//
+        			bar` with `foo= foo/ //
+        			bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (/=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo/=/^bar$/
+   · ────────────
+   ╰────
+  help: Replace `foo/=/^bar$/` with `foo= foo/ /^bar$/`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo+=+bar
+   · ─────────
+   ╰────
+  help: Replace `foo+=+bar` with `foo= foo+ +bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo+= +bar
+   · ──────────
+   ╰────
+  help: Replace `foo+= +bar` with `foo= foo+ +bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo+=/**/+bar
+   · ─────────────
+   ╰────
+  help: Replace `foo+=/**/+bar` with `foo= foo+/**/+bar`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ foo+=+bar===baz
+   · ───────────────
+   ╰────
+  help: Replace `foo+=+bar===baz` with `foo= foo+(+bar===baz)`.
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ (obj?.a).b = (obj?.a).b + y
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ obj.a = obj?.a + b
+   · ──────────────────
+   ╰────
+  help: Replace `obj.a = obj?.a + b` with `obj.a += b`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x += + (() => {})
+   · ─────────────────
+   ╰────
+  help: Replace `x += + (() => {})` with `x = x + + (() => {})`.
+
+  ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
+   ╭─[operator_assignment.tsx:1:1]
+ 1 │ x += + /** fooo */ (() => {})
+   · ─────────────────────────────
+   ╰────
+  help: Replace `x += + /** fooo */ (() => {})` with `x = x + + /** fooo */ (() => {})`.

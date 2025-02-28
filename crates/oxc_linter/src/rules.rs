@@ -33,6 +33,7 @@ mod import {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
+    pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
     pub mod default_param_last;
@@ -125,6 +126,7 @@ mod eslint {
     pub mod no_self_compare;
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
+    pub mod no_spaced_func;
     pub mod no_sparse_arrays;
     pub mod no_template_curly_in_string;
     pub mod no_ternary;
@@ -151,6 +153,7 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
+    pub mod operator_assignment;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
@@ -517,6 +520,7 @@ mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
+    pub mod no_nesting;
     pub mod no_new_statics;
     pub mod no_promise_in_callback;
     pub mod no_return_in_finally;
@@ -546,6 +550,7 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_unused_modules,
     eslint::array_callback_return,
     eslint::constructor_super,
+    eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
     eslint::default_param_last,
@@ -564,6 +569,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_spaced_func,
     eslint::no_useless_call,
     eslint::no_unneeded_ternary,
     eslint::no_extra_label,
@@ -664,6 +670,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::operator_assignment,
     eslint::prefer_promise_reject_errors,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
@@ -847,6 +854,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_nesting,
     promise::no_promise_in_callback,
     promise::no_callback_in_promise,
     promise::no_new_statics,

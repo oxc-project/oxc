@@ -1163,6 +1163,12 @@ impl<'a> ParserImpl<'a> {
             Expression::BinaryExpression(binary_expr) => {
                 Self::set_pure_on_call_or_new_expr(&mut binary_expr.left);
             }
+            Expression::LogicalExpression(logical_expr) => {
+                Self::set_pure_on_call_or_new_expr(&mut logical_expr.left);
+            }
+            Expression::ConditionalExpression(conditional_expr) => {
+                Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test);
+            }
             _ => {}
         }
     }
