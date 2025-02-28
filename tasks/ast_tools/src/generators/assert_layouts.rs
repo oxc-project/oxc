@@ -5,16 +5,18 @@
 //! Calculate each separately, and generate assertions for each.
 
 use std::{
+    borrow::Cow,
     cmp::{max, min},
     num,
 };
 
 use proc_macro2::TokenStream;
 use quote::quote;
+use rustc_hash::FxHashMap;
 use syn::Ident;
 
 use crate::{
-    AST_CRATE_PATH, Codegen, Generator,
+    Codegen, Generator,
     output::{Output, output_path},
     schema::{
         Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
@@ -39,37 +41,8 @@ impl Generator for AssertLayouts {
     }
 
     /// Generate assertions that calculated layouts are correct.
-    fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
-        let (assertions_64, assertions_32): (TokenStream, TokenStream) =
-            schema.types.iter().map(generate_layout_assertions).unzip();
-
-        let output = quote! {
-            use std::mem::{align_of, offset_of, size_of};
-
-            ///@@line_break
-            use nonmax::NonMaxU32;
-
-            ///@@line_break
-            use oxc_regular_expression::ast::*;
-            use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
-
-            ///@@line_break
-            use crate::ast::*;
-
-            ///@@line_break
-            #[cfg(target_pointer_width = "64")]
-            const _: () = { #assertions_64 };
-
-            ///@@line_break
-            #[cfg(target_pointer_width = "32")]
-            const _: () = { #assertions_32 };
-
-            ///@@line_break
-            #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
-            const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
-        };
-
-        Output::Rust { path: output_path(AST_CRATE_PATH, "assert_layouts.rs"), tokens: output }
+    fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
+        generate_assertions(schema)
     }
 }
 
@@ -417,20 +390,53 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
     }
 }
 
-/// Generate layout assertions for a type
-fn generate_layout_assertions(
+/// Generate layout assertions for all types.
+fn generate_assertions(schema: &Schema) -> Vec<Output> {
+    let mut assertions = FxHashMap::default();
+
+    for type_def in &schema.types {
+        generate_layout_assertions(type_def, &mut assertions, schema);
+    }
+
+    assertions
+        .into_iter()
+        .map(|(krate, (assertions_64, assertions_32))| {
+            let output = template(krate, &assertions_64, &assertions_32);
+
+            let crate_path = if krate.starts_with("napi/") {
+                Cow::Borrowed(krate)
+            } else {
+                Cow::Owned(format!("crates/{krate}"))
+            };
+            Output::Rust { path: output_path(&crate_path, "assert_layouts.rs"), tokens: output }
+        })
+        .collect()
+}
+
+/// Generate layout assertions for a type.
+fn generate_layout_assertions<'s>(
     type_def: &TypeDef,
-) -> (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream) {
+    assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
+    schema: &'s Schema,
+) {
     match type_def {
-        TypeDef::Struct(struct_def) => generate_layout_assertions_for_struct(struct_def),
-        TypeDef::Enum(enum_def) => generate_layout_assertions_for_enum(enum_def),
-        _ => (quote!(), quote!()),
+        TypeDef::Struct(struct_def) => {
+            generate_layout_assertions_for_struct(struct_def, assertions, schema);
+        }
+        TypeDef::Enum(enum_def) => {
+            generate_layout_assertions_for_enum(enum_def, assertions, schema);
+        }
+        _ => {}
     }
 }
 
 /// Generate layout assertions for a struct.
 /// This includes size and alignment assertions, plus assertions about offset of fields.
-fn generate_layout_assertions_for_struct(struct_def: &StructDef) -> (TokenStream, TokenStream) {
+fn generate_layout_assertions_for_struct<'s>(
+    struct_def: &StructDef,
+    assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
+    schema: &'s Schema,
+) {
     fn r#gen(struct_def: &StructDef, is_64: bool, struct_ident: &Ident) -> TokenStream {
         let layout =
             if is_64 { &struct_def.layout.layout_64 } else { &struct_def.layout.layout_32 };
@@ -458,18 +464,27 @@ fn generate_layout_assertions_for_struct(struct_def: &StructDef) -> (TokenStream
         }
     }
 
+    let (assertions_64, assertions_32) =
+        assertions.entry(struct_def.file(schema).krate()).or_default();
+
     let ident = struct_def.ident();
-    (r#gen(struct_def, true, &ident), r#gen(struct_def, false, &ident))
+    assertions_64.extend(r#gen(struct_def, true, &ident));
+    assertions_32.extend(r#gen(struct_def, false, &ident));
 }
 
 /// Generate layout assertions for an enum.
 /// This is just size and alignment assertions.
-fn generate_layout_assertions_for_enum(enum_def: &EnumDef) -> (TokenStream, TokenStream) {
+fn generate_layout_assertions_for_enum<'s>(
+    enum_def: &EnumDef,
+    assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
+    schema: &'s Schema,
+) {
+    let (assertions_64, assertions_32) =
+        assertions.entry(enum_def.file(schema).krate()).or_default();
+
     let ident = enum_def.ident();
-    (
-        generate_size_align_assertions(&enum_def.layout.layout_64, &ident),
-        generate_size_align_assertions(&enum_def.layout.layout_32, &ident),
-    )
+    assertions_64.extend(generate_size_align_assertions(&enum_def.layout.layout_64, &ident));
+    assertions_32.extend(generate_size_align_assertions(&enum_def.layout.layout_32, &ident));
 }
 
 /// Generate size and alignment assertions for a type.
@@ -480,5 +495,52 @@ fn generate_size_align_assertions(layout: &PlatformLayout, ident: &Ident) -> Tok
         ///@@line_break
         assert!(size_of::<#ident>() == #size);
         assert!(align_of::<#ident>() == #align);
+    }
+}
+
+/// Generate output for a crate.
+fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStream) -> TokenStream {
+    #[expect(clippy::match_same_arms)]
+    let imports = match krate {
+        "oxc_ast" => quote! {
+            use crate::ast::*;
+        },
+        "oxc_regular_expression" => quote! {
+            use crate::ast::*;
+        },
+        "oxc_span" => quote! {
+            use crate::*;
+        },
+        "oxc_syntax" => quote! {
+            use nonmax::NonMaxU32;
+
+            ///@@line_break
+            use crate::{number::*, operator::*, reference::*, scope::*, symbol::*};
+        },
+        _ => quote! {
+            use crate::*;
+        },
+    };
+
+    quote! {
+        #![allow(unused_imports)]
+
+        ///@@line_break
+        use std::mem::{align_of, offset_of, size_of};
+
+        ///@@line_break
+        #imports
+
+        ///@@line_break
+        #[cfg(target_pointer_width = "64")]
+        const _: () = { #assertions_64 };
+
+        ///@@line_break
+        #[cfg(target_pointer_width = "32")]
+        const _: () = { #assertions_32 };
+
+        ///@@line_break
+        #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
+        const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
     }
 }

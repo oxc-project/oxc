@@ -1586,7 +1586,6 @@ version = "0.53.0"
 dependencies = [
  "bitflags 2.8.0",
  "cow-utils",
- "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",

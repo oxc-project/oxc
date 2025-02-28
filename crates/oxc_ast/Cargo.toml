@@ -28,7 +28,6 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
-nonmax = { workspace = true }
 
 [features]
 default = []
