@@ -3,7 +3,7 @@ use std::iter;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     ToPrimitive,
-    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
+    constant_evaluation::{DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
@@ -16,7 +16,7 @@ impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
     pub fn remove_unused_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         match e {
-            Expression::ArrayExpression(_) => Self::fold_array_expression(e, ctx),
+            Expression::ArrayExpression(_) => self.fold_array_expression(e, ctx),
             Expression::UnaryExpression(_) => self.fold_unary_expression(e, ctx),
             Expression::NewExpression(e) => Self::fold_new_constructor(e, ctx),
             Expression::LogicalExpression(_) => self.fold_logical_expression(e, ctx),
@@ -72,70 +72,48 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `([1,2,3, foo()])` -> `foo()`
-    fn fold_array_expression(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_array_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::ArrayExpression(array_expr) = e else {
             return false;
         };
-
-        let mut transformed_elements = ctx.ast.vec();
-        let mut pending_spread_elements = ctx.ast.vec();
-
         if array_expr.elements.len() == 0 {
             return true;
         }
 
-        if array_expr
+        array_expr.elements.retain_mut(|el| match el {
+            ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(&ctx),
+            ArrayExpressionElement::Elision(_) => false,
+            match_expression!(ArrayExpressionElement) => {
+                let el_expr = el.to_expression_mut();
+                !self.remove_unused_expression(el_expr, ctx)
+            }
+        });
+        if array_expr.elements.len() == 0 {
+            return true;
+        }
+
+        // try removing the brackets "[]", if the array does not contain spread elements
+        // `a(), b()` is shorter than `[a(), b()]`,
+        // but `[...a], [...b]` is not shorter than `[...a, ...b]`
+        let keep_as_array = array_expr
             .elements
             .iter()
-            .any(|el| matches!(el, ArrayExpressionElement::SpreadElement(_)))
-        {
+            .any(|el| matches!(el, ArrayExpressionElement::SpreadElement(_)));
+        if keep_as_array {
             return false;
         }
 
-        for el in &mut array_expr.elements {
-            match el {
-                ArrayExpressionElement::SpreadElement(_) => {
-                    let spread_element = ctx.ast.move_array_expression_element(el);
-                    pending_spread_elements.push(spread_element);
-                }
-                ArrayExpressionElement::Elision(_) => {}
-                match_expression!(ArrayExpressionElement) => {
-                    let el = el.to_expression_mut();
-                    let el_expr = ctx.ast.move_expression(el);
-                    if !el_expr.is_literal_value(false)
-                        && !matches!(&el_expr, Expression::Identifier(ident) if !ctx.is_global_reference(ident))
-                    {
-                        if pending_spread_elements.len() > 0 {
-                            // flush pending spread elements
-                            transformed_elements.push(ctx.ast.expression_array(
-                                el_expr.span(),
-                                pending_spread_elements,
-                                None,
-                            ));
-                            pending_spread_elements = ctx.ast.vec();
-                        }
-                        transformed_elements.push(el_expr);
-                    }
-                }
-            }
-        }
-
-        if pending_spread_elements.len() > 0 {
-            transformed_elements.push(ctx.ast.expression_array(
-                array_expr.span,
-                pending_spread_elements,
-                None,
-            ));
-        }
-
-        if transformed_elements.is_empty() {
+        let mut expressions = ctx.ast.vec_from_iter(
+            array_expr.elements.drain(..).map(ArrayExpressionElement::into_expression),
+        );
+        if expressions.is_empty() {
             return true;
-        } else if transformed_elements.len() == 1 {
-            *e = transformed_elements.pop().unwrap();
+        } else if expressions.len() == 1 {
+            *e = expressions.pop().unwrap();
             return false;
         }
 
-        *e = ctx.ast.expression_sequence(array_expr.span, transformed_elements);
+        *e = ctx.ast.expression_sequence(array_expr.span, expressions);
         false
     }
 
@@ -326,18 +304,18 @@ mod test {
         test("([a])", "a");
         test("var a; ([a])", "var a;");
         test("([foo()])", "foo()");
+        test("[[foo()]]", "foo()");
         test_same("baz.map((v) => [v])");
     }
 
     #[test]
     fn test_array_literal_containing_spread() {
         test_same("([...c])");
-        // FIXME
-        test_same("([4, ...c, a])");
-        test_same("var a; ([4, ...c, a])");
+        test("([4, ...c, a])", "[...c, a]");
+        test("var a; ([4, ...c, a])", "var a; [...c]");
         test_same("([foo(), ...c, bar()])");
         test_same("([...a, b, ...c])");
-        test_same("var b; ([...a, b, ...c])");
+        test("var b; ([...a, b, ...c])", "var b; [...a, ...c]");
         test_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
     }
 
