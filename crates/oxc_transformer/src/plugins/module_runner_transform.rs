@@ -536,11 +536,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                         Statement::FunctionDeclaration(func),
                         Self::create_export(span, ident, DEFAULT, ctx),
                     ]);
-                    return;
+                } else {
+                    func.r#type = FunctionType::FunctionExpression;
+                    let right = Expression::FunctionExpression(func);
+                    new_stmts.push(Self::create_export_default_assignment(span, right, ctx));
                 }
-                // Without name, treat it as an expression
-                func.r#type = FunctionType::FunctionExpression;
-                Expression::FunctionExpression(func)
+                return;
             }
             ExportDefaultDeclarationKind::ClassDeclaration(mut class) => {
                 if let Some(id) = &class.id {
@@ -549,12 +550,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                         Statement::ClassDeclaration(class),
                         Self::create_export(span, ident, DEFAULT, ctx),
                     ]);
-                    return;
+                } else {
+                    class.r#type = ClassType::ClassExpression;
+                    let right = Expression::ClassExpression(class);
+                    new_stmts.push(Self::create_export_default_assignment(span, right, ctx));
                 }
-
-                // Without name, treat it as an expression
-                class.r#type = ClassType::ClassExpression;
-                Expression::ClassExpression(class)
+                return;
             }
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
                 // Do nothing for `export default interface Foo {}`
@@ -767,6 +768,22 @@ impl<'a> ModuleRunnerTransform<'a> {
         ]);
 
         ctx.ast.statement_expression(span, Self::create_define_property(arguments, ctx))
+    }
+
+    // __vite_ssr_exports__.default = right;
+    fn create_export_default_assignment(
+        span: Span,
+        right: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let object =
+            ctx.create_unbound_ident_expr(SPAN, SSR_MODULE_EXPORTS_KEY, ReferenceFlags::Read);
+        let property = ctx.ast.identifier_name(SPAN, DEFAULT);
+        let member = ctx.ast.member_expression_static(SPAN, object, property, false);
+        let target = AssignmentTarget::from(member);
+        let operator = AssignmentOperator::Assign;
+        let assignment = ctx.ast.expression_assignment(SPAN, operator, target, right);
+        ctx.ast.statement_expression(span, assignment)
     }
 }
 
@@ -1233,28 +1250,10 @@ Object.defineProperty(__vite_ssr_exports__, 'B', {
     #[test]
     fn should_handle_default_export_variants() {
         // default anonymous functions
-        test_same(
-            "export default function() {}",
-            "Object.defineProperty(__vite_ssr_exports__, 'default', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return function() {};
-  }
-});",
-        );
+        test_same("export default function() {}", "__vite_ssr_exports__.default = function() {};");
 
         // default anonymous class
-        test_same(
-            "export default class {}",
-            "Object.defineProperty(__vite_ssr_exports__, 'default', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return class {};
-  }
-});",
-        );
+        test_same("export default class {}", "__vite_ssr_exports__.default = class {};");
 
         // default named functions
         test_same(
