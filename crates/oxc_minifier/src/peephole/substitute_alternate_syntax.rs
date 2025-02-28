@@ -1457,7 +1457,7 @@ mod test {
     fn test_template_string_to_string() {
         test("x = `abcde`", "x = 'abcde'");
         test("x = `ab cd ef`", "x = 'ab cd ef'");
-        test_same("`hello ${name}`");
+        test_same("x = `hello ${name}`");
         test_same("tag `hello ${name}`");
         test_same("tag `hello`");
         test("x = `hello ${'foo'}`", "x = 'hello foo'");
