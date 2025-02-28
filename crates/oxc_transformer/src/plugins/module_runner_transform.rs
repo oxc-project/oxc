@@ -156,7 +156,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 }
             }
 
-            // Found that non-import statements, we can start hoisting import statements after this
+            // Found that non-import statements, we should start hoisting import statements after this
             if hoist_index.is_none() {
                 hoist_index.replace(new_stmts.len() - 1);
             }
