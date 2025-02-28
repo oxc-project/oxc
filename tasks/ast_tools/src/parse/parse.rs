@@ -207,6 +207,7 @@ impl<'c> Parser<'c> {
         let StructSkeleton { name, item, is_foreign, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
+        let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Struct(StructDef::new(
@@ -216,6 +217,7 @@ impl<'c> Parser<'c> {
             has_lifetime,
             is_foreign,
             file_id,
+            visibility,
             generated_derives,
             fields,
         ));
@@ -282,6 +284,7 @@ impl<'c> Parser<'c> {
         let has_lifetime = check_generics(&item.generics, &name);
         let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
         let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();
+        let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
         let mut type_def = TypeDef::Enum(EnumDef::new(
@@ -291,6 +294,7 @@ impl<'c> Parser<'c> {
             has_lifetime,
             is_foreign,
             file_id,
+            visibility,
             generated_derives,
             variants,
             inherits,
@@ -370,11 +374,7 @@ impl<'c> Parser<'c> {
         let type_id = self
             .parse_type_name(ty)
             .unwrap_or_else(|| panic!("Cannot parse type reference: {}", ty.to_token_stream()));
-        let visibility = match &field.vis {
-            SynVisibility::Public(_) => Visibility::Public,
-            SynVisibility::Restricted(_) => Visibility::Restricted,
-            SynVisibility::Inherited => Visibility::Private,
-        };
+        let visibility = convert_visibility(&field.vis);
 
         // Get doc comment
         let mut doc_comment = None;
@@ -912,4 +912,13 @@ fn check_attr_position(
         "`{type_name}` type has `#[{attr_name}]` attribute on a {position_debug_str}, \
         but `#[{attr_name}]` is not legal in this position."
     );
+}
+
+/// Convert `syn::Visibility` to our `Visibility` type.
+fn convert_visibility(vis: &SynVisibility) -> Visibility {
+    match vis {
+        SynVisibility::Public(_) => Visibility::Public,
+        SynVisibility::Restricted(_) => Visibility::Restricted,
+        SynVisibility::Inherited => Visibility::Private,
+    }
 }

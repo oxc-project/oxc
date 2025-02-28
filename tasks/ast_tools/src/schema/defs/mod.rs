@@ -24,7 +24,7 @@ pub use cell::CellDef;
 pub use r#enum::{Discriminant, EnumDef, VariantDef};
 pub use option::OptionDef;
 pub use primitive::PrimitiveDef;
-pub use r#struct::{FieldDef, StructDef, Visibility};
+pub use r#struct::{FieldDef, StructDef};
 pub use r#type::TypeDef;
 pub use vec::VecDef;
 
@@ -113,4 +113,13 @@ pub trait Def {
             &schema.types[self.id()]
         }
     }
+}
+
+/// Visibility of a struct / enum / struct field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Visibility {
+    Public,
+    /// `pub(crate)` or `pub(super)`
+    Restricted,
+    Private,
 }
