@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -184,8 +186,14 @@ pub trait Derive: Runner {
                     .collect::<Vec<_>>();
                 import_paths.sort_unstable();
 
+                let crate_path = if krate.starts_with("napi/") {
+                    Cow::Borrowed(krate)
+                } else {
+                    Cow::Owned(format!("crates/{krate}"))
+                };
+
                 Output::Rust {
-                    path: output_path(&format!("crates/{krate}"), &filename),
+                    path: output_path(&crate_path, &filename),
                     tokens: self.template(&import_paths, content.output),
                 }
             })
