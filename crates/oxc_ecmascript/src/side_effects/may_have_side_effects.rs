@@ -340,6 +340,8 @@ impl MayHaveSideEffects for PropertyKey<'_> {
         match self {
             PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
+                // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
+                // But we can ignore that by using the assumption.
                 self.to_expression().may_have_side_effects(is_global_reference)
             }
         }

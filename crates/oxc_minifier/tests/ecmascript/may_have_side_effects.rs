@@ -560,6 +560,11 @@ fn test_object_expression() {
     test("({[1]: 1})", false);
     test("({[1n]: 1})", false);
     test("({['1']: 1})", false);
+    // These actually have a side effect, but this treated as side-effect free.
+    test("({[{ toString() { console.log('sideeffect') } }]: 1})", false);
+    test("({[{ valueOf() { console.log('sideeffect') } }]: 1})", false);
+    test("({[{ [s]() { console.log('sideeffect') } }]: 1})", false); // assuming s is Symbol.toPrimitive
+    test("({[foo]: 1})", false);
     test("({[foo()]: 1 })", true);
     test("({a: foo()})", true);
     test("({...a})", true);
