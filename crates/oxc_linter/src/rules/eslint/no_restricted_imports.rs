@@ -1189,7 +1189,10 @@ impl NoRestrictedImports {
                 }
                 GlobResult::Found => {
                     let diagnostic = get_diagnostic_from_import_name_result_pattern(
-                        entry.statement_span, source, result, pattern,
+                        entry.statement_span,
+                        source,
+                        result,
+                        pattern,
                     );
 
                     found_errors.push(diagnostic);
@@ -1199,7 +1202,10 @@ impl NoRestrictedImports {
 
             if pattern.get_regex_result(module_request.name()) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
-                    entry.statement_span, source, result, pattern,
+                    entry.statement_span,
+                    source,
+                    result,
+                    pattern,
                 ));
             }
         }
