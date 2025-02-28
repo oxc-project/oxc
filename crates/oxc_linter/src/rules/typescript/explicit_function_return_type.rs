@@ -7,13 +7,13 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use rustc_hash::FxHashSet;
 
 use crate::{
     AstNode,
-    ast_util::{outermost_paren_parent, iter_outer_expressions},
+    ast_util::{iter_outer_expressions, outermost_paren_parent},
     context::{ContextHost, LintContext},
     rule::Rule,
     rules::eslint::array_callback_return::return_checker::{
@@ -471,13 +471,14 @@ impl ExplicitFunctionReturnType {
 
 // check function is IIFE (Immediately Invoked Function Expression)
 fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.semantic(), node.id()).next()
+    let Some(AstKind::CallExpression(call)) =
+        iter_outer_expressions(ctx.semantic(), node.id()).next()
     else {
-    return false;
+        return false;
     };
     call.callee.span().contains_inclusive(node.span())
-
 }
+
 /**
  * Checks if a node belongs to:
  * ```
