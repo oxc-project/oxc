@@ -512,38 +512,28 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 // JSX
 // --------------------
 
+/// Serializer for `IdentifierReference` variant of `JSXElementName` and `JSXMemberExpressionObject`.
+///
+/// Convert to `JSXIdentifier`.
 #[ast_meta]
-pub struct JSXElementNameConverter<'a, 'b>(pub &'b JSXElementName<'a>);
+#[estree(ts_type = "JSXIdentifier")]
+pub struct JSXElementIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>);
 
-impl ESTree for JSXElementNameConverter<'_, '_> {
+impl ESTree for JSXElementIdentifierReference<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        match self.0 {
-            JSXElementName::Identifier(ident) => ident.serialize(serializer),
-            JSXElementName::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer);
-            }
-            JSXElementName::NamespacedName(name) => name.serialize(serializer),
-            JSXElementName::MemberExpression(expr) => expr.serialize(serializer),
-            JSXElementName::ThisExpression(expr) => {
-                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer);
-            }
-        }
+        JSXIdentifier { span: self.0.span, name: self.0.name }.serialize(serializer);
     }
 }
 
+/// Serializer for `ThisExpression` variant of `JSXElementName` and `JSXMemberExpressionObject`.
+///
+/// Convert to `JSXIdentifier`.
 #[ast_meta]
-pub struct JSXMemberExpressionObjectConverter<'a, 'b>(pub &'b JSXMemberExpressionObject<'a>);
+#[estree(ts_type = "JSXIdentifier")]
+pub struct JSXElementThisExpression<'b>(pub &'b ThisExpression);
 
-impl ESTree for JSXMemberExpressionObjectConverter<'_, '_> {
+impl ESTree for JSXElementThisExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        match self.0 {
-            JSXMemberExpressionObject::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer);
-            }
-            JSXMemberExpressionObject::MemberExpression(expr) => expr.serialize(serializer),
-            JSXMemberExpressionObject::ThisExpression(expr) => {
-                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer);
-            }
-        }
+        JSXIdentifier { span: self.0.span, name: Atom::from("this") }.serialize(serializer);
     }
 }

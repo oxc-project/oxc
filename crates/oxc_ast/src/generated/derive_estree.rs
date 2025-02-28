@@ -1993,7 +1993,17 @@ impl ESTree for JSXClosingFragment {
 
 impl ESTree for JSXElementName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::JSXElementNameConverter(self).serialize(serializer)
+        match self {
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::IdentifierReference(it) => {
+                crate::serialize::JSXElementIdentifierReference(it).serialize(serializer)
+            }
+            Self::NamespacedName(it) => it.serialize(serializer),
+            Self::MemberExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => {
+                crate::serialize::JSXElementThisExpression(it).serialize(serializer)
+            }
+        }
     }
 }
 
@@ -2023,7 +2033,15 @@ impl ESTree for JSXMemberExpression<'_> {
 
 impl ESTree for JSXMemberExpressionObject<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::JSXMemberExpressionObjectConverter(self).serialize(serializer)
+        match self {
+            Self::IdentifierReference(it) => {
+                crate::serialize::JSXElementIdentifierReference(it).serialize(serializer)
+            }
+            Self::MemberExpression(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => {
+                crate::serialize::JSXElementThisExpression(it).serialize(serializer)
+            }
+        }
     }
 }
 

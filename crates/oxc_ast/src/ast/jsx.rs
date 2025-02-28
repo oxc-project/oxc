@@ -147,20 +147,18 @@ pub struct JSXClosingFragment {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
-#[estree(
-    via = JSXElementNameConverter,
-    custom_ts_def = "type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpression"
-)]
 pub enum JSXElementName<'a> {
     /// `<div />`
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
     /// `<Apple />`
+    #[estree(via = JSXElementIdentifierReference)]
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 1,
     /// `<Apple:Orange />`
     NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 2,
     /// `<Apple.Orange />`
     MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 3,
     /// `<this />`
+    #[estree(via = JSXElementThisExpression)]
     ThisExpression(Box<'a, ThisExpression>) = 4,
 }
 
@@ -229,16 +227,14 @@ pub struct JSXMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
-#[estree(
-    via = JSXMemberExpressionObjectConverter,
-    custom_ts_def = "type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression"
-)]
 pub enum JSXMemberExpressionObject<'a> {
     /// `<Apple.Orange />`
+    #[estree(via = JSXElementIdentifierReference)]
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
     /// `<Apple.Orange.Banana />`
     MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 1,
     /// `<this.Orange />`
+    #[estree(via = JSXElementThisExpression)]
     ThisExpression(Box<'a, ThisExpression>) = 2,
 }
 

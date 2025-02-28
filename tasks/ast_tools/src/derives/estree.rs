@@ -178,6 +178,9 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::String("rename", value) => {
                 enum_def.variants[variant_index].estree.rename = Some(value);
             }
+            AttrPart::String("via", value) => {
+                enum_def.variants[variant_index].estree.via = Some(value);
+            }
             _ => return Err(()),
         },
         // `#[estree]` attr on meta type
@@ -424,8 +427,17 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                 Self::#variant_ident => #value.serialize(serializer),
             }
         } else {
+            let value = if let Some(converter_name) = &variant.estree.via {
+                let converter = schema.meta_by_name(converter_name);
+                let krate = enum_def.file(schema).krate();
+                let converter_path = converter.import_path_from_crate(krate, schema);
+                quote!( #converter_path(it) )
+            } else {
+                quote!(it)
+            };
+
             quote! {
-                Self::#variant_ident(it) => it.serialize(serializer),
+                Self::#variant_ident(it) => #value.serialize(serializer),
             }
         }
     });

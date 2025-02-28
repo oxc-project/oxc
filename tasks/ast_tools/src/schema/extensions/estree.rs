@@ -65,6 +65,7 @@ pub struct ESTreeStructField {
 #[derive(Default, Debug)]
 pub struct ESTreeEnumVariant {
     pub rename: Option<String>,
+    pub via: Option<String>,
     pub is_ts: bool,
 }
 

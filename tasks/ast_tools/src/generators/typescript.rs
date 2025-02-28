@@ -11,6 +11,7 @@ use crate::{
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    utils::FxIndexSet,
 };
 
 use super::define_generator;
@@ -319,18 +320,29 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<
         }
     }
 
-    let own_variants_type_names = enum_def.variants.iter().map(|variant| {
-        if let Some(variant_type) = variant.field_type(schema) {
-            ts_type_name(variant_type, schema)
-        } else {
-            Cow::Owned(format!("'{}'", get_fieldless_variant_value(enum_def, variant)))
-        }
-    });
+    // Get variant type names.
+    // Collect into `FxIndexSet` to filter out duplicates.
+    let mut variant_type_names = enum_def
+        .variants
+        .iter()
+        .map(|variant| {
+            if let Some(variant_type) = variant.field_type(schema) {
+                if let Some(converter_name) = &variant.estree.via {
+                    Cow::Borrowed(get_ts_type_for_converter(converter_name, schema).unwrap())
+                } else {
+                    ts_type_name(variant_type, schema)
+                }
+            } else {
+                Cow::Owned(format!("'{}'", get_fieldless_variant_value(enum_def, variant)))
+            }
+        })
+        .collect::<FxIndexSet<_>>();
 
-    let inherits_type_names =
-        enum_def.inherits_types(schema).map(|inherited_type| ts_type_name(inherited_type, schema));
+    variant_type_names.extend(
+        enum_def.inherits_types(schema).map(|inherited_type| ts_type_name(inherited_type, schema)),
+    );
 
-    let union = own_variants_type_names.chain(inherits_type_names).join(" | ");
+    let union = variant_type_names.iter().join(" | ");
 
     let enum_name = enum_def.name();
     Some(format!("export type {enum_name} = {union};"))
