@@ -49,7 +49,8 @@ use std::mem;
 
 use metadata::LegacyDecoratorMetadata;
 use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
-use oxc_ast::{NONE, Visit, VisitMut, ast::*};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{Visit, VisitMut};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;

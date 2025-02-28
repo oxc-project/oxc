@@ -95,7 +95,8 @@ use indexmap::IndexMap;
 use rustc_hash::FxBuildHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
-use oxc_ast::{Visit, ast::*, visit::walk};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_span::CompactStr;

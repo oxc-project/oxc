@@ -6,15 +6,13 @@ use std::{
 
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
-use oxc_ast::{
-    Visit,
-    ast::{
-        Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
-        ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
-        TemplateLiteral,
-    },
+use oxc_ast::ast::{
+    Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
+    ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
+    PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
+    TemplateLiteral,
 };
+use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;

@@ -227,6 +227,9 @@ static SOURCE_PATHS: &[&str] = &[
 /// Path to `oxc_ast` crate
 const AST_CRATE_PATH: &str = "crates/oxc_ast";
 
+/// Path to `oxc_ast_visit` crate
+const AST_VISIT_CRATE_PATH: &str = "crates/oxc_ast_visit";
+
 /// Path to `oxc_ast_macros` crate
 const AST_MACROS_CRATE_PATH: &str = "crates/oxc_ast_macros";
 

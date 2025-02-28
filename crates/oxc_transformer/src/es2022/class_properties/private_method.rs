@@ -1,7 +1,8 @@
 //! ES2022: Class Properties
 //! Transform of private method uses e.g. `this.#method()`.
 
-use oxc_ast::{VisitMut, ast::*, visit::walk_mut};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::ScopeFlags;
 use oxc_span::SPAN;
 use oxc_traverse::TraverseCtx;

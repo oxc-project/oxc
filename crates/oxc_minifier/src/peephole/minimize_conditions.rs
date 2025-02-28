@@ -1315,14 +1315,14 @@ mod test {
 
     #[test]
     fn test_try_compress_type_of_equal_string() {
-        test("typeof foo === 'number'", "typeof foo == 'number'");
-        test("'number' === typeof foo", "typeof foo == 'number'");
-        test("typeof foo === `number`", "typeof foo == 'number'");
-        test("`number` === typeof foo", "typeof foo == 'number'");
-        test("typeof foo !== 'number'", "typeof foo != 'number'");
-        test("'number' !== typeof foo", "typeof foo != 'number'");
-        test("typeof foo !== `number`", "typeof foo != 'number'");
-        test("`number` !== typeof foo", "typeof foo != 'number'");
+        test("v = typeof foo === 'number'", "v = typeof foo == 'number'");
+        test("v = 'number' === typeof foo", "v = typeof foo == 'number'");
+        test("v = typeof foo === `number`", "v = typeof foo == 'number'");
+        test("v = `number` === typeof foo", "v = typeof foo == 'number'");
+        test("v = typeof foo !== 'number'", "v = typeof foo != 'number'");
+        test("v = 'number' !== typeof foo", "v = typeof foo != 'number'");
+        test("v = typeof foo !== `number`", "v = typeof foo != 'number'");
+        test("v = `number` !== typeof foo", "v = typeof foo != 'number'");
     }
 
     #[test]

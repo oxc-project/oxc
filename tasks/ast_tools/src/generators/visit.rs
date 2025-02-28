@@ -6,7 +6,7 @@ use quote::{ToTokens, format_ident, quote};
 use syn::{Expr, Ident, parse_str};
 
 use crate::{
-    AST_CRATE_PATH, Codegen, Generator, Result,
+    AST_VISIT_CRATE_PATH, Codegen, Generator, Result,
     output::{Output, output_path},
     schema::{
         Def, EnumDef, FieldDef, OptionDef, Schema, StructDef, TypeDef, VecDef,
@@ -75,10 +75,12 @@ impl Generator for VisitGenerator {
     fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
         let (visit_output, visit_mut_output) = generate_outputs(schema);
 
-        let visit_output =
-            Output::Rust { path: output_path(AST_CRATE_PATH, "visit.rs"), tokens: visit_output };
+        let visit_output = Output::Rust {
+            path: output_path(AST_VISIT_CRATE_PATH, "visit.rs"),
+            tokens: visit_output,
+        };
         let visit_mut_output = Output::Rust {
-            path: output_path(AST_CRATE_PATH, "visit_mut.rs"),
+            path: output_path(AST_VISIT_CRATE_PATH, "visit_mut.rs"),
             tokens: visit_mut_output,
         };
 
@@ -241,8 +243,8 @@ fn generate_output(
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
         ///@@line_break
-        use crate::ast::*;
-        use crate::ast_kind::#ast_kind_or_type_ident;
+        use oxc_ast::ast::*;
+        use oxc_ast::ast_kind::#ast_kind_or_type_ident;
 
         ///@@line_break
         use #walk_mod_ident::*;

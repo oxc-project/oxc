@@ -1457,7 +1457,7 @@ mod test {
     fn test_template_string_to_string() {
         test("x = `abcde`", "x = 'abcde'");
         test("x = `ab cd ef`", "x = 'ab cd ef'");
-        test_same("`hello ${name}`");
+        test_same("x = `hello ${name}`");
         test_same("tag `hello ${name}`");
         test_same("tag `hello`");
         test("x = `hello ${'foo'}`", "x = 'hello foo'");
@@ -1517,47 +1517,47 @@ mod test {
 
     #[test]
     fn test_fold_is_typeof_equals_undefined_resolved() {
-        test("var x; typeof x !== 'undefined'", "var x; x !== void 0");
-        test("var x; typeof x != 'undefined'", "var x; x !== void 0");
-        test("var x; 'undefined' !== typeof x", "var x; x !== void 0");
-        test("var x; 'undefined' != typeof x", "var x; x !== void 0");
+        test("var x; v = typeof x !== 'undefined'", "var x; v = x !== void 0");
+        test("var x; v = typeof x != 'undefined'", "var x; v = x !== void 0");
+        test("var x; v = 'undefined' !== typeof x", "var x; v = x !== void 0");
+        test("var x; v = 'undefined' != typeof x", "var x; v = x !== void 0");
 
-        test("var x; typeof x === 'undefined'", "var x; x === void 0");
-        test("var x; typeof x == 'undefined'", "var x; x === void 0");
-        test("var x; 'undefined' === typeof x", "var x; x === void 0");
-        test("var x; 'undefined' == typeof x", "var x; x === void 0");
+        test("var x; v = typeof x === 'undefined'", "var x; v = x === void 0");
+        test("var x; v = typeof x == 'undefined'", "var x; v = x === void 0");
+        test("var x; v = 'undefined' === typeof x", "var x; v = x === void 0");
+        test("var x; v = 'undefined' == typeof x", "var x; v = x === void 0");
 
         test(
-            "var x; function foo() { typeof x !== 'undefined' }",
-            "var x; function foo() { x !== void 0 }",
+            "var x; function foo() { v = typeof x !== 'undefined' }",
+            "var x; function foo() { v = x !== void 0 }",
         );
         test(
-            "typeof x !== 'undefined'; function foo() { var x }",
-            "typeof x < 'u'; function foo() { var x }",
+            "v = typeof x !== 'undefined'; function foo() { var x }",
+            "v = typeof x < 'u'; function foo() { var x }",
         );
-        test("typeof x !== 'undefined'; { var x }", "x !== void 0; var x;");
-        test("typeof x !== 'undefined'; { let x }", "typeof x < 'u'; { let x }");
-        test("typeof x !== 'undefined'; var x", "x !== void 0; var x");
+        test("v = typeof x !== 'undefined'; { var x }", "v = x !== void 0; var x;");
+        test("v = typeof x !== 'undefined'; { let x }", "v = typeof x < 'u'; { let x }");
+        test("v = typeof x !== 'undefined'; var x", "v = x !== void 0; var x");
         // input and output both errors with same TDZ error
-        test("typeof x !== 'undefined'; let x", "x !== void 0; let x");
+        test("v = typeof x !== 'undefined'; let x", "v = x !== void 0; let x");
 
-        test("typeof x.y === 'undefined'", "x.y === void 0");
-        test("typeof x.y !== 'undefined'", "x.y !== void 0");
-        test("typeof (x + '') === 'undefined'", "x + '' === void 0");
+        test("v = typeof x.y === 'undefined'", "v = x.y === void 0");
+        test("v = typeof x.y !== 'undefined'", "v = x.y !== void 0");
+        test("v = typeof (x + '') === 'undefined'", "v = x + '' === void 0");
     }
 
     /// Port from <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser_test.go#L4658>
     #[test]
     fn test_fold_is_typeof_equals_undefined() {
-        test("typeof x !== 'undefined'", "typeof x < 'u'");
-        test("typeof x != 'undefined'", "typeof x < 'u'");
-        test("'undefined' !== typeof x", "typeof x < 'u'");
-        test("'undefined' != typeof x", "typeof x < 'u'");
+        test("v = typeof x !== 'undefined'", "v = typeof x < 'u'");
+        test("v = typeof x != 'undefined'", "v = typeof x < 'u'");
+        test("v = 'undefined' !== typeof x", "v = typeof x < 'u'");
+        test("v = 'undefined' != typeof x", "v = typeof x < 'u'");
 
-        test("typeof x === 'undefined'", "typeof x > 'u'");
-        test("typeof x == 'undefined'", "typeof x > 'u'");
-        test("'undefined' === typeof x", "typeof x > 'u'");
-        test("'undefined' == typeof x", "typeof x > 'u'");
+        test("v = typeof x === 'undefined'", "v = typeof x > 'u'");
+        test("v = typeof x == 'undefined'", "v = typeof x > 'u'");
+        test("v = 'undefined' === typeof x", "v = typeof x > 'u'");
+        test("v = 'undefined' == typeof x", "v = typeof x > 'u'");
     }
 
     #[test]
@@ -1633,8 +1633,8 @@ mod test {
     fn test_property_key() {
         // Object Property
         test(
-            "({ '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ })",
-            "({  0: _,   a: _,    1: _,     1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ })",
+            "v = { '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ }",
+            "v = {  0: _,   a: _,    1: _,     1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ }",
         );
         // AssignmentTargetPropertyProperty
         test(

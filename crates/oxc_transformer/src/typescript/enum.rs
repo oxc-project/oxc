@@ -2,7 +2,8 @@ use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::ToInt32;
 use oxc_semantic::{ScopeFlags, ScopeId};

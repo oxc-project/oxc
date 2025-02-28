@@ -9,10 +9,10 @@ use napi_derive::napi;
 use oxc::{
     allocator::Allocator,
     ast::CommentKind,
+    ast_visit::utf8_to_utf16::Utf8ToUtf16,
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
-use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
 use oxc_napi::OxcError;
 
 mod convert;

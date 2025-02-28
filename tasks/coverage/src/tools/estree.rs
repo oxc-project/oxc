@@ -5,7 +5,7 @@ use std::{
 };
 
 use oxc::{
-    allocator::Allocator, ast::utf8_to_utf16::Utf8ToUtf16, diagnostics::OxcDiagnostic,
+    allocator::Allocator, ast_visit::utf8_to_utf16::Utf8ToUtf16, diagnostics::OxcDiagnostic,
     parser::Parser, span::SourceType,
 };
 

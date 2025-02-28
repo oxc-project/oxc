@@ -11,7 +11,8 @@ use wasm_bindgen::prelude::*;
 
 use oxc::{
     allocator::Allocator,
-    ast::{Comment as OxcComment, CommentKind, Visit, ast::Program, utf8_to_utf16::Utf8ToUtf16},
+    ast::{Comment as OxcComment, CommentKind, ast::Program},
+    ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16},
     codegen::{CodeGenerator, CodegenOptions},
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},

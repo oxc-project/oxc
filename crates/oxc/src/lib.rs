@@ -17,6 +17,12 @@ pub mod ast {
     pub use oxc_ast::*;
 }
 
+#[cfg(feature = "ast_visit")]
+pub mod ast_visit {
+    #[doc(inline)]
+    pub use oxc_ast_visit::*;
+}
+
 pub mod diagnostics {
     //! Error data types and utilities for handling/reporting them.
     //!

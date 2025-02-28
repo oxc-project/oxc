@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::{
-    AST_CRATE_PATH, Codegen, Generator,
+    AST_VISIT_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{Def, Schema, StructDef, TypeId},
     utils::create_ident,
@@ -21,7 +21,7 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
     fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
         let output = generate(schema, codegen);
         Output::Rust {
-            path: output_path(AST_CRATE_PATH, "utf8_to_utf16_converter.rs"),
+            path: output_path(AST_VISIT_CRATE_PATH, "utf8_to_utf16_converter.rs"),
             tokens: output,
         }
     }
@@ -75,12 +75,12 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     quote! {
         use oxc_span::GetSpan;
         use oxc_syntax::scope::ScopeFlags;
+        use oxc_ast::ast::*;
 
         ///@@line_break
         use crate::{
-            ast::*,
             utf8_to_utf16::Utf8ToUtf16Converter,
-            visit::{VisitMut, walk_mut},
+            VisitMut, walk_mut,
         };
 
         ///@@line_break

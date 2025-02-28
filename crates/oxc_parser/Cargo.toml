@@ -39,6 +39,7 @@ memchr = { workspace = true }
 
 [dev-dependencies]
 oxc_ast = { workspace = true, features = ["serialize"] }
+oxc_ast_visit = { workspace = true, features = ["serialize"] }
 pico-args = { workspace = true }
 
 [features]
