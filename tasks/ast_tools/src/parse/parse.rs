@@ -204,7 +204,7 @@ impl<'c> Parser<'c> {
 
     /// Parse [`StructSkeleton`] to yield a [`TypeDef`].
     fn parse_struct(&mut self, type_id: TypeId, skeleton: StructSkeleton) -> TypeDef {
-        let StructSkeleton { name, item, file_id } = skeleton;
+        let StructSkeleton { name, item, is_foreign, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
         let (generated_derives, plural_name) =
@@ -214,6 +214,7 @@ impl<'c> Parser<'c> {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
             generated_derives,
             fields,
@@ -277,7 +278,7 @@ impl<'c> Parser<'c> {
 
     /// Parse [`EnumSkeleton`] to yield a [`TypeDef`].
     fn parse_enum(&mut self, type_id: TypeId, skeleton: EnumSkeleton) -> TypeDef {
-        let EnumSkeleton { name, item, inherits, file_id } = skeleton;
+        let EnumSkeleton { name, item, inherits, is_foreign, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
         let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();
@@ -288,6 +289,7 @@ impl<'c> Parser<'c> {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
             generated_derives,
             variants,

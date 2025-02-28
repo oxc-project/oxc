@@ -444,9 +444,9 @@ fn generate_layout_assertions_for_struct<'s>(
         let size_align_assertions = generate_size_align_assertions(layout, struct_ident);
 
         let offset_asserts = struct_def.fields.iter().filter_map(|field| {
-            if field.visibility != Visibility::Public {
-                // Cannot create assertions for fields which are not public, as assertions
-                // are generated in `oxc_ast` crate, and those types are in other crates
+            if struct_def.is_foreign || field.visibility == Visibility::Private {
+                // Cannot create assertions for private fields (cant access them)
+                // or foreign types (we don't know what fields they have)
                 return None;
             }
 

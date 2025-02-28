@@ -27,6 +27,7 @@ pub struct StructDef {
     pub name: String,
     pub plural_name: Option<String>,
     pub has_lifetime: bool,
+    pub is_foreign: bool,
     pub file_id: FileId,
     pub generated_derives: Derives,
     pub fields: Vec<FieldDef>,
@@ -42,11 +43,13 @@ pub struct StructDef {
 
 impl StructDef {
     /// Create new [`StructDef`].
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         id: TypeId,
         name: String,
         plural_name: Option<String>,
         has_lifetime: bool,
+        is_foreign: bool,
         file_id: FileId,
         generated_derives: Derives,
         fields: Vec<FieldDef>,
@@ -56,6 +59,7 @@ impl StructDef {
             name,
             plural_name,
             has_lifetime,
+            is_foreign,
             file_id,
             generated_derives,
             fields,
