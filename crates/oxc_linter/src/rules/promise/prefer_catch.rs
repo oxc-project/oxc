@@ -1,3 +1,7 @@
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -48,7 +52,35 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferCatch {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ExpressionStatement(expr) = node.kind() else {
+            return;
+        };
+
+        let Expression::CallExpression(ref call_expr) = expr.expression else {
+            return;
+        };
+
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
+
+        let is_promise_then_call = member_expr
+            .static_property_name()
+            .map_or_else(|| false, |prop_name| matches!(prop_name, "then"));
+
+        if !is_promise_then_call {
+            println!("_______");
+
+            println!("not a promise then: {node:?}");
+            println!("_______");
+        }
+        // todo is arg count geq to 2? if so then flag violation
+
+        //println!("aa {is_promise_then_call:?}");
+        //println!("aa {node:?}");
+        //println!("call {call_expr:?}");
+    }
 }
 
 #[test]
@@ -56,6 +88,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // not promise related
+        "foo()",
+        "a.foo()",
+        "var a = new Foo()",
+        // I added these ^^
         "prom.then()",
         "prom.then(fn)",
         "prom.then(fn1).then(fn2)",
