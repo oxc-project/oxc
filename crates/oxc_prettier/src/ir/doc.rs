@@ -52,13 +52,3 @@ pub struct IndentIfBreak<'a> {
     pub contents: Box<'a, Doc<'a>>,
     pub group_id: GroupId,
 }
-
-// NOTE: Really needed? Just use `Doc` as a separator?
-#[derive(Clone, Copy)]
-pub enum JoinSeparator {
-    Softline,
-    Hardline,
-    CommaLine,  // [",", line]
-    CommaSpace, // ", "
-    Literalline,
-}
