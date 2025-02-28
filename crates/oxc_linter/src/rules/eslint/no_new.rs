@@ -28,18 +28,14 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// new Person();
-    /// ```
     ///
-    /// ```javascript
     /// (() => { new Date() })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// var a = new Date()
-    /// ```
     ///
-    /// ```javascript
     /// (() => new Date())
     /// ```
     NoNew,
