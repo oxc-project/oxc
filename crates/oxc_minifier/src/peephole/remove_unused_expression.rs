@@ -13,17 +13,6 @@ impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
     pub fn remove_unused_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         match e {
-            Expression::NullLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::BigIntLiteral(_)
-            | Expression::StringLiteral(_)
-            | Expression::ThisExpression(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::FunctionExpression(_)
-            | Expression::ArrowFunctionExpression(_)
-            | Expression::MetaProperty(_) => true,
-            Expression::Identifier(ident) => ctx.symbols().has_binding(ident.reference_id()),
             Expression::ArrayExpression(_) => Self::fold_array_expression(e, ctx),
             Expression::UnaryExpression(_) => self.fold_unary_expression(e, ctx),
             Expression::NewExpression(e) => Self::fold_new_constructor(e, ctx),
@@ -32,10 +21,13 @@ impl<'a> PeepholeOptimizations {
             // TODO
             // Expression::TemplateLiteral(_)
             // | Expression::ObjectExpression(_)
-            // | Expression::ConditionalExpression(_) => {
+            // | Expression::ConditionalExpression(_)
+            // | Expression::BinaryExpression(_)
+            // | Expression::CallExpression(_)
+            // | Expression::NewExpression(_) => {
             // false
             // }
-            _ => false,
+            _ => !e.may_have_side_effects(&ctx),
         }
     }
 
