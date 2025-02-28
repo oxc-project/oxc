@@ -1225,24 +1225,30 @@ class A extends __vite_ssr_import_0__.Foo {}",
     #[test]
     fn should_declare_exported_super_class() {
         test_same(
-            "import { Foo } from './dependency'; export default class A extends Foo {} export class B extends Foo {}",
-            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['Foo'] });
-class A extends __vite_ssr_import_0__.Foo {}
-Object.defineProperty(__vite_ssr_exports__, 'default', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return A;
-  }
-});
-class B extends __vite_ssr_import_0__.Foo {}
-Object.defineProperty(__vite_ssr_exports__, 'B', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return B;
-  }
-});",
+            "
+            import { Foo } from './dependency';
+            export default class A extends Foo {};
+            export class B extends Foo {}
+            ",
+            "
+            const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['Foo'] });
+            class A extends __vite_ssr_import_0__.Foo {}
+            Object.defineProperty(__vite_ssr_exports__, 'default', {
+              enumerable: true,
+              configurable: true,
+              get() {
+                return A;
+              }
+            });
+            class B extends __vite_ssr_import_0__.Foo {}
+            Object.defineProperty(__vite_ssr_exports__, 'B', {
+              enumerable: true,
+              configurable: true,
+              get() {
+                return B;
+              }
+            });
+            ",
         );
     }
 
