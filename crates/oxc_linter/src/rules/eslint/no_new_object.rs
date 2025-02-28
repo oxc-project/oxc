@@ -2,7 +2,6 @@ use oxc_ast::AstKind;
 use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -19,62 +18,34 @@ pub struct NoNewObject;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows calling the Object constructor with new
+    /// This rule disallows using `new Object()` to create objects and encourages using
+    /// the object literal `{}` instead.
     ///
     /// ### Why is this bad?
     ///
-    /// The Object constructor is used to create new generic objects in JavaScript, such as:
-    ///
-    /// ```javascript
-    /// var myObject = new Object();
-    /// ```
-    ///
-    /// However, this is no different from using the more concise object literal syntax:
-    ///
-    /// ```javascript
-    /// var myObject = {};
-    /// ```
-    ///
-    /// For this reason, many prefer to always use the object literal syntax and never use the
-    /// Object constructor.
-    ///
-    /// While there are no performance differences between the two approaches, the byte savings and
-    /// conciseness of the object literal form is what has made it the de facto way of creating new
-    /// objects.
+    /// Using `new Object()` is longer and less clear than `{}`. While both approaches
+    /// work the same way and have no performance difference, the object literal is more
+    /// concise, easier to read, and aligns with standard JavaScript practices.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// var foo = new Object()
-    /// ```
-    ///
-    /// ```javascript
-    /// new Object()
-    /// ```
-    ///
-    /// ```javascript
-    /// const a = new Object()
+    /// const foo = new Object()
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// var myObject = {};
-    /// ```
+    /// const foo = {};
     ///
-    /// ```javascript
     /// var Object = function Object() {};
     /// new Object();
-    /// ```
     ///
-    /// ```javascript
     /// class Object {
     ///     constructor(){}
     /// }
     /// new Object();
-    /// ```
     ///
-    /// ```javascript
     /// import { Object } from './'
     /// new Object();
     /// ```
@@ -90,23 +61,15 @@ impl Rule for NoNewObject {
             return;
         };
 
-        let Expression::Identifier(ident) = &new_expr.callee else {
+        let Expression::Identifier(ident) = new_expr.callee.get_inner_expression() else {
             return;
         };
 
-        if ident.name != "Object" {
-            return;
-        }
-
         // If `Object` refers to a custom identifier defined in the source code then the use of the `new`
         // constructor is allowed.
-        let is_custom_object_id: bool = !ident.is_global_reference_name("Object", ctx.symbols());
-
-        if is_custom_object_id {
-            return;
+        if ident.name == "Object" && ctx.semantic().is_reference_to_global_variable(ident) {
+            ctx.diagnostic(no_new_object_diagnostic(new_expr.span));
         }
-
-        ctx.diagnostic(no_new_object_diagnostic(new_expr.span));
     }
 }
 
@@ -119,21 +82,16 @@ fn test() {
         "var myObject = new CustomObject();",
         "var foo = new foo.Object()",
         "var Object = function Object() {};
-			            new Object();",
+		new Object();",
         "var x = something ? MyClass : Object;
-			        var y = new x();",
+		var y = new x();",
         "
-			        class Object {
-			            constructor(){
-			
-			            }
-			        }
-			        new Object();
-			        ", // { "ecmaVersion": 6 },
-        "
-			        import { Object } from './'
-			        new Object();
-			        ", // { "ecmaVersion": 6, "sourceType": "module" }
+		class Object {
+			constructor(){}
+		}
+		new Object();", // { "ecmaVersion": 6 },
+        "import { Object } from './'
+		new Object();", // { "ecmaVersion": 6, "sourceType": "module" }
     ];
 
     let fail = vec![
