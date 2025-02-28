@@ -484,7 +484,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         let export = if let Some(exported) = exported {
             // `export * as foo from 'vue'` ->
-            // `defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });`
+            // `Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });`
             Self::create_export(span, ident, exported.name(), ctx)
         } else {
             let callee = ctx.ast.expression_identifier(SPAN, SSR_EXPORT_ALL_KEY);
