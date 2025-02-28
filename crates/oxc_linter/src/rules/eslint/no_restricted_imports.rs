@@ -1158,8 +1158,12 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let diagnostic =
-                get_diagnostic_from_import_name_result_path(entry.span, source, result, path);
+            let diagnostic = get_diagnostic_from_import_name_result_path(
+                entry.statement_span,
+                source,
+                result,
+                path,
+            );
 
             ctx.diagnostic(diagnostic);
         }
@@ -1185,7 +1189,7 @@ impl NoRestrictedImports {
                 }
                 GlobResult::Found => {
                     let diagnostic = get_diagnostic_from_import_name_result_pattern(
-                        entry.span, source, result, pattern,
+                        entry.statement_span, source, result, pattern,
                     );
 
                     found_errors.push(diagnostic);
@@ -1195,7 +1199,7 @@ impl NoRestrictedImports {
 
             if pattern.get_regex_result(module_request.name()) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
-                    entry.span, source, result, pattern,
+                    entry.statement_span, source, result, pattern,
                 ));
             }
         }
@@ -2098,7 +2102,6 @@ fn test() {
         ),
         (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export * as ns from "fs";"#, Some(serde_json::json!(["fs"]))),
-        // ToDo: wrong span
         (r#"export {a} from "fs";"#, Some(serde_json::json!(["fs"]))),
         (
             r#"export {foo as b} from "fs";"#,
@@ -2150,7 +2153,6 @@ fn test() {
                  }]
             }])),
         ),
-        // ToDo: wrong span
         (
             r#"export * as ns from "fs";"#,
             Some(serde_json::json!([{
