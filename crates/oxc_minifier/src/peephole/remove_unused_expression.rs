@@ -1,5 +1,8 @@
+use std::iter;
+
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
+    ToPrimitive,
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
@@ -18,9 +21,9 @@ impl<'a> PeepholeOptimizations {
             Expression::NewExpression(e) => Self::fold_new_constructor(e, ctx),
             Expression::LogicalExpression(_) => self.fold_logical_expression(e, ctx),
             Expression::SequenceExpression(_) => self.fold_sequence_expression(e, ctx),
+            Expression::TemplateLiteral(_) => self.fold_template_literal(e, ctx),
             // TODO
-            // Expression::TemplateLiteral(_)
-            // | Expression::ObjectExpression(_)
+            // Expression::ObjectExpression(_)
             // | Expression::ConditionalExpression(_)
             // | Expression::BinaryExpression(_)
             // | Expression::CallExpression(_)
@@ -181,6 +184,79 @@ impl<'a> PeepholeOptimizations {
         }
         false
     }
+
+    // "`${1}2${foo()}3`" -> "`${foo()}`"
+    fn fold_template_literal(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::TemplateLiteral(temp_lit) = e else { return false };
+        if temp_lit.expressions.is_empty() {
+            return true;
+        }
+
+        let mut transformed_elements = ctx.ast.vec();
+        let mut pending_to_string_required_exprs = ctx.ast.vec();
+
+        for mut e in temp_lit.expressions.drain(..) {
+            if e.to_primitive(&ctx).is_symbol() != Some(false) {
+                pending_to_string_required_exprs.push(e);
+            } else if !self.remove_unused_expression(&mut e, ctx) {
+                if pending_to_string_required_exprs.len() > 0 {
+                    // flush pending to string required expressions
+                    let expressions =
+                        ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
+                    let mut quasis = ctx.ast.vec_from_iter(
+                        iter::repeat_with(|| {
+                            ctx.ast.template_element(
+                                e.span(),
+                                false,
+                                TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                            )
+                        })
+                        .take(expressions.len() + 1),
+                    );
+                    quasis
+                        .last_mut()
+                        .expect("template literal must have at least one quasi")
+                        .tail = true;
+                    transformed_elements.push(ctx.ast.expression_template_literal(
+                        e.span(),
+                        quasis,
+                        expressions,
+                    ));
+                }
+                transformed_elements.push(e);
+            }
+        }
+
+        if pending_to_string_required_exprs.len() > 0 {
+            let expressions = ctx.ast.vec_from_iter(pending_to_string_required_exprs.drain(..));
+            let mut quasis = ctx.ast.vec_from_iter(
+                iter::repeat_with(|| {
+                    ctx.ast.template_element(
+                        temp_lit.span,
+                        false,
+                        TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                    )
+                })
+                .take(expressions.len() + 1),
+            );
+            quasis.last_mut().expect("template literal must have at least one quasi").tail = true;
+            transformed_elements.push(ctx.ast.expression_template_literal(
+                temp_lit.span,
+                quasis,
+                expressions,
+            ));
+        }
+
+        if transformed_elements.is_empty() {
+            return true;
+        } else if transformed_elements.len() == 1 {
+            *e = transformed_elements.pop().unwrap();
+            return false;
+        }
+
+        *e = ctx.ast.expression_sequence(temp_lit.span, transformed_elements);
+        false
+    }
 }
 
 #[cfg(test)]
@@ -317,5 +393,20 @@ mod test {
 
         test("({ [bar()]: foo() })", "bar(), foo()");
         test_same("({ ...baz, [bar()]: foo() })");
+    }
+
+    #[test]
+    fn test_fold_template_literal() {
+        test("`a${b}c${d}e`", "`${b}${d}`");
+        test("`stuff ${x} ${1}`", "`${x}`");
+        test("`stuff ${1} ${y}`", "`${y}`");
+        test("`stuff ${x} ${y}`", "`${x}${y}`");
+        test("`stuff ${x ? 1 : 2} ${y}`", "x ? 1 : 2, `${y}`"); // can be improved to "x, `${y}`"
+        test("`stuff ${x} ${y ? 1 : 2}`", "`${x}`, y ? 1 : 2"); // can be improved to "`${x}`, y"
+        test("`stuff ${x} ${y ? 1 : 2} ${z}`", "`${x}`, y ? 1 : 2, `${z}`"); // can be improved to "`${x}`, y, `${z}`"
+
+        test("`4${c}${+a}`", "`${c}`, +a");
+        test("`${+foo}${c}${+bar}`", "+foo, `${c}`, +bar");
+        test("`${a}${+b}${c}`", "`${a}`, +b, `${c}`");
     }
 }

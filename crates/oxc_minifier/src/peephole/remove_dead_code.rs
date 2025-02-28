@@ -470,7 +470,7 @@ mod test {
 
         test("{'hi'}", "");
         test("{x==3}", "x == 3");
-        test("{`hello ${foo}`}", "`hello ${foo}`");
+        test("{`hello ${foo}`}", "`${foo}`");
         test("{ (function(){x++}) }", "");
         test("{ (function foo(){x++; foo()}) }", "");
         test("function f(){return;}", "function f(){}");
