@@ -162,9 +162,16 @@ fn calculate_layout_for_struct(type_id: TypeId, schema: &mut Schema) -> Layout {
             layout.align = max(layout.align, field_layout.align);
 
             // Update niche.
-            // Take the largest niche. Preference for earlier niche if 2 fields have niches of same size.
+            // Take the largest niche. Preference for (in order):
+            // * Largest single range of niche values.
+            // * Largest number of niche values at start of range.
+            // * Earlier field.
             if let Some(field_niche) = &field_layout.niche {
-                if layout.niche.as_ref().is_none_or(|niche| field_niche.count > niche.count) {
+                if layout.niche.as_ref().is_none_or(|niche| {
+                    field_niche.count_max() > niche.count_max()
+                        || (field_niche.count_max() == niche.count_max()
+                            && field_niche.count_start > niche.count_start)
+                }) {
                     let mut niche = field_niche.clone();
                     niche.offset += offset;
                     layout.niche = Some(niche);
@@ -258,9 +265,7 @@ fn calculate_layout_for_enum(type_id: TypeId, schema: &mut Schema) -> Layout {
     let niches_end = Discriminant::MAX - max_discriminant;
 
     if niches_start != 0 || niches_end != 0 {
-        let is_range_start = niches_start >= niches_end;
-        let count = u32::from(if is_range_start { niches_start } else { niches_end });
-        let niche = Niche::new(0, 1, is_range_start, count);
+        let niche = Niche::new(0, 1, u32::from(niches_start), u32::from(niches_end));
         layout_64.niche = Some(niche.clone());
         layout_32.niche = Some(niche);
     }
@@ -284,14 +289,18 @@ fn calculate_layout_for_option(type_id: TypeId, schema: &mut Schema) -> Layout {
     #[expect(clippy::items_after_statements)]
     fn consume_niche(layout: &mut PlatformLayout) {
         if let Some(niche) = &mut layout.niche {
-            if niche.count == 1 {
-                layout.niche = None;
+            if niche.count_start == 0 {
+                niche.count_end -= 1;
             } else {
-                niche.count -= 1;
+                niche.count_start -= 1;
+            }
+
+            if niche.count_start == 0 && niche.count_end == 0 {
+                layout.niche = None;
             }
         } else {
             layout.size += layout.align;
-            layout.niche = Some(Niche::new(0, 1, false, 254));
+            layout.niche = Some(Niche::new(0, 1, 0, 254));
         }
     }
 
@@ -307,8 +316,8 @@ fn calculate_layout_for_option(type_id: TypeId, schema: &mut Schema) -> Layout {
 /// `Box`es are pointer-sized, with a single niche (like `NonNull`).
 fn calculate_layout_for_box() -> Layout {
     Layout {
-        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, true, 1)),
-        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, true, 1)),
+        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
     }
 }
 
@@ -319,8 +328,8 @@ fn calculate_layout_for_box() -> Layout {
 /// They have a single niche on the first field - the pointer which is `NonNull`.
 fn calculate_layout_for_vec() -> Layout {
     Layout {
-        layout_64: PlatformLayout::from_size_align_niche(32, 8, Niche::new(0, 8, true, 1)),
-        layout_32: PlatformLayout::from_size_align_niche(16, 4, Niche::new(0, 4, true, 1)),
+        layout_64: PlatformLayout::from_size_align_niche(32, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(16, 4, Niche::new(0, 4, 1, 0)),
     }
 }
 
@@ -343,8 +352,8 @@ fn calculate_layout_for_cell(type_id: TypeId, schema: &mut Schema) -> Layout {
 fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
     // `&str` and `Atom` are a `NonNull` pointer + `usize` pair. Niche for 0 on the pointer field
     let str_layout = Layout {
-        layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, true, 1)),
-        layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, true, 1)),
+        layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, 1, 0)),
     };
     // `usize` and `isize` are pointer-sized, but with no niche
     let usize_layout = Layout {
@@ -353,13 +362,13 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
     };
     // `NonZeroUsize` and `NonZeroIsize` are pointer-sized, with a single niche
     let non_zero_usize_layout = Layout {
-        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, true, 1)),
-        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, true, 1)),
+        layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
     };
 
     #[expect(clippy::match_same_arms)]
     match primitive_def.name() {
-        "bool" => Layout::from_size_align_niche(1, 1, Niche::new(0, 1, false, 254)),
+        "bool" => Layout::from_size_align_niche(1, 1, Niche::new(0, 1, 0, 254)),
         "u8" => Layout::from_type::<u8>(),
         "u16" => Layout::from_type::<u16>(),
         "u32" => Layout::from_type::<u32>(),
