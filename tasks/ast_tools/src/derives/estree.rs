@@ -140,6 +140,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::StructField(struct_def, field_index) => match part {
             AttrPart::Tag("skip") => struct_def.fields[field_index].estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.fields[field_index].estree.flatten = true,
+            AttrPart::Tag("no_flatten") => struct_def.fields[field_index].estree.no_flatten = true,
             AttrPart::Tag("json_safe") => struct_def.fields[field_index].estree.json_safe = true,
             AttrPart::String("rename", value) => {
                 struct_def.fields[field_index].estree.rename = Some(value);
@@ -488,6 +489,8 @@ pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
 pub fn should_flatten_field(field: &FieldDef, schema: &Schema) -> bool {
     if field.estree.flatten {
         true
+    } else if field.estree.no_flatten {
+        false
     } else {
         let field_type = field.type_def(schema);
         matches!(field_type, TypeDef::Struct(field_struct_def) if field_struct_def.estree.flatten)
