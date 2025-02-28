@@ -47,13 +47,16 @@ impl std::ops::Deref for ExplicitFunctionReturnType {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces that functions do have an explicit return type annotation.
+    /// This rule enforces that functions have an explicit return type annotation.
     ///
     /// ### Why is this bad?
     ///
-    /// Explicit return types do make it visually more clear what type is
-    /// returned by a function. They can also speed up TypeScript type checking
-    /// performance in large codebases with many large functions.
+    /// Explicit return types make it clearer what type is returned by a function. Making the
+    /// type returned by a function obvious allows the reader to infer what the function does
+    /// and how it can be used from a quick glance.
+    ///
+    /// Another benefit of explicit return types is the potential for a speed up of type
+    /// checking in large codebases with many large functions.
     ///
     /// ### Example
     ///
