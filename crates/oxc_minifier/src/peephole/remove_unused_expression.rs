@@ -22,9 +22,9 @@ impl<'a> PeepholeOptimizations {
             Expression::LogicalExpression(_) => self.fold_logical_expression(e, ctx),
             Expression::SequenceExpression(_) => self.fold_sequence_expression(e, ctx),
             Expression::TemplateLiteral(_) => self.fold_template_literal(e, ctx),
+            Expression::ObjectExpression(_) => self.fold_object_expression(e, ctx),
             // TODO
-            // Expression::ObjectExpression(_)
-            // | Expression::ConditionalExpression(_)
+            // Expression::ConditionalExpression(_)
             // | Expression::BinaryExpression(_)
             // | Expression::CallExpression(_)
             // | Expression::NewExpression(_) => {
@@ -235,6 +235,73 @@ impl<'a> PeepholeOptimizations {
         *e = ctx.ast.expression_sequence(temp_lit.span, transformed_elements);
         false
     }
+
+    // `({ 1: 1, [foo()]: bar() })` -> `foo(), bar()`
+    fn fold_object_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::ObjectExpression(object_expr) = e else {
+            return false;
+        };
+        if object_expr.properties.is_empty() {
+            return true;
+        }
+
+        let mut transformed_elements = ctx.ast.vec();
+        let mut pending_spread_elements = ctx.ast.vec();
+
+        for prop in object_expr.properties.drain(..) {
+            match prop {
+                ObjectPropertyKind::SpreadProperty(_) => {
+                    pending_spread_elements.push(prop);
+                }
+                ObjectPropertyKind::ObjectProperty(prop) => {
+                    if pending_spread_elements.len() > 0 {
+                        // flush pending spread elements
+                        transformed_elements.push(ctx.ast.expression_object(
+                            prop.span(),
+                            pending_spread_elements,
+                            None,
+                        ));
+                        pending_spread_elements = ctx.ast.vec();
+                    }
+
+                    let ObjectProperty { key, mut value, .. } = prop.unbox();
+                    // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
+                    // But we can ignore that by using the assumption.
+                    match key {
+                        PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {}
+                        match_expression!(PropertyKey) => {
+                            let mut prop_key = key.into_expression();
+                            if !self.remove_unused_expression(&mut prop_key, ctx) {
+                                transformed_elements.push(prop_key);
+                            }
+                        }
+                    }
+
+                    if !self.remove_unused_expression(&mut value, ctx) {
+                        transformed_elements.push(value);
+                    }
+                }
+            }
+        }
+
+        if pending_spread_elements.len() > 0 {
+            transformed_elements.push(ctx.ast.expression_object(
+                object_expr.span,
+                pending_spread_elements,
+                None,
+            ));
+        }
+
+        if transformed_elements.is_empty() {
+            return true;
+        } else if transformed_elements.len() == 1 {
+            *e = transformed_elements.pop().unwrap();
+            return false;
+        }
+
+        *e = ctx.ast.expression_sequence(object_expr.span, transformed_elements);
+        false
+    }
 }
 
 #[cfg(test)]
@@ -359,7 +426,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_object_literal() {
         test("({})", "");
         test("({a:1})", "");
@@ -368,9 +434,11 @@ mod test {
         // Object-spread may trigger getters.
         test_same("({...a})");
         test_same("({...foo()})");
+        test("({ [{ foo: foo() }]: 0 })", "foo()");
+        test("({ foo: { foo: foo() } })", "foo()");
 
         test("({ [bar()]: foo() })", "bar(), foo()");
-        test_same("({ ...baz, [bar()]: foo() })");
+        test("({ ...baz, [bar()]: foo() })", "({ ...baz }), bar(), foo()");
     }
 
     #[test]
