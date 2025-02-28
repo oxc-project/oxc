@@ -13,7 +13,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     AstNode,
-    ast_util::outermost_paren_parent,
+    ast_util::{outermost_paren_parent, iter_outer_expressions},
     context::{ContextHost, LintContext},
     rule::Rule,
     rules::eslint::array_callback_return::return_checker::{
@@ -468,10 +468,12 @@ impl ExplicitFunctionReturnType {
 
 // check function is IIFE (Immediately Invoked Function Expression)
 fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(parent) = get_parent_node(node, ctx) else {
-        return false;
+    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.semantic(), node.id()).next()
+    else {
+    return false;
     };
-    matches!(parent.kind(), AstKind::CallExpression(_))
+    call.callee.span().contains_inclusive(node.span())
+
 }
 /**
  * Checks if a node belongs to:
