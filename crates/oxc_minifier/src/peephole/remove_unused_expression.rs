@@ -23,9 +23,9 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(_) => self.fold_sequence_expression(e, ctx),
             Expression::TemplateLiteral(_) => self.fold_template_literal(e, ctx),
             Expression::ObjectExpression(_) => self.fold_object_expression(e, ctx),
+            Expression::ConditionalExpression(_) => self.fold_conditional_expression(e, ctx),
             // TODO
-            // Expression::ConditionalExpression(_)
-            // | Expression::BinaryExpression(_)
+            // Expression::BinaryExpression(_)
             // | Expression::CallExpression(_)
             // | Expression::NewExpression(_) => {
             // false
@@ -302,6 +302,51 @@ impl<'a> PeepholeOptimizations {
         *e = ctx.ast.expression_sequence(object_expr.span, transformed_elements);
         false
     }
+
+    fn fold_conditional_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::ConditionalExpression(conditional_expr) = e else {
+            return false;
+        };
+
+        let consequent = self.remove_unused_expression(&mut conditional_expr.consequent, ctx);
+        let alternate = self.remove_unused_expression(&mut conditional_expr.alternate, ctx);
+
+        // "foo() ? 1 : 2" => "foo()"
+        if consequent && alternate {
+            let test = self.remove_unused_expression(&mut conditional_expr.test, ctx);
+            if test {
+                return true;
+            }
+            *e = ctx.ast.move_expression(&mut conditional_expr.test);
+            return false;
+        }
+
+        // "foo() ? 1 : bar()" => "foo() || bar()"
+        if consequent {
+            *e = self.join_with_left_associative_op(
+                conditional_expr.span,
+                LogicalOperator::Or,
+                ctx.ast.move_expression(&mut conditional_expr.test),
+                ctx.ast.move_expression(&mut conditional_expr.alternate),
+                ctx,
+            );
+            return false;
+        }
+
+        // "foo() ? bar() : 2" => "foo() && bar()"
+        if alternate {
+            *e = self.join_with_left_associative_op(
+                conditional_expr.span,
+                LogicalOperator::Or,
+                ctx.ast.move_expression(&mut conditional_expr.test),
+                ctx.ast.move_expression(&mut conditional_expr.consequent),
+                ctx,
+            );
+            return false;
+        }
+
+        false
+    }
 }
 
 #[cfg(test)]
@@ -447,12 +492,21 @@ mod test {
         test("`stuff ${x} ${1}`", "`${x}`");
         test("`stuff ${1} ${y}`", "`${y}`");
         test("`stuff ${x} ${y}`", "`${x}${y}`");
-        test("`stuff ${x ? 1 : 2} ${y}`", "x ? 1 : 2, `${y}`"); // can be improved to "x, `${y}`"
-        test("`stuff ${x} ${y ? 1 : 2}`", "`${x}`, y ? 1 : 2"); // can be improved to "`${x}`, y"
-        test("`stuff ${x} ${y ? 1 : 2} ${z}`", "`${x}`, y ? 1 : 2, `${z}`"); // can be improved to "`${x}`, y, `${z}`"
+        test("`stuff ${x ? 1 : 2} ${y}`", "x, `${y}`");
+        test("`stuff ${x} ${y ? 1 : 2}`", "`${x}`, y");
+        test("`stuff ${x} ${y ? 1 : 2} ${z}`", "`${x}`, y, `${z}`");
 
         test("`4${c}${+a}`", "`${c}`, +a");
         test("`${+foo}${c}${+bar}`", "+foo, `${c}`, +bar");
         test("`${a}${+b}${c}`", "`${a}`, +b, `${c}`");
+    }
+
+    #[test]
+    fn test_fold_conditional_expression() {
+        test("(1, foo()) ? 1 : 2", "foo()");
+        test("foo() ? 1 : 2", "foo()");
+        test("foo() ? 1 : bar()", "foo() || bar()");
+        test("foo() ? bar() : 2", "!foo() || bar()"); // can be improved to "foo() && bar()"
+        test_same("foo() ? bar() : baz()");
     }
 }
