@@ -1,7 +1,8 @@
 use std::cell::Cell;
 
 use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
-use oxc_ast::{Visit, VisitMut, ast::*, visit::walk_mut::walk_ts_signatures};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{Visit, VisitMut, walk_mut::walk_ts_signatures};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;

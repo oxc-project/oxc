@@ -10,7 +10,8 @@ use std::{cell::RefCell, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, NONE, Visit, ast::*};
+use oxc_ast::{AstBuilder, NONE, ast::*};
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SPAN, SourceType};
 

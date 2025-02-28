@@ -1,6 +1,6 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.52.0",
+  "version": "0.53.0",
   "description": "Wasm target for the oxc parser.",
   "keywords": [
     "JavaScript",
@@ -36,7 +36,7 @@
     "update-bindings": "node ./update-bindings.mjs",
     "copy-files": "cp ./package.json ../../npm/parser-wasm/package.json && cp ./README.md ../../npm/parser-wasm/README.md",
     "clean-files": "rm ../../npm/parser-wasm/*/.gitignore",
-    "test": "node ./test-node.mjs",
+    "test": "vitest ./test",
     "check": "tsc --lib es2020,dom ./node/oxc_parser_wasm.d.ts"
   }
 }

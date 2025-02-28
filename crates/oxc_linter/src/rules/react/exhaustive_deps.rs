@@ -5,15 +5,15 @@ use phf::phf_set;
 use rustc_hash::FxHashSet;
 
 use oxc_ast::{
-    AstKind, AstType, Visit,
+    AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPatternKind,
         CallExpression, ChainElement, Expression, Function, FunctionBody, IdentifierReference,
         MemberExpression, StaticMemberExpression, VariableDeclarationKind,
     },
     match_expression,
-    visit::walk::walk_function_body,
 };
+use oxc_ast_visit::{Visit, walk::walk_function_body};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};

@@ -54,7 +54,8 @@
 use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString};
-use oxc_ast::{NONE, Visit, ast::*};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::{

@@ -1509,6 +1509,7 @@ version = "0.53.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_cfg",
  "oxc_codegen",
  "oxc_diagnostics",
@@ -1627,12 +1628,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_ast_visit"
+version = "0.53.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_span",
+ "oxc_syntax",
+]
+
+[[package]]
 name = "oxc_benchmark"
 version = "0.0.0"
 dependencies = [
  "criterion2",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_codegen",
  "oxc_isolated_declarations",
  "oxc_linter",
@@ -1778,6 +1790,7 @@ dependencies = [
  "insta",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_ecmascript",
@@ -1833,6 +1846,7 @@ dependencies = [
  "nonmax",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_cfg",
  "oxc_codegen",
  "oxc_diagnostics",
@@ -1891,6 +1905,7 @@ dependencies = [
  "insta",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_codegen",
  "oxc_data_structures",
  "oxc_ecmascript",
@@ -1961,6 +1976,7 @@ dependencies = [
  "num-traits",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_diagnostics",
  "oxc_ecmascript",
  "oxc_regular_expression",
@@ -1979,7 +1995,6 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
- "oxc_ast",
  "oxc_napi",
  "rustc-hash",
 ]
@@ -2017,6 +2032,7 @@ dependencies = [
  "cow-utils",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_parser",
  "oxc_prettier",
  "oxc_span",
@@ -2070,6 +2086,7 @@ dependencies = [
  "itertools",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_cfg",
  "oxc_data_structures",
  "oxc_diagnostics",
@@ -2153,6 +2170,7 @@ dependencies = [
  "indexmap",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_diagnostics",
  "oxc_semantic",
  "oxc_span",
@@ -2200,6 +2218,7 @@ dependencies = [
  "oxc-browserslist",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_codegen",
  "oxc_data_structures",
  "oxc_diagnostics",
@@ -2226,6 +2245,7 @@ dependencies = [
  "itoa",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_data_structures",
  "oxc_ecmascript",
  "oxc_semantic",
@@ -2592,6 +2612,7 @@ dependencies = [
  "lazy_static",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",

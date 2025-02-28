@@ -3,7 +3,8 @@ use std::cell::Cell;
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{Visit, ast::*, visit::walk::*};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{Visit, walk::*};
 use oxc_span::Atom;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 

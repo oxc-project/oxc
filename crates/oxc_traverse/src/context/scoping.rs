@@ -4,7 +4,8 @@ use compact_str::CompactString;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashSet;
 
-use oxc_ast::{ast::*, visit::Visit};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{

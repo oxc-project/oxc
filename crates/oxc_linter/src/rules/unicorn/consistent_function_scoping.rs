@@ -1,6 +1,7 @@
 use rustc_hash::FxHashSet;
 
-use oxc_ast::{AstKind, Visit, visit::walk};
+use oxc_ast::AstKind;
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags};

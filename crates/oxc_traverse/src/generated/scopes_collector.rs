@@ -4,7 +4,8 @@
 
 use std::cell::Cell;
 
-use oxc_ast::{ast::*, visit::Visit};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Visitor that locates all child scopes.

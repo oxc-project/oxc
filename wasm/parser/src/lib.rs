@@ -1,9 +1,7 @@
 #![expect(clippy::needless_pass_by_value)]
 
 use oxc::{
-    allocator::Allocator,
-    ast::{CommentKind, utf8_to_utf16::Utf8ToUtf16},
-    parser::Parser,
+    allocator::Allocator, ast::CommentKind, ast_visit::utf8_to_utf16::Utf8ToUtf16, parser::Parser,
     span::SourceType,
 };
 use serde::{Deserialize, Serialize};

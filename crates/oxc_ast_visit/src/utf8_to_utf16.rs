@@ -2,13 +2,11 @@
 
 use std::{cmp::min, slice};
 
+use oxc_ast::ast::{Comment, Program};
 use oxc_span::Span;
 use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
 
-use crate::{
-    ast::{Comment, Program},
-    visit::VisitMut,
-};
+use crate::VisitMut;
 
 /// Convert UTF-8 span offsets to UTF-16.
 pub struct Utf8ToUtf16 {
@@ -530,12 +528,11 @@ unsafe fn offset_from(to_ptr: *const u8, from_ptr: *const u8) -> usize {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_span::{GetSpan, SourceType, Span};
-
-    use crate::{
+    use oxc_ast::{
         AstBuilder, Comment, CommentKind,
         ast::{Expression, Statement},
     };
+    use oxc_span::{GetSpan, SourceType, Span};
 
     use super::Utf8ToUtf16;
 

@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
-use oxc_ast::{Visit, ast::*};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_traverse::Ancestor;
 
