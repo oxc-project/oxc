@@ -544,7 +544,7 @@ declare_oxc_lint!(
     /// ```
     NoRestrictedImports,
     eslint,
-    nursery,
+    restriction,
 );
 
 fn add_configuration_path_from_object(
