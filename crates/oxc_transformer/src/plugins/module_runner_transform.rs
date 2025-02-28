@@ -1006,6 +1006,26 @@ Object.defineProperty(__vite_ssr_exports__, 'c', {
     }
 
     #[test]
+    fn export_named_imported_binding() {
+        test_same(
+            "
+            import { createApp } from 'vue';
+            export { createApp }
+            ",
+            "
+            const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['createApp'] });
+            Object.defineProperty(__vite_ssr_exports__, 'createApp', {
+              enumerable: true,
+              configurable: true,
+              get() {
+                return __vite_ssr_import_0__.createApp;
+              }
+            });
+            ",
+        );
+    }
+
+    #[test]
     fn export_star_from() {
         test_same(
             "export * from 'vue'\nexport * from 'react'",
