@@ -124,7 +124,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         // Reserve enough space for new statements
         let mut new_stmts: ArenaVec<'a, Statement<'a>> =
             ctx.ast.vec_with_capacity(program.body.len() * 2);
+
         let mut hoist_index = None;
+        let mut hoist_imports = Vec::with_capacity(program.body.len());
 
         for stmt in program.body.drain(..) {
             match stmt {
@@ -132,9 +134,8 @@ impl<'a> ModuleRunnerTransform<'a> {
                     let ImportDeclaration { span, source, specifiers, .. } = import.unbox();
                     let import_statement = self.transform_import(span, source, specifiers, ctx);
                     // Needs to hoist import statements to the above of the other statements
-                    if let Some(index) = hoist_index {
-                        new_stmts.insert(index, import_statement);
-                        hoist_index.replace(index + 1);
+                    if hoist_index.is_some() {
+                        hoist_imports.push(import_statement);
                     } else {
                         new_stmts.push(import_statement);
                     }
@@ -158,6 +159,12 @@ impl<'a> ModuleRunnerTransform<'a> {
             // Found that non-import statements, we can start hoisting import statements after this
             if hoist_index.is_none() {
                 hoist_index.replace(new_stmts.len() - 1);
+            }
+        }
+
+        if let Some(index) = hoist_index {
+            if !hoist_imports.is_empty() {
+                new_stmts.splice(index..index, hoist_imports);
             }
         }
 
