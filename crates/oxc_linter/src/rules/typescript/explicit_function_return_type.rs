@@ -749,7 +749,7 @@ fn test() {
         	function test(): void {
         	  return;
         	}
-        	      ",
+        	",
             None,
             None,
             None,
@@ -759,19 +759,12 @@ fn test() {
         	var fn = function (): number {
         	  return 1;
         	};
-        	      ",
+            ",
             None,
             None,
             None,
         ),
-        (
-            "
-        	var arrowFn = (): string => 'test';
-        	      ",
-            None,
-            None,
-            None,
-        ),
+        ("var arrowFn = (): string => 'test';", None, None, None),
         (
             "
         	class Test {
@@ -785,7 +778,7 @@ fn test() {
         	  }
         	  arrow = (): string => 'arrow';
         	}
-        	      ",
+        	",
             None,
             None,
             None,
@@ -817,9 +810,7 @@ fn test() {
             None,
         ),
         (
-            "
-        	var arrowFn: Foo = () => 'test';
-        	      ",
+            "var arrowFn: Foo = () => 'test';",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -829,7 +820,7 @@ fn test() {
         	var funcExpr: Foo = function () {
         	  return 'test';
         	};
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -851,7 +842,7 @@ fn test() {
         	const x = {
         	  foo: () => {},
         	} as Foo;
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -861,7 +852,7 @@ fn test() {
         	const x = <Foo>{
         	  foo: () => {},
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             Some(PathBuf::from("test.ts")),
@@ -871,7 +862,7 @@ fn test() {
         	const x: Foo = {
         	  foo: () => {},
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -881,7 +872,7 @@ fn test() {
         	const x = {
         	  foo: { bar: () => {} },
         	} as Foo;
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -891,7 +882,7 @@ fn test() {
         	const x = <Foo>{
         	  foo: { bar: () => {} },
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             Some(PathBuf::from("test.ts")),
@@ -901,7 +892,7 @@ fn test() {
         	const x: Foo = {
         	  foo: { bar: () => {} },
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -913,7 +904,7 @@ fn test() {
         	class App {
         	  private method: MethodType = () => {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -955,23 +946,19 @@ fn test() {
         	    this.myProp = val;
         	  },
         	};
-        	      ",
+            ",
             None,
             None,
             None,
         ),
         (
-            "
-        	() => (): void => {};
-        	      ",
+            "() => (): void => {};",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
         ),
         (
-            "
-        	() => function (): void {};
-        	      ",
+            "() => function (): void {};",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -981,7 +968,7 @@ fn test() {
         	() => {
         	  return (): void => {};
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -991,7 +978,7 @@ fn test() {
         	() => {
         	  return function (): void {};
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1004,7 +991,7 @@ fn test() {
         	    return foo;
         	  };
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1014,7 +1001,7 @@ fn test() {
         	function fn() {
         	  return (): void => {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1024,7 +1011,7 @@ fn test() {
         	function fn() {
         	  return function (): void {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1035,7 +1022,7 @@ fn test() {
         	  const bar = () => (): number => 1;
         	  return function (): void {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1053,7 +1040,7 @@ fn test() {
 
         	  return function (): void {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1073,7 +1060,7 @@ fn test() {
         	    };
         	  };
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1085,7 +1072,7 @@ fn test() {
         	    return;
         	  };
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1098,7 +1085,7 @@ fn test() {
         	foo(() => null);
         	foo(() => true);
         	foo(() => '');
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1111,7 +1098,7 @@ fn test() {
         	foo?.bar?.(() => null);
         	foo.bar?.(() => true);
         	foo?.(() => '');
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1127,7 +1114,7 @@ fn test() {
         	}
 
         	new Accumulator().accumulate(() => 1);
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1150,7 +1137,7 @@ fn test() {
         	    return 1;
         	  },
         	});
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1161,7 +1148,7 @@ fn test() {
         	const func2 = (value: number) => ({ type: 'X', value }) as const;
         	const func3 = (value: number) => x as const;
         	const func4 = (value: number) => x as const;
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": true,  }, ])),
             None,
             None,
@@ -1170,7 +1157,7 @@ fn test() {
             "
         	new Promise(resolve => {});
         	new Foo(1, () => {});
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1200,7 +1187,7 @@ fn test() {
         	function log<A>(a: A): A {
         	  return a;
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowFunctionsWithoutTypeParameters": true }])),
             None,
             None,
@@ -1210,7 +1197,7 @@ fn test() {
         	function log(a: string) {
         	  return a;
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowFunctionsWithoutTypeParameters": true }])),
             None,
             None,
@@ -1220,7 +1207,7 @@ fn test() {
         	const log = function <A>(a: A): A {
         	  return a;
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowFunctionsWithoutTypeParameters": true }])),
             None,
             None,
@@ -1230,7 +1217,7 @@ fn test() {
         	const log = function (a: A): string {
         	  return a;
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowFunctionsWithoutTypeParameters": true }])),
             None,
             None,
@@ -1244,7 +1231,7 @@ fn test() {
         	const foo = function test2() {
         	  return;
         	};
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowedNames": ["test1", "test2"],  }, ])),
             None,
             None,
@@ -1257,7 +1244,7 @@ fn test() {
         	const foo = function () {
         	  return function test2() {};
         	};
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowedNames": ["test1", "test2"],  }, ])),
             None,
             None,
@@ -1272,7 +1259,7 @@ fn test() {
         	    return 0;
         	  },
         	};
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowedNames": ["test1", "test2"],  }, ])),
             None,
             None,
@@ -1293,7 +1280,7 @@ fn test() {
         	    return;
         	  }
         	}
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowedNames": ["prop", "method", "arrow"],  }, ])),
             None,
             None,
@@ -1308,7 +1295,7 @@ fn test() {
         	    return;
         	  },
         	};
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowedNames": ["arrowFn", "fn"],  }, ])),
             None,
             None,
@@ -1317,7 +1304,7 @@ fn test() {
             "
         	type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
         	const x: HigherOrderType = () => arg1 => arg2 => 'foo';
-        	      ",
+        	",
             Some(
                 serde_json::json!([ { "allowTypedFunctionExpressions": true,  "allowHigherOrderFunctions": true,  }, ]),
             ),
@@ -1328,7 +1315,7 @@ fn test() {
             "
         	type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
         	const x: HigherOrderType = () => arg1 => arg2 => 'foo';
-        	      ",
+        	",
             Some(
                 serde_json::json!([ { "allowTypedFunctionExpressions": true,  "allowHigherOrderFunctions": false,  }, ]),
             ),
@@ -1348,7 +1335,7 @@ fn test() {
         	    arrowFn: () => 'test',
         	  };
         	}
-        	      ",
+        	",
             Some(
                 serde_json::json!([ { "allowTypedFunctionExpressions": true,  "allowHigherOrderFunctions": true,  }, ]),
             ),
@@ -1360,7 +1347,7 @@ fn test() {
         	type Foo = (arg1: string) => string;
         	type Bar<T> = (arg2: string) => T;
         	const x: Bar<Foo> = arg1 => arg2 => arg1 + arg2;
-        	      ",
+        	",
             Some(
                 serde_json::json!([ { "allowTypedFunctionExpressions": true,  "allowHigherOrderFunctions": true,  }, ]),
             ),
@@ -1372,7 +1359,7 @@ fn test() {
         	let foo = function (): number {
         	  return 1;
         	};
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -1382,7 +1369,7 @@ fn test() {
         	const foo = (function () {
         	  return 1;
         	})();
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -1392,7 +1379,7 @@ fn test() {
         	const foo = (() => {
         	  return 1;
         	})();
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -1402,15 +1389,13 @@ fn test() {
         	const foo = ((arg: number): number => {
         	  return arg;
         	})(0);
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
         ),
         (
-            "
-        	const foo = (() => (() => 'foo')())();
-        	      ",
+            "const foo = (() => (() => 'foo')())();",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -1420,7 +1405,7 @@ fn test() {
         	let foo = (() => (): string => {
         	  return 'foo';
         	})()();
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -1430,7 +1415,7 @@ fn test() {
         	let foo = (() => (): string => {
         	  return 'foo';
         	})();
-        	      ",
+        	",
             Some(
                 serde_json::json!([ { "allowIIFEs": true,  "allowHigherOrderFunctions": false,  }, ]),
             ),
@@ -1442,7 +1427,7 @@ fn test() {
         	let foo = (() => (): string => {
         	  return 'foo';
         	})()();
-        	      ",
+        	",
             Some(
                 serde_json::json!([ { "allowIIFEs": true,  "allowHigherOrderFunctions": true,  }, ]),
             ),
@@ -1452,7 +1437,7 @@ fn test() {
         (
             "
         	let foo = (() => (): void => {})()();
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -1460,7 +1445,7 @@ fn test() {
         (
             "
         	let foo = (() => (() => {})())();
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -1472,7 +1457,7 @@ fn test() {
         	    foo: x => x + 1,
         	  };
         	}
-        	      ",
+        	",
             None,
             None,
             None,
@@ -1486,7 +1471,7 @@ fn test() {
         	    },
         	  ];
         	}
-        	      ",
+        	",
             None,
             None,
             None,
@@ -1496,7 +1481,7 @@ fn test() {
         	type CallBack = () => void;
 
         	function f(gotcha: CallBack = () => {}): void {}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -1506,7 +1491,7 @@ fn test() {
         	type CallBack = () => void;
 
         	const f = (gotcha: CallBack = () => {}): void => {};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -1516,7 +1501,7 @@ fn test() {
         	type ObjectWithCallback = { callback: () => void };
 
         	const f = (gotcha: ObjectWithCallback = { callback: () => {} }): void => {};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -1529,7 +1514,7 @@ fn test() {
         	function test(a: number, b: number) {
         	  return;
         	}
-        	      ",
+        	",
             None,
             None,
             None,
@@ -1539,7 +1524,7 @@ fn test() {
         	function test() {
         	  return;
         	}
-        	      ",
+        	",
             None,
             None,
             None,
@@ -1549,7 +1534,7 @@ fn test() {
         	var fn = function () {
         	  return 1;
         	};
-        	      ",
+        	",
             None,
             None,
             None,
@@ -1557,7 +1542,7 @@ fn test() {
         (
             "
         	var arrowFn = () => 'test';
-        	      ",
+        	",
             None,
             None,
             None,
@@ -1578,7 +1563,7 @@ fn test() {
         	    return;
         	  }
         	}
-        	      ",
+        	",
             None,
             None,
             None,
@@ -1588,7 +1573,7 @@ fn test() {
         	function test() {
         	  return;
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowExpressions": true }])),
             None,
             None,
@@ -1627,7 +1612,7 @@ fn test() {
         	  static d = () => {};
         	  static e = function () {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowExpressions": true }])),
             None,
             None,
@@ -1643,7 +1628,7 @@ fn test() {
         	function foo(): any {
         	  const bar = () => () => console.log('aa');
         	}
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1654,7 +1639,7 @@ fn test() {
         	function foo(): any {
         	  anyValue = () => () => console.log('aa');
         	}
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1668,7 +1653,7 @@ fn test() {
         	    };
         	  }
         	}
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1678,7 +1663,7 @@ fn test() {
         	var funcExpr = function () {
         	  return 'test';
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": true }])),
             None,
             None,
@@ -1695,7 +1680,7 @@ fn test() {
         	const x = {
         	  foo: () => {},
         	} as Foo;
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": false }])),
             None,
             None,
@@ -1706,7 +1691,7 @@ fn test() {
         	const x: Foo = {
         	  foo: () => {},
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": false }])),
             None,
             None,
@@ -1750,7 +1735,7 @@ fn test() {
         	    };
         	  }
         	}
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": true,  }, ])),
             None,
             None,
@@ -1772,7 +1757,7 @@ fn test() {
         	() => {
         	  return () => {};
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1782,7 +1767,7 @@ fn test() {
         	() => {
         	  return function () {};
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1792,7 +1777,7 @@ fn test() {
         	function fn() {
         	  return () => {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1802,7 +1787,7 @@ fn test() {
         	function fn() {
         	  return function () {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1814,7 +1799,7 @@ fn test() {
         	  const baz = () => () => 'baz';
         	  return function (): void {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1825,7 +1810,7 @@ fn test() {
         	  if (arg) return 'string';
         	  return function (): void {};
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1845,7 +1830,7 @@ fn test() {
         	    };
         	  };
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1857,7 +1842,7 @@ fn test() {
         	    return;
         	  };
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowHigherOrderFunctions": true }])),
             None,
             None,
@@ -1870,7 +1855,7 @@ fn test() {
         	foo(() => null);
         	foo(() => true);
         	foo(() => '');
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": false,  }, ])),
             None,
             None,
@@ -1886,7 +1871,7 @@ fn test() {
         	}
 
         	new Accumulator().accumulate(() => 1);
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": false,  }, ])),
             None,
             None,
@@ -1915,7 +1900,7 @@ fn test() {
         	    return 1;
         	  },
         	});
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowTypedFunctionExpressions": false,  }, ])),
             None,
             None,
@@ -1924,7 +1909,7 @@ fn test() {
             "
         	type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
         	const x: HigherOrderType = () => arg1 => arg2 => 'foo';
-        	      ",
+        	",
             Some(
                 serde_json::json!([ { "allowTypedFunctionExpressions": false,  "allowHigherOrderFunctions": true,  }, ]),
             ),
@@ -1935,7 +1920,7 @@ fn test() {
             "
         	type HigherOrderType = () => (arg1: string) => (arg2: number) => string;
         	const x: HigherOrderType = () => arg1 => arg2 => 'foo';
-        	      ",
+        	",
             Some(
                 serde_json::json!([ { "allowTypedFunctionExpressions": false,  "allowHigherOrderFunctions": false,  }, ]),
             ),
@@ -1946,15 +1931,13 @@ fn test() {
             "
         	const func1 = (value: number) => ({ type: 'X', value }) as any;
         	const func2 = (value: number) => ({ type: 'X', value }) as Action;
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": true,  }, ])),
             None,
             None,
         ),
         (
-            "
-        	const func = (value: number) => ({ type: 'X', value }) as const;
-        	      ",
+            "const func = (value: number) => ({ type: 'X', value }) as const;",
             Some(serde_json::json!([ { "allowDirectConstAssertionInArrowFunctions": false,  }, ])),
             None,
             None,
@@ -1969,10 +1952,10 @@ fn test() {
         ),
         (
             "
-        	        const log = (message: string) => {
-        	          void console.log(message);
-        	        };
-        	      ",
+        	const log = (message: string) => {
+              void console.log(message);
+        	};
+            ",
             Some(
                 serde_json::json!([{ "allowConciseArrowFunctionExpressionsStartingWithVoid": true }]),
             ),
@@ -1990,7 +1973,7 @@ fn test() {
         	function log<A>(a: A) {
         	  return a;
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowFunctionsWithoutTypeParameters": true }])),
             None,
             None,
@@ -2000,7 +1983,7 @@ fn test() {
         	const log = function <A>(a: A) {
         	  return a;
         	};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowFunctionsWithoutTypeParameters": true }])),
             None,
             None,
@@ -2029,7 +2012,7 @@ fn test() {
         	    return;
         	  },
         	};
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowedNames": ["test", "1"],  }, ])),
             None,
             None,
@@ -2040,7 +2023,7 @@ fn test() {
         	class Foo {
         	  [ignoredName]() {}
         	}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowedNames": ["ignoredName"] }])),
             None,
             None,
@@ -2054,7 +2037,7 @@ fn test() {
         	    },
         	  ];
         	}
-        	      ",
+        	",
             None,
             None,
             None,
@@ -2064,7 +2047,7 @@ fn test() {
         	const foo = (function () {
         	  return 'foo';
         	})();
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": false,  }, ])),
             None,
             None,
@@ -2076,7 +2059,7 @@ fn test() {
         	    return 1;
         	  };
         	})();
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -2086,15 +2069,13 @@ fn test() {
         	let foo = function () {
         	  return 'foo';
         	};
-        	      ",
+        	",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
         ),
         (
-            "
-        	let foo = (() => () => {})()();
-        	      ",
+            "let foo = (() => () => {})()();",
             Some(serde_json::json!([ { "allowIIFEs": true,  }, ])),
             None,
             None,
@@ -2104,7 +2085,7 @@ fn test() {
         	type CallBack = () => void;
 
         	function f(gotcha: CallBack = () => {}): void {}
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": false }])),
             None,
             None,
@@ -2114,7 +2095,7 @@ fn test() {
         	type CallBack = () => void;
 
         	const f = (gotcha: CallBack = () => {}): void => {};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": false }])),
             None,
             None,
@@ -2124,7 +2105,7 @@ fn test() {
         	type ObjectWithCallback = { callback: () => void };
 
         	const f = (gotcha: ObjectWithCallback = { callback: () => {} }): void => {};
-        	      ",
+        	",
             Some(serde_json::json!([{ "allowTypedFunctionExpressions": false }])),
             None,
             None,
