@@ -3,7 +3,6 @@ packages:
   - 'wasm/*'
   - 'npm/*'
   - 'editors/*'
-  - 'tasks/benchmark/codspeed'
   - 'tasks/transform_conformance'
   - 'tasks/compat_data'
   - 'tasks/e2e'

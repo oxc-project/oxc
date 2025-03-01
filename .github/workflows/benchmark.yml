@@ -3,13 +3,8 @@
 # Each benchmark (parser, transformer, etc) runs in parallel in a separate job.
 # Linter benchmarks are much slower to build and run than the rest, so linter benchmark
 # is built in 1 job, and then run on each fixture in parallel in separate jobs.
-# When all jobs are complete, a final job uploads all the results to CodSpeed.
 #
-# Sharding is not natively supported by CodSpeed, so we use a hacky method to achieve it.
-# 1. Intercept the data which `CodSpeedHQ/action` would normally upload to CodSpeed for each job.
-# 2. Once all runs are complete, combine the data for all the runs together.
-# 3. Upload the combined data to CodSpeed as one.
-# This is performed by some short NodeJS scripts in `tasks/benchmark/codspeed`.
+# See https://docs.codspeed.io/features/sharded-benchmarks
 
 name: Benchmark
 
@@ -74,14 +69,6 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
-      - uses: ./.github/actions/pnpm
-
-      - name: Start bench results interceptor server
-        working-directory: ./tasks/benchmark/codspeed
-        env:
-          COMPONENT: ${{ matrix.component }}
-        run: pnpm run start &
-
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
@@ -96,18 +83,8 @@ jobs:
         uses: CodSpeedHQ/action@63ae6025a0ffee97d7736a37c9192dbd6ed4e75f # v3.4.0
         timeout-minutes: 30
         with:
-          # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
-          token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
-          upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
+          token: ${{ secrets.CODSPEED_TOKEN }}
           run: cargo codspeed run
-
-      - name: Upload bench data artefact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
-        with:
-          name: result-${{ matrix.component }}
-          path: ${{ env.DATA_DIR }} # env.DATA_DIR from `capture.mjs`
-          if-no-files-found: error
-          retention-days: 1
 
   # Build linter benchmark.
   # Linter benchmarks are much slower than the rest, so we run each fixture in a separate job.
@@ -174,137 +151,11 @@ jobs:
         with:
           tool: cargo-codspeed
 
-      - uses: ./.github/actions/pnpm
-
-      - name: Start bench results interceptor server
-        working-directory: ./tasks/benchmark/codspeed
-        env:
-          COMPONENT: linter
-          FIXTURE: ${{ matrix.fixture }}
-        run: node capture.mjs &
-
       - name: Run benchmark
         uses: CodSpeedHQ/action@63ae6025a0ffee97d7736a37c9192dbd6ed4e75f # v3.4.0
         timeout-minutes: 30
         env:
           FIXTURE: ${{ matrix.fixture }}
         with:
-          # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
-          token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
-          upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
+          token: ${{ secrets.CODSPEED_TOKEN }}
           run: cargo codspeed run
-
-      - name: Upload bench data artefact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
-        with:
-          name: result-linter${{ matrix.fixture }}
-          path: ${{ env.DATA_DIR }} # env.DATA_DIR from `capture.mjs`
-          if-no-files-found: error
-          retention-days: 1
-
-  # benchmark-napi:
-  # name: Benchmark NAPI parser
-  # runs-on: ubuntu-latest
-  # if: false
-  # steps:
-  # - name: Checkout Branch
-  # uses: taiki-e/checkout-action@v1.3.1
-
-  # - uses: oxc-project/setup-rust@v1.0.0
-  # with:
-  # shared-key: benchmark_napi
-  # save-cache: ${{ github.ref_name == 'main' }}
-
-  # - name: Install codspeed
-  # uses: taiki-e/install-action@v2.46.8
-  # with:
-  # tool: cargo-codspeed
-
-  # - uses: ./.github/actions/pnpm
-
-  # - name: Start bench results interceptor server
-  # working-directory: ./tasks/benchmark/codspeed
-  # env:
-  # COMPONENT: 'parser_napi'
-  # run: |
-  # pnpm install
-  # node capture.mjs &
-
-  # # CodSpeed gets measurements completely off for NAPI if run in `CodSpeedHQ/action`,
-  # # so instead run real benchmark without CodSpeed's instrumentation and save the results.
-  # # Then "Run Rust benchmark" step below runs a loop of some simple Rust code the number
-  # # of times required to take same amount of time as the real benchmark took.
-  # # This is all a workaround for https://github.com/CodSpeedHQ/action/issues/96
-  # - name: Build NAPI Benchmark
-  # working-directory: ./napi/parser
-  # run: |
-  # corepack enable
-  # pnpm install
-  # pnpm build
-
-  # - name: Run NAPI Benchmark
-  # working-directory: ./napi/parser
-  # run: node parse.bench.mjs
-
-  # - name: Build Rust benchmark
-  # env:
-  # RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
-  # run: |
-  # cargo build --release -p oxc_benchmark --bench parser_napi --no-default-features --features codspeed_napi
-  # mkdir -p target/codspeed/oxc_benchmark/
-  # mv target/release/deps/parser_napi-* target/codspeed/oxc_benchmark
-  # rm -rf target/codspeed/oxc_benchmark/*.d
-
-  # - name: Run Rust benchmark
-  # uses: CodSpeedHQ/action@v2.46.8
-  # timeout-minutes: 30
-  # with:
-  # run: cargo codspeed run
-  # # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
-  # token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
-  # upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
-
-  # - name: Upload bench data artefact
-  # uses: actions/upload-artifact@v4
-  # with:
-  # name: 'parser_napi'
-  # path: ${{ env.DATA_DIR }}
-  # if-no-files-found: error
-  # retention-days: 1
-
-  # Upload combined benchmark results to CodSpeed
-  upload:
-    name: Upload benchmarks
-    # needs: [benchmark, benchmark-linter, benchmark-napi]
-    needs: [benchmark, benchmark-linter]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Branch
-        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-
-      - uses: ./.github/actions/pnpm
-
-      - name: Create temp dir
-        working-directory: ./tasks/benchmark/codspeed
-        run: node create_temp_dir.mjs
-
-      - name: Download artefacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          merge-multiple: true
-          pattern: result-*
-          path: ${{ env.DATA_DIR }} # env.DATA_DIR from `create_temp_dir.mjs`
-
-      - name: Upload to Codspeed
-        working-directory: ./tasks/benchmark/codspeed
-        env:
-          CODSPEED_TOKEN: ${{ secrets.CODSPEED_TOKEN }}
-        run: node upload.mjs
-
-      - name: Delete temporary artefacts
-        uses: geekyeggo/delete-artifact@f275313e70c08f6120db482d7a6b98377786765b # v5.1.0
-        with:
-          name: |
-            result-*
-            benchmark-linter
-          failOnError: false
