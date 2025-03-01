@@ -26,14 +26,14 @@ pub struct PreferCatch;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows passing an argument into the second parameter of `then` calls, favouring the use
-    /// of `catch` for handling promise errors instead.
+    /// Prefer `catch` to `then(a, b)` and `then(null, b)`. This rule disallows the passing of an
+    /// argument into the second parameter of `then` calls for handling promise errors.
     ///
     /// ### Why is this bad?
     ///
-    /// A then call with two arguments can make it more difficult to recognize that a catch error handler is present.
-    /// Also, using the second argument in `then` calls makes the ordering of promise error handling les
-    /// obvious.
+    /// A `then` call with two arguments can make it more difficult to recognize that a catch error
+    /// handler is present. Another issue with using the second argument in `then` calls is that
+    /// the ordering of promise error handling is less obvious.
     ///
     /// For example on first glance it may appear that `prom.then(fn1, fn2)` is equivalent to
     /// `prom.then(fn1).catch(fn2)`. However they aren't equivalent. In fact
