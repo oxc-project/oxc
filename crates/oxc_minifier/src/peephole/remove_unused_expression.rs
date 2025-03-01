@@ -1,5 +1,6 @@
 use std::iter;
 
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     ToPrimitive,
@@ -19,18 +20,14 @@ impl<'a> PeepholeOptimizations {
         match e {
             Expression::ArrayExpression(_) => self.fold_array_expression(e, ctx),
             Expression::UnaryExpression(_) => self.fold_unary_expression(e, ctx),
-            Expression::NewExpression(e) => Self::fold_new_constructor(e, ctx),
+            Expression::NewExpression(_) => self.fold_new_constructor(e, ctx),
             Expression::LogicalExpression(_) => self.fold_logical_expression(e, ctx),
             Expression::SequenceExpression(_) => self.fold_sequence_expression(e, ctx),
             Expression::TemplateLiteral(_) => self.fold_template_literal(e, ctx),
             Expression::ObjectExpression(_) => self.fold_object_expression(e, ctx),
             Expression::ConditionalExpression(_) => self.fold_conditional_expression(e, ctx),
             Expression::BinaryExpression(_) => self.fold_binary_expression(e, ctx),
-            // TODO
-            // Expression::CallExpression(_)
-            // | Expression::NewExpression(_) => {
-            // false
-            // }
+            Expression::CallExpression(_) => self.fold_call_expression(e, ctx),
             _ => !e.may_have_side_effects(&ctx),
         }
     }
@@ -172,13 +169,30 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn fold_new_constructor(e: &mut NewExpression<'a>, ctx: Ctx<'a, '_>) -> bool {
-        let Expression::Identifier(ident) = &e.callee else { return false };
-        let len = e.arguments.len();
+    fn fold_new_constructor(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::NewExpression(new_expr) = e else { return false };
+
+        if new_expr.pure {
+            let mut exprs =
+                self.fold_arguments_into_needed_expressions(&mut new_expr.arguments, ctx);
+            if exprs.is_empty() {
+                return true;
+            } else if exprs.len() == 1 {
+                *e = exprs.pop().unwrap();
+                self.mark_current_function_as_changed();
+                return false;
+            }
+            *e = ctx.ast.expression_sequence(new_expr.span, exprs);
+            self.mark_current_function_as_changed();
+            return false;
+        }
+
+        let Expression::Identifier(ident) = &new_expr.callee else { return false };
+        let len = new_expr.arguments.len();
         if match ident.name.as_str() {
             "WeakSet" | "WeakMap" if ctx.is_global_reference(ident) => match len {
                 0 => true,
-                1 => match e.arguments[0].as_expression() {
+                1 => match new_expr.arguments[0].as_expression() {
                     Some(Expression::NullLiteral(_)) => true,
                     Some(Expression::ArrayExpression(e)) => e.elements.is_empty(),
                     Some(e) if ctx.is_expression_undefined(e) => true,
@@ -189,7 +203,7 @@ impl<'a> PeepholeOptimizations {
             "Date" if ctx.is_global_reference(ident) => match len {
                 0 => true,
                 1 => {
-                    let Some(arg) = e.arguments[0].as_expression() else { return false };
+                    let Some(arg) = new_expr.arguments[0].as_expression() else { return false };
                     let ty = arg.value_type(&ctx);
                     matches!(
                         ty,
@@ -204,7 +218,7 @@ impl<'a> PeepholeOptimizations {
             },
             "Set" | "Map" if ctx.is_global_reference(ident) => match len {
                 0 => true,
-                1 => match e.arguments[0].as_expression() {
+                1 => match new_expr.arguments[0].as_expression() {
                     Some(Expression::NullLiteral(_)) => true,
                     Some(e) if ctx.is_expression_undefined(e) => true,
                     _ => false,
@@ -510,6 +524,45 @@ impl<'a> PeepholeOptimizations {
         }
         false
     }
+
+    fn fold_call_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::CallExpression(call_expr) = e else { return false };
+
+        if call_expr.pure {
+            let mut exprs =
+                self.fold_arguments_into_needed_expressions(&mut call_expr.arguments, ctx);
+            if exprs.is_empty() {
+                return true;
+            } else if exprs.len() == 1 {
+                *e = exprs.pop().unwrap();
+                self.mark_current_function_as_changed();
+                return false;
+            }
+            *e = ctx.ast.expression_sequence(call_expr.span, exprs);
+            self.mark_current_function_as_changed();
+            return false;
+        }
+
+        false
+    }
+
+    fn fold_arguments_into_needed_expressions(
+        &mut self,
+        args: &mut Vec<'a, Argument<'a>>,
+        ctx: Ctx<'a, '_>,
+    ) -> Vec<'a, Expression<'a>> {
+        ctx.ast.vec_from_iter(args.drain(..).filter_map(|arg| {
+            let mut expr = match arg {
+                Argument::SpreadElement(e) => ctx.ast.expression_array(
+                    e.span,
+                    ctx.ast.vec1(ArrayExpressionElement::SpreadElement(e)),
+                    None,
+                ),
+                match_expression!(Argument) => arg.into_expression(),
+            };
+            (!self.remove_unused_expression(&mut expr, ctx)).then_some(expr)
+        }))
+    }
 }
 
 #[cfg(test)]
@@ -705,5 +758,17 @@ mod test {
         test("var a, b; 'a' + +b", "var a, b; '' + +b"); // can be improved to "var a, b; +b"
         test_same("var a, b; a + ('' + b)");
         test("var a, b, c; a + ('' + (b === c))", "var a, b, c; a + ''");
+    }
+
+    #[test]
+    fn test_fold_call_expression() {
+        test_same("foo()");
+        test("/* @__PURE__ */ foo()", "");
+        test("/* @__PURE__ */ foo(a)", "a");
+        test("/* @__PURE__ */ foo(a, b)", "a, b");
+        test("/* @__PURE__ */ foo(...a)", "[...a]");
+        test("/* @__PURE__ */ foo(...'a')", "");
+        test("/* @__PURE__ */ new Foo()", "");
+        test("/* @__PURE__ */ new Foo(a)", "a");
     }
 }
