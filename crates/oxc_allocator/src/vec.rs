@@ -9,6 +9,8 @@ use std::{
     self,
     fmt::{self, Debug},
     hash::{Hash, Hasher},
+    iter::FusedIterator,
+    marker::PhantomData,
     mem::ManuallyDrop,
     ops,
     ptr::NonNull,
@@ -201,7 +203,80 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `ptr` was created from a `&mut [T]`.
         unsafe { Box::from_non_null(ptr) }
     }
+
+    /// Convert the vector into an iterator of [`Box<T>`]s.
+    pub fn into_boxes_iter(self) -> IntoBoxesIter<'alloc, T> {
+        let inner = ManuallyDrop::into_inner(self.0);
+        let (ptr, len, _) = inner.into_raw_parts();
+
+        // SAFETY: `len` is the length of the `Vec`, so cannot be out of bounds of its allocation.
+        // It's impossible for this `add` to wrap around, since that allocation is contiguous.
+        // If `len == 0`, `ptr` is a dangling pointer, and would not be value for reads.
+        // But `.add(0)` is acceptable on an invalid pointer.
+        let end = unsafe { ptr.add(len) }.cast_const();
+
+        // SAFETY: `ptr` is non-null, even if the `Vec` has 0 capacity.
+        let ptr = unsafe { NonNull::new_unchecked(ptr) };
+
+        IntoBoxesIter { ptr, end, _marker: PhantomData }
+    }
 }
+
+/// Iterator of [`Box`]es. Returned by [`Vec::into_boxes_iter`].
+//
+// Note: `Vec` can only contain non-drop types, and has no `Drop` impl itself.
+// This is enforced by the const assertions in all methods that create a `Vec`.
+// Therefore there is no need for a `Drop` impl on `IntoBoxes` either.
+//
+// TODO: Tests
+pub struct IntoBoxesIter<'alloc, T> {
+    ptr: NonNull<T>,
+    end: *const T,
+    // Should this be `(&'alloc (), T)`?
+    _marker: PhantomData<&'alloc ()>,
+}
+
+impl<'alloc, T> Iterator for IntoBoxesIter<'alloc, T> {
+    type Item = Box<'alloc, T>;
+
+    fn next(&mut self) -> Option<Box<'alloc, T>> {
+        if self.ptr.as_ptr().cast_const() == self.end {
+            None
+        } else {
+            // SAFETY: `ptr` is part of a `Vec`'s allocated section.
+            // `ptr != end` check above ensures that `ptr` is in bounds of the allocation,
+            // therefore `ptr` must point to a valid `T`.
+            // `IntoBoxes` has ownership of the allocation, so no other references to the `T` at `ptr`
+            // can exist. So we can pass ownership of this `T` in a `Box` to the caller.
+            // The lifetime of the `Box` returned matches that of the original `Vec`.
+            let boxed = unsafe { Box::from_non_null(self.ptr) };
+            // SAFETY: `ptr != end` check above ensures that `ptr` is not at end of the iterator,
+            // so advancing by one cannot go past the end (it could reach the end).
+            self.ptr = unsafe { self.ptr.add(1) };
+
+            Some(boxed)
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = ExactSizeIterator::len(self);
+        (len, Some(len))
+    }
+}
+
+impl<T> ExactSizeIterator for IntoBoxesIter<'_, T> {
+    fn len(&self) -> usize {
+        // SAFETY: `end` is always equal to, or before `ptr`.
+        // `ptr` and `end` are both always aligned for `T`.
+        // TODO: Is this sound if `Vec` was unallocated, so both `ptr` and `end` are dangling?
+        unsafe {
+            let len = self.end.offset_from(self.ptr.as_ptr().cast_const());
+            usize::try_from(len).unwrap_unchecked()
+        }
+    }
+}
+
+impl<T> FusedIterator for IntoBoxesIter<'_, T> {}
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
     type Target = InnerVec<T, &'alloc Bump>;
