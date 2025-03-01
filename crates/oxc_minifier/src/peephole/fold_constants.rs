@@ -1212,7 +1212,7 @@ mod test {
     #[test]
     fn test_fold_logical_op() {
         fold("x = true && x", "x = x");
-        fold("x = [foo()] && x", "x = ([foo()],x)");
+        fold("x = [foo()] && x", "x = (foo(),x)");
 
         fold("x = false && x", "x = !1");
         fold("x = true || x", "x = !0");
@@ -1240,7 +1240,7 @@ mod test {
         fold("x = foo() || true && bar()", "x = foo() || bar()");
         fold("x = foo() || false && bar()", "x = foo() || !1");
         fold("x = foo() && false && bar()", "x = foo() && !1");
-        fold("x = foo() && false || bar()", "x = (foo() && !1, bar())");
+        fold("x = foo() && false || bar()", "x = (foo(), bar())");
         fold("x = foo() || false || bar()", "x = foo() || bar()");
         fold("x = foo() && true && bar()", "x = foo() && bar()");
         fold("x = foo() || true || bar()", "x = foo() || !0");
@@ -1280,7 +1280,7 @@ mod test {
     fn test_fold_logical_op2() {
         fold("x = function(){} && x", "x=x");
         fold("x = true && function(){}", "x=function(){}");
-        fold("x = [(function(){alert(x)})()] && x", "x=([function(){alert(x)}()],x)");
+        fold("x = [(function(){alert(x)})()] && x", "x=(function(){alert(x)}(),x)");
     }
 
     #[test]
@@ -1288,7 +1288,7 @@ mod test {
         // fold if left is null/undefined
         fold("null ?? 1", "1");
         fold("undefined ?? false", "!1");
-        fold("(a(), null) ?? 1", "(a(), null, 1)");
+        fold("(a(), null) ?? 1", "(a(), 1)");
 
         fold("x = [foo()] ?? x", "x = [foo()]");
 

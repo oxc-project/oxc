@@ -2,6 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
+use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
@@ -39,7 +40,7 @@ impl<'a, 'b> PeepholeOptimizations {
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
             Expression::SequenceExpression(sequence_expression) => {
-                Self::try_fold_sequence_expression(sequence_expression, ctx)
+                self.try_fold_sequence_expression(sequence_expression, ctx)
             }
             _ => None,
         } {
@@ -381,6 +382,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_sequence_expression(
+        &mut self,
         sequence_expr: &mut SequenceExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -388,53 +390,41 @@ impl<'a, 'b> PeepholeOptimizations {
             ctx.parent(),
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
         );
-
-        if should_keep_as_sequence_expr && sequence_expr.expressions.len() == 2 {
+        if should_keep_as_sequence_expr
+            && sequence_expr.expressions.len() == 2
+            && sequence_expr.expressions.first().unwrap().is_number_0()
+        {
             return None;
         }
 
-        let (should_fold, new_len) = sequence_expr.expressions.iter().enumerate().fold(
-            (false, 0),
-            |(mut should_fold, mut new_len), (i, expr)| {
-                if i == sequence_expr.expressions.len() - 1 || expr.may_have_side_effects(&ctx) {
-                    new_len += 1;
-                } else {
-                    should_fold = true;
+        let old_len = sequence_expr.expressions.len();
+        let mut i = 0;
+        sequence_expr.expressions.retain_mut(|e| {
+            i += 1;
+            if should_keep_as_sequence_expr && i == old_len - 1 {
+                if self.remove_unused_expression(e, ctx) {
+                    *e = ctx.ast.expression_numeric_literal(
+                        e.span(),
+                        0.0,
+                        None,
+                        NumberBase::Decimal,
+                    );
+                    self.mark_current_function_as_changed();
                 }
-                (should_fold, new_len)
-            },
-        );
-
-        if new_len == 0 {
-            return Some(ctx.ast.expression_null_literal(sequence_expr.span));
+                return true;
+            }
+            if i == old_len {
+                return true;
+            }
+            !self.remove_unused_expression(e, ctx)
+        });
+        if sequence_expr.expressions.len() == 1 {
+            return Some(sequence_expr.expressions.pop().unwrap());
         }
 
-        if should_fold {
-            let mut new_exprs = ctx.ast.vec_with_capacity(new_len);
-            let len = sequence_expr.expressions.len();
-            for (i, expr) in sequence_expr.expressions.iter_mut().enumerate() {
-                if i == len - 1 || expr.may_have_side_effects(&ctx) {
-                    new_exprs.push(ctx.ast.move_expression(expr));
-                }
-            }
-
-            if should_keep_as_sequence_expr && new_exprs.len() == 1 {
-                let number = ctx.ast.expression_numeric_literal(
-                    sequence_expr.span,
-                    1.0,
-                    None,
-                    NumberBase::Decimal,
-                );
-                new_exprs.insert(0, number);
-            }
-
-            if new_exprs.len() == 1 {
-                return Some(new_exprs.pop().unwrap());
-            }
-
-            return Some(ctx.ast.expression_sequence(sequence_expr.span, new_exprs));
+        if sequence_expr.expressions.len() != old_len {
+            self.mark_current_function_as_changed();
         }
-
         None
     }
 }
@@ -605,6 +595,15 @@ mod test {
         test("while(true) { continue a; unreachable;}", "for(;;) continue a");
         test("while(true) { throw a; unreachable;}", "for(;;) throw a");
         test("while(true) { return a; unreachable;}", "for(;;) return a");
+    }
+
+    #[test]
+    fn remove_unused_expressions_in_sequence() {
+        test("true, foo();", "foo();");
+        test("(true, foo)();", "(0, foo)();");
+        test("(true, true, foo)();", "(0, foo)();");
+        test("var foo; (true, foo)();", "var foo; (0, foo)();");
+        test("var foo; (true, true, foo)();", "var foo; (0, foo)();");
     }
 
     #[test]
