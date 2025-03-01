@@ -1,7 +1,7 @@
 import {join as pathJoin} from 'path';
 import {writeFile} from 'fs/promises';
 import {Bench} from 'tinybench';
-import {parseSyncRaw, createBuffer} from './index.js';
+import {parseSync, parseSyncRaw, createBuffer} from './index.js';
 import deserialize from './deserialize.js';
 import fixtures from './fixtures.mjs';
 
@@ -22,6 +22,14 @@ const buff = createBuffer();
 for (const {filename, sourceBuff, sourceStr} of fixtures) {
     bench.add(
         `parser_napi[${filename}]`,
+        () => {
+            const json = parseSync(sourceStr, {sourceFilename: filename}).program;
+            JSON.parse(json);
+        }
+    );
+
+    bench.add(
+        `parser_napi_raw[${filename}]`,
         () => {
             parseSyncRaw(buff, sourceBuff.length, {sourceFilename: filename});
             deserialize(buff, sourceStr, sourceBuff.length);
