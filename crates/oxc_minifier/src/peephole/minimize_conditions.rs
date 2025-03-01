@@ -1308,8 +1308,8 @@ mod test {
         test("if((-0 != +0) !== false){}", "");
         test_same("foo(x >> y == 0)");
 
-        test("(x = 1) === 1", "(x = 1) == 1");
-        test("(x = 1) !== 1", "(x = 1) != 1");
+        test("v = (x = 1) === 1", "v = (x = 1) == 1");
+        test("v = (x = 1) !== 1", "v = (x = 1) != 1");
         test("v = !0 + null !== 1", "v = !1");
     }
 
@@ -1360,39 +1360,39 @@ mod test {
 
     #[test]
     fn test_fold_is_null_or_undefined() {
-        test("foo === null || foo === undefined", "foo == null");
-        test("foo === undefined || foo === null", "foo == null");
-        test("foo === null || foo === void 0", "foo == null");
-        test("foo === null || foo === void 0 || foo === 1", "foo == null || foo === 1");
-        test("foo === 1 || foo === null || foo === void 0", "foo === 1 || foo == null");
-        test_same("foo === void 0 || bar === null");
-        test_same("var undefined = 1; foo === null || foo === undefined");
-        test_same("foo !== 1 && foo === void 0 || foo === null");
-        test_same("foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
+        test("v = foo === null || foo === undefined", "v = foo == null");
+        test("v = foo === undefined || foo === null", "v = foo == null");
+        test("v = foo === null || foo === void 0", "v = foo == null");
+        test("v = foo === null || foo === void 0 || foo === 1", "v = foo == null || foo === 1");
+        test("v = foo === 1 || foo === null || foo === void 0", "v = foo === 1 || foo == null");
+        test_same("v = foo === void 0 || bar === null");
+        test_same("var undefined = 1; v = foo === null || foo === undefined");
+        test_same("v = foo !== 1 && foo === void 0 || foo === null");
+        test_same("v = foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
 
-        test("foo !== null && foo !== undefined", "foo != null");
-        test("foo !== undefined && foo !== null", "foo != null");
-        test("foo !== null && foo !== void 0", "foo != null");
-        test("foo !== null && foo !== void 0 && foo !== 1", "foo != null && foo !== 1");
-        test("foo !== 1 && foo !== null && foo !== void 0", "foo !== 1 && foo != null");
-        test("foo !== 1 || foo !== void 0 && foo !== null", "foo !== 1 || foo != null");
-        test_same("foo !== void 0 && bar !== null");
+        test("v = foo !== null && foo !== undefined", "v = foo != null");
+        test("v = foo !== undefined && foo !== null", "v = foo != null");
+        test("v = foo !== null && foo !== void 0", "v = foo != null");
+        test("v = foo !== null && foo !== void 0 && foo !== 1", "v = foo != null && foo !== 1");
+        test("v = foo !== 1 && foo !== null && foo !== void 0", "v = foo !== 1 && foo != null");
+        test("v = foo !== 1 || foo !== void 0 && foo !== null", "v = foo !== 1 || foo != null");
+        test_same("v = foo !== void 0 && bar !== null");
 
-        test("(_foo = foo) === null || _foo === undefined", "(_foo = foo) == null");
-        test("(_foo = foo) === null || _foo === void 0", "(_foo = foo) == null");
-        test("(_foo = foo.bar) === null || _foo === undefined", "(_foo = foo.bar) == null");
-        test("(_foo = foo) !== null && _foo !== undefined", "(_foo = foo) != null");
-        test("(_foo = foo) === undefined || _foo === null", "(_foo = foo) == null");
-        test("(_foo = foo) === void 0 || _foo === null", "(_foo = foo) == null");
+        test("v = (_foo = foo) === null || _foo === undefined", "v = (_foo = foo) == null");
+        test("v = (_foo = foo) === null || _foo === void 0", "v = (_foo = foo) == null");
+        test("v = (_foo = foo.bar) === null || _foo === undefined", "v = (_foo = foo.bar) == null");
+        test("v = (_foo = foo) !== null && _foo !== undefined", "v = (_foo = foo) != null");
+        test("v = (_foo = foo) === undefined || _foo === null", "v = (_foo = foo) == null");
+        test("v = (_foo = foo) === void 0 || _foo === null", "v = (_foo = foo) == null");
         test(
-            "(_foo = foo) === null || _foo === void 0 || _foo === 1",
-            "(_foo = foo) == null || _foo === 1",
+            "v = (_foo = foo) === null || _foo === void 0 || _foo === 1",
+            "v = (_foo = foo) == null || _foo === 1",
         );
         test(
-            "_foo === 1 || (_foo = foo) === null || _foo === void 0",
-            "_foo === 1 || (_foo = foo) == null",
+            "v = _foo === 1 || (_foo = foo) === null || _foo === void 0",
+            "v = _foo === 1 || (_foo = foo) == null",
         );
-        test_same("(_foo = foo) === void 0 || bar === null");
+        test_same("v = (_foo = foo) === void 0 || bar === null");
     }
 
     #[test]

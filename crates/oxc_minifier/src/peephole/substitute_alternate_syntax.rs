@@ -1215,25 +1215,25 @@ mod test {
 
     #[test]
     fn test_fold_true_false_comparison() {
-        test("x == true", "x == !0");
-        test("x == false", "x == !1");
-        test("x != true", "x != !0");
-        test("x < true", "x < !0");
-        test("x <= true", "x <= !0");
-        test("x > true", "x > !0");
-        test("x >= true", "x >= !0");
+        test("v = x == true", "v = x == !0");
+        test("v = x == false", "v = x == !1");
+        test("v = x != true", "v = x != !0");
+        test("v = x < true", "v = x < !0");
+        test("v = x <= true", "v = x <= !0");
+        test("v = x > true", "v = x > !0");
+        test("v = x >= true", "v = x >= !0");
 
-        test("x instanceof true", "x instanceof !0");
-        test("x + false", "x + !1");
+        test("v = x instanceof true", "v = x instanceof !0");
+        test("v = x + false", "v = x + !1");
 
         // Order: should perform the nearest.
-        test("x == x instanceof false", "x == x instanceof !1");
-        test("x in x >> true", "x in x >> !0");
-        test("x == fake(false)", "x == fake(!1)");
+        test("v = x == x instanceof false", "v = x == x instanceof !1");
+        test("v = x in x >> true", "v = x in x >> !0");
+        test("v = x == fake(false)", "v = x == fake(!1)");
 
         // The following should not be folded.
-        test("x === true", "x === !0");
-        test("x !== false", "x !== !1");
+        test("v = x === true", "v = x === !0");
+        test("v = x !== false", "v = x !== !1");
     }
 
     /// Based on https://github.com/terser/terser/blob/58ba5c163fa1684f2a63c7bc19b7ebcf85b74f73/test/compress/assignment.js
@@ -1622,11 +1622,11 @@ mod test {
 
     #[test]
     fn test_fold_loose_equals_undefined() {
-        test_same("foo != null");
-        test("foo != undefined", "foo != null");
-        test("foo != void 0", "foo != null");
-        test("undefined != foo", "foo != null");
-        test("void 0 != foo", "foo != null");
+        test_same("v = foo != null");
+        test("v = foo != undefined", "v = foo != null");
+        test("v = foo != void 0", "v = foo != null");
+        test("v = undefined != foo", "v = foo != null");
+        test("v = void 0 != foo", "v = foo != null");
     }
 
     #[test]

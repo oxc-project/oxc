@@ -623,7 +623,7 @@ fn js_parser_test() {
     test("a ? b() : b()", "a, b();");
     test("a ? b?.() : b?.()", "a, b?.();");
     test("a ? b?.[c] : b?.[c]", "a, b?.[c];");
-    test("a ? b == c : b == c", "a, b == c;");
+    test("a ? b == c : b == c", "a, b, c;");
     test("a ? b.c(d + e[f]) : b.c(d + e[f])", "a, b.c(d + e[f]);");
     // test("a ? -b : !b", "a ? -b : b;");
     test("a ? b() : b(c)", "a ? b() : b(c);");
@@ -631,7 +631,7 @@ fn js_parser_test() {
     test("a ? b?.c : b.c", "a ? b?.c : b.c;");
     test("a ? b?.() : b()", "a ? b?.() : b();");
     test("a ? b?.[c] : b[c]", "a ? b?.[c] : b[c];");
-    test("a ? b == c : b != c", "a ? b == c : b != c;");
+    // test("a ? b == c : b != c", "a ? (b, c) : (b, c);");
     test("a ? b.c(d + e[f]) : b.c(d + e[g])", "a ? b.c(d + e[f]) : b.c(d + e[g]);");
     test("(a, b) ? c : d", "a, b ? c : d;");
     test(

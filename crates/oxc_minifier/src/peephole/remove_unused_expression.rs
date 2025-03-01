@@ -24,9 +24,9 @@ impl<'a> PeepholeOptimizations {
             Expression::TemplateLiteral(_) => self.fold_template_literal(e, ctx),
             Expression::ObjectExpression(_) => self.fold_object_expression(e, ctx),
             Expression::ConditionalExpression(_) => self.fold_conditional_expression(e, ctx),
+            Expression::BinaryExpression(_) => self.fold_binary_expression(e, ctx),
             // TODO
-            // Expression::BinaryExpression(_)
-            // | Expression::CallExpression(_)
+            // Expression::CallExpression(_)
             // | Expression::NewExpression(_) => {
             // false
             // }
@@ -347,6 +347,89 @@ impl<'a> PeepholeOptimizations {
 
         false
     }
+
+    fn fold_binary_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::BinaryExpression(binary_expr) = e else {
+            return false;
+        };
+
+        match binary_expr.operator {
+            BinaryOperator::Equality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::GreaterEqualThan => {
+                let left = self.remove_unused_expression(&mut binary_expr.left, ctx);
+                let right = self.remove_unused_expression(&mut binary_expr.right, ctx);
+                match (left, right) {
+                    (true, true) => true,
+                    (true, false) => {
+                        *e = ctx.ast.move_expression(&mut binary_expr.right);
+                        false
+                    }
+                    (false, true) => {
+                        *e = ctx.ast.move_expression(&mut binary_expr.left);
+                        false
+                    }
+                    (false, false) => {
+                        *e = ctx.ast.expression_sequence(
+                            binary_expr.span,
+                            ctx.ast.vec_from_array([
+                                ctx.ast.move_expression(&mut binary_expr.left),
+                                ctx.ast.move_expression(&mut binary_expr.right),
+                            ]),
+                        );
+                        false
+                    }
+                }
+            }
+            BinaryOperator::Addition => {
+                Self::fold_string_addition_chain(e, ctx);
+                matches!(e, Expression::StringLiteral(_))
+            }
+            _ => !e.may_have_side_effects(&ctx),
+        }
+    }
+
+    /// returns whether the passed expression is a string
+    fn fold_string_addition_chain(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        let Expression::BinaryExpression(binary_expr) = e else {
+            return e.to_primitive(&ctx).is_string() == Some(true);
+        };
+        if binary_expr.operator != BinaryOperator::Addition {
+            return e.to_primitive(&ctx).is_string() == Some(true);
+        }
+
+        let left_is_string = Self::fold_string_addition_chain(&mut binary_expr.left, ctx);
+        if left_is_string {
+            if !binary_expr.left.may_have_side_effects(&ctx) {
+                binary_expr.left =
+                    ctx.ast.expression_string_literal(binary_expr.left.span(), "", None);
+            }
+
+            let right_as_primitive = binary_expr.right.to_primitive(&ctx);
+            if right_as_primitive.is_symbol() == Some(false)
+                && !binary_expr.right.may_have_side_effects(&ctx)
+            {
+                *e = ctx.ast.move_expression(&mut binary_expr.left);
+                return true;
+            }
+            return true;
+        }
+
+        let right_as_primitive = binary_expr.right.to_primitive(&ctx);
+        if right_as_primitive.is_string() == Some(true) {
+            if !binary_expr.right.may_have_side_effects(&ctx) {
+                binary_expr.right =
+                    ctx.ast.expression_string_literal(binary_expr.right.span(), "", None);
+            }
+            return true;
+        }
+        false
+    }
 }
 
 #[cfg(test)]
@@ -508,5 +591,29 @@ mod test {
         test("foo() ? 1 : bar()", "foo() || bar()");
         test("foo() ? bar() : 2", "!foo() || bar()"); // can be improved to "foo() && bar()"
         test_same("foo() ? bar() : baz()");
+    }
+
+    #[test]
+    fn test_fold_binary_expression() {
+        test("var a, b; a === b", "var a, b;");
+        test("var a, b; a() === b", "var a, b; a()");
+        test("var a, b; a === b()", "var a, b; b()");
+        test("var a, b; a() === b()", "var a, b; a(), b()");
+
+        test("var a, b; a !== b", "var a, b;");
+        test("var a, b; a == b", "var a, b;");
+        test("var a, b; a != b", "var a, b;");
+        test("var a, b; a < b", "var a, b;");
+        test("var a, b; a > b", "var a, b;");
+        test("var a, b; a <= b", "var a, b;");
+        test("var a, b; a >= b", "var a, b;");
+
+        test_same("var a, b; a + b");
+        test("var a, b; 'a' + b", "var a, b; '' + b");
+        test_same("var a, b; a + '' + b");
+        test("var a, b, c; 'a' + (b === c)", "var a, b, c;");
+        test("var a, b; 'a' + +b", "var a, b; '' + +b"); // can be improved to "var a, b; +b"
+        test_same("var a, b; a + ('' + b)");
+        test("var a, b, c; a + ('' + (b === c))", "var a, b, c; a + ''");
     }
 }
