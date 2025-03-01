@@ -171,6 +171,7 @@ declare_oxc_lint!(
     ///      "vitest/consistent-test-it": "error"
     ///   }
     /// }
+    /// ```
     ConsistentTestIt,
     jest,
     style,
