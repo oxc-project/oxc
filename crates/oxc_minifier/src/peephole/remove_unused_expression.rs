@@ -7,6 +7,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
+use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
@@ -78,7 +79,45 @@ impl<'a> PeepholeOptimizations {
             self.remove_unused_expression(&mut logical_expr.left, ctx);
             *e = ctx.ast.move_expression(&mut logical_expr.left);
             self.mark_current_function_as_changed();
+            return false;
         }
+
+        if self.target >= ESTarget::ES2020 {
+            // "a != null && a.b()" => "a?.b()"
+            // "a == null || a.b()" => "a?.b()"
+            let LogicalExpression {
+                left: logical_left,
+                right: logical_right,
+                operator: logical_op,
+                ..
+            } = logical_expr.as_mut();
+            if let Expression::BinaryExpression(binary_expr) = logical_left {
+                if matches!(
+                    (logical_op, binary_expr.operator),
+                    (LogicalOperator::And, BinaryOperator::Inequality)
+                        | (LogicalOperator::Or, BinaryOperator::Equality)
+                ) {
+                    let name_and_id = if let Expression::Identifier(id) = &binary_expr.left {
+                        (!ctx.is_global_reference(id) && binary_expr.right.is_null())
+                            .then_some((id.name, &mut binary_expr.left))
+                    } else if let Expression::Identifier(id) = &binary_expr.right {
+                        (!ctx.is_global_reference(id) && binary_expr.left.is_null())
+                            .then_some((id.name, &mut binary_expr.right))
+                    } else {
+                        None
+                    };
+                    if let Some((name, id)) = name_and_id {
+                        if Self::inject_optional_chaining_if_matched(&name, id, logical_right, ctx)
+                        {
+                            *e = ctx.ast.move_expression(logical_right);
+                            self.mark_current_function_as_changed();
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
         false
     }
 
@@ -592,6 +631,16 @@ mod test {
         test_same(
             "React.useEffect(() => (isMountRef.current = !1, () => { isMountRef.current = !0; }), [])",
         );
+    }
+
+    #[test]
+    fn test_logical_expression() {
+        test("var a; a != null && a.b()", "var a; a?.b()");
+        test("var a; a == null || a.b()", "var a; a?.b()");
+        test_same("a != null && a.b()"); // a may have a getter
+        test_same("a == null || a.b()"); // a may have a getter
+        test("var a; null != a && a.b()", "var a; a?.b()");
+        test("var a; null == a || a.b()", "var a; a?.b()");
     }
 
     #[test]

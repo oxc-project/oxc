@@ -451,7 +451,7 @@ impl<'a> PeepholeOptimizations {
     /// Modify `expr` if that has `target_expr` as a parent, and returns true if modified.
     ///
     /// For `target_expr` = `a`, `expr` = `a.b`, this function changes `expr` to `a?.b` and returns true.
-    fn inject_optional_chaining_if_matched(
+    pub fn inject_optional_chaining_if_matched(
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
