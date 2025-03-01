@@ -20,8 +20,15 @@ pub struct ParserOptions {
     /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
     /// containing the expression inside parentheses.
     ///
-    /// Default: true
+    /// @default true
     pub preserve_parens: Option<bool>,
+
+    /// Produce semantic errors with an additional AST pass.
+    /// Semantic errors depend on symbols and scopes, where the parser does not construct.
+    /// This adds a small performance overhead.
+    ///
+    /// @default false
+    pub show_semantic_errors: Option<bool>,
 }
 
 #[napi]

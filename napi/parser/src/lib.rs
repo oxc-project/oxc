@@ -11,6 +11,7 @@ use oxc::{
     ast::CommentKind,
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     parser::{ParseOptions, Parser, ParserReturn},
+    semantic::SemanticBuilder,
     span::SourceType,
 };
 use oxc_napi::OxcError;
@@ -56,9 +57,15 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
     let allocator = Allocator::default();
     let source_type = get_source_type(filename, options);
     let ret = parse(&allocator, source_type, &source_text, options);
+
     let mut program = ret.program;
     let mut module_record = ret.module_record;
     let mut errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
+
+    if options.show_semantic_errors == Some(true) {
+        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+        errors.extend(semantic_ret.errors.into_iter().map(OxcError::from));
+    }
 
     // Convert spans to UTF-16
     let span_converter = Utf8ToUtf16::new(&source_text);

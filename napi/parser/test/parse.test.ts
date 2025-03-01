@@ -28,6 +28,17 @@ describe('parse', () => {
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
   });
 
+  it('checks semantic', async () => {
+    const code = 'let x; let x;';
+    let ret = await parseAsync('test.js', code);
+    expect(ret.errors.length).toBe(0);
+
+    ret = await parseAsync('test.js', code, {
+      showSemanticErrors: true,
+    });
+    expect(ret.errors.length).toBe(1);
+  });
+
   it('`Infinity` is represented as `Infinity` number', () => {
     const ret = parseSync('test.js', '1e+350');
     expect(ret.errors.length).toBe(0);

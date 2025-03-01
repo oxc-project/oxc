@@ -141,9 +141,17 @@ export interface ParserOptions {
    * (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
    * containing the expression inside parentheses.
    *
-   * Default: true
+   * @default true
    */
   preserveParens?: boolean
+  /**
+   * Produce semantic errors with an additional AST pass.
+   * Semantic errors depend on symbols and scopes, where the parser does not construct.
+   * This adds a small performance overhead.
+   *
+   * @default false
+   */
+  showSemanticErrors?: boolean
 }
 
 /** Parse synchronously. */
