@@ -716,7 +716,7 @@ mod test {
         // Verify function deletion tracking.
         // test("if(!!true||function(){}) {}", "if(1) {}");
         // Don't bother with FOR inits as there are normalized out.
-        test("for(!!true;;) foo()", "for(!0;;) foo()");
+        test("for(!!true;;) foo()", "for(;;) foo()");
 
         // These test tryMinimizeCondition
         test("for(;!!x;) foo()", "for(;x;) foo()");

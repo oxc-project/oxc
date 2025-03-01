@@ -220,6 +220,21 @@ impl<'a, 'b> PeepholeOptimizations {
         for_stmt: &mut ForStatement<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
+        if let Some(init) = &mut for_stmt.init {
+            if let Some(init) = init.as_expression_mut() {
+                if self.remove_unused_expression(init, ctx) {
+                    for_stmt.init = None;
+                    self.mark_current_function_as_changed();
+                }
+            }
+        }
+        if let Some(update) = &mut for_stmt.update {
+            if self.remove_unused_expression(update, ctx) {
+                for_stmt.update = None;
+                self.mark_current_function_as_changed();
+            }
+        }
+
         let test_boolean =
             for_stmt.test.as_ref().and_then(|test| test.evaluate_value_to_boolean(&ctx));
         if for_stmt.test.as_ref().is_some_and(|test| test.may_have_side_effects(&ctx)) {
@@ -590,5 +605,17 @@ mod test {
         test("while(true) { continue a; unreachable;}", "for(;;) continue a");
         test("while(true) { throw a; unreachable;}", "for(;;) throw a");
         test("while(true) { return a; unreachable;}", "for(;;) return a");
+    }
+
+    #[test]
+    fn remove_unused_expressions_in_for() {
+        test(
+            "var i; for (i = 0, 0; i < 10; i++) foo(i);",
+            "var i; for (i = 0; i < 10; i++) foo(i);",
+        );
+        test(
+            "var i; for (i = 0; i < 10; 0, i++, 0) foo(i);",
+            "var i; for (i = 0; i < 10; i++) foo(i);",
+        );
     }
 }
