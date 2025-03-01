@@ -1889,6 +1889,7 @@ fn test() {
 			",
             None,
         ),
+        ("if(I){if(t)s}þ", "if(I){if(t){s}}þ", None),
     ];
     Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }
