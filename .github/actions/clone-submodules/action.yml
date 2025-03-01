@@ -17,14 +17,14 @@ runs:
         show-progress: false
         repository: babel/babel
         path: tasks/coverage/babel
-        ref: acbc09a87016778c1551ab5e7162fdd0e70b6663
+        ref: 578ac4df1c8a05f01350553950dbfbbeaac013c2
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         show-progress: false
         repository: microsoft/TypeScript
         path: tasks/coverage/typescript
-        ref: d85767abfd83880cea17cea70f9913e9c4496dcc
+        ref: 15392346d05045742e653eab5c87538ff2a3c863
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:

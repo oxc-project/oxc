@@ -1,6 +1,6 @@
-commit: acbc09a8
+commit: 578ac4df
 
-Passed: 698/1168
+Passed: 698/1167
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1355,7 +1355,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (49/159)
+# babel-plugin-transform-typescript (49/158)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1940,14 +1940,6 @@ rebuilt        : ScopeId(0): []
 Bindings mismatch:
 after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
-
-* lvalues/TSTypeParameterInstantiation/input.ts
-Symbol reference IDs mismatch for "AbstractClass":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
-Symbol reference IDs mismatch for "ConcreteClass":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 * namespace/alias/input.ts
 Bindings mismatch:
