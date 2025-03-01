@@ -332,7 +332,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
     fn try_fold_conditional_expression(
-        &self,
+        &mut self,
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {

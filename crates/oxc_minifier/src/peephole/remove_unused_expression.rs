@@ -14,7 +14,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
-    pub fn remove_unused_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    pub fn remove_unused_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         match e {
             Expression::ArrayExpression(_) => self.fold_array_expression(e, ctx),
             Expression::UnaryExpression(_) => self.fold_unary_expression(e, ctx),
@@ -34,11 +34,12 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn fold_unary_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_unary_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
                 *e = ctx.ast.move_expression(&mut unary_expr.argument);
+                self.mark_current_function_as_changed();
                 self.remove_unused_expression(e, ctx)
             }
             UnaryOperator::Typeof => {
@@ -46,6 +47,7 @@ impl<'a> PeepholeOptimizations {
                     true
                 } else {
                     *e = ctx.ast.move_expression(&mut unary_expr.argument);
+                    self.mark_current_function_as_changed();
                     self.remove_unused_expression(e, ctx)
                 }
             }
@@ -53,26 +55,35 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn fold_sequence_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_sequence_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::SequenceExpression(sequence_expr) = e else { return false };
+
+        let old_len = sequence_expr.expressions.len();
         sequence_expr.expressions.retain_mut(|e| !self.remove_unused_expression(e, ctx));
+        if sequence_expr.expressions.len() != old_len {
+            self.mark_current_function_as_changed();
+        }
+
         sequence_expr.expressions.is_empty()
     }
 
-    fn fold_logical_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_logical_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::LogicalExpression(logical_expr) = e else { return false };
-        if !logical_expr.operator.is_coalesce() {
-            self.try_fold_expr_in_boolean_context(&mut logical_expr.left, ctx);
+        if !logical_expr.operator.is_coalesce()
+            && self.try_fold_expr_in_boolean_context(&mut logical_expr.left, ctx)
+        {
+            self.mark_current_function_as_changed();
         }
         if self.remove_unused_expression(&mut logical_expr.right, ctx) {
             self.remove_unused_expression(&mut logical_expr.left, ctx);
             *e = ctx.ast.move_expression(&mut logical_expr.left);
+            self.mark_current_function_as_changed();
         }
         false
     }
 
     // `([1,2,3, foo()])` -> `foo()`
-    fn fold_array_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_array_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::ArrayExpression(array_expr) = e else {
             return false;
         };
@@ -80,6 +91,7 @@ impl<'a> PeepholeOptimizations {
             return true;
         }
 
+        let old_len = array_expr.elements.len();
         array_expr.elements.retain_mut(|el| match el {
             ArrayExpressionElement::SpreadElement(_) => el.may_have_side_effects(&ctx),
             ArrayExpressionElement::Elision(_) => false,
@@ -88,6 +100,10 @@ impl<'a> PeepholeOptimizations {
                 !self.remove_unused_expression(el_expr, ctx)
             }
         });
+        if array_expr.elements.len() != old_len {
+            self.mark_current_function_as_changed();
+        }
+
         if array_expr.elements.len() == 0 {
             return true;
         }
@@ -164,10 +180,15 @@ impl<'a> PeepholeOptimizations {
     }
 
     // "`${1}2${foo()}3`" -> "`${foo()}`"
-    fn fold_template_literal(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_template_literal(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::TemplateLiteral(temp_lit) = e else { return false };
         if temp_lit.expressions.is_empty() {
             return true;
+        }
+        if temp_lit.expressions.iter().all(|e| e.to_primitive(&ctx).is_symbol() != Some(false))
+            && temp_lit.quasis.iter().all(|q| q.value.raw.is_empty())
+        {
+            return false;
         }
 
         let mut transformed_elements = ctx.ast.vec();
@@ -229,20 +250,25 @@ impl<'a> PeepholeOptimizations {
             return true;
         } else if transformed_elements.len() == 1 {
             *e = transformed_elements.pop().unwrap();
+            self.mark_current_function_as_changed();
             return false;
         }
 
         *e = ctx.ast.expression_sequence(temp_lit.span, transformed_elements);
+        self.mark_current_function_as_changed();
         false
     }
 
     // `({ 1: 1, [foo()]: bar() })` -> `foo(), bar()`
-    fn fold_object_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_object_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::ObjectExpression(object_expr) = e else {
             return false;
         };
         if object_expr.properties.is_empty() {
             return true;
+        }
+        if object_expr.properties.iter().all(ObjectPropertyKind::is_spread) {
+            return false;
         }
 
         let mut transformed_elements = ctx.ast.vec();
@@ -296,14 +322,16 @@ impl<'a> PeepholeOptimizations {
             return true;
         } else if transformed_elements.len() == 1 {
             *e = transformed_elements.pop().unwrap();
+            self.mark_current_function_as_changed();
             return false;
         }
 
         *e = ctx.ast.expression_sequence(object_expr.span, transformed_elements);
+        self.mark_current_function_as_changed();
         false
     }
 
-    fn fold_conditional_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_conditional_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::ConditionalExpression(conditional_expr) = e else {
             return false;
         };
@@ -318,6 +346,7 @@ impl<'a> PeepholeOptimizations {
                 return true;
             }
             *e = ctx.ast.move_expression(&mut conditional_expr.test);
+            self.mark_current_function_as_changed();
             return false;
         }
 
@@ -330,6 +359,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.ast.move_expression(&mut conditional_expr.alternate),
                 ctx,
             );
+            self.mark_current_function_as_changed();
             return false;
         }
 
@@ -342,13 +372,14 @@ impl<'a> PeepholeOptimizations {
                 ctx.ast.move_expression(&mut conditional_expr.consequent),
                 ctx,
             );
+            self.mark_current_function_as_changed();
             return false;
         }
 
         false
     }
 
-    fn fold_binary_expression(&self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_binary_expression(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::BinaryExpression(binary_expr) = e else {
             return false;
         };
@@ -368,10 +399,12 @@ impl<'a> PeepholeOptimizations {
                     (true, true) => true,
                     (true, false) => {
                         *e = ctx.ast.move_expression(&mut binary_expr.right);
+                        self.mark_current_function_as_changed();
                         false
                     }
                     (false, true) => {
                         *e = ctx.ast.move_expression(&mut binary_expr.left);
+                        self.mark_current_function_as_changed();
                         false
                     }
                     (false, false) => {
@@ -382,12 +415,13 @@ impl<'a> PeepholeOptimizations {
                                 ctx.ast.move_expression(&mut binary_expr.right),
                             ]),
                         );
+                        self.mark_current_function_as_changed();
                         false
                     }
                 }
             }
             BinaryOperator::Addition => {
-                Self::fold_string_addition_chain(e, ctx);
+                self.fold_string_addition_chain(e, ctx);
                 matches!(e, Expression::StringLiteral(_))
             }
             _ => !e.may_have_side_effects(&ctx),
@@ -395,7 +429,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// returns whether the passed expression is a string
-    fn fold_string_addition_chain(e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn fold_string_addition_chain(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         let Expression::BinaryExpression(binary_expr) = e else {
             return e.to_primitive(&ctx).is_string() == Some(true);
         };
@@ -403,11 +437,14 @@ impl<'a> PeepholeOptimizations {
             return e.to_primitive(&ctx).is_string() == Some(true);
         }
 
-        let left_is_string = Self::fold_string_addition_chain(&mut binary_expr.left, ctx);
+        let left_is_string = self.fold_string_addition_chain(&mut binary_expr.left, ctx);
         if left_is_string {
-            if !binary_expr.left.may_have_side_effects(&ctx) {
+            if !binary_expr.left.may_have_side_effects(&ctx)
+                && !binary_expr.left.is_specific_string_literal("")
+            {
                 binary_expr.left =
                     ctx.ast.expression_string_literal(binary_expr.left.span(), "", None);
+                self.mark_current_function_as_changed();
             }
 
             let right_as_primitive = binary_expr.right.to_primitive(&ctx);
@@ -415,6 +452,7 @@ impl<'a> PeepholeOptimizations {
                 && !binary_expr.right.may_have_side_effects(&ctx)
             {
                 *e = ctx.ast.move_expression(&mut binary_expr.left);
+                self.mark_current_function_as_changed();
                 return true;
             }
             return true;
@@ -422,9 +460,12 @@ impl<'a> PeepholeOptimizations {
 
         let right_as_primitive = binary_expr.right.to_primitive(&ctx);
         if right_as_primitive.is_string() == Some(true) {
-            if !binary_expr.right.may_have_side_effects(&ctx) {
+            if !binary_expr.right.may_have_side_effects(&ctx)
+                && !binary_expr.right.is_specific_string_literal("")
+            {
                 binary_expr.right =
                     ctx.ast.expression_string_literal(binary_expr.right.span(), "", None);
+                self.mark_current_function_as_changed();
             }
             return true;
         }
