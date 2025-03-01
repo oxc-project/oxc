@@ -132,18 +132,18 @@ impl Rule for JsxFilenameExtension {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let jsx_elt = ctx.nodes().iter().find(|&&x| match x.kind() {
-            AstKind::JSXElement(_) | AstKind::JSXFragment(_) => true,
-            _ => false,
-        });
+        let jsx_elt = ctx
+            .nodes()
+            .iter()
+            .find(|&&x| matches!(x.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_)));
         let file_extension = ctx.file_path().extension().and_then(OsStr::to_str).unwrap_or("");
         let has_ext_allowed = self.extensions.contains(&CompactStr::new(file_extension));
 
         if jsx_elt.is_some() {
             if !has_ext_allowed {
-                let span_elt = jsx_elt.map(|elt| elt.span());
+                let span_elt = jsx_elt.map(GetSpan::span);
                 ctx.diagnostic(no_jsx_with_filename_extension_diagnostic(
-                    &file_extension,
+                    file_extension,
                     span_elt.unwrap(),
                 ));
             }
@@ -158,7 +158,7 @@ impl Rule for JsxFilenameExtension {
             if self.ignore_files_without_code && program.body.is_empty() {
                 return;
             }
-            ctx.diagnostic(extension_only_for_jsx_diagnostic(&file_extension));
+            ctx.diagnostic(extension_only_for_jsx_diagnostic(file_extension));
         }
     }
 }
