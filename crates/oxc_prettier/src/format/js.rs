@@ -1481,8 +1481,8 @@ impl<'a> Format<'a> for BindingPattern<'a> {
             parts.push(text!("?"));
         }
 
-        if let Some(typ) = &self.type_annotation {
-            parts.push(array!(p, [text!(": "), typ.type_annotation.format(p)]));
+        if let Some(ty) = &self.type_annotation {
+            parts.push(array!(p, [text!(": "), ty.type_annotation.format(p)]));
         }
 
         array!(p, parts)

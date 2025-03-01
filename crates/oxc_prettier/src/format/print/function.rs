@@ -153,9 +153,9 @@ pub fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> 
 
     parts.push(group!(p, [parameters_doc]));
 
-    if let Some(ret_typ) = &function.return_type {
+    if let Some(ret_type) = &function.return_type {
         parts.push(text!(": "));
-        parts.push(ret_typ.type_annotation.format(p));
+        parts.push(ret_type.type_annotation.format(p));
     }
 
     if let Some(body) = &function.body {

@@ -61,8 +61,8 @@ declare_oxc_lint!(
 impl Rule for BanTypes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::TSTypeReference(typ) => {
-                let name = match &typ.type_name {
+            AstKind::TSTypeReference(ty) => {
+                let name = match &ty.type_name {
                     oxc_ast::ast::TSTypeName::IdentifierReference(v) => &v.name,
                     oxc_ast::ast::TSTypeName::QualifiedName(_) => return,
                 };
@@ -72,21 +72,21 @@ impl Rule for BanTypes {
                         ctx.diagnostic(type_diagnostic(
                             name.as_str(),
                             &name.as_str().cow_to_ascii_lowercase(),
-                            typ.span,
+                            ty.span,
                         ));
                     }
                     "Object" => {
-                        ctx.diagnostic(object(typ.span));
+                        ctx.diagnostic(object(ty.span));
                     }
                     "Function" => {
-                        ctx.diagnostic(function(typ.span));
+                        ctx.diagnostic(function(ty.span));
                     }
                     _ => {}
                 }
             }
-            AstKind::TSTypeLiteral(typ) => {
-                if typ.members.is_empty() {
-                    ctx.diagnostic(type_literal(typ.span));
+            AstKind::TSTypeLiteral(ty) => {
+                if ty.members.is_empty() {
+                    ctx.diagnostic(type_literal(ty.span));
                 }
             }
             _ => {}
