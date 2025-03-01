@@ -296,6 +296,7 @@ mod react {
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
+    pub mod no_namespace;
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
@@ -882,6 +883,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_undef,
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
+    react::no_namespace,
     react::no_array_index_key,
     react::no_children_prop,
     react::no_danger_with_children,
