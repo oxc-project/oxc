@@ -543,6 +543,19 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
+        if call_expr.arguments.is_empty() {
+            let is_empty_iife = match &call_expr.callee {
+                Expression::FunctionExpression(f) => {
+                    f.params.is_empty() && f.body.as_ref().is_some_and(|body| body.is_empty())
+                }
+                Expression::ArrowFunctionExpression(f) => f.params.is_empty() && f.body.is_empty(),
+                _ => false,
+            };
+            if is_empty_iife {
+                return true;
+            }
+        }
+
         false
     }
 
@@ -770,5 +783,31 @@ mod test {
         test("/* @__PURE__ */ foo(...'a')", "");
         test("/* @__PURE__ */ new Foo()", "");
         test("/* @__PURE__ */ new Foo(a)", "a");
+    }
+
+    #[test]
+    fn test_fold_iife() {
+        test_same("var k = () => {}");
+        test_same("var k = function () {}");
+        // test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
+        test("(() => {})()", "");
+        // test("(() => a())()", "a();");
+        // test("(() => { a() })()", "a();");
+        // test("(() => { return a() })()", "a();");
+        // test("(() => { let b = a; b() })()", "a();");
+        // test("(() => { let b = a; return b() })()", "a();");
+        test("(async () => {})()", "");
+        test_same("(async () => { a() })()");
+        // test("(async () => { let b = a; b() })()", "(async () => a())();");
+        // test("var a = (function() {})()", "var a = /* @__PURE__ */ function() {}();");
+        test("(function() {})()", "");
+        test("(function*() {})()", "");
+        test("(async function() {})()", "");
+        test_same("(function() { a() })()");
+        test_same("(function*() { a() })()");
+        test_same("(async function() { a() })()");
+        // test("(() => x)()", "x;");
+        test("/* @__PURE__ */ (() => x)()", "");
+        test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
     }
 }
