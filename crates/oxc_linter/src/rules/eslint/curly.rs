@@ -344,8 +344,12 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         oxc_span::GetSpan::span,
     );
 
+    let Some(next_char_offset) = get_next_char_offset(before_node_span, ctx) else {
+        return true;
+    };
+
     let text = ctx.source_range(Span::new(
-        before_node_span.end + 1,
+        next_char_offset,
         span.end - ((node_string.len() as u32) - trimmed_len),
     ));
 
@@ -390,9 +394,19 @@ fn is_lexical_declaration(node: &Statement) -> bool {
     }
 }
 
+#[expect(clippy::cast_possible_truncation)]
+fn get_next_char_offset(span: Span, ctx: &LintContext) -> Option<u32> {
+    let next_char = ctx.source_text()[(span.end as usize)..].chars().next();
+    next_char.map(|c| span.end + c.len_utf8() as u32)
+}
+
 #[expect(clippy::cast_possible_truncation)] // for `as i32`
 fn is_followed_by_else_keyword(node: &Statement, ctx: &LintContext) -> bool {
-    let start = node.span().end + 1;
+    let Some(next_char_offset) = get_next_char_offset(node.span(), ctx) else {
+        return false;
+    };
+
+    let start = next_char_offset;
     let end = ctx.source_text().len() as u32;
 
     if start > end {
@@ -1875,6 +1889,7 @@ fn test() {
 			",
             None,
         ),
+        ("if(I){if(t)s}þ", "if(I){if(t){s}}þ", None),
     ];
     Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }
