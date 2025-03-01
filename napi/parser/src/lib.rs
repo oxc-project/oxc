@@ -52,17 +52,6 @@ fn parse<'a>(
         .parse()
 }
 
-/// Parse without returning anything.
-///
-/// This is for benchmark purposes such as measuring napi communication overhead.
-#[napi]
-pub fn parse_without_return(filename: String, source_text: String, options: Option<ParserOptions>) {
-    let options = options.unwrap_or_default();
-    let allocator = Allocator::default();
-    let source_type = get_source_type(&filename, &options);
-    parse(&allocator, source_type, &source_text, &options);
-}
-
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type = get_source_type(filename, options);

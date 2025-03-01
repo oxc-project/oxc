@@ -149,13 +149,6 @@ export interface ParserOptions {
 /** Parse synchronously. */
 export declare function parseSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): ParseResult
 
-/**
- * Parse without returning anything.
- *
- * This is for benchmark purposes such as measuring napi communication overhead.
- */
-export declare function parseWithoutReturn(filename: string, sourceText: string, options?: ParserOptions | undefined | null): void
-
 export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
