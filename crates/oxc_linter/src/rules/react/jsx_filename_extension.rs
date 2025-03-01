@@ -96,7 +96,7 @@ declare_oxc_lint!(
     /// ```
     JsxFilenameExtension,
     react,
-    restriction, 
+    restriction,
     pending
 );
 
