@@ -155,6 +155,7 @@ fn check_path_is_absolute(path_str: &str) -> bool {
 }
 
 #[test]
+#[cfg(not(windows))] // `Path::is_absolute` is platform-dependent, so these tests fail on windows. https://doc.rust-lang.org/std/path/struct.Path.html#method.is_absolute
 fn test() {
     use crate::tester::Tester;
     use serde_json::json;
