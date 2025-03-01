@@ -933,62 +933,6 @@ impl<'a> PeepholeOptimizations {
             self.mark_current_function_as_changed();
         }
     }
-
-    pub fn substitute_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
-        if let Statement::ExpressionStatement(expr_stmt) = stmt {
-            if let Some(folded_expr) = match &mut expr_stmt.expression {
-                Expression::LogicalExpression(expr) => {
-                    self.try_compress_is_null_and_to_nullish_coalescing(expr, ctx)
-                }
-                _ => None,
-            } {
-                expr_stmt.expression = folded_expr;
-                self.mark_current_function_as_changed();
-            }
-        }
-    }
-
-    /// Compress `a == null && b` to `a ?? b`
-    ///
-    /// - `a == null && b` -> `a ?? b`
-    /// - `a != null || b` -> `a ?? b`
-    ///
-    /// This can be only done when the return value is not used.
-    /// For example when a = 1, `a == null && b` returns `false` while `a ?? b` returns `1`.
-    fn try_compress_is_null_and_to_nullish_coalescing(
-        &self,
-        expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if self.target < ESTarget::ES2020 {
-            return None;
-        }
-        let target_op = match expr.operator {
-            LogicalOperator::And => BinaryOperator::Equality,
-            LogicalOperator::Or => BinaryOperator::Inequality,
-            LogicalOperator::Coalesce => return None,
-        };
-        let Expression::BinaryExpression(binary_expr) = &mut expr.left else {
-            return None;
-        };
-        if binary_expr.operator != target_op {
-            return None;
-        }
-        let new_left_hand_expr = if binary_expr.left.is_null() {
-            ctx.ast.move_expression(&mut binary_expr.right)
-        } else if binary_expr.right.is_null() {
-            ctx.ast.move_expression(&mut binary_expr.left)
-        } else {
-            return None;
-        };
-
-        Some(ctx.ast.expression_logical(
-            expr.span,
-            new_left_hand_expr,
-            LogicalOperator::Coalesce,
-            ctx.ast.move_expression(&mut expr.right),
-        ))
-    }
 }
 
 impl<'a> LatePeepholeOptimizations {
@@ -1762,15 +1706,6 @@ mod test {
         test_same("var a = function f() { return f; }");
         test("var a = class C {}", "var a = class {}");
         test_same("var a = class C { foo() { return C } }");
-    }
-
-    #[test]
-    fn test_compress_is_null_and_to_nullish_coalescing() {
-        test("x == null && y", "x ?? y");
-        test("x != null || y", "x ?? y");
-        test_same("v = x == null && y");
-        test_same("v = x != null || y");
-        test("void (x == null && y)", "x ?? y");
     }
 
     #[test]

@@ -166,7 +166,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 self.mark_current_function_as_changed();
             }
         }
-        self.substitute_exit_statement(stmt, ctx);
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {

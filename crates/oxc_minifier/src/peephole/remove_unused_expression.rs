@@ -79,38 +79,84 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
+        // try optional chaining and nullish coalescing
         if self.target >= ESTarget::ES2020 {
-            // "a != null && a.b()" => "a?.b()"
-            // "a == null || a.b()" => "a?.b()"
             let LogicalExpression {
+                span: logical_span,
                 left: logical_left,
                 right: logical_right,
                 operator: logical_op,
-                ..
             } = logical_expr.as_mut();
             if let Expression::BinaryExpression(binary_expr) = logical_left {
-                if matches!(
-                    (logical_op, binary_expr.operator),
+                match (logical_op, binary_expr.operator) {
+                    // "a != null && a.b()" => "a?.b()"
+                    // "a == null || a.b()" => "a?.b()"
                     (LogicalOperator::And, BinaryOperator::Inequality)
-                        | (LogicalOperator::Or, BinaryOperator::Equality)
-                ) {
-                    let name_and_id = if let Expression::Identifier(id) = &binary_expr.left {
-                        (!ctx.is_global_reference(id) && binary_expr.right.is_null())
-                            .then_some((id.name, &mut binary_expr.left))
-                    } else if let Expression::Identifier(id) = &binary_expr.right {
-                        (!ctx.is_global_reference(id) && binary_expr.left.is_null())
-                            .then_some((id.name, &mut binary_expr.right))
-                    } else {
-                        None
-                    };
-                    if let Some((name, id)) = name_and_id {
-                        if Self::inject_optional_chaining_if_matched(&name, id, logical_right, ctx)
-                        {
-                            *e = ctx.ast.move_expression(logical_right);
+                    | (LogicalOperator::Or, BinaryOperator::Equality) => {
+                        let name_and_id = if let Expression::Identifier(id) = &binary_expr.left {
+                            (!ctx.is_global_reference(id) && binary_expr.right.is_null())
+                                .then_some((id.name, &mut binary_expr.left))
+                        } else if let Expression::Identifier(id) = &binary_expr.right {
+                            (!ctx.is_global_reference(id) && binary_expr.left.is_null())
+                                .then_some((id.name, &mut binary_expr.right))
+                        } else {
+                            None
+                        };
+                        if let Some((name, id)) = name_and_id {
+                            if Self::inject_optional_chaining_if_matched(
+                                &name,
+                                id,
+                                logical_right,
+                                ctx,
+                            ) {
+                                *e = ctx.ast.move_expression(logical_right);
+                                self.mark_current_function_as_changed();
+                                return false;
+                            }
+                        }
+                    }
+                    // "a == null && b" => "a ?? b"
+                    // "a != null || b" => "a ?? b"
+                    // "a == null && (a = b)" => "a ??= b"
+                    // "a != null || (a = b)" => "a ??= b"
+                    (LogicalOperator::And, BinaryOperator::Equality)
+                    | (LogicalOperator::Or, BinaryOperator::Inequality) => {
+                        let new_left_hand_expr = if binary_expr.right.is_null() {
+                            Some(&mut binary_expr.left)
+                        } else if binary_expr.left.is_null() {
+                            Some(&mut binary_expr.right)
+                        } else {
+                            None
+                        };
+                        if let Some(new_left_hand_expr) = new_left_hand_expr {
+                            if let Expression::AssignmentExpression(assignment_expr) = logical_right
+                            {
+                                if assignment_expr.operator == AssignmentOperator::Assign
+                                    && Self::has_no_side_effect_for_evaluation_same_target(
+                                        &assignment_expr.left,
+                                        new_left_hand_expr,
+                                        ctx,
+                                    )
+                                {
+                                    assignment_expr.span = *logical_span;
+                                    assignment_expr.operator = AssignmentOperator::LogicalNullish;
+                                    *e = ctx.ast.move_expression(logical_right);
+                                    self.mark_current_function_as_changed();
+                                    return false;
+                                }
+                            }
+
+                            *e = ctx.ast.expression_logical(
+                                *logical_span,
+                                ctx.ast.move_expression(new_left_hand_expr),
+                                LogicalOperator::Coalesce,
+                                ctx.ast.move_expression(logical_right),
+                            );
                             self.mark_current_function_as_changed();
                             return false;
                         }
                     }
+                    _ => {}
                 }
             }
         }
@@ -735,6 +781,16 @@ mod test {
         test_same("a == null || a.b()"); // a may have a getter
         test("var a; null != a && a.b()", "var a; a?.b()");
         test("var a; null == a || a.b()", "var a; a?.b()");
+
+        test("x == null && y", "x ?? y");
+        test("x != null || y", "x ?? y");
+        test_same("v = x == null && y");
+        test_same("v = x != null || y");
+        test("a == null && (a = b)", "a ??= b");
+        test("a != null || (a = b)", "a ??= b");
+        test_same("v = a == null && (a = b)");
+        test_same("v = a != null || (a = b)");
+        test("void (x == null && y)", "x ?? y");
     }
 
     #[test]
