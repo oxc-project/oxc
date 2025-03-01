@@ -37,10 +37,21 @@ impl AllowType {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct JsxFilenameExtension {
+pub struct JsxFilenameExtension(Box<JsxFilenameExtensionConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct JsxFilenameExtensionConfig {
     allow: AllowType,
     extensions: Vec<CompactStr>,
     ignore_files_without_code: bool,
+}
+
+impl std::ops::Deref for JsxFilenameExtension {
+    type Target = JsxFilenameExtensionConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -128,7 +139,7 @@ impl Rule for JsxFilenameExtension {
             })
             .unwrap_or(vec![CompactStr::from("jsx")]);
 
-        Self { allow, extensions, ignore_files_without_code }
+        Self(Box::new(JsxFilenameExtensionConfig { allow, extensions, ignore_files_without_code }))
     }
 
     fn run_once(&self, ctx: &LintContext) {
