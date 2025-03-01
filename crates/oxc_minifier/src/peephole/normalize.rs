@@ -250,7 +250,11 @@ mod test {
     #[test]
     fn drop_console() {
         test("console.log()", "");
-        test("(() => console.log())()", "(() => void 0)()");
+        test("(() => console.log())()", "");
+        test(
+            "(() => { try { return console.log() } catch {} })()",
+            "(() => { try { return } catch {} })()",
+        );
     }
 
     #[test]

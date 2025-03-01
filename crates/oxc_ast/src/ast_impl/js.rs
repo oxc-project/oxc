@@ -1429,6 +1429,16 @@ impl<'a> ArrowFunctionExpression<'a> {
         None
     }
 
+    /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        if self.expression {
+            if let Statement::ExpressionStatement(expr_stmt) = &mut self.body.statements[0] {
+                return Some(&mut expr_stmt.expression);
+            }
+        }
+        None
+    }
+
     /// Returns `true` if this arrow function's body has a `"use strict"` directive.
     pub fn has_use_strict_directive(&self) -> bool {
         self.body.has_use_strict_directive()

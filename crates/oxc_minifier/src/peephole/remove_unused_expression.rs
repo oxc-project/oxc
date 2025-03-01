@@ -554,6 +554,34 @@ impl<'a> PeepholeOptimizations {
             if is_empty_iife {
                 return true;
             }
+
+            if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee {
+                if !f.r#async && f.body.statements.len() == 1 {
+                    if f.expression {
+                        // Replace "(() => foo())()" with "foo()"
+                        let expr = f.get_expression_mut().unwrap();
+                        *e = ctx.ast.move_expression(expr);
+                        return self.remove_unused_expression(e, ctx);
+                    }
+                    match &mut f.body.statements[0] {
+                        Statement::ExpressionStatement(expr_stmt) => {
+                            // Replace "(() => { foo() })" with "foo()"
+                            *e = ctx.ast.move_expression(&mut expr_stmt.expression);
+                            return self.remove_unused_expression(e, ctx);
+                        }
+                        Statement::ReturnStatement(ret_stmt) => {
+                            if let Some(argument) = &mut ret_stmt.argument {
+                                // Replace "(() => { return foo() })" with "foo()"
+                                *e = ctx.ast.move_expression(argument);
+                                return self.remove_unused_expression(e, ctx);
+                            }
+                            // Replace "(() => { return })" with ""
+                            return true;
+                        }
+                        _ => {}
+                    }
+                }
+            }
         }
 
         false
@@ -791,9 +819,9 @@ mod test {
         test_same("var k = function () {}");
         // test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
         test("(() => {})()", "");
-        // test("(() => a())()", "a();");
-        // test("(() => { a() })()", "a();");
-        // test("(() => { return a() })()", "a();");
+        test("(() => a())()", "a();");
+        test("(() => { a() })()", "a();");
+        test("(() => { return a() })()", "a();");
         // test("(() => { let b = a; b() })()", "a();");
         // test("(() => { let b = a; return b() })()", "a();");
         test("(async () => {})()", "");
@@ -806,7 +834,7 @@ mod test {
         test_same("(function() { a() })()");
         test_same("(function*() { a() })()");
         test_same("(async function() { a() })()");
-        // test("(() => x)()", "x;");
+        test("(() => x)()", "x;");
         test("/* @__PURE__ */ (() => x)()", "");
         test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
     }
