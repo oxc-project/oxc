@@ -1,7 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsInt32OrUint32};
 use oxc_span::GetSpan;
-use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -14,14 +13,6 @@ impl<'a> PeepholeOptimizations {
             Statement::WhileStatement(s) => Some(&mut s.test),
             Statement::ForStatement(s) => s.test.as_mut(),
             Statement::DoWhileStatement(s) => Some(&mut s.test),
-            Statement::ExpressionStatement(s)
-                if !matches!(
-                    ctx.ancestry.ancestor(1),
-                    Ancestor::ArrowFunctionExpressionBody(_)
-                ) =>
-            {
-                Some(&mut s.expression)
-            }
             _ => None,
         };
 

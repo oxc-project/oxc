@@ -367,7 +367,7 @@ impl<'a> PeepholeOptimizations {
         if alternate {
             *e = self.join_with_left_associative_op(
                 conditional_expr.span,
-                LogicalOperator::Or,
+                LogicalOperator::And,
                 ctx.ast.move_expression(&mut conditional_expr.test),
                 ctx.ast.move_expression(&mut conditional_expr.consequent),
                 ctx,
@@ -630,7 +630,7 @@ mod test {
         test("(1, foo()) ? 1 : 2", "foo()");
         test("foo() ? 1 : 2", "foo()");
         test("foo() ? 1 : bar()", "foo() || bar()");
-        test("foo() ? bar() : 2", "!foo() || bar()"); // can be improved to "foo() && bar()"
+        test("foo() ? bar() : 2", "foo() && bar()");
         test_same("foo() ? bar() : baz()");
     }
 
