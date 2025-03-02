@@ -5,11 +5,7 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     Format, Prettier, array, break_parent, conditional_group,
-    format::print::{
-        array,
-        call_expression::{self, CallExpressionLike},
-        misc,
-    },
+    format::print::{array, call_expression, misc},
     group, hardline, if_break, indent,
     ir::Doc,
     line, softline, text, utils,
