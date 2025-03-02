@@ -12,39 +12,25 @@ pub enum CallExpressionLike<'a, 'b> {
     V8Intrinsic(&'b V8IntrinsicExpression<'a>),
 }
 
-pub enum Callee<'a, 'b> {
-    Expression(&'b Expression<'a>),
-    V8IntrinsicName(&'b IdentifierName<'a>),
-}
-
-impl<'b> Callee<'b, '_> {
-    fn format<'a>(&self, p: &mut Prettier<'a>) -> Doc<'a>
-    where
-        'b: 'a,
-    {
-        match self {
-            Callee::Expression(expr) => expr.format(p),
-            Callee::V8IntrinsicName(name) => {
-                array!(p, [text!("%"), dynamic_text!(p, &name.name)])
-            }
-        }
-    }
-
-    fn is_call_expression(&self) -> bool {
-        matches!(self, Callee::Expression(Expression::CallExpression(_)))
-    }
-}
-
 impl<'a> CallExpressionLike<'a, '_> {
-    fn is_new(&self) -> bool {
+    pub fn is_new(&self) -> bool {
         matches!(self, CallExpressionLike::NewExpression(_))
     }
 
-    pub fn callee(&self) -> Callee<'a, '_> {
+    // NOTE: This only exists for `is_commons_js_or_amd_call()` check in `call_arguments.rs`
+    // and it should be performed before calling `print_call_arguments()`.
+    pub fn callee_expr(&self) -> &Expression<'a> {
         match self {
-            CallExpressionLike::CallExpression(call) => Callee::Expression(&call.callee),
-            CallExpressionLike::NewExpression(new) => Callee::Expression(&new.callee),
-            CallExpressionLike::V8Intrinsic(expr) => Callee::V8IntrinsicName(&expr.name),
+            CallExpressionLike::CallExpression(call) => &call.callee,
+            _ => unreachable!(),
+        }
+    }
+
+    fn callee_doc(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            CallExpressionLike::CallExpression(call) => call.callee.format(p),
+            CallExpressionLike::NewExpression(new) => new.callee.format(p),
+            CallExpressionLike::V8Intrinsic(v8i) => array!(p, [text!("%"), v8i.name.format(p)]),
         }
     }
 
@@ -121,7 +107,7 @@ pub fn print_call_expression<'a>(
     if expr.is_new() {
         parts.push(text!("new "));
     };
-    parts.push(expr.callee().format(p));
+    parts.push(expr.callee_doc(p));
     if expr.optional() {
         parts.push(text!("?."));
     }
@@ -130,7 +116,7 @@ pub fn print_call_expression<'a>(
     }
     parts.push(call_arguments::print_call_arguments(p, expr));
 
-    if expr.callee().is_call_expression() {
+    if !expr.is_new() {
         return group!(p, parts);
     }
 

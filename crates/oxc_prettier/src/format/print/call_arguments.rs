@@ -7,7 +7,7 @@ use crate::{
     Format, Prettier, array, break_parent, conditional_group,
     format::print::{
         array,
-        call_expression::{self, Callee},
+        call_expression::{self, CallExpressionLike},
         misc,
     },
     group, hardline, if_break, indent,
@@ -186,10 +186,8 @@ pub fn print_call_arguments<'a>(
 
     let should_break =
         if matches!(expression, call_expression::CallExpressionLike::CallExpression(_)) {
-            match expression.callee() {
-                Callee::Expression(e) => call_expression::is_commons_js_or_amd_call(e, arguments),
-                Callee::V8IntrinsicName(_) => false,
-            }
+            // TODO: This check should be resolved by `call_expression` side
+            !call_expression::is_commons_js_or_amd_call(expression.callee_expr(), arguments)
         } else {
             true
         };
