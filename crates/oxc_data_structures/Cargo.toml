@@ -26,8 +26,9 @@ ropey = { workspace = true, optional = true }
 
 [features]
 default = []
-all = ["code_buffer", "inline_string", "rope", "stack"]
+all = ["code_buffer", "inline_string", "num", "rope", "stack"]
 code_buffer = ["dep:assert-unchecked"]
 inline_string = []
+num = []
 rope = ["dep:ropey"]
 stack = ["dep:assert-unchecked"]

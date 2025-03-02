@@ -6,6 +6,8 @@
 pub mod code_buffer;
 #[cfg(feature = "inline_string")]
 pub mod inline_string;
+#[cfg(feature = "num")]
+pub mod num;
 #[cfg(feature = "rope")]
 pub mod rope;
 #[cfg(feature = "stack")]
