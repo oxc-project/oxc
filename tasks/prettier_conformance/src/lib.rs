@@ -387,7 +387,11 @@ fn run_oxc_prettier(
 ) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type)
-        .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+        .with_options(ParseOptions {
+            preserve_parens: false,
+            allow_v8_intrinsics: true,
+            ..ParseOptions::default()
+        })
         .parse();
     Prettier::new(&allocator, prettier_options).build(&ret.program)
 }
