@@ -1,22 +1,15 @@
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_catch_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+    OxcDiagnostic::warn("Prefer `catch` to `then(a, b)` or `then(null, b)`")
+        .with_help(
+            "Handle promise errors in a `catch` instead of using the second argument of `then`.",
+        )
         .with_label(span)
 }
 
@@ -59,12 +52,8 @@ declare_oxc_lint!(
     /// ```
     PreferCatch,
     promise,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
+    pending
 );
 
 impl Rule for PreferCatch {
@@ -85,25 +74,8 @@ impl Rule for PreferCatch {
             .static_property_name()
             .map_or_else(|| false, |prop_name| matches!(prop_name, "then"));
 
-        if !is_promise_then_call {
-            println!("_______");
-            let s = node.span().source_text(ctx.source_text());
-            println!("NOT -> {s:?}");
-
-
-           // println!("not a promise then: {node:?}");
-            println!("_______");
-        }
-
-        if is_promise_then_call {
-            let s = node.span().source_text(ctx.source_text());
-            println!("IS - > {s:?}");
-
-            if call_expr.arguments.len() >= 2 {
-                println!("{0:?}",call_expr.arguments.len() >= 2);
-ctx.diagnostic(prefer_catch_diagnostic(call_expr.span));
-            }
-
+        if is_promise_then_call && call_expr.arguments.len() >= 2 {
+            ctx.diagnostic(prefer_catch_diagnostic(call_expr.span));
         }
     }
 }
@@ -130,11 +102,11 @@ fn test() {
         "prom.then(undefined, fn2)",
         "function foo() { prom.then(x => {}, () => {}) }",
         "function foo() {
-		   prom.then(function a() { }, function b() {}).then(fn1, fn2)
-	     }",
+		      prom.then(function a() { }, function b() {}).then(fn1, fn2)
+	      }",
     ];
 
-    /* Todo
+    /* Pending
     let fix = vec![
         ("prom.then(fn1, fn2)", "prom.catch(fn2).then(fn1)", None),
         ("prom.then(fn1, (fn2))", "prom.catch(fn2).then(fn1)", None),
@@ -157,6 +129,6 @@ fn test() {
     ];
     */
     Tester::new(PreferCatch::NAME, PreferCatch::PLUGIN, pass, fail)
-    //    .expect_fix(fix)
+        //    .expect_fix(fix)
         .test_and_snapshot();
 }
