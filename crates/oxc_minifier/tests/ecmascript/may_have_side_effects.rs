@@ -657,6 +657,8 @@ fn test_call_like_expressions() {
     test("/* #__PURE__ */ foo(...`${bar}`)", true);
     test("/* #__PURE__ */ foo(...`${bar()}`)", true);
     test("/* #__PURE__ */ (() => { foo() })()", false);
+    test("foo?.()", true);
+    test("/* #__PURE__ */ foo?.()", false);
 
     test("new Foo()", true);
     test("/* #__PURE__ */ new Foo()", false);

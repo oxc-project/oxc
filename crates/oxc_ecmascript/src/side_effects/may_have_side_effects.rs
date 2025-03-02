@@ -400,7 +400,7 @@ impl MayHaveSideEffects for ClassElement<'_> {
 impl MayHaveSideEffects for ChainElement<'_> {
     fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
         match self {
-            ChainElement::CallExpression(_) => true,
+            ChainElement::CallExpression(e) => e.may_have_side_effects(is_global_reference),
             ChainElement::TSNonNullExpression(e) => {
                 e.expression.may_have_side_effects(is_global_reference)
             }
