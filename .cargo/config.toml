@@ -36,3 +36,9 @@ rustflags = [
   "-C",
   "link-args=/DEFAULTLIB:ucrt.lib",
 ]
+
+# Addresses a potential segmentation fault issue that occurs when
+# running napi-rs within a Node.js worker thread on GNU/Linux systems.
+# See https://x.com/Brooooook_lyn/status/1895848334692401270
+[target.'cfg(target_env = "gnu")']
+rustflags = ["-C", "link-args=-Wl,-z,nodelete"]
