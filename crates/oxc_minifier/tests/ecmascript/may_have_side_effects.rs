@@ -354,6 +354,7 @@ fn test_template_literal() {
     test("`${{ [s]() { console.log('sideeffect') } }}`", true); // assuming s is Symbol.toPrimitive
     test("`${a}`", true); // a maybe a symbol
     test("`${a()}`", true);
+    test("`${a() === b}`", true);
 }
 
 #[test]

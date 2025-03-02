@@ -89,6 +89,7 @@ impl MayHaveSideEffects for TemplateLiteral<'_> {
             // If the expression is a Symbol or ToPrimitive returns a Symbol, an error is thrown.
             // ToPrimitive returns the value as-is for non-Object values, so we can use it instead of ToString here.
             e.to_primitive(is_global_reference).is_symbol() != Some(false)
+                || e.may_have_side_effects(is_global_reference)
         })
     }
 }
