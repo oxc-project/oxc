@@ -29,29 +29,88 @@ pub struct NoAnonymousDefaultExport {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Reports if a module's default export is unnamed.
+    /// This includes several types of unnamed data types;
+    /// literals, object expressions, arrays, anonymous functions, arrow functions,
+    /// and anonymous class declarations.
     ///
     /// ### Why is this bad?
     ///
+    /// Ensuring that default exports are named helps improve the grepability of
+    /// the codebase by encouraging the re-use of the same identifier for
+    /// the module's default export at its declaration site and at its import sites.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// export default [];
+    /// export default () => {};
+    /// export default class {};
+    /// export default function() {};
+    /// export default foo(bar);
+    /// export default 123;
+    /// export default {};
+    /// export default new Foo();
+    /// export default `foo`;
+    /// export default /^123/;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// const foo = 123;
+    /// export default foo;
+    /// export default function foo() {};
+    /// export default class MyClass {};
+    /// export default function foo() {};
+    /// export default foo(bar);
+    /// /* eslint import/no-anonymous-default-export: ['error', {"allowLiteral": true}] */
+    /// export default 123;
+    /// /* eslint import/no-anonymous-default-export: ['error, {"allowArray": true}] */
+    /// export default []
+    /// /* eslint import/no-anonymous-default-export: ['error, {"allowArrowFunction": true}] */
+    /// export default () => {};
+    /// /* eslint import/no-anonymous-default-export: ['error, {"allowAnonymousClass": true}] */
+    /// export default class {};
+    /// /* eslint import/no-anonymous-default-export: ['error, {"allowAnonymousFunction": true}] */
+    /// export default function() {};
+    /// /* eslint import/no-anonymous-default-export: ['error, {"allowObject": true}] */
+    /// export default {};
+    /// /* eslint import/no-anonymous-default-export: ['error, {"allowNew": true}] */
+    /// export default new Foo();
+    /// /* eslint import/no-anonymous-default-export: ['error, {"allowCallExpression": true}] */
+    /// export default foo(bar);
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// This rule takes an object with the following properties:
+    ///
+    /// - `allowArray`: `boolean` (default: `false`) - Allow anonymous array as default export.
+    /// - `allowArrowFunction`: `boolean` (default: `false`) - Allow anonymous arrow function as default export.
+    /// - `allowAnonymousClass`: `boolean` (default: `false`) - Allow anonymous class as default export.
+    /// - `allowAnonymousFunction`: `boolean` (default: `false`) - Allow anonymous function as default export.
+    /// - `allowCallExpression`: `boolean` (default: `true`) - Allow anonymous call expression as default export.
+    /// - `allowNew`: `boolean` (default: `false`) - Allow anonymous new expression as default export.
+    /// - `allowLiteral`: `boolean` (default: `false`) - Allow anonymous literal as default export.
+    /// - `allowObject`: `boolean` (default: `false`) - Allow anonymous object as default export.
+    ///
+    /// By default, all types of anonymous default exports are forbidden,
+    /// but any types can be selectively allowed by toggling them on in the options.
+    /// ```json
+    /// "oxc/import/no-anonymous-default-export": ["error", {
+    ///    "allowArray": false,
+    ///    "allowArrowFunction": false,
+    ///    "allowAnonymousClass": false,
+    ///    "allowAnonymousFunction": false,
+    ///    "allowCallExpression": true,
+    ///    "allowNew": false,
+    ///    "allowLiteral": false,
+    ///    "allowObject": false
     /// ```
     NoAnonymousDefaultExport,
     import,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
 );
 
 impl Rule for NoAnonymousDefaultExport {
