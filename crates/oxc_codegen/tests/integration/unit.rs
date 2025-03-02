@@ -387,6 +387,9 @@ fn pure_comment_additional() {
     test_same("/* @__PURE__ */ a() && b;\n");
     test_same("/* @__PURE__ */ a() ?? b;\n");
     test_same("/* @__PURE__ */ a() ? b : c;\n");
+    test_same("/* @__PURE__ */ a.b();\n");
+    test_same("/* @__PURE__ */ a?.b();\n");
+    test_same("/* @__PURE__ */ a.b?.();\n");
 }
 
 // followup from https://github.com/oxc-project/oxc/pull/6422

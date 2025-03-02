@@ -1203,6 +1203,11 @@ impl<'a> ParserImpl<'a> {
             Expression::ConditionalExpression(conditional_expr) => {
                 Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test);
             }
+            Expression::ChainExpression(chain_expr) => {
+                if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
+                    call_expr.pure = true;
+                }
+            }
             _ => {}
         }
     }
