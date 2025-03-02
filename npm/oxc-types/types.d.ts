@@ -48,6 +48,7 @@ export type Expression =
   | TSTypeAssertion
   | TSNonNullExpression
   | TSInstantiationExpression
+  | V8IntrinsicExpression
   | MemberExpression;
 
 export interface IdentifierName extends Span {
@@ -758,6 +759,12 @@ export interface ExportSpecifier extends Span {
 export type ExportDefaultDeclarationKind = Function | Class | TSInterfaceDeclaration | Expression;
 
 export type ModuleExportName = IdentifierName | IdentifierReference | StringLiteral;
+
+export interface V8IntrinsicExpression extends Span {
+  type: 'V8IntrinsicExpression';
+  name: IdentifierName;
+  arguments: Array<Argument>;
+}
 
 export interface BooleanLiteral extends Span {
   type: 'Literal';

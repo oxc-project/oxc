@@ -180,6 +180,7 @@ impl<'a> ParserImpl<'a> {
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
                 self.parse_template_literal_expression(false)
             }
+            Kind::Percent => self.parse_v8_intrinsic_expression(),
             Kind::New => self.parse_new_expression(),
             Kind::Super => Ok(self.parse_super()),
             Kind::Import => self.parse_import_meta_or_call(),
@@ -583,6 +584,39 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::LParen => self.parse_import_expression(span, None),
             _ => Err(self.unexpected()),
+        }
+    }
+
+    /// V8 Runtime calls.
+    /// See: [runtime.h](https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43)
+    pub(crate) fn parse_v8_intrinsic_expression(&mut self) -> Result<Expression<'a>> {
+        if !self.options.allow_v8_intrinsics {
+            return Err(self.unexpected());
+        }
+
+        let span = self.start_span();
+        self.expect(Kind::Percent)?;
+        let name = self.parse_identifier_name()?;
+
+        self.expect(Kind::LParen)?;
+        let arguments = self.context(Context::In, Context::Decorator, |p| {
+            p.parse_delimited_list(
+                Kind::RParen,
+                Kind::Comma,
+                /* trailing_separator */ true,
+                Self::parse_v8_intrinsic_argument,
+            )
+        })?;
+        self.expect(Kind::RParen)?;
+        Ok(self.ast.expression_v_8_intrinsic(self.end_span(span), name, arguments))
+    }
+
+    fn parse_v8_intrinsic_argument(&mut self) -> Result<Argument<'a>> {
+        if self.at(Kind::Dot3) {
+            self.error(diagnostics::v8_intrinsic_spread_elem(self.cur_token().span()));
+            self.parse_spread_element().map(Argument::SpreadElement)
+        } else {
+            self.parse_assignment_expression_or_higher().map(Argument::from)
         }
     }
 

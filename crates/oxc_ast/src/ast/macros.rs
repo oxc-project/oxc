@@ -171,6 +171,8 @@ macro_rules! inherit_variants {
                 TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
                 /// Inherited from [`Expression`]
                 TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+                /// Inherited from [`Expression`]
+                V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -228,6 +230,7 @@ macro_rules! inherit_variants {
                 TSTypeAssertion,
                 TSNonNullExpression,
                 TSInstantiationExpression,
+                V8IntrinsicExpression,
                 ComputedMemberExpression,
                 StaticMemberExpression,
                 PrivateFieldExpression,

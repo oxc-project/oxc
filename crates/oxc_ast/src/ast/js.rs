@@ -141,6 +141,8 @@ pub enum Expression<'a> {
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
     /// See [`TSInstantiationExpression`] for AST node details.
     TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+    /// See [`V8IntrinsicExpression`] for AST node details.
+    V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
 
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
@@ -194,6 +196,7 @@ macro_rules! match_expression {
             | $ty::ComputedMemberExpression(_)
             | $ty::StaticMemberExpression(_)
             | $ty::PrivateFieldExpression(_)
+            | $ty::V8IntrinsicExpression(_)
     };
 }
 pub use match_expression;
@@ -2575,4 +2578,15 @@ pub enum ModuleExportName<'a> {
     /// For `local` in `ExportSpecifier`: `foo` in `export { foo }`
     IdentifierReference(IdentifierReference<'a>) = 1,
     StringLiteral(StringLiteral<'a>) = 2,
+}
+
+/// Intrinsics in Google's V8 engine, like `%GetOptimizationStatus`.
+/// See: [runtime.h](https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43)
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+pub struct V8IntrinsicExpression<'a> {
+    pub span: Span,
+    pub name: IdentifierName<'a>,
+    pub arguments: Vec<'a, Argument<'a>>,
 }

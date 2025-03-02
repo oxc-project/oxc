@@ -207,6 +207,9 @@ impl Oxc {
             preserve_parens: parser_options
                 .preserve_parens
                 .unwrap_or(default_parser_options.preserve_parens),
+            allow_v8_intrinsics: parser_options
+                .allow_v8_intrinsics
+                .unwrap_or(default_parser_options.allow_v8_intrinsics),
         };
         let ParserReturn { mut program, errors, module_record, .. } =
             Parser::new(&allocator, source_text, source_type)

@@ -794,6 +794,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::TSTypeAssertion(expr) => expr.format(p),
             Self::TSNonNullExpression(expr) => expr.format(p),
             Self::TSInstantiationExpression(expr) => expr.format(p),
+            Self::V8IntrinsicExpression(expr) => expr.format(p),
         }
     }
 }
@@ -1540,6 +1541,17 @@ impl<'a> Format<'a> for AssignmentPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, AssignmentPattern, {
             array!(p, [self.left.format(p), text!(" = "), self.right.format(p)])
+        })
+    }
+}
+
+impl<'a> Format<'a> for V8IntrinsicExpression<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        wrap!(p, self, V8IntrinsicExpression, {
+            call_expression::print_call_expression(
+                p,
+                &call_expression::CallExpressionLike::V8Intrinsic(self),
+            )
         })
     }
 }

@@ -748,6 +748,12 @@ const _: () = {
     assert!(size_of::<ModuleExportName>() == 48);
     assert!(align_of::<ModuleExportName>() == 8);
 
+    assert!(size_of::<V8IntrinsicExpression>() == 64);
+    assert!(align_of::<V8IntrinsicExpression>() == 8);
+    assert!(offset_of!(V8IntrinsicExpression, span) == 0);
+    assert!(offset_of!(V8IntrinsicExpression, name) == 8);
+    assert!(offset_of!(V8IntrinsicExpression, arguments) == 32);
+
     assert!(size_of::<BooleanLiteral>() == 16);
     assert!(align_of::<BooleanLiteral>() == 8);
     assert!(offset_of!(BooleanLiteral, span) == 0);
@@ -2139,6 +2145,12 @@ const _: () = {
 
     assert!(size_of::<ModuleExportName>() == 28);
     assert!(align_of::<ModuleExportName>() == 4);
+
+    assert!(size_of::<V8IntrinsicExpression>() == 40);
+    assert!(align_of::<V8IntrinsicExpression>() == 4);
+    assert!(offset_of!(V8IntrinsicExpression, span) == 0);
+    assert!(offset_of!(V8IntrinsicExpression, name) == 8);
+    assert!(offset_of!(V8IntrinsicExpression, arguments) == 24);
 
     assert!(size_of::<BooleanLiteral>() == 12);
     assert!(align_of::<BooleanLiteral>() == 4);

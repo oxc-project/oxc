@@ -59,6 +59,7 @@ impl GetSpan for Expression<'_> {
             Self::TSTypeAssertion(it) => GetSpan::span(&**it),
             Self::TSNonNullExpression(it) => GetSpan::span(&**it),
             Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -152,6 +153,7 @@ impl GetSpan for ArrayExpressionElement<'_> {
             Self::TSTypeAssertion(it) => GetSpan::span(&**it),
             Self::TSNonNullExpression(it) => GetSpan::span(&**it),
             Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -233,6 +235,7 @@ impl GetSpan for PropertyKey<'_> {
             Self::TSTypeAssertion(it) => GetSpan::span(&**it),
             Self::TSNonNullExpression(it) => GetSpan::span(&**it),
             Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -363,6 +366,7 @@ impl GetSpan for Argument<'_> {
             Self::TSTypeAssertion(it) => GetSpan::span(&**it),
             Self::TSNonNullExpression(it) => GetSpan::span(&**it),
             Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -753,6 +757,7 @@ impl GetSpan for ForStatementInit<'_> {
             Self::TSTypeAssertion(it) => GetSpan::span(&**it),
             Self::TSNonNullExpression(it) => GetSpan::span(&**it),
             Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -1187,6 +1192,7 @@ impl GetSpan for ExportDefaultDeclarationKind<'_> {
             Self::TSTypeAssertion(it) => GetSpan::span(&**it),
             Self::TSNonNullExpression(it) => GetSpan::span(&**it),
             Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -1201,6 +1207,13 @@ impl GetSpan for ModuleExportName<'_> {
             Self::IdentifierReference(it) => GetSpan::span(it),
             Self::StringLiteral(it) => GetSpan::span(it),
         }
+    }
+}
+
+impl GetSpan for V8IntrinsicExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
     }
 }
 
@@ -1374,6 +1387,7 @@ impl GetSpan for JSXExpression<'_> {
             Self::TSTypeAssertion(it) => GetSpan::span(&**it),
             Self::TSNonNullExpression(it) => GetSpan::span(&**it),
             Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),

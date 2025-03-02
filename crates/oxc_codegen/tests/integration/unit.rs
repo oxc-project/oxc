@@ -1,6 +1,8 @@
 use oxc_codegen::CodegenOptions;
 
-use crate::tester::{test, test_minify, test_minify_same, test_options, test_same};
+use crate::tester::{
+    test, test_minify, test_minify_same, test_options, test_same, test_with_parse_options,
+};
 
 #[test]
 fn decl() {
@@ -500,4 +502,18 @@ fn string() {
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
     );
     test_minify(r#"foo("\n")"#, "foo(`\n`);");
+}
+
+#[test]
+fn v8_intrinsics() {
+    let parse_opts = oxc_parser::ParseOptions {
+        allow_v8_intrinsics: true,
+        ..oxc_parser::ParseOptions::default()
+    };
+
+    test_with_parse_options(
+        "const p = %DebugPrint('hi')",
+        "const p = %DebugPrint(\"hi\");\n",
+        parse_opts,
+    );
 }

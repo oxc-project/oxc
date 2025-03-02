@@ -71,6 +71,7 @@ impl ESTree for Expression<'_> {
             Self::TSTypeAssertion(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -187,6 +188,7 @@ impl ESTree for ArrayExpressionElement<'_> {
             Self::TSTypeAssertion(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -270,6 +272,7 @@ impl ESTree for PropertyKey<'_> {
             Self::TSTypeAssertion(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -478,6 +481,7 @@ impl ESTree for Argument<'_> {
             Self::TSTypeAssertion(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -1037,6 +1041,7 @@ impl ESTree for ForStatementInit<'_> {
             Self::TSTypeAssertion(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -1808,6 +1813,7 @@ impl ESTree for ExportDefaultDeclarationKind<'_> {
             Self::TSTypeAssertion(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -1822,6 +1828,18 @@ impl ESTree for ModuleExportName<'_> {
             Self::IdentifierReference(it) => it.serialize(serializer),
             Self::StringLiteral(it) => it.serialize(serializer),
         }
+    }
+}
+
+impl ESTree for V8IntrinsicExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("V8IntrinsicExpression"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("name", &self.name);
+        state.serialize_field("arguments", &self.arguments);
+        state.end();
     }
 }
 
@@ -2099,6 +2117,7 @@ impl ESTree for JSXExpression<'_> {
             Self::TSTypeAssertion(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSInstantiationExpression(it) => it.serialize(serializer),
+            Self::V8IntrinsicExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),

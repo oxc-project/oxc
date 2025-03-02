@@ -68,6 +68,7 @@ impl ContentEq for Expression<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -162,6 +163,7 @@ impl ContentEq for ArrayExpressionElement<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -253,6 +255,7 @@ impl ContentEq for PropertyKey<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -414,6 +417,7 @@ impl ContentEq for Argument<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -863,6 +867,7 @@ impl ContentEq for ForStatementInit<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1427,6 +1432,7 @@ impl ContentEq for ExportDefaultDeclarationKind<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1445,6 +1451,13 @@ impl ContentEq for ModuleExportName<'_> {
             (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
             _ => false,
         }
+    }
+}
+
+impl ContentEq for V8IntrinsicExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.name, &other.name)
+            && ContentEq::content_eq(&self.arguments, &other.arguments)
     }
 }
 
@@ -1625,6 +1638,7 @@ impl ContentEq for JSXExpression<'_> {
             (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
                 a.content_eq(b)
             }
+            (Self::V8IntrinsicExpression(a), Self::V8IntrinsicExpression(b)) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }

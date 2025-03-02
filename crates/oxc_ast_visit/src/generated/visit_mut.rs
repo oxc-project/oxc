@@ -618,6 +618,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_v_8_intrinsic_expression(&mut self, it: &mut V8IntrinsicExpression<'a>) {
+        walk_v_8_intrinsic_expression(self, it);
+    }
+
+    #[inline]
     fn visit_boolean_literal(&mut self, it: &mut BooleanLiteral) {
         walk_boolean_literal(self, it);
     }
@@ -1408,6 +1413,7 @@ pub mod walk_mut {
             Expression::TSInstantiationExpression(it) => {
                 visitor.visit_ts_instantiation_expression(it)
             }
+            Expression::V8IntrinsicExpression(it) => visitor.visit_v_8_intrinsic_expression(it),
             match_member_expression!(Expression) => {
                 visitor.visit_member_expression(it.to_member_expression_mut())
             }
@@ -2989,6 +2995,19 @@ pub mod walk_mut {
             ModuleExportName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             ModuleExportName::StringLiteral(it) => visitor.visit_string_literal(it),
         }
+    }
+
+    #[inline]
+    pub fn walk_v_8_intrinsic_expression<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut V8IntrinsicExpression<'a>,
+    ) {
+        let kind = AstType::V8IntrinsicExpression;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_identifier_name(&mut it.name);
+        visitor.visit_arguments(&mut it.arguments);
+        visitor.leave_node(kind);
     }
 
     #[inline]

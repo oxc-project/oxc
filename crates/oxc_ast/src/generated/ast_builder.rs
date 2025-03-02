@@ -1003,6 +1003,26 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build an [`Expression::V8IntrinsicExpression`].
+    ///
+    /// This node contains a [`V8IntrinsicExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `arguments`
+    #[inline]
+    pub fn expression_v_8_intrinsic(
+        self,
+        span: Span,
+        name: IdentifierName<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+    ) -> Expression<'a> {
+        Expression::V8IntrinsicExpression(
+            self.alloc_v_8_intrinsic_expression(span, name, arguments),
+        )
+    }
+
     /// Build an [`IdentifierName`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_identifier_name`] instead.
@@ -7514,6 +7534,42 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
+    }
+
+    /// Build a [`V8IntrinsicExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_v_8_intrinsic_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `arguments`
+    #[inline]
+    pub fn v_8_intrinsic_expression(
+        self,
+        span: Span,
+        name: IdentifierName<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+    ) -> V8IntrinsicExpression<'a> {
+        V8IntrinsicExpression { span, name, arguments }
+    }
+
+    /// Build a [`V8IntrinsicExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::v_8_intrinsic_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    /// * `arguments`
+    #[inline]
+    pub fn alloc_v_8_intrinsic_expression(
+        self,
+        span: Span,
+        name: IdentifierName<'a>,
+        arguments: Vec<'a, Argument<'a>>,
+    ) -> Box<'a, V8IntrinsicExpression<'a>> {
+        Box::new_in(self.v_8_intrinsic_expression(span, name, arguments), self.allocator)
     }
 
     /// Build a [`BooleanLiteral`].

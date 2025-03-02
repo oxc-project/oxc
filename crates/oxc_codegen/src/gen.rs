@@ -1224,6 +1224,7 @@ impl GenExpr for Expression<'_> {
             Self::TSTypeAssertion(e) => e.print_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.print_expr(p, precedence, ctx),
+            Self::V8IntrinsicExpression(e) => e.print_expr(p, precedence, ctx),
         }
     }
 }
@@ -3856,5 +3857,48 @@ impl Gen for TSModuleReference<'_> {
             }
             match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),
         }
+    }
+}
+
+impl GenExpr for V8IntrinsicExpression<'_> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let is_statement = p.start_of_stmt == p.code_len();
+        let is_export_default = p.start_of_default_export == p.code_len();
+        let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
+        if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
+            wrap = true;
+        }
+
+        p.wrap(wrap, |p| {
+            p.print_annotation_comments(self.span.start);
+            if is_export_default {
+                p.start_of_default_export = p.code_len();
+            } else if is_statement {
+                p.start_of_stmt = p.code_len();
+            }
+            p.add_source_mapping(self.span);
+            p.print_ascii_byte(b'%');
+            self.name.print(p, Context::empty());
+            p.print_ascii_byte(b'(');
+            let print_comments = p.options.print_comments();
+            let has_comment_before_right_paren =
+                print_comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
+            let has_comment = print_comments
+                && (has_comment_before_right_paren
+                    || self.arguments.iter().any(|item| p.has_comment(item.span().start)));
+            if has_comment {
+                p.indent();
+                p.print_list_with_comments(&self.arguments, ctx);
+                // Handle `/* comment */);`
+                if !has_comment_before_right_paren || !p.print_expr_comments(self.span.end - 1) {
+                    p.print_soft_newline();
+                }
+                p.dedent();
+            } else {
+                p.print_list(&self.arguments, ctx);
+            }
+            p.print_ascii_byte(b')');
+            p.add_source_mapping_end(self.span);
+        });
     }
 }
