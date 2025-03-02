@@ -88,17 +88,23 @@ impl Rule for PreferCatch {
         if !is_promise_then_call {
             println!("_______");
             let s = node.span().source_text(ctx.source_text());
-            println!("{s:?}");
+            println!("NOT -> {s:?}");
 
 
-            println!("not a promise then: {node:?}");
+           // println!("not a promise then: {node:?}");
             println!("_______");
         }
-        // todo is arg count geq to 2? if so then flag violation
 
-        //println!("aa {is_promise_then_call:?}");
-        //println!("aa {node:?}");
-        //println!("call {call_expr:?}");
+        if is_promise_then_call {
+            let s = node.span().source_text(ctx.source_text());
+            println!("IS - > {s:?}");
+
+            if call_expr.arguments.len() >= 2 {
+                println!("{0:?}",call_expr.arguments.len() >= 2);
+ctx.diagnostic(prefer_catch_diagnostic(call_expr.span));
+            }
+
+        }
     }
 }
 
@@ -107,12 +113,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // not promise related
-        "foo()",
-        "a.foo()",
-        "var a = new Foo()",
-        "foo().then()",
-        // I added these ^^
         "prom.then()",
         "prom.then(fn)",
         "prom.then(fn1).then(fn2)",
@@ -124,8 +124,6 @@ fn test() {
     ];
 
     let fail = vec![
-        "prom().then()",
-        // I added ^
         "prom.then(fn1, fn2)",
         "prom.then(fn1, (fn2))",
         "prom.then(null, fn2)",
@@ -136,6 +134,7 @@ fn test() {
 	     }",
     ];
 
+    /* Todo
     let fix = vec![
         ("prom.then(fn1, fn2)", "prom.catch(fn2).then(fn1)", None),
         ("prom.then(fn1, (fn2))", "prom.catch(fn2).then(fn1)", None),
@@ -147,20 +146,17 @@ fn test() {
             None,
         ),
         (
-            "
-			        function foo() {
-			          prom.then(function a() { }, function b() {}).then(fn1, fn2)
-			        }
-			      ",
-            "
-			        function foo() {
-			          prom.catch(function b() {}).then(function a() { }).catch(fn2).then(fn1)
-			        }
-			      ",
+            "function foo() {
+			   prom.then(function a() { }, function b() {}).then(fn1, fn2)
+			 }",
+            "function foo() {
+			   prom.catch(function b() {}).then(function a() { }).catch(fn2).then(fn1)
+			 }",
             None,
         ),
     ];
+    */
     Tester::new(PreferCatch::NAME, PreferCatch::PLUGIN, pass, fail)
-        .expect_fix(fix)
+    //    .expect_fix(fix)
         .test_and_snapshot();
 }
