@@ -20,32 +20,35 @@ pub struct NoSpacedFunc;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces that no whitespace exists between a function's name and its
-    /// invocation parentheses. It promotes a compact, consistent style for calling functions.
+    /// This rule disallows spacing between function identifiers and their applications.
     ///
     /// ### Why is this bad?
     ///
-    /// JavaScript allows spaces or newlines between a function name and its parentheses,
-    /// but this is uncommon and often mistaken for a typo or unfinished code. Such spacing
-    /// can confuse developers, disrupt the visual flow of the code, and deviate from widely
-    /// accepted style guides like Airbnb or StandardJS.
+    /// While it’s possible to have whitespace between the name of a function and the parentheses
+    /// that execute it, such patterns tend to look more like errors.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// fn ()
+    /// ```
     ///
+    /// ```javascript
     /// fn
     /// ()
+    /// ```
     ///
+    /// ```javascript
     /// f.b ()
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// fn()
+    /// ```
     ///
+    /// ```javascript
     /// f.b()
     /// ```
     NoSpacedFunc,
@@ -66,7 +69,7 @@ enum FuncSpace {
 ///
 /// For example `foo  ()` would return `FuncSpace::Spaced(span)`
 /// where span refers to the whitespace between `foo` and `()`.
-fn get_substring_to_l_parens(ctx: &LintContext, search_span: Span) -> FuncSpace {
+fn get_substring_to_lparens(ctx: &LintContext, search_span: Span) -> FuncSpace {
     let src = ctx.source_range(search_span);
 
     let Some(char_count) = memchr(b'(', src.as_bytes()) else {
@@ -81,46 +84,73 @@ fn get_substring_to_l_parens(ctx: &LintContext, search_span: Span) -> FuncSpace 
     let span_to_l_parens = Span::new(search_span.start, l_parens_pos);
     let src_to_l_parens = ctx.source_range(span_to_l_parens);
 
-    if src_to_l_parens.is_empty() || !src_to_l_parens.trim().is_empty() {
+    if src_to_l_parens.is_empty() {
         return FuncSpace::NotSpaced;
     }
 
-    FuncSpace::Spaced(span_to_l_parens)
+    if src_to_l_parens.trim().is_empty() {
+        FuncSpace::Spaced(span_to_l_parens)
+    } else {
+        FuncSpace::NotSpaced
+    }
+}
+
+fn check_ident_to_application(ctx: &LintContext, span: Span) {
+    match get_substring_to_lparens(ctx, span) {
+        FuncSpace::NotSpaced => {}
+        FuncSpace::Spaced(span) => {
+            ctx.diagnostic_with_fix(no_spaced_func_diagnostic(span), |fixer| fixer.delete(&span));
+        }
+    }
 }
 
 impl Rule for NoSpacedFunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let span = match node.kind() {
-            AstKind::NewExpression(new_expr) => {
-                let callee = new_expr.callee.without_parentheses();
-                Span::new(callee.span().end, new_expr.span().end)
-            }
-            AstKind::CallExpression(call_expr) => {
-                let start = match &call_expr.callee {
-                    // f ()
-                    Expression::Identifier(ident) => ident.span().end,
-                    Expression::ParenthesizedExpression(paren_exp) => {
-                        if let Expression::Identifier(_) = &paren_exp.expression {
-                            paren_exp.span().end
-                        } else {
-                            return;
-                        }
-                    }
-                    // f() () <-- second parens
-                    Expression::CallExpression(c) => c.span().end,
-                    // f.a ()
-                    Expression::StaticMemberExpression(exp) => exp.property.span().end,
-                    // function(){ } ()
-                    Expression::FunctionExpression(func) => func.span().end,
-                    _ => return,
-                };
-                Span::new(start, call_expr.span().end)
-            }
-            _ => return,
+        if let AstKind::NewExpression(new_expr) = node.kind() {
+            // new Foo ()
+            let callee = new_expr.callee.without_parentheses();
+            let callee_end = callee.span().end;
+            let span = Span::new(callee_end, new_expr.span().end);
+
+            check_ident_to_application(ctx, span);
         };
 
-        if let FuncSpace::Spaced(span) = get_substring_to_l_parens(ctx, span) {
-            ctx.diagnostic_with_fix(no_spaced_func_diagnostic(span), |fixer| fixer.delete(&span));
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        let callee_end = call_expr.span().end;
+
+        match &call_expr.callee {
+            // f ()
+            Expression::Identifier(ident) => {
+                let span = Span::new(ident.span().end, callee_end);
+                check_ident_to_application(ctx, span);
+            }
+            Expression::ParenthesizedExpression(paren_exp) => {
+                if let Expression::Identifier(_ident) = &paren_exp.expression {
+                    let span = Span::new(paren_exp.span().end, callee_end);
+                    check_ident_to_application(ctx, span);
+                }
+            }
+            // f() () <-- second parens
+            Expression::CallExpression(c) => {
+                let span = Span::new(c.span().end, callee_end);
+                check_ident_to_application(ctx, span);
+            }
+            // f.a ()
+            Expression::StaticMemberExpression(exp) => {
+                let ident_name_span_end = exp.property.span().end;
+                let span = Span::new(ident_name_span_end, callee_end);
+
+                check_ident_to_application(ctx, span);
+            }
+            // function(){ } ()
+            Expression::FunctionExpression(func) => {
+                let span = Span::new(func.span().end, callee_end);
+                check_ident_to_application(ctx, span);
+            }
+            _ => {}
         }
     }
 }
