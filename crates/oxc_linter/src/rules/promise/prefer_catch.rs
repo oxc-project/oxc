@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// `prom.then(fn1).catch(fn2)`. However they aren't equivalent. In fact
     /// `prom.catch(fn2).then(fn1)` is the equivalent.
     ///
-    /// This easy confusion is a good reason for prefering explicit `catch` calls over passing an argument
+    /// This easy confusion is a good reason for preferring explicit `catch` calls over passing an argument
     /// to the second parameter of `then` calls.
     ///
     /// ### Examples
