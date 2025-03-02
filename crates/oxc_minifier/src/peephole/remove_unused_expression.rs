@@ -602,7 +602,7 @@ impl<'a> PeepholeOptimizations {
             }
 
             if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee {
-                if !f.r#async && f.body.statements.len() == 1 {
+                if !f.r#async && f.params.parameters_count() == 0 && f.body.statements.len() == 1 {
                     if f.expression {
                         // Replace "(() => foo())()" with "foo()"
                         let expr = f.get_expression_mut().unwrap();
@@ -878,6 +878,11 @@ mod test {
         test("(() => a())()", "a();");
         test("(() => { a() })()", "a();");
         test("(() => { return a() })()", "a();");
+        test_same("(a => {})()");
+        test_same("((a = foo()) => {})()");
+        test_same("(a => { a() })()");
+        test("((...a) => {})()", "");
+        test_same("((...a) => { a() })()");
         // test("(() => { let b = a; b() })()", "a();");
         // test("(() => { let b = a; return b() })()", "a();");
         test("(async () => {})()", "");
