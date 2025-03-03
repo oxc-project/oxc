@@ -37,10 +37,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.
 
   ⚠ eslint-plugin-promise(prefer-catch): Prefer `catch` to `then(a, b)` or `then(null, b)`
-   ╭─[prefer_catch.tsx:2:9]
+   ╭─[prefer_catch.tsx:2:6]
  1 │ function foo() {
- 2 │               prom.then(function a() { }, function b() {}).then(fn1, fn2)
-   ·               ───────────────────────────────────────────────────────────
- 3 │           }
+ 2 │            prom.then(function a() { }, function b() {}).then(fn1, fn2)
+   ·            ───────────────────────────────────────────────────────────
+ 3 │          }
    ╰────
   help: Handle promise errors in a `catch` instead of using the second argument of `then`.
