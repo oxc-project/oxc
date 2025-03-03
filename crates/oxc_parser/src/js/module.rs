@@ -383,6 +383,8 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Box<'a, ExportDefaultDeclaration<'a>>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
         let decl_span = self.start_span();
+        let has_no_side_effects_comment =
+            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
@@ -406,9 +408,13 @@ impl<'a> ParserImpl<'a> {
                     }
                 })?
             }
-            _ if self.at_function_with_async() => self
-                .parse_function_impl(FunctionKind::DefaultExport)
-                .map(ExportDefaultDeclarationKind::FunctionDeclaration)?,
+            _ if self.at_function_with_async() => {
+                let mut func = self.parse_function_impl(FunctionKind::DefaultExport)?;
+                if has_no_side_effects_comment {
+                    func.pure = true;
+                }
+                ExportDefaultDeclarationKind::FunctionDeclaration(func)
+            }
             _ => {
                 let decl = self
                     .parse_assignment_expression_or_higher()

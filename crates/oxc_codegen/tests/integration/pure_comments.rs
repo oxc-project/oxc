@@ -61,6 +61,8 @@ async function* d() {}
 /* @__NO_SIDE_EFFECTS__ */ export function* b() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function c() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function* d() {}
+export default /* @__NO_SIDE_EFFECTS__ */ async function() {}
+export default /* @__NO_SIDE_EFFECTS__ */ function() {}
         ",
         // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
         r"
