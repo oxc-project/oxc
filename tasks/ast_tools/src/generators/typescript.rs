@@ -1,6 +1,6 @@
 //! Generator for TypeScript type definitions for all AST types.
 
-use std::{borrow::Cow, fmt::Write};
+use std::borrow::Cow;
 
 use itertools::Itertools;
 
@@ -11,7 +11,7 @@ use crate::{
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
-    utils::{FxIndexSet, format_cow},
+    utils::{FxIndexSet, format_cow, write_it},
 };
 
 use super::define_generator;
@@ -51,7 +51,7 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
     if let Some(custom_ts_def) = custom_ts_def {
         // Empty string means don't output any TS def at all for this type
         if !custom_ts_def.is_empty() {
-            write!(code, "export {custom_ts_def};\n\n").unwrap();
+            write_it!(code, "export {custom_ts_def};\n\n");
         }
     } else {
         // No custom definition. Generate one.
@@ -62,7 +62,7 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
         };
 
         if let Some(ts_def) = ts_def {
-            write!(code, "{ts_def};\n\n").unwrap();
+            write_it!(code, "{ts_def};\n\n");
         }
     };
 
@@ -73,7 +73,7 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
         _ => unreachable!(),
     };
     if let Some(add_ts_def) = add_ts_def {
-        write!(code, "export {add_ts_def};\n\n").unwrap();
+        write_it!(code, "export {add_ts_def};\n\n");
     }
 }
 

@@ -90,3 +90,12 @@ macro_rules! format_cow {
     }
 }
 pub(crate) use format_cow;
+
+/// Macro to `write!` and unwrap result.
+macro_rules! write_it {
+    ($($tokens:tt)+) => {{
+        use std::fmt::Write;
+        write!($($tokens)+).unwrap();
+    }}
+}
+pub(crate) use write_it;
