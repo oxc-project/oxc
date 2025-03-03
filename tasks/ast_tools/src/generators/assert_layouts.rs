@@ -20,7 +20,7 @@ use crate::{
     output::{Output, output_path},
     schema::{
         Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
-        extensions::layout::{Layout, Niche, Offset, PlatformLayout},
+        extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
     utils::number_lit,
 };
@@ -438,8 +438,7 @@ fn generate_layout_assertions_for_struct<'s>(
     schema: &'s Schema,
 ) {
     fn r#gen(struct_def: &StructDef, is_64: bool, struct_ident: &Ident) -> TokenStream {
-        let layout =
-            if is_64 { &struct_def.layout.layout_64 } else { &struct_def.layout.layout_32 };
+        let layout = struct_def.platform_layout(is_64);
 
         let size_align_assertions = generate_size_align_assertions(layout, struct_ident);
 
@@ -451,8 +450,7 @@ fn generate_layout_assertions_for_struct<'s>(
             }
 
             let field_ident = field.ident();
-            let offset =
-                number_lit(if is_64 { field.offset.offset_64 } else { field.offset.offset_32 });
+            let offset = number_lit(field.platform_offset(is_64));
             Some(quote! {
                 assert!(offset_of!(#struct_ident, #field_ident) == #offset);
             })
@@ -483,8 +481,8 @@ fn generate_layout_assertions_for_enum<'s>(
         assertions.entry(enum_def.file(schema).krate()).or_default();
 
     let ident = enum_def.ident();
-    assertions_64.extend(generate_size_align_assertions(&enum_def.layout.layout_64, &ident));
-    assertions_32.extend(generate_size_align_assertions(&enum_def.layout.layout_32, &ident));
+    assertions_64.extend(generate_size_align_assertions(enum_def.layout_64(), &ident));
+    assertions_32.extend(generate_size_align_assertions(enum_def.layout_32(), &ident));
 }
 
 /// Generate size and alignment assertions for a type.

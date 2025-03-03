@@ -15,7 +15,7 @@ use super::{
         content_eq::ContentEqType,
         estree::{ESTreeEnum, ESTreeEnumVariant},
         kind::Kind,
-        layout::Layout,
+        layout::{GetLayout, Layout},
         visit::{VisitEnum, VisitFieldOrVariant},
     },
 };
@@ -108,7 +108,7 @@ impl EnumDef {
         // All AST enums are `#[repr(C, u8)]` or `#[repr(u8)]`.
         // Such enums must have at least 1 variant, so only way can have size 1
         // is if all variants are fieldless.
-        self.layout.layout_64.size == 1
+        self.layout_64().size == 1
     }
 
     /// Get the [`File`] which this struct is defined in.

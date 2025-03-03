@@ -3,6 +3,10 @@ use std::{
     mem::{align_of, size_of},
 };
 
+use crate::schema::{
+    BoxDef, CellDef, EnumDef, FieldDef, OptionDef, PrimitiveDef, StructDef, TypeDef, VecDef,
+};
+
 /// The layout of a type.
 #[derive(Clone, Default, Debug)]
 pub struct Layout {
@@ -117,10 +121,90 @@ impl Niche {
 }
 
 /// Offset of a struct field.
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Offset {
     /// Offset in bytes on 64-bit platforms
     pub offset_64: u32,
     /// Offset in bytes on 32-bit platforms
     pub offset_32: u32,
+}
+
+/// Trait to get layout of a type.
+pub trait GetLayout {
+    /// Get [`Layout`] for type.
+    fn layout(&self) -> &Layout;
+
+    /// Get [`PlatformLayout`] for type on 32-bit platform.
+    fn layout_32(&self) -> &PlatformLayout {
+        &self.layout().layout_32
+    }
+
+    /// Get [`PlatformLayout`] for type on 64-bit platform.
+    fn layout_64(&self) -> &PlatformLayout {
+        &self.layout().layout_64
+    }
+
+    /// Get [`PlatformLayout`] for type on specified platform.
+    fn platform_layout(&self, is_64: bool) -> &PlatformLayout {
+        if is_64 { self.layout_64() } else { self.layout_32() }
+    }
+}
+
+impl GetLayout for TypeDef {
+    fn layout(&self) -> &Layout {
+        match self {
+            TypeDef::Struct(def) => &def.layout,
+            TypeDef::Enum(def) => &def.layout,
+            TypeDef::Primitive(def) => &def.layout,
+            TypeDef::Option(def) => &def.layout,
+            TypeDef::Box(def) => &def.layout,
+            TypeDef::Vec(def) => &def.layout,
+            TypeDef::Cell(def) => &def.layout,
+        }
+    }
+}
+
+macro_rules! impl_get_layout {
+    ($ty:ident) => {
+        impl GetLayout for $ty {
+            fn layout(&self) -> &Layout {
+                &self.layout
+            }
+        }
+    };
+}
+
+impl_get_layout!(StructDef);
+impl_get_layout!(EnumDef);
+impl_get_layout!(PrimitiveDef);
+impl_get_layout!(OptionDef);
+impl_get_layout!(BoxDef);
+impl_get_layout!(VecDef);
+impl_get_layout!(CellDef);
+
+/// Trait to get offset of a struct field.
+pub trait GetOffset {
+    /// Get [`Offset`] for struct field.
+    fn offset(&self) -> Offset;
+
+    /// Get offset for struct field on 32-bit platform.
+    fn offset_32(&self) -> u32 {
+        self.offset().offset_32
+    }
+
+    /// Get offset for struct field on 64-bit platform.
+    fn offset_64(&self) -> u32 {
+        self.offset().offset_64
+    }
+
+    /// Get offset for struct field on specified platform.
+    fn platform_offset(&self, is_64: bool) -> u32 {
+        if is_64 { self.offset_64() } else { self.offset_32() }
+    }
+}
+
+impl GetOffset for FieldDef {
+    fn offset(&self) -> Offset {
+        self.offset
+    }
 }
