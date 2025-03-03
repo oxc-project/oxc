@@ -572,7 +572,7 @@ impl<'a> OptionalChaining<'a, '_> {
                             binding.to_maybe_bound_identifier()
                         });
                     self.set_binding_context(binding);
-                } else if object.is_super() {
+                } else if matches!(object, Expression::Super(_) | Expression::ThisExpression(_)) {
                     self.set_this_context();
                 }
             }
