@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 137/221
+Passed: 137/223
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -319,7 +319,29 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (2/64)
+# legacy-decorators (2/66)
+* oxc/metadata/bound-type-reference/input.ts
+Symbol reference IDs mismatch for "BoundTypeReference":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(6), ReferenceId(7)]
+Symbol span mismatch for "Example":
+after transform: SymbolId(1): Span { start: 87, end: 94 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "Example":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
+
+* oxc/metadata/unbound-type-reference/input.ts
+Symbol span mismatch for "Example":
+after transform: SymbolId(0): Span { start: 6, end: 13 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Symbol span mismatch for "Example":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 6, end: 13 }
+Unresolved reference IDs mismatch for "UnboundTypeReference":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+rebuilt        : [ReferenceId(4), ReferenceId(5)]
+
 * typescript/accessor/decoratorOnClassAccessor1/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]

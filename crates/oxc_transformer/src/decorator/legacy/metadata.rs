@@ -548,7 +548,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let operator = BinaryOperator::StrictEquality;
+        let operator = BinaryOperator::StrictInequality;
         let undefined = ctx.ast.expression_string_literal(SPAN, "undefined", None);
         let typeof_left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, left);
         let left_check = ctx.ast.expression_binary(SPAN, typeof_left, operator, undefined);
