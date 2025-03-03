@@ -57,7 +57,7 @@ fn integration() {
          }
          console.log(c, d);
         ",
-        "if (console.log('effect'), !1) for (var c = 1, c; unknownGlobal; unknownGlobal) var d;
+        "if (console.log('effect'), !1) var c, c, d;
         console.log(c, d);
         ",
     );

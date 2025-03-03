@@ -68,9 +68,11 @@ fn dce_if_statement() {
 
     test("if (!false && xxx) { foo }", "if (xxx) foo");
     test("if (!true && yyy) { foo } else { bar }", "bar");
+    test("if (xxx && false) { foo } else { bar }", "if (xxx && false); else bar");
 
     test("if (true || xxx) { foo }", "foo");
     test("if (false || xxx) { foo }", "if (xxx) foo");
+    test("if (xxx || true) { foo } else { bar }", "if (xxx || true) foo");
 
     test("if ('production' == 'production') { foo } else { bar }", "foo");
     test("if ('development' == 'production') { foo } else { bar }", "bar");
