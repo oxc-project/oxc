@@ -221,6 +221,7 @@ impl Gen for Statement<'_> {
             Self::FunctionDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
                 if decl.pure && p.options.print_annotation_comments() {
+                    p.print_indent();
                     p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
                 }
                 p.print_indent();
