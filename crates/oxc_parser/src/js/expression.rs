@@ -1021,7 +1021,12 @@ impl<'a> ParserImpl<'a> {
             }
             self.ast.expression_private_in(self.end_span(lhs_span), left, right)
         } else {
-            self.parse_unary_expression_or_higher(lhs_span)?
+            let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+            let mut expr = self.parse_unary_expression_or_higher(lhs_span)?;
+            if has_pure_comment {
+                Self::set_pure_on_call_or_new_expr(&mut expr);
+            }
+            expr
         };
 
         self.parse_binary_expression_rest(lhs_span, lhs, lhs_precedence)

@@ -379,17 +379,16 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ a.b().c.d();\n");
     test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
     test_same("(/* @__PURE__ */ a()).b;\n");
-}
 
-#[test]
-fn pure_comment_additional() {
+    // More
     test_same("/* @__PURE__ */ a() || b;\n");
     test_same("/* @__PURE__ */ a() && b;\n");
     test_same("/* @__PURE__ */ a() ?? b;\n");
     test_same("/* @__PURE__ */ a() ? b : c;\n");
     test_same("/* @__PURE__ */ a.b();\n");
     test_same("/* @__PURE__ */ a?.b();\n");
-    test_same("/* @__PURE__ */ a.b?.();\n");
+    test_same("true && /* @__PURE__ */ noEffect();\n");
+    test_same("false || /* @__PURE__ */ noEffect();\n");
 }
 
 // followup from https://github.com/oxc-project/oxc/pull/6422

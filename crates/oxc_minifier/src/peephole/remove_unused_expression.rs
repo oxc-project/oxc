@@ -867,6 +867,8 @@ mod test {
         test("/* @__PURE__ */ foo(...'a')", "");
         test("/* @__PURE__ */ new Foo()", "");
         test("/* @__PURE__ */ new Foo(a)", "a");
+        test("true && /* @__PURE__ */ noEffect()", "");
+        test("false || /* @__PURE__ */ noEffect()", "");
     }
 
     #[test]
