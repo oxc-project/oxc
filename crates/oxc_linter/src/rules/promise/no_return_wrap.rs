@@ -151,7 +151,27 @@ fn find_first_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
         return;
     };
 
-    ctx.diagnostic(no_return_wrap_diagnostic(stmt.span));
+    let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
+        return;
+    };
+
+    let Expression::StaticMemberExpression(stat_expr) = &call_expr.callee else {
+        return;
+    };
+
+    let Some(obj_call_ident) = stat_expr.object.get_identifier_reference() else {
+        return;
+    };
+
+    if !ctx.semantic().is_reference_to_global_variable(obj_call_ident) {
+        return;
+    }
+
+    if obj_call_ident.name == "Promise" {
+        ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
+    }
+
+    ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
 }
 
 /// Return true if this node is inside a `then` or `catch` promise callback. Will return `true`
@@ -215,7 +235,6 @@ fn test() {
     ];
 
     let fail = vec![
-        /*
         ("doThing().then(function() { return Promise.resolve(4) })", None),
         ("doThing().then(null, function() { return Promise.resolve(4) })", None),
         ("doThing().catch(function() { return Promise.resolve(4) })", None),
@@ -317,7 +336,6 @@ fn test() {
         ),
         ("doThing().then(() => Promise.resolve(4))", None),
         ("doThing().then(() => Promise.reject(4))", None),
-         */
     ];
 
     Tester::new(NoReturnWrap::NAME, NoReturnWrap::PLUGIN, pass, fail).test_and_snapshot();
