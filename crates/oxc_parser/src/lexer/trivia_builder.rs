@@ -23,6 +23,8 @@ pub struct TriviaBuilder {
     previous_kind: Kind,
 
     pub(super) has_pure_comment: bool,
+
+    pub(super) has_no_side_effects_comment: bool,
 }
 
 impl Default for TriviaBuilder {
@@ -34,6 +36,7 @@ impl Default for TriviaBuilder {
             saw_newline: true,
             previous_kind: Kind::Undetermined,
             has_pure_comment: false,
+            has_no_side_effects_comment: false,
         }
     }
 }
@@ -41,6 +44,10 @@ impl Default for TriviaBuilder {
 impl TriviaBuilder {
     pub fn previous_token_has_pure_comment(&self) -> bool {
         self.has_pure_comment
+    }
+
+    pub fn previous_token_has_no_side_effects_comment(&self) -> bool {
+        self.has_no_side_effects_comment
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
@@ -113,9 +120,7 @@ impl TriviaBuilder {
     }
 
     fn add_comment(&mut self, comment: Comment, source_text: &str) {
-        if comment.is_pure(source_text) {
-            self.has_pure_comment = true;
-        }
+        self.parse_pure_comment(comment, source_text);
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last() {
@@ -137,6 +142,26 @@ impl TriviaBuilder {
         }
 
         self.comments.push(comment);
+    }
+
+    /// Parse `#__PURE__` and `#__NO_SIDE_EFFECTS__` Notation
+    ///
+    /// <https://github.com/javascript-compiler-hints/compiler-notations-spec>
+    #[inline] // inline because code path is hot.
+    fn parse_pure_comment(&mut self, comment: Comment, source_text: &str) {
+        let Some(s) = source_text[(comment.span.start + 2) as usize..]
+            .trim_ascii_start()
+            .strip_prefix(['@', '#'])
+        else {
+            return;
+        };
+        let Some(s) = s.strip_prefix("__") else { return };
+        if s.starts_with("PURE__") {
+            self.has_pure_comment = true;
+        }
+        if s.starts_with("NO_SIDE_EFFECTS__") {
+            self.has_no_side_effects_comment = true;
+        }
     }
 }
 

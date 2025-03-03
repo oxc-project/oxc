@@ -1923,6 +1923,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
             return_type: CloneIn::clone_in(&self.return_type, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
             scope_id: Default::default(),
+            pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
 }

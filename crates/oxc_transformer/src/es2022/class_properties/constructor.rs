@@ -325,7 +325,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // `(..._args) => (super(..._args), <inits>, this)`
         let super_func = Expression::ArrowFunctionExpression(
-            ctx.ast.alloc_arrow_function_expression_with_scope_id(
+            ctx.ast.alloc_arrow_function_expression_with_scope_id_and_pure(
                 SPAN,
                 true,
                 false,
@@ -342,6 +342,7 @@ impl<'a> ClassProperties<'a, '_> {
                 NONE,
                 ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
                 super_func_scope_id,
+                false,
             ),
         );
 

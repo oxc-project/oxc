@@ -115,19 +115,6 @@ pub struct Codegen<'a> {
     comments: CommentsMap,
 
     legal_comments: Vec<Comment>,
-    /// Start of comment that needs to be moved to the before VariableDeclarator
-    ///
-    /// For example:
-    /// ```js
-    ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
-    ///  }, b = 10000;
-    /// ```
-    /// Should be generated as:
-    /// ```js
-    ///   export const /* @__NO_SIDE_EFFECTS__ */ a = function() {
-    ///  }, b = 10000;
-    /// ```
-    start_of_annotation_comment: Option<u32>,
 
     sourcemap_builder: Option<SourcemapBuilder>,
 }
@@ -179,7 +166,6 @@ impl<'a> Codegen<'a> {
             quote: b'"',
             print_comments,
             comments: CommentsMap::default(),
-            start_of_annotation_comment: None,
             legal_comments: vec![],
             sourcemap_builder: None,
         }

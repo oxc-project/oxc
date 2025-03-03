@@ -555,6 +555,7 @@ const _: () = {
     assert!(offset_of!(ArrowFunctionExpression, return_type) == 32);
     assert!(offset_of!(ArrowFunctionExpression, body) == 40);
     assert!(offset_of!(ArrowFunctionExpression, scope_id) == 48);
+    assert!(offset_of!(ArrowFunctionExpression, pure) == 52);
 
     assert!(size_of::<YieldExpression>() == 32);
     assert!(align_of::<YieldExpression>() == 8);
@@ -1943,7 +1944,7 @@ const _: () = {
     assert!(offset_of!(FunctionBody, directives) == 8);
     assert!(offset_of!(FunctionBody, statements) == 24);
 
-    assert!(size_of::<ArrowFunctionExpression>() == 32);
+    assert!(size_of::<ArrowFunctionExpression>() == 36);
     assert!(align_of::<ArrowFunctionExpression>() == 4);
     assert!(offset_of!(ArrowFunctionExpression, span) == 0);
     assert!(offset_of!(ArrowFunctionExpression, expression) == 8);
@@ -1953,6 +1954,7 @@ const _: () = {
     assert!(offset_of!(ArrowFunctionExpression, return_type) == 20);
     assert!(offset_of!(ArrowFunctionExpression, body) == 24);
     assert!(offset_of!(ArrowFunctionExpression, scope_id) == 28);
+    assert!(offset_of!(ArrowFunctionExpression, pure) == 32);
 
     assert!(size_of::<YieldExpression>() == 20);
     assert!(align_of::<YieldExpression>() == 4);

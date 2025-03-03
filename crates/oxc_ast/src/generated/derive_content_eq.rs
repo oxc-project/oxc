@@ -1117,6 +1117,7 @@ impl ContentEq for ArrowFunctionExpression<'_> {
             && ContentEq::content_eq(&self.params, &other.params)
             && ContentEq::content_eq(&self.return_type, &other.return_type)
             && ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
 

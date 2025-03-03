@@ -18,19 +18,10 @@ impl Codegen<'_> {
         self.comments.contains_key(&start)
     }
 
-    pub(crate) fn has_annotation_comment(&self, start: u32) -> bool {
-        if !self.options.print_annotation_comments() {
-            return false;
-        }
-        self.comments.get(&start).is_some_and(|comments| {
-            comments.iter().any(|comment| self.is_annotation_comment(comment))
-        })
-    }
-
     pub(crate) fn has_non_annotation_comment(&self, start: u32) -> bool {
         if self.options.print_annotation_comments() {
             self.comments.get(&start).is_some_and(|comments| {
-                comments.iter().any(|comment| !self.is_annotation_comment(comment))
+                comments.iter().any(|comment| !self.is_pure_comment(comment))
             })
         } else {
             self.has_comment(start)
@@ -40,7 +31,7 @@ impl Codegen<'_> {
     /// `#__PURE__` Notation Specification
     ///
     /// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/c14f7e197cb225c9eee877143536665ce3150712/pure-notation-spec.md>
-    fn is_annotation_comment(&self, comment: &Comment) -> bool {
+    fn is_pure_comment(&self, comment: &Comment) -> bool {
         let s = comment.content_span().source_text(self.source_text).trim_start();
         if let Some(s) = s.strip_prefix(['@', '#']) {
             s.starts_with("__PURE__") || s.starts_with("__NO_SIDE_EFFECTS__")
@@ -52,8 +43,7 @@ impl Codegen<'_> {
     /// Whether to keep leading comments.
     fn is_leading_comments(&self, comment: &Comment) -> bool {
         comment.preceded_by_newline
-            && (comment.is_jsdoc(self.source_text)
-                || (comment.is_line() && self.is_annotation_comment(comment)))
+            && (comment.is_jsdoc(self.source_text) && !self.is_pure_comment(comment))
             && !comment.content_span().source_text(self.source_text).chars().all(|c| c == '*')
         // webpack comment `/*****/`
     }
@@ -118,36 +108,11 @@ impl Codegen<'_> {
         }
     }
 
-    pub(crate) fn print_annotation_comments(&mut self, node_start: u32) {
-        if !self.options.print_annotation_comments() {
-            return;
-        }
-
-        // If there is has annotation comments awaiting move to here, print them.
-        let start = self.start_of_annotation_comment.take().unwrap_or(node_start);
-
-        let Some(comments) = self.comments.remove(&start) else { return };
-
-        for comment in comments {
-            if !self.is_annotation_comment(&comment) {
-                continue;
-            }
-            if comment.is_line() {
-                self.print_str("/*");
-                self.print_str(comment.content_span().source_text(self.source_text));
-                self.print_str("*/");
-            } else {
-                self.print_str(comment.span.source_text(self.source_text));
-            }
-            self.print_hard_space();
-        }
-    }
-
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
         let Some(comments) = self.comments.remove(&start) else { return false };
 
         let (annotation_comments, comments): (Vec<_>, Vec<_>) =
-            comments.into_iter().partition(|comment| self.is_annotation_comment(comment));
+            comments.into_iter().partition(|comment| self.is_pure_comment(comment));
 
         if !annotation_comments.is_empty() {
             self.comments.insert(start, annotation_comments);
