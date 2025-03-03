@@ -84,10 +84,22 @@ pub fn create_prototype_member<'a>(
 
 /// `object` -> `object.a`.
 pub fn create_property_access<'a>(
+    span: Span,
     object: Expression<'a>,
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
-    Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
+    Expression::from(ctx.ast.member_expression_static(span, object, property, false))
+}
+
+/// `object` -> `object['a']`.
+pub fn create_compute_property_access<'a>(
+    span: Span,
+    object: Expression<'a>,
+    property: &str,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(property), None);
+    Expression::from(ctx.ast.member_expression_computed(span, object, expression, false))
 }

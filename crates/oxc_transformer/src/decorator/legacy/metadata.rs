@@ -375,7 +375,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
                     let ident1 = binding.create_read_expression(ctx);
                     let ident2 = binding.create_read_expression(ctx);
-                    let member = create_property_access(ident1, &qualified.right.name, ctx);
+                    let member = create_property_access(SPAN, ident1, &qualified.right.name, ctx);
                     Self::create_checked_value(ident2, member, ctx)
                 } else {
                     // `A.B.C` -> `typeof A !== "undefined" && (_a = A.B) !== void 0 && _a.C`
@@ -401,7 +401,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     );
 
                     let object = binding.create_read_expression(ctx);
-                    let member = create_property_access(object, &qualified.right.name, ctx);
+                    let member = create_property_access(SPAN, object, &qualified.right.name, ctx);
                     ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member)
                 }
             }

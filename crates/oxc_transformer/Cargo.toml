@@ -50,7 +50,9 @@ insta = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_sourcemap = { workspace = true }
+oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
+similar = { workspace = true }
 
 [features]
 default = []
