@@ -255,83 +255,73 @@ fn test() {
             None,
         ),
         (
-            "
-			      fn(function() {
-			        doThing().then(function() {
-			          return Promise.resolve(4)
-			        })
-			        return
-			      })",
+            "fn(function() {
+			   doThing().then(function() {
+			     return Promise.resolve(4)
+			   })
+			   return
+			 })",
             None,
         ),
         (
-            "
-			      fn(function() {
-			        doThing().then(function nm() {
-			          return Promise.resolve(4)
-			        })
-			        return
-			      })",
+            "fn(function() {
+			   doThing().then(function nm() {
+			     return Promise.resolve(4)
+			   })
+			   return
+			 })",
             None,
         ),
         (
-            "
-			      fn(function() {
-			        fn2(function() {
-			          doThing().then(function() {
-			            return Promise.resolve(4)
-			          })
-			        })
-			      })",
+            "fn(function() {
+			   fn2(function() {
+			     doThing().then(function() {
+			       return Promise.resolve(4)
+			     })
+			   })
+			 })",
             None,
         ),
         (
-            "
-			      fn(function() {
-			        fn2(function() {
-			          doThing().then(function() {
-			            fn3(function() {
-			              return Promise.resolve(4)
-			            })
-			            return Promise.resolve(4)
-			          })
-			        })
-			      })",
+            "fn(function() {
+			   fn2(function() {
+			     doThing().then(function() {
+			       fn3(function() {
+			         return Promise.resolve(4)
+			       })
+			       return Promise.resolve(4)
+			     })
+			   })
+			 })",
             None,
         ),
         (
-            "
-			      const o = {
-			        fn: function() {
-			          return doThing().then(function() {
-			            return Promise.resolve(5);
-			          });
-			        },
-			      }
-			      ",
+            "const o = {
+			   fn: function() {
+			     return doThing().then(function() {
+			       return Promise.resolve(5);
+			     });
+			   },
+			 }",
             None,
         ),
         (
-            "
-			      fn(
-			        doThing().then(function() {
-			          return Promise.resolve(5);
-			        })
-			      );
-			      ",
+            "fn(
+			   doThing().then(function() {
+			     return Promise.resolve(5);
+			   })
+			 );",
             None,
         ),
         ("doThing().then((function() { return Promise.resolve(4) }).bind(this))", None),
         ("doThing().then((function() { return Promise.resolve(4) }).bind(this).bind(this))", None),
         ("doThing().then(() => { return Promise.resolve(4) })", None),
         (
-            "
-			      function a () {
-			        return p.then(function(val) {
-			          return Promise.resolve(val * 4)
-			        })
-			      }
-			      ",
+            "function a () {
+		       return p.then(function(val) {
+			     return Promise.resolve(val * 4)
+			   })
+			}",
             None,
         ),
         ("doThing().then(() => Promise.resolve(4))", None),
