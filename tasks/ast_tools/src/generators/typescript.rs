@@ -413,7 +413,10 @@ fn should_add_type_field_to_struct(struct_def: &StructDef) -> bool {
     if struct_def.estree.no_type {
         false
     } else {
-        !struct_def.fields.iter().any(|field| matches!(field.name(), "type"))
+        !struct_def.fields.iter().any(|field| {
+            let field_name = field.estree.rename.as_deref().unwrap_or_else(|| field.name());
+            field_name == "type"
+        })
     }
 }
 
