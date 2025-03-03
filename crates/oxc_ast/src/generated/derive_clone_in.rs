@@ -4154,6 +4154,21 @@ impl<'alloc> CloneIn<'alloc> for CommentPosition {
     }
 }
 
+impl<'alloc> CloneIn<'alloc> for CommentAnnotation {
+    type Cloned = CommentAnnotation;
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::None => CommentAnnotation::None,
+            Self::Jsdoc => CommentAnnotation::Jsdoc,
+            Self::Legal => CommentAnnotation::Legal,
+            Self::Pure => CommentAnnotation::Pure,
+            Self::NoSideEffects => CommentAnnotation::NoSideEffects,
+            Self::Webpack => CommentAnnotation::Webpack,
+            Self::Vite => CommentAnnotation::Vite,
+        }
+    }
+}
+
 impl<'alloc> CloneIn<'alloc> for Comment {
     type Cloned = Comment;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
@@ -4164,6 +4179,7 @@ impl<'alloc> CloneIn<'alloc> for Comment {
             position: CloneIn::clone_in(&self.position, allocator),
             preceded_by_newline: CloneIn::clone_in(&self.preceded_by_newline, allocator),
             followed_by_newline: CloneIn::clone_in(&self.followed_by_newline, allocator),
+            annotation: CloneIn::clone_in(&self.annotation, allocator),
         }
     }
 }

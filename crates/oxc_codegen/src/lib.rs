@@ -482,13 +482,17 @@ impl<'a> Codegen<'a> {
             if index != 0 {
                 self.print_comma();
             }
-            if self.print_comments && self.has_non_annotation_comment(item.span().start) {
-                self.print_expr_comments(item.span().start);
-                self.print_indent();
-            } else {
-                self.print_soft_newline();
-                self.print_indent();
+            if self.print_comments {
+                let start = item.span().start;
+                if self.has_comment(start) {
+                    self.print_expr_comments(start);
+                    self.print_indent();
+                    item.print(self, ctx);
+                    continue;
+                }
             }
+            self.print_soft_newline();
+            self.print_indent();
             item.print(self, ctx);
         }
     }

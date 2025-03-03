@@ -1,4 +1,4 @@
-use oxc_ast::ast::{Comment, CommentKind, CommentPosition};
+use oxc_ast::ast::{Comment, CommentAnnotation, CommentKind, CommentPosition};
 use oxc_span::Span;
 
 use super::{Kind, Token};
@@ -119,8 +119,8 @@ impl TriviaBuilder {
         !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
     }
 
-    fn add_comment(&mut self, comment: Comment, source_text: &str) {
-        self.parse_pure_comment(comment, source_text);
+    fn add_comment(&mut self, mut comment: Comment, source_text: &str) {
+        self.parse_annotation(&mut comment, source_text);
         // The comments array is an ordered vec, only add the comment if its not added before,
         // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
         if let Some(last_comment) = self.comments.last() {
@@ -129,7 +129,6 @@ impl TriviaBuilder {
             }
         }
 
-        let mut comment = comment;
         // This newly added comment may be preceded by a newline.
         comment.preceded_by_newline = self.saw_newline;
         if comment.is_line() {
@@ -144,22 +143,54 @@ impl TriviaBuilder {
         self.comments.push(comment);
     }
 
-    /// Parse `#__PURE__` and `#__NO_SIDE_EFFECTS__` Notation
-    ///
-    /// <https://github.com/javascript-compiler-hints/compiler-notations-spec>
-    #[inline] // inline because code path is hot.
-    fn parse_pure_comment(&mut self, comment: Comment, source_text: &str) {
-        let Some(s) = source_text[(comment.span.start + 2) as usize..]
-            .trim_ascii_start()
-            .strip_prefix(['@', '#'])
-        else {
+    /// Parse Notation
+    fn parse_annotation(&mut self, comment: &mut Comment, source_text: &str) {
+        let mut s = comment.content_span().source_text(source_text);
+
+        if s.starts_with('!') {
+            comment.annotation = CommentAnnotation::Legal;
             return;
-        };
+        }
+
+        if comment.is_block() && s.starts_with('*') {
+            // Ignore webpack comment `/*****/`
+            if !s.bytes().all(|c| c == b'*') {
+                comment.annotation = CommentAnnotation::Jsdoc;
+                return;
+            }
+        }
+
+        s = s.trim_ascii_start();
+
+        if let Some(ss) = s.strip_prefix('@') {
+            if ss.starts_with("vite") {
+                comment.annotation = CommentAnnotation::Vite;
+                return;
+            }
+            if ss.starts_with("license") || ss.starts_with("preserve") {
+                comment.annotation = CommentAnnotation::Legal;
+                return;
+            }
+            s = ss;
+        } else if let Some(ss) = s.strip_prefix('#') {
+            s = ss;
+        } else if s.starts_with("webpack") {
+            comment.annotation = CommentAnnotation::Webpack;
+            return;
+        } else {
+            if s.contains("@license") || s.contains("@preserve") {
+                comment.annotation = CommentAnnotation::Legal;
+            }
+            return;
+        }
+
         let Some(s) = s.strip_prefix("__") else { return };
         if s.starts_with("PURE__") {
+            comment.annotation = CommentAnnotation::Pure;
             self.has_pure_comment = true;
         }
         if s.starts_with("NO_SIDE_EFFECTS__") {
+            comment.annotation = CommentAnnotation::NoSideEffects;
             self.has_no_side_effects_comment = true;
         }
     }
@@ -168,7 +199,7 @@ impl TriviaBuilder {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_ast::{Comment, CommentKind, CommentPosition};
+    use oxc_ast::{Comment, CommentAnnotation, CommentKind, CommentPosition};
     use oxc_span::{SourceType, Span};
 
     use crate::Parser;
@@ -197,6 +228,7 @@ mod test {
                 attached_to: 70,
                 preceded_by_newline: true,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
             Comment {
                 span: Span::new(33, 45),
@@ -205,6 +237,7 @@ mod test {
                 attached_to: 70,
                 preceded_by_newline: true,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
             Comment {
                 span: Span::new(54, 69),
@@ -213,6 +246,7 @@ mod test {
                 attached_to: 70,
                 preceded_by_newline: true,
                 followed_by_newline: false,
+                annotation: CommentAnnotation::None,
             },
             Comment {
                 span: Span::new(76, 92),
@@ -221,6 +255,7 @@ mod test {
                 attached_to: 0,
                 preceded_by_newline: false,
                 followed_by_newline: false,
+                annotation: CommentAnnotation::None,
             },
             Comment {
                 span: Span::new(93, 106),
@@ -229,6 +264,7 @@ mod test {
                 attached_to: 0,
                 preceded_by_newline: false,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
             Comment {
                 span: Span::new(115, 138),
@@ -237,6 +273,7 @@ mod test {
                 attached_to: 147,
                 preceded_by_newline: true,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
         ];
 
@@ -261,6 +298,7 @@ token /* Trailing 1 */
                 attached_to: 36,
                 preceded_by_newline: true,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
             Comment {
                 span: Span::new(42, 58),
@@ -269,6 +307,7 @@ token /* Trailing 1 */
                 attached_to: 0,
                 preceded_by_newline: false,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
         ];
         assert_eq!(comments, expected);
@@ -277,10 +316,10 @@ token /* Trailing 1 */
     #[test]
     fn comment_attachments3() {
         let source_text = "
-/**
+/*
  * A
  **/
-/**
+/*
  * B
  **/
  token
@@ -288,20 +327,22 @@ token /* Trailing 1 */
         let comments = get_comments(source_text);
         let expected = vec![
             Comment {
-                span: Span::new(1, 14),
+                span: Span::new(1, 13),
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
-                attached_to: 30,
+                attached_to: 28,
                 preceded_by_newline: true,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
             Comment {
-                span: Span::new(15, 28),
+                span: Span::new(14, 26),
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
-                attached_to: 30,
+                attached_to: 28,
                 preceded_by_newline: true,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
         ];
         assert_eq!(comments, expected);
@@ -325,6 +366,7 @@ token /* Trailing 1 */
                 attached_to: 57,
                 preceded_by_newline: false,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
             Comment {
                 span: Span::new(96, 116),
@@ -333,6 +375,7 @@ token /* Trailing 1 */
                 attached_to: 129,
                 preceded_by_newline: false,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
         ];
         assert_eq!(comments, expected);
@@ -355,6 +398,7 @@ token /* Trailing 1 */
                 attached_to: 55,
                 preceded_by_newline: false,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
             Comment {
                 span: Span::new(79, 99),
@@ -363,8 +407,37 @@ token /* Trailing 1 */
                 attached_to: 116,
                 preceded_by_newline: false,
                 followed_by_newline: true,
+                annotation: CommentAnnotation::None,
             },
         ];
         assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn comment_parsing() {
+        let data = [
+            ("/*! legal */", CommentAnnotation::Legal),
+            ("/* @preserve */", CommentAnnotation::Legal),
+            ("/* @license */", CommentAnnotation::Legal),
+            ("/* foo @preserve */", CommentAnnotation::Legal),
+            ("/* foo @license */", CommentAnnotation::Legal),
+            ("/** jsdoc */", CommentAnnotation::Jsdoc),
+            ("/**/", CommentAnnotation::None),
+            ("/***/", CommentAnnotation::None),
+            ("/****/", CommentAnnotation::None),
+            ("/* @vite-ignore */", CommentAnnotation::Vite),
+            ("/* @vite-xxx */", CommentAnnotation::Vite),
+            ("/* webpackChunkName: 'my-chunk-name' */", CommentAnnotation::Webpack),
+            ("/* @__PURE__ */", CommentAnnotation::Pure),
+            ("/* @__NO_SIDE_EFFECTS__ */", CommentAnnotation::NoSideEffects),
+            ("/* #__PURE__ */", CommentAnnotation::Pure),
+            ("/* #__NO_SIDE_EFFECTS__ */", CommentAnnotation::NoSideEffects),
+        ];
+
+        for (source_text, expected) in data {
+            let comments = get_comments(source_text);
+            assert_eq!(comments.len(), 1, "{source_text}");
+            assert_eq!(comments[0].annotation, expected, "{source_text}");
+        }
     }
 }

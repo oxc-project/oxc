@@ -71,7 +71,7 @@ mod generated {
 pub use generated::{ast_builder, ast_kind};
 
 pub use crate::{
-    ast::comment::{Comment, CommentKind, CommentPosition},
+    ast::comment::{Comment, CommentAnnotation, CommentKind, CommentPosition},
     ast_builder::AstBuilder,
     ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},

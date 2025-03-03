@@ -38,6 +38,43 @@ pub enum CommentPosition {
     Trailing = 1,
 }
 
+/// Annotation comment that has special meaning.
+#[ast]
+#[generate_derive(CloneIn, ContentEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+pub enum CommentAnnotation {
+    /// No Annotation
+    #[default]
+    None = 0,
+
+    /// `/** jsdoc */`
+    /// <https://jsdoc.app>
+    Jsdoc = 1,
+
+    /// Legal Comment
+    /// e.g. `/* @license */`, `/* @preserve */`, or starts with `//!` or `/*!`.
+    ///
+    /// <https://esbuild.github.io/api/#legal-comments>
+    Legal = 2,
+
+    /// `/* #__PURE__ */`
+    /// <https://github.com/javascript-compiler-hints/compiler-notations-spec>
+    Pure = 3,
+
+    /// `/* #__NO_SIDE_EFFECTS__ */`
+    NoSideEffects = 4,
+
+    /// Webpack magic comment
+    /// e.g. `/* webpackChunkName */`
+    /// <https://webpack.js.org/api/module-methods/#magic-comments>
+    Webpack = 5,
+
+    /// Vite comment
+    /// e.g. `/* @vite-ignore */`
+    /// <https://github.com/search?q=repo%3Avitejs%2Fvite%20vite-ignore&type=code>
+    Vite = 6,
+}
+
 /// A comment in source code.
 #[ast]
 #[generate_derive(CloneIn, ContentEq)]
@@ -64,6 +101,9 @@ pub struct Comment {
 
     /// Whether this comment has a tailing newline.
     pub followed_by_newline: bool,
+
+    /// Comment Annotation
+    pub annotation: CommentAnnotation,
 }
 
 impl Comment {
@@ -78,6 +118,15 @@ impl Comment {
             position: CommentPosition::Trailing,
             preceded_by_newline: false,
             followed_by_newline: false,
+            annotation: CommentAnnotation::None,
+        }
+    }
+
+    /// Gets the span of the comment content.
+    pub fn content_span(&self) -> Span {
+        match self.kind {
+            CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
+            CommentKind::Block => Span::new(self.span.start + 2, self.span.end - 2),
         }
     }
 
@@ -101,35 +150,43 @@ impl Comment {
         self.position == CommentPosition::Trailing
     }
 
-    /// Returns `true` if this comment is a JSDoc comment. Implies `is_leading`
-    /// and `is_block`.
-    pub fn is_jsdoc(&self, source_text: &str) -> bool {
-        self.is_leading() && self.is_block() && {
-            let span = self.content_span();
-            !span.is_empty() && source_text.as_bytes()[span.start as usize] == b'*'
-        }
+    /// Is comment with special meaning.
+    pub fn is_annotation(self) -> bool {
+        self.annotation != CommentAnnotation::None
+    }
+
+    /// Returns `true` if this comment is a JSDoc comment. Implies `is_leading` and `is_block`.
+    pub fn is_jsdoc(self) -> bool {
+        self.is_leading() && self.annotation == CommentAnnotation::Jsdoc
     }
 
     /// Legal comments
     ///
     /// A "legal comment" is considered to be any statement-level comment
     /// that contains `@license` or `@preserve` or that starts with `//!` or `/*!`.
+    ///
     /// <https://esbuild.github.io/api/#legal-comments>
-    pub fn is_legal(&self, source_text: &str) -> bool {
-        if !self.is_leading() {
-            return false;
-        }
-        let source_text = self.content_span().source_text(source_text);
-        source_text.starts_with('!')
-            || source_text.contains("@license")
-            || source_text.contains("@preserve")
+    pub fn is_legal(self) -> bool {
+        self.is_leading() && self.annotation == CommentAnnotation::Legal
     }
 
-    /// Gets the span of the comment content.
-    pub fn content_span(&self) -> Span {
-        match self.kind {
-            CommentKind::Line => Span::new(self.span.start + 2, self.span.end),
-            CommentKind::Block => Span::new(self.span.start + 2, self.span.end - 2),
-        }
+    /// Is `/* @__PURE__*/`.
+    pub fn is_pure(self) -> bool {
+        self.annotation == CommentAnnotation::Pure
+    }
+
+    /// Is `/* @__NO_SIDE_EFFECTS__*/`.
+    pub fn is_no_side_effects(self) -> bool {
+        self.annotation == CommentAnnotation::NoSideEffects
+    }
+
+    /// Is webpack magic comment.
+    pub fn is_webpack(self) -> bool {
+        self.annotation == CommentAnnotation::Webpack
+    }
+
+    /// Is vite special comment.
+    pub fn is_vite(self) -> bool {
+        self.annotation == CommentAnnotation::Vite
     }
 }

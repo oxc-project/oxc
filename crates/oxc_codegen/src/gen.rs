@@ -801,7 +801,7 @@ impl Gen for FunctionBody<'_> {
             None
         };
         let is_empty = if self.is_empty() {
-            comments_at_end.is_none() || comments_at_end.as_ref().is_some_and(|c| c.0.is_empty())
+            comments_at_end.is_none() || comments_at_end.as_ref().is_some_and(Vec::is_empty)
         } else {
             false
         };
@@ -814,8 +814,8 @@ impl Gen for FunctionBody<'_> {
                 stmt.print(p, ctx);
             }
             // Print trailing statement comments.
-            if let Some((comments, unused)) = comments_at_end {
-                p.print_comments(span_end - 1, &comments, unused);
+            if let Some(comments) = comments_at_end {
+                p.print_comments(&comments);
             }
         });
         p.needs_semicolon = false;

@@ -327,7 +327,7 @@ pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
 
 #[cfg(test)]
 mod tests {
-    use oxc_ast::CommentPosition;
+    use oxc_ast::{CommentAnnotation, CommentPosition};
     use oxc_span::Span;
 
     use super::*;
@@ -367,6 +367,7 @@ mod tests {
             attached_to: 0,
             preceded_by_newline: true,
             followed_by_newline: true,
+            annotation: CommentAnnotation::None,
         };
         (comment, source_text)
     }
