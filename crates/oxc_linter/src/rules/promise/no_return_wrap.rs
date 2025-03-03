@@ -143,7 +143,8 @@ impl Rule for NoReturnWrap {
     }
 }
 
-/// Checks for `return Promise.resolve()` or `return Promise.reject()`.
+/// Checks for `return Promise.resolve()` or `return Promise.reject()` at top level statements and
+/// will look inside if no return is found as a top level statement in the function body.
 fn check_first_return_statement<'a>(
     func_body: &OBox<'_, FunctionBody<'a>>,
     ctx: &LintContext<'a>,
@@ -158,7 +159,7 @@ fn check_first_return_statement<'a>(
         Some(Statement::ReturnStatement(r)) => Some(r),
         Some(Statement::IfStatement(if_stmt)) => match &if_stmt.consequent {
             Statement::BlockStatement(block_stmt) => {
-                // Find first return statement in if { // here } else { }
+                // Find first return statement in `if { // here } else { }`
                 let res = block_stmt.body.iter().find_map(|stmt| {
                     if let Statement::ReturnStatement(r) = stmt {
                         return Some(r);
@@ -169,7 +170,7 @@ fn check_first_return_statement<'a>(
 
                 match res {
                     None => {
-                        // No return found so now look  if {  } else { // here}
+                        // No return found so now look `if {  } else { // here }`
                         block_stmt.body.iter().find_map(|stmt| {
                             if let Statement::ReturnStatement(r) = stmt {
                                 return Some(r);
@@ -190,14 +191,6 @@ fn check_first_return_statement<'a>(
     let Some(return_stmt) = maybe_return_stmt else {
         return;
     };
-
-    //  else {
-    //     return;
-    // };
-
-    //let Statement::ReturnStatement(stmt) = return_stmt else {
-    //    return;
-    //};
 
     let Some(Expression::CallExpression(call_expr)) = &return_stmt.argument else {
         return;
