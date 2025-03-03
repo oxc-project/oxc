@@ -155,11 +155,11 @@ export default function() {}
 /* #__NO_SIDE_EFFECTS__ */ export const c2 = () => {}, c3 = () => {}
         
 ----------
-export var v0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, v1 = function() {};
-export let l0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, l1 = function() {};
+export var v0 = function() {}, v1 = function() {};
+export let l0 = function() {}, l1 = function() {};
 export const c0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
-export var v2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, v3 = () => {};
-export let l2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, l3 = () => {};
+export var v2 = () => {}, v3 = () => {};
+export let l2 = () => {}, l3 = () => {};
 export const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 
 ########## 8
@@ -172,11 +172,11 @@ export const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 /* #__NO_SIDE_EFFECTS__ */ const c2 = () => {}, c3 = () => {}
         
 ----------
-var v0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, v1 = function() {};
-let l0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, l1 = function() {};
+var v0 = function() {}, v1 = function() {};
+let l0 = function() {}, l1 = function() {};
 const c0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
-var v2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, v3 = () => {};
-let l2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, l3 = () => {};
+var v2 = () => {}, v3 = () => {};
+let l2 = () => {}, l3 = () => {};
 const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 
 ########## 9

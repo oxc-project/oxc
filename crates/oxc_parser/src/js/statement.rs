@@ -161,7 +161,7 @@ impl<'a> ParserImpl<'a> {
                 Some(Declaration::FunctionDeclaration(func)) => {
                     func.pure = true;
                 }
-                Some(Declaration::VariableDeclaration(var_decl)) => {
+                Some(Declaration::VariableDeclaration(var_decl)) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
                     {
                         Self::set_pure_on_function_expr(expr);
@@ -169,7 +169,7 @@ impl<'a> ParserImpl<'a> {
                 }
                 _ => {}
             },
-            Statement::VariableDeclaration(var_decl) => {
+            Statement::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                 if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
                     Self::set_pure_on_function_expr(expr);
                 }
