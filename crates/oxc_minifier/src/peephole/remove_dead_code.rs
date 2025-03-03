@@ -323,25 +323,35 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_try(s: &mut TryStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
-        if !s.block.body.is_empty() {
-            return None;
+        if let Some(handler) = &mut s.handler {
+            if s.block.body.is_empty() {
+                let mut var = KeepVar::new(ctx.ast);
+                var.visit_block_statement(&handler.body);
+                handler.body.body.clear();
+                if let Some(var_decl) = var.get_variable_declaration_statement() {
+                    handler.body.body.push(var_decl);
+                }
+            }
         }
-        if let Some(finalizer) = &mut s.finalizer {
-            if finalizer.body.is_empty() {
-                Some(ctx.ast.statement_empty(s.span))
-            } else {
+
+        if let Some(finalizer) = &s.finalizer {
+            if finalizer.body.is_empty() && s.handler.is_some() {
+                s.finalizer = None;
+            }
+        }
+
+        if s.block.body.is_empty()
+            && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
+        {
+            if let Some(finalizer) = &mut s.finalizer {
                 let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
                 std::mem::swap(&mut **finalizer, &mut block);
                 Some(Statement::BlockStatement(ctx.ast.alloc(block)))
+            } else {
+                Some(ctx.ast.statement_empty(s.span))
             }
         } else {
-            if let Some(handler) = &s.handler {
-                if handler.body.body.iter().any(|s| matches!(s, Statement::VariableDeclaration(_)))
-                {
-                    return None;
-                }
-            }
-            Some(ctx.ast.statement_empty(s.span))
+            None
         }
     }
 
@@ -544,6 +554,11 @@ mod test {
     fn test_fold_try_statement() {
         test("try { throw 0 } catch (e) { foo() }", "try { throw 0 } catch { foo() }");
         test("try {} catch (e) { var foo }", "try {} catch { var foo }");
+        test("try {} catch (e) { var foo; bar() } finally {}", "try {} catch { var foo }");
+        test(
+            "try {} catch (e) { var foo; bar() } finally { baz() }",
+            "try {} catch { var foo } finally { baz() }",
+        );
         test("try {} catch (e) { foo() }", "");
         test("try {} catch (e) { foo() } finally {}", "");
         test("try {} finally { foo() }", "foo()");
@@ -553,6 +568,8 @@ mod test {
         test("try {} finally { let x = foo() }", "{ let x = foo() }");
         test("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
         test("try {} catch (e) { } finally {}", "");
+        test("try { foo() } catch (e) { bar() } finally {}", "try { foo() } catch { bar() }");
+        test_same("try { foo() } catch { bar() } finally { baz() }");
     }
 
     #[test]
