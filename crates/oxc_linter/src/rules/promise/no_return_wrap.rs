@@ -26,15 +26,27 @@ pub struct NoReturnWrap {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevents unnecessary wrapping of results in `Promise.resolve` or `Promise.reject` as the
-    /// Promise will do that for us.
+    /// Prevents unnecessary wrapping of return values in promises with either `Promise.resolve`
+    /// or `Promise.reject`.
+    ///
+    /// This rule enforces the following stances:
+    ///
+    /// 1. When a promise is to be resolved, instead of returning `Promise.resolve(value)` it is
+    /// better to return the raw value with `return value` instead.
+    ///
+    /// 2. When a promise is to be rejected, instead of returning `Promise.reject(error)`, instead
+    /// the raw error value should be thrown as in `throw error`.
+    ///
+    /// There is an option to turn off the enforcing of 2, see the options section below.
     ///
     /// ### Why is this bad?
     ///
-    /// `Promise.resolve` and Promise.reject` are used to convert raw values to promises. This
-    /// conversion is unnecessary for return values inside promises as such return values are
-    /// already converted into promises. This is why some take the opinion that returning values
-    /// such as `Promise.resolve(1)` or `Promise.reject(err)` is syntactic noise.
+    /// It is unnecessary to use `Promise.resolve` and Promise.reject` for converting raw values
+    /// to promises in the return statements of `then` and `catch` callbacks. Using these
+    /// operations to convert raw values to promises is unnecessary as simply returning the raw
+    /// value for the success case and throwing the raw error value in the failure case have the
+    /// same effect. This is why some take the opinion that returning values such as
+    /// `Promise.resolve(1)` or `Promise.reject(err)` is syntactic noise.
     ///
     /// ### Examples
     ///
