@@ -152,7 +152,7 @@ unicode-id-start = "1"
 oxc-browserslist = "2.0.0"
 oxc_index = "3"
 oxc_resolver = "4"
-oxc_sourcemap = "2"
+oxc_sourcemap = "3"
 
 #
 allocator-api2 = "0.2.21"
