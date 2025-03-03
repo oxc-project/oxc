@@ -22,9 +22,15 @@ pub struct NoReturnWrap;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Prevents unnecessary wrapping of results in `Promise.resolve` or `Promise.reject` as the
+    /// Promise will do that for us.
     ///
     /// ### Why is this bad?
     ///
+    /// `Promise.resolve` and Promise.reject` are used to convert raw values to promises. This
+    /// conversion is unnecessary for return values inside promises as such return values are
+    /// already converted into promises. This is why some take the opinion that returning values
+    /// such as `Promise.resolve(1)` or `Promise.reject(err)` is syntactic noise.
     ///
     /// ### Examples
     ///
@@ -37,14 +43,13 @@ declare_oxc_lint!(
     /// ```js
     /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
+    ///
+    /// ### Options
+    ///
     NoReturnWrap,
     promise,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
+    pending
 );
 
 impl Rule for NoReturnWrap {
