@@ -1,13 +1,15 @@
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-
 use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
+    utils::is_promise,
 };
+use oxc_ast::AstKind;
+use oxc_ast::ast::{CallExpression, MemberExpression};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 
 fn no_return_wrap_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
@@ -17,7 +19,9 @@ fn no_return_wrap_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct NoReturnWrap;
+pub struct NoReturnWrap {
+    allow_reject: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -53,7 +57,42 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoReturnWrap {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let allow_reject = value
+            .get(0)
+            .and_then(|v| v.get("allowReject"))
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+
+        Self { allow_reject }
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let d = ctx.source_text();
+        let in_prom_cb = inside_then_or_catch(node, ctx);
+        println!("Is indise then or catch: {0:?}, {1:?}", in_prom_cb, d);
+    }
+}
+
+/// Return true if this node is inside a `then` or `catch` promise callback. Will return `true`
+/// for `node` in both `prom.then(null, () => node)` and `prom.then(() => node)`.
+fn inside_then_or_catch<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
+    ctx.nodes().ancestors(node.id()).any(|node| {
+        node.kind()
+            .as_call_expression()
+            .is_some_and(|call_expr| {
+                matches!(
+                    call_expr
+                        .callee
+                        .as_member_expression()
+                        .and_then(MemberExpression::static_property_name),
+                    Some("then" | "catch")
+                )
+            })
+    })
 }
 
 #[test]
