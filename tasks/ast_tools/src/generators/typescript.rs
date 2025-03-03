@@ -11,7 +11,7 @@ use crate::{
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
-    utils::FxIndexSet,
+    utils::{FxIndexSet, format_cow},
 };
 
 use super::define_generator;
@@ -333,7 +333,7 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<
                     ts_type_name(variant_type, schema)
                 }
             } else {
-                Cow::Owned(format!("'{}'", get_fieldless_variant_value(enum_def, variant)))
+                format_cow!("'{}'", get_fieldless_variant_value(enum_def, variant))
             }
         })
         .collect::<FxIndexSet<_>>();
@@ -385,10 +385,10 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             name => name,
         }),
         TypeDef::Option(option_def) => {
-            Cow::Owned(format!("{} | null", ts_type_name(option_def.inner_type(schema), schema)))
+            format_cow!("{} | null", ts_type_name(option_def.inner_type(schema), schema))
         }
         TypeDef::Vec(vec_def) => {
-            Cow::Owned(format!("Array<{}>", ts_type_name(vec_def.inner_type(schema), schema)))
+            format_cow!("Array<{}>", ts_type_name(vec_def.inner_type(schema), schema))
         }
         TypeDef::Box(box_def) => ts_type_name(box_def.inner_type(schema), schema),
         TypeDef::Cell(cell_def) => ts_type_name(cell_def.inner_type(schema), schema),

@@ -11,6 +11,7 @@ use crate::{
     output::{Output, output_path},
     parse::attr::{AttrLocation, AttrPart, AttrPositions, attr_positions},
     schema::{Def, Derives, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
+    utils::format_cow,
 };
 
 mod clone_in;
@@ -189,7 +190,7 @@ pub trait Derive: Runner {
                 let crate_path = if krate.starts_with("napi/") {
                     Cow::Borrowed(krate)
                 } else {
-                    Cow::Owned(format!("crates/{krate}"))
+                    format_cow!("crates/{krate}")
                 };
 
                 Output::Rust {

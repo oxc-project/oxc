@@ -82,3 +82,11 @@ pub fn pluralize(name: &str) -> String {
         }
     }
 }
+
+/// Macro to `format!` arguments, and wrap the formatted string in a `Cow::Owned`.
+macro_rules! format_cow {
+    ($($tokens:tt)+) => {
+        std::borrow::Cow::Owned(format!($($tokens)+))
+    }
+}
+pub(crate) use format_cow;

@@ -22,7 +22,7 @@ use crate::{
         Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
-    utils::number_lit,
+    utils::{format_cow, number_lit},
 };
 
 use super::define_generator;
@@ -406,7 +406,7 @@ fn generate_assertions(schema: &Schema) -> Vec<Output> {
             let crate_path = if krate.starts_with("napi/") {
                 Cow::Borrowed(krate)
             } else {
-                Cow::Owned(format!("crates/{krate}"))
+                format_cow!("crates/{krate}")
             };
             Output::Rust { path: output_path(&crate_path, "assert_layouts.rs"), tokens: output }
         })
