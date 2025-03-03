@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.54.0] - 2025-03-03
+
+### Features
+
+- 64f4a82 ecmascript: Handle pure call expression in chain expressions (#9480) (sapphi-red)
+- 32139d2 ecmascript: Support `/* @__PURE__ */` in may_have_side_effects (#9409) (sapphi-red)
+
+### Bug Fixes
+
+- d2cd975 ecmascript: Fix may_have_side_effects for `${a() === b}` (#9478) (sapphi-red)
+- 584d847 ecmascript: Objects passed to template literals may have side effects (#9425) (sapphi-red)
+
+### Testing
+
+- c187b11 ecmascript: Add comments and tests for cases where `ToPropertyKey` throws an error (#9429) (sapphi-red)
+
 ## [0.53.0] - 2025-02-26
 
 ### Features
