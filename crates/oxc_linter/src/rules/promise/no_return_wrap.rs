@@ -5,15 +5,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, format_compact_str};
+use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-    utils::is_promise,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_return_wrap_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
@@ -88,23 +82,12 @@ impl Rule for NoReturnWrap {
             return;
         };
 
-        let d = ctx.source_text();
-        //let in_prom_cb =
         if !inside_then_or_catch(node, ctx) {
             return;
         }
 
-        //  let args = &call_expr.arguments;
-        //     let resolve_cb = todo!();
-        //     let reject_cb = todo!();
-
-        // let ret = get_return(state);
-        //        println!("return then or catch: {0:?}, {1:?}", args , d);
-
         for argument in &call_expr.arguments {
             let Some(arg_expr) = argument.as_expression().map(|a| a.without_parentheses()) else {
-                println!("noe");
-
                 continue;
             };
 
@@ -118,28 +101,64 @@ impl Rule for NoReturnWrap {
                     };
                     check_first_return_statement(func_body, ctx, self.allow_reject);
                 }
-                //  Expression::CallExpression(call) => {
-                //      let Expression::StaticMemberExpression(s) = call.callee.get_inner_expression()
-                //      else {
-                //          continue;
-                //      };
-                //      match &s.object.get_inner_expression() {
-                //          Expression::ArrowFunctionExpression(arrow_expr) => {
-                //              check_first_return_statement(&arrow_expr.body, ctx, self.allow_reject);
-                //          }
-                //          Expression::FunctionExpression(func_expr) => {
-                //              let Some(func_body) = &func_expr.body else {
-                //                  continue;
-                //              };
-                //              check_first_return_statement(func_body, ctx, self.allow_reject);
-                //          }
-                //          _ => continue,
-                //      }
-                //      continue;
-                //  }
+                Expression::CallExpression(call) => {
+                    let Expression::StaticMemberExpression(static_memb_expr) =
+                        call.callee.get_inner_expression()
+                    else {
+                        continue;
+                    };
+
+                    // `.bind(this)` is true but `.bind(foo)` is false.
+                    let is_this_arg = call.arguments.first().is_some_and(|arg| {
+                        matches!(arg.as_expression(), Some(Expression::ThisExpression(_)))
+                    });
+
+                    let property_name = static_memb_expr.property.name;
+
+                    if is_this_arg && property_name == "bind" {
+                    } else {
+                        // We only examine the return statement inside func when the call expression on
+                        // the func is a `this` binding for example `func.bind.this()` or
+                        // `func.bind.this().bind.this()`.
+                        continue;
+                    };
+
+                    let inner_obj = &static_memb_expr.object.get_inner_expression();
+
+                    if let Expression::CallExpression(nested_call) = inner_obj {
+                        // if not a chained .bind(this) then skip
+                        let Expression::StaticMemberExpression(nested_expr) =
+                            nested_call.callee.get_inner_expression()
+                        else {
+                            continue;
+                        };
+                        check_callback_fn(
+                            ctx,
+                            self.allow_reject,
+                            nested_expr.object.without_parentheses(),
+                        );
+                    } else {
+                        check_callback_fn(ctx, self.allow_reject, inner_obj);
+                    };
+                }
                 _ => continue,
             }
         }
+    }
+}
+
+fn check_callback_fn<'a>(ctx: &LintContext<'a>, allow_reject: bool, expr: &Expression<'a>) {
+    match expr {
+        Expression::ArrowFunctionExpression(arrow_expr) => {
+            check_first_return_statement(&arrow_expr.body, ctx, allow_reject);
+        }
+        Expression::FunctionExpression(func_expr) => {
+            let Some(func_body) = &func_expr.body else {
+                return;
+            };
+            check_first_return_statement(func_body, ctx, allow_reject);
+        }
+        _ => (),
     }
 }
 
@@ -161,22 +180,14 @@ fn check_first_return_statement<'a>(
             Statement::BlockStatement(block_stmt) => {
                 // Find first return statement in `if { // here } else { }`
                 let res = block_stmt.body.iter().find_map(|stmt| {
-                    if let Statement::ReturnStatement(r) = stmt {
-                        return Some(r);
-                    } else {
-                        return None;
-                    }
+                    if let Statement::ReturnStatement(r) = stmt { Some(r) } else { None }
                 });
 
                 match res {
                     None => {
                         // No return found so now look `if {  } else { // here }`
                         block_stmt.body.iter().find_map(|stmt| {
-                            if let Statement::ReturnStatement(r) = stmt {
-                                return Some(r);
-                            } else {
-                                return None;
-                            }
+                            if let Statement::ReturnStatement(r) = stmt { Some(r) } else { None }
                         })
                     }
                     res => res,
