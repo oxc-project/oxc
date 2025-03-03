@@ -107,13 +107,13 @@ impl Rule for NoReturnWrap {
 
             match arg_expr {
                 Expression::ArrowFunctionExpression(arrow_expr) => {
-                    find_return_statement(&arrow_expr.body, ctx);
+                    find_first_return_statement(&arrow_expr.body, ctx);
                 }
                 Expression::FunctionExpression(func_expr) => {
                     let Some(func_body) = &func_expr.body else {
                         continue;
                     };
-                    find_return_statement(func_body, ctx);
+                    find_first_return_statement(func_body, ctx);
                 }
                 Expression::CallExpression(call) => {
                     let Expression::StaticMemberExpression(s) = call.callee.get_inner_expression()
@@ -122,13 +122,13 @@ impl Rule for NoReturnWrap {
                     };
                     match &s.object.get_inner_expression() {
                         Expression::ArrowFunctionExpression(arrow_expr) => {
-                            find_return_statement(&arrow_expr.body, ctx);
+                            find_first_return_statement(&arrow_expr.body, ctx);
                         }
                         Expression::FunctionExpression(func_expr) => {
                             let Some(func_body) = &func_expr.body else {
                                 continue;
                             };
-                            find_return_statement(func_body, ctx);
+                            find_first_return_statement(func_body, ctx);
                         }
                         _ => continue,
                     }
@@ -140,7 +140,7 @@ impl Rule for NoReturnWrap {
     }
 }
 
-fn find_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
+fn find_first_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
     let Some(return_stmt) =
         func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
     else {
