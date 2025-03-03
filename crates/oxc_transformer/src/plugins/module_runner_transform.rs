@@ -1996,7 +1996,12 @@ console.log(bar);",
 
         let expected = "
 
-  const __vite_ssr_import_0__ = await __vite_ssr_import__('./f', {importedNames:['f']});
+    const __vite_ssr_import_0__ = await __vite_ssr_import__(
+      './f',
+      /*;;*/
+      /*;;*/
+      { importedNames: ['f'] }
+    );
 
     let x = 0;
 

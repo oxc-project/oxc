@@ -82,6 +82,9 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Statement<'a>> {
         let start_span = self.start_span();
 
+        let has_no_side_effects_comment =
+            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+
         if self.at(Kind::At) {
             self.eat_decorators()?;
         }
@@ -90,7 +93,7 @@ impl<'a> ParserImpl<'a> {
         // 1. plain if check
         // 2. check current token
         // 3. peek token
-        match self.cur_kind() {
+        let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => Ok(self.parse_empty_statement()),
             Kind::If => self.parse_if_statement(),
@@ -130,6 +133,48 @@ impl<'a> ParserImpl<'a> {
                 self.parse_ts_declaration_statement(start_span)
             }
             _ => self.parse_expression_or_labeled_statement(),
+        }?;
+
+        if has_no_side_effects_comment {
+            Self::set_pure_on_function_stmt(&mut stmt);
+        }
+
+        Ok(stmt)
+    }
+
+    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) {
+        match stmt {
+            Statement::FunctionDeclaration(func) => {
+                func.pure = true;
+            }
+            Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
+                ExportDefaultDeclarationKind::FunctionExpression(func)
+                | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                    func.pure = true;
+                }
+                ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
+                    func.pure = true;
+                }
+                _ => {}
+            },
+            Statement::ExportNamedDeclaration(decl) => match &mut decl.declaration {
+                Some(Declaration::FunctionDeclaration(func)) => {
+                    func.pure = true;
+                }
+                Some(Declaration::VariableDeclaration(var_decl)) => {
+                    if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
+                    {
+                        Self::set_pure_on_function_expr(expr);
+                    }
+                }
+                _ => {}
+            },
+            Statement::VariableDeclaration(var_decl) => {
+                if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
+                    Self::set_pure_on_function_expr(expr);
+                }
+            }
+            _ => {}
         }
     }
 

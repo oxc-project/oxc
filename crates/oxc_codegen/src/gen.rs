@@ -13,6 +13,10 @@ use crate::{
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
 };
 
+const PURE_COMMENT: &str = "/* @__PURE__ */ ";
+const NO_SIDE_EFFECTS_NEW_LINE_COMMENT: &str = "/* @__NO_SIDE_EFFECTS__ */\n";
+const NO_SIDE_EFFECTS_COMMENT: &str = "/* @__NO_SIDE_EFFECTS__ */ ";
+
 /// Generate source code for an AST node.
 pub trait Gen: GetSpan {
     /// Generate code for an AST node.
@@ -184,10 +188,20 @@ impl Gen for Statement<'_> {
             }
             Self::ExportDefaultDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
+                if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &decl.declaration {
+                    if func.pure && p.options.print_annotation_comments() {
+                        p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+                    }
+                }
                 decl.print(p, ctx);
             }
             Self::ExportNamedDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
+                if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
+                    if func.pure && p.options.print_annotation_comments() {
+                        p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+                    }
+                }
                 decl.print(p, ctx);
             }
             Self::TSExportAssignment(decl) => {
@@ -206,6 +220,9 @@ impl Gen for Statement<'_> {
             }
             Self::FunctionDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
+                if decl.pure && p.options.print_annotation_comments() {
+                    p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
+                }
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
@@ -689,15 +706,6 @@ impl Gen for VariableDeclaration<'_> {
             p.print_str("declare ");
         }
 
-        if p.options.print_annotation_comments()
-            && p.start_of_annotation_comment.is_none()
-            && matches!(self.kind, VariableDeclarationKind::Const)
-            && matches!(self.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
-            && p.has_annotation_comment(self.span.start)
-        {
-            p.start_of_annotation_comment = Some(self.span.start);
-        }
-
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",
@@ -730,7 +738,6 @@ impl Gen for VariableDeclarator<'_> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            p.print_annotation_comments(self.span.start);
             init.print_expr(p, Precedence::Comma, ctx);
         }
     }
@@ -740,7 +747,6 @@ impl Gen for Function<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
-        p.print_annotation_comments(self.span.start);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -999,24 +1005,6 @@ impl Gen for ExportNamedDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
-
-        if p.options.print_annotation_comments() {
-            match &self.declaration {
-                Some(Declaration::FunctionDeclaration(_)) => {
-                    p.print_annotation_comments(self.span.start);
-                }
-                Some(Declaration::VariableDeclaration(var_decl))
-                    if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
-                {
-                    if matches!(var_decl.declarations.first(), Some(VariableDeclarator { init: Some(init), .. }) if init.is_function())
-                        && p.has_annotation_comment(self.span.start)
-                    {
-                        p.start_of_annotation_comment = Some(self.span.start);
-                    }
-                }
-                _ => {}
-            };
-        }
         p.print_str("export");
         if self.export_kind.is_type() {
             p.print_str(" type ");
@@ -1161,8 +1149,8 @@ impl Gen for ExportDefaultDeclaration<'_> {
 impl Gen for ExportDefaultDeclarationKind<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::FunctionDeclaration(fun) => {
-                fun.print(p, ctx);
+            Self::FunctionDeclaration(func) => {
+                func.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::ClassDeclaration(class) => {
@@ -1196,8 +1184,18 @@ impl GenExpr for Expression<'_> {
             Self::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             Self::ArrayExpression(expr) => expr.print(p, ctx),
             Self::ObjectExpression(expr) => expr.print_expr(p, precedence, ctx),
-            Self::FunctionExpression(expr) => expr.print(p, ctx),
-            Self::ArrowFunctionExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::FunctionExpression(func) => {
+                if func.pure && p.options.print_annotation_comments() {
+                    p.print_str(NO_SIDE_EFFECTS_COMMENT);
+                }
+                func.print(p, ctx);
+            }
+            Self::ArrowFunctionExpression(func) => {
+                if func.pure && p.options.print_annotation_comments() {
+                    p.print_str(NO_SIDE_EFFECTS_COMMENT);
+                }
+                func.print_expr(p, precedence, ctx);
+            }
             Self::YieldExpression(expr) => expr.print_expr(p, precedence, ctx),
             Self::UpdateExpression(expr) => expr.print_expr(p, precedence, ctx),
             Self::UnaryExpression(expr) => expr.print_expr(p, precedence, ctx),
@@ -1431,14 +1429,14 @@ impl GenExpr for CallExpression<'_> {
         let is_statement = p.start_of_stmt == p.code_len();
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let pure = p.options.print_annotation_comments() && self.pure;
+        let pure = self.pure && p.options.print_annotation_comments();
         if precedence >= Precedence::Postfix && pure {
             wrap = true;
         }
 
         p.wrap(wrap, |p| {
             if pure {
-                p.print_str("/* @__PURE__ */ ");
+                p.print_str(PURE_COMMENT);
             }
             if is_export_default {
                 p.start_of_default_export = p.code_len();
@@ -1688,7 +1686,6 @@ impl Gen for PropertyKey<'_> {
 impl GenExpr for ArrowFunctionExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Assign, |p| {
-            p.print_annotation_comments(self.span.start);
             if self.r#async {
                 p.print_space_before_identifier();
                 p.add_source_mapping(self.span);
@@ -2202,13 +2199,13 @@ impl GenExpr for ChainExpression<'_> {
 impl GenExpr for NewExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        let pure = p.options.print_annotation_comments() && self.pure;
+        let pure = self.pure && p.options.print_annotation_comments();
         if precedence >= Precedence::Postfix && pure {
             wrap = true;
         }
         p.wrap(wrap, |p| {
             if pure {
-                p.print_str("/* @__PURE__ */ ");
+                p.print_str(PURE_COMMENT);
             }
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -3865,12 +3862,11 @@ impl GenExpr for V8IntrinsicExpression<'_> {
         let is_statement = p.start_of_stmt == p.code_len();
         let is_export_default = p.start_of_default_export == p.code_len();
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        if precedence >= Precedence::Postfix && p.has_annotation_comment(self.span.start) {
+        if precedence >= Precedence::Postfix {
             wrap = true;
         }
 
         p.wrap(wrap, |p| {
-            p.print_annotation_comments(self.span.start);
             if is_export_default {
                 p.start_of_default_export = p.code_len();
             } else if is_statement {

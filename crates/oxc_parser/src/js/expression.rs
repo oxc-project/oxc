@@ -1141,21 +1141,33 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Result<Expression<'a>> {
+        let has_no_side_effects_comment =
+            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
         }
         // `() => {}`, `(x) => {}`
-        if let Some(arrow_expr) = self.try_parse_parenthesized_arrow_function_expression(
+        if let Some(mut arrow_expr) = self.try_parse_parenthesized_arrow_function_expression(
             allow_return_type_in_arrow_function,
         )? {
+            if has_no_side_effects_comment {
+                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
+                    func.pure = true;
+                }
+            }
             return Ok(arrow_expr);
         }
         // `async x => {}`
-        if let Some(arrow_expr) = self
+        if let Some(mut arrow_expr) = self
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)?
         {
+            if has_no_side_effects_comment {
+                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
+                    func.pure = true;
+                }
+            }
             return Ok(arrow_expr);
         }
 
@@ -1165,12 +1177,18 @@ impl<'a> ParserImpl<'a> {
 
         // `x => {}`
         if lhs.is_identifier_reference() && kind == Kind::Arrow {
-            return self.parse_simple_arrow_function_expression(
+            let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 span,
                 lhs,
                 /* async */ false,
                 allow_return_type_in_arrow_function,
-            );
+            )?;
+            if has_no_side_effects_comment {
+                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
+                    func.pure = true;
+                }
+            }
+            return Ok(arrow_expr);
         }
 
         if kind.is_assignment_operator() {
@@ -1186,6 +1204,10 @@ impl<'a> ParserImpl<'a> {
 
         if has_pure_comment {
             Self::set_pure_on_call_or_new_expr(&mut expr);
+        }
+
+        if has_no_side_effects_comment {
+            Self::set_pure_on_function_expr(&mut expr);
         }
 
         Ok(expr)
@@ -1212,6 +1234,18 @@ impl<'a> ParserImpl<'a> {
                 if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
                     call_expr.pure = true;
                 }
+            }
+            _ => {}
+        }
+    }
+
+    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) {
+        match expr {
+            Expression::FunctionExpression(func) => {
+                func.pure = true;
+            }
+            Expression::ArrowFunctionExpression(func) => {
+                func.pure = true;
             }
             _ => {}
         }

@@ -158,7 +158,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                 ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
             );
             let arrow_function = Expression::ArrowFunctionExpression(
-                ctx.ast.alloc_arrow_function_expression_with_scope_id(
+                ctx.ast.alloc_arrow_function_expression_with_scope_id_and_pure(
                     SPAN,
                     true,
                     false,
@@ -167,6 +167,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                     NONE,
                     body,
                     current_scope_id,
+                    false,
                 ),
             );
             // `(x) => x;` -> `((x) => x)();`

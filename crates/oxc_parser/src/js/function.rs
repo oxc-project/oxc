@@ -203,7 +203,6 @@ impl<'a> ParserImpl<'a> {
                 )));
             }
         }
-
         Ok(Statement::FunctionDeclaration(decl))
     }
 

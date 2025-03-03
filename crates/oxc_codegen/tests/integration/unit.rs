@@ -370,7 +370,7 @@ fn pure_comment() {
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test_same("/* #__PURE__ */ function foo() {}\n"); // FIXME: can be removed. // INVALID: Only allowed for calls
+    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");

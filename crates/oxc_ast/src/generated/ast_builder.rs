@@ -5589,6 +5589,7 @@ impl<'a> AstBuilder<'a> {
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
             scope_id: Default::default(),
+            pure: Default::default(),
         }
     }
 
@@ -5635,9 +5636,9 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `scope_id`.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure`.
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_arrow_function_expression_with_scope_id`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_arrow_function_expression_with_scope_id_and_pure`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5648,8 +5649,9 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[inline]
-    pub fn arrow_function_expression_with_scope_id<T1, T2, T3, T4>(
+    pub fn arrow_function_expression_with_scope_id_and_pure<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -5659,6 +5661,7 @@ impl<'a> AstBuilder<'a> {
         return_type: T3,
         body: T4,
         scope_id: ScopeId,
+        pure: bool,
     ) -> ArrowFunctionExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5675,12 +5678,13 @@ impl<'a> AstBuilder<'a> {
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
             scope_id: Cell::new(Some(scope_id)),
+            pure,
         }
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `scope_id`, and store it in the memory arena.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id`] instead.
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id_and_pure`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5691,8 +5695,9 @@ impl<'a> AstBuilder<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
+    /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[inline]
-    pub fn alloc_arrow_function_expression_with_scope_id<T1, T2, T3, T4>(
+    pub fn alloc_arrow_function_expression_with_scope_id_and_pure<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -5702,6 +5707,7 @@ impl<'a> AstBuilder<'a> {
         return_type: T3,
         body: T4,
         scope_id: ScopeId,
+        pure: bool,
     ) -> Box<'a, ArrowFunctionExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5710,7 +5716,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         Box::new_in(
-            self.arrow_function_expression_with_scope_id(
+            self.arrow_function_expression_with_scope_id_and_pure(
                 span,
                 expression,
                 r#async,
@@ -5719,6 +5725,7 @@ impl<'a> AstBuilder<'a> {
                 return_type,
                 body,
                 scope_id,
+                pure,
             ),
             self.allocator,
         )

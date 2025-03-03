@@ -7393,6 +7393,8 @@ pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_BODY: usize =
     offset_of!(ArrowFunctionExpression, body);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID: usize =
     offset_of!(ArrowFunctionExpression, scope_id);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PURE: usize =
+    offset_of!(ArrowFunctionExpression, pure);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -7453,6 +7455,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
         }
     }
 }
@@ -7525,6 +7534,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
                 as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutParams<'a, 't> {
@@ -7595,6 +7611,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
                 as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutReturnType<'a, 't> {
@@ -7663,6 +7686,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutBody<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
+        }
+    }
+
+    #[inline]
+    pub fn pure(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PURE) as *const bool)
         }
     }
 }

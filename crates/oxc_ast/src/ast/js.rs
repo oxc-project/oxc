@@ -1834,6 +1834,10 @@ pub struct ArrowFunctionExpression<'a> {
     #[estree(via = ArrowFunctionExpressionBody)]
     pub body: Box<'a, FunctionBody<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
+    /// `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// Generator Function Definitions
