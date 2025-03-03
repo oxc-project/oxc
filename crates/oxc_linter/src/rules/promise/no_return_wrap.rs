@@ -149,17 +149,57 @@ fn check_first_return_statement<'a>(
     ctx: &LintContext<'a>,
     allow_reject: bool,
 ) {
-    let Some(return_stmt) =
-        func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
-    else {
+    let top_level_statements = func_body
+        .statements
+        .iter()
+        .find(|stmt| matches!(stmt, Statement::ReturnStatement(_) | Statement::IfStatement(_)));
+
+    let maybe_return_stmt = match top_level_statements {
+        Some(Statement::ReturnStatement(r)) => Some(r),
+        Some(Statement::IfStatement(if_stmt)) => match &if_stmt.consequent {
+            Statement::BlockStatement(block_stmt) => {
+                // Find first return statement in if { // here } else { }
+                let res = block_stmt.body.iter().find_map(|stmt| {
+                    if let Statement::ReturnStatement(r) = stmt {
+                        return Some(r);
+                    } else {
+                        return None;
+                    }
+                });
+
+                match res {
+                    None => {
+                        // No return found so now look  if {  } else { // here}
+                        block_stmt.body.iter().find_map(|stmt| {
+                            if let Statement::ReturnStatement(r) = stmt {
+                                return Some(r);
+                            } else {
+                                return None;
+                            }
+                        })
+                    }
+                    res => res,
+                }
+            }
+            Statement::ReturnStatement(r) => Some(r),
+            _ => None,
+        },
+        _ => None,
+    };
+
+    let Some(return_stmt) = maybe_return_stmt else {
         return;
     };
 
-    let Statement::ReturnStatement(stmt) = return_stmt else {
-        return;
-    };
+    //  else {
+    //     return;
+    // };
 
-    let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
+    //let Statement::ReturnStatement(stmt) = return_stmt else {
+    //    return;
+    //};
+
+    let Some(Expression::CallExpression(call_expr)) = &return_stmt.argument else {
         return;
     };
 
