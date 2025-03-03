@@ -396,7 +396,39 @@ rebuilt        : SymbolId(2): Span { start: 74, end: 75 }
 x Output mismatch
 
 * typescript/constructor/decoratorOnClassConstructor4/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["A", "B", "C", "dec"]
+rebuilt        : ScopeId(0): ["A", "B", "C"]
+Symbol span mismatch for "A":
+after transform: SymbolId(1): Span { start: 139, end: 140 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol span mismatch for "A":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(1): Span { start: 139, end: 140 }
+Symbol span mismatch for "B":
+after transform: SymbolId(2): Span { start: 157, end: 158 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+Symbol span mismatch for "B":
+after transform: SymbolId(6): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 157, end: 158 }
+Symbol span mismatch for "C":
+after transform: SymbolId(4): Span { start: 205, end: 206 }
+rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol span mismatch for "C":
+after transform: SymbolId(7): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(6): Span { start: 205, end: 206 }
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Number", "babelHelpers"]
+rebuilt        : ["Number", "babelHelpers", "dec"]
 
 * typescript/constructor/parameter/decoratorOnClassConstructorParameter1/input.ts
 Scope children mismatch:

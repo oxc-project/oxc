@@ -107,9 +107,6 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
 
 impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if class.decorators.is_empty() {
-            return;
-        }
         let constructor = class.body.body.iter_mut().find_map(|item| match item {
             ClassElement::MethodDefinition(method) if method.kind.is_constructor() => Some(method),
             _ => None,
@@ -121,12 +118,7 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
             let metadata_decorator =
                 self.create_metadata_decorate("design:paramtypes", serialized_type, ctx);
 
-            if let Some(param) = constructor.value.params.items.last_mut() {
-                // We need to make sure all metadata decorators are placed after parameter decorators
-                param.decorators.push(metadata_decorator);
-            } else {
-                class.decorators.push(metadata_decorator);
-            }
+            class.decorators.push(metadata_decorator);
         }
     }
 
@@ -158,12 +150,7 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
             },
         ]);
 
-        if let Some(param) = method.value.params.items.last_mut() {
-            // We need to make sure all metadata decorators are placed after parameter decorators
-            param.decorators.extend(metadata_decorators);
-        } else {
-            method.decorators.extend(metadata_decorators);
-        }
+        method.decorators.extend(metadata_decorators);
     }
 
     #[inline]

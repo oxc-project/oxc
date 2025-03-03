@@ -303,10 +303,10 @@ describe('legacy decorator', () => {
         };
         _decorate([dce, _decorateMetadata("design:type", Object)], C.prototype, "prop", void 0);
         _decorate([
-        	_decorateParam(0, dce),
-        	_decorateParam(0, _decorateMetadata("design:type", Function)),
-        	_decorateParam(0, _decorateMetadata("design:paramtypes", [Object])),
-        	_decorateParam(0, _decorateMetadata("design:returntype", void 0))
+        	_decorateMetadata("design:type", Function),
+        	_decorateMetadata("design:paramtypes", [Object]),
+        	_decorateMetadata("design:returntype", void 0),
+        	_decorateParam(0, dce)
         ], C.prototype, "method", null);
         C = _decorate([dce], C);
         export default C;
