@@ -30,10 +30,9 @@ declare_oxc_lint!(
     ///
     /// For example on first glance it may appear that `prom.then(fn1, fn2)` is equivalent to
     /// `prom.then(fn1).catch(fn2)`. However they aren't equivalent. In fact
-    /// `prom.catch(fn2).then(fn1)` is the equivalent.
-    ///
-    /// This easy confusion is a good reason for preferring explicit `catch` calls over passing an argument
-    /// to the second parameter of `then` calls.
+    /// `prom.catch(fn2).then(fn1)` is the equivalent. This kind of confusion is a good reason for
+    /// preferring explicit `catch` calls over passing an argument to the second parameter of
+    /// `then` calls.
     ///
     /// ### Examples
     ///
@@ -102,8 +101,8 @@ fn test() {
         "prom.then(undefined, fn2)",
         "function foo() { prom.then(x => {}, () => {}) }",
         "function foo() {
-		      prom.then(function a() { }, function b() {}).then(fn1, fn2)
-	      }",
+		   prom.then(function a() { }, function b() {}).then(fn1, fn2)
+	     }",
     ];
 
     /* Pending
