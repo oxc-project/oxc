@@ -275,6 +275,11 @@ fn test() {
         ("doThing().then(() => { return Promise.a() })", None),
         ("doThing().then(() => a())", None),
         ("doThing().then(() => Promise.a())", None),
+        (
+            "class Promise { constructor(){} resolve(){} };
+             doThing().then(function() { return Promise.resolve(4) })",
+            None,
+        ),
     ];
 
     let fail = vec![
