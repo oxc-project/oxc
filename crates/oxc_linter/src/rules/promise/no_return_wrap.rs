@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Span, format_compact_str};
 
 use crate::{
     AstNode,
@@ -89,7 +89,10 @@ impl Rule for NoReturnWrap {
         };
 
         let d = ctx.source_text();
-        let in_prom_cb = inside_then_or_catch(node, ctx);
+        //let in_prom_cb =
+        if !inside_then_or_catch(node, ctx) {
+            return;
+        }
 
         //  let args = &call_expr.arguments;
         //     let resolve_cb = todo!();
@@ -107,40 +110,45 @@ impl Rule for NoReturnWrap {
 
             match arg_expr {
                 Expression::ArrowFunctionExpression(arrow_expr) => {
-                    find_first_return_statement(&arrow_expr.body, ctx);
+                    check_first_return_statement(&arrow_expr.body, ctx, self.allow_reject);
                 }
                 Expression::FunctionExpression(func_expr) => {
                     let Some(func_body) = &func_expr.body else {
                         continue;
                     };
-                    find_first_return_statement(func_body, ctx);
+                    check_first_return_statement(func_body, ctx, self.allow_reject);
                 }
-                Expression::CallExpression(call) => {
-                    let Expression::StaticMemberExpression(s) = call.callee.get_inner_expression()
-                    else {
-                        continue;
-                    };
-                    match &s.object.get_inner_expression() {
-                        Expression::ArrowFunctionExpression(arrow_expr) => {
-                            find_first_return_statement(&arrow_expr.body, ctx);
-                        }
-                        Expression::FunctionExpression(func_expr) => {
-                            let Some(func_body) = &func_expr.body else {
-                                continue;
-                            };
-                            find_first_return_statement(func_body, ctx);
-                        }
-                        _ => continue,
-                    }
-                    continue;
-                }
+                //  Expression::CallExpression(call) => {
+                //      let Expression::StaticMemberExpression(s) = call.callee.get_inner_expression()
+                //      else {
+                //          continue;
+                //      };
+                //      match &s.object.get_inner_expression() {
+                //          Expression::ArrowFunctionExpression(arrow_expr) => {
+                //              check_first_return_statement(&arrow_expr.body, ctx, self.allow_reject);
+                //          }
+                //          Expression::FunctionExpression(func_expr) => {
+                //              let Some(func_body) = &func_expr.body else {
+                //                  continue;
+                //              };
+                //              check_first_return_statement(func_body, ctx, self.allow_reject);
+                //          }
+                //          _ => continue,
+                //      }
+                //      continue;
+                //  }
                 _ => continue,
             }
         }
     }
 }
 
-fn find_first_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
+/// Checks for `return Promise.resolve()` or `return Promise.reject()`.
+fn check_first_return_statement<'a>(
+    func_body: &OBox<'_, FunctionBody<'a>>,
+    ctx: &LintContext<'a>,
+    allow_reject: bool,
+) {
     let Some(return_stmt) =
         func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
     else {
@@ -168,10 +176,12 @@ fn find_first_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
     }
 
     if obj_call_ident.name == "Promise" {
-        ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
+        if stat_expr.property.name == "resolve" {
+            ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
+        } else if stat_expr.property.name == "reject" && !allow_reject {
+            ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
+        }
     }
-
-    ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
 }
 
 /// Return true if this node is inside a `then` or `catch` promise callback. Will return `true`
