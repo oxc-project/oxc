@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 32/32 (100.00%)
 Positive Passed: 32/32 (100.00%)
-Negative Passed: 26/26 (100.00%)
+Negative Passed: 27/27 (100.00%)
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
@@ -270,6 +270,13 @@ Negative Passed: 26/26 (100.00%)
  4 │     obj.#x;
    ·         ──
  5 │   }
+   ╰────
+
+  × Unexpected end of file
+   ╭─[misc/fail/oxc-9497.js:2:8]
+ 1 │ let repro = {};
+ 2 │ repro.f?.
+   ·        ──
    ╰────
 
   × The keyword 'let' is reserved

@@ -711,6 +711,9 @@ impl<'a> ParserImpl<'a> {
                         kind if kind.is_identifier_name() => {
                             self.parse_static_member_expression(lhs_span, lhs, true)?
                         }
+                        Kind::Eof => {
+                            return Err(diagnostics::unexpected_end(self.cur_token().span()));
+                        }
                         _ => break,
                     }
                 }
