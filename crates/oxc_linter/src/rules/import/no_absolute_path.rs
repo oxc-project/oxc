@@ -122,7 +122,7 @@ impl Rule for NoAbsolutePath {
                 };
                 let func_name = ident.name.as_str();
                 let count = call_expr.arguments.len();
-                if func_name == "require" || func_name == "define" {
+                if matches!(func_name, "require" | "define") && count > 0 {
                     match &call_expr.arguments[0] {
                         Argument::StringLiteral(str_literal)
                             if count == 1 && func_name == "require" && self.commonjs =>
@@ -202,6 +202,7 @@ fn test() {
         (r"define(['./foo'], function(){})", Some(json!([{ "amd": true }]))),
         (r"define(['./foo'])", Some(json!([{ "amd": true }]))),
         (r"define([...['/12323']])", Some(json!([{ "amd": true }]))),
+        (r"var foo = require()", None),
     ];
 
     let fail = vec![
