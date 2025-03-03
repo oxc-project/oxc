@@ -116,7 +116,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: Ctx<'a, '_>) {
-        self.try_compress_call_expression_arguments(expr, ctx);
+        self.try_flatten_arguments(&mut expr.arguments, ctx);
+    }
+
+    pub fn substitute_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: Ctx<'a, '_>) {
+        self.try_flatten_arguments(&mut expr.arguments, ctx);
     }
 
     pub fn substitute_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
@@ -873,13 +877,10 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `foo(...[1,2,3])` -> `foo(1,2,3)`
-    fn try_compress_call_expression_arguments(
-        &mut self,
-        node: &mut CallExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) {
+    // `new Foo(...[1,2,3])` -> `new Foo(1,2,3)`
+    fn try_flatten_arguments(&mut self, args: &mut Vec<'a, Argument<'a>>, ctx: Ctx<'a, '_>) {
         let (new_size, should_fold) =
-            node.arguments.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
+            args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let Argument::SpreadElement(spread_el) = arg {
                     if let Expression::ArrayExpression(array_expr) = &spread_el.argument {
                         should_fold = true;
@@ -893,45 +894,44 @@ impl<'a> PeepholeOptimizations {
 
                 (new_size, should_fold)
             });
+        if !should_fold {
+            return;
+        }
 
-        if should_fold {
-            let old_args =
-                std::mem::replace(&mut node.arguments, ctx.ast.vec_with_capacity(new_size));
-            let new_args = &mut node.arguments;
+        let old_args = std::mem::replace(args, ctx.ast.vec_with_capacity(new_size));
+        let new_args = args;
 
-            for arg in old_args {
-                if let Argument::SpreadElement(mut spread_el) = arg {
-                    if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
-                        for el in &mut array_expr.elements {
-                            match el {
-                                ArrayExpressionElement::SpreadElement(spread_el) => {
-                                    new_args.push(ctx.ast.argument_spread_element(
-                                        spread_el.span,
-                                        ctx.ast.move_expression(&mut spread_el.argument),
-                                    ));
-                                }
-                                ArrayExpressionElement::Elision(elision) => {
-                                    new_args.push(ctx.ast.void_0(elision.span).into());
-                                }
-                                match_expression!(ArrayExpressionElement) => {
-                                    new_args.push(
-                                        ctx.ast.move_expression(el.to_expression_mut()).into(),
-                                    );
-                                }
+        for arg in old_args {
+            if let Argument::SpreadElement(mut spread_el) = arg {
+                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
+                    for el in &mut array_expr.elements {
+                        match el {
+                            ArrayExpressionElement::SpreadElement(spread_el) => {
+                                new_args.push(ctx.ast.argument_spread_element(
+                                    spread_el.span,
+                                    ctx.ast.move_expression(&mut spread_el.argument),
+                                ));
+                            }
+                            ArrayExpressionElement::Elision(elision) => {
+                                new_args.push(ctx.ast.void_0(elision.span).into());
+                            }
+                            match_expression!(ArrayExpressionElement) => {
+                                new_args
+                                    .push(ctx.ast.move_expression(el.to_expression_mut()).into());
                             }
                         }
-                    } else {
-                        new_args.push(ctx.ast.argument_spread_element(
-                            spread_el.span,
-                            ctx.ast.move_expression(&mut spread_el.argument),
-                        ));
                     }
                 } else {
-                    new_args.push(arg);
+                    new_args.push(ctx.ast.argument_spread_element(
+                        spread_el.span,
+                        ctx.ast.move_expression(&mut spread_el.argument),
+                    ));
                 }
+            } else {
+                new_args.push(arg);
             }
-            self.mark_current_function_as_changed();
         }
+        self.mark_current_function_as_changed();
     }
 }
 
@@ -1618,12 +1618,15 @@ mod test {
         test_same("f(...a)");
         test_same("f(...a, ...b)");
         test_same("f(...a, b, ...c)");
+        test_same("new F(...a)");
 
         test("f(...[])", "f()");
         test("f(...[1])", "f(1)");
         test("f(...[1, 2])", "f(1, 2)");
         test("f(...[1,,,3])", "f(1, void 0, void 0, 3)");
         test("f(a, ...[])", "f(a)");
+        test("new F(...[])", "new F()");
+        test("new F(...[1])", "new F(1)");
     }
 
     #[test]

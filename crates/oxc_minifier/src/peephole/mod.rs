@@ -226,6 +226,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.substitute_call_expression(expr, ctx);
     }
 
+    fn exit_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.is_prev_function_changed() {
+            return;
+        }
+        let ctx = Ctx(ctx);
+        self.substitute_new_expression(expr, ctx);
+    }
+
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_prev_function_changed() {
             return;
