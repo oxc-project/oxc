@@ -1,11 +1,10 @@
 commit: 578ac4df
 
-Passed: 698/1167
+Passed: 693/1167
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
-* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
@@ -2626,8 +2625,25 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-plugin-transform-react-jsx (135/145)
+# babel-preset-react (6/9)
+* preset-options/pure/input.js
+x Output mismatch
+
+* preset-options/runtime-classic-pragma-no-frag/input.js
+x Output mismatch
+
+* regression/11294/input.mjs
+x Output mismatch
+
+
+# babel-plugin-transform-react-jsx (133/145)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
+x Output mismatch
+
+* pure/false-default-pragma-automatic-runtime/input.js
+x Output mismatch
+
+* pure/false-default-pragma-classic-runtime/input.js
 x Output mismatch
 
 * react/should-disallow-valueless-key/input.js

@@ -2,7 +2,8 @@ commit: 15392346
 
 transformer_typescript Summary:
 AST Parsed     : 6531/6531 (100.00%)
-Positive Passed: 6528/6531 (99.95%)
+Positive Passed: 6527/6531 (99.94%)
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tsxDiscriminantPropertyInference.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivateAccessor.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx

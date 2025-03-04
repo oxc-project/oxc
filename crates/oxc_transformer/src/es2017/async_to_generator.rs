@@ -391,7 +391,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         // Construct the IIFE
         let callee =
             Expression::FunctionExpression(ctx.alloc(ctx.ast.move_function(wrapper_function)));
-        ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)
+        ctx.ast.expression_call_with_pure(SPAN, callee, NONE, ctx.ast.vec(), false, true)
     }
 
     /// Transforms async function declarations into generator functions wrapped in the asyncToGenerator helper.

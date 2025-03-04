@@ -101,6 +101,13 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let is_already_declared = self.enums.contains_key(&enum_name);
 
+        let has_potential_side_effect = decl.members.iter().any(|member| {
+            matches!(
+                member.initializer,
+                Some(Expression::NewExpression(_) | Expression::CallExpression(_))
+            )
+        });
+
         let statements =
             self.transform_ts_enum_members(decl.scope_id(), &mut decl.members, &param_binding, ctx);
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
@@ -138,7 +145,14 @@ impl<'a> TypeScriptEnum<'a> {
             ast.vec1(Argument::from(expression))
         };
 
-        let call_expression = ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let call_expression = ast.expression_call_with_pure(
+            SPAN,
+            callee,
+            NONE,
+            arguments,
+            false,
+            !has_potential_side_effect,
+        );
 
         if is_already_declared {
             let op = AssignmentOperator::Assign;

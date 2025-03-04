@@ -113,6 +113,7 @@ use super::{
 };
 
 pub struct JsxImpl<'a, 'ctx> {
+    pure: bool,
     options: JsxOptions,
     object_rest_spread_options: Option<ObjectRestSpreadOptions>,
 
@@ -411,6 +412,8 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
         ast: AstBuilder<'a>,
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
+        // Only add `pure` when `pure` is explicitly set to `true` or all JSX options are default.
+        let pure = options.pure || (options.import_source.is_none() && options.pragma.is_none());
         let bindings = match options.runtime {
             JsxRuntime::Classic => {
                 if options.import_source.is_some() {
@@ -475,6 +478,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
         };
 
         Self {
+            pure,
             options,
             object_rest_spread_options,
             ctx,
@@ -753,7 +757,7 @@ impl<'a> JsxImpl<'a, '_> {
         arguments.insert(0, Argument::from(argument_expr));
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
-        ctx.ast.expression_call(span, callee, NONE, arguments, false)
+        ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, self.pure)
     }
 
     fn transform_element_name(

@@ -1,5 +1,5 @@
-var _privateField = new WeakMap();
-var _Cl_brand = new WeakSet();
+var _privateField = /* @__PURE__ */ new WeakMap();
+var _Cl_brand = /* @__PURE__ */ new WeakSet();
 class Cl {
   constructor() {
     babelHelpers.classPrivateMethodInitSpec(this, _Cl_brand);

@@ -104,7 +104,7 @@ describe('target', () => {
     expect(ret.code).toBeDefined();
     expect(ret.code).toMatchInlineSnapshot(`
       "import _classPrivateFieldInitSpec from "@oxc-project/runtime/helpers/classPrivateFieldInitSpec";
-      var _a = new WeakMap();
+      var _a = /* @__PURE__ */ new WeakMap();
       class Foo {
       	constructor() {
       		_classPrivateFieldInitSpec(this, _a, void 0);
@@ -164,7 +164,11 @@ describe('jsx', () => {
 
   it('enables jsx transform by default', () => {
     const ret = transform('test.tsx', code);
-    expect(ret.code).toEqual('import { jsx as _jsx } from "react/jsx-runtime";\nconst foo = _jsx("div", {});\n');
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import { jsx as _jsx } from "react/jsx-runtime";
+      const foo = /* @__PURE__ */ _jsx("div", {});
+      "
+    `);
   });
 
   it('configures jsx', () => {
@@ -173,7 +177,11 @@ describe('jsx', () => {
         importSource: 'xxx',
       },
     });
-    expect(ret.code).toEqual('import { jsx as _jsx } from "xxx/jsx-runtime";\nconst foo = _jsx("div", {});\n');
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import { jsx as _jsx } from "xxx/jsx-runtime";
+      const foo = /* @__PURE__ */ _jsx("div", {});
+      "
+    `);
   });
 
   it('can preserve jsx transform', () => {
@@ -193,23 +201,25 @@ describe('react refresh plugin', () => {
 
   it('matches output', () => {
     const ret = transform('test.tsx', code, { jsx: { refresh: {} } });
-    expect(ret.code).toEqual(
-      `import { useState } from "react";
-import { jsxs as _jsxs } from "react/jsx-runtime";
-var _s = $RefreshSig$();
-export const App = () => {
-	_s();
-	const [count, setCount] = useState(0);
-	return _jsxs("button", {
-		onClick: () => setCount(count + 1),
-		children: ["count is ", count]
-	});
-};
-_s(App, "oDgYfYHkD9Wkv4hrAPCkI/ev3YU=");
-_c = App;
-var _c;
-$RefreshReg$(_c, "App");
-`,
+    expect(ret.code).toMatchInlineSnapshot(
+      `
+      "import { useState } from "react";
+      import { jsxs as _jsxs } from "react/jsx-runtime";
+      var _s = $RefreshSig$();
+      export const App = () => {
+      	_s();
+      	const [count, setCount] = useState(0);
+      	return /* @__PURE__ */ _jsxs("button", {
+      		onClick: () => setCount(count + 1),
+      		children: ["count is ", count]
+      	});
+      };
+      _s(App, "oDgYfYHkD9Wkv4hrAPCkI/ev3YU=");
+      _c = App;
+      var _c;
+      $RefreshReg$(_c, "App");
+      "
+    `,
     );
   });
 });

@@ -3,7 +3,7 @@ class A {
     return "bar";
   }
 }
-var _foo = new WeakMap();
+var _foo = /* @__PURE__ */ new WeakMap();
 class B extends A {
   constructor(..._args) {
     super(..._args);

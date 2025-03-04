@@ -830,7 +830,11 @@ mod test {
             return Err(ret.errors);
         }
         let code = CodeGenerator::new()
-            .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
+            .with_options(CodegenOptions {
+                comments: false,
+                single_quote: true,
+                ..CodegenOptions::default()
+            })
             .build(&program)
             .code;
         Ok(code)
@@ -842,7 +846,11 @@ mod test {
         let ret = Parser::new(&allocator, source_text, source_type).parse();
 
         CodeGenerator::new()
-            .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
+            .with_options(CodegenOptions {
+                comments: false,
+                single_quote: true,
+                ..CodegenOptions::default()
+            })
             .build(&ret.program)
             .code
     }
