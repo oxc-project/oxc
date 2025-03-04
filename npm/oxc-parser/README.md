@@ -2,6 +2,26 @@
 
 ## Features
 
+### ESTree
+
+The returned JavaScript AST follows the [ESTree](https://github.com/estree/estree) specification.
+
+It is fully aligned with Acorn's AST, and any deviation would be considered a bug.
+
+The returned TypeScript AST will conform to (`@typescript-eslint/typescript-estree`)[https://www.npmjs.com/package/@typescript-eslint/typescript-estree] in the near future.
+
+### AST Types
+
+[@oxc-project/types](https://www.npmjs.com/package/@oxc-project/types) can be used. For example:
+
+```typescript
+import { Statement } from '@oxc-project/types';
+```
+
+### Visitor
+
+[oxc-walker](https://www.npmjs.com/package/oxc-walker) or [estree-walker](https://www.npmjs.com/package/estree-walker) can be used.
+
 ### Fast Mode
 
 By default, Oxc parser does not produce semantic errors where symbols and scopes are needed.
@@ -17,7 +37,9 @@ let foo;
 
 Does not produce any errors when `showSemanticErrors` is `false`, which is the default behavior.
 
-This mode is best suited for parser plugins, where other parts of your build pipeline has already checked for errors.
+Fast mode is best suited for parser plugins, where other parts of your build pipeline has already checked for errors.
+
+Please note that turning off fast mode ​incurs​ a small performance overhead.
 
 ### Returns ESM information.
 
@@ -52,7 +74,7 @@ export interface EcmaScriptModule {
 ## API
 
 ```javascript
-import oxc from './index.js';
+import oxc from 'oxc-parser';
 
 const code = 'const url: String = /* 🤨 */ import.meta.url;';
 
