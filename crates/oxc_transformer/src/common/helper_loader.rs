@@ -230,7 +230,6 @@ impl HelperLoaderStore<'_> {
 // Public methods implemented directly on `TransformCtx`, as they need access to `TransformCtx::module_imports`.
 impl<'a> TransformCtx<'a> {
     /// Load and call a helper function and return a `CallExpression`.
-    #[expect(dead_code)]
     pub fn helper_call(
         &self,
         helper: Helper,
