@@ -112,6 +112,27 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
+    ///
+    /// #### allowReject
+    ///
+    /// `{ type: boolean, default: false }`
+    ///
+    /// The `allowReject` turns off the checking of returning a call `Promise.reject` inside a
+    /// promise handler.
+    ///
+    /// With `allowReject` set to `true` the following are examples of correct code:
+    ///
+    /// ```js
+    /// myPromise().then(
+    ///   function() {
+    ///     return Promise.reject(0)
+    /// })
+    /// ```
+    ///
+    /// ```js
+    /// myPromise().then().catch(() => Promise.reject("err"))
+    /// ```
+    ///
     NoReturnWrap,
     promise,
     nursery,
@@ -359,10 +380,14 @@ fn test() {
         ("doThing(function(x) { return Promise.reject(x) })", None),
         ("doThing().then(function() { return })", None),
         (
-            "doThing().then(function() { return Promise.reject(4) })",
+            "doThing().then(function() { return Promise.reject(0) })",
             Some(serde_json::json!([{ "allowReject": true }])),
         ),
         (r#"doThing().then(function () {}).finally(function () { Promise.reject("err") })"#, None),
+        (
+            r#"doThing().then().catch(() => Promise.reject("err"))"#,
+            Some(serde_json::json!([{ "allowReject": true }])),
+        ),
         (
             r#"doThing().then(function () {}).finally(function () { return Promise.reject("err") })"#,
             Some(serde_json::json!([{ "allowReject": true }])),
