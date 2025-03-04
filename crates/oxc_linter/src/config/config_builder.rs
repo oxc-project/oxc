@@ -744,13 +744,12 @@ mod test {
 
     #[test]
     fn test_extends_rules_single() {
-        let base_config =
-            config_store_from_path("../../apps/oxlint/fixtures/extends_config/rules_config.json");
+        let base_config = config_store_from_path("fixtures/extends_config/rules_config.json");
         let derived_config = config_store_from_str(
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/rules_config.json"
+                "fixtures/extends_config/rules_config.json"
             ]
         }
         "#,
@@ -762,7 +761,7 @@ mod test {
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/rules_config.json"
+                "fixtures/extends_config/rules_config.json"
             ],
             "rules": {
                 "no-debugger": "warn",
@@ -806,9 +805,9 @@ mod test {
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/allow_all.json",
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/deny_all.json",
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/warn_all.json"
+                "fixtures/extends_config/rules_multiple/allow_all.json",
+                "fixtures/extends_config/rules_multiple/deny_all.json",
+                "fixtures/extends_config/rules_multiple/warn_all.json"
             ]
         }
         "#,
@@ -819,9 +818,9 @@ mod test {
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/allow_all.json",
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/warn_all.json",
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/deny_all.json"
+                "fixtures/extends_config/rules_multiple/allow_all.json",
+                "fixtures/extends_config/rules_multiple/warn_all.json",
+                "fixtures/extends_config/rules_multiple/deny_all.json"
             ]
         }
         "#,
@@ -832,9 +831,9 @@ mod test {
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/warn_all.json",
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/deny_all.json",
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/allow_all.json"
+                "fixtures/extends_config/rules_multiple/warn_all.json",
+                "fixtures/extends_config/rules_multiple/deny_all.json",
+                "fixtures/extends_config/rules_multiple/allow_all.json"
             ]
         }
         "#,
@@ -846,8 +845,8 @@ mod test {
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/deny_all.json",
-                "../../apps/oxlint/fixtures/extends_config/rules_multiple/allow_all.json"
+                "fixtures/extends_config/rules_multiple/deny_all.json",
+                "fixtures/extends_config/rules_multiple/allow_all.json"
             ],
             "rules": {
                 "no-var": "warn",
@@ -882,7 +881,7 @@ mod test {
         let invalid_config = ConfigStoreBuilder::from_oxlintrc(
             true,
             Oxlintrc::from_file(&PathBuf::from(
-                "../../apps/oxlint/fixtures/extends_config/extends_invalid_config.json",
+                "fixtures/extends_config/extends_invalid_config.json",
             ))
             .unwrap(),
         );
@@ -900,8 +899,8 @@ mod test {
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/plugins/jest.json",
-                "../../apps/oxlint/fixtures/extends_config/plugins/react.json"
+                "fixtures/extends_config/plugins/jest.json",
+                "fixtures/extends_config/plugins/react.json"
             ]
         }
         "#,
@@ -915,8 +914,8 @@ mod test {
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/plugins/jest.json",
-                "../../apps/oxlint/fixtures/extends_config/plugins/react.json"
+                "fixtures/extends_config/plugins/jest.json",
+                "fixtures/extends_config/plugins/react.json"
             ],
             "plugins": ["typescript"]
         }
@@ -933,8 +932,8 @@ mod test {
             r#"
         {
             "extends": [
-                "../../apps/oxlint/fixtures/extends_config/plugins/jest.json",
-                "../../apps/oxlint/fixtures/extends_config/plugins/react.json"
+                "fixtures/extends_config/plugins/jest.json",
+                "fixtures/extends_config/plugins/react.json"
             ],
             "plugins": []
         }
