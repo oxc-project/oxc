@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use indexmap::{IndexMap, IndexSet};
 use phf::{Set as PhfSet, phf_set};
 use proc_macro2::{Span, TokenStream};
@@ -80,6 +82,17 @@ pub fn pluralize(name: &str) -> String {
             Some(b'y') => format!("{}ies", &name[..name.len() - 1]),
             _ => format!("{name}s"),
         }
+    }
+}
+
+/// Upper case first character of a string.
+pub fn upper_case_first(s: &str) -> Cow<'_, str> {
+    let mut chars = s.chars();
+    let first_char = chars.next().unwrap();
+    if first_char.is_uppercase() {
+        Cow::Borrowed(s)
+    } else {
+        Cow::Owned(first_char.to_uppercase().chain(chars).collect::<String>())
     }
 }
 

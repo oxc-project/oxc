@@ -16,6 +16,8 @@ pub mod operator;
 pub mod precedence;
 pub mod reference;
 pub mod scope;
+#[cfg(feature = "serialize")]
+mod serialize;
 pub mod symbol;
 pub mod xml_entities;
 

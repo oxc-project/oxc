@@ -160,7 +160,11 @@ assert-unchecked = "0.1.2"
 base64 = "0.22.1"
 bitflags = "2.8.0"
 bpaf = "0.9.16"
-bumpalo = "3.17.0"
+# `bumpalo` must be pinned to exactly this version.
+# `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
+# of `bumpalo` which may change in a future version.
+# This is a temporary situation - we'll replace `bumpalo` with our own allocator.
+bumpalo = "=3.17.0"
 compact_str = "0.8.1"
 console = "0.15.10"
 console_error_panic_hook = "0.1.7"

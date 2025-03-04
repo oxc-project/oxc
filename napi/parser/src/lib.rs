@@ -17,8 +17,17 @@ use oxc::{
 use oxc_napi::OxcError;
 
 mod convert;
+mod raw_transfer;
+mod raw_transfer_types;
 mod types;
+pub use raw_transfer::{get_buffer_offset, parse_sync_raw};
 pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
+
+mod generated {
+    // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
+    #[cfg(debug_assertions)]
+    pub mod assert_layouts;
+}
 
 fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
     match options.lang.as_deref() {

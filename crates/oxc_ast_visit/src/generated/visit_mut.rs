@@ -1335,6 +1335,11 @@ pub trait VisitMut<'a>: Sized {
     fn visit_ts_import_attribute_list(&mut self, it: &mut Vec<'a, TSImportAttribute<'a>>) {
         walk_ts_import_attribute_list(self, it);
     }
+
+    #[inline]
+    fn visit_spans(&mut self, it: &mut Vec<'a, Span>) {
+        walk_spans(self, it);
+    }
 }
 
 pub mod walk_mut {
@@ -4655,6 +4660,13 @@ pub mod walk_mut {
     ) {
         for el in it {
             visitor.visit_ts_import_attribute(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_spans<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Span>) {
+        for el in it {
+            visitor.visit_span(el);
         }
     }
 }

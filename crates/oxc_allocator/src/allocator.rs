@@ -435,6 +435,18 @@ impl Allocator {
     pub(crate) fn bump(&self) -> &Bump {
         &self.bump
     }
+
+    /// Create [`Allocator`] from a [`bumpalo::Bump`].
+    ///
+    /// This method is not public. Only used by [`Allocator::from_raw_parts`].
+    //
+    // `#[inline(always)]` because it's a no-op
+    #[cfg(feature = "from_raw_parts")]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(crate) fn from_bump(bump: Bump) -> Self {
+        Self { bump }
+    }
 }
 
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.

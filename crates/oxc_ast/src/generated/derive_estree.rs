@@ -8,6 +8,7 @@ use oxc_estree::{
     ser::{AppendTo, AppendToConcat},
 };
 
+use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -3333,6 +3334,26 @@ impl ESTree for JSDocUnknownType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSDocUnknownType"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for CommentKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Line => JsonSafeString("Line").serialize(serializer),
+            Self::Block => JsonSafeString("Block").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for Comment {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &self.kind);
+        state.serialize_field("value", &crate::serialize::CommentValue(self));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();

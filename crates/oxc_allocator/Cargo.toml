@@ -34,4 +34,5 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
+from_raw_parts = []
 serialize = ["dep:serde", "oxc_estree/serialize"]

@@ -74,4 +74,6 @@ pub struct ESTreeEnumVariant {
 #[derive(Default, Debug)]
 pub struct ESTreeMeta {
     pub ts_type: Option<String>,
+    // JS code for raw transfer deserializer
+    pub raw_deser: Option<String>,
 }

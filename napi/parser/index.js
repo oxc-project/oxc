@@ -1,4 +1,5 @@
 const bindings = require('./bindings.js');
+const deserialize = require('./deserialize.js');
 
 module.exports.ParseResult = bindings.ParseResult;
 module.exports.ExportExportNameKind = bindings.ExportExportNameKind;
@@ -55,6 +56,77 @@ module.exports.parseAsync = async function parseAsync(...args) {
   return wrap(await bindings.parseAsync(...args));
 };
 
-module.exports.parseSync = function parseSync(...args) {
-  return wrap(bindings.parseSync(...args));
+module.exports.parseSync = function parseSync(filename, sourceText, options) {
+  if (options?.experimentalRawTransfer) {
+    return parseSyncRaw(filename, sourceText, options);
+  }
+
+  return wrap(bindings.parseSync(filename, sourceText, options));
 };
+
+let buffer, encoder;
+
+function parseSyncRaw(filename, sourceText, options) {
+  // Delete `experimentalRawTransfer` option
+  let experimentalRawTransfer;
+  ({ experimentalRawTransfer, ...options } = options);
+
+  // Create buffer and `TextEncoder`
+  if (!buffer) {
+    buffer = createBuffer();
+    encoder = new TextEncoder();
+  }
+
+  // Write source into start of buffer.
+  // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB,
+  // so create a view into buffer of this size to write into.
+  const sourceBuffer = new Uint8Array(buffer.buffer, buffer.byteOffset, ONE_GIB);
+  const { read, written: sourceByteLen } = encoder.encodeInto(sourceText, sourceBuffer);
+  if (read !== sourceText.length) {
+    throw new Error('Failed to write source text into buffer');
+  }
+
+  // Parse
+  bindings.parseSyncRaw(filename, buffer, sourceByteLen, options);
+
+  // Deserialize.
+  // We cannot lazily deserialize in the getters, because the buffer might be re-used to parse
+  // another file before the getter is called.
+  const data = deserialize(buffer, sourceText, sourceByteLen);
+
+  return {
+    get program() {
+      return data.program;
+    },
+    get module() {
+      return data.module;
+    },
+    get comments() {
+      return data.comments;
+    },
+    get errors() {
+      return data.errors;
+    },
+  };
+}
+
+const ONE_GIB = 1 << 30,
+  TWO_GIB = ONE_GIB * 2,
+  SIX_GIB = ONE_GIB * 6;
+
+// Create a `Uint8Array` which is 2 GiB in size, with its start aligned on 4 GiB.
+//
+// Achieve this by creating a 6 GiB `ArrayBuffer`, getting the offset within it that's aligned to 4 GiB,
+// chopping off that number of bytes from the start, and shortening to 2 GiB.
+//
+// It's always possible to obtain a 2 GiB slice aligned on 4 GiB within a 6 GiB buffer,
+// no matter how the 6 GiB buffer is aligned.
+//
+// Note: On systems with virtual memory, this only consumes 6 GiB of *virtual* memory.
+// It does not consume physical memory until data is actually written to the `Uint8Array`.
+// Physical memory consumed corresponds to the quantity of data actually written.
+function createBuffer() {
+  const arrayBuffer = new ArrayBuffer(SIX_GIB);
+  const offset = bindings.getBufferOffset(new Uint8Array(arrayBuffer));
+  return new Uint8Array(arrayBuffer, offset, TWO_GIB);
+}

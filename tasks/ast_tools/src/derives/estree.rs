@@ -187,6 +187,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         // `#[estree]` attr on meta type
         AttrLocation::Meta(meta) => match part {
             AttrPart::String("ts_type", ts_type) => meta.estree.ts_type = Some(ts_type),
+            AttrPart::String("raw_deser", raw_deser) => meta.estree.raw_deser = Some(raw_deser),
             _ => return Err(()),
         },
         _ => unreachable!(),
@@ -466,7 +467,7 @@ fn generate_body_for_via_override(
 /// Returns `true` if either the field has an `#[estree(skip)]` attr on it,
 /// or the type that the field contains has an `#[estree(skip)]` attr.
 ///
-/// This function also used by Typescript generator.
+/// This function also used by Typescript and raw transfer generators.
 pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
     if field.estree.skip {
         true
@@ -527,7 +528,7 @@ pub fn can_flatten_field_inline(field: &FieldDef, krate: &str, schema: &Schema) 
 /// * `#[estree(rename)]` attr on variant.
 /// * `#[estree(no_rename_variants)]` attr on enum.
 ///
-/// This function also used by Typescript generator.
+/// This function also used by Typescript and raw transfer generators.
 pub fn get_fieldless_variant_value<'s>(
     enum_def: &'s EnumDef,
     variant: &'s VariantDef,
@@ -543,7 +544,7 @@ pub fn get_fieldless_variant_value<'s>(
 
 /// Get ESTree name for struct field.
 ///
-/// This function also used by Typescript generator.
+/// This function also used by Typescript and raw transfer generators.
 pub fn get_struct_field_name(field: &FieldDef) -> Cow<'_, str> {
     if let Some(field_name) = field.estree.rename.as_deref() {
         Cow::Borrowed(field_name)

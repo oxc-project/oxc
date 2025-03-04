@@ -75,7 +75,7 @@ impl Program<'_> {
 
 /// Serialized as `null`.
 #[ast_meta]
-#[estree(ts_type = "null")]
+#[estree(ts_type = "null", raw_deser = "null")]
 pub struct Null<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for Null<'_, T> {
@@ -86,7 +86,7 @@ impl<T> ESTree for Null<'_, T> {
 
 /// Serialized as `true`.
 #[ast_meta]
-#[estree(ts_type = "true")]
+#[estree(ts_type = "true", raw_deser = "true")]
 pub struct True<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for True<'_, T> {
@@ -97,7 +97,7 @@ impl<T> ESTree for True<'_, T> {
 
 /// Serialized as `false`.
 #[ast_meta]
-#[estree(ts_type = "false")]
+#[estree(ts_type = "false", raw_deser = "false")]
 pub struct False<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for False<'_, T> {
@@ -108,7 +108,7 @@ impl<T> ESTree for False<'_, T> {
 
 /// Serialized as `"in"`.
 #[ast_meta]
-#[estree(ts_type = "'in'")]
+#[estree(ts_type = "'in'", raw_deser = "'in'")]
 pub struct In<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for In<'_, T> {
@@ -119,7 +119,7 @@ impl<T> ESTree for In<'_, T> {
 
 /// Serialized as `"init"`.
 #[ast_meta]
-#[estree(ts_type = "'init'")]
+#[estree(ts_type = "'init'", raw_deser = "'init'")]
 pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for Init<'_, T> {
@@ -134,7 +134,10 @@ impl<T> ESTree for Init<'_, T> {
 
 /// Serializer for `raw` field of `BooleanLiteral`.
 #[ast_meta]
-#[estree(ts_type = "string | null")]
+#[estree(
+    ts_type = "string | null",
+    raw_deser = "(THIS.start === 0 && THIS.end === 0) ? null : THIS.value + ''"
+)]
 pub struct BooleanLiteralRaw<'b>(pub &'b BooleanLiteral);
 
 impl ESTree for BooleanLiteralRaw<'_> {
@@ -153,7 +156,10 @@ impl ESTree for BooleanLiteralRaw<'_> {
 
 /// Serializer for `raw` field of `NullLiteral`.
 #[ast_meta]
-#[estree(ts_type = "'null' | null")]
+#[estree(
+    ts_type = "'null' | null",
+    raw_deser = "(THIS.start === 0 && THIS.end === 0) ? null : 'null'"
+)]
 pub struct NullLiteralRaw<'b>(pub &'b NullLiteral);
 
 impl ESTree for NullLiteralRaw<'_> {
@@ -166,7 +172,7 @@ impl ESTree for NullLiteralRaw<'_> {
 
 /// Serializer for `bigint` field of `BigIntLiteral`.
 #[ast_meta]
-#[estree(ts_type = "string")]
+#[estree(ts_type = "string", raw_deser = "THIS.raw.slice(0, -1).replace(/_/g, '')")]
 pub struct BigIntLiteralBigint<'a, 'b>(pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralBigint<'_, '_> {
@@ -180,7 +186,7 @@ impl ESTree for BigIntLiteralBigint<'_, '_> {
 ///
 /// Serialized as `null` in JSON, but updated on JS side to contain a `BigInt`.
 #[ast_meta]
-#[estree(ts_type = "BigInt")]
+#[estree(ts_type = "BigInt", raw_deser = "BigInt(THIS.bigint)")]
 pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralValue<'_, '_> {
@@ -191,7 +197,33 @@ impl ESTree for BigIntLiteralValue<'_, '_> {
 
 /// Serializer for `regex` field of `RegExpLiteral`.
 #[ast_meta]
-#[estree(ts_type = "RegExp")]
+#[estree(
+    ts_type = "RegExp",
+    raw_deser = r#"
+        let pattern, flags, value = null;
+        if (THIS.raw === null) {
+            pattern = DESER[RegExpPattern](POS_OFFSET.regex.pattern);
+            const flagBits = DESER[u8](POS_OFFSET.regex.flags);
+            flags = '';
+            if (flagBits & 1) flags += 'g';
+            if (flagBits & 2) flags += 'i';
+            if (flagBits & 4) flags += 'm';
+            if (flagBits & 8) flags += 's';
+            if (flagBits & 16) flags += 'u';
+            if (flagBits & 32) flags += 'y';
+            if (flagBits & 64) flags += 'd';
+            if (flagBits & 128) flags += 'v';
+        } else {
+            [, pattern, flags] = THIS.raw.match(/^\/(.*)\/([a-z]*)$/);
+        }
+
+        try {
+            value = new RegExp(pattern, flags);
+        } catch (e) {}
+
+        { pattern, flags }
+    "#
+)]
 pub struct RegExpLiteralRegex<'a, 'b>(pub &'b RegExpLiteral<'a>);
 
 impl ESTree for RegExpLiteralRegex<'_, '_> {
@@ -218,7 +250,11 @@ impl ESTree for RegExpLiteralRegex<'_, '_> {
 ///
 /// Serialized as `null` in JSON, but updated on JS side to contain a `RegExp` if the regexp is valid.
 #[ast_meta]
-#[estree(ts_type = "RegExp | null")]
+#[estree(
+    ts_type = "RegExp | null",
+    // `value` is defined by `RegExpLiteralRegex` converter
+    raw_deser = "value",
+)]
 pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral<'a>);
 
 impl ESTree for RegExpLiteralValue<'_, '_> {
@@ -253,7 +289,7 @@ impl ESTree for RegExpFlagsConverter<'_> {
 
 /// Serialize `ArrayExpressionElement::Elision` variant as `null`.
 #[ast_meta]
-#[estree(ts_type = "null")]
+#[estree(ts_type = "null", raw_deser = "null")]
 pub struct ElisionConverter<'b>(#[expect(dead_code)] pub &'b Elision);
 
 impl ESTree for ElisionConverter<'_> {
@@ -265,7 +301,26 @@ impl ESTree for ElisionConverter<'_> {
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined
 /// and `argument` field flattened.
 #[ast_meta]
-#[estree(ts_type = "ParamPattern[]")]
+#[estree(
+    ts_type = "ParamPattern[]",
+    raw_deser = "
+        const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
+        if (uint32[(POS_OFFSET.rest) >> 2] !== 0 && uint32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
+            pos = uint32[(POS_OFFSET.rest) >> 2];
+            params.push({
+                type: 'RestElement',
+                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
+                end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
+                argument: DESER[BindingPatternKind]( POS_OFFSET<BindingRestElement>.argument.kind ),
+                typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](
+                    POS_OFFSET<BindingRestElement>.argument.type_annotation
+                ),
+                optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
+            });
+        }
+        params
+    "
+)]
 pub struct FormalParametersConverter<'a, 'b>(pub &'b FormalParameters<'a>);
 
 impl ESTree for FormalParametersConverter<'_, '_> {
@@ -303,7 +358,14 @@ impl ESTree for FormalParametersRest<'_, '_> {
 ///
 /// Serialize `specifiers` as an empty array if it's `None`.
 #[ast_meta]
-#[estree(ts_type = "Array<ImportDeclarationSpecifier>")]
+#[estree(
+    ts_type = "Array<ImportDeclarationSpecifier>",
+    raw_deser = "
+        let specifiers = DESER[Option<Vec<ImportDeclarationSpecifier>>](POS_OFFSET.specifiers);
+        if (specifiers === null) specifiers = [];
+        specifiers
+    "
+)]
 pub struct ImportDeclarationSpecifiers<'a, 'b>(pub &'b ImportDeclaration<'a>);
 
 impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
@@ -318,6 +380,20 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
 
 /// Serialize `ObjectProperty` with fields in same order as Acorn.
 #[ast_meta]
+#[estree(raw_deser = "
+    const start = DESER[u32](POS_OFFSET.span.start),
+        end = DESER[u32](POS_OFFSET.span.end),
+        method = DESER[bool](POS_OFFSET.method),
+        shorthand = DESER[bool](POS_OFFSET.shorthand),
+        computed = DESER[bool](POS_OFFSET.computed),
+        key = DESER[PropertyKey](POS_OFFSET.key),
+        kind = DESER[PropertyKind](POS_OFFSET.kind),
+        value = DESER[Expression](POS_OFFSET.value),
+        obj = method || shorthand || kind !== 'init'
+            ? {type: 'Property', start, end, method, shorthand, computed, key, kind, value}
+            : {type: 'Property', start, end, method, shorthand, computed, key, value, kind};
+    obj
+")]
 pub struct ObjectPropertyConverter<'a, 'b>(pub &'b ObjectProperty<'a>);
 
 impl ESTree for ObjectPropertyConverter<'_, '_> {
@@ -345,6 +421,18 @@ impl ESTree for ObjectPropertyConverter<'_, '_> {
 
 /// Serialize `BindingProperty` with fields in same order as Acorn.
 #[ast_meta]
+#[estree(raw_deser = "
+    const start = DESER[u32](POS_OFFSET.span.start),
+        end = DESER[u32](POS_OFFSET.span.end),
+        shorthand = DESER[bool](POS_OFFSET.shorthand),
+        computed = DESER[bool](POS_OFFSET.computed),
+        key = DESER[PropertyKey](POS_OFFSET.key),
+        value = DESER[BindingPattern](POS_OFFSET.value),
+        obj = shorthand
+            ? {type: 'Property', start, end, method: false, shorthand, computed, key, kind: 'init', value}
+            : {type: 'Property', start, end, method: false, shorthand, computed, key, value, kind: 'init'};
+    obj
+")]
 pub struct BindingPropertyConverter<'a, 'b>(pub &'b BindingProperty<'a>);
 
 impl ESTree for BindingPropertyConverter<'_, '_> {
@@ -375,7 +463,13 @@ impl ESTree for BindingPropertyConverter<'_, '_> {
 /// Serializes as either an expression (if `expression` property is set),
 /// or a `BlockStatement` (if it's not).
 #[ast_meta]
-#[estree(ts_type = "FunctionBody | Expression")]
+#[estree(
+    ts_type = "FunctionBody | Expression",
+    raw_deser = "
+        let body = DESER[Box<FunctionBody>](POS_OFFSET.body);
+        DESER[bool](POS_OFFSET.expression) ? body.body[0].expression : body
+    "
+)]
 pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
 
 impl ESTree for ArrowFunctionExpressionBody<'_> {
@@ -391,7 +485,23 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
 /// Serializer for `AssignmentTargetPropertyIdentifier`'s `init` field
 /// (which is renamed to `value` in ESTree AST).
 #[ast_meta]
-#[estree(ts_type = "IdentifierReference | AssignmentTargetWithDefault")]
+#[estree(
+    ts_type = "IdentifierReference | AssignmentTargetWithDefault",
+    raw_deser = "
+        const init = DESER[Option<Expression>](POS_OFFSET.init),
+            binding = DESER[IdentifierReference](POS_OFFSET.binding),
+            value = init === null
+                ? binding
+                : {
+                    type: 'AssignmentPattern',
+                    start: DESER[u32](POS_OFFSET.span.start),
+                    end: DESER[u32](POS_OFFSET.span.end),
+                    left: binding,
+                    right: init,
+                };
+        value
+    "
+)]
 pub struct AssignmentTargetPropertyIdentifierValue<'a>(
     pub &'a AssignmentTargetPropertyIdentifier<'a>,
 );
@@ -417,7 +527,13 @@ impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
 ///
 /// Serialize only the first expression in `arguments`, or `null` if `arguments` is empty.
 #[ast_meta]
-#[estree(ts_type = "Expression | null")]
+#[estree(
+    ts_type = "Expression | null",
+    raw_deser = "
+        const args = DESER[Vec<Expression>](POS_OFFSET.arguments);
+        args.length === 0 ? null : args[0]
+    "
+)]
 pub struct ImportExpressionArguments<'a>(pub &'a ImportExpression<'a>);
 
 impl ESTree for ImportExpressionArguments<'_> {
@@ -435,6 +551,25 @@ impl ESTree for ImportExpressionArguments<'_> {
 /// Omit `with_clause` field (which is renamed to `attributes` in ESTree)
 /// unless `source` field is `Some`.
 #[ast_meta]
+#[estree(raw_deser = "
+    const start = DESER[u32](POS_OFFSET.span.start),
+        end = DESER[u32](POS_OFFSET.span.end),
+        declaration = DESER[Option<Declaration>](POS_OFFSET.declaration),
+        specifiers = DESER[Vec<ExportSpecifier>](POS_OFFSET.specifiers),
+        source = DESER[Option<StringLiteral>](POS_OFFSET.source),
+        exportKind = DESER[ImportOrExportKind](POS_OFFSET.export_kind);
+
+    if (source !== null) {
+        const withClause = deserializeOptionBoxWithClause(POS_OFFSET.with_clause);
+        return {
+            type: 'ExportNamedDeclaration',
+            start, end, declaration, specifiers, source, exportKind,
+            attributes: withClause === null ? [] : withClause.withEntries
+        };
+    }
+
+    {type: 'ExportNamedDeclaration', start, end, declaration, specifiers, source, exportKind}
+")]
 pub struct ExportNamedDeclarationConverter<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
 
 impl ESTree for ExportNamedDeclarationConverter<'_, '_> {
@@ -467,7 +602,13 @@ impl ESTree for ExportNamedDeclarationConverter<'_, '_> {
 // https://github.com/estree/estree/blob/master/es2025.md#exportnameddeclaration
 
 #[ast_meta]
-#[estree(ts_type = "Array<ImportAttribute>")]
+#[estree(
+    ts_type = "Array<ImportAttribute>",
+    raw_deser = "
+        const withClause = DESER[Option<Box<WithClause>>](POS_OFFSET.with_clause);
+        withClause === null ? [] : withClause.withEntries
+    "
+)]
 pub struct ImportDeclarationWithClause<'a, 'b>(pub &'b ImportDeclaration<'a>);
 
 impl ESTree for ImportDeclarationWithClause<'_, '_> {
@@ -481,7 +622,13 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
 }
 
 #[ast_meta]
-#[estree(ts_type = "Array<ImportAttribute>")]
+#[estree(
+    ts_type = "Array<ImportAttribute>",
+    raw_deser = "
+        const withClause = DESER[Option<Box<WithClause>>](POS_OFFSET.with_clause);
+        withClause === null ? [] : withClause.withEntries
+    "
+)]
 pub struct ExportNamedDeclarationWithClause<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
 
 impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
@@ -495,7 +642,13 @@ impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
 }
 
 #[ast_meta]
-#[estree(ts_type = "Array<ImportAttribute>")]
+#[estree(
+    ts_type = "Array<ImportAttribute>",
+    raw_deser = "
+        const withClause = DESER[Option<Box<WithClause>>](POS_OFFSET.with_clause);
+        withClause === null ? [] : withClause.withEntries
+    "
+)]
 pub struct ExportAllDeclarationWithClause<'a, 'b>(pub &'b ExportAllDeclaration<'a>);
 
 impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
@@ -516,7 +669,14 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 ///
 /// Convert to `JSXIdentifier`.
 #[ast_meta]
-#[estree(ts_type = "JSXIdentifier")]
+#[estree(
+    ts_type = "JSXIdentifier",
+    raw_deser = "
+        const ident = DESER[Box<IdentifierReference>](POS);
+        ident.type = 'JSXIdentifier';
+        ident
+    "
+)]
 pub struct JSXElementIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>);
 
 impl ESTree for JSXElementIdentifierReference<'_, '_> {
@@ -529,11 +689,45 @@ impl ESTree for JSXElementIdentifierReference<'_, '_> {
 ///
 /// Convert to `JSXIdentifier`.
 #[ast_meta]
-#[estree(ts_type = "JSXIdentifier")]
+#[estree(
+    ts_type = "JSXIdentifier",
+    raw_deser = "
+        const thisExpr = DESER[Box<ThisExpression>](POS);
+        {type: 'JSXIdentifier', start: thisExpr.start, end: thisExpr.end, name: 'this'}
+    "
+)]
 pub struct JSXElementThisExpression<'b>(pub &'b ThisExpression);
 
 impl ESTree for JSXElementThisExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JSXIdentifier { span: self.0.span, name: Atom::from("this") }.serialize(serializer);
+    }
+}
+
+// --------------------
+// Comments
+// --------------------
+
+/// Serialize `value` field of `Comment`.
+///
+/// This serializer does not work for JSON serializer, because there's no access to source text
+/// in `fn serialize`. But in any case, comments often contain characters which need escaping in JSON,
+/// which is slow, so it's probably faster to transfer comments as NAPI types (which we do).
+///
+/// This meta type is only present for raw transfer, which can transfer faster.
+#[ast_meta]
+#[estree(
+    ts_type = "string",
+    raw_deser = "
+        const endCut = THIS.type === 'Line' ? 0 : 2;
+        SOURCE_TEXT.slice(THIS.start + 2, THIS.end - endCut)
+    "
+)]
+pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);
+
+impl ESTree for CommentValue<'_> {
+    #[expect(clippy::unimplemented)]
+    fn serialize<S: Serializer>(&self, _serializer: S) {
+        unimplemented!();
     }
 }

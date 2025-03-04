@@ -65,6 +65,7 @@ isolated_declarations = ["oxc_isolated_declarations"]
 ast_visit = ["oxc_ast_visit"]
 
 serialize = [
+  "oxc_allocator/from_raw_parts",
   "oxc_ast/serialize",
   "oxc_ast_visit/serialize",
   "oxc_semantic?/serialize",

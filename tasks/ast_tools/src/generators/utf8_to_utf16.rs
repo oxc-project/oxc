@@ -43,6 +43,9 @@ impl Generator for Utf8ToUtf16ConverterGenerator {
 fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
     let span_type_id = schema.type_names["Span"];
+
+    // Types with custom visitors (see comment above).
+    // Also skip `Comment` because we handle adjusting comment spans separately.
     let skip_type_ids = [
         "ObjectProperty",
         "BindingProperty",
@@ -50,6 +53,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
         "ExportSpecifier",
         "WithClause",
         "TemplateLiteral",
+        "Comment",
     ]
     .map(|type_name| schema.type_names[type_name]);
 
@@ -64,8 +68,12 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
             return None;
         }
 
-        // Skip `oxc_regular_expression` types. They don't appear in ESTree AST.
-        if struct_def.file(schema).krate() == "oxc_regular_expression" {
+        // Skip types in `oxc_regular_expression`, `oxc_syntax`, and `napi/parser` crates.
+        // They don't appear in ESTree AST.
+        if matches!(
+            struct_def.file(schema).krate(),
+            "oxc_regular_expression" | "oxc_syntax" | "napi/parser"
+        ) {
             return None;
         }
 

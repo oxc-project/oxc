@@ -36,6 +36,14 @@ const fixtures = await Promise.all(fixtureUrls.map(async (url) => {
 // Run benchmarks
 for (const { filename, code } of fixtures) {
   bench(`parser_napi[${filename}]`, () => {
-    parseSync(filename, code);
+    const ret = parseSync(filename, code);
+    // Read returned object's properties to execute getters which deserialize
+    const { program, comments, module, errors } = ret;
+  });
+
+  bench(`parser_napi_raw[${filename}]`, () => {
+    const ret = parseSync(filename, code, { experimentalRawTransfer: true });
+    // Read returned object's properties to execute getters
+    const { program, comments, module, errors } = ret;
   });
 }

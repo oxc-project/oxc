@@ -100,6 +100,14 @@ export declare const enum ExportLocalNameKind {
   None = 'None'
 }
 
+/**
+ * Get offset within a `Uint8Array` which is aligned on 4 GiB.
+ *
+ * Does not check that the offset is within bounds of `buffer`.
+ * To ensure it always is, provide a `Uint8Array` of at least 4 GiB size.
+ */
+export declare function getBufferOffset(buffer: Uint8Array): number
+
 export interface ImportName {
   kind: ImportNameKind
   name?: string
@@ -156,6 +164,34 @@ export interface ParserOptions {
 
 /** Parse synchronously. */
 export declare function parseSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): ParseResult
+
+/**
+ * Parses AST into provided `Uint8Array` buffer.
+ *
+ * Source text must be written into the start of the buffer, and its length (in UTF-8 bytes)
+ * provided as `source_len`.
+ *
+ * This function will parse the source, and write the AST into the buffer, starting at the end.
+ *
+ * It also writes to the very end of the buffer the offset of `Program` within the buffer.
+ *
+ * Caller can deserialize data from the buffer on JS side.
+ *
+ * # SAFETY
+ *
+ * Caller must ensure:
+ * * Source text is written into start of the buffer.
+ * * Source text's UTF-8 byte length is `source_len`.
+ * * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+ *
+ * If source text is originally a JS string on JS side, and converted to a buffer with
+ * `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+ *
+ * # Panics
+ *
+ * Panics if source text is too long, or AST takes more memory than is available in the buffer.
+ */
+export declare function parseSyncRaw(filename: string, buffer: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
 
 export declare const enum Severity {
   Error = 'Error',

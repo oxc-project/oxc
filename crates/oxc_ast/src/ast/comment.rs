@@ -1,12 +1,14 @@
 #![warn(missing_docs)]
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
+use oxc_estree::ESTree;
 use oxc_span::{ContentEq, Span};
 
 /// Indicates a line or block comment.
 #[ast]
-#[generate_derive(CloneIn, ContentEq)]
+#[generate_derive(CloneIn, ContentEq, ESTree)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[estree(no_rename_variants, no_ts_def)]
 pub enum CommentKind {
     /// Line comment
     #[default]
@@ -77,8 +79,9 @@ pub enum CommentAnnotation {
 
 /// A comment in source code.
 #[ast]
-#[generate_derive(CloneIn, ContentEq)]
+#[generate_derive(CloneIn, ContentEq, ESTree)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[estree(add_fields(value = CommentValue), field_order(kind, value, span), no_ts_def)]
 pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.
     pub span: Span,
@@ -87,22 +90,28 @@ pub struct Comment {
     /// `/* Leading */ token`
     ///                ^ This start
     /// NOTE: Trailing comment attachment is not computed yet.
+    #[estree(skip)]
     pub attached_to: u32,
 
     /// Line or block comment
+    #[estree(rename = "type")]
     pub kind: CommentKind,
 
     /// Leading or trailing comment
+    #[estree(skip)]
     pub position: CommentPosition,
 
     /// Whether this comment has a preceding newline.
     /// Used to avoid becoming a trailing comment in codegen.
+    #[estree(skip)]
     pub preceded_by_newline: bool,
 
     /// Whether this comment has a tailing newline.
+    #[estree(skip)]
     pub followed_by_newline: bool,
 
     /// Comment Annotation
+    #[estree(skip)]
     pub annotation: CommentAnnotation,
 }
 

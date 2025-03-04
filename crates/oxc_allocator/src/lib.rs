@@ -20,6 +20,8 @@ mod allocator_api2;
 mod boxed;
 mod clone_in;
 mod convert;
+#[cfg(feature = "from_raw_parts")]
+mod from_raw_parts;
 pub mod hash_map;
 pub mod string;
 mod vec;

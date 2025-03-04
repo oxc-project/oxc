@@ -101,7 +101,6 @@ impl Niche {
     }
 
     /// Get value of the [`Niche`].
-    #[expect(unused)]
     pub fn value(&self) -> u128 {
         // Prefer to consume niches at start of range over end of range
         if self.count_start > 0 {
