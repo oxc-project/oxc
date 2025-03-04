@@ -33,12 +33,83 @@ declare_oxc_lint!(
     /// later renamed to "namespaces" (namespace Example). Namespaces are an outdated way to organize TypeScript code.
     /// ES2015 module syntax is now preferred (import/export).
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// module foo {}
     /// namespace foo {}
     /// declare module foo {}
     /// declare namespace foo {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// declare module 'foo' {}
+    /// // anything inside a d.ts file
+    /// ```
+    ///
+    /// #### allowDeclarations
+    ///
+    /// `{ type: boolean, allowDeclarations: false }`
+    ///
+    /// Whether to allow declare with custom TypeScript namespaces.
+    ///
+    /// Examples of **incorrect** code for this rule when `{ "allowDeclarations": true }`
+    /// ```typescript
+    /// module foo {}
+    /// namespace foo {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule when `{ "allowDeclarations": true }`
+    /// ```typescript
+    /// declare module 'foo' {}
+    /// declare module foo {}
+    /// declare namespace foo {}
+    ///
+    /// declare global {
+    ///   namespace foo {}
+    /// }
+    ///
+    /// declare module foo {
+    ///   namespace foo {}
+    /// }
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule when `{ "allowDeclarations": false }`
+    /// ```typescript
+    /// module foo {}
+    /// namespace foo {}
+    /// declare module foo {}
+    /// declare namespace foo {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule when `{ "allowDeclarations": false }`
+    /// ```typescript
+    /// declare module 'foo' {}
+    /// ```
+    ///
+    /// #### allowDefinitionFiles
+    ///
+    /// `{ type: boolean, allowDefinitionFiles: true }`
+    ///
+    /// Examples of **incorrect** code for this rule when `{ "allowDefinitionFiles": true }`
+    /// ```typescript
+    /// // if outside a d.ts file
+    /// module foo {}
+    /// namespace foo {}
+    ///
+    /// // if outside a d.ts file
+    /// module foo {}
+    /// namespace foo {}
+    /// declare module foo {}
+    /// declare namespace foo {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule when `{ "allowDefinitionFiles": true }`
+    /// ```typescript
+    /// declare module 'foo' {}
+    /// // anything inside a d.ts file
     /// ```
     NoNamespace,
     typescript,
