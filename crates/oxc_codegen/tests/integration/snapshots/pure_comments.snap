@@ -423,3 +423,15 @@ let new_exp_no = /* @__PURE__ */ new foo() ** foo();
 {
 	/* @__PURE__ */ (() => {})();
 }
+
+########## 24
+
+void /* @__PURE__ */ function() {}();
+typeof /* @__PURE__ */ function() {}();
+! /* @__PURE__ */ function() {}();
+delete /* @__PURE__ */ (() => {})();
+----------
+void /* @__PURE__ */ function() {}();
+typeof /* @__PURE__ */ function() {}();
+!/* @__PURE__ */ function() {}();
+delete /* @__PURE__ */ (() => {})();

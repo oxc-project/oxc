@@ -199,6 +199,11 @@ const defineSSRCustomElement = () => {
         ",
         "{ /* @__PURE__ */ (function() {})(); }",
         "{ /* @__PURE__ */ (() => {})(); }",
+        "
+void /* @__PURE__ */ function() {}();
+typeof /* @__PURE__ */ function() {}();
+! /* @__PURE__ */ function() {}();
+delete /* @__PURE__ */ (() => {})();",
     ];
 
     snapshot("pure_comments", &cases);

@@ -1005,7 +1005,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let operator = map_unary_operator(self.cur_kind());
         self.bump_any();
-        let argument = self.parse_simple_unary_expression(span)?;
+        let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+        let mut argument = self.parse_simple_unary_expression(span)?;
+        if has_pure_comment {
+            Self::set_pure_on_call_or_new_expr(&mut argument);
+        }
         Ok(self.ast.expression_unary(self.end_span(span), operator, argument))
     }
 
