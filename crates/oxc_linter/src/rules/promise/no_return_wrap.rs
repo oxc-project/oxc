@@ -1,13 +1,13 @@
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, MemberExpression, Statement},
+    ast::{CallExpression, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
 
 fn no_return_wrap_diagnostic(span: Span, issue: &ReturnWrapper) -> OxcDiagnostic {
     let warn_msg: CompactStr = match issue {
@@ -134,7 +134,7 @@ impl Rule for NoReturnWrap {
             return;
         };
 
-        if !inside_then_or_catch(node, ctx) {
+        if !inside_promise_cb(node, ctx) {
             return;
         }
 
@@ -321,19 +321,10 @@ fn check_for_resolve_reject(ctx: &LintContext, allow_reject: bool, call_expr: &C
     }
 }
 
-/// Return true if this node is inside a `then` or `catch` promise callback. Will return `true`
-/// for `node` in both `prom.then(null, () => node)` and `prom.then(() => node)`.
-fn inside_then_or_catch<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
+/// Return true if this node is inside a `then` or `catch` or `finally` promise callback.
+fn inside_promise_cb<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
     ctx.nodes().ancestors(node.id()).any(|node| {
-        node.kind().as_call_expression().is_some_and(|call_expr| {
-            matches!(
-                call_expr
-                    .callee
-                    .as_member_expression()
-                    .and_then(MemberExpression::static_property_name),
-                Some("then" | "catch" | "finally")
-            )
-        })
+        node.kind().as_call_expression().is_some_and(|call_expr| is_promise(call_expr).is_some())
     })
 }
 
