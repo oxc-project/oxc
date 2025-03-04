@@ -1,7 +1,7 @@
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, MemberExpression, ReturnStatement, Statement},
+    ast::{CallExpression, Expression, FunctionBody, MemberExpression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -87,13 +87,13 @@ impl Rule for NoReturnWrap {
         }
 
         for argument in &call_expr.arguments {
-            let Some(arg_expr) = argument.as_expression().map(|a| a.without_parentheses()) else {
+            let Some(arg_expr) = argument.as_expression().map(Expression::without_parentheses)
+            else {
                 continue;
             };
 
             match arg_expr {
                 Expression::ArrowFunctionExpression(arrow_expr) => {
-                    println!("ddddddoooooo ");
                     if arrow_expr.body.statements.len() == 1 {
                         let Some(only_stmt) = &arrow_expr.body.statements.first() else {
                             return;
@@ -104,15 +104,14 @@ impl Rule for NoReturnWrap {
                         };
 
                         if let Statement::ReturnStatement(r) = only_stmt {
-                            println!("zoooooo {only_stmt:?}");
                             if let Some(Expression::CallExpression(returned_call_expr)) =
                                 &r.argument
                             {
                                 check_for_resolve_reject(
                                     ctx,
                                     self.allow_reject,
-                                    &returned_call_expr,
-                                )
+                                    returned_call_expr,
+                                );
                             }
                         };
 
@@ -125,7 +124,7 @@ impl Rule for NoReturnWrap {
                         else {
                             return;
                         };
-                        check_for_resolve_reject(ctx, self.allow_reject, &returned_call_expr);
+                        check_for_resolve_reject(ctx, self.allow_reject, returned_call_expr);
                     } else {
                         check_first_return_statement(&arrow_expr.body, ctx, self.allow_reject);
                     }
@@ -183,8 +182,6 @@ impl Rule for NoReturnWrap {
 }
 
 fn check_callback_fn<'a>(ctx: &LintContext<'a>, allow_reject: bool, expr: &Expression<'a>) {
-    println!("sssss {expr:?}");
-
     match expr {
         Expression::ArrowFunctionExpression(arrow_expr) => {
             check_first_return_statement(&arrow_expr.body, ctx, allow_reject);
@@ -244,7 +241,7 @@ fn check_first_return_statement<'a>(
         return;
     };
 
-    check_for_resolve_reject(ctx, allow_reject, &returned_call_expr)
+    check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
 }
 
 /// Checks for `return Promise.resolve()` or `return Promise.reject()`
@@ -261,12 +258,10 @@ fn check_for_resolve_reject(ctx: &LintContext, allow_reject: bool, call_expr: &C
         return;
     }
 
-    if obj_call_ident.name == "Promise" {
-        if stat_expr.property.name == "resolve" {
-            ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
-        } else if stat_expr.property.name == "reject" && !allow_reject {
-            ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
-        }
+    if obj_call_ident.name == "Promise" && stat_expr.property.name == "resolve"
+        || (stat_expr.property.name == "reject" && !allow_reject)
+    {
+        ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
     }
 }
 
@@ -437,7 +432,7 @@ fn test() {
 		       return p.then(function(val) {
 			     return Promise.resolve(val * 4)
 			   })
-			}",
+			 }",
             None,
         ),
         ("doThing().then(() => Promise.resolve(4))", None),
@@ -454,7 +449,7 @@ fn test() {
 			   }).bind(this)
 			 }))",
             None,
-        )
+        ),
     ];
 
     Tester::new(NoReturnWrap::NAME, NoReturnWrap::PLUGIN, pass, fail).test_and_snapshot();
