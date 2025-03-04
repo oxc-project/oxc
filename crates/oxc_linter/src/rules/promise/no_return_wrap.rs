@@ -430,6 +430,7 @@ fn test() {
         ),
         ("doThing().then((function() { return Promise.resolve(4) }).bind(this))", None),
         ("doThing().then((function() { return Promise.resolve(4) }).bind(this).bind(this))", None),
+        ("doThing().then(null, (function() { return Promise.resolve(4) }).bind(this))", None),
         ("doThing().then(() => { return Promise.resolve(4) })", None),
         (
             "function a () {
@@ -441,6 +442,19 @@ fn test() {
         ),
         ("doThing().then(() => Promise.resolve(4))", None),
         ("doThing().then(() => Promise.reject(4))", None),
+        (
+            "fn((() => {
+			   fn2(function() {
+			     doThing().then(function() {
+			       fn3(function() {
+			         return Promise.resolve(4)
+			       })
+			       return Promise.resolve(4)
+			     })
+			   }).bind(this)
+			 }))",
+            None,
+        )
     ];
 
     Tester::new(NoReturnWrap::NAME, NoReturnWrap::PLUGIN, pass, fail).test_and_snapshot();
