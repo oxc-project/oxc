@@ -1,7 +1,7 @@
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FunctionBody, Statement},
+    ast::{ArrowFunctionExpression, CallExpression, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -145,47 +145,14 @@ impl Rule for NoReturnWrap {
             };
 
             match arg_expr {
-                Expression::ArrowFunctionExpression(arrow_expr) => {
-                    if arrow_expr.body.statements.len() == 1 {
-                        let Some(only_stmt) = &arrow_expr.body.statements.first() else {
-                            return;
-                        };
-
-                        if let Statement::BlockStatement(_) = only_stmt {
-                            check_first_return_statement(&arrow_expr.body, ctx, self.allow_reject);
-                        };
-
-                        if let Statement::ReturnStatement(r) = only_stmt {
-                            if let Some(Expression::CallExpression(returned_call_expr)) =
-                                &r.argument
-                            {
-                                check_for_resolve_reject(
-                                    ctx,
-                                    self.allow_reject,
-                                    returned_call_expr,
-                                );
-                            }
-                        };
-
-                        let Statement::ExpressionStatement(expr_stmt) = only_stmt else {
-                            return;
-                        };
-
-                        let Expression::CallExpression(ref returned_call_expr) =
-                            expr_stmt.expression
-                        else {
-                            return;
-                        };
-                        check_for_resolve_reject(ctx, self.allow_reject, returned_call_expr);
-                    } else {
-                        check_first_return_statement(&arrow_expr.body, ctx, self.allow_reject);
-                    }
+                Expression::ArrowFunctionExpression(arrow) => {
+                    check_arrow_cb_arg(ctx, self.allow_reject, arrow);
                 }
                 Expression::FunctionExpression(func_expr) => {
                     let Some(func_body) = &func_expr.body else {
                         continue;
                     };
-                    check_first_return_statement(func_body, ctx, self.allow_reject);
+                    check_first_return_statement(ctx, func_body, self.allow_reject);
                 }
                 Expression::CallExpression(call) => {
                     let Expression::StaticMemberExpression(static_memb_expr) =
@@ -233,16 +200,50 @@ impl Rule for NoReturnWrap {
     }
 }
 
+/// Look for issues in the arrow callback `cb` in `myProm().then(cb)`.
+fn check_arrow_cb_arg<'a>(
+    ctx: &LintContext<'a>,
+    allow_reject: bool,
+    arrow_expr: &ArrowFunctionExpression<'a>,
+) {
+    if arrow_expr.body.statements.len() == 1 {
+        let Some(only_stmt) = &arrow_expr.body.statements.first() else {
+            return;
+        };
+
+        if let Statement::BlockStatement(_) = only_stmt {
+            check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
+        };
+
+        if let Statement::ReturnStatement(r) = only_stmt {
+            if let Some(Expression::CallExpression(returned_call_expr)) = &r.argument {
+                check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
+            }
+        };
+
+        let Statement::ExpressionStatement(expr_stmt) = only_stmt else {
+            return;
+        };
+
+        let Expression::CallExpression(ref returned_call_expr) = expr_stmt.expression else {
+            return;
+        };
+        check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
+    } else {
+        check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
+    }
+}
+
 fn check_callback_fn<'a>(ctx: &LintContext<'a>, allow_reject: bool, expr: &Expression<'a>) {
     match expr {
         Expression::ArrowFunctionExpression(arrow_expr) => {
-            check_first_return_statement(&arrow_expr.body, ctx, allow_reject);
+            check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
         }
         Expression::FunctionExpression(func_expr) => {
             let Some(func_body) = &func_expr.body else {
                 return;
             };
-            check_first_return_statement(func_body, ctx, allow_reject);
+            check_first_return_statement(ctx, func_body, allow_reject);
         }
         _ => (),
     }
@@ -251,8 +252,8 @@ fn check_callback_fn<'a>(ctx: &LintContext<'a>, allow_reject: bool, expr: &Expre
 /// Checks for `return` at top level statements and
 /// will look inside if no return is found as a top level statement in the function body.
 fn check_first_return_statement<'a>(
-    func_body: &OBox<'_, FunctionBody<'a>>,
     ctx: &LintContext<'a>,
+    func_body: &OBox<'_, FunctionBody<'a>>,
     allow_reject: bool,
 ) {
     let top_level_statements = func_body
