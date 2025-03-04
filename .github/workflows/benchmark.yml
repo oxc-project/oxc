@@ -164,6 +164,8 @@ jobs:
   build-parser-napi:
     name: Build NAPI parser
     runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.filter.outputs.src == 'false' }}
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
@@ -173,15 +175,23 @@ jobs:
           cache-key: benchmark-parser-napi
           save-cache: ${{ github.ref_name == 'main' }}
 
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: ".github/generated/napi_parser_watch_list.yml"
+
       - uses: ./.github/actions/pnpm
+        if: steps.filter.outputs.src == 'true'
 
       - name: Build benchmark
+        if: steps.filter.outputs.src == 'true'
         run: |
           cd napi/parser;
           pnpm run build;
 
       - name: Upload Binary
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        if: steps.filter.outputs.src == 'true'
         with:
           if-no-files-found: error
           name: benchmark-parser-napi
@@ -194,6 +204,7 @@ jobs:
     name: Benchmark NAPI parser
     needs: build-parser-napi
     runs-on: ubuntu-latest
+    if: ${{ needs.build-parser-napi.skip == 'false' }}
     strategy:
       matrix:
         # Skip the slowest benchmarks

@@ -246,6 +246,9 @@ const RAW_TRANSFER_TS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-ts.js";
 /// Path to write AST changes filter list to
 const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_list.yml";
 
+/// Path to write raw transfer changes filter list to
+const NAPI_PARSER_WATCH_LIST_PATH: &str = ".github/generated/napi_parser_watch_list.yml";
+
 /// Derives (for use with `#[generate_derive]`)
 const DERIVES: &[&(dyn Derive + Sync)] = &[
     &derives::DeriveCloneIn,

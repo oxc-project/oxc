@@ -8,15 +8,16 @@ use regex::{Captures, Regex, Replacer};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    Generator, RAW_TRANSFER_JS_DESERIALIZER_PATH, RAW_TRANSFER_TS_DESERIALIZER_PATH,
+    Generator, NAPI_PARSER_WATCH_LIST_PATH, RAW_TRANSFER_JS_DESERIALIZER_PATH,
+    RAW_TRANSFER_TS_DESERIALIZER_PATH,
     codegen::{Codegen, DeriveId},
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field, should_skip_field,
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, FieldDef, OptionDef, PrimitiveDef, Schema, StructDef,
-        TypeDef, VecDef,
+        BoxDef, CellDef, Def, EnumDef, FieldDef, FileId, OptionDef, PrimitiveDef, Schema,
+        StructDef, TypeDef, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{FxIndexMap, format_cow, upper_case_first, write_it},
@@ -37,10 +38,14 @@ define_generator!(RawTransferGenerator);
 
 impl Generator for RawTransferGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
-        let Codes { js, ts, .. } = generate_deserializers(schema, codegen);
+        let Codes { js, ts, file_ids, .. } = generate_deserializers(schema, codegen);
+
+        let watch_list = generate_watch_list(&file_ids, schema);
+
         vec![
             Output::Javascript { path: RAW_TRANSFER_JS_DESERIALIZER_PATH.to_string(), code: js },
             Output::Javascript { path: RAW_TRANSFER_TS_DESERIALIZER_PATH.to_string(), code: ts },
+            watch_list,
         ]
     }
 }
@@ -86,22 +91,40 @@ struct Codes {
     ts: String,
     /// Code which is part of both deserializers
     both: String,
+    /// File IDs of types which derive `ESTree` and converter meta types
+    file_ids: FxHashSet<FileId>,
+}
+
+impl Codes {
+    /// Add code to either JS or TS deserializer.
+    fn push_code(&mut self, code: &str, is_ts: bool) {
+        if is_ts {
+            self.ts.push_str(code);
+        } else {
+            self.js.push_str(code);
+        }
+    }
 }
 
 /// Generate deserializer functions for all types.
 fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> Codes {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
 
-    let mut codes = Codes { js: PRELUDE.to_string(), ts: PRELUDE.to_string(), both: String::new() };
+    let mut codes = Codes {
+        js: PRELUDE.to_string(),
+        ts: PRELUDE.to_string(),
+        both: String::new(),
+        file_ids: FxHashSet::default(),
+    };
 
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
-                generate_struct(struct_def, &mut codes.js, false, estree_derive_id, schema);
-                generate_struct(struct_def, &mut codes.ts, true, estree_derive_id, schema);
+                generate_struct(struct_def, &mut codes, false, estree_derive_id, schema);
+                generate_struct(struct_def, &mut codes, true, estree_derive_id, schema);
             }
             TypeDef::Enum(enum_def) => {
-                generate_enum(enum_def, &mut codes.both, estree_derive_id, schema);
+                generate_enum(enum_def, &mut codes, estree_derive_id, schema);
             }
             TypeDef::Primitive(primitive_def) => {
                 generate_primitive(primitive_def, &mut codes.both, schema);
@@ -129,7 +152,7 @@ fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> Codes {
 /// Generate deserialize function for a struct.
 fn generate_struct(
     struct_def: &StructDef,
-    code: &mut String,
+    codes: &mut Codes,
     is_ts: bool,
     estree_derive_id: DeriveId,
     schema: &Schema,
@@ -137,9 +160,10 @@ fn generate_struct(
     if !struct_def.generates_derive(estree_derive_id) || struct_def.estree.skip {
         return;
     }
+    codes.file_ids.insert(struct_def.file_id);
 
     let fn_name = struct_def.deser_name(schema);
-    let mut generator = StructDeserializerGenerator::new(is_ts, schema);
+    let mut generator = StructDeserializerGenerator::new(is_ts, &mut codes.file_ids, schema);
 
     let body = if let Some(converter_name) = &struct_def.estree.via {
         generator.apply_converter(converter_name, struct_def, 0).map(|value| {
@@ -203,12 +227,16 @@ fn generate_struct(
         )
     };
 
-    #[rustfmt::skip]
-    write_it!(code, "
-        function {fn_name}(pos) {{
-            {body}
-        }}
-    ");
+    codes.push_code(
+        &format!(
+            "
+            function {fn_name}(pos) {{
+                {body}
+            }}
+            "
+        ),
+        is_ts,
+    );
 }
 
 struct StructDeserializerGenerator<'s> {
@@ -220,17 +248,20 @@ struct StructDeserializerGenerator<'s> {
     preamble: Vec<String>,
     /// Fields, keyed by fields name (field name in ESTree AST)
     fields: FxIndexMap<String, String>,
+    /// File IDs for watch list. File IDs of converters are added to this.
+    file_ids: &'s mut FxHashSet<FileId>,
     /// Schema
     schema: &'s Schema,
 }
 
 impl<'s> StructDeserializerGenerator<'s> {
-    fn new(is_ts: bool, schema: &'s Schema) -> Self {
+    fn new(is_ts: bool, file_ids: &'s mut FxHashSet<FileId>, schema: &'s Schema) -> Self {
         Self {
             is_ts,
             dependent_field_names: FxHashSet::default(),
             preamble: vec![],
             fields: FxIndexMap::default(),
+            file_ids,
             schema,
         }
     }
@@ -370,9 +401,10 @@ impl<'s> StructDeserializerGenerator<'s> {
         struct_offset: u32,
     ) -> Option<String> {
         let converter = self.schema.meta_by_name(converter_name);
-        let raw_deser = converter.estree.raw_deser.as_deref()?;
+        self.file_ids.insert(converter.file_id);
 
-        let value = IF_TS_REGEX.replace_all(raw_deser, IfTsReplacer::new(self.is_ts));
+        let value = converter.estree.raw_deser.as_deref()?;
+        let value = IF_TS_REGEX.replace_all(value, IfTsReplacer::new(self.is_ts));
         let value = THIS_REGEX.replace_all(&value, ThisReplacer::new(self));
         let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(self.schema));
         let value = POS_OFFSET_REGEX
@@ -393,20 +425,21 @@ impl<'s> StructDeserializerGenerator<'s> {
 /// Generate deserialize function for an enum.
 fn generate_enum(
     enum_def: &EnumDef,
-    code: &mut String,
+    codes: &mut Codes,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
     if !enum_def.generates_derive(estree_derive_id) || enum_def.estree.skip {
         return;
     }
+    codes.file_ids.insert(enum_def.file_id);
 
     let type_name = enum_def.name();
     let fn_name = enum_def.deser_name(schema);
     let payload_offset = enum_def.layout_64().align;
 
     let body = if let Some(converter_name) = &enum_def.estree.via {
-        apply_converter_for_enum(converter_name, 0, schema)
+        apply_converter_for_enum(converter_name, 0, &mut codes.file_ids, schema)
     } else {
         None
     };
@@ -419,7 +452,13 @@ fn generate_enum(
             let discriminant = variant.discriminant;
 
             let ret = if let Some(converter_name) = &variant.estree.via {
-                apply_converter_for_enum(converter_name, payload_offset, schema).unwrap()
+                apply_converter_for_enum(
+                    converter_name,
+                    payload_offset,
+                    &mut codes.file_ids,
+                    schema,
+                )
+                .unwrap()
             } else if let Some(variant_type) = variant.field_type(schema) {
                 let variant_fn_name = variant_type.deser_name(schema);
                 let payload_pos = pos_offset(payload_offset);
@@ -443,7 +482,7 @@ fn generate_enum(
     });
 
     #[rustfmt::skip]
-    write_it!(code, "
+    write_it!(&mut codes.both, "
         function {fn_name}(pos) {{
             {body}
         }}
@@ -648,11 +687,17 @@ where
 /// Get `raw_deser` for converter and replace `POS`, `DESER` and `SOURCE_TEXT` within it.
 ///
 /// Returns `None` if converter is not annotated `#[estree(raw_deser = "...")]`.
-fn apply_converter_for_enum(converter_name: &str, offset: u32, schema: &Schema) -> Option<String> {
+fn apply_converter_for_enum(
+    converter_name: &str,
+    offset: u32,
+    file_ids: &mut FxHashSet<FileId>,
+    schema: &Schema,
+) -> Option<String> {
     let converter = schema.meta_by_name(converter_name);
-    let raw_deser = converter.estree.raw_deser.as_deref()?;
+    file_ids.insert(converter.file_id);
 
-    let value = POS_REGEX.replace_all(raw_deser, PosReplacer::new(offset));
+    let value = converter.estree.raw_deser.as_deref()?;
+    let value = POS_REGEX.replace_all(value, PosReplacer::new(offset));
     let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(schema));
     let value = value.cow_replace("SOURCE_TEXT", "sourceText");
     let value = if let Some((preamble, value)) = value.trim().rsplit_once('\n') {
@@ -885,4 +930,13 @@ impl DeserializeFunctionName for CellDef {
         // `Cell`s use same deserializer as inner type, as layout is identical
         self.inner_type(schema).plain_name(schema)
     }
+}
+
+/// Generate watch list for running NAPI parser benchmarks.
+fn generate_watch_list(file_ids: &FxHashSet<FileId>, schema: &Schema) -> Output {
+    let paths = file_ids
+        .iter()
+        .map(|&file_id| schema.files[file_id].fs_path.as_str())
+        .chain(["napi/parser/**"]);
+    Output::yaml_watch_list(NAPI_PARSER_WATCH_LIST_PATH, paths)
 }

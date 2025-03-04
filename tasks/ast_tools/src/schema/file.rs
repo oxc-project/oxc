@@ -4,7 +4,6 @@ use itertools::Itertools;
 #[derive(Debug)]
 pub struct File {
     /// File path
-    #[expect(dead_code)]
     pub fs_path: String,
     /// Crate file is in e.g. `oxc_ast`
     pub krate: String,

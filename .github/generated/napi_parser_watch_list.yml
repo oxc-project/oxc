@@ -1,0 +1,20 @@
+# Auto-generated code, DO NOT EDIT DIRECTLY!
+# To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`
+
+src:
+  - '.github/generated/napi_parser_watch_list.yml'
+  - 'crates/oxc_ast/src/ast/comment.rs'
+  - 'crates/oxc_ast/src/ast/js.rs'
+  - 'crates/oxc_ast/src/ast/jsx.rs'
+  - 'crates/oxc_ast/src/ast/literal.rs'
+  - 'crates/oxc_ast/src/ast/ts.rs'
+  - 'crates/oxc_ast/src/serialize.rs'
+  - 'crates/oxc_regular_expression/src/ast.rs'
+  - 'crates/oxc_span/src/source_type/mod.rs'
+  - 'crates/oxc_span/src/span.rs'
+  - 'crates/oxc_syntax/src/module_record.rs'
+  - 'crates/oxc_syntax/src/operator.rs'
+  - 'crates/oxc_syntax/src/serialize.rs'
+  - 'napi/parser/**'
+  - 'napi/parser/src/raw_transfer_types.rs'
+  - 'tasks/ast_tools/src/**'
