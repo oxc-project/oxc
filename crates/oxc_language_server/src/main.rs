@@ -497,6 +497,7 @@ impl Backend {
             let config = Oxlintrc::from_file(&config_path)
                 .expect("should have initialized linter with new options");
             let config_store = ConfigStoreBuilder::from_oxlintrc(true, config.clone())
+                .expect("failed to build config")
                 .build()
                 .expect("failed to build config");
             *linter = ServerLinter::new_with_linter(

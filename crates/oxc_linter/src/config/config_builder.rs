@@ -78,11 +78,13 @@ impl ConfigStoreBuilder {
     ///
     /// # Errors
     ///
-    /// Will return a [`ConfigBuilderError::UnknownRules`] if there are unknown rules in the
-    /// config. This can happen if the plugin for a rule is not enabled, or the rule name doesn't
-    /// match any recognized rules.
-    pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
-        // TODO: monorepo config merging, plugin-based extends, etc.
+    /// Returns [`ConfigBuilderError::InvalidConfigFile`] if a referenced config file is not valid.
+    pub fn from_oxlintrc(
+        start_empty: bool,
+        oxlintrc: Oxlintrc,
+    ) -> Result<Self, ConfigBuilderError> {
+        // TODO(refactor); can we make this function infallible, and move all the error handling to
+        // the `build` method?
         let Oxlintrc {
             plugins,
             settings,
@@ -93,7 +95,7 @@ impl ConfigStoreBuilder {
             overrides,
             path,
             ignore_patterns: _,
-            extends: _,
+            extends,
         } = oxlintrc;
 
         let config = LintConfig { plugins, settings, env, globals, path: Some(path) };
@@ -108,10 +110,37 @@ impl ConfigStoreBuilder {
 
         {
             let all_rules = builder.cache.borrow();
+
+            if !extends.is_empty() {
+                let config_file_path = builder.config.path.as_ref().and_then(|p| p.parent());
+                for path in &extends {
+                    // resolve path relative to config path
+                    let path = match config_file_path {
+                        Some(config_file_path) => &config_file_path.join(path),
+                        None => path,
+                    };
+                    // TODO: throw an error if this is a self-referential extend
+                    // TODO(perf): use a global config cache to avoid re-parsing the same file multiple times
+                    match Oxlintrc::from_file(path) {
+                        Ok(extended_config) => {
+                            extended_config
+                                .rules
+                                .override_rules(&mut builder.rules, all_rules.as_slice());
+                        }
+                        Err(err) => {
+                            return Err(ConfigBuilderError::InvalidConfigFile {
+                                file: path.display().to_string(),
+                                reason: err.to_string(),
+                            });
+                        }
+                    }
+                }
+            }
+
             oxlintrc_rules.override_rules(&mut builder.rules, all_rules.as_slice());
         }
 
-        builder
+        Ok(builder)
     }
 
     /// Configure what linter plugins are enabled.
@@ -295,7 +324,7 @@ impl TryFrom<Oxlintrc> for ConfigStoreBuilder {
 
     #[inline]
     fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
-        Ok(Self::from_oxlintrc(false, oxlintrc))
+        Self::from_oxlintrc(false, oxlintrc)
     }
 }
 
@@ -309,10 +338,12 @@ impl fmt::Debug for ConfigStoreBuilder {
 }
 
 /// An error that can occur while building a [`ConfigStore`] from an [`Oxlintrc`].
-#[derive(Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub enum ConfigBuilderError {
     /// There were unknown rules that could not be matched to any known plugins/rules.
     UnknownRules { rules: Vec<ESLintRule> },
+    /// A configuration file was referenced which was not valid for some reason.
+    InvalidConfigFile { file: String, reason: String },
 }
 
 impl std::fmt::Display for ConfigBuilderError {
@@ -324,6 +355,9 @@ impl std::fmt::Display for ConfigBuilderError {
                     write!(f, "{}", rule.full_name())?;
                 }
                 Ok(())
+            }
+            ConfigBuilderError::InvalidConfigFile { file, reason } => {
+                write!(f, "invalid config file {file}: {reason}")
             }
         }
     }
@@ -421,6 +455,8 @@ impl RulesCache {
 
 #[cfg(test)]
 mod test {
+    use std::path::PathBuf;
+
     use super::*;
 
     #[test]
@@ -641,7 +677,7 @@ mod test {
         "#,
         )
         .unwrap();
-        let builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc);
+        let builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).unwrap();
         for rule in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();
@@ -674,5 +710,171 @@ mod test {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_extends_rules_single() {
+        let base_config =
+            config_store_from_path("../../apps/oxlint/fixtures/extends_config/rules_config.json");
+        let derived_config = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/rules_config.json"
+            ]
+        }
+        "#,
+        );
+
+        assert_eq!(base_config.rules(), derived_config.rules());
+
+        let update_rules_config = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/rules_config.json"
+            ],
+            "rules": {
+                "no-debugger": "warn",
+                "no-console": "warn",
+                "unicorn/no-null": "off",
+                "typescript/prefer-as-const": "warn"
+            }
+        }
+        "#,
+        );
+
+        assert!(
+            update_rules_config
+                .rules()
+                .iter()
+                .any(|r| r.name() == "no-debugger" && r.severity == AllowWarnDeny::Warn)
+        );
+        assert!(
+            update_rules_config
+                .rules()
+                .iter()
+                .any(|r| r.name() == "no-console" && r.severity == AllowWarnDeny::Warn)
+        );
+        assert!(
+            !update_rules_config
+                .rules()
+                .iter()
+                .any(|r| r.name() == "no-null" && r.severity == AllowWarnDeny::Allow)
+        );
+        assert!(
+            update_rules_config
+                .rules()
+                .iter()
+                .any(|r| r.name() == "prefer-as-const" && r.severity == AllowWarnDeny::Warn)
+        );
+    }
+
+    #[test]
+    fn test_extends_rules_multiple() {
+        let warn_all = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/allow_all.json",
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/deny_all.json",
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/warn_all.json"
+            ]
+        }
+        "#,
+        );
+        assert!(warn_all.rules().iter().all(|r| r.severity == AllowWarnDeny::Warn));
+
+        let deny_all = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/allow_all.json",
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/warn_all.json",
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/deny_all.json"
+            ]
+        }
+        "#,
+        );
+        assert!(deny_all.rules().iter().all(|r| r.severity == AllowWarnDeny::Deny));
+
+        let allow_all = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/warn_all.json",
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/deny_all.json",
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/allow_all.json"
+            ]
+        }
+        "#,
+        );
+        assert!(allow_all.rules().iter().all(|r| r.severity == AllowWarnDeny::Allow));
+        assert_eq!(allow_all.number_of_rules(), 0);
+
+        let allow_and_override_config = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/deny_all.json",
+                "../../apps/oxlint/fixtures/extends_config/rules_multiple/allow_all.json"
+            ],
+            "rules": {
+                "no-var": "warn",
+                "oxc/approx-constant": "error",
+                "unicorn/no-null": "error"
+            }
+        }
+        "#,
+        );
+        assert!(
+            allow_and_override_config
+                .rules()
+                .iter()
+                .any(|r| r.name() == "no-var" && r.severity == AllowWarnDeny::Warn)
+        );
+        assert!(
+            allow_and_override_config
+                .rules()
+                .iter()
+                .any(|r| r.name() == "approx-constant" && r.severity == AllowWarnDeny::Deny)
+        );
+        assert!(
+            allow_and_override_config
+                .rules()
+                .iter()
+                .any(|r| r.name() == "no-null" && r.severity == AllowWarnDeny::Deny)
+        );
+    }
+
+    #[test]
+    fn test_extends_invalid() {
+        let invalid_config = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            Oxlintrc::from_file(&PathBuf::from(
+                "../../apps/oxlint/fixtures/extends_config/extends_invalid_config.json",
+            ))
+            .unwrap(),
+        );
+        let err = invalid_config.unwrap_err();
+        assert!(matches!(err, ConfigBuilderError::InvalidConfigFile { .. }));
+        if let ConfigBuilderError::InvalidConfigFile { file, reason } = err {
+            assert!(file.ends_with("invalid_config.json"));
+            assert!(reason.contains("Failed to parse"));
+        }
+    }
+
+    fn config_store_from_path(path: &str) -> ConfigStore {
+        ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::from_file(&PathBuf::from(path)).unwrap())
+            .unwrap()
+            .build()
+            .unwrap()
+    }
+
+    fn config_store_from_str(s: &str) -> ConfigStore {
+        ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap())
+            .unwrap()
+            .build()
+            .unwrap()
     }
 }

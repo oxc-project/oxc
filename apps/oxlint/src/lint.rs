@@ -7,7 +7,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
+use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions,
     LintService, LintServiceOptions, Linter, Oxlintrc, loader::LINT_PARTIAL_LOADER_EXT,
@@ -200,9 +200,28 @@ impl Runner for LintRunner {
 
             // iterate over each config and build the ConfigStore
             for (dir, oxlintrc) in nested_oxlintrc {
+                // TODO(refactor): clean up all of the error handling in this function
+                let builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
+                    Ok(builder) => builder,
+                    Err(e) => {
+                        let handler = GraphicalReportHandler::new();
+                        let mut err = String::new();
+                        handler
+                            .render_report(&mut err, &OxcDiagnostic::error(e.to_string()))
+                            .unwrap();
+                        stdout
+                            .write_all(
+                                format!("Failed to parse configuration file.\n{err}\n").as_bytes(),
+                            )
+                            .or_else(Self::check_for_writer_error)
+                            .unwrap();
+                        stdout.flush().unwrap();
+
+                        return CliRunResult::InvalidOptionConfig;
+                    }
+                }
                 // TODO(perf): figure out if we can avoid cloning `filter`
-                let builder =
-                    ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter.clone());
+                .with_filters(filter.clone());
                 match builder.build() {
                     Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
                     Err(diagnostic) => {
@@ -230,8 +249,22 @@ impl Runner for LintRunner {
         } else {
             None
         };
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter);
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
+            Ok(builder) => builder,
+            Err(e) => {
+                let handler = GraphicalReportHandler::new();
+                let mut err = String::new();
+                handler.render_report(&mut err, &OxcDiagnostic::error(e.to_string())).unwrap();
+                stdout
+                    .write_all(format!("Failed to parse configuration file.\n{err}\n").as_bytes())
+                    .or_else(Self::check_for_writer_error)
+                    .unwrap();
+                stdout.flush().unwrap();
+
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
+        .with_filters(filter);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
@@ -981,5 +1014,12 @@ mod test {
             "oxlint-no-console.json",
         ];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_explicit_config() {
+        // Check that referencing a config file that extends other config files works as expected
+        let args = &["--config", "extends_rules_config.json", "console.js"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
     }
 }
