@@ -711,10 +711,16 @@ impl<'a> ParserImpl<'a> {
                         kind if kind.is_identifier_name() => {
                             self.parse_static_member_expression(lhs_span, lhs, true)?
                         }
-                        Kind::Eof => {
-                            return Err(diagnostics::unexpected_end(self.cur_token().span()));
+                        Kind::Bang
+                        | Kind::LAngle
+                        | Kind::LParen
+                        | Kind::NoSubstitutionTemplate
+                        | Kind::ShiftLeft
+                        | Kind::TemplateHead
+                        | Kind::LBrack => break,
+                        _ => {
+                            return Err(diagnostics::unexpected_token(self.cur_token().span()));
                         }
-                        _ => break,
                     }
                 }
                 // computed member expression is not allowed in decorator
