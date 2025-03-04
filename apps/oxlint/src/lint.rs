@@ -60,6 +60,11 @@ impl Runner for LintRunner {
             ..
         } = self.options;
 
+        let use_nested_config = experimental_nested_config &&
+            // If the `--config` option is explicitly passed, we should not search for nested config files
+            // as the passed config file takes absolute precedence.
+            basic_options.config.is_none();
+
         let mut paths = paths;
         let provided_path_count = paths.len();
         let now = Instant::now();
@@ -151,7 +156,7 @@ impl Runner for LintRunner {
             if provided_path_count > 0 {
                 if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
                     number_of_files: 0,
-                    number_of_rules: 0,
+                    number_of_rules: None,
                     threads_count: rayon::current_num_threads(),
                     start_time: now.elapsed(),
                 }) {
@@ -175,12 +180,7 @@ impl Runner for LintRunner {
         let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
         let mut nested_configs = FxHashMap::<PathBuf, ConfigStore>::default();
 
-        let use_nested_config =
-            // If the `--config` option is explicitly passed, we should not search for nested config files
-            // as the passed config file takes absolute precedence.
-            basic_options.config.is_none();
-
-        if experimental_nested_config && use_nested_config {
+        if use_nested_config {
             // get all of the unique directories among the paths to use for search for
             // oxlint config files in those directories
             // e.g. `/some/file.js` and `/some/other/file.js` would both result in `/some`
