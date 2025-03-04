@@ -147,3 +147,15 @@ function stringifyAcornTest262Style(obj) {
 function clean(obj) {
   return JSON.parse(JSON.stringify(obj, (_key, value) => value === null ? undefined : value));
 }
+
+it('checks semantic', async () => {
+  const code = 'let x; let x;';
+
+  // @ts-ignore
+  let ret = parseSync('test.js', code, { experimentalRawTransfer: true });
+  expect(ret.errors.length).toBe(0);
+
+  // @ts-ignore
+  ret = parseSync('test.js', code, { experimentalRawTransfer: true, showSemanticErrors: true });
+  expect(ret.errors.length).toBe(1);
+});

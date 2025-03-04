@@ -10,6 +10,7 @@ use napi_derive::napi;
 use oxc::{
     allocator::{Allocator, FromIn, Vec as ArenaVec},
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
+    semantic::SemanticBuilder,
 };
 
 use crate::{
@@ -134,6 +135,13 @@ pub unsafe fn parse_sync_raw(
             &allocator,
         );
 
+        // Run `SemanticBuilder` if requested
+        if options.show_semantic_errors == Some(true) {
+            let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+            errors
+                .extend(semantic_ret.errors.iter().map(|error| Error::from_in(error, &allocator)));
+        }
+
         // Convert spans to UTF-16
         let span_converter = Utf8ToUtf16::new(source_text);
         span_converter.convert_program(&mut program);
@@ -150,10 +158,9 @@ pub unsafe fn parse_sync_raw(
         // Convert module record
         let module = EcmaScriptModule::from_in(module_record, &allocator);
 
+        // Write `RawTransferData` to arena, and return pointer to it
         let data = RawTransferData { program, comments, module, errors };
         let data = allocator.alloc(data);
-
-        // Return pointer to `RawTransferData`
         ptr::from_ref(data).cast::<u8>()
     };
 
