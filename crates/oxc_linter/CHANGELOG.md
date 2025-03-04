@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.13] - 2025-03-04
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+- 7bb0121 linter: Add `react/no-namespace` (#9404) (Mikhail Baev)
+- 0a7ca20 linter: Support allowable method diagnostic for eslint/no-console (#9454) (Boshen)
+- d99bc51 linter: Add import/no-absolute-path rule (#9415) (yefan)
+- 8c71590 linter: Add import/no-mutable-exports rule (#9434) (yefan)
+- b65f8a5 linter: Add `promise/no-nesting` (#9345) (Tom)
+- d38e6de linter: Add `eslint/no-spaced-func` (#9360) (Tom)
+- 25392de linter: Add eslint/operator-assignment rule (#9208) (yefan)
+- bf77167 linter: Add `curly` rule (#8123) (Yuichiro Yamashita)
+- e3b6eeb linter: Add `unicorn/consistent-date-clone` (#9346) (Amol Bhave)
+- 5ee2cab linter: Improve no_invalid_fetch_options (#9347) (Brooooooklyn)
+- 4ad328b linter: Add oxc/no-redundant-constructor-init (#9299) (Ben Jones)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+
+### Bug Fixes
+
+- c4624a6 linter: Fix panic in `import/no-absolute-path` (#9500) (camc314)
+- 4b0327b linter: False positive in `eslint/curly` (#9471) (Kevin Deng 三咲智子)
+- 8804555 linter: Skip `no-absolute-path` tests on windows (#9435) (Cameron)
+- 06fe76d linter: Rule `no-restricted-imports` use right span for exports statements (#9442) (Sysix)
+- 3da3565 linter: Rule `unicorn/no-invalid-fetch-options` (#9416) (Tom)
+- 85fbe8c linter: Rule `eslint/radix` look into globals config (#9407) (Sysix)
+- 1113e3b linter: Rule `eslint/no-object-constructor` look into globals config (#9406) (Sysix)
+- 0217ebb linter: Support more cases for no_redundant_constructor_init (#9364) (Ben Jones)
+
+### Documentation
+
+- 24850e7 linter: Add example of how configure rule (#9469) (Cédric DIRAND)
+- acb1e2c linter: Add end code tag on rule doc (#9470) (Cédric DIRAND)
+- d43b456 linter: Add full documentation to rule `no-restricted-imports` (#9440) (Sysix)
+
+### Refactor
+
+- ffec3f6 linter: Improve `eslint/no-new` (#9423) (Tom)
+- 7c27f10 linter: Move rule `no-restricted-imports` to category `restriction` (#9443) (Sysix)
+- 7e118a3 linter: Improve `typescript/explicit-function-return-type` (#9439) (Tom)
+- 5318cf2 linter: Improve `eslint/no-spaced-func` (#9419) (shulaoda)
+- 802f00e linter: Use the `javascript-globals` crate (#9412) (Boshen)
+- bff83c9 linter: Improve `eslint/no-unsafe-negation` (#9362) (dalaoshu)
+- 228bf99 linter: Improve `unicorn/empty-brace-spaces` (#9341) (dalaoshu)
+- 55d071b linter: Improve `unicorn/consistent-existence-index-check` (#9339) (dalaoshu)
+- 17acece linter: Improve `eslint/no-template-curly-in-string` (#9090) (dalaoshu)
+
 ## [0.15.12] - 2025-02-23
 
 ### Features
