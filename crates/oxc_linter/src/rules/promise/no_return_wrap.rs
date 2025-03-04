@@ -65,12 +65,34 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// myPromise().then(() => Promise.resolve(4))
+    /// myPromise().then(function() { return Promise.resolve(4) })
+    ///
+    /// myPromise().then(() => Promise.reject("err"))
+    /// myPromise().then(function() { return Promise.reject("err") })
+    /// ```
+    ///
+    /// ```js
+    /// myPromise().catch(
+    ///   function() {
+    ///     return Promise.reject("err")
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// myPromise().then(() => 4)
+    /// myPromise().then(function() { return 4 })
+    ///
+    /// myPromise().then(() => throw "err")
+    /// myPromise().then(function() { throw "err" })
+    /// ```
+    ///
+    /// ```js
+    /// myPromise().catch(
+    ///   function() {
+    ///     throw "err"
+    /// })
     /// ```
     ///
     /// ### Options
