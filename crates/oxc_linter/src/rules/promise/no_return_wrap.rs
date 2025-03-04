@@ -5,20 +5,35 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_return_wrap_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
-        .with_label(span)
+fn no_return_wrap_diagnostic(span: Span, issue: &ReturnWrapper) -> OxcDiagnostic {
+    let warn_msg: CompactStr = match issue {
+        ReturnWrapper::Resolve => "Avoid wrapping return values in Promise.resolve".into(),
+        ReturnWrapper::Reject => "Expected throw instead of Promise.reject".into(),
+    };
+
+    let help_msg: CompactStr = match issue {
+        ReturnWrapper::Resolve => {
+            "Return the value being passed into Promise.resolve instead".into()
+        }
+        ReturnWrapper::Reject => "Throw the value being passed into Promise.reject instead".into(),
+    };
+
+    OxcDiagnostic::warn(warn_msg).with_help(help_msg).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoReturnWrap {
     allow_reject: bool,
+}
+
+#[derive(Debug, PartialEq)]
+enum ReturnWrapper {
+    Resolve,
+    Reject,
 }
 
 declare_oxc_lint!(
@@ -258,10 +273,14 @@ fn check_for_resolve_reject(ctx: &LintContext, allow_reject: bool, call_expr: &C
         return;
     }
 
-    if obj_call_ident.name == "Promise" && stat_expr.property.name == "resolve"
-        || (stat_expr.property.name == "reject" && !allow_reject)
-    {
-        ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span));
+    if !(obj_call_ident.name == "Promise") {
+        return;
+    }
+
+    if stat_expr.property.name == "resolve" {
+        ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span, &ReturnWrapper::Resolve));
+    } else if stat_expr.property.name == "reject" && !allow_reject {
+        ctx.diagnostic(no_return_wrap_diagnostic(call_expr.span, &ReturnWrapper::Reject));
     }
 }
 
