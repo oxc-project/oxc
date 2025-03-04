@@ -48,13 +48,13 @@ use compact_str::ToCompactString;
 use rustc_hash::FxHashMap;
 use std::iter;
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::{Allocator, Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{ReferenceFlags, ScopeFlags, SymbolFlags, SymbolId};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeTree, SymbolFlags, SymbolId, SymbolTable};
 use oxc_span::SPAN;
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx, traverse_mut};
 
 use crate::utils::ast_builder::{
     create_compute_property_access, create_member_callee, create_property_access,
@@ -74,7 +74,7 @@ pub struct ModuleRunnerTransform<'a> {
     dynamic_deps: Vec<String>,
 }
 
-impl ModuleRunnerTransform<'_> {
+impl<'a> ModuleRunnerTransform<'a> {
     pub fn new() -> Self {
         Self {
             import_uid: 0,
@@ -82,6 +82,19 @@ impl ModuleRunnerTransform<'_> {
             deps: Vec::default(),
             dynamic_deps: Vec::default(),
         }
+    }
+
+    /// Standalone transform
+    pub fn transform(
+        mut self,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+        symbols: SymbolTable,
+        scopes: ScopeTree,
+    ) -> (Vec<String>, Vec<String>) {
+        traverse_mut(&mut self, allocator, program, symbols, scopes);
+
+        (self.deps, self.dynamic_deps)
     }
 }
 
