@@ -262,8 +262,8 @@ fn test() {
         ("doThing().then(function() { return Promise.all([a,b,c]) })", None),
         ("doThing().then(() => 4)", None),
         ("doThing().then(() => { throw 4 })", None),
-        ("doThing().then(()=>{}, () => 4)", None),
-        ("doThing().then(()=>{}, () => { throw 4 })", None),
+        ("doThing().then(() => {}, () => 4)", None),
+        ("doThing().then(() => {}, () => { throw 4 })", None),
         ("doThing().catch(() => 4)", None),
         ("doThing().catch(() => { throw 4 })", None),
         ("var x = function() { return Promise.resolve(4) }", None),
@@ -301,7 +301,14 @@ fn test() {
         ("doThing().then(null, function() { return Promise.reject(4) })", None),
         ("doThing().catch(function() { return Promise.reject(4) })", None),
         (
-            r#"doThing().then(function(x) { if (x>1) { return Promise.resolve(4) } else { throw "bad" } })"#,
+            r#"doThing().then(
+                 function(x) {
+                   if (x>1) {
+                     return Promise.resolve(4)
+                   } else {
+                     throw "bad"
+                   }
+                })"#,
             None,
         ),
         ("doThing().then(function(x) { if (x>1) { return Promise.reject(4) } })", None),
@@ -310,7 +317,14 @@ fn test() {
             None,
         ),
         (
-            "doThing().catch(function(x) {if (x) { return Promise.resolve(4) } else { return Promise.reject() } })",
+            "doThing().catch(
+              function(x) {
+                if (x) {
+                  return Promise.resolve(4)
+                } else {
+                  return Promise.reject()
+                }
+             })",
             None,
         ),
         (
