@@ -3,6 +3,9 @@ use itertools::Itertools;
 /// A Rust source file.
 #[derive(Debug)]
 pub struct File {
+    /// File path
+    #[expect(dead_code)]
+    pub fs_path: String,
     /// Crate file is in e.g. `oxc_ast`
     pub krate: String,
     /// `true` if file is in a NAPI package, rather than a crate
@@ -34,7 +37,7 @@ impl File {
             import_path.clear();
         }
 
-        Self { krate, is_napi, import_path }
+        Self { fs_path: file_path.to_string(), krate, is_napi, import_path }
     }
 
     /// Get name of crate this [`File`] is in.
