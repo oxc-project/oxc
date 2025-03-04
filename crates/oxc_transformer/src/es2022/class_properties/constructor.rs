@@ -324,26 +324,24 @@ impl<'a> ClassProperties<'a, '_> {
         let body = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, body_exprs));
 
         // `(..._args) => (super(..._args), <inits>, this)`
-        let super_func = Expression::ArrowFunctionExpression(
-            ctx.ast.alloc_arrow_function_expression_with_scope_id_and_pure(
+        let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+            SPAN,
+            true,
+            false,
+            NONE,
+            ctx.ast.alloc_formal_parameters(
                 SPAN,
-                true,
-                false,
-                NONE,
-                ctx.ast.alloc_formal_parameters(
-                    SPAN,
-                    FormalParameterKind::ArrowFormalParameters,
-                    ctx.ast.vec(),
-                    Some(ctx.ast.alloc_binding_rest_element(
-                        SPAN,
-                        args_binding.create_binding_pattern(ctx),
-                    )),
+                FormalParameterKind::ArrowFormalParameters,
+                ctx.ast.vec(),
+                Some(
+                    ctx.ast
+                        .alloc_binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx)),
                 ),
-                NONE,
-                ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
-                super_func_scope_id,
-                false,
             ),
+            NONE,
+            ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
+            super_func_scope_id,
+            false,
         );
 
         // `var _super = (..._args) => ( ... );`
@@ -389,7 +387,7 @@ impl<'a> ClassProperties<'a, '_> {
         let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
         // `function() { <inits>; return this; }`
         let super_func_scope_id = self.instance_inits_scope_id;
-        let super_func = Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
+        let super_func = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -407,7 +405,8 @@ impl<'a> ClassProperties<'a, '_> {
             NONE,
             Some(ctx.ast.alloc_function_body(SPAN, directives, body_stmts)),
             super_func_scope_id,
-        ));
+            false,
+        );
 
         // Insert `_super` function after class.
         // TODO: Need to add `_super` function to class as a static method, and then remove it again

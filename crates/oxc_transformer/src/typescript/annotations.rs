@@ -575,8 +575,7 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        let block = ctx.ast.alloc_block_statement_with_scope_id(span, ctx.ast.vec1(stmt), scope_id);
-        Statement::BlockStatement(block)
+        ctx.ast.statement_block_with_scope_id(span, ctx.ast.vec1(stmt), scope_id)
     }
 
     fn replace_for_statement_body_with_empty_block_if_ts(
@@ -594,9 +593,7 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
     ) {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            let block =
-                ctx.ast.alloc_block_statement_with_scope_id(stmt.span(), ctx.ast.vec(), scope_id);
-            *stmt = Statement::BlockStatement(block);
+            *stmt = ctx.ast.statement_block_with_scope_id(stmt.span(), ctx.ast.vec(), scope_id);
         }
     }
 

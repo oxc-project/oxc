@@ -593,7 +593,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 )),
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
-            let function = Argument::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
+            let function = Argument::from(ctx.ast.expression_function_with_scope_id_and_pure(
                 SPAN,
                 FunctionType::FunctionExpression,
                 None,
@@ -606,6 +606,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 NONE,
                 Some(function_body),
                 scope_id,
+                false,
             ));
             arguments.push(function);
         }

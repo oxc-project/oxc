@@ -671,9 +671,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             let span = stmt.span();
             (span, ctx.ast.vec1(ctx.ast.move_statement(stmt)))
         };
-        *stmt = Statement::BlockStatement(
-            ctx.ast.alloc_block_statement_with_scope_id(span, stmts, scope_id),
-        );
+        *stmt = ctx.ast.statement_block_with_scope_id(span, stmts, scope_id);
         scope_id
     }
 
