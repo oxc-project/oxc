@@ -93,6 +93,7 @@ impl ConfigStoreBuilder {
             overrides,
             path,
             ignore_patterns: _,
+            extends: _,
         } = oxlintrc;
 
         let config = LintConfig { plugins, settings, env, globals, path: Some(path) };

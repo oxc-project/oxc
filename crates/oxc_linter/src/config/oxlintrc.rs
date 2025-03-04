@@ -96,6 +96,12 @@ pub struct Oxlintrc {
     /// Globs to ignore during linting. These are resolved from the configuration file path.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
+    /// Paths of configuration files that this configuration file extends (inherits from). The files
+    /// are resolved relative to the location of the configuration file that contains the `extends`
+    /// property. The configuration files are merged from the first to the last, with the last file
+    /// overriding the previous ones.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub extends: Vec<PathBuf>,
 }
 
 impl Oxlintrc {
@@ -156,6 +162,7 @@ mod test {
         assert_eq!(config.settings, OxlintSettings::default());
         assert_eq!(config.env, OxlintEnv::default());
         assert_eq!(config.path, PathBuf::default());
+        assert_eq!(config.extends, Vec::<PathBuf>::default());
     }
 
     #[test]
@@ -184,5 +191,24 @@ mod test {
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "@typescript-eslint"] }"#).unwrap();
         assert_eq!(config.plugins, LintPlugins::TYPESCRIPT);
+    }
+
+    #[test]
+    fn test_oxlintrc_extends() {
+        let config: Oxlintrc = serde_json::from_str(
+            r#"{"extends": [".oxlintrc.json", "./oxlint-ts.json", "../.config/.oxlintrc.json"]}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            config.extends,
+            vec![
+                PathBuf::from(".oxlintrc.json"),
+                PathBuf::from("./oxlint-ts.json"),
+                PathBuf::from("../.config/.oxlintrc.json")
+            ]
+        );
+
+        let config: Oxlintrc = serde_json::from_str(r#"{"extends": []}"#).unwrap();
+        assert_eq!(0, config.extends.len());
     }
 }
