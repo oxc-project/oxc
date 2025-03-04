@@ -370,7 +370,7 @@ fn generate_proc_macro() -> RawOutput {
         if derive.trait_has_lifetime() {
             quote!( #trait_name => (quote!(::#crate_ident::#trait_ident), quote!( <'static> )) )
         } else {
-            quote!( #trait_name => (quote!(::#crate_ident::#trait_ident), TokenStream::new()) )
+            quote!( #trait_name => (quote!(::#crate_ident::#trait_ident), quote!()) )
         }
     });
 
