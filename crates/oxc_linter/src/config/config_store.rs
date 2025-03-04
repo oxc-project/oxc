@@ -55,6 +55,10 @@ impl ConfigStore {
         &self.base.base.rules
     }
 
+    pub fn plugins(&self) -> LintPlugins {
+        self.base.base.config.plugins
+    }
+
     pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
         // TODO: based on the `path` provided, resolve the configuration file to use.
         let resolved_config = &self.base;

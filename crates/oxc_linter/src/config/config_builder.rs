@@ -130,9 +130,11 @@ impl ConfigStoreBuilder {
                                 .rules
                                 .override_rules(&mut builder.rules, &builder.cache.borrow());
                             // Use `ConfigStoreBuilder` to load extended config files and then apply rules from those
-                            let extended_config_store =
+                            let mut extended_config_store =
                                 ConfigStoreBuilder::from_oxlintrc(true, extended_config)?;
-                            builder = builder.with_rules(extended_config_store.rules);
+                            let rules = std::mem::take(&mut extended_config_store.rules);
+                            builder = builder.with_rules(rules);
+                            builder = builder.and_plugins(extended_config_store.plugins(), true);
                         }
                         Err(err) => {
                             return Err(ConfigBuilderError::InvalidConfigFile {
@@ -876,6 +878,59 @@ mod test {
             assert!(file.ends_with("invalid_config.json"));
             assert!(reason.contains("Failed to parse"));
         }
+    }
+
+    #[test]
+    fn test_extends_plugins() {
+        let config = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/plugins/jest.json",
+                "../../apps/oxlint/fixtures/extends_config/plugins/react.json"
+            ]
+        }
+        "#,
+        );
+        assert!(config.plugins().contains(LintPlugins::default()));
+        assert!(config.plugins().contains(LintPlugins::JEST));
+        assert!(config.plugins().contains(LintPlugins::REACT));
+
+        // Test adding more plugins
+        let config = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/plugins/jest.json",
+                "../../apps/oxlint/fixtures/extends_config/plugins/react.json"
+            ],
+            "plugins": ["typescript"]
+        }
+        "#,
+        );
+        assert_eq!(
+            config.plugins(),
+            LintPlugins::JEST | LintPlugins::REACT | LintPlugins::TYPESCRIPT
+        );
+
+        // Test that extended a config with a plugin is the same as adding it directly
+        let plugin_config = config_store_from_str(r#"{ "plugins": ["jest", "react"] }"#);
+        let extends_plugin_config = config_store_from_str(
+            r#"
+        {
+            "extends": [
+                "../../apps/oxlint/fixtures/extends_config/plugins/jest.json",
+                "../../apps/oxlint/fixtures/extends_config/plugins/react.json"
+            ],
+            "plugins": []
+        }
+        "#,
+        );
+        assert_eq!(
+            plugin_config.plugins(),
+            extends_plugin_config.plugins(),
+            "Extending a config with a plugin is the same as adding it directly"
+        );
     }
 
     fn config_store_from_path(path: &str) -> ConfigStore {
