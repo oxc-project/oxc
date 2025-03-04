@@ -32,26 +32,20 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// doThing().then(() => a.then())
-    /// ```
     ///
-    /// ```javascript
     /// doThing().then(function() { a.then() })
-    /// ```
     ///
-    /// ```javascript
     /// doThing().then(() => { b.catch() })
+    ///
+    /// doThing().catch((val) => doSomething(val).catch(errors))
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// doThing().then(() => 4)
-    /// ```
     ///
-    /// ```javascript
     /// doThing().then(function() { return 4 })
-    /// ```
     ///
-    /// ```javascript
     /// doThing().catch(() => 4)
     /// ```
     ///
@@ -273,6 +267,8 @@ fn test() {
         "doThing().then(() => { b.catch() })",
         "doThing().then(() => a.then())",
         "doThing().then(() => b.catch())",
+        "doThing().then((val) => doSomething(val).catch(errors))",
+        "doThing().catch((val) => doSomething(val).catch(errors))",
         "doThing()
           .then(() =>
             a.then(() => Promise.resolve(1)))",
