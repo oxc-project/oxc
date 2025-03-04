@@ -10,7 +10,10 @@ use rustc_hash::FxHashSet;
 use crate::{
     AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
     RuleWithSeverity,
-    config::{ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules},
+    config::{
+        ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules,
+        overrides::OxlintOverride,
+    },
     rules::RULES,
 };
 
@@ -135,6 +138,11 @@ impl ConfigStoreBuilder {
                             let rules = std::mem::take(&mut extended_config_store.rules);
                             builder = builder.with_rules(rules);
                             builder = builder.and_plugins(extended_config_store.plugins(), true);
+                            if !extended_config_store.overrides.is_empty() {
+                                let overrides =
+                                    std::mem::take(&mut extended_config_store.overrides);
+                                builder = builder.with_overrides(overrides);
+                            }
                         }
                         Err(err) => {
                             return Err(ConfigBuilderError::InvalidConfigFile {
@@ -198,6 +206,12 @@ impl ConfigStoreBuilder {
 
     pub(crate) fn with_rules<R: IntoIterator<Item = RuleWithSeverity>>(mut self, rules: R) -> Self {
         self.rules.extend(rules);
+        self
+    }
+
+    /// Appends an override to the end of the current list of overrides.
+    pub fn with_overrides<O: IntoIterator<Item = OxlintOverride>>(mut self, overrides: O) -> Self {
+        self.overrides.extend(overrides);
         self
     }
 

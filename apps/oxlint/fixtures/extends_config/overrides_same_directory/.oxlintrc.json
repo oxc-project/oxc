@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "no-debugger": "error"
+  },
+  "overrides": [
+    {
+      "files": ["config/*.{ts,js}"],
+      "rules": { "no-debugger": "off" }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "plugins": ["jsx-a11y"],
+  "overrides": [
+    {
+      "files": ["*.{jsx,tsx}"],
+      "rules": {
+        "jsx-a11y/anchor-ambiguous-text": "error"
+      }
+    }
+  ]
+}

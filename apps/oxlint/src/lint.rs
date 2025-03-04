@@ -1029,4 +1029,15 @@ mod test {
         let args = &["--config", "relative_paths/extends_extends_config.json", "console.js"];
         Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_extends_overrides() {
+        // Check that using a config with overrides works as expected
+        let args = &["--experimental-nested-config", "overrides"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+
+        // Check that using a config which extends a config with overrides works as expected
+        let args = &["--experimental-nested-config", "overrides_same_directory"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+    }
 }
