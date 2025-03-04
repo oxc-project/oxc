@@ -1453,15 +1453,12 @@ impl GenExpr for CallExpression<'_> {
                 type_parameters.print(p, ctx);
             }
             p.print_ascii_byte(b'(');
-            let print_comments = p.options.print_comments();
-            let has_comment_before_right_paren =
-                print_comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
-            let has_comment = print_comments
-                && (has_comment_before_right_paren
-                    || self.arguments.iter().any(|item| p.has_comment(item.span().start)));
+
+            let (has_comment, has_comment_before_right_paren) =
+                p.contains_comment_in_call_like_expression(self.span, self.arguments.as_slice());
             if has_comment {
                 p.indent();
-                p.print_list_with_comments(&self.arguments, ctx);
+                p.print_list_with_comments(self.arguments.as_slice(), ctx);
                 // Handle `/* comment */);`
                 if !has_comment_before_right_paren || !p.print_expr_comments(self.span.end - 1) {
                     p.print_soft_newline();
@@ -2124,7 +2121,7 @@ impl GenExpr for ImportExpression<'_> {
             }
             if has_comment {
                 // Handle `/* comment */);`
-                if self.span.end > 0 && !p.print_expr_comments(self.span.end - 1) {
+                if !has_comment_before_right_paren || !p.print_expr_comments(self.span.end - 1) {
                     p.print_soft_newline();
                 }
                 p.dedent();
@@ -2218,13 +2215,14 @@ impl GenExpr for NewExpression<'_> {
             if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
             {
                 p.print_ascii_byte(b'(');
-                let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
-                    || self.arguments.iter().any(|item| p.has_comment(item.span().start));
+                let (has_comment, has_comment_before_right_paren) = p
+                    .contains_comment_in_call_like_expression(self.span, self.arguments.as_slice());
                 if has_comment {
                     p.indent();
-                    p.print_list_with_comments(&self.arguments, ctx);
+                    p.print_list_with_comments(self.arguments.as_slice(), ctx);
                     // Handle `/* comment */);`
-                    if self.span.end > 0 && !p.print_expr_comments(self.span.end - 1) {
+                    if !has_comment_before_right_paren || !p.print_expr_comments(self.span.end - 1)
+                    {
                         p.print_soft_newline();
                     }
                     p.dedent();
@@ -3877,15 +3875,11 @@ impl GenExpr for V8IntrinsicExpression<'_> {
             p.print_ascii_byte(b'%');
             self.name.print(p, Context::empty());
             p.print_ascii_byte(b'(');
-            let print_comments = p.options.print_comments();
-            let has_comment_before_right_paren =
-                print_comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
-            let has_comment = print_comments
-                && (has_comment_before_right_paren
-                    || self.arguments.iter().any(|item| p.has_comment(item.span().start)));
+            let (has_comment, has_comment_before_right_paren) =
+                p.contains_comment_in_call_like_expression(self.span, self.arguments.as_slice());
             if has_comment {
                 p.indent();
-                p.print_list_with_comments(&self.arguments, ctx);
+                p.print_list_with_comments(self.arguments.as_slice(), ctx);
                 // Handle `/* comment */);`
                 if !has_comment_before_right_paren || !p.print_expr_comments(self.span.end - 1) {
                     p.print_soft_newline();

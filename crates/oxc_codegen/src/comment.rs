@@ -1,6 +1,7 @@
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{Comment, CommentKind};
+use oxc_ast::{Comment, CommentKind, ast::Argument};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{Codegen, LegalComment};
@@ -21,6 +22,21 @@ impl Codegen<'_> {
 
     pub(crate) fn has_comment(&self, start: u32) -> bool {
         self.comments.contains_key(&start)
+    }
+
+    pub(crate) fn contains_comment_in_call_like_expression(
+        &self,
+        span: Span,
+        arguments: &[Argument<'_>],
+    ) -> (bool, bool) {
+        let has_comment_before_right_paren =
+            self.print_comments && span.end > 0 && self.has_comment(span.end - 1);
+
+        let has_comment = has_comment_before_right_paren
+            || self.print_comments
+                && arguments.iter().any(|item| self.has_comment(item.span().start));
+
+        (has_comment, has_comment_before_right_paren)
     }
 
     /// Whether to keep leading comments.

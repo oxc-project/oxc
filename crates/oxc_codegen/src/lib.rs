@@ -15,7 +15,7 @@ mod sourcemap_builder;
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
-    BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
+    Argument, BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
     Statement, StringLiteral,
 };
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
@@ -477,22 +477,17 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_list_with_comments<T: Gen + GetSpan>(&mut self, items: &[T], ctx: Context) {
+    fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
             }
-            if self.print_comments {
-                let start = item.span().start;
-                if self.has_comment(start) {
-                    self.print_expr_comments(start);
-                    self.print_indent();
-                    item.print(self, ctx);
-                    continue;
-                }
+            if self.print_expr_comments(item.span().start) {
+                self.print_indent();
+            } else {
+                self.print_soft_newline();
+                self.print_indent();
             }
-            self.print_soft_newline();
-            self.print_indent();
             item.print(self, ctx);
         }
     }
