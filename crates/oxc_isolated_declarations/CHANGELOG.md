@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.54.0] - 2025-03-04
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+
+### Performance
+
+- 27a8e50 isolated_declarations: Reserve sufficient capacity in statements `Vec` (#9394) (overlookmotel)
+
+### Refactor
+
+- c880481 isolated_declarations: Rename var (#9390) (overlookmotel)
+- 37e41f0 isolated_declarations: Use aliases `ArenaBox` / `ArenaVec` (#9389) (overlookmotel)
+
 ## [0.53.0] - 2025-02-26
 
 ### Refactor

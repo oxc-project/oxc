@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+- abb15e0 ast: [**BREAKING**] Add `pure` field to `Function`, `CallExpression`, and `NewExpression` (#9207) (overlookmotel)
+
+### Features
+
+- 26fde56 minifier: Inline simple IIFEs in `remove_unused_expression` (#9465) (sapphi-red)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+- 9b7017c parser,codegen: Pure annotations (#9351) (Boshen)
+
+### Bug Fixes
+
+- b371fdc estree/ast: Camel-case `typeAnnotation` field (#9420) (overlookmotel)
+
+### Performance
+
+- 10e4431 ast/estree: Skip escaping identifiers (#9398) (overlookmotel)
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- 8916335 ast/estree: Convert enums with converters on variants (#9438) (overlookmotel)
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
 ## [0.53.0] - 2025-02-26
 
 ### Features
