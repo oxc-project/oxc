@@ -39,6 +39,108 @@ describe('parse', () => {
     expect(ret.errors.length).toBe(1);
   });
 
+  describe('TS properties', () => {
+    const code = 'let x;';
+
+    const withTsFields = {
+      type: 'Program',
+      start: 0,
+      end: 6,
+      body: [
+        {
+          type: 'VariableDeclaration',
+          start: 0,
+          end: 6,
+          declarations: [
+            {
+              type: 'VariableDeclarator',
+              start: 4,
+              end: 5,
+              id: {
+                type: 'Identifier',
+                start: 4,
+                end: 5,
+                name: 'x',
+                typeAnnotation: null,
+                optional: false,
+              },
+              init: null,
+              definite: false,
+            },
+          ],
+          kind: 'let',
+          declare: false,
+        },
+      ],
+      sourceType: 'module',
+      hashbang: null,
+    };
+
+    const withoutTsFields = {
+      type: 'Program',
+      start: 0,
+      end: 6,
+      body: [
+        {
+          type: 'VariableDeclaration',
+          start: 0,
+          end: 6,
+          declarations: [
+            {
+              type: 'VariableDeclarator',
+              start: 4,
+              end: 5,
+              id: {
+                type: 'Identifier',
+                start: 4,
+                end: 5,
+                name: 'x',
+              },
+              init: null,
+            },
+          ],
+          kind: 'let',
+        },
+      ],
+      sourceType: 'module',
+      hashbang: null,
+    };
+
+    describe('included when', () => {
+      it('filename has `.ts` extension', () => {
+        const { program } = parseSync('test.ts', code);
+        expect(program).toEqual(withTsFields);
+      });
+
+      it('`lang` option is "ts"', () => {
+        const { program } = parseSync('test.js', code, { lang: 'ts' });
+        expect(program).toEqual(withTsFields);
+      });
+
+      it('`astType` option is "ts"', () => {
+        const { program } = parseSync('test.js', code, { lang: 'js', astType: 'ts' });
+        expect(program).toEqual(withTsFields);
+      });
+    });
+
+    describe('not included when', () => {
+      it('filename has `.js` extension', () => {
+        const { program } = parseSync('test.js', code);
+        expect(program).toEqual(withoutTsFields);
+      });
+
+      it('`lang` option is "js"', () => {
+        const { program } = parseSync('test.ts', code, { lang: 'js' });
+        expect(program).toEqual(withoutTsFields);
+      });
+
+      it('`astType` option is "js"', () => {
+        const { program } = parseSync('test.ts', code, { lang: 'ts', astType: 'js' });
+        expect(program).toEqual(withoutTsFields);
+      });
+    });
+  });
+
   it('`Infinity` is represented as `Infinity` number', () => {
     const ret = parseSync('test.js', '1e+350');
     expect(ret.errors.length).toBe(0);

@@ -8,7 +8,7 @@ use regex::{Captures, Regex, Replacer};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    Generator, RAW_TRANSFER_DESERIALIZER_PATH,
+    Generator, RAW_TRANSFER_JS_DESERIALIZER_PATH, RAW_TRANSFER_TS_DESERIALIZER_PATH,
     codegen::{Codegen, DeriveId},
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field, should_skip_field,
@@ -36,9 +36,12 @@ pub struct RawTransferGenerator;
 define_generator!(RawTransferGenerator);
 
 impl Generator for RawTransferGenerator {
-    fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
-        let code = generate_deserializers(schema, codegen);
-        Output::Javascript { path: RAW_TRANSFER_DESERIALIZER_PATH.to_string(), code }
+    fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
+        let Codes { js, ts, .. } = generate_deserializers(schema, codegen);
+        vec![
+            Output::Javascript { path: RAW_TRANSFER_JS_DESERIALIZER_PATH.to_string(), code: js },
+            Output::Javascript { path: RAW_TRANSFER_TS_DESERIALIZER_PATH.to_string(), code: ts },
+        ]
     }
 }
 
@@ -75,31 +78,42 @@ static PRELUDE: &str = "
     }
 ";
 
+/// Container for generated code.
+struct Codes {
+    /// Code which is part of JS deserializer only
+    js: String,
+    /// Code which is part of TS deserializer only
+    ts: String,
+    /// Code which is part of both deserializers
+    both: String,
+}
+
 /// Generate deserializer functions for all types.
-fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> String {
+fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> Codes {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
 
-    let mut code = PRELUDE.to_string();
+    let mut codes = Codes { js: PRELUDE.to_string(), ts: PRELUDE.to_string(), both: String::new() };
 
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
-                generate_struct(struct_def, &mut code, estree_derive_id, schema);
+                generate_struct(struct_def, &mut codes.js, false, estree_derive_id, schema);
+                generate_struct(struct_def, &mut codes.ts, true, estree_derive_id, schema);
             }
             TypeDef::Enum(enum_def) => {
-                generate_enum(enum_def, &mut code, estree_derive_id, schema);
+                generate_enum(enum_def, &mut codes.both, estree_derive_id, schema);
             }
             TypeDef::Primitive(primitive_def) => {
-                generate_primitive(primitive_def, &mut code, schema);
+                generate_primitive(primitive_def, &mut codes.both, schema);
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut code, schema);
+                generate_option(option_def, &mut codes.both, schema);
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut code, schema);
+                generate_box(box_def, &mut codes.both, schema);
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut code, schema);
+                generate_vec(vec_def, &mut codes.both, schema);
             }
             TypeDef::Cell(_cell_def) => {
                 // No deserializers for `Cell`s - use inner type's deserializer
@@ -107,13 +121,16 @@ fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> String {
         }
     }
 
-    code
+    codes.js.push_str(&codes.both);
+    codes.ts.push_str(&codes.both);
+    codes
 }
 
 /// Generate deserialize function for a struct.
 fn generate_struct(
     struct_def: &StructDef,
     code: &mut String,
+    is_ts: bool,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -122,7 +139,7 @@ fn generate_struct(
     }
 
     let fn_name = struct_def.deser_name(schema);
-    let mut generator = StructDeserializerGenerator::new(schema);
+    let mut generator = StructDeserializerGenerator::new(is_ts, schema);
 
     let body = if let Some(converter_name) = &struct_def.estree.via {
         generator.apply_converter(converter_name, struct_def, 0).map(|value| {
@@ -195,6 +212,8 @@ fn generate_struct(
 }
 
 struct StructDeserializerGenerator<'s> {
+    /// `true` if generating deserializer for TypeScript
+    is_ts: bool,
     /// Dependencies
     dependent_field_names: FxHashSet<String>,
     /// Preamble
@@ -206,8 +225,9 @@ struct StructDeserializerGenerator<'s> {
 }
 
 impl<'s> StructDeserializerGenerator<'s> {
-    fn new(schema: &'s Schema) -> Self {
+    fn new(is_ts: bool, schema: &'s Schema) -> Self {
         Self {
+            is_ts,
             dependent_field_names: FxHashSet::default(),
             preamble: vec![],
             fields: FxIndexMap::default(),
@@ -263,6 +283,10 @@ impl<'s> StructDeserializerGenerator<'s> {
         struct_def: &StructDef,
         struct_offset: u32,
     ) {
+        if !self.is_ts && field.estree.is_ts {
+            return;
+        }
+
         if should_skip_field(field, self.schema) {
             return;
         }
@@ -348,11 +372,13 @@ impl<'s> StructDeserializerGenerator<'s> {
         let converter = self.schema.meta_by_name(converter_name);
         let raw_deser = converter.estree.raw_deser.as_deref()?;
 
-        let value = THIS_REGEX.replace_all(raw_deser, ThisReplacer::new(self));
+        let value = IF_TS_REGEX.replace_all(raw_deser, IfTsReplacer::new(self.is_ts));
+        let value = THIS_REGEX.replace_all(&value, ThisReplacer::new(self));
         let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(self.schema));
         let value = POS_OFFSET_REGEX
             .replace_all(&value, PosOffsetReplacer::new(self, struct_def, struct_offset));
         let value = value.cow_replace("SOURCE_TEXT", "sourceText");
+
         let value = if let Some((preamble, value)) = value.trim().rsplit_once('\n') {
             self.preamble.push(preamble.to_string());
             value.trim().to_string()
@@ -760,6 +786,30 @@ impl Replacer for PosOffsetReplacer<'_, '_> {
             write_it!(dst, "pos");
         } else {
             write_it!(dst, "pos + {offset}");
+        }
+    }
+}
+
+lazy_static! {
+    static ref IF_TS_REGEX: Regex =
+        Regex::new(r"/\* IF_TS \*/\s*([\s\S]*?)/\* END_IF_TS \*/\s*").unwrap();
+}
+
+struct IfTsReplacer {
+    is_ts: bool,
+}
+
+impl IfTsReplacer {
+    fn new(is_ts: bool) -> Self {
+        Self { is_ts }
+    }
+}
+
+impl Replacer for IfTsReplacer {
+    fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
+        assert_eq!(caps.len(), 2);
+        if self.is_ts {
+            dst.push_str(caps.get(1).unwrap().as_str());
         }
     }
 }

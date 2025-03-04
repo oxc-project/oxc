@@ -312,10 +312,12 @@ impl ESTree for ElisionConverter<'_> {
                 start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
                 end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
                 argument: DESER[BindingPatternKind]( POS_OFFSET<BindingRestElement>.argument.kind ),
+                /* IF_TS */
                 typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<BindingRestElement>.argument.type_annotation
                 ),
                 optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
+                /* END_IF_TS */
             });
         }
         params
@@ -556,19 +558,20 @@ impl ESTree for ImportExpressionArguments<'_> {
         end = DESER[u32](POS_OFFSET.span.end),
         declaration = DESER[Option<Declaration>](POS_OFFSET.declaration),
         specifiers = DESER[Vec<ExportSpecifier>](POS_OFFSET.specifiers),
-        source = DESER[Option<StringLiteral>](POS_OFFSET.source),
-        exportKind = DESER[ImportOrExportKind](POS_OFFSET.export_kind);
+        source = DESER[Option<StringLiteral>](POS_OFFSET.source)/* IF_TS */,
+        exportKind = DESER[ImportOrExportKind](POS_OFFSET.export_kind) /* END_IF_TS */;
 
     if (source !== null) {
         const withClause = deserializeOptionBoxWithClause(POS_OFFSET.with_clause);
         return {
             type: 'ExportNamedDeclaration',
-            start, end, declaration, specifiers, source, exportKind,
+            start, end, declaration, specifiers, source,
+            /* IF_TS */ exportKind, /* END_IF_TS */
             attributes: withClause === null ? [] : withClause.withEntries
         };
     }
 
-    {type: 'ExportNamedDeclaration', start, end, declaration, specifiers, source, exportKind}
+    {type: 'ExportNamedDeclaration', start, end, declaration, specifiers, source /* IF_TS */ , exportKind /* END_IF_TS */ }
 ")]
 pub struct ExportNamedDeclarationConverter<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
 

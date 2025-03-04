@@ -29,8 +29,14 @@ mod generated {
     pub mod assert_layouts;
 }
 
-fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
-    match options.lang.as_deref() {
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum AstType {
+    JavaScript,
+    TypeScript,
+}
+
+fn get_source_and_ast_type(filename: &str, options: &ParserOptions) -> (SourceType, AstType) {
+    let source_type = match options.lang.as_deref() {
         Some("js") => SourceType::mjs(),
         Some("jsx") => SourceType::jsx(),
         Some("ts") => SourceType::ts(),
@@ -45,7 +51,21 @@ fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
             }
             source_type
         }
-    }
+    };
+
+    let ast_type = match options.ast_type.as_deref() {
+        Some("js") => AstType::JavaScript,
+        Some("ts") => AstType::TypeScript,
+        _ => {
+            if source_type.is_javascript() {
+                AstType::JavaScript
+            } else {
+                AstType::TypeScript
+            }
+        }
+    };
+
+    (source_type, ast_type)
 }
 
 fn parse<'a>(
@@ -64,7 +84,7 @@ fn parse<'a>(
 
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
-    let source_type = get_source_type(filename, options);
+    let (source_type, ast_type) = get_source_and_ast_type(filename, options);
     let ret = parse(&allocator, source_type, &source_text, options);
 
     let mut program = ret.program;
@@ -117,8 +137,13 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         }
     }
 
-    let program = program.to_estree_ts_json();
+    let program = match ast_type {
+        AstType::JavaScript => program.to_estree_js_json(),
+        AstType::TypeScript => program.to_estree_ts_json(),
+    };
+
     let module = EcmaScriptModule::from(&module_record);
+
     ParseResult { program, module, comments, errors }
 }
 

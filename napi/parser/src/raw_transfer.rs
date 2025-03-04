@@ -13,7 +13,7 @@ use oxc::{
 };
 
 use crate::{
-    ParserOptions, get_source_type, parse,
+    AstType, ParserOptions, get_source_and_ast_type, parse,
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData},
 };
 
@@ -115,7 +115,7 @@ pub unsafe fn parse_sync_raw(
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator`
     // exist after this.
     let options = options.unwrap_or_default();
-    let source_type = get_source_type(&filename, &options);
+    let (source_type, ast_type) = get_source_and_ast_type(&filename, &options);
 
     let data_ptr = {
         // SAFETY: We checked above that `source_len` does not exceed length of buffer
@@ -157,7 +157,7 @@ pub unsafe fn parse_sync_raw(
         ptr::from_ref(data).cast::<u8>()
     };
 
-    // Write offset of `RawTransferData` into end of buffer
+    // Write offset of `RawTransferData` and `bool` representing AST type into end of buffer
     #[allow(clippy::cast_possible_truncation)]
     let data_offset = data_ptr as u32;
     const METADATA_OFFSET: usize = BUFFER_SIZE - METADATA_SIZE;
@@ -165,6 +165,7 @@ pub unsafe fn parse_sync_raw(
     #[expect(clippy::cast_ptr_alignment)]
     unsafe {
         buffer_ptr.add(METADATA_OFFSET).cast::<u32>().write(data_offset);
+        buffer_ptr.add(METADATA_OFFSET + 4).cast::<bool>().write(ast_type == AstType::TypeScript);
     }
 }
 

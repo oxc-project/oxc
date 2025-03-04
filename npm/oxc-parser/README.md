@@ -41,6 +41,17 @@ Fast mode is best suited for parser plugins, where other parts of your build pip
 
 Please note that turning off fast mode ​incurs​ a small performance overhead.
 
+### ESTree compatibility
+
+When parsing JS or JSX files, the AST returned is fully conformant with the
+[ESTree standard](https://github.com/estree/estree).
+
+When parsing TS or TSX files, the AST has additional properties related to TypeScript syntax.
+These extra properties are broadly (but not entirely) in line with
+[TypeScript ESLint](https://typescript-eslint.io/packages/parser/)'s AST.
+
+If you need all ASTs in the same with-TS-properties format, use the `astType: 'ts'` option.
+
 ### Returns ESM information.
 
 It is likely that you are writing a parser plugin that requires ESM information.

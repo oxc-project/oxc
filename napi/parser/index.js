@@ -1,5 +1,6 @@
 const bindings = require('./bindings.js');
-const deserialize = require('./deserialize.js');
+const deserializeJS = require('./deserialize-js.js');
+const deserializeTS = require('./deserialize-ts.js');
 
 module.exports.ParseResult = bindings.ParseResult;
 module.exports.ExportExportNameKind = bindings.ExportExportNameKind;
@@ -92,7 +93,14 @@ function parseSyncRaw(filename, sourceText, options) {
   // Deserialize.
   // We cannot lazily deserialize in the getters, because the buffer might be re-used to parse
   // another file before the getter is called.
-  const data = deserialize(buffer, sourceText, sourceByteLen);
+
+  // (2 * 1024 * 1024 * 1024 - 12)
+  const astTypeFlagPos = 2147483636;
+  let isJsAst = buffer[astTypeFlagPos] === 0;
+
+  const data = isJsAst
+    ? deserializeJS(buffer, sourceText, sourceByteLen)
+    : deserializeTS(buffer, sourceText, sourceByteLen);
 
   return {
     get program() {

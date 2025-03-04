@@ -143,6 +143,14 @@ export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
   lang?: 'js' | 'jsx' | 'ts' | 'tsx'
   /**
+   * Return an AST which includes TypeScript-related properties, or excludes them.
+   *
+   * `'js'` is default for JS / JSX files.
+   * `'ts'` is default for TS / TSX files.
+   * The type of the file is determined from `lang` option, or extension of provided `filename`.
+   */
+  astType?: 'js' | 'ts'
+  /**
    * Emit `ParenthesizedExpression` in AST.
    *
    * If this option is true, parenthesized expressions are represented by

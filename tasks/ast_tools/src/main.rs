@@ -239,8 +239,9 @@ const AST_MACROS_CRATE_PATH: &str = "crates/oxc_ast_macros";
 /// Path to write TS type definitions to
 const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 
-/// Path to write raw deserializer to
-const RAW_TRANSFER_DESERIALIZER_PATH: &str = "napi/parser/deserialize.js";
+// Paths to write raw deserializer to
+const RAW_TRANSFER_JS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-js.js";
+const RAW_TRANSFER_TS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-ts.js";
 
 /// Path to write CI filter list to
 const GITHUB_WATCH_LIST_PATH: &str = ".github/.generated_ast_watch_list.yml";

@@ -14,6 +14,14 @@ pub struct ParserOptions {
     #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
     pub lang: Option<String>,
 
+    /// Return an AST which includes TypeScript-related properties, or excludes them.
+    ///
+    /// `'js'` is default for JS / JSX files.
+    /// `'ts'` is default for TS / TSX files.
+    /// The type of the file is determined from `lang` option, or extension of provided `filename`.
+    #[napi(ts_type = "'js' | 'ts'")]
+    pub ast_type: Option<String>,
+
     /// Emit `ParenthesizedExpression` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by
