@@ -109,13 +109,13 @@ impl ConfigStoreBuilder {
         }
 
         {
-            let all_rules = builder.cache.borrow();
-
             if !extends.is_empty() {
-                let config_file_path = builder.config.path.as_ref().and_then(|p| p.parent());
+                let config_path = builder.config.path.clone();
+                let config_path_parent = config_path.as_ref().and_then(|p| p.parent());
+
                 for path in &extends {
                     // resolve path relative to config path
-                    let path = match config_file_path {
+                    let path = match config_path_parent {
                         Some(config_file_path) => &config_file_path.join(path),
                         None => path,
                     };
@@ -123,9 +123,16 @@ impl ConfigStoreBuilder {
                     // TODO(perf): use a global config cache to avoid re-parsing the same file multiple times
                     match Oxlintrc::from_file(path) {
                         Ok(extended_config) => {
+                            // TODO(refactor): can we merge this together? seems redundant to use `override_rules` and then
+                            // use `ConfigStoreBuilder`, but we don't have a better way of loading rules from config files other than that.
+                            // Use `override_rules` to apply rule configurations and add/remove rules as needed
                             extended_config
                                 .rules
-                                .override_rules(&mut builder.rules, all_rules.as_slice());
+                                .override_rules(&mut builder.rules, &builder.cache.borrow());
+                            // Use `ConfigStoreBuilder` to load extended config files and then apply rules from those
+                            let extended_config_store =
+                                ConfigStoreBuilder::from_oxlintrc(true, extended_config)?;
+                            builder = builder.with_rules(extended_config_store.rules);
                         }
                         Err(err) => {
                             return Err(ConfigBuilderError::InvalidConfigFile {
@@ -136,6 +143,8 @@ impl ConfigStoreBuilder {
                     }
                 }
             }
+
+            let all_rules = builder.cache.borrow();
 
             oxlintrc_rules.override_rules(&mut builder.rules, all_rules.as_slice());
         }
@@ -182,6 +191,11 @@ impl ConfigStoreBuilder {
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleWithSeverity) -> Self {
         self.rules.insert(rule);
+        self
+    }
+
+    pub(crate) fn with_rules<R: IntoIterator<Item = RuleWithSeverity>>(mut self, rules: R) -> Self {
+        self.rules.extend(rules);
         self
     }
 

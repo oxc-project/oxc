@@ -1022,4 +1022,11 @@ mod test {
         let args = &["--config", "extends_rules_config.json", "console.js"];
         Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_extends_extends_config() {
+        // Check that using a config that extends a config which extends a config works
+        let args = &["--config", "relative_paths/extends_extends_config.json", "console.js"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+    }
 }
