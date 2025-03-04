@@ -79,6 +79,17 @@ declare_oxc_lint!(
     /// })
     /// ```
     ///
+    /// ```js
+    /// myPromise().finally(
+    ///   function() {
+    ///     return Promise.reject("err")
+    /// })
+    /// ```
+    ///
+    /// ```js
+    /// myPromise().finally(() => Promise.resolve(4))
+    /// ```
+    ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// myPromise().then(() => 4)
@@ -93,6 +104,10 @@ declare_oxc_lint!(
     ///   function() {
     ///     throw "err"
     /// })
+    /// ```
+    ///
+    /// ```js
+    /// myPromise().finally(() => 4)
     /// ```
     ///
     /// ### Options
@@ -316,7 +331,7 @@ fn inside_then_or_catch<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>)
                     .callee
                     .as_member_expression()
                     .and_then(MemberExpression::static_property_name),
-                Some("then" | "catch")
+                Some("then" | "catch" | "finally")
             )
         })
     })
@@ -337,6 +352,8 @@ fn test() {
         ("doThing().then(null, function() { throw 4 })", None),
         ("doThing().catch(null, function() { return 4 })", None),
         ("doThing().catch(null, function() { throw 4 })", None),
+        ("doThing().then(() => {}).finally(() => 4)", None),
+        (r#"doThing().then(() => {}).finally(() => { throw "err" })"#, None),
         ("doThing().then(function() { return Promise.all([a,b,c]) })", None),
         ("doThing().then(() => 4)", None),
         ("doThing().then(() => { throw 4 })", None),
@@ -351,6 +368,11 @@ fn test() {
         ("doThing().then(function() { return })", None),
         (
             "doThing().then(function() { return Promise.reject(4) })",
+            Some(serde_json::json!([{ "allowReject": true }])),
+        ),
+        (r#"doThing().then(function () {}).finally(function () { Promise.reject("err") })"#, None),
+        (
+            r#"doThing().then(function () {}).finally(function () { return Promise.reject("err") })"#,
             Some(serde_json::json!([{ "allowReject": true }])),
         ),
         ("doThing().then((function() { return Promise.resolve(4) }).toString())", None),
@@ -378,6 +400,11 @@ fn test() {
         ("doThing().then(function() { return Promise.reject(4) })", None),
         ("doThing().then(null, function() { return Promise.reject(4) })", None),
         ("doThing().catch(function() { return Promise.reject(4) })", None),
+        ("doThing().finally(() => Promise.resolve(4))", None),
+        (
+            r#"doThing().then(function () {}).finally(function () { return Promise.reject("err") })"#,
+            None,
+        ),
         (
             r#"doThing().then(
                  function(x) {
