@@ -10,6 +10,7 @@ use oxc_syntax::{
     scope::ScopeId,
     symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
+use rustc_hash::FxHashSet;
 
 /// Symbol Table
 ///
@@ -27,6 +28,9 @@ pub struct SymbolTable {
     redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
     pub references: IndexVec<ReferenceId, Reference>,
+
+    /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
+    pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
     inner: SymbolTableCell,
 }
@@ -47,6 +51,7 @@ impl Default for SymbolTable {
             declarations: IndexVec::new(),
             redeclarations: IndexVec::new(),
             references: IndexVec::new(),
+            no_side_effects: FxHashSet::default(),
             inner: SymbolTableCell::new(allocator, |allocator| SymbolTableInner {
                 names: ArenaVec::new_in(allocator),
                 resolved_references: ArenaVec::new_in(allocator),
@@ -331,6 +336,10 @@ impl SymbolTable {
             inner.resolved_references.reserve(additional_symbols);
         });
         self.references.reserve(additional_references);
+    }
+
+    pub fn no_side_effects(&self) -> &FxHashSet<SymbolId> {
+        &self.no_side_effects
     }
 }
 

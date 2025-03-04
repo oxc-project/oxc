@@ -901,4 +901,31 @@ mod test {
         test("/* @__PURE__ */ (() => x)()", "");
         test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
     }
+
+    #[test]
+    fn no_side_effects() {
+        fn check(source_text: &str) {
+            let input = format!("{source_text}; f()");
+            test(&input, source_text);
+
+            let input = format!("{source_text}; new f()");
+            test(&input, source_text);
+
+            // TODO https://github.com/evanw/esbuild/issues/3511
+            // let input = format!("{source_text}; html``");
+            // test(&input, source_text);
+        }
+        check("/* @__NO_SIDE_EFFECTS__ */ function f() {}");
+        check("/* @__NO_SIDE_EFFECTS__ */ export function f() {}");
+        check("/* @__NO_SIDE_EFFECTS__ */ export default function f() {}");
+        check("export default /* @__NO_SIDE_EFFECTS__ */ function f() {}");
+        check("const f = /* @__NO_SIDE_EFFECTS__ */ function() {}");
+        check("export const f = /* @__NO_SIDE_EFFECTS__ */ function() {}");
+        check("/* @__NO_SIDE_EFFECTS__ */ const f = function() {}");
+        check("/* @__NO_SIDE_EFFECTS__ */ export const f = function() {}");
+        check("const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
+        check("export const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
+        check("/* @__NO_SIDE_EFFECTS__ */ const f = () => {}");
+        check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
+    }
 }

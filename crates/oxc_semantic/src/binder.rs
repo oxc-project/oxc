@@ -39,58 +39,78 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
             });
-            return;
-        }
+        } else {
+            // ------------------ var hosting ------------------
+            let mut target_scope_id = builder.current_scope_id;
+            let mut var_scope_ids = vec![];
 
-        // ------------------ var hosting ------------------
-        let mut target_scope_id = builder.current_scope_id;
-        let mut var_scope_ids = vec![];
-
-        // Collect all scopes where variable hoisting can occur
-        for scope_id in builder.scope.ancestors(target_scope_id) {
-            let flags = builder.scope.get_flags(scope_id);
-            if flags.is_var() {
-                target_scope_id = scope_id;
-                break;
-            }
-            var_scope_ids.push(scope_id);
-        }
-
-        self.id.bound_names(&mut |ident| {
-            let span = ident.span;
-            let name = ident.name;
-            let mut declared_symbol_id = None;
-
-            for &scope_id in &var_scope_ids {
-                if let Some(symbol_id) =
-                    builder.check_redeclaration(scope_id, span, &name, excludes, true)
-                {
-                    builder.add_redeclare_variable(symbol_id, span);
-                    declared_symbol_id = Some(symbol_id);
-
-                    // remove current scope binding and add to target scope
-                    // avoid same symbols appear in multi-scopes
-                    builder.scope.remove_binding(scope_id, &name);
-                    builder.scope.add_binding(target_scope_id, &name, symbol_id);
-                    builder.symbols.scope_ids[symbol_id] = target_scope_id;
+            // Collect all scopes where variable hoisting can occur
+            for scope_id in builder.scope.ancestors(target_scope_id) {
+                let flags = builder.scope.get_flags(scope_id);
+                if flags.is_var() {
+                    target_scope_id = scope_id;
                     break;
                 }
+                var_scope_ids.push(scope_id);
             }
 
-            // If a variable is already declared in the hoisted scopes,
-            // we don't need to create another symbol with the same name
-            // to make sure they point to the same symbol.
-            let symbol_id = declared_symbol_id.unwrap_or_else(|| {
-                builder.declare_symbol_on_scope(span, &name, target_scope_id, includes, excludes)
+            self.id.bound_names(&mut |ident| {
+                let span = ident.span;
+                let name = ident.name;
+                let mut declared_symbol_id = None;
+
+                for &scope_id in &var_scope_ids {
+                    if let Some(symbol_id) =
+                        builder.check_redeclaration(scope_id, span, &name, excludes, true)
+                    {
+                        builder.add_redeclare_variable(symbol_id, span);
+                        declared_symbol_id = Some(symbol_id);
+
+                        // remove current scope binding and add to target scope
+                        // avoid same symbols appear in multi-scopes
+                        builder.scope.remove_binding(scope_id, &name);
+                        builder.scope.add_binding(target_scope_id, &name, symbol_id);
+                        builder.symbols.scope_ids[symbol_id] = target_scope_id;
+                        break;
+                    }
+                }
+
+                // If a variable is already declared in the hoisted scopes,
+                // we don't need to create another symbol with the same name
+                // to make sure they point to the same symbol.
+                let symbol_id = declared_symbol_id.unwrap_or_else(|| {
+                    builder.declare_symbol_on_scope(
+                        span,
+                        &name,
+                        target_scope_id,
+                        includes,
+                        excludes,
+                    )
+                });
+                ident.symbol_id.set(Some(symbol_id));
+
+                // Finally, add the variable to all hoisted scopes
+                // to support redeclaration checks when declaring variables with the same name later.
+                for &scope_id in &var_scope_ids {
+                    builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+                }
             });
-            ident.symbol_id.set(Some(symbol_id));
+        }
 
-            // Finally, add the variable to all hoisted scopes
-            // to support redeclaration checks when declaring variables with the same name later.
-            for &scope_id in &var_scope_ids {
-                builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+        // Save `@__NO_SIDE_EFFECTS__` for function initializers.
+        if let BindingPatternKind::BindingIdentifier(id) = &self.id.kind {
+            if let Some(symbol_id) = id.symbol_id.get() {
+                if let Some(init) = &self.init {
+                    if match init {
+                        Expression::FunctionExpression(func) => func.pure,
+                        Expression::ArrowFunctionExpression(func) => func.pure,
+                        _ => false,
+                    } {
+                        builder.symbols.no_side_effects.insert(symbol_id);
+                    }
+                }
             }
-        });
+        }
     }
 }
 
@@ -201,6 +221,13 @@ impl<'a> Binder<'a> for Function<'a> {
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
                 PropertyKind::Init => {}
             };
+        }
+
+        // Save `@__NO_SIDE_EFFECTS__`
+        if self.pure {
+            if let Some(symbold_id) = self.id.as_ref().and_then(|id| id.symbol_id.get()) {
+                builder.symbols.no_side_effects.insert(symbold_id);
+            }
         }
     }
 }

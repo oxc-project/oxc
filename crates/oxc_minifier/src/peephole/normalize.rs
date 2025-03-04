@@ -92,6 +92,14 @@ impl<'a> Traverse<'a> for Normalize {
             *expr = e;
         }
     }
+
+    fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::set_no_side_effects(&mut e.pure, &e.callee, ctx);
+    }
+
+    fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::set_no_side_effects(&mut e.pure, &e.callee, ctx);
+    }
 }
 
 impl<'a> Normalize {
@@ -205,6 +213,20 @@ impl<'a> Normalize {
             return;
         }
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+    }
+
+    fn set_no_side_effects(pure: &mut bool, callee: &Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !*pure {
+            if let Some(ident) = callee.get_identifier_reference() {
+                if let Some(symbol_id) =
+                    ctx.symbols().get_reference(ident.reference_id()).symbol_id()
+                {
+                    if ctx.symbols().no_side_effects().contains(&symbol_id) {
+                        *pure = true;
+                    }
+                }
+            }
+        }
     }
 }
 
