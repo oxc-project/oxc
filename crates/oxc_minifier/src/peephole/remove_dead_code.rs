@@ -379,14 +379,6 @@ impl<'a, 'b> PeepholeOptimizations {
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
-        let parent = ctx.ancestry.parent();
-        if parent.is_tagged_template_expression()
-            || matches!(parent, Ancestor::CallExpressionCallee(_))
-        {
-            return None;
-        }
-
         expr.test.evaluate_value_to_boolean(&ctx).map(|v| {
             if expr.test.may_have_side_effects(&ctx) {
                 // "(a, true) ? b : c" => "a, b"
@@ -404,7 +396,31 @@ impl<'a, 'b> PeepholeOptimizations {
                 ]);
                 ctx.ast.expression_sequence(expr.span, exprs)
             } else {
-                ctx.ast.move_expression(if v { &mut expr.consequent } else { &mut expr.alternate })
+                let result_expr = ctx.ast.move_expression(if v {
+                    &mut expr.consequent
+                } else {
+                    &mut expr.alternate
+                });
+
+                let should_keep_as_sequence_expr =
+                    Self::should_keep_indirect_access(&result_expr, ctx);
+                // "(1 ? a.b : 0)()" => "(0, a.b)()"
+                if should_keep_as_sequence_expr {
+                    ctx.ast.expression_sequence(
+                        expr.span,
+                        ctx.ast.vec_from_iter([
+                            ctx.ast.expression_numeric_literal(
+                                expr.span,
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                            ),
+                            result_expr,
+                        ]),
+                    )
+                } else {
+                    result_expr
+                }
             }
         })
     }
@@ -414,10 +430,10 @@ impl<'a, 'b> PeepholeOptimizations {
         sequence_expr: &mut SequenceExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        let should_keep_as_sequence_expr = matches!(
-            ctx.parent(),
-            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
-        );
+        let should_keep_as_sequence_expr = sequence_expr
+            .expressions
+            .last()
+            .is_some_and(|last_expr| Self::should_keep_indirect_access(last_expr, ctx));
         if should_keep_as_sequence_expr
             && sequence_expr.expressions.len() == 2
             && sequence_expr.expressions.first().unwrap().is_number_0()
@@ -454,6 +470,22 @@ impl<'a, 'b> PeepholeOptimizations {
             self.mark_current_function_as_changed();
         }
         None
+    }
+
+    /// Whether the indirect access should be kept.
+    /// For example, `(0, foo.bar)()` should not be transformed to `foo.bar()`.
+    /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
+    ///
+    /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
+    pub fn should_keep_indirect_access(access_value: &Expression<'a>, ctx: Ctx<'a, 'b>) -> bool {
+        matches!(
+            ctx.parent(),
+            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
+        ) && match access_value {
+            Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
+            match_member_expression!(Expression) => true,
+            _ => false,
+        }
     }
 }
 
@@ -604,6 +636,11 @@ mod test {
         test("false ? foo() : bar()", "bar()");
         test_same("foo() ? bar() : baz()");
         test("foo && false ? foo() : bar()", "(foo, bar());");
+
+        test("var a; (true ? a : 0)()", "var a; a()");
+        test("var a; (true ? a.b : 0)()", "var a; (0, a.b)()");
+        test("var a; (false ? 0 : a)()", "var a; a()");
+        test("var a; (false ? 0 : a.b)()", "var a; (0, a.b)()");
     }
 
     #[test]
@@ -635,10 +672,20 @@ mod test {
     #[test]
     fn remove_unused_expressions_in_sequence() {
         test("true, foo();", "foo();");
-        test("(true, foo)();", "(0, foo)();");
-        test("(true, true, foo)();", "(0, foo)();");
-        test("var foo; (true, foo)();", "var foo; (0, foo)();");
-        test("var foo; (true, true, foo)();", "var foo; (0, foo)();");
+        test("(0, foo)();", "foo();");
+        test("(0, foo)``;", "foo``;");
+        test("(0, foo)?.();", "foo?.();");
+        test_same("(0, eval)();"); // this can be compressed to `eval?.()`
+        test_same("(0, eval)``;"); // this can be compressed to `eval?.()`
+        test_same("(0, eval)?.();"); // this can be compressed to `eval?.()`
+        test("var eval; (0, eval)();", "var eval; eval();");
+        test_same("(0, foo.bar)();");
+        test_same("(0, foo.bar)``;");
+        test_same("(0, foo.bar)?.();");
+        test("(true, foo.bar)();", "(0, foo.bar)();");
+        test("(true, true, foo.bar)();", "(0, foo.bar)();");
+        test("var foo; (true, foo.bar)();", "var foo; (0, foo.bar)();");
+        test("var foo; (true, true, foo.bar)();", "var foo; (0, foo.bar)();");
     }
 
     #[test]

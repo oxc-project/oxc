@@ -6,7 +6,6 @@ use oxc_ecmascript::{
 };
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
-use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -126,12 +125,22 @@ impl<'a> PeepholeOptimizations {
             if if lval { op.is_or() } else { op.is_and() } {
                 return Some(ctx.ast.move_expression(&mut logical_expr.left));
             } else if !left.may_have_side_effects(&ctx) {
-                let parent = ctx.ancestry.parent();
-                // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
-                if parent.is_tagged_template_expression()
-                    || matches!(parent, Ancestor::CallExpressionCallee(_))
-                {
-                    return None;
+                let should_keep_indirect_access =
+                    Self::should_keep_indirect_access(&logical_expr.right, ctx);
+                // (true && o.f) => (0, o.f)
+                if should_keep_indirect_access {
+                    return Some(ctx.ast.expression_sequence(
+                        logical_expr.span,
+                        ctx.ast.vec_from_array([
+                            ctx.ast.expression_numeric_literal(
+                                logical_expr.left.span(),
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                            ),
+                            ctx.ast.move_expression(&mut logical_expr.right),
+                        ]),
+                    ));
                 }
                 // (FALSE || x) => x
                 // (TRUE && x) => x
@@ -191,6 +200,23 @@ impl<'a> PeepholeOptimizations {
                     ]);
                     ctx.ast.expression_sequence(logical_expr.span, expressions)
                 } else {
+                    let should_keep_indirect_access =
+                        Self::should_keep_indirect_access(&logical_expr.right, ctx);
+                    // (null ?? o.f) => (0, o.f)
+                    if should_keep_indirect_access {
+                        return Some(ctx.ast.expression_sequence(
+                            logical_expr.span,
+                            ctx.ast.vec_from_array([
+                                ctx.ast.expression_numeric_literal(
+                                    logical_expr.left.span(),
+                                    0.0,
+                                    None,
+                                    NumberBase::Decimal,
+                                ),
+                                ctx.ast.move_expression(&mut logical_expr.right),
+                            ]),
+                        ));
+                    }
                     // nullish condition => this expression evaluates to the right side.
                     ctx.ast.move_expression(&mut logical_expr.right)
                 })
@@ -200,6 +226,23 @@ impl<'a> PeepholeOptimizations {
             | ValueType::String
             | ValueType::Boolean
             | ValueType::Object => {
+                let should_keep_indirect_access =
+                    Self::should_keep_indirect_access(&logical_expr.left, ctx);
+                // (o.f ?? something) => (0, o.f)
+                if should_keep_indirect_access {
+                    return Some(ctx.ast.expression_sequence(
+                        logical_expr.span,
+                        ctx.ast.vec_from_array([
+                            ctx.ast.expression_numeric_literal(
+                                logical_expr.right.span(),
+                                0.0,
+                                None,
+                                NumberBase::Decimal,
+                            ),
+                            ctx.ast.move_expression(&mut logical_expr.left),
+                        ]),
+                    ));
+                }
                 // non-nullish condition => this expression evaluates to the left side.
                 Some(ctx.ast.move_expression(&mut logical_expr.left))
             }
@@ -1274,6 +1317,11 @@ mod test {
         // 1 || 0 == 1, but true =/= 1
         fold("x = foo() && true || bar()", "x = foo() && !0 || bar()");
         fold("foo() && true || bar()", "foo() && !0 || bar()");
+
+        test("var y; x = (true && y)()", "var y; x = y()");
+        test("var y; x = (true && y.z)()", "var y; x = (0, y.z)()");
+        test("var y; x = (false || y)()", "var y; x = y()");
+        test("var y; x = (false || y.z)()", "var y; x = (0, y.z)()");
     }
 
     #[test]
@@ -1315,6 +1363,11 @@ mod test {
 
         fold("a() ?? (1 ?? b())", "a() ?? 1");
         fold("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
+
+        test_same("var y; x = (y ?? 1)()"); // can compress to "var y; x = y()" if y is not null or undefined
+        test_same("var y; x = (y.z ?? 1)()"); // "var y; x = (0, y.z)()" if y is not null or undefined
+        test("var y; x = (null ?? y)()", "var y; x = y()");
+        test("var y; x = (null ?? y.z)()", "var y; x = (0, y.z)()");
     }
 
     #[test]
