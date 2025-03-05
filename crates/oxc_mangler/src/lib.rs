@@ -1,4 +1,4 @@
-use std::{iter, ops::Deref};
+use std::iter;
 
 use fixedbitset::FixedBitSet;
 use itertools::Itertools;
@@ -7,6 +7,7 @@ use rustc_hash::FxHashSet;
 use base54::base54;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
+use oxc_data_structures::inline_string::InlineString;
 use oxc_index::Idx;
 use oxc_semantic::{ScopeTree, Semantic, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::Atom;
@@ -184,7 +185,7 @@ impl Mangler {
 
     fn build_with_symbols_and_scopes_impl<
         const CAPACITY: usize,
-        G: Fn(usize) -> InlineString<CAPACITY>,
+        G: Fn(usize) -> InlineString<CAPACITY, u32>,
     >(
         self,
         semantic: Semantic<'_>,
@@ -450,78 +451,10 @@ fn is_keyword(s: &str) -> bool {
 }
 
 // Maximum length of string is 25 (`slot_18446744073709551615` for `u64::MAX`)
-// but set `CAPACITY` as 28 so the total size of `InlineString` is 32, including the `len` field.
-fn debug_name(n: usize) -> InlineString<28> {
+// but set `CAPACITY` as 28 so the total size of `InlineString` is 32, including the `u32` length.
+fn debug_name(n: usize) -> InlineString<28, u32> {
+    // Using `format!` here allocates a string unnecessarily.
+    // But this function is not for use in production, so let's not worry about it.
+    // We shouldn't resort to unsafe code, when it's not critical for performance.
     InlineString::from_str(&format!("slot_{n}"))
-}
-
-/// Short inline string.
-///
-/// `CAPACITY` determines the maximum length of the string.
-#[repr(align(16))]
-pub(crate) struct InlineString<const CAPACITY: usize> {
-    len: u32,
-    bytes: [u8; CAPACITY],
-}
-
-impl<const CAPACITY: usize> InlineString<CAPACITY> {
-    /// Create empty [`InlineString`].
-    #[inline]
-    fn new() -> Self {
-        const { assert!(CAPACITY <= u32::MAX as usize) };
-
-        Self { bytes: [0; CAPACITY], len: 0 }
-    }
-
-    /// Create [`InlineString`] from `&str`.
-    ///
-    /// # Panics
-    /// Panics if `s.len() > CAPACITY`.
-    fn from_str(s: &str) -> Self {
-        let mut bytes = [0; CAPACITY];
-        let slice = &mut bytes[..s.len()];
-        slice.copy_from_slice(s.as_bytes());
-        Self { bytes, len: u32::try_from(s.len()).unwrap() }
-    }
-
-    /// Push a byte to the string.
-    ///
-    /// # SAFETY
-    /// * Must not push more than `CAPACITY` bytes.
-    /// * `byte` must be < 128 (an ASCII character).
-    #[inline]
-    unsafe fn push_unchecked(&mut self, byte: u8) {
-        debug_assert!((self.len as usize) < CAPACITY);
-        debug_assert!(byte.is_ascii());
-
-        // SAFETY: Caller guarantees not pushing more than `CAPACITY` bytes, so `len` is in bounds
-        unsafe { *self.bytes.get_unchecked_mut(self.len as usize) = byte };
-        self.len += 1;
-    }
-
-    /// Get length of string as `u32`.
-    #[inline]
-    fn len(&self) -> u32 {
-        self.len
-    }
-
-    /// Get string as `&str` slice.
-    #[inline]
-    fn as_str(&self) -> &str {
-        // SAFETY: If safety conditions of `push_unchecked` have been upheld,
-        // slice cannot be out of bounds, and contents of that slice is a valid UTF-8 string
-        unsafe {
-            let slice = self.bytes.get_unchecked(..self.len as usize);
-            std::str::from_utf8_unchecked(slice)
-        }
-    }
-}
-
-impl<const CAPACITY: usize> Deref for InlineString<CAPACITY> {
-    type Target = str;
-
-    #[inline]
-    fn deref(&self) -> &str {
-        self.as_str()
-    }
 }

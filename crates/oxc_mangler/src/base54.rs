@@ -1,4 +1,4 @@
-use crate::InlineString;
+use oxc_data_structures::inline_string::InlineString;
 
 #[repr(C, align(64))]
 struct Aligned64([u8; 64]);
@@ -38,7 +38,7 @@ const BASE54_CHARS: Aligned64 =
 // Then initializing the `InlineString` is a single `xmm` set, and with luck it'll sit in a register
 // throughout this function.
 #[expect(clippy::items_after_statements)]
-pub fn base54(n: usize) -> InlineString<12> {
+pub fn base54(n: usize) -> InlineString<12, u32> {
     let mut str = InlineString::new();
 
     let mut num = n;
