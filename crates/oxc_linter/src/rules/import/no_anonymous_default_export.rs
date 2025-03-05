@@ -98,7 +98,7 @@ declare_oxc_lint!(
     /// By default, all types of anonymous default exports are forbidden,
     /// but any types can be selectively allowed by toggling them on in the options.
     /// ```json
-    /// "oxc/import/no-anonymous-default-export": ["error", {
+    /// "import/no-anonymous-default-export": ["error", {
     ///    "allowArray": false,
     ///    "allowArrowFunction": false,
     ///    "allowAnonymousClass": false,
@@ -157,24 +157,20 @@ impl Rule for NoAnonymousDefaultExport {
         };
         match &export_decl.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(func_decl)
-                if !self.allow_anonymous_function =>
+                if !self.allow_anonymous_function && func_decl.id.is_none() =>
             {
-                if func_decl.id.is_none() {
-                    ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                        export_decl.span,
-                        "Unexpected default export of anonymous function",
-                    ));
-                }
+                ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                    export_decl.span,
+                    "Unexpected default export of anonymous function",
+                ));
             }
             ExportDefaultDeclarationKind::ClassDeclaration(class_decl)
-                if !self.allow_anonymous_class =>
+                if !self.allow_anonymous_class && class_decl.id.is_none() =>
             {
-                if class_decl.id.is_none() {
-                    ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                        export_decl.span,
-                        "Unexpected default export of anonymous class",
-                    ));
-                }
+                ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                    export_decl.span,
+                    "Unexpected default export of anonymous class",
+                ));
             }
             ExportDefaultDeclarationKind::ArrowFunctionExpression(_)
                 if !self.allow_arrow_function =>
