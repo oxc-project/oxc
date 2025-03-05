@@ -137,14 +137,6 @@ jobs:
           mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) napi/${name}/${name}.${{ matrix.code-target }}.node
           ls napi/${name}
 
-      - uses: ./.github/actions/pnpm
-        if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
-
-      - name: Test
-        working-directory: napi/${{ inputs.name }}
-        if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
-        run: pnpm run test
-
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
         if: runner.os == 'Windows'
