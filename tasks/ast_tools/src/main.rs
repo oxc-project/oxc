@@ -243,8 +243,8 @@ const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 const RAW_TRANSFER_JS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-js.js";
 const RAW_TRANSFER_TS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-ts.js";
 
-/// Path to write CI filter list to
-const GITHUB_WATCH_LIST_PATH: &str = ".github/.generated_ast_watch_list.yml";
+/// Path to write AST changes filter list to
+const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_list.yml";
 
 /// Derives (for use with `#[generate_derive]`)
 const DERIVES: &[&(dyn Derive + Sync)] = &[
@@ -353,7 +353,7 @@ fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
         .iter()
         .copied()
         .chain(outputs.iter().map(|output| output.path.as_str()))
-        .chain(["tasks/ast_tools/src/**", GITHUB_WATCH_LIST_PATH])
+        .chain(["tasks/ast_tools/src/**", AST_CHANGES_WATCH_LIST_PATH])
         .collect::<Vec<_>>();
     paths.sort_unstable();
 
@@ -364,7 +364,7 @@ fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
 
     log_success!();
 
-    Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
+    Output::Yaml { path: AST_CHANGES_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
 }
 
 /// Generate function for proc macro in `oxc_ast_macros` crate.

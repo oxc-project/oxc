@@ -2,7 +2,7 @@
 # To edit this generated file you have to edit `tasks/ast_tools/src/main.rs`
 
 src:
-  - '.github/.generated_ast_watch_list.yml'
+  - '.github/generated/ast_changes_watch_list.yml'
   - 'crates/oxc_ast/src/ast/comment.rs'
   - 'crates/oxc_ast/src/ast/js.rs'
   - 'crates/oxc_ast/src/ast/jsx.rs'

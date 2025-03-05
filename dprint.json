@@ -24,7 +24,7 @@
     "npm/oxlint/configuration_schema.json",
     "npm/oxc-wasm/**",
     "npm/runtime/src",
-    ".github/.generated_ast_watch_list.yml"
+    ".github/generated/ast_changes_watch_list.yml"
   ],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.93.3.wasm",
