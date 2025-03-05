@@ -60,101 +60,58 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            code-target: win32-x64-msvc
-
           - os: windows-latest
             target: aarch64-pc-windows-msvc
-            code-target: win32-arm64-msvc
-
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            code-target: linux-x64-gnu
-
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            code-target: linux-arm64-gnu
-
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            code-target: linux-x64-musl
-
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            code-target: linux-arm64-musl
-
-          - os: macos-13
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+          - os: macos-latest
             target: x86_64-apple-darwin
-            code-target: darwin-x64
-
-          - os: macos-14 # M1
+          - os: macos-latest
             target: aarch64-apple-darwin
-            code-target: darwin-arm64
+          - os: ubuntu-latest
+            target: wasm32-wasip1
+
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      ### install musl dependencies ###
+      - uses: ./.github/actions/pnpm
 
-      - uses: mlugg/setup-zig@a67e68dc5c8281d9608136d3d7ca1b282213e4ac # v1.2.1
+      - run: rustup target add ${{ matrix.target }}
+
+      - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
         if: ${{ contains(matrix.target, 'musl') }}
         with:
-          version: 0.11.0
+          version: 0.13.0
 
-      - name: Install cargo-zigbuild
+      - name: Build with zig cross
         if: ${{ contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@3c8fc6eaa5fcff049bb133c1f540c6c2287a191f # v2.49.10
+        working-directory: napi/${{ inputs.name }}
+        run: pnpm build -x --target ${{ matrix.target }}
+
+      - name: Build with napi cross
+        if: ${{ contains(matrix.target, 'gnu') }}
+        working-directory: napi/${{ inputs.name }}
+        run: pnpm build --use-napi-cross --target ${{ matrix.target }}
+
+      - name: Build
+        if: ${{ !contains(matrix.target, 'gnu') && !contains(matrix.target, 'musl') }}
+        working-directory: napi/${{ inputs.name }}
+        run: pnpm build --target ${{ matrix.target }}
+
+      - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
-          tool: cargo-zigbuild
-
-      ### install non-musl dependencies ###
-
-      - name: Install cross
-        if: ${{ !contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@3c8fc6eaa5fcff049bb133c1f540c6c2287a191f # v2.49.10
-        with:
-          tool: cross
-
-      ### Build
-
-      - name: Add Rust Target
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Build with cross
-        if: ${{ !contains(matrix.target, 'musl') }}
-        run: cross build --release -p oxc_${name}_napi --target=${{ matrix.target }}
-
-      - name: Build with zig
-        if: ${{ contains(matrix.target, 'musl') }}
-        env:
-          RUSTFLAGS: "-C target-feature=-crt-static"
-        run: cargo zigbuild --release -p oxc_${name}_napi --target=${{ matrix.target }}
-
-      ### Build Done
-
-      - name: Move file on ${{ matrix.os }}
-        run: |
-          shopt -s extglob
-          ls target/${{ matrix.target }}/release/*.@(so|dll|dylib)
-          mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) napi/${name}/${name}.${{ matrix.code-target }}.node
-          ls napi/${name}
-
-      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binary
-        if: runner.os == 'Windows'
-        run: 7z a ${{ matrix.code-target }}.zip napi/${name}/${name}.${{ matrix.code-target }}.node
-
-      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binary
-        if: runner.os != 'Windows'
-        run: tar czf ${{ matrix.code-target }}.tar.gz napi/${name}/${name}.${{ matrix.code-target }}.node
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
-        with:
-          if-no-files-found: error
-          name: binaries-${{ matrix.code-target }}
+          name: bindings-${{ matrix.target }}
           path: |
-            *.zip
-            *.tar.gz
+            napi/${{ inputs.name }}/*.node
+            napi/${{ inputs.name }}/*.wasm
 
   publish:
     name: Publish NAPI
@@ -165,46 +122,73 @@ jobs:
       id-token: write # for `pnpm publish --provenance`
     env:
       name: ${{ inputs.name }}
+      package_json_path: npm/oxc-${{ inputs.name }}/package.json
+      npm_dir: release-dir
+      PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - uses: ./.github/actions/pnpm
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
-          merge-multiple: true
+          path: artifacts
 
-      - name: Unzip
-        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
-        with:
-          args: unzip -qq *.zip -d .
+      - run: mkdir -p release-dir
 
-      - name: Untar
-        run: ls *.gz | xargs -i tar xvf {}
+      - run: pnpm napi create-npm-dirs --package-json-path ${package_json_path} --npm-dir ${npm_dir}
 
-      - name: Generate npm packages
+      - run: pnpm napi artifacts --package-json-path ${package_json_path} --build-output-dir napi/${name} --npm-dir ${npm_dir}
+
+      - name: Copy files
         run: |
-          ls
-          ls napi/${name}
-          node npm/oxc-${name}/scripts/generate-packages.mjs
-          cat npm/oxc-${name}/package.json
-          for package in npm/oxc-${name}*
+          jq -r '.files[]' ${package_json_path} | while read -r file ; do
+            cp napi/${name}/${file} npm/oxc-${name}/${file}
+          done
+
+      - run: pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_json_path} --npm-dir ${npm_dir} --dry-run
+
+      - name: Check Publish
+        run: |
+          # Check subpackages
+          for package in ${npm_dir}/*
           do
+            echo $package
             ls $package
             cat $package/package.json
-            echo '----'
+            # Check publish files exist
+            jq -r '.files[]' $package/package.json | while read -r file ; do
+              if ! [ -f $package/$file ] ; then
+                echo "File does not exist." $package/$file
+                exit 1
+              fi
+            done
+            pnpm publish $package/ ${PUBLISH_FLAGS} --dry-run
+            echo ''
           done
 
-      - name: Publish npm packages as latest
+          # Check root package
+          echo ${package_json_path}
+          ls npm/oxc-${name}
+          cat ${package_json_path}
+          # Check publish files exist
+          jq -r '.files[]' ${package_json_path} | while read -r file ; do
+            if ! [ -f npm/oxc-${name}/$file ]; then
+              echo "File does not exist." npm/oxc-${name}/$file
+              exit 1
+            fi
+          done
+          pnpm publish npm/oxc-${name}/ ${PUBLISH_FLAGS} --dry-run
+
+      - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
-          # publish subpackages first
-          for package in npm/oxc-${name}-*
+          # Publish subpackages first
+          for package in ${npm_dir}/*
           do
-            pnpm publish $package/ --provenance --access public --no-git-checks
+            pnpm publish $package/ ${PUBLISH_FLAGS}
           done
+
           # publish root package last
-          pnpm publish npm/oxc-${name}/ --provenance --access public --no-git-checks
+          pnpm publish npm/oxc-${name}/ ${PUBLISH_FLAGS}

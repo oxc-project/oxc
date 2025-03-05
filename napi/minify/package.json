@@ -2,22 +2,9 @@
   "name": "@oxc-minify/binding",
   "private": true,
   "scripts": {
-    "build-dev": "napi build --no-dts-cache --platform",
-    "build": "napi build --no-dts-cache --platform --release",
+    "build-dev": "napi build --package-json-path ../../npm/oxc-minify/package.json --no-dts-cache --platform",
+    "build": "pnpm run build-dev --release",
     "test": "vitest --typecheck run ./test && tsc"
-  },
-  "napi": {
-    "binaryName": "minify",
-    "targets": [
-      "x86_64-pc-windows-msvc",
-      "aarch64-pc-windows-msvc",
-      "x86_64-unknown-linux-gnu",
-      "aarch64-unknown-linux-gnu",
-      "x86_64-unknown-linux-musl",
-      "aarch64-unknown-linux-musl",
-      "x86_64-apple-darwin",
-      "aarch64-apple-darwin"
-    ]
   },
   "devDependencies": {
     "vitest": "catalog:"
