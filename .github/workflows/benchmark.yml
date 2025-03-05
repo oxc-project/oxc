@@ -159,3 +159,65 @@ jobs:
         with:
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: cargo codspeed run
+
+  # Build NAPI parser
+  build-parser-napi:
+    name: Build NAPI parser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          cache-key: benchmark-parser-napi
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - uses: ./.github/actions/pnpm
+
+      - name: Build benchmark
+        run: |
+          cd napi/parser;
+          pnpm run build;
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          if-no-files-found: error
+          name: benchmark-parser-napi
+          path: ./napi/parser/parser.*.node
+          retention-days: 1
+
+  # Run NAPI parser benchmark.
+  # Shard into multiple jobs as it's so slow.
+  benchmark-parser-napi:
+    name: Benchmark NAPI parser
+    needs: build-parser-napi
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Skip the slowest benchmarks
+        shard: [1, 3, 4, 5, 6, 7]
+    steps:
+      - name: Checkout Branch
+        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Download Binary
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: benchmark-parser-napi
+          path: ./napi/parser
+
+      - uses: ./.github/actions/pnpm
+
+      - name: Run benchmark
+        uses: CodSpeedHQ/action@63ae6025a0ffee97d7736a37c9192dbd6ed4e75f # v3.4.0
+        timeout-minutes: 30
+        env:
+          SHARD: ${{ matrix.shard }}
+        with:
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: |
+            mkdir -p target;
+            cd napi/parser;
+            pnpm run bench;

@@ -4,13 +4,27 @@ import { bench } from 'vitest';
 import { parseSync } from './index.js';
 
 // Same fixtures as used in Rust parser benchmarks
-const fixtureUrls = [
+let fixtureUrls = [
   'https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts',
   'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx',
   'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/RadixUIAdoptionSection.jsx',
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs',
   'https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js',
 ];
+
+// For sharding in CI - specify single fixture to run benchmarks on
+let skipStandard = false, skipRaw = false;
+let shard = process.env.SHARD;
+if (shard) {
+  shard *= 1;
+  if (shard % 2 === 0) {
+    skipRaw = true;
+  } else {
+    skipStandard = true;
+    shard--;
+  }
+  fixtureUrls = [fixtureUrls[shard / 2]];
+}
 
 // Same directory as Rust benchmarks use for downloaded files
 // to avoid re-downloading if Rust benchmarks already downloaded
@@ -35,15 +49,19 @@ const fixtures = await Promise.all(fixtureUrls.map(async (url) => {
 
 // Run benchmarks
 for (const { filename, code } of fixtures) {
-  bench(`parser_napi[${filename}]`, () => {
-    const ret = parseSync(filename, code);
-    // Read returned object's properties to execute getters which deserialize
-    const { program, comments, module, errors } = ret;
-  });
+  if (!skipStandard) {
+    bench(`parser_napi[${filename}]`, () => {
+      const ret = parseSync(filename, code);
+      // Read returned object's properties to execute getters which deserialize
+      const { program, comments, module, errors } = ret;
+    });
+  }
 
-  bench(`parser_napi_raw[${filename}]`, () => {
-    const ret = parseSync(filename, code, { experimentalRawTransfer: true });
-    // Read returned object's properties to execute getters
-    const { program, comments, module, errors } = ret;
-  });
+  if (!skipRaw) {
+    bench(`parser_napi_raw[${filename}]`, () => {
+      const ret = parseSync(filename, code, { experimentalRawTransfer: true });
+      // Read returned object's properties to execute getters
+      const { program, comments, module, errors } = ret;
+    });
+  }
 }
