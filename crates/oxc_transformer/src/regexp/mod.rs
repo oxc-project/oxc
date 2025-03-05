@@ -185,7 +185,11 @@ impl<'a> Traverse<'a> for RegExp<'a, '_> {
 
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_source, None)),
-            Argument::from(ctx.ast.expression_string_literal(SPAN, flags.to_string(), None)),
+            Argument::from(ctx.ast.expression_string_literal(
+                SPAN,
+                flags.to_inline_string().as_str(),
+                None,
+            )),
         ]);
 
         *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);

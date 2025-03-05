@@ -1588,6 +1588,7 @@ dependencies = [
  "cow-utils",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_data_structures",
  "oxc_estree",
  "oxc_regular_expression",
  "oxc_span",

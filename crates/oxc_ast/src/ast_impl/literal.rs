@@ -3,6 +3,7 @@
 use std::{borrow::Cow, fmt};
 
 use oxc_allocator::CloneIn;
+use oxc_data_structures::inline_string::InlineString;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::ContentEq;
 
@@ -255,31 +256,47 @@ impl TryFrom<u8> for RegExpFlags {
 
 impl fmt::Display for RegExpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // In alphabetical order
-        if self.contains(Self::D) {
-            write!(f, "d")?;
+        f.write_str(self.to_inline_string().as_str())
+    }
+}
+
+impl RegExpFlags {
+    /// Convert [`RegExpFlags`] to an [`InlineString`].
+    ///
+    /// This performs the same role as `RegExpFlags::to_string`, but does not allocate.
+    pub fn to_inline_string(&self) -> InlineString<8, usize> {
+        let mut str = InlineString::new();
+
+        // In alphabetical order.
+        // SAFETY: Capacity of the `InlineString` is 8, and we push a maximum of 8 bytes.
+        // All bytes pushed are ASCII.
+        unsafe {
+            if self.contains(Self::D) {
+                str.push_unchecked(b'd');
+            }
+            if self.contains(Self::G) {
+                str.push_unchecked(b'g');
+            }
+            if self.contains(Self::I) {
+                str.push_unchecked(b'i');
+            }
+            if self.contains(Self::M) {
+                str.push_unchecked(b'm');
+            }
+            if self.contains(Self::S) {
+                str.push_unchecked(b's');
+            }
+            if self.contains(Self::U) {
+                str.push_unchecked(b'u');
+            }
+            if self.contains(Self::V) {
+                str.push_unchecked(b'v');
+            }
+            if self.contains(Self::Y) {
+                str.push_unchecked(b'y');
+            }
         }
-        if self.contains(Self::G) {
-            write!(f, "g")?;
-        }
-        if self.contains(Self::I) {
-            write!(f, "i")?;
-        }
-        if self.contains(Self::M) {
-            write!(f, "m")?;
-        }
-        if self.contains(Self::S) {
-            write!(f, "s")?;
-        }
-        if self.contains(Self::U) {
-            write!(f, "u")?;
-        }
-        if self.contains(Self::V) {
-            write!(f, "v")?;
-        }
-        if self.contains(Self::Y) {
-            write!(f, "y")?;
-        }
-        Ok(())
+
+        str
     }
 }

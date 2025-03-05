@@ -279,7 +279,7 @@ pub struct RegExpFlagsConverter<'b>(pub &'b RegExpFlags);
 
 impl ESTree for RegExpFlagsConverter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        JsonSafeString(self.0.to_string().as_str()).serialize(serializer);
+        JsonSafeString(self.0.to_inline_string().as_str()).serialize(serializer);
     }
 }
 

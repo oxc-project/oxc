@@ -1355,7 +1355,7 @@ impl Gen for RegExpLiteral<'_> {
         p.print_ascii_byte(b'/');
         p.print_str(pattern_text.as_ref());
         p.print_ascii_byte(b'/');
-        p.print_str(self.regex.flags.to_string().as_str());
+        p.print_str(self.regex.flags.to_inline_string().as_str());
         p.prev_reg_exp_end = p.code().len();
     }
 }
