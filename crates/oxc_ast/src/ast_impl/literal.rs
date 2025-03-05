@@ -255,6 +255,10 @@ impl TryFrom<u8> for RegExpFlags {
 
 impl fmt::Display for RegExpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // In alphabetical order
+        if self.contains(Self::D) {
+            write!(f, "d")?;
+        }
         if self.contains(Self::G) {
             write!(f, "g")?;
         }
@@ -270,14 +274,11 @@ impl fmt::Display for RegExpFlags {
         if self.contains(Self::U) {
             write!(f, "u")?;
         }
-        if self.contains(Self::Y) {
-            write!(f, "y")?;
-        }
-        if self.contains(Self::D) {
-            write!(f, "d")?;
-        }
         if self.contains(Self::V) {
             write!(f, "v")?;
+        }
+        if self.contains(Self::Y) {
+            write!(f, "y")?;
         }
         Ok(())
     }
