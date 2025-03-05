@@ -369,6 +369,7 @@ fn test_unary_expressions() {
 
     test("typeof 'foo'", false);
     test_with_global_variables("typeof a", vec!["a".to_string()], false);
+    test_with_global_variables("typeof (0, a)", vec!["a".to_string()], true);
     test("typeof foo()", true);
 
     test("+0", false);

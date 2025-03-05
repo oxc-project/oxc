@@ -185,13 +185,17 @@ impl<'a> Normalize {
             "undefined" if ident.is_global_reference(ctx.symbols()) => {
                 // `delete undefined` returns `false`
                 // `delete void 0` returns `true`
-                if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
-                {
+                if Self::is_unary_delete_ancestor(ctx.ancestors()) {
                     return None;
                 }
                 Some(ctx.ast.void_0(ident.span))
             }
             "Infinity" if ident.is_global_reference(ctx.symbols()) => {
+                // `delete Infinity` returns `false`
+                // `delete 1/0` returns `true`
+                if Self::is_unary_delete_ancestor(ctx.ancestors()) {
+                    return None;
+                }
                 Some(ctx.ast.expression_numeric_literal(
                     ident.span,
                     f64::INFINITY,
@@ -199,11 +203,35 @@ impl<'a> Normalize {
                     NumberBase::Decimal,
                 ))
             }
-            "NaN" if ident.is_global_reference(ctx.symbols()) => Some(
-                ctx.ast.expression_numeric_literal(ident.span, f64::NAN, None, NumberBase::Decimal),
-            ),
+            "NaN" if ident.is_global_reference(ctx.symbols()) => {
+                // `delete NaN` returns `false`
+                // `delete 0/0` returns `true`
+                if Self::is_unary_delete_ancestor(ctx.ancestors()) {
+                    return None;
+                }
+                Some(ctx.ast.expression_numeric_literal(
+                    ident.span,
+                    f64::NAN,
+                    None,
+                    NumberBase::Decimal,
+                ))
+            }
             _ => None,
         }
+    }
+
+    fn is_unary_delete_ancestor<'t>(ancestors: impl Iterator<Item = Ancestor<'a, 't>>) -> bool {
+        for ancestor in ancestors {
+            match ancestor {
+                Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete() => {
+                    return true;
+                }
+                Ancestor::ParenthesizedExpressionExpression(_)
+                | Ancestor::SequenceExpressionExpressions(_) => {}
+                _ => return false,
+            }
+        }
+        false
     }
 
     fn convert_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {

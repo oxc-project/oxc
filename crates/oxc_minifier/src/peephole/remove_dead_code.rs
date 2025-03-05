@@ -478,12 +478,41 @@ impl<'a, 'b> PeepholeOptimizations {
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
     pub fn should_keep_indirect_access(access_value: &Expression<'a>, ctx: Ctx<'a, 'b>) -> bool {
-        matches!(
-            ctx.parent(),
-            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
-        ) && match access_value {
-            Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
-            match_member_expression!(Expression) => true,
+        match ctx.parent() {
+            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
+                match access_value {
+                    Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
+                    match_member_expression!(Expression) => true,
+                    _ => false,
+                }
+            }
+            Ancestor::UnaryExpressionArgument(unary) => match unary.operator() {
+                UnaryOperator::Typeof => {
+                    // Example case: `typeof (0, foo)` (error) -> `typeof foo` (no error)
+                    if let Expression::Identifier(id) = access_value {
+                        ctx.is_global_reference(id)
+                    } else {
+                        false
+                    }
+                }
+                UnaryOperator::Delete => {
+                    match access_value {
+                        // Example case: `delete (0, foo)` (no error) -> `delete foo` (error)
+                        Expression::Identifier(_)
+                        // Example case: `delete (0, foo.#a)` (no error) -> `delete foo.#a` (error)
+                        | Expression::PrivateFieldExpression(_)
+                        // Example case: `typeof (0, foo.bar)` (noop) -> `typeof foo.bar` (deletes bar)
+                        | Expression::ComputedMemberExpression(_)
+                        | Expression::StaticMemberExpression(_) => true,
+                        // Example case: `typeof (0, foo?.bar)` (noop) -> `typeof foo?.bar` (deletes bar)
+                        Expression::ChainExpression(chain) => {
+                            matches!(&chain.expression, match_member_expression!(ChainElement))
+                        }
+                        _ => false,
+                    }
+                }
+                _ => false,
+            },
             _ => false,
         }
     }
@@ -686,6 +715,18 @@ mod test {
         test("(true, true, foo.bar)();", "(0, foo.bar)();");
         test("var foo; (true, foo.bar)();", "var foo; (0, foo.bar)();");
         test("var foo; (true, true, foo.bar)();", "var foo; (0, foo.bar)();");
+
+        test("typeof (0, foo);", "foo");
+        test_same("v = typeof (0, foo);");
+        test("var foo; typeof (0, foo);", "var foo;");
+        test("var foo; v = typeof (0, foo);", "var foo; v = typeof foo");
+        test("typeof 0", "");
+
+        test_same("delete (0, foo);");
+        test_same("delete (0, foo.#bar);");
+        test_same("delete (0, foo.bar);");
+        test_same("delete (0, foo[bar]);");
+        test_same("delete (0, foo?.bar);");
     }
 
     #[test]
