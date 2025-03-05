@@ -8,7 +8,7 @@ working directory:
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[fixtures/svelte/debugger.svelte:2:2]
- 1 | 
+ 1 | <script>
  2 |     debugger;
    :     ^^^^^^^^^
  3 | 
