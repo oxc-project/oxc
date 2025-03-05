@@ -1,13 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, MemberExpression},
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
 
 fn no_nesting_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid nesting promises.")
@@ -32,26 +32,20 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// doThing().then(() => a.then())
-    /// ```
     ///
-    /// ```javascript
     /// doThing().then(function() { a.then() })
-    /// ```
     ///
-    /// ```javascript
     /// doThing().then(() => { b.catch() })
+    ///
+    /// doThing().catch((val) => doSomething(val).catch(errors))
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// doThing().then(() => 4)
-    /// ```
     ///
-    /// ```javascript
     /// doThing().then(function() { return 4 })
-    /// ```
     ///
-    /// ```javascript
     /// doThing().catch(() => 4)
     /// ```
     ///
@@ -82,10 +76,11 @@ fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
         return false;
     }
 
-    ctx.nodes()
-        .ancestors(node.id())
-        .nth(2)
-        .is_some_and(|node| node.kind().as_call_expression().is_some_and(has_promise_callback))
+    ctx.nodes().ancestors(node.id()).nth(2).is_some_and(|node| {
+        node.kind().as_call_expression().is_some_and(|a| {
+            is_promise(a).is_some_and(|prop_name| prop_name == "then" || prop_name == "catch")
+        })
+    })
 }
 
 /// Gets the closest promise callback function of the nested promise.
@@ -96,25 +91,11 @@ fn closest_promise_cb<'a, 'b>(
     ctx.nodes()
         .ancestors(node.id())
         .filter_map(|node| node.kind().as_call_expression())
-        .filter(|a| has_promise_callback(a))
+        .filter(|ancestor| {
+            is_promise(ancestor)
+                .is_some_and(|prop_name| prop_name == "then" || prop_name == "catch")
+        })
         .nth(1)
-}
-
-fn has_promise_callback(call_expr: &CallExpression) -> bool {
-    matches!(
-        call_expr.callee.as_member_expression().and_then(MemberExpression::static_property_name),
-        Some("then" | "catch")
-    )
-}
-
-fn is_promise_then_or_catch(call_expr: &CallExpression) -> bool {
-    let Some(member_expr) = call_expr.callee.get_member_expr() else {
-        return false;
-    };
-
-    member_expr
-        .static_property_name()
-        .map_or_else(|| false, |prop_name| matches!(prop_name, "then" | "catch"))
 }
 
 /// Checks if we can safely unnest the promise callback.
@@ -205,7 +186,9 @@ impl Rule for NoNesting {
             return;
         };
 
-        if !is_promise_then_or_catch(call_expr) {
+        if !is_promise(call_expr)
+            .is_some_and(|prop_name| prop_name == "then" || prop_name == "catch")
+        {
             return;
         };
 
@@ -284,6 +267,8 @@ fn test() {
         "doThing().then(() => { b.catch() })",
         "doThing().then(() => a.then())",
         "doThing().then(() => b.catch())",
+        "doThing().then((val) => doSomething(val).catch(errors))",
+        "doThing().catch((val) => doSomething(val).catch(errors))",
         "doThing()
           .then(() =>
             a.then(() => Promise.resolve(1)))",
