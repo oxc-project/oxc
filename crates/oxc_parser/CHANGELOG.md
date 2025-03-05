@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 2326cef parser: Apply `pure` to argument of unary expression (#9530) (Dunqing)
+
+### Bug Fixes
+
+- a88eb56 parser: Parsing errors occur when type parameters are followed by `as` or `satisfies` (#9553) (Dunqing)
+- 2c6e3f1 parser: Fix false positive parsing optional member expr (#9534) (camc314)
+
 ## [0.54.0] - 2025-03-04
 
 - 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)

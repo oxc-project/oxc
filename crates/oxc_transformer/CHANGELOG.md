@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 45ace44 transformer: Add `/* @_PURE__ */` annotation for pure calls (#9424) (Dunqing)
+- ffd485c transformer, napi/transform: Expose `moduleRunnerTransform` function (#9532) (Dunqing)
+
+### Bug Fixes
+
+- cead38d transformer/optional-chaining: Fix context of optional chain call (#9526) (hi-ogawa)
+
+### Performance
+
+- 6b4a8c6 ast, codegen, transformer: Avoid allocations when converting `RegExpFlags` to string (#9550) (overlookmotel)
+
+### Refactor
+
+- fb4d0b6 transformer: Shorten code for using `*_with_scope_id` methods (#9538) (Dunqing)
+- 0c46f2a transformer/object-rest-spread: Use `helper_call` instead of `helper_load` + `call_expression` (#9536) (Dunqing)
+
 ## [0.54.0] - 2025-03-04
 
 - 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
