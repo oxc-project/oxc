@@ -1945,7 +1945,7 @@ impl ESTree for RegExpLiteral<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::RegExpLiteralValue(self));
         state.serialize_field("raw", &self.raw);
-        state.serialize_field("regex", &crate::serialize::RegExpLiteralRegex(self));
+        state.serialize_field("regex", &self.regex);
         state.end();
     }
 }

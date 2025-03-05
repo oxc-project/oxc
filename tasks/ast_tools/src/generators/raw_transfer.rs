@@ -377,6 +377,7 @@ impl<'s> StructDeserializerGenerator<'s> {
         let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(self.schema));
         let value = POS_OFFSET_REGEX
             .replace_all(&value, PosOffsetReplacer::new(self, struct_def, struct_offset));
+        let value = POS_REGEX.replace_all(&value, PosReplacer::new(struct_offset));
         let value = value.cow_replace("SOURCE_TEXT", "sourceText");
 
         let value = if let Some((preamble, value)) = value.trim().rsplit_once('\n') {

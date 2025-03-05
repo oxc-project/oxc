@@ -1079,34 +1079,18 @@ function deserializeBigIntLiteral(pos) {
 }
 
 function deserializeRegExpLiteral(pos) {
-  const raw = deserializeOptionStr(pos + 40);
-  let pattern, flags, value = null;
-  if (raw === null) {
-    pattern = deserializeRegExpPattern(pos + 8);
-    const flagBits = deserializeU8(pos + 32);
-    flags = '';
-    if (flagBits & 1) flags += 'g';
-    if (flagBits & 2) flags += 'i';
-    if (flagBits & 4) flags += 'm';
-    if (flagBits & 8) flags += 's';
-    if (flagBits & 16) flags += 'u';
-    if (flagBits & 32) flags += 'y';
-    if (flagBits & 64) flags += 'd';
-    if (flagBits & 128) flags += 'v';
-  } else {
-    [, pattern, flags] = raw.match(/^\/(.*)\/([a-z]*)$/);
-  }
-
+  const regex = deserializeRegExp(pos + 8);
+  let value = null;
   try {
-    value = new RegExp(pattern, flags);
+    value = new RegExp(regex.pattern, regex.flags);
   } catch (e) {}
   return {
     type: 'Literal',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     value,
-    raw,
-    regex: { pattern, flags },
+    raw: deserializeOptionStr(pos + 40),
+    regex,
   };
 }
 
@@ -1118,10 +1102,18 @@ function deserializeRegExp(pos) {
 }
 
 function deserializeRegExpFlags(pos) {
-  return {
-    type: 'RegExpFlags',
-    0: deserializeU8(pos),
-  };
+  const flagBits = deserializeU8(pos);
+  let flags = '';
+  // Alphabetical order
+  if (flagBits & 64) flags += 'd';
+  if (flagBits & 1) flags += 'g';
+  if (flagBits & 2) flags += 'i';
+  if (flagBits & 4) flags += 'm';
+  if (flagBits & 8) flags += 's';
+  if (flagBits & 16) flags += 'u';
+  if (flagBits & 128) flags += 'v';
+  if (flagBits & 32) flags += 'y';
+  return flags;
 }
 
 function deserializeJSXElement(pos) {

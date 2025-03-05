@@ -195,65 +195,19 @@ impl ESTree for BigIntLiteralValue<'_, '_> {
     }
 }
 
-/// Serializer for `regex` field of `RegExpLiteral`.
-#[ast_meta]
-#[estree(
-    ts_type = "RegExp",
-    raw_deser = r#"
-        let pattern, flags, value = null;
-        if (THIS.raw === null) {
-            pattern = DESER[RegExpPattern](POS_OFFSET.regex.pattern);
-            const flagBits = DESER[u8](POS_OFFSET.regex.flags);
-            flags = '';
-            if (flagBits & 1) flags += 'g';
-            if (flagBits & 2) flags += 'i';
-            if (flagBits & 4) flags += 'm';
-            if (flagBits & 8) flags += 's';
-            if (flagBits & 16) flags += 'u';
-            if (flagBits & 32) flags += 'y';
-            if (flagBits & 64) flags += 'd';
-            if (flagBits & 128) flags += 'v';
-        } else {
-            [, pattern, flags] = THIS.raw.match(/^\/(.*)\/([a-z]*)$/);
-        }
-
-        try {
-            value = new RegExp(pattern, flags);
-        } catch (e) {}
-
-        { pattern, flags }
-    "#
-)]
-pub struct RegExpLiteralRegex<'a, 'b>(pub &'b RegExpLiteral<'a>);
-
-impl ESTree for RegExpLiteralRegex<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("pattern", &self.0.regex.pattern);
-
-        // If `raw` field is present, flags must be in same order as in source to match Acorn.
-        // Count number of set bits in `flags` to get number of flags
-        // (cheaper than searching through `raw` for last `/`).
-        let flags = self.0.regex.flags;
-        if let Some(raw) = &self.0.raw {
-            let flags_count = flags.bits().count_ones() as usize;
-            let flags_index = raw.len() - flags_count;
-            state.serialize_field("flags", &JsonSafeString(&raw[flags_index..]));
-        } else {
-            state.serialize_field("flags", &flags);
-        }
-        state.end();
-    }
-}
-
 /// Serializer for `value` field of `RegExpLiteral`.
 ///
 /// Serialized as `null` in JSON, but updated on JS side to contain a `RegExp` if the regexp is valid.
 #[ast_meta]
 #[estree(
     ts_type = "RegExp | null",
-    // `value` is defined by `RegExpLiteralRegex` converter
-    raw_deser = "value",
+    raw_deser = "
+        let value = null;
+        try {
+            value = new RegExp(THIS.regex.pattern, THIS.regex.flags);
+        } catch (e) {}
+        value
+    "
 )]
 pub struct RegExpLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b RegExpLiteral<'a>);
 
@@ -274,7 +228,23 @@ impl ESTree for RegExpPatternConverter<'_, '_> {
 }
 
 #[ast_meta]
-#[estree(ts_type = "string")]
+#[estree(
+    ts_type = "string",
+    raw_deser = "
+        const flagBits = DESER[u8](POS);
+        let flags = '';
+        // Alphabetical order
+        if (flagBits & 64) flags += 'd';
+        if (flagBits & 1) flags += 'g';
+        if (flagBits & 2) flags += 'i';
+        if (flagBits & 4) flags += 'm';
+        if (flagBits & 8) flags += 's';
+        if (flagBits & 16) flags += 'u';
+        if (flagBits & 128) flags += 'v';
+        if (flagBits & 32) flags += 'y';
+        flags
+    "
+)]
 pub struct RegExpFlagsConverter<'b>(pub &'b RegExpFlags);
 
 impl ESTree for RegExpFlagsConverter<'_> {
