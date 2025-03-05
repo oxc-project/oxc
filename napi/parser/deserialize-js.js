@@ -967,26 +967,16 @@ function deserializeImportAttribute(pos) {
 }
 
 function deserializeExportNamedDeclaration(pos) {
-  const start = deserializeU32(pos),
-    end = deserializeU32(pos + 4),
-    declaration = deserializeOptionDeclaration(pos + 8),
-    specifiers = deserializeVecExportSpecifier(pos + 24),
-    source = deserializeOptionStringLiteral(pos + 56);
-
-  if (source !== null) {
-    const withClause = deserializeOptionBoxWithClause(pos + 104);
-    return {
-      type: 'ExportNamedDeclaration',
-      start,
-      end,
-      declaration,
-      specifiers,
-      source,
-      attributes: withClause === null ? [] : withClause.withEntries,
-    };
-  }
-
-  return { type: 'ExportNamedDeclaration', start, end, declaration, specifiers, source };
+  const withClause = deserializeOptionBoxWithClause(pos + 104);
+  return {
+    type: 'ExportNamedDeclaration',
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+    declaration: deserializeOptionDeclaration(pos + 8),
+    specifiers: deserializeVecExportSpecifier(pos + 24),
+    source: deserializeOptionStringLiteral(pos + 56),
+    attributes: withClause === null ? [] : withClause.withEntries,
+  };
 }
 
 function deserializeExportDefaultDeclaration(pos) {

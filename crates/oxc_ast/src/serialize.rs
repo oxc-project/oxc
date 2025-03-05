@@ -548,54 +548,6 @@ impl ESTree for ImportExpressionArguments<'_> {
     }
 }
 
-/// Serialize `ExportNamedDeclaration`.
-///
-/// Omit `with_clause` field (which is renamed to `attributes` in ESTree)
-/// unless `source` field is `Some`.
-#[ast_meta]
-#[estree(raw_deser = "
-    const start = DESER[u32](POS_OFFSET.span.start),
-        end = DESER[u32](POS_OFFSET.span.end),
-        declaration = DESER[Option<Declaration>](POS_OFFSET.declaration),
-        specifiers = DESER[Vec<ExportSpecifier>](POS_OFFSET.specifiers),
-        source = DESER[Option<StringLiteral>](POS_OFFSET.source)/* IF_TS */,
-        exportKind = DESER[ImportOrExportKind](POS_OFFSET.export_kind) /* END_IF_TS */;
-
-    if (source !== null) {
-        const withClause = deserializeOptionBoxWithClause(POS_OFFSET.with_clause);
-        return {
-            type: 'ExportNamedDeclaration',
-            start, end, declaration, specifiers, source,
-            /* IF_TS */ exportKind, /* END_IF_TS */
-            attributes: withClause === null ? [] : withClause.withEntries
-        };
-    }
-
-    {type: 'ExportNamedDeclaration', start, end, declaration, specifiers, source /* IF_TS */ , exportKind /* END_IF_TS */ }
-")]
-pub struct ExportNamedDeclarationConverter<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
-
-impl ESTree for ExportNamedDeclarationConverter<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let decl = self.0;
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("ExportNamedDeclaration"));
-        state.serialize_field("start", &decl.span.start);
-        state.serialize_field("end", &decl.span.end);
-        state.serialize_field("declaration", &decl.declaration);
-        state.serialize_field("specifiers", &decl.specifiers);
-        state.serialize_field("source", &decl.source);
-        state.serialize_ts_field("exportKind", &decl.export_kind);
-        if decl.source.is_some() {
-            state.serialize_field(
-                "attributes",
-                &crate::serialize::ExportNamedDeclarationWithClause(decl),
-            );
-        }
-        state.end();
-    }
-}
-
 // Serializers for `with_clause` field of `ImportDeclaration`, `ExportNamedDeclaration`,
 // and `ExportAllDeclaration` (which are renamed to `attributes` in ESTree AST).
 //
