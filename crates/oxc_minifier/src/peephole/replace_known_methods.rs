@@ -1325,10 +1325,9 @@ mod test {
         test_value("Math.abs(NaN)", "NaN");
         test_value("Math.abs(-0)", "0");
         test_value("Math.abs(-Infinity)", "Infinity");
-        // TODO
-        // test_value("Math.abs([])", "0");
-        // test_value("Math.abs([2])", "2");
-        // test_value("Math.abs([1,2])", "NaN");
+        test_value("Math.abs([])", "0");
+        test_value("Math.abs([2])", "2");
+        test_value("Math.abs([1,2])", "NaN");
         test_value("Math.abs({})", "NaN");
         test_value("Math.abs('string');", "NaN");
     }

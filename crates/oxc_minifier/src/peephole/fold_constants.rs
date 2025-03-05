@@ -1509,7 +1509,7 @@ mod test {
         fold("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
         fold("x = '' + null", "x = 'null'");
         fold("x = true + '' + false", "x = 'truefalse'");
-        // fold("x = '' + []", "x = ''");
+        fold("x = '' + []", "x = ''");
         fold("x = foo() + 'a' + 1 + 1", "x = foo() + 'a11'");
         fold("x = 1 + 1 + 'a'", "x = '2a'");
         fold("x = 1 + 1 + 'a'", "x = '2a'");
