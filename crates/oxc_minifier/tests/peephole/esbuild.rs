@@ -1098,8 +1098,7 @@ fn test_mangle_boolean_with_side_effects() {
 }
 
 #[test]
-#[ignore]
-fn test_ignored3() {
+fn test_minimize_exit_statements() {
     test("function foo() { x(); return; }", "function foo() { x();}");
     test("let foo = function() { x(); return; }", "let foo = function() { x();};");
     test("let foo = () => { x(); return; }", "let foo = () => { x();};");
