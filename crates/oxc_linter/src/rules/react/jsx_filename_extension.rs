@@ -150,12 +150,11 @@ impl Rule for JsxFilenameExtension {
         let file_extension = ctx.file_path().extension().and_then(OsStr::to_str).unwrap_or("");
         let has_ext_allowed = self.extensions.contains(&CompactStr::new(file_extension));
 
-        if jsx_elt.is_some() {
+        if let Some(jsx_elt) = jsx_elt {
             if !has_ext_allowed {
-                let span_elt = jsx_elt.map(GetSpan::span);
                 ctx.diagnostic(no_jsx_with_filename_extension_diagnostic(
                     file_extension,
-                    span_elt.unwrap(),
+                    jsx_elt.span(),
                 ));
             }
             return;
