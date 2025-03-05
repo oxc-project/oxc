@@ -228,7 +228,7 @@ fn test() {
             Some(serde_json::json!([{ "allow": "as-needed" }])),
             None,
             Some(PathBuf::from("foo.jsx")),
-        ),        
+        ),
         (
             "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
@@ -267,7 +267,7 @@ fn test() {
             Some(serde_json::json!([{ "extensions": [".js", ".jsx"] }])),
             None,
             Some(PathBuf::from("foo.js")),
-        ),        
+        ),
         (
             "//test\n\n//comment",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
@@ -331,7 +331,6 @@ fn test() {
             None,
             Some(PathBuf::from("foo.js")),
         ),
-
         (
             "module.exports = function MyComponent() { return <div>\n<div />\n</div>; }",
             Some(serde_json::json!([{ "extensions": [".js"] }])),
@@ -355,7 +354,7 @@ fn test() {
             Some(serde_json::json!([{ "extensions": [".js"] }])),
             None,
             Some(PathBuf::from("foo.jsx")),
-        ),        
+        ),
         (
             "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "extensions": [".js"] }])),
