@@ -225,7 +225,17 @@ impl ESTree for ObjectPropertyKind<'_> {
 
 impl ESTree for ObjectProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::ObjectPropertyConverter(self).serialize(serializer)
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("method", &self.method);
+        state.serialize_field("shorthand", &self.shorthand);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("kind", &self.kind);
+        state.end();
     }
 }
 
@@ -710,11 +720,11 @@ impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
         state.serialize_field("shorthand", &crate::serialize::True(self));
         state.serialize_field("computed", &crate::serialize::False(self));
         state.serialize_field("key", &self.binding);
-        state.serialize_field("kind", &crate::serialize::Init(self));
         state.serialize_field(
             "value",
             &crate::serialize::AssignmentTargetPropertyIdentifierValue(self),
         );
+        state.serialize_field("kind", &crate::serialize::Init(self));
         state.end();
     }
 }
@@ -1282,7 +1292,17 @@ impl ESTree for ObjectPattern<'_> {
 
 impl ESTree for BindingProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::BindingPropertyConverter(self).serialize(serializer)
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("method", &crate::serialize::False(self));
+        state.serialize_field("shorthand", &self.shorthand);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("kind", &crate::serialize::Init(self));
+        state.end();
     }
 }
 

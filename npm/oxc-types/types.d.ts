@@ -95,8 +95,8 @@ export interface ObjectProperty extends Span {
   shorthand: boolean;
   computed: boolean;
   key: PropertyKey;
-  kind: PropertyKind;
   value: Expression;
+  kind: PropertyKind;
 }
 
 export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
@@ -274,8 +274,8 @@ export interface AssignmentTargetPropertyIdentifier extends Span {
   shorthand: true;
   computed: false;
   key: IdentifierReference;
-  kind: 'init';
   value: IdentifierReference | AssignmentTargetWithDefault;
+  kind: 'init';
 }
 
 export interface AssignmentTargetPropertyProperty extends Span {
@@ -520,8 +520,8 @@ export interface BindingProperty extends Span {
   shorthand: boolean;
   computed: boolean;
   key: PropertyKey;
-  kind: 'init';
   value: BindingPattern;
+  kind: 'init';
 }
 
 export interface ArrayPattern extends Span {

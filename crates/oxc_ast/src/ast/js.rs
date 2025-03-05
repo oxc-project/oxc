@@ -370,11 +370,7 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    rename = "Property",
-    via = ObjectPropertyConverter,
-    field_order(span, method, shorthand, computed, key, kind, value),
-)]
+#[estree(rename = "Property", field_order(span, method, shorthand, computed, key, value, kind))]
 pub struct ObjectProperty<'a> {
     pub span: Span,
     pub kind: PropertyKind,
@@ -936,7 +932,7 @@ pub enum AssignmentTargetProperty<'a> {
 #[estree(
     rename = "Property",
     add_fields(method = False, shorthand = True, computed = False, kind = Init),
-    field_order(span, method, shorthand, computed, binding, kind, init),
+    field_order(span, method, shorthand, computed, binding, init, kind),
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
@@ -1566,9 +1562,8 @@ pub struct ObjectPattern<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Property",
-    via = BindingPropertyConverter,
     add_fields(method = False, kind = Init),
-    field_order(span, method, shorthand, computed, key, kind, value),
+    field_order(span, method, shorthand, computed, key, value, kind),
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,

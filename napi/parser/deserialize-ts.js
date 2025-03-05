@@ -114,18 +114,17 @@ function deserializeObjectExpression(pos) {
 }
 
 function deserializeObjectProperty(pos) {
-  const start = deserializeU32(pos),
-    end = deserializeU32(pos + 4),
-    method = deserializeBool(pos + 48),
-    shorthand = deserializeBool(pos + 49),
-    computed = deserializeBool(pos + 50),
-    key = deserializePropertyKey(pos + 16),
-    kind = deserializePropertyKind(pos + 8),
-    value = deserializeExpression(pos + 32),
-    obj = method || shorthand || kind !== 'init'
-      ? { type: 'Property', start, end, method, shorthand, computed, key, kind, value }
-      : { type: 'Property', start, end, method, shorthand, computed, key, value, kind };
-  return obj;
+  return {
+    type: 'Property',
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+    method: deserializeBool(pos + 48),
+    shorthand: deserializeBool(pos + 49),
+    computed: deserializeBool(pos + 50),
+    key: deserializePropertyKey(pos + 16),
+    value: deserializeExpression(pos + 32),
+    kind: deserializePropertyKind(pos + 8),
+  };
 }
 
 function deserializeTemplateLiteral(pos) {
@@ -384,8 +383,8 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     shorthand: true,
     computed: false,
     key: deserializeIdentifierReference(pos + 8),
-    kind: 'init',
     value,
+    kind: 'init',
   };
 }
 
@@ -724,16 +723,17 @@ function deserializeObjectPattern(pos) {
 }
 
 function deserializeBindingProperty(pos) {
-  const start = deserializeU32(pos),
-    end = deserializeU32(pos + 4),
-    shorthand = deserializeBool(pos + 56),
-    computed = deserializeBool(pos + 57),
-    key = deserializePropertyKey(pos + 8),
-    value = deserializeBindingPattern(pos + 24),
-    obj = shorthand
-      ? { type: 'Property', start, end, method: false, shorthand, computed, key, kind: 'init', value }
-      : { type: 'Property', start, end, method: false, shorthand, computed, key, value, kind: 'init' };
-  return obj;
+  return {
+    type: 'Property',
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+    method: false,
+    shorthand: deserializeBool(pos + 56),
+    computed: deserializeBool(pos + 57),
+    key: deserializePropertyKey(pos + 8),
+    value: deserializeBindingPattern(pos + 24),
+    kind: 'init',
+  };
 }
 
 function deserializeArrayPattern(pos) {
