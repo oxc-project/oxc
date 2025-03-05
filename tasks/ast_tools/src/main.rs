@@ -181,7 +181,7 @@
 //! [`AttrLocation`]: parse::attr::AttrLocation
 //! [`AttrPart`]: parse::attr::AttrPart
 
-use std::{fmt::Write, fs};
+use std::fs;
 
 use bpaf::{Bpaf, Parser};
 use quote::quote;
@@ -349,22 +349,13 @@ fn main() {
 fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
     log!("Generate CI filter... ");
 
-    let mut paths = SOURCE_PATHS
-        .iter()
-        .copied()
-        .chain(outputs.iter().map(|output| output.path.as_str()))
-        .chain(["tasks/ast_tools/src/**", AST_CHANGES_WATCH_LIST_PATH])
-        .collect::<Vec<_>>();
-    paths.sort_unstable();
-
-    let mut code = "src:\n".to_string();
-    for path in paths {
-        writeln!(&mut code, "  - '{path}'").unwrap();
-    }
+    let paths =
+        SOURCE_PATHS.iter().copied().chain(outputs.iter().map(|output| output.path.as_str()));
+    let output = Output::yaml_watch_list(AST_CHANGES_WATCH_LIST_PATH, paths);
 
     log_success!();
 
-    Output::Yaml { path: AST_CHANGES_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
+    output.into_raw(file!())
 }
 
 /// Generate function for proc macro in `oxc_ast_macros` crate.
