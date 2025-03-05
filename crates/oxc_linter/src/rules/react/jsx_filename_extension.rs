@@ -161,11 +161,7 @@ impl Rule for JsxFilenameExtension {
         }
 
         if matches!(self.allow, AllowType::AsNeeded) && has_ext_allowed {
-            let Some(root) = ctx.nodes().root_node() else {
-                return;
-            };
-            let AstKind::Program(program) = root.kind() else { unreachable!() };
-            if self.ignore_files_without_code && program.body.is_empty() {
+            if self.ignore_files_without_code && ctx.nodes().len() == 1 {
                 return;
             }
             ctx.diagnostic(extension_only_for_jsx_diagnostic(file_extension));
@@ -178,10 +174,34 @@ fn test() {
     use crate::tester::Tester;
     use std::path::PathBuf;
 
-    let pass = vec![
+    let pass: Vec<(&str, Option<Value>, Option<Value>, Option<PathBuf>)> = vec![
         (
             "module.exports = function MyComponent() { return <div>jsx\n<div />\n</div>; }",
             None,
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        (
+            "export default function MyComponent() { return <Comp />;}",
+            None,
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        (
+            "export function MyComponent() { return <div><Comp /></div>;}",
+            None,
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        (
+            "const MyComponent = () => (<div><Comp /></div>); export default MyComponent;",
+            None,
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        (
+            "export function MyComponent() { return <div><Comp /></div>;}",
+            Some(serde_json::json!([{ "allow": "as-needed" }])),
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
@@ -192,18 +212,31 @@ fn test() {
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "module.exports = function MyComponent() { return <>fragment\n</>; }",
+            "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
             None,
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "module.exports = function MyComponent() { return <>fragment\n</>; }",
+            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            None,
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        (
+            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            Some(serde_json::json!([{ "allow": "as-needed" }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),        
+        (
+            "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
             None,
             Some(PathBuf::from("foo.jsx")),
         ),
         ("module.exports = {}", None, None, Some(PathBuf::from("foo.js"))),
+        ("export const foo = () => 'foo';", None, None, Some(PathBuf::from("foo.js"))),
         (
             "module.exports = {}",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
@@ -218,11 +251,23 @@ fn test() {
             Some(PathBuf::from("foo.js")),
         ),
         (
-            "module.exports = function MyComponent() { return <>fragment\n</>; }",
+            "export function MyComponent() { return <div><Comp /></div>;}",
             Some(serde_json::json!([{ "extensions": [".js", ".jsx"] }])),
             None,
             Some(PathBuf::from("foo.js")),
         ),
+        (
+            "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
+            Some(serde_json::json!([{ "extensions": [".js", ".jsx"] }])),
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            Some(serde_json::json!([{ "extensions": [".js", ".jsx"] }])),
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),        
         (
             "//test\n\n//comment",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
@@ -251,7 +296,31 @@ fn test() {
             Some(PathBuf::from("foo.js")),
         ),
         (
+            "export default function MyComponent() { return <Comp />;}",
+            None,
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            "export function MyComponent() { return <div><Comp /></div>;}",
+            None,
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            "const MyComponent = () => (<div><Comp /></div>); export default MyComponent;",
+            None,
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
             "module.exports = {}",
+            Some(serde_json::json!([{ "allow": "as-needed" }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),
+        (
+            "export function foo() { return 'foo'; }",
             Some(serde_json::json!([{ "allow": "as-needed" }])),
             None,
             Some(PathBuf::from("foo.jsx")),
@@ -262,6 +331,7 @@ fn test() {
             None,
             Some(PathBuf::from("foo.js")),
         ),
+
         (
             "module.exports = function MyComponent() { return <div>\n<div />\n</div>; }",
             Some(serde_json::json!([{ "extensions": [".js"] }])),
@@ -269,13 +339,25 @@ fn test() {
             Some(PathBuf::from("foo.jsx")),
         ),
         (
-            "module.exports = function MyComponent() { return <>fragment\n</>; }",
+            "export function MyComponent() { return <><Comp /><Comp /></>;}",
             None,
             None,
             Some(PathBuf::from("foo.js")),
         ),
         (
-            "module.exports = function MyComponent() { return <>fragment\n</>; }",
+            "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
+            None,
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            "export function MyComponent() { return <><Comp /><Comp /></>;}",
+            Some(serde_json::json!([{ "extensions": [".js"] }])),
+            None,
+            Some(PathBuf::from("foo.jsx")),
+        ),        
+        (
+            "module.exports = function MyComponent() { return <><Comp /><Comp /></>; }",
             Some(serde_json::json!([{ "extensions": [".js"] }])),
             None,
             Some(PathBuf::from("foo.jsx")),
