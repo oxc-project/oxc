@@ -174,7 +174,7 @@ fn test() {
     use crate::tester::Tester;
     use std::path::PathBuf;
 
-    let pass: Vec<(&str, Option<Value>, Option<Value>, Option<PathBuf>)> = vec![
+    let pass = vec![
         (
             "module.exports = function MyComponent() { return <div>jsx\n<div />\n</div>; }",
             None,
