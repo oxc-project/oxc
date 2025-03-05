@@ -21,7 +21,9 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "bindings.js"
+    "bindings.js",
+    "deserialize-js.js",
+    "deserialize-ts.js"
   ],
   "dependencies": {
     "@oxc-project/types": "workspace:^"
