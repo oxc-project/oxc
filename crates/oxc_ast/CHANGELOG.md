@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.55.0] - 2025-03-05
+
+- 4056560 ast/estree: [**BREAKING**] Option to return JS-only AST (#9520) (overlookmotel)
+
+### Features
+
+- 59a9f1d ast: Add `AstBuilder::*_with_pure` etc methods (#9417) (Dunqing)
+- af02a87 ast/estree: `Property` have consistent field order (#9547) (overlookmotel)
+- 3e4f909 ast/estree: ESTree AST `ExportNamedDeclaration` always have `attributes` field (#9546) (overlookmotel)
+- d55dbe2 ast/estree: Raw transfer (experimental) (#9516) (overlookmotel)
+
+### Performance
+
+- 6b4a8c6 ast, codegen, transformer: Avoid allocations when converting `RegExpFlags` to string (#9550) (overlookmotel)
+
+### Refactor
+
+- 734b6b6 ast: `RegExpFlags::to_string` return flags in alphabetical order (#9548) (overlookmotel)
+- c1a8cea ast/estree: Simplify serializing `RegExpLiteral`s (#9551) (overlookmotel)
+
 ## [0.54.0] - 2025-03-04
 
 - 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)

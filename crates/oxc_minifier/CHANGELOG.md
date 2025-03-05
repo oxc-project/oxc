@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 9321439 minifier: Merge throw statements at the end (#9539) (sapphi-red)
+- 803f061 minifier: Apply `__NO_SIDE_EFFECTS__` (#9533) (Boshen)
+
+### Testing
+
+- dc1465e minifier: Enable some tests in minimize_conditions (#9543) (sapphi-red)
+- 0a5c73b minifier: Enable some tests in peephole directory (#9542) (sapphi-red)
+- 55e7ee9 minifier: Enable some esbuild tests (#9540) (sapphi-red)
+
 ## [0.54.0] - 2025-03-04
 
 - a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
