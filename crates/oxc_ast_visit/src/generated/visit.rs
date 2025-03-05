@@ -3302,7 +3302,7 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.check_type);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        visitor.enter_scope(ScopeFlags::TsConditional, &it.scope_id);
         visitor.visit_ts_type(&it.extends_type);
         visitor.visit_ts_type(&it.true_type);
         visitor.leave_scope();

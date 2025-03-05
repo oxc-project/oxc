@@ -282,7 +282,9 @@ pub use match_ts_type;
 /// ## Reference
 /// * [TypeScript Handbook - Conditional Types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html)
 #[ast(visit)]
-#[scope]
+#[scope(
+    flags = ScopeFlags::TsConditional,
+)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConditionalType<'a> {

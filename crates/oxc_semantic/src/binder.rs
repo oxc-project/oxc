@@ -439,9 +439,22 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let symbol_id = builder.declare_symbol(
+        let scope_id = if matches!(
+            builder.nodes.parent_kind(builder.current_node_id),
+            Some(AstKind::TSInferType(_))
+        ) {
+            builder
+                .scope
+                .ancestors(builder.current_scope_id)
+                .find(|scope_id| builder.scope.get_flags(*scope_id).is_ts_conditional())
+        } else {
+            None
+        };
+
+        let symbol_id = builder.declare_symbol_on_scope(
             self.name.span,
             &self.name.name,
+            scope_id.unwrap_or(builder.current_scope_id),
             SymbolFlags::TypeParameter,
             SymbolFlags::TypeParameterExcludes,
         );

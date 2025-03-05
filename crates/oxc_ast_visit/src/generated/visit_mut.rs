@@ -3466,7 +3466,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.check_type);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        visitor.enter_scope(ScopeFlags::TsConditional, &it.scope_id);
         visitor.visit_ts_type(&mut it.extends_type);
         visitor.visit_ts_type(&mut it.true_type);
         visitor.leave_scope();

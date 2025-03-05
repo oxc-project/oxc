@@ -13901,7 +13901,7 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Pick", "U"]
+after transform: ["Pick"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes2.ts
@@ -41049,9 +41049,6 @@ tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypes2.
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(9), ScopeId(10), ScopeId(12)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Unresolved references mismatch:
-after transform: ["P", "foo", "foo2"]
-rebuilt        : ["foo", "foo2"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends1.ts
 semantic error: Bindings mismatch:
