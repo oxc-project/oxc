@@ -185,7 +185,7 @@ impl Mangler {
 
     fn build_with_symbols_and_scopes_impl<
         const CAPACITY: usize,
-        G: Fn(usize) -> InlineString<CAPACITY, u32>,
+        G: Fn(u32) -> InlineString<CAPACITY, u8>,
     >(
         self,
         semantic: Semantic<'_>,
@@ -450,9 +450,8 @@ fn is_keyword(s: &str) -> bool {
             | "void" | "with")
 }
 
-// Maximum length of string is 25 (`slot_18446744073709551615` for `u64::MAX`)
-// but set `CAPACITY` as 28 so the total size of `InlineString` is 32, including the `u32` length.
-fn debug_name(n: usize) -> InlineString<28, u32> {
+// Maximum length of string is 15 (`slot_4294967295` for `u32::MAX`).
+fn debug_name(n: u32) -> InlineString<15, u8> {
     // Using `format!` here allocates a string unnecessarily.
     // But this function is not for use in production, so let's not worry about it.
     // We shouldn't resort to unsafe code, when it's not critical for performance.
