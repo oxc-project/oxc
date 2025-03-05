@@ -18,6 +18,13 @@ use crate::{
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData},
 };
 
+const _: () = {
+    #[cfg(not(target_pointer_width = "64"))]
+    panic!("Only 64-bit systems are supported");
+    #[cfg(target_endian = "big")]
+    panic!("Little-endian systems are not supported");
+};
+
 // For raw transfer, use a buffer 4 GiB in size, with 4 GiB alignment.
 // This ensures that all 64-bit pointers have the same value in upper 32 bits,
 // so JS only needs to read the lower 32 bits to get an offset into the buffer.
@@ -69,15 +76,12 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 /// Panics if source text is too long, or AST takes more memory than is available in the buffer.
 #[allow(clippy::items_after_statements, clippy::allow_attributes)]
 #[napi]
-pub unsafe fn parse_sync_raw(
+pub fn parse_sync_raw(
     filename: String,
     mut buffer: Uint8Array,
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
-    // 32-bit systems are not supported
-    const { assert!(std::mem::size_of::<usize>() >= 8) };
-
     // Check buffer has expected size and alignment
     let buffer = &mut *buffer;
     assert_eq!(buffer.len(), BUFFER_SIZE);
@@ -174,6 +178,14 @@ pub unsafe fn parse_sync_raw(
         buffer_ptr.add(METADATA_OFFSET).cast::<u32>().write(data_offset);
         buffer_ptr.add(METADATA_OFFSET + 4).cast::<bool>().write(ast_type == AstType::TypeScript);
     }
+}
+
+/// Returns `true` if raw transfer is supported on this platform.
+#[napi]
+pub fn raw_transfer_supported() -> bool {
+    // On unsupported platforms, the stub function in `raw_transfer_stubs.rs` will be compiled instead.
+    // It returns `false`.
+    true
 }
 
 /// Returns `true` if `n` is a multiple of `divisor`.

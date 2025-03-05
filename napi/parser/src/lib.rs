@@ -17,17 +17,29 @@ use oxc::{
 use oxc_napi::OxcError;
 
 mod convert;
-mod raw_transfer;
-mod raw_transfer_types;
 mod types;
-pub use raw_transfer::{get_buffer_offset, parse_sync_raw};
 pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
+// Only compile raw transfer APIs on 64-bit little-endian systems
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+mod raw_transfer;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+mod raw_transfer_types;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+pub use raw_transfer::*;
+
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 mod generated {
     // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
     #[cfg(debug_assertions)]
     pub mod assert_layouts;
 }
+
+// Expose stubs on unsupported platforms
+#[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+mod raw_transfer_stubs;
+#[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+pub use raw_transfer_stubs::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum AstType {
