@@ -1323,6 +1323,7 @@ pub enum TSImportAttributeName<'a> {
 /// //             ^^^^ return_type
 /// ```
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSFunctionType<'a> {
@@ -1349,6 +1350,8 @@ pub struct TSFunctionType<'a> {
     /// //             ^^^^
     /// ```
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
+
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[ast(visit)]

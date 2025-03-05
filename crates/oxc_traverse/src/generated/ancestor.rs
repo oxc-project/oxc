@@ -14584,6 +14584,7 @@ pub(crate) const OFFSET_TS_FUNCTION_TYPE_THIS_PARAM: usize = offset_of!(TSFuncti
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_PARAMS: usize = offset_of!(TSFunctionType, params);
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE: usize =
     offset_of!(TSFunctionType, return_type);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_SCOPE_ID: usize = offset_of!(TSFunctionType, scope_id);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -14619,6 +14620,14 @@ impl<'a, 't> TSFunctionTypeWithoutTypeParameters<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
                 as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -14666,6 +14675,14 @@ impl<'a, 't> TSFunctionTypeWithoutThisParam<'a, 't> {
                 as *const Box<'a, TSTypeAnnotation<'a>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for TSFunctionTypeWithoutThisParam<'a, 't> {
@@ -14711,6 +14728,14 @@ impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
                 as *const Box<'a, TSTypeAnnotation<'a>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for TSFunctionTypeWithoutParams<'a, 't> {
@@ -14754,6 +14779,14 @@ impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
                 as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }

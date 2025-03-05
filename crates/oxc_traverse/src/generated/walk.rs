@@ -5232,6 +5232,12 @@ unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_function_type(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::TSFunctionTypeTypeParameters(
         ancestor::TSFunctionTypeWithoutTypeParameters(node, PhantomData),
     ));
@@ -5262,6 +5268,7 @@ unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_ts_function_type(&mut *node, ctx);
 }
 

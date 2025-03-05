@@ -1747,7 +1747,7 @@ x Output mismatch
 
 * exports/issue-9916-1/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["PromiseLike"]
@@ -1755,7 +1755,7 @@ rebuilt        : []
 
 * exports/issue-9916-2/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["PromiseLike"]
@@ -1763,7 +1763,7 @@ rebuilt        : []
 
 * exports/issue-9916-3/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["PromiseLike"]

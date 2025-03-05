@@ -10292,6 +10292,43 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`TSType::TSFunctionType`] with `scope_id`.
+    ///
+    /// This node contains a [`TSFunctionType`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`: Generic type parameters
+    /// * `this_param`: `this` parameter
+    /// * `params`: Function parameters. Akin to [`Function::params`].
+    /// * `return_type`: Return type of the function.
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_type_function_type_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> TSType<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+    {
+        TSType::TSFunctionType(self.alloc_ts_function_type_with_scope_id(
+            span,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            scope_id,
+        ))
+    }
+
     /// Build a [`TSType::TSImportType`].
     ///
     /// This node contains a [`TSImportType`] that will be stored in the memory arena.
@@ -13655,6 +13692,7 @@ impl<'a> AstBuilder<'a> {
             this_param: this_param.into_in(self.allocator),
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -13685,6 +13723,83 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.ts_function_type(span, type_parameters, this_param, params, return_type),
+            self.allocator,
+        )
+    }
+
+    /// Build a [`TSFunctionType`] with `scope_id`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_function_type_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`: Generic type parameters
+    /// * `this_param`: `this` parameter
+    /// * `params`: Function parameters. Akin to [`Function::params`].
+    /// * `return_type`: Return type of the function.
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_function_type_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> TSFunctionType<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+    {
+        TSFunctionType {
+            span,
+            type_parameters: type_parameters.into_in(self.allocator),
+            this_param: this_param.into_in(self.allocator),
+            params: params.into_in(self.allocator),
+            return_type: return_type.into_in(self.allocator),
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSFunctionType`] with `scope_id`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_function_type_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`: Generic type parameters
+    /// * `this_param`: `this` parameter
+    /// * `params`: Function parameters. Akin to [`Function::params`].
+    /// * `return_type`: Return type of the function.
+    /// * `scope_id`
+    #[inline]
+    pub fn alloc_ts_function_type_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> Box<'a, TSFunctionType<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+    {
+        Box::new_in(
+            self.ts_function_type_with_scope_id(
+                span,
+                type_parameters,
+                this_param,
+                params,
+                return_type,
+                scope_id,
+            ),
             self.allocator,
         )
     }

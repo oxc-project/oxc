@@ -3917,6 +3917,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSFunctionType<'_> {
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
+            scope_id: Default::default(),
         }
     }
 }

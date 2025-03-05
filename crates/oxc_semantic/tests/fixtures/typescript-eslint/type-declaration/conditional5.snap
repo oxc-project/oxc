@@ -8,7 +8,23 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
       {
         "children": [
           {
-            "children": [],
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(StrictMode)",
+                    "id": 4,
+                    "node": "TSTypeAnnotation",
+                    "symbols": []
+                  }
+                ],
+                "flags": "ScopeFlags(StrictMode)",
+                "id": 3,
+                "node": "TSConditionalType",
+                "symbols": []
+              }
+            ],
             "flags": "ScopeFlags(StrictMode | TsConditional)",
             "id": 2,
             "node": "TSConditionalType",

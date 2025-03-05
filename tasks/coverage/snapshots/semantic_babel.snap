@@ -2,7 +2,7 @@ commit: 578ac4df
 
 semantic_babel Summary:
 AST Parsed     : 2322/2322 (100.00%)
-Positive Passed: 1919/2322 (82.64%)
+Positive Passed: 1902/2322 (81.91%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -1331,12 +1331,12 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/destructuring-in-function-type/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/destructuring-in-function-type-babel-7/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/elision-arrow-destructuring-13636/input.ts
@@ -2279,6 +2279,16 @@ Unresolved references mismatch:
 after transform: ["C", "T", "f"]
 rebuilt        : ["C", "f"]
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/type-parameters/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/type-parameters-babel-7/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/declare/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -2435,11 +2445,31 @@ semantic error: Unresolved references mismatch:
 after transform: ["T", "f", "x"]
 rebuilt        : ["f", "x"]
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/call-expression/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/call-expression-babel-7/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
 semantic error: Expected `{` but found `<<`
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage-babel-7/input.ts
 semantic error: Expected `{` but found `<<`
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/decorator-call-expression/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/decorator-call-expression-babel-7/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts
 semantic error: Expected `{` but found `<<`
@@ -2450,16 +2480,41 @@ semantic error: Unexpected token
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element-babel-7/input.tsx
 semantic error: Unexpected token
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/new-expression/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/new-expression-babel-7/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/after-bit-shift/input.ts
 semantic error: Unresolved references mismatch:
 after transform: ["T", "f", "x"]
 rebuilt        : ["f", "x"]
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/call-expression/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts
 semantic error: Expected `{` but found `<<`
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/decorator-call-expression/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx
 semantic error: Unexpected token
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/new-expression/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-type-only-as-as-keyword/input.ts
 semantic error: Unresolved references mismatch:
@@ -2529,15 +2584,51 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-
 semantic error: Identifier `method` has already been declared
 Identifier `method` has already been declared
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-babel-7/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-generic/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-generic-babel-7/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-in-generic/input.ts
-semantic error: Unresolved references mismatch:
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
 after transform: ["Array"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-in-generic-babel-7/input.ts
-semantic error: Unresolved references mismatch:
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
 after transform: ["Array"]
 rebuilt        : []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-with-this/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-with-this-babel-7/input.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration/input.ts
 semantic error: Bindings mismatch:

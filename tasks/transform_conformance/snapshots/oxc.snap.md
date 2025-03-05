@@ -586,7 +586,7 @@ rebuilt        : SymbolId(1): Span { start: 127, end: 128 }
 
 * typescript/decoratorOnClass4/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol span mismatch for "C":
 after transform: SymbolId(1): Span { start: 107, end: 108 }
@@ -597,7 +597,7 @@ rebuilt        : SymbolId(1): Span { start: 107, end: 108 }
 
 * typescript/decoratorOnClass5/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol span mismatch for "C":
 after transform: SymbolId(1): Span { start: 107, end: 108 }
@@ -608,7 +608,7 @@ rebuilt        : SymbolId(1): Span { start: 107, end: 108 }
 
 * typescript/decoratorOnClass8/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 134, end: 135 }
@@ -744,7 +744,7 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod5/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["TypedPropertyDescriptor", "babelHelpers", "dec"]
@@ -752,7 +752,7 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod6/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["TypedPropertyDescriptor", "babelHelpers", "dec"]
@@ -838,17 +838,17 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 * typescript/property/decoratorOnClassProperty10/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 * typescript/property/decoratorOnClassProperty11/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 * typescript/property/decoratorOnClassProperty12/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 * typescript/property/decoratorOnClassProperty13/input.ts

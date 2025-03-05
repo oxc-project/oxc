@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 33/33 (100.00%)
-Positive Passed: 20/33 (60.61%)
+Positive Passed: 19/33 (57.58%)
 tasks/coverage/misc/pass/oxc-1288.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["from"]
@@ -32,7 +32,10 @@ after transform: ["F"]
 rebuilt        : []
 
 tasks/coverage/misc/pass/oxc-3910.ts
-semantic error: Unresolved references mismatch:
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(2): []
+Unresolved references mismatch:
 after transform: ["ServicesAccessor"]
 rebuilt        : []
 
@@ -182,4 +185,9 @@ tasks/coverage/misc/pass/oxc-9215.ts
 semantic error: Unresolved references mismatch:
 after transform: ["a", "b", "d", "e"]
 rebuilt        : ["a", "b", "e"]
+
+tasks/coverage/misc/pass/swc-7187.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 

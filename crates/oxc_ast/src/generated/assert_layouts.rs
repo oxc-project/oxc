@@ -1277,13 +1277,14 @@ const _: () = {
     assert!(size_of::<TSImportAttributeName>() == 48);
     assert!(align_of::<TSImportAttributeName>() == 8);
 
-    assert!(size_of::<TSFunctionType>() == 40);
+    assert!(size_of::<TSFunctionType>() == 48);
     assert!(align_of::<TSFunctionType>() == 8);
     assert!(offset_of!(TSFunctionType, span) == 0);
     assert!(offset_of!(TSFunctionType, type_parameters) == 8);
     assert!(offset_of!(TSFunctionType, this_param) == 16);
     assert!(offset_of!(TSFunctionType, params) == 24);
     assert!(offset_of!(TSFunctionType, return_type) == 32);
+    assert!(offset_of!(TSFunctionType, scope_id) == 40);
 
     assert!(size_of::<TSConstructorType>() == 40);
     assert!(align_of::<TSConstructorType>() == 8);
@@ -2680,13 +2681,14 @@ const _: () = {
     assert!(size_of::<TSImportAttributeName>() == 28);
     assert!(align_of::<TSImportAttributeName>() == 4);
 
-    assert!(size_of::<TSFunctionType>() == 24);
+    assert!(size_of::<TSFunctionType>() == 28);
     assert!(align_of::<TSFunctionType>() == 4);
     assert!(offset_of!(TSFunctionType, span) == 0);
     assert!(offset_of!(TSFunctionType, type_parameters) == 8);
     assert!(offset_of!(TSFunctionType, this_param) == 12);
     assert!(offset_of!(TSFunctionType, params) == 16);
     assert!(offset_of!(TSFunctionType, return_type) == 20);
+    assert!(offset_of!(TSFunctionType, scope_id) == 24);
 
     assert!(size_of::<TSConstructorType>() == 24);
     assert!(align_of::<TSConstructorType>() == 4);

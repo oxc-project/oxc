@@ -4174,6 +4174,7 @@ pub mod walk_mut {
         it: &mut TSFunctionType<'a>,
     ) {
         // No `AstType` for this type
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -4183,6 +4184,7 @@ pub mod walk_mut {
         }
         visitor.visit_formal_parameters(&mut it.params);
         visitor.visit_ts_type_annotation(&mut it.return_type);
+        visitor.leave_scope();
     }
 
     #[inline]
