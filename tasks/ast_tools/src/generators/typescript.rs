@@ -27,11 +27,17 @@ impl Generator for TypescriptGenerator {
         let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
 
         let mut code = String::new();
+        let mut ast_node_names: Vec<String> = vec![];
         for type_def in &schema.types {
             if type_def.generates_derive(estree_derive_id) {
-                generate_ts_type_def(type_def, &mut code, schema);
+                generate_ts_type_def(type_def, &mut code, &mut ast_node_names, schema);
             }
         }
+
+        // Manually append `FormalParameterRest`, which is generated via `add_ts_def`.
+        // TODO: Should not be hard-coded here.
+        let ast_node_union = ast_node_names.join(" | ");
+        write_it!(code, "export type Node = {ast_node_union} | FormalParameterRest;\n\n");
 
         Output::Javascript { path: TYPESCRIPT_DEFINITIONS_PATH.to_string(), code }
     }
@@ -40,7 +46,12 @@ impl Generator for TypescriptGenerator {
 /// Generate Typescript type definition for a struct or enum.
 ///
 /// Push type defs to `code`.
-fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) {
+fn generate_ts_type_def(
+    type_def: &TypeDef,
+    code: &mut String,
+    ast_node_names: &mut Vec<String>,
+    schema: &Schema,
+) {
     // Skip TS def generation if `#[estree(no_ts_def)]` attribute
     let no_ts_def = match type_def {
         TypeDef::Struct(struct_def) => &struct_def.estree.no_ts_def,
@@ -50,7 +61,9 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
 
     if !no_ts_def {
         let ts_def = match type_def {
-            TypeDef::Struct(struct_def) => generate_ts_type_def_for_struct(struct_def, schema),
+            TypeDef::Struct(struct_def) => {
+                generate_ts_type_def_for_struct(struct_def, ast_node_names, schema)
+            }
             TypeDef::Enum(enum_def) => generate_ts_type_def_for_enum(enum_def, schema),
             _ => unreachable!(),
         };
@@ -72,7 +85,11 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
 }
 
 /// Generate Typescript type definition for a struct.
-fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> Option<String> {
+fn generate_ts_type_def_for_struct(
+    struct_def: &StructDef,
+    ast_node_names: &mut Vec<String>,
+    schema: &Schema,
+) -> Option<String> {
     // If struct marked with `#[estree(ts_alias = "...")]`, then it needs no type def
     if struct_def.estree.ts_alias.is_some() {
         return None;
@@ -100,6 +117,10 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> O
     if should_add_type_field_to_struct(struct_def) {
         let type_name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
         fields_str.push_str(&format!("\n\ttype: '{type_name}';"));
+    }
+
+    if !struct_def.estree.no_type {
+        ast_node_names.push(type_name.to_string());
     }
 
     let mut output_as_type = false;
