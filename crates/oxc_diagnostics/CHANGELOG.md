@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.0] - 2025-03-06
+
+### Bug Fixes
+
+- 4ca62ab linter: Output right file line and column for `.vue`, `.astro` and `.svelte` files (#9484) (Sysix)
+
 ## [0.48.2] - 2025-02-02
 
 ### Testing
