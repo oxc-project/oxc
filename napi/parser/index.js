@@ -68,6 +68,10 @@ module.exports.parseSync = function parseSync(filename, sourceText, options) {
 let buffer, encoder;
 
 function parseSyncRaw(filename, sourceText, options) {
+  if (!rawTransferSupported()) {
+    throw new Error('`experimentalRawTransfer` option is not supported on 32-bit or big-endian systems');
+  }
+
   // Delete `experimentalRawTransfer` option
   let experimentalRawTransfer;
   ({ experimentalRawTransfer, ...options } = options);
@@ -138,3 +142,14 @@ function createBuffer() {
   const offset = bindings.getBufferOffset(new Uint8Array(arrayBuffer));
   return new Uint8Array(arrayBuffer, offset, TWO_GIB);
 }
+
+let rawTransferIsSupported = null;
+
+// Returns `true` if `experimentalRawTransfer` is option is supported.
+// Raw transfer is only available on 64-bit little-endian systems.
+function rawTransferSupported() {
+  if (rawTransferIsSupported === null) rawTransferIsSupported = bindings.rawTransferSupported();
+  return rawTransferIsSupported;
+}
+
+module.exports.rawTransferSupported = rawTransferSupported;

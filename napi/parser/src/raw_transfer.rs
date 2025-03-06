@@ -18,6 +18,10 @@ use crate::{
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData},
 };
 
+// Only 64-bit little-endian platforms are supported at present.
+const IS_SUPPORTED_PLATFORM: bool =
+    cfg!(all(target_pointer_width = "64", target_endian = "little"));
+
 // For raw transfer, use a buffer 4 GiB in size, with 4 GiB alignment.
 // This ensures that all 64-bit pointers have the same value in upper 32 bits,
 // so JS only needs to read the lower 32 bits to get an offset into the buffer.
@@ -26,7 +30,9 @@ use crate::{
 // so this enables using `>>` bitshift operator in JS, rather than the more expensive `>>>`,
 // without offsets being interpreted as negative.
 const TWO_GIB: usize = 1 << 31;
-const FOUR_GIB: usize = 1 << 32;
+// `1 << 32`.
+// We use `IS_SUPPORTED_PLATFORM as usize * 32` to avoid compilation failure on 32-bit platforms.
+const FOUR_GIB: usize = 1 << (IS_SUPPORTED_PLATFORM as usize * 32);
 
 const BUFFER_SIZE: usize = TWO_GIB;
 const BUFFER_ALIGN: usize = FOUR_GIB;
@@ -75,8 +81,10 @@ pub unsafe fn parse_sync_raw(
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
-    // 32-bit systems are not supported
-    const { assert!(std::mem::size_of::<usize>() >= 8) };
+    assert!(
+        IS_SUPPORTED_PLATFORM,
+        "Raw transfer is only supported on 64-bit little-endian platforms"
+    );
 
     // Check buffer has expected size and alignment
     let buffer = &mut *buffer;
@@ -174,6 +182,12 @@ pub unsafe fn parse_sync_raw(
         buffer_ptr.add(METADATA_OFFSET).cast::<u32>().write(data_offset);
         buffer_ptr.add(METADATA_OFFSET + 4).cast::<bool>().write(ast_type == AstType::TypeScript);
     }
+}
+
+/// Returns `true` if raw transfer is supported on this platform.
+#[napi]
+pub fn raw_transfer_supported() -> bool {
+    IS_SUPPORTED_PLATFORM
 }
 
 /// Returns `true` if `n` is a multiple of `divisor`.

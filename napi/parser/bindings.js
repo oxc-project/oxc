@@ -379,4 +379,5 @@ module.exports.ImportNameKind = nativeBinding.ImportNameKind
 module.exports.parseAsync = nativeBinding.parseAsync
 module.exports.parseSync = nativeBinding.parseSync
 module.exports.parseSyncRaw = nativeBinding.parseSyncRaw
+module.exports.rawTransferSupported = nativeBinding.rawTransferSupported
 module.exports.Severity = nativeBinding.Severity

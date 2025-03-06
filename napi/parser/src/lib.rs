@@ -20,7 +20,7 @@ mod convert;
 mod raw_transfer;
 mod raw_transfer_types;
 mod types;
-pub use raw_transfer::{get_buffer_offset, parse_sync_raw};
+pub use raw_transfer::{get_buffer_offset, parse_sync_raw, raw_transfer_supported};
 pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
 mod generated {

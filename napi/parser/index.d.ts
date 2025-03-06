@@ -201,6 +201,9 @@ export declare function parseSync(filename: string, sourceText: string, options?
  */
 export declare function parseSyncRaw(filename: string, buffer: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
 
+/** Returns `true` if raw transfer is supported on this platform. */
+export declare function rawTransferSupported(): boolean
+
 export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
