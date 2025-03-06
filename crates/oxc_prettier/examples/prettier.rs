@@ -35,7 +35,11 @@ fn main() -> std::io::Result<()> {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type)
-        .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+        .with_options(ParseOptions {
+            preserve_parens: false,
+            allow_v8_intrinsics: true,
+            ..ParseOptions::default()
+        })
         .parse();
     let mut prettier = Prettier::new(
         &allocator,

@@ -38,6 +38,8 @@
 //! [ECMAScript spec]: <https://tc39.es/ecma262/>
 //! [tsc]: <https://github.com/microsoft/TypeScript>
 //! [`Traverse`]: <https://github.com/oxc-project/oxc/tree/main/crates/oxc_traverse>
+//! [`Visit`]: <http://docs.rs/oxc_ast_visit>
+//! [`VisitMut`]: <http://docs.rs/oxc_ast_visit>
 
 #![warn(missing_docs)]
 
@@ -50,11 +52,8 @@ mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
 mod trivia;
-#[cfg(feature = "serialize")]
-pub mod utf8_to_utf16;
 
 mod generated {
-    #![expect(missing_docs)]
     #[cfg(debug_assertions)]
     pub mod assert_layouts;
     pub mod ast_builder;
@@ -67,24 +66,16 @@ mod generated {
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
     pub mod get_id;
-    pub mod visit;
-    pub mod visit_mut;
-}
-
-pub mod visit {
-    #![expect(missing_docs)]
-    pub use crate::generated::{visit::*, visit_mut::*};
 }
 
 pub use generated::{ast_builder, ast_kind};
 
 pub use crate::{
-    ast::comment::{Comment, CommentKind, CommentPosition},
+    ast::comment::{Comment, CommentAnnotation, CommentKind, CommentPosition},
     ast_builder::AstBuilder,
     ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
     trivia::{CommentsRange, comments_range, has_comments_between},
-    visit::{Visit, VisitMut},
 };
 
 // After experimenting with two types of boxed enum variants:

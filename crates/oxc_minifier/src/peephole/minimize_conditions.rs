@@ -287,9 +287,9 @@ mod test {
         test("function f(){if(x){a()}x=3}", "function f(){x&&a(),x=3}");
         test("function f(){if(x){a?.()}x=3}", "function f(){x&&a?.(),x=3}");
 
-        // test("function f(){if(x){return 3}}", "function f(){if(x)return 3}");
+        test("function f(){if(x){return 3}}", "function f(){if(x)return 3}");
         test("function f(){if(x){a()}}", "function f(){x&&a()}");
-        // test("function f(){if(x){throw 1}}", "function f(){if(x)throw 1;}");
+        test("function f(){if(x){throw 1}}", "function f(){if(x)throw 1}");
 
         // Try it out with functions
         test("function f(){if(x){foo()}}", "function f(){x&&foo()}");
@@ -315,7 +315,7 @@ mod test {
             "function f() { if (e1) do foo(); while (e2); else foo2(); }",
         );
         // Test an obscure case with do and while
-        // test("if(x){do{foo()}while(y)}else bar()", "if(x){do foo();while(y)}else bar()");
+        test("if(x){do{foo()}while(y)}else bar()", "if(x)do foo();while(y);else bar()");
 
         // Play with nested IFs
         test("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
@@ -326,27 +326,27 @@ mod test {
             "function f(){x?y?foo():bar():baz()}",
         );
 
-        // test("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
+        test("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)for(;e2;)e3&&foo();else bar()");
 
-        // test("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
+        test("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
         // test("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
-        // test("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
+        test("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
 
         // NOTE - technically we can remove the blocks since both the parent
         // and child have elses. But we don't since it causes ambiguities in
         // some cases where not all descendent ifs having elses
-        // test(
-        // "if(x){ if(y){var x;}else{var z;} }else{var w}",
-        // "if(x)if(y)var x;else var z;else var w",
-        // );
-        // test("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
+        test(
+            "if(x){ if(y){var x;}else{var z;} }else{var w}",
+            "if(x)if(y)var x;else var z;else var w",
+        );
+        test("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
 
         // Here's some of the ambiguous cases
-        // test(
-        // "if(a){if(b){f1();f2();}else if(c){f3();}}else {if(d){f4();}}",
-        // "if(a)if(b){f1();f2()}else c&&f3();else d&&f4()",
-        // );
+        test(
+            "if(a){if(b){f1();f2();}else if(c){f3();}}else {if(d){f4();}}",
+            "a ? b ? (f1(), f2()) : c && f3() : d && f4();",
+        );
 
         test_same("function f(){foo()}");
         test_same("switch(x){case y: foo()}");
@@ -392,37 +392,33 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs1() {
         test(
             "function f() {if (x) return 1; if (y) return 1}",
-            "function f() {if (x||y) return 1;}",
+            "function f() {if (x || y) return 1;}",
         );
-        test(
-            "function f() {if (x) return 1; if (y) foo(); else return 1}",
-            "function f() {if ((!x)&&y) foo(); else return 1;}",
-        );
+        // test(
+        //     "function f() {if (x) return 1; if (y) foo(); else return 1}",
+        //     "function f() {if ((!x)&&y) foo(); else return 1;}",
+        // );
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs2() {
-        // combinable but not yet done
-        test_same("function f() {if (x) throw 1; if (y) throw 1}");
+        test("function f() {if (x) throw 1; if (y) throw 1}", "function f() {if (x || y) throw 1}");
         // Can't combine, side-effect
-        test("function f(){ if (x) g(); if (y) g() }", "function f(){ x&&g(); y&&g() }");
-        test("function f(){ if (x) g?.(); if (y) g?.() }", "function f(){ x&&g?.(); y&&g?.() }");
+        test("function f(){ if (x) g(); if (y) g() }", "function f(){ x&&g(), y&&g() }");
+        test("function f(){ if (x) g?.(); if (y) g?.() }", "function f(){ x&&g?.(), y&&g?.() }");
         // Can't combine, side-effect
-        test(
-            "function f(){ if (x) y = 0; if (y) y = 0; }",
-            "function f(){ x&&(y = 0); y&&(y = 0); }",
-        );
+        test("function f(){ if (x) y = 0; if (y) y = 0; }", "function f(){ x&&(y = 0), y &&= 0 }");
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs3() {
-        test_same("function f() {if (x) return 1; if (y) {g();f()}}");
+        test(
+            "function f() {if (x) return 1; if (y) {g();f()}}",
+            "function f() { if (x) return 1; y && (g(), f()) }",
+        );
     }
 
     /** Try to minimize assignments */
@@ -511,8 +507,8 @@ mod test {
     fn test_not_cond() {
         test("function f(){if(!x)foo()}", "function f(){x||foo()}");
         test("function f(){if(!x)b=1}", "function f(){x||(b=1)}");
-        // test("if(!x)z=1;else if(y)z=2", "x ? y&&(z=2) : z=1;");
-        // test("if(x)y&&(z=2);else z=1;", "x ? y&&(z=2) : z=1");
+        test("if(!x)z=1;else if(y)z=2", "x ? y&&(z=2) : z=1;");
+        test("if(x)y&&(z=2);else z=1;", "x ? y&&(z=2) : z=1");
         test("function f(){if(!(x=1))a.b=1}", "function f(){(x=1)||(a.b=1)}");
     }
 
@@ -714,9 +710,9 @@ mod test {
         // These could be simplified to "for(;;) ..."
         test("for(;!!true;) foo()", "for(;;) foo()");
         // Verify function deletion tracking.
-        // test("if(!!true||function(){}) {}", "if(1) {}");
+        test("if(!!true||function(){}) {}", "");
         // Don't bother with FOR inits as there are normalized out.
-        test("for(!!true;;) foo()", "for(!0;;) foo()");
+        test("for(!!true;;) foo()", "for(;;) foo()");
 
         // These test tryMinimizeCondition
         test("for(;!!x;) foo()", "for(;x;) foo()");
@@ -739,31 +735,17 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    fn test_fold_loop_break_late() {
+    fn test_fold_loop_break() {
         test("for(;;) if (a) break", "for(;!a;);");
         test_same("for(;;) if (a) { f(); break }");
-        test("for(;;) if (a) break; else f()", "for(;!a;) { { f(); } }");
+        test("for(;;) if (a) break; else f()", "for(;!a;) f()");
         test("for(;a;) if (b) break", "for(;a && !b;);");
-        test("for(;a;) { if (b) break; if (c) break; }", "for(;(a && !b);) if (c) break;");
+        test("for(;a;) { if (b) break; if (c) break; }", "for (;a && !(b || c););");
         test("for(;(a && !b);) if (c) break;", "for(;(a && !b) && !c;);");
-        test("for(;;) { if (foo) { break; var x; } } x;", "var x; for(;!foo;) {} x;");
+        // test("for(;;) { if (foo) { break; var x; } } x;", "var x; for(;!foo;) {} x;");
 
         // 'while' is normalized to 'for'
-        test("while(true) if (a) break", "for(;1&&!a;);");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_fold_loop_break_early() {
-        test_same("for(;;) if (a) break");
-        test_same("for(;;) if (a) { f(); break }");
-        test_same("for(;;) if (a) break; else f()");
-        test_same("for(;a;) if (b) break");
-        test_same("for(;a;) { if (b) break; if (c) break; }");
-
-        test_same("while(1) if (a) break");
-        test_same("for (; 1; ) if (a) break");
+        test("while(true) if (a) break", "for(;!a;);");
     }
 
     #[test]
@@ -985,72 +967,70 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_remove_duplicate_return() {
         test("function f() { return; }", "function f(){}");
         test_same("function f() { return a; }");
+        test("function f() { if (x) { return a } return a; }", "function f() { return x, a; }");
+        test_same("function f() { try { if (x) return a; } catch {} return a; }");
         test(
-            "function f() { if (x) { return a } return a; }",
-            "function f() { if (x) {} return a; }",
+            "function f() { try { if (x) {} } catch {} return 1; }",
+            "function f() { try { x } catch {} return 1; }",
         );
-        test_same("function f() { try { if (x) { return a } } catch(e) {} return a; }");
-        test_same("function f() { try { if (x) {} } catch(e) {} return 1; }");
 
         // finally clauses may have side effects
-        test_same("function f() { try { if (x) { return a } } finally { a++ } return a; }");
+        test_same("function f() { try { if (x) return a } finally { a++ } return a; }");
         // but they don't matter if the result doesn't have side effects and can't
         // be affect by side-effects.
-        test(
-            "function f() { try { if (x) { return 1 } } finally {} return 1; }",
-            "function f() { try { if (x) {} } finally {} return 1; }",
-        );
+        // test(
+        //     "function f() { try { if (x) return 1 } finally {} return 1; }",
+        //     "function f() { try { if (x) {} } finally {} return 1; }",
+        // );
 
-        test(
-            "function f() { switch(a){ case 1: return a; } return a; }",
-            "function f() { switch(a){ case 1: } return a; }",
-        );
+        // test(
+        //     "function f() { switch(a){ case 1: return a; } return a; }",
+        //     "function f() { switch(a){ case 1: } return a; }",
+        // );
 
-        test(
-            concat!(
-                "function f() { switch(a){ ",
-                "  case 1: return a; case 2: return a; } return a; }"
-            ),
-            concat!("function f() { switch(a){ ", "  case 1: break; case 2: } return a; }"),
-        );
+        // test(
+        //     concat!(
+        //         "function f() { switch(a){ ",
+        //         "  case 1: return a; case 2: return a; } return a; }"
+        //     ),
+        //     concat!("function f() { switch(a){ ", "  case 1: break; case 2: } return a; }"),
+        // );
     }
 
     #[test]
-    #[ignore]
     fn test_remove_duplicate_throw() {
         test_same("function f() { throw a; }");
-        test("function f() { if (x) { throw a } throw a; }", "function f() { if (x) {} throw a; }");
-        test_same("function f() { try { if (x) {throw a} } catch(e) {} throw a; }");
-        test_same("function f() { try { if (x) {throw 1} } catch(e) {f()} throw 1; }");
-        test_same("function f() { try { if (x) {throw 1} } catch(e) {f()} throw 1; }");
-        test_same("function f() { try { if (x) {throw 1} } catch(e) {throw 1}}");
-        test(
-            "function f() { try { if (x) {throw 1} } catch(e) {throw 1} throw 1; }",
-            "function f() { try { if (x) {throw 1} } catch(e) {} throw 1; }",
-        );
+        test("function f() { if (x) { throw a } throw a; }", "function f() { throw x, a; }");
+        test_same("function f() { try { if (x) throw a } catch {} throw a; }");
+        test_same("function f() { try { if (x) throw 1 } catch {f()} throw 1; }");
+        test_same("function f() { try { if (x) throw 1 } catch {f()} throw 1; }");
+        test_same("function f() { try { if (x) throw 1 } catch {throw 1}}");
+        // test(
+        //     "function f() { try { if (x) throw 1 } catch {throw 1} throw 1; }",
+        //     "function f() { try { if (x) throw 1 } catch {} throw 1; }",
+        // );
 
         // finally clauses may have side effects
-        test_same("function f() { try { if (x) { throw a } } finally { a++ } throw a; }");
+        test_same("function f() { try { if (x) throw a } finally { a++ } throw a; }");
         // but they don't matter if the result doesn't have side effects and can't
         // be affect by side-effects.
-        test(
-            "function f() { try { if (x) { throw 1 } } finally {} throw 1; }",
-            "function f() { try { if (x) {} } finally {} throw 1; }",
-        );
+        // test(
+        //     "function f() { try { if (x) throw 1 } finally {} throw 1; }",
+        //     "function f() { try { if (x) {} } finally {} throw 1; }",
+        // );
 
-        test(
-            "function f() { switch(a){ case 1: throw a; } throw a; }",
-            "function f() { switch(a){ case 1: } throw a; }",
-        );
+        // test(
+        //     "function f() { switch(a){ case 1: throw a; } throw a; }",
+        //     "function f() { switch(a){ case 1: } throw a; }",
+        // );
 
-        test(
-            concat!("function f() { switch(a){ ", "case 1: throw a; case 2: throw a; } throw a; }"),
-            concat!("function f() { switch(a){ case 1: break; case 2: } throw a; }"),
-        );
+        // test(
+        //     concat!("function f() { switch(a){ ", "case 1: throw a; case 2: throw a; } throw a; }"),
+        //     concat!("function f() { switch(a){ case 1: break; case 2: } throw a; }"),
+        // );
     }
 
     #[test]
@@ -1081,24 +1061,16 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_remove_else_cause1() {
-        test(
-            "function f() { if (x) throw 1; else f() }",
-            "function f() { if (x) throw 1; { f() } }",
-        );
+        test("function f() { if (x) throw 1; else f() }", "function f() { if (x) throw 1; f() }");
     }
 
     #[test]
-    #[ignore]
     fn test_remove_else_cause2() {
-        test(
-            "function f() { if (x) return 1; else f() }",
-            "function f() { if (x) return 1; { f() } }",
-        );
-        test("function f() { if (x) return; else f() }", "function f() { if (x) {} else { f() } }");
+        test("function f() { if (x) return 1; else f() }", "function f() { if (x) return 1; f() }");
+        test("function f() { if (x) return; else f() }", "function f() { x || f() }");
         // This case is handled by minimize exit points.
-        test_same("function f() { if (x) return; f() }");
+        test("function f() { if (x) return; f() }", "function f() { x || f() }");
     }
 
     #[test]
@@ -1308,21 +1280,21 @@ mod test {
         test("if((-0 != +0) !== false){}", "");
         test_same("foo(x >> y == 0)");
 
-        test("(x = 1) === 1", "(x = 1) == 1");
-        test("(x = 1) !== 1", "(x = 1) != 1");
+        test("v = (x = 1) === 1", "v = (x = 1) == 1");
+        test("v = (x = 1) !== 1", "v = (x = 1) != 1");
         test("v = !0 + null !== 1", "v = !1");
     }
 
     #[test]
     fn test_try_compress_type_of_equal_string() {
-        test("typeof foo === 'number'", "typeof foo == 'number'");
-        test("'number' === typeof foo", "typeof foo == 'number'");
-        test("typeof foo === `number`", "typeof foo == 'number'");
-        test("`number` === typeof foo", "typeof foo == 'number'");
-        test("typeof foo !== 'number'", "typeof foo != 'number'");
-        test("'number' !== typeof foo", "typeof foo != 'number'");
-        test("typeof foo !== `number`", "typeof foo != 'number'");
-        test("`number` !== typeof foo", "typeof foo != 'number'");
+        test("v = typeof foo === 'number'", "v = typeof foo == 'number'");
+        test("v = 'number' === typeof foo", "v = typeof foo == 'number'");
+        test("v = typeof foo === `number`", "v = typeof foo == 'number'");
+        test("v = `number` === typeof foo", "v = typeof foo == 'number'");
+        test("v = typeof foo !== 'number'", "v = typeof foo != 'number'");
+        test("v = 'number' !== typeof foo", "v = typeof foo != 'number'");
+        test("v = typeof foo !== `number`", "v = typeof foo != 'number'");
+        test("v = `number` !== typeof foo", "v = typeof foo != 'number'");
     }
 
     #[test]
@@ -1360,39 +1332,39 @@ mod test {
 
     #[test]
     fn test_fold_is_null_or_undefined() {
-        test("foo === null || foo === undefined", "foo == null");
-        test("foo === undefined || foo === null", "foo == null");
-        test("foo === null || foo === void 0", "foo == null");
-        test("foo === null || foo === void 0 || foo === 1", "foo == null || foo === 1");
-        test("foo === 1 || foo === null || foo === void 0", "foo === 1 || foo == null");
-        test_same("foo === void 0 || bar === null");
-        test_same("var undefined = 1; foo === null || foo === undefined");
-        test_same("foo !== 1 && foo === void 0 || foo === null");
-        test_same("foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
+        test("v = foo === null || foo === undefined", "v = foo == null");
+        test("v = foo === undefined || foo === null", "v = foo == null");
+        test("v = foo === null || foo === void 0", "v = foo == null");
+        test("v = foo === null || foo === void 0 || foo === 1", "v = foo == null || foo === 1");
+        test("v = foo === 1 || foo === null || foo === void 0", "v = foo === 1 || foo == null");
+        test_same("v = foo === void 0 || bar === null");
+        test_same("var undefined = 1; v = foo === null || foo === undefined");
+        test_same("v = foo !== 1 && foo === void 0 || foo === null");
+        test_same("v = foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
 
-        test("foo !== null && foo !== undefined", "foo != null");
-        test("foo !== undefined && foo !== null", "foo != null");
-        test("foo !== null && foo !== void 0", "foo != null");
-        test("foo !== null && foo !== void 0 && foo !== 1", "foo != null && foo !== 1");
-        test("foo !== 1 && foo !== null && foo !== void 0", "foo !== 1 && foo != null");
-        test("foo !== 1 || foo !== void 0 && foo !== null", "foo !== 1 || foo != null");
-        test_same("foo !== void 0 && bar !== null");
+        test("v = foo !== null && foo !== undefined", "v = foo != null");
+        test("v = foo !== undefined && foo !== null", "v = foo != null");
+        test("v = foo !== null && foo !== void 0", "v = foo != null");
+        test("v = foo !== null && foo !== void 0 && foo !== 1", "v = foo != null && foo !== 1");
+        test("v = foo !== 1 && foo !== null && foo !== void 0", "v = foo !== 1 && foo != null");
+        test("v = foo !== 1 || foo !== void 0 && foo !== null", "v = foo !== 1 || foo != null");
+        test_same("v = foo !== void 0 && bar !== null");
 
-        test("(_foo = foo) === null || _foo === undefined", "(_foo = foo) == null");
-        test("(_foo = foo) === null || _foo === void 0", "(_foo = foo) == null");
-        test("(_foo = foo.bar) === null || _foo === undefined", "(_foo = foo.bar) == null");
-        test("(_foo = foo) !== null && _foo !== undefined", "(_foo = foo) != null");
-        test("(_foo = foo) === undefined || _foo === null", "(_foo = foo) == null");
-        test("(_foo = foo) === void 0 || _foo === null", "(_foo = foo) == null");
+        test("v = (_foo = foo) === null || _foo === undefined", "v = (_foo = foo) == null");
+        test("v = (_foo = foo) === null || _foo === void 0", "v = (_foo = foo) == null");
+        test("v = (_foo = foo.bar) === null || _foo === undefined", "v = (_foo = foo.bar) == null");
+        test("v = (_foo = foo) !== null && _foo !== undefined", "v = (_foo = foo) != null");
+        test("v = (_foo = foo) === undefined || _foo === null", "v = (_foo = foo) == null");
+        test("v = (_foo = foo) === void 0 || _foo === null", "v = (_foo = foo) == null");
         test(
-            "(_foo = foo) === null || _foo === void 0 || _foo === 1",
-            "(_foo = foo) == null || _foo === 1",
+            "v = (_foo = foo) === null || _foo === void 0 || _foo === 1",
+            "v = (_foo = foo) == null || _foo === 1",
         );
         test(
-            "_foo === 1 || (_foo = foo) === null || _foo === void 0",
-            "_foo === 1 || (_foo = foo) == null",
+            "v = _foo === 1 || (_foo = foo) === null || _foo === void 0",
+            "v = _foo === 1 || (_foo = foo) == null",
         );
-        test_same("(_foo = foo) === void 0 || bar === null");
+        test_same("v = (_foo = foo) === void 0 || bar === null");
     }
 
     #[test]

@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.52.0"
+version = "0.56.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -31,6 +31,7 @@ oxc_ast = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 
+oxc_ast_visit = { workspace = true, optional = true }
 oxc_cfg = { workspace = true, optional = true }
 oxc_codegen = { workspace = true, optional = true }
 oxc_diagnostics = { workspace = true }
@@ -50,6 +51,7 @@ full = [
   "semantic",
   "transformer",
   "isolated_declarations",
+  "ast_visit",
   "cfg",
 ]
 
@@ -60,9 +62,12 @@ codegen = ["oxc_codegen"]
 mangler = ["oxc_mangler"]
 cfg = ["oxc_cfg"]
 isolated_declarations = ["oxc_isolated_declarations"]
+ast_visit = ["oxc_ast_visit"]
 
 serialize = [
+  "oxc_allocator/from_raw_parts",
   "oxc_ast/serialize",
+  "oxc_ast_visit/serialize",
   "oxc_semantic?/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",

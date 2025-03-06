@@ -54,7 +54,8 @@
 use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString};
-use oxc_ast::{NONE, Visit, ast::*};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::{
@@ -390,7 +391,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         // Construct the IIFE
         let callee =
             Expression::FunctionExpression(ctx.alloc(ctx.ast.move_function(wrapper_function)));
-        ctx.ast.expression_call(SPAN, callee, NONE, ctx.ast.vec(), false)
+        ctx.ast.expression_call_with_pure(SPAN, callee, NONE, ctx.ast.vec(), false, true)
     }
 
     /// Transforms async function declarations into generator functions wrapped in the asyncToGenerator helper.

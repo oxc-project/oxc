@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, CloneIn};
+use oxc_allocator::{Box as ArenaBox, CloneIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{SPAN, Span};
 
@@ -16,7 +16,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         func: &Function<'a>,
         declare: Option<bool>,
-    ) -> Box<'a, Function<'a>> {
+    ) -> ArenaBox<'a, Function<'a>> {
         let return_type = self.infer_function_return_type(func);
         if return_type.is_none() {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
@@ -113,7 +113,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_formal_parameters(
         &self,
         params: &FormalParameters<'a>,
-    ) -> Box<'a, FormalParameters<'a>> {
+    ) -> ArenaBox<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
             return self.ast.alloc(params.clone_in(self.ast.allocator));
         }

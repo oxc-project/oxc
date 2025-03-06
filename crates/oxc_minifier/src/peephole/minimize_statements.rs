@@ -1,7 +1,8 @@
 use std::ops::ControlFlow;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{Visit, ast::*};
+use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_semantic::ScopeId;
 use oxc_span::{ContentEq, GetSpan};
@@ -182,6 +183,93 @@ impl<'a> PeepholeOptimizations {
                             result.push(last_return_stmt);
                         }
                         _ => break 'return_loop,
+                    }
+                }
+            } else if let Some(Statement::ThrowStatement(_)) = result.last() {
+                'throw_loop: while result.len() >= 2 {
+                    let prev_index = result.len() - 2;
+                    let prev_stmt = &result[prev_index];
+                    match prev_stmt {
+                        Statement::ExpressionStatement(_) => {
+                            self.mark_current_function_as_changed();
+                            // "a(); throw b;" => "throw a(), b;"
+                            let last_stmt = result.pop().unwrap();
+                            let Statement::ThrowStatement(mut last_throw) = last_stmt else {
+                                unreachable!()
+                            };
+                            let prev_stmt = result.pop().unwrap();
+                            let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
+                                unreachable!()
+                            };
+                            let argument = Self::join_sequence(
+                                &mut expr_stmt.expression,
+                                &mut last_throw.argument,
+                                ctx,
+                            );
+                            let right_span = last_throw.span;
+                            let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
+                            result.push(last_throw_stmt);
+                        }
+                        // Merge the last two statements
+                        Statement::IfStatement(if_stmt) => {
+                            // The previous statement must be an if statement with no else clause
+                            if if_stmt.alternate.is_some() {
+                                break 'throw_loop;
+                            }
+                            // The then clause must be a throw
+                            let Statement::ThrowStatement(_) = &if_stmt.consequent else {
+                                break 'throw_loop;
+                            };
+
+                            self.mark_current_function_as_changed();
+                            let last_stmt = result.pop().unwrap();
+                            let Statement::ThrowStatement(last_throw) = last_stmt else {
+                                unreachable!()
+                            };
+                            let prev_stmt = result.pop().unwrap();
+                            let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
+                            let mut prev_if = prev_if.unbox();
+                            let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
+                                unreachable!()
+                            };
+
+                            let right_span = last_throw.span;
+                            let mut left = prev_throw.unbox().argument;
+                            let mut right = last_throw.unbox().argument;
+
+                            // "if (!a) throw b; throw c;" => "throw a ? c : b;"
+                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
+                                if unary_expr.operator.is_not() {
+                                    prev_if.test =
+                                        ctx.ast.move_expression(&mut unary_expr.argument);
+                                    std::mem::swap(&mut left, &mut right);
+                                }
+                            }
+
+                            let argument = if let Expression::SequenceExpression(sequence_expr) =
+                                &mut prev_if.test
+                            {
+                                // "if (a, b) throw c; throw d;" => "throw a, b ? c : d;"
+                                let test = sequence_expr.expressions.pop().unwrap();
+                                let mut b =
+                                    self.minimize_conditional(prev_if.span, test, left, right, ctx);
+                                Self::join_sequence(&mut prev_if.test, &mut b, ctx)
+                            } else {
+                                // "if (a) throw b; throw c;" => "throw a ? b : c;"
+                                let mut expr = self.minimize_conditional(
+                                    prev_if.span,
+                                    ctx.ast.move_expression(&mut prev_if.test),
+                                    left,
+                                    right,
+                                    ctx,
+                                );
+                                self.minimize_conditions_exit_expression(&mut expr, ctx);
+                                expr
+                            };
+                            let last_throw_stmt = ctx.ast.statement_throw(right_span, argument);
+                            result.push(last_throw_stmt);
+                        }
+                        _ => break 'throw_loop,
                     }
                 }
             }

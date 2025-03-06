@@ -10,10 +10,16 @@ use crate::{
     rule::Rule,
 };
 
-fn no_console_diagnostic(span: Span) -> OxcDiagnostic {
+fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
+    let only_msg = if allow.is_empty() {
+        String::from("Delete this console statement.")
+    } else {
+        format!("Supported methods are: {}.", allow.join(", "))
+    };
+
     OxcDiagnostic::warn("eslint(no-console): Unexpected console statement.")
         .with_label(span)
-        .with_help("Delete this console statement.")
+        .with_help(only_msg)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -90,9 +96,11 @@ impl Rule for NoConsole {
         {
             if let Some((mem_span, _)) = mem.static_property_info() {
                 let diagnostic_span = ident.span().merge(mem_span);
-                ctx.diagnostic_with_suggestion(no_console_diagnostic(diagnostic_span), |fixer| {
-                    remove_console(fixer, ctx, node)
-                });
+
+                ctx.diagnostic_with_suggestion(
+                    no_console_diagnostic(diagnostic_span, &self.allow),
+                    |fixer| remove_console(fixer, ctx, node),
+                );
             }
         }
     }

@@ -1,4 +1,11 @@
-use std::mem::{align_of, size_of};
+use std::{
+    cmp::max,
+    mem::{align_of, size_of},
+};
+
+use crate::schema::{
+    BoxDef, CellDef, EnumDef, FieldDef, OptionDef, PrimitiveDef, StructDef, TypeDef, VecDef,
+};
 
 /// The layout of a type.
 #[derive(Clone, Default, Debug)]
@@ -24,7 +31,7 @@ impl Layout {
         Self::from_size_align_niche(
             size,
             u32::try_from(align_of::<T>()).unwrap(),
-            Niche::new(0, size, true, 1),
+            Niche::new(0, size, 1, 0),
         )
     }
 
@@ -75,28 +82,128 @@ pub struct Niche {
     /// Byte offset of the niche from start of type
     pub offset: u32,
     /// Size of the niche in bytes
-    #[expect(dead_code)]
     pub size: u32,
-    /// `true` if niche is at start of range (e.g. 0..3).
-    /// `false` if niche is at end of range (e.g. 2..255).
-    #[expect(dead_code)]
-    pub is_range_start: bool,
-    /// Number of niche values in the niche (e.g. 1 for `&str`, 254 for `bool`)
-    pub count: u32,
+    /// Number of values at start of range
+    pub count_start: u32,
+    /// Number of values at end of range
+    pub count_end: u32,
 }
 
 impl Niche {
     /// Create new [`Niche`].
-    pub fn new(offset: u32, size: u32, is_range_start: bool, count: u32) -> Self {
-        Self { offset, size, is_range_start, count }
+    pub fn new(offset: u32, size: u32, count_start: u32, count_end: u32) -> Self {
+        Self { offset, size, count_start, count_end }
+    }
+
+    /// Get size of largest niche range (start or end)
+    pub fn count_max(&self) -> u32 {
+        max(self.count_start, self.count_end)
+    }
+
+    /// Get value of the [`Niche`].
+    pub fn value(&self) -> u128 {
+        // Prefer to consume niches at start of range over end of range
+        if self.count_start > 0 {
+            u128::from(self.count_start - 1)
+        } else {
+            let max_value = match self.size {
+                1 => u128::from(u8::MAX),
+                2 => u128::from(u16::MAX),
+                4 => u128::from(u32::MAX),
+                8 => u128::from(u64::MAX),
+                16 => u128::MAX,
+                size => panic!("Invalid niche size: {size}"),
+            };
+            max_value - u128::from(self.count_end) + 1
+        }
     }
 }
 
 /// Offset of a struct field.
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Offset {
     /// Offset in bytes on 64-bit platforms
     pub offset_64: u32,
     /// Offset in bytes on 32-bit platforms
     pub offset_32: u32,
+}
+
+/// Trait to get layout of a type.
+pub trait GetLayout {
+    /// Get [`Layout`] for type.
+    fn layout(&self) -> &Layout;
+
+    /// Get [`PlatformLayout`] for type on 32-bit platform.
+    fn layout_32(&self) -> &PlatformLayout {
+        &self.layout().layout_32
+    }
+
+    /// Get [`PlatformLayout`] for type on 64-bit platform.
+    fn layout_64(&self) -> &PlatformLayout {
+        &self.layout().layout_64
+    }
+
+    /// Get [`PlatformLayout`] for type on specified platform.
+    fn platform_layout(&self, is_64: bool) -> &PlatformLayout {
+        if is_64 { self.layout_64() } else { self.layout_32() }
+    }
+}
+
+impl GetLayout for TypeDef {
+    fn layout(&self) -> &Layout {
+        match self {
+            TypeDef::Struct(def) => &def.layout,
+            TypeDef::Enum(def) => &def.layout,
+            TypeDef::Primitive(def) => &def.layout,
+            TypeDef::Option(def) => &def.layout,
+            TypeDef::Box(def) => &def.layout,
+            TypeDef::Vec(def) => &def.layout,
+            TypeDef::Cell(def) => &def.layout,
+        }
+    }
+}
+
+macro_rules! impl_get_layout {
+    ($ty:ident) => {
+        impl GetLayout for $ty {
+            fn layout(&self) -> &Layout {
+                &self.layout
+            }
+        }
+    };
+}
+
+impl_get_layout!(StructDef);
+impl_get_layout!(EnumDef);
+impl_get_layout!(PrimitiveDef);
+impl_get_layout!(OptionDef);
+impl_get_layout!(BoxDef);
+impl_get_layout!(VecDef);
+impl_get_layout!(CellDef);
+
+/// Trait to get offset of a struct field.
+pub trait GetOffset {
+    /// Get [`Offset`] for struct field.
+    fn offset(&self) -> Offset;
+
+    /// Get offset for struct field on 32-bit platform.
+    fn offset_32(&self) -> u32 {
+        self.offset().offset_32
+    }
+
+    /// Get offset for struct field on 64-bit platform.
+    fn offset_64(&self) -> u32 {
+        self.offset().offset_64
+    }
+
+    /// Get offset for struct field on specified platform.
+    fn platform_offset(&self, is_64: bool) -> u32 {
+        if is_64 { self.offset_64() } else { self.offset_32() }
+    }
+}
+
+impl GetOffset for FieldDef {
+    fn offset(&self) -> Offset {
+        self.offset
+    }
 }

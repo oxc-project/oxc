@@ -96,8 +96,21 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         entry.value::<TypeScriptOptions>().map_err(|err| p.errors.push(err)).ok();
                 }
                 "transform-react-jsx" => {
-                    p.react_jsx =
-                        entry.value::<JsxOptions>().map_err(|err| p.errors.push(err)).ok();
+                    #[derive(Deserialize, Default)]
+                    struct Pure {
+                        pure: bool,
+                    }
+
+                    let pure = entry.clone().value::<Pure>().map(|p| p.pure).unwrap_or(false);
+                    p.react_jsx = entry
+                        .value::<JsxOptions>()
+                        .map_err(|err| p.errors.push(err))
+                        .map(|mut options| {
+                            // `pure` only defaults to `true` in `preset-react`
+                            options.pure = pure;
+                            options
+                        })
+                        .ok();
                 }
                 "transform-react-jsx-development" => {
                     p.react_jsx_dev =

@@ -2,11 +2,8 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    Prettier, array, dynamic_text,
-    format::Format,
-    group, hardline, indent,
-    ir::{Doc, JoinSeparator},
-    join, line, softline, text, wrap,
+    Prettier, array, dynamic_text, format::Format, group, hardline, indent, ir::Doc, join, line,
+    softline, text, wrap,
 };
 
 impl<'a> Format<'a> for JSXIdentifier<'a> {
@@ -126,6 +123,7 @@ impl<'a> Format<'a> for JSXExpression<'a> {
             JSXExpression::TSTypeAssertion(it) => it.format(p),
             JSXExpression::TSNonNullExpression(it) => it.format(p),
             JSXExpression::TSInstantiationExpression(it) => it.format(p),
+            JSXExpression::V8IntrinsicExpression(it) => it.format(p),
         }
     }
 }

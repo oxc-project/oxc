@@ -57,7 +57,7 @@ fn integration() {
          }
          console.log(c, d);
         ",
-        "if ((() => console.log('effect'))(), !1) for (var c = 1, c; unknownGlobal; unknownGlobal && !0) var d;
+        "if (console.log('effect'), !1) var c, c, d;
         console.log(c, d);
         ",
     );
@@ -74,12 +74,12 @@ fn fold() {
 
 #[test] // https://github.com/oxc-project/oxc/issues/4341
 fn tagged_template() {
-    test_same("(1, o.f)()");
-    test_same("(1, o.f)``");
-    test_same("(!0 && o.f)()");
-    test_same("(!0 && o.f)``");
-    test("(!0 ? o.f : !1)()", "(0 ? !1: o.f)()");
-    test("(!0 ? o.f : !1)``", "(0 ? !1: o.f)``");
+    test("(1, o.f)()", "(0, o.f)()");
+    test("(1, o.f)``", "(0, o.f)``");
+    test("(!0 && o.f)()", "(0, o.f)()");
+    test("(!0 && o.f)``", "(0, o.f)``");
+    test("(!0 ? o.f : !1)()", "(0, o.f)()");
+    test("(!0 ? o.f : !1)``", "(0, o.f)``");
 
     test("foo(true && o.f)", "foo(o.f)");
     test("foo(true ? o.f : false)", "foo(o.f)");
@@ -88,13 +88,13 @@ fn tagged_template() {
 #[test]
 fn eval() {
     // Keep indirect-eval syntaxes
-    test_same("(!0 && eval)(x)");
-    test_same("(1 ? eval : 2)(x)");
-    test_same("(1 ? eval : 2)?.(x)");
-    test_same("(1, eval)(x)");
-    test_same("(1, eval)?.(x)");
-    test_same("(3, eval)(x)");
-    test_same("(4, eval)?.(x)");
+    test("(!0 && eval)(x)", "(0, eval)(x)");
+    test("(1 ? eval : 2)(x)", "(0, eval)(x)");
+    test("(1 ? eval : 2)?.(x)", "(0, eval)?.(x)");
+    test("(1, eval)(x)", "(0, eval)(x)");
+    test("(1, eval)?.(x)", "(0, eval)?.(x)");
+    test("(3, eval)(x)", "(0, eval)(x)");
+    test("(4, eval)?.(x)", "(0, eval)?.(x)");
     test_same("(eval)(x)");
     test_same("(eval)?.(x)");
     test_same("eval(x)");

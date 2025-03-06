@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.0] - 2025-03-06
+
+- 48a0394 ast: [**BREAKING**] Add `scope_id` to `TSFunctionType` (#9559) (camc314)
+
+### Features
+
+
+## [0.54.0] - 2025-03-04
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+- abb15e0 ast: [**BREAKING**] Add `pure` field to `Function`, `CallExpression`, and `NewExpression` (#9207) (overlookmotel)
+
+### Features
+
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+
+## [0.53.0] - 2025-02-26
+
+### Bug Fixes
+
+- 6a8f53f ast/estree: Visit `JSXOpeningFragment` and `JSXClosingFragment` (#9342) (overlookmotel)
+
+### Refactor
+
+- 7427900 ast: Re-order `ExportDefaultDeclaration` fields (#9348) (overlookmotel)
+- f39be5f traverse: Reduce scope of `unsafe` blocks (#9323) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 ### Refactor

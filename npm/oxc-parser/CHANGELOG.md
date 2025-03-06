@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.0] - 2025-03-06
+
+### Bug Fixes
+
+- 4b61372 npm/oxc-parser: Add `deserialize-*.js` (Boshen)
+
+## [0.55.0] - 2025-03-05
+
+- 4056560 ast/estree: [**BREAKING**] Option to return JS-only AST (#9520) (overlookmotel)
+
+### Features
+
+
+### Documentation
+
+- a453f0b npm/oxc-parser: Update README (Boshen)
+
+## [0.54.0] - 2025-03-04
+
+### Features
+
+- 68c77c8 napi/parser: Return semantic errors (#9460) (Boshen)
+
+## [0.53.0] - 2025-02-26
+
+- 4a5a7cf napi/parser: [**BREAKING**] Remove magic string; enable utf16 span converter by default (#9291) (Boshen)
+
+### Features
+
+
 ## [0.40.0] - 2024-12-10
 
 ### Features

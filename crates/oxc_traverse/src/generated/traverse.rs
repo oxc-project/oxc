@@ -1268,6 +1268,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_v8_intrinsic_expression(
+        &mut self,
+        node: &mut V8IntrinsicExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_v8_intrinsic_expression(
+        &mut self,
+        node: &mut V8IntrinsicExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {}
@@ -1306,6 +1321,36 @@ pub trait Traverse<'a> {
     fn enter_jsx_fragment(&mut self, node: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_jsx_fragment(&mut self, node: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_opening_fragment(
+        &mut self,
+        node: &mut JSXOpeningFragment,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_opening_fragment(
+        &mut self,
+        node: &mut JSXOpeningFragment,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_closing_fragment(
+        &mut self,
+        node: &mut JSXClosingFragment,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_closing_fragment(
+        &mut self,
+        node: &mut JSXClosingFragment,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
 
     #[inline]
     fn enter_jsx_element_name(&mut self, node: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {

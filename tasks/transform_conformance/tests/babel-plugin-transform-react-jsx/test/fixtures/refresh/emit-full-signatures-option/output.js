@@ -3,7 +3,7 @@ var _s = $RefreshSig$();
 export default function Bar() {
   _s();
   useContext(X);
-  return _jsx(Foo, {});
+  return /* @__PURE__ */ _jsx(Foo, {});
 }
 _s(Bar, "gDsCjeeItUuvgOWf1v4qoK9RF6k=");
 _c = Bar;

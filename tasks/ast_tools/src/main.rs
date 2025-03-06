@@ -181,7 +181,7 @@
 //! [`AttrLocation`]: parse::attr::AttrLocation
 //! [`AttrPart`]: parse::attr::AttrPart
 
-use std::{fmt::Write, fs};
+use std::fs;
 
 use bpaf::{Bpaf, Parser};
 use quote::quote;
@@ -214,18 +214,24 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/ast/comment.rs",
     "crates/oxc_ast/src/serialize.rs",
     "crates/oxc_syntax/src/lib.rs",
+    "crates/oxc_syntax/src/module_record.rs",
     "crates/oxc_syntax/src/number.rs",
     "crates/oxc_syntax/src/operator.rs",
     "crates/oxc_syntax/src/scope.rs",
+    "crates/oxc_syntax/src/serialize.rs",
     "crates/oxc_syntax/src/symbol.rs",
     "crates/oxc_syntax/src/reference.rs",
     "crates/oxc_span/src/span.rs",
     "crates/oxc_span/src/source_type/mod.rs",
     "crates/oxc_regular_expression/src/ast.rs",
+    "napi/parser/src/raw_transfer_types.rs",
 ];
 
 /// Path to `oxc_ast` crate
 const AST_CRATE_PATH: &str = "crates/oxc_ast";
+
+/// Path to `oxc_ast_visit` crate
+const AST_VISIT_CRATE_PATH: &str = "crates/oxc_ast_visit";
 
 /// Path to `oxc_ast_macros` crate
 const AST_MACROS_CRATE_PATH: &str = "crates/oxc_ast_macros";
@@ -233,8 +239,12 @@ const AST_MACROS_CRATE_PATH: &str = "crates/oxc_ast_macros";
 /// Path to write TS type definitions to
 const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 
-/// Path to write CI filter list to
-const GITHUB_WATCH_LIST_PATH: &str = ".github/.generated_ast_watch_list.yml";
+// Paths to write raw deserializer to
+const RAW_TRANSFER_JS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-js.js";
+const RAW_TRANSFER_TS_DESERIALIZER_PATH: &str = "napi/parser/deserialize-ts.js";
+
+/// Path to write AST changes filter list to
+const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_list.yml";
 
 /// Derives (for use with `#[generate_derive]`)
 const DERIVES: &[&(dyn Derive + Sync)] = &[
@@ -253,6 +263,8 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::AstBuilderGenerator,
     &generators::GetIdGenerator,
     &generators::VisitGenerator,
+    &generators::Utf8ToUtf16ConverterGenerator,
+    &generators::RawTransferGenerator,
     &generators::TypescriptGenerator,
 ];
 
@@ -337,22 +349,13 @@ fn main() {
 fn generate_ci_filter(outputs: &[RawOutput]) -> RawOutput {
     log!("Generate CI filter... ");
 
-    let mut paths = SOURCE_PATHS
-        .iter()
-        .copied()
-        .chain(outputs.iter().map(|output| output.path.as_str()))
-        .chain(["tasks/ast_tools/src/**", GITHUB_WATCH_LIST_PATH])
-        .collect::<Vec<_>>();
-    paths.sort_unstable();
-
-    let mut code = "src:\n".to_string();
-    for path in paths {
-        writeln!(&mut code, "  - '{path}'").unwrap();
-    }
+    let paths =
+        SOURCE_PATHS.iter().copied().chain(outputs.iter().map(|output| output.path.as_str()));
+    let output = Output::yaml_watch_list(AST_CHANGES_WATCH_LIST_PATH, paths);
 
     log_success!();
 
-    Output::Yaml { path: GITHUB_WATCH_LIST_PATH.to_string(), code }.into_raw(file!())
+    output.into_raw(file!())
 }
 
 /// Generate function for proc macro in `oxc_ast_macros` crate.

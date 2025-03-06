@@ -1,11 +1,10 @@
-commit: acbc09a8
+commit: 578ac4df
 
-Passed: 698/1168
+Passed: 693/1167
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
-* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
@@ -1355,7 +1354,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (49/159)
+# babel-plugin-transform-typescript (49/158)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1748,7 +1747,7 @@ x Output mismatch
 
 * exports/issue-9916-1/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["PromiseLike"]
@@ -1756,7 +1755,7 @@ rebuilt        : []
 
 * exports/issue-9916-2/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["PromiseLike"]
@@ -1764,7 +1763,7 @@ rebuilt        : []
 
 * exports/issue-9916-3/input.ts
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["PromiseLike"]
@@ -1940,14 +1939,6 @@ rebuilt        : ScopeId(0): []
 Bindings mismatch:
 after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
-
-* lvalues/TSTypeParameterInstantiation/input.ts
-Symbol reference IDs mismatch for "AbstractClass":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
-Symbol reference IDs mismatch for "ConcreteClass":
-after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 * namespace/alias/input.ts
 Bindings mismatch:
@@ -2634,8 +2625,25 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-plugin-transform-react-jsx (135/145)
+# babel-preset-react (6/9)
+* preset-options/pure/input.js
+x Output mismatch
+
+* preset-options/runtime-classic-pragma-no-frag/input.js
+x Output mismatch
+
+* regression/11294/input.mjs
+x Output mismatch
+
+
+# babel-plugin-transform-react-jsx (133/145)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
+x Output mismatch
+
+* pure/false-default-pragma-automatic-runtime/input.js
+x Output mismatch
+
+* pure/false-default-pragma-classic-runtime/input.js
 x Output mismatch
 
 * react/should-disallow-valueless-key/input.js

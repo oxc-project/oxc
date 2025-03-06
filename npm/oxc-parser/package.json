@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.52.0",
+  "version": "0.56.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "Parser"
@@ -21,7 +21,9 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "bindings.js"
+    "bindings.js",
+    "deserialize-js.js",
+    "deserialize-ts.js"
   ],
   "dependencies": {
     "@oxc-project/types": "workspace:^"

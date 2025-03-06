@@ -12,9 +12,11 @@ use crate::{
 };
 
 mod equality_comparison;
+mod is_int32_or_uint32;
 mod is_literal_value;
 mod value;
 mod value_type;
+pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
@@ -186,9 +188,6 @@ fn binary_operation_evaluate_value_to<'a>(
     match operator {
         BinaryOperator::Addition => {
             use crate::to_primitive::ToPrimitive;
-            if left.may_have_side_effects(ctx) || right.may_have_side_effects(ctx) {
-                return None;
-            }
             let left_to_primitive = left.to_primitive(ctx);
             let right_to_primitive = right.to_primitive(ctx);
             if left_to_primitive.is_string() == Some(true)
@@ -247,8 +246,8 @@ fn binary_operation_evaluate_value_to<'a>(
         BinaryOperator::ShiftLeft
         | BinaryOperator::ShiftRight
         | BinaryOperator::ShiftRightZeroFill => {
-            let left = left.get_side_free_number_value(ctx)?;
-            let right = right.get_side_free_number_value(ctx)?;
+            let left = left.evaluate_value_to_number(ctx)?;
+            let right = right.evaluate_value_to_number(ctx)?;
             let left = left.to_int_32();
             let right = (right.to_int_32() as u32) & 31;
             Some(ConstantValue::Number(match operator {
@@ -284,8 +283,8 @@ fn binary_operation_evaluate_value_to<'a>(
         }
         BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
             if left.value_type(ctx).is_bigint() && right.value_type(ctx).is_bigint() {
-                let left_val = left.get_side_free_bigint_value(ctx)?;
-                let right_val = right.get_side_free_bigint_value(ctx)?;
+                let left_val = left.evaluate_value_to_bigint(ctx)?;
+                let right_val = right.evaluate_value_to_bigint(ctx)?;
                 let result_val: BigInt = match operator {
                     BinaryOperator::BitwiseAnd => left_val & right_val,
                     BinaryOperator::BitwiseOR => left_val | right_val,
@@ -294,8 +293,8 @@ fn binary_operation_evaluate_value_to<'a>(
                 };
                 return Some(ConstantValue::BigInt(result_val));
             }
-            let left_num = left.get_side_free_number_value(ctx);
-            let right_num = right.get_side_free_number_value(ctx);
+            let left_num = left.evaluate_value_to_number(ctx);
+            let right_num = right.evaluate_value_to_number(ctx);
             if let (Some(left_val), Some(right_val)) = (left_num, right_num) {
                 let left_val_int = left_val.to_int_32();
                 let right_val_int = right_val.to_int_32();
@@ -311,9 +310,6 @@ fn binary_operation_evaluate_value_to<'a>(
             None
         }
         BinaryOperator::Instanceof => {
-            if left.may_have_side_effects(ctx) {
-                return None;
-            }
             if let Expression::Identifier(right_ident) = right {
                 let name = right_ident.name.as_str();
                 if matches!(name, "Object" | "Number" | "Boolean" | "String")
@@ -334,9 +330,6 @@ fn binary_operation_evaluate_value_to<'a>(
         | BinaryOperator::StrictInequality
         | BinaryOperator::Equality
         | BinaryOperator::Inequality => {
-            if left.may_have_side_effects(ctx) || right.may_have_side_effects(ctx) {
-                return None;
-            }
             let value = match operator {
                 BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
                     strict_equality_comparison(ctx, left, right)?
@@ -404,9 +397,6 @@ impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
     ) -> Option<ConstantValue<'a>> {
         match self.operator {
             UnaryOperator::Typeof => {
-                if self.argument.may_have_side_effects(ctx) {
-                    return None;
-                }
                 let arg_ty = self.argument.value_type(ctx);
                 let s = match arg_ty {
                     ValueType::BigInt => "bigint",
@@ -427,26 +417,22 @@ impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
                 };
                 Some(ConstantValue::String(Cow::Borrowed(s)))
             }
-            UnaryOperator::Void => {
-                (!self.argument.may_have_side_effects(ctx)).then_some(ConstantValue::Undefined)
+            UnaryOperator::Void => Some(ConstantValue::Undefined),
+            UnaryOperator::LogicalNot => {
+                self.argument.evaluate_value_to_boolean(ctx).map(|b| !b).map(ConstantValue::Boolean)
             }
-            UnaryOperator::LogicalNot => self
-                .argument
-                .get_side_free_boolean_value(ctx)
-                .map(|b| !b)
-                .map(ConstantValue::Boolean),
             UnaryOperator::UnaryPlus => {
-                self.argument.get_side_free_number_value(ctx).map(ConstantValue::Number)
+                self.argument.evaluate_value_to_number(ctx).map(ConstantValue::Number)
             }
             UnaryOperator::UnaryNegation => match self.argument.value_type(ctx) {
                 ValueType::BigInt => self
                     .argument
-                    .get_side_free_bigint_value(ctx)
+                    .evaluate_value_to_bigint(ctx)
                     .map(|v| -v)
                     .map(ConstantValue::BigInt),
                 ValueType::Number => self
                     .argument
-                    .get_side_free_number_value(ctx)
+                    .evaluate_value_to_number(ctx)
                     .map(|v| if v.is_nan() { v } else { -v })
                     .map(ConstantValue::Number),
                 ValueType::Undefined => Some(ConstantValue::Number(f64::NAN)),
@@ -456,13 +442,13 @@ impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
             UnaryOperator::BitwiseNot => match self.argument.value_type(ctx) {
                 ValueType::BigInt => self
                     .argument
-                    .get_side_free_bigint_value(ctx)
+                    .evaluate_value_to_bigint(ctx)
                     .map(|v| !v)
                     .map(ConstantValue::BigInt),
                 #[expect(clippy::cast_lossless)]
                 _ => self
                     .argument
-                    .get_side_free_number_value(ctx)
+                    .evaluate_value_to_number(ctx)
                     .map(|v| (!v.to_int_32()) as f64)
                     .map(ConstantValue::Number),
             },
@@ -481,15 +467,10 @@ impl<'a> ConstantEvaluation<'a> for StaticMemberExpression<'a> {
             "length" => {
                 if let Some(ConstantValue::String(s)) = self.object.evaluate_value(ctx) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
+                } else if let Expression::ArrayExpression(arr) = &self.object {
+                    Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
                 } else {
-                    if self.object.may_have_side_effects(ctx) {
-                        return None;
-                    }
-                    if let Expression::ArrayExpression(arr) = &self.object {
-                        Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
-                    } else {
-                        None
-                    }
+                    None
                 }
             }
             _ => None,
@@ -507,15 +488,10 @@ impl<'a> ConstantEvaluation<'a> for ComputedMemberExpression<'a> {
             Expression::StringLiteral(s) if s.value == "length" => {
                 if let Some(ConstantValue::String(s)) = self.object.evaluate_value(ctx) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
+                } else if let Expression::ArrayExpression(arr) = &self.object {
+                    Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
                 } else {
-                    if self.object.may_have_side_effects(ctx) {
-                        return None;
-                    }
-                    if let Expression::ArrayExpression(arr) = &self.object {
-                        Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
-                    } else {
-                        None
-                    }
+                    None
                 }
             }
             _ => None,
@@ -529,10 +505,6 @@ fn is_less_than<'a>(
     x: &Expression<'a>,
     y: &Expression<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if x.may_have_side_effects(ctx) || y.may_have_side_effects(ctx) {
-        return None;
-    }
-
     // a. Let px be ? ToPrimitive(x, NUMBER).
     // b. Let py be ? ToPrimitive(y, NUMBER).
     let px = x.value_type(ctx);

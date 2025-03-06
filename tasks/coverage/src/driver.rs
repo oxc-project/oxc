@@ -167,7 +167,7 @@ impl Driver {
                 continue;
             };
             let printed1 = pattern.to_string();
-            let flags = literal.regex.flags.to_string();
+            let flags = literal.regex.flags.to_inline_string();
             match LiteralParser::new(&allocator, &printed1, Some(&flags), Options::default())
                 .parse()
             {

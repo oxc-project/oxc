@@ -166,7 +166,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 self.mark_current_function_as_changed();
             }
         }
-        self.substitute_exit_statement(stmt, ctx);
     }
 
     fn exit_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -225,6 +224,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
         let ctx = Ctx(ctx);
         self.substitute_call_expression(expr, ctx);
+    }
+
+    fn exit_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.is_prev_function_changed() {
+            return;
+        }
+        let ctx = Ctx(ctx);
+        self.substitute_new_expression(expr, ctx);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {

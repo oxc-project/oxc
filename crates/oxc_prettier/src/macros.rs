@@ -1,11 +1,13 @@
 //! Prettier IR builder macros
-//! Ref: <https://github.com/prettier/prettier/blob/3.4.2/commands.md>
+//! Ref: <https://github.com/prettier/prettier/blob/3.5.2/commands.md>
+//! Ref: <https://github.com/prettier/prettier/blob/3.5.2/src/document/builders.js>
 
 // NOTE: In addition to those defined here, there are still some that are not yet implemented.
 // In terms of macro implementation, there are 2 forms: the most frequently used form and the most flexible form.
 
+/// `[]` (In Prettier, this is just an array literal.)
+///
 /// Arrays are used to concatenate a list of `Doc`s to be printed sequentially into a single doc.
-/// (In Prettier(.js) this is just an array literal.)
 /// ```
 /// array!(p, [a, b, c]);
 /// array!(p, vec);
@@ -24,9 +26,10 @@ macro_rules! array {
     }};
 }
 
+/// `"(static)text"` (In Prettier, this is just a string literal.)
+///
 /// Strings are printed directly as is.
 /// However for the algorithm to work properly they shouldn't contain line break characters.
-/// (In Prettier(.js) this is just a string literal.)
 /// ```
 /// text!("const");
 /// ```
@@ -38,9 +41,10 @@ macro_rules! text {
     }};
 }
 
+/// `"(dynamic)text"` (In Prettier, this is just a string literal.)
+///
 /// Strings are printed directly as is.
 /// However for the algorithm to work properly they shouldn't contain line break characters.
-/// (In Prettier(.js) this is just a string literal.)
 /// ```
 /// dynamic_text!(value.as_str());
 /// ```
@@ -64,7 +68,6 @@ macro_rules! dynamic_text {
 /// A hard and literal line breaks automatically include this so they always break parent groups.
 /// Breaks are propagated to all parent groups, so if a deeply nested expression has a hard break, everything will break.
 /// This only matters for "hard" breaks, i.e. newlines that are printed no matter what and can be statically analyzed.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#group>
 /// ```
 /// group!(p, [a, b, c], true, Some(group_id));
 /// group!(p, vec, true, None);
@@ -105,12 +108,11 @@ macro_rules! group {
     }};
 }
 
-/// `conditional_group`
+/// `conditionalGroup`
 ///
 /// This should be used as last resort as it triggers an exponential complexity when nested.
 /// This will try to print the first alternative, if it fit use it, otherwise go to the next one and so on.
 /// The alternatives is an array of documents going from the least expanded (most flattened) representation first to the most expanded.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#conditionalgroup>
 /// ```
 /// conditional_group!(p, [a, b, c]);
 /// ```
@@ -141,7 +143,6 @@ macro_rules! conditional_group {
 ///
 /// Expects the arguments to be an array of alternating content and line breaks.
 /// In other words, elements with odd indices must be line breaks (e.g., `softline`).
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#fill>
 /// ```
 /// fill!(p, [a, line!(), b, line!(), c]);
 /// fill!(p, vec);
@@ -160,7 +161,7 @@ macro_rules! fill {
     }};
 }
 
-/// `if_break`
+/// `ifBreak`
 ///
 /// Print something if the current group or the current element of fill breaks and something else if it doesn't.
 /// `group_id` can be used to check another already printed group instead of the current group.
@@ -169,7 +170,6 @@ macro_rules! fill {
 /// the parent groups will be broken regardless of said content being printed, which might not be desirable.
 /// This behaviour is a design limitation.
 /// Usually the desired result can be achieved in a different way.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#ifbreak>
 /// ```
 /// if_break!(p, a, b, Some(group_id));
 /// if_break!(p, a);
@@ -189,8 +189,9 @@ macro_rules! if_break {
     }};
 }
 
+/// `breakParent`
+///
 /// Include this anywhere to force all parent groups to break. See `group` for more info.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#breakparent>
 /// ```
 /// break_parent!();
 /// ```
@@ -199,10 +200,13 @@ macro_rules! break_parent {
     () => {{ $crate::ir::Doc::BreakParent }};
 }
 
+/// `join`
+///
 /// Join an array of docs with a separator.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#join>
 /// ```
-/// join!(p, JoinSeparator::Softline, vec);
+/// join!(p, text!(", "), vec);
+/// join!(p, softline!(), vec);
+/// join!(p, array!(p, [text!(","), line!()]), vec);
 /// ```
 #[macro_export]
 macro_rules! join {
@@ -210,15 +214,7 @@ macro_rules! join {
         let mut parts = oxc_allocator::Vec::new_in($p.allocator);
         for (i, doc) in $vec.into_iter().enumerate() {
             if i != 0 {
-                match $sep {
-                    $crate::ir::JoinSeparator::Softline => parts.push($crate::softline!()),
-                    $crate::ir::JoinSeparator::Hardline => parts.push($crate::hardline!($p)),
-                    $crate::ir::JoinSeparator::CommaLine => {
-                        parts.extend([$crate::text!(","), $crate::line!()]);
-                    }
-                    $crate::ir::JoinSeparator::CommaSpace => parts.push($crate::text!(", ")),
-                    $crate::ir::JoinSeparator::Literalline => parts.push($crate::literalline!($p)),
-                }
+                parts.push($sep);
             }
             parts.push(doc);
         }
@@ -226,11 +222,11 @@ macro_rules! join {
     }};
 }
 
-/// Specify a line break.
+/// `line`
 ///
+/// Specify a line break.
 /// If an expression fits on one line, the line break will be replaced with a space.
 /// Line breaks always indent the next line with the current level of indentation.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#line>
 /// ```
 /// line!();
 /// ```
@@ -239,9 +235,10 @@ macro_rules! line {
     () => {{ $crate::ir::Doc::Line($crate::ir::Line::default()) }};
 }
 
+/// `softline`
+///
 /// Specify a line break.
 /// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#softline>
 /// ```
 /// softline!();
 /// ```
@@ -250,8 +247,9 @@ macro_rules! softline {
     () => {{ $crate::ir::Doc::Line($crate::ir::Line { soft: true, ..Default::default() }) }};
 }
 
+/// `hardline`
+///
 /// Specify a line break that is always included in the output, no matter if the expression fits on one line or not.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#hardline>
 /// ```
 /// hardline!(p);
 /// ```
@@ -270,7 +268,6 @@ macro_rules! hardline {
 /// Specify a line break that is always included in the output and doesn't indent the next line.
 /// Also, unlike hardline, this kind of line break preserves trailing whitespace on the line it ends.
 /// This is used for template literals.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#literalline>
 /// ```
 /// literalline!(p);
 /// ```
@@ -288,11 +285,10 @@ macro_rules! literalline {
     }};
 }
 
-/// `line_suffix_boundary`
+/// `lineSuffixBoundary`
 ///
 /// In cases where you embed code inside of templates, comments shouldn't be able to leave the code part.
 /// `line_suffix_boundary` is an explicit marker you can use to flush the `line_suffix` buffer in addition to line breaks.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#linesuffixboundary>
 /// ```
 /// line_suffix_boundary!();
 /// ```
@@ -301,8 +297,9 @@ macro_rules! line_suffix_boundary {
     () => {{ $crate::ir::Doc::LineSuffixBoundary }};
 }
 
+/// `indent`
+///
 /// Increase the level of indentation.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#indent>
 /// ```
 /// indent!(p, [a, b, c]);
 /// indent!(p, vec);
@@ -321,13 +318,12 @@ macro_rules! indent {
     }};
 }
 
-/// `indent_if_break`
+/// `indentIfBreak`
 ///
 /// An optimized version of `if_break(indent(doc), doc, group_id)`.
 /// It doesn't make sense to apply `indent_if_break` to the current group,
 /// because "indent if the current group is broken" is the normal behavior of indent.
 /// That's why `group_id` is required.
-/// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#indentifbreak>
 /// ```
 /// indent_if_break!(p, a, group_id);
 /// ```

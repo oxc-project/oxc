@@ -1,4 +1,4 @@
-js compatibility: 252/643 (39.19%)
+js compatibility: 252/645 (39.07%)
 
 # Failed
 
@@ -12,7 +12,7 @@ js compatibility: 252/643 (39.19%)
 | js/arrays/numbers-with-tricky-comments.js | 💥 | 40.00% |
 | js/arrays/numbers2.js | 💥 | 93.62% |
 | js/arrays/numbers3.js | 💥 | 66.67% |
-| js/arrays/preserve_empty_lines.js | 💥 | 62.81% |
+| js/arrays/preserve_empty_lines.js | 💥 | 73.60% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 40.40% |
 | js/arrow-call/class-property.js | 💥💥💥 | 0.00% |
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 6.67% |
@@ -331,7 +331,7 @@ js compatibility: 252/643 (39.19%)
 | js/test-declarations/angular_waitForAsync.js | 💥💥 | 27.12% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 27.12% |
 | js/test-declarations/jest-each-template-string.js | 💥💥 | 25.00% |
-| js/test-declarations/jest-each.js | 💥💥 | 59.15% |
+| js/test-declarations/jest-each.js | 💥💥 | 56.94% |
 | js/test-declarations/test_declarations.js | 💥💥 | 39.68% |
 | js/throw_statement/binaryish.js | 💥 | 40.74% |
 | js/throw_statement/comment.js | 💥 | 47.06% |
@@ -345,6 +345,8 @@ js compatibility: 252/643 (39.19%)
 | js/unary-expression/comments.js | 💥 | 18.23% |
 | js/unicode/combining-characters.js | 💥 | 0.00% |
 | js/unicode/nbsp-jsx.js | 💥 | 0.00% |
+| js/v8_intrinsic/avoid-conflicts-to-pipeline.js | 💥 | 66.67% |
+| js/v8_intrinsic/intrinsic_call.js | 💥 | 81.82% |
 | js/yield/jsx-without-parenthesis.js | 💥 | 50.00% |
 | js/yield/jsx.js | 💥 | 50.00% |
 | jsx/attr-element/attr-element.js | 💥 | 0.00% |

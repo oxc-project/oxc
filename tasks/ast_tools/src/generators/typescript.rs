@@ -1,6 +1,6 @@
 //! Generator for TypeScript type definitions for all AST types.
 
-use std::{borrow::Cow, fmt::Write};
+use std::borrow::Cow;
 
 use itertools::Itertools;
 
@@ -11,6 +11,7 @@ use crate::{
     },
     output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    utils::{FxIndexSet, format_cow, write_it},
 };
 
 use super::define_generator;
@@ -50,7 +51,7 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
     if let Some(custom_ts_def) = custom_ts_def {
         // Empty string means don't output any TS def at all for this type
         if !custom_ts_def.is_empty() {
-            write!(code, "export {custom_ts_def};\n\n").unwrap();
+            write_it!(code, "export {custom_ts_def};\n\n");
         }
     } else {
         // No custom definition. Generate one.
@@ -61,7 +62,7 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
         };
 
         if let Some(ts_def) = ts_def {
-            write!(code, "{ts_def};\n\n").unwrap();
+            write_it!(code, "{ts_def};\n\n");
         }
     };
 
@@ -72,7 +73,7 @@ fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) 
         _ => unreachable!(),
     };
     if let Some(add_ts_def) = add_ts_def {
-        write!(code, "export {add_ts_def};\n\n").unwrap();
+        write_it!(code, "export {add_ts_def};\n\n");
     }
 }
 
@@ -81,6 +82,14 @@ fn generate_ts_type_def_for_struct(struct_def: &StructDef, schema: &Schema) -> O
     // If struct marked with `#[estree(ts_alias = "...")]`, then it needs no type def
     if struct_def.estree.ts_alias.is_some() {
         return None;
+    }
+
+    // If struct has a converter defined with `#[estree(via = Converter)]` and that converter defines
+    // a type alias, then it needs no type def
+    if let Some(converter_name) = &struct_def.estree.via {
+        if get_ts_type_for_converter(converter_name, schema).is_some() {
+            return None;
+        }
     }
 
     // If struct is marked as `#[estree(flatten)]`, and only has a single field which isn't skipped,
@@ -237,7 +246,10 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
 
         Cow::Owned(field_type_name)
     } else if let Some(converter_name) = &field.estree.via {
-        Cow::Borrowed(get_ts_type_for_converter(converter_name, schema))
+        let Some(ts_type) = get_ts_type_for_converter(converter_name, schema) else {
+            panic!("No `ts_type` provided for ESTree converter `{converter_name}`");
+        };
+        Cow::Borrowed(ts_type)
     } else {
         get_field_type_name(field, schema)
     };
@@ -278,7 +290,9 @@ fn generate_ts_type_def_for_added_struct_field(
     fields_str: &mut String,
     schema: &Schema,
 ) {
-    let ts_type = get_ts_type_for_converter(converter_name, schema);
+    let Some(ts_type) = get_ts_type_for_converter(converter_name, schema) else {
+        panic!("No `ts_type` provided for ESTree converter `{converter_name}`");
+    };
     fields_str.push_str(&format!("\n\t{field_name}: {ts_type};"));
 }
 
@@ -286,12 +300,9 @@ fn generate_ts_type_def_for_added_struct_field(
 ///
 /// Converters are specified with `#[estree(add_fields(field_name = converter_name))]`
 /// and `#[estree(via = converter_name)]`.
-fn get_ts_type_for_converter<'s>(converter_name: &str, schema: &'s Schema) -> &'s str {
+fn get_ts_type_for_converter<'s>(converter_name: &str, schema: &'s Schema) -> Option<&'s str> {
     let converter = schema.meta_by_name(converter_name);
-    let Some(ts_type) = &converter.estree.ts_type else {
-        panic!("No `ts_type` provided for ESTree converter `{}`", converter.name());
-    };
-    ts_type
+    converter.estree.ts_type.as_deref()
 }
 
 /// Generate Typescript type definition for an enum.
@@ -301,18 +312,37 @@ fn generate_ts_type_def_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<
         return None;
     }
 
-    let own_variants_type_names = enum_def.variants.iter().map(|variant| {
-        if let Some(variant_type) = variant.field_type(schema) {
-            ts_type_name(variant_type, schema)
-        } else {
-            Cow::Owned(format!("'{}'", get_fieldless_variant_value(enum_def, variant)))
+    // If enum has a converter defined with `#[estree(via = Converter)]` and that converter defines
+    // a type alias, then it needs no type def
+    if let Some(converter_name) = &enum_def.estree.via {
+        if get_ts_type_for_converter(converter_name, schema).is_some() {
+            return None;
         }
-    });
+    }
 
-    let inherits_type_names =
-        enum_def.inherits_types(schema).map(|inherited_type| ts_type_name(inherited_type, schema));
+    // Get variant type names.
+    // Collect into `FxIndexSet` to filter out duplicates.
+    let mut variant_type_names = enum_def
+        .variants
+        .iter()
+        .map(|variant| {
+            if let Some(variant_type) = variant.field_type(schema) {
+                if let Some(converter_name) = &variant.estree.via {
+                    Cow::Borrowed(get_ts_type_for_converter(converter_name, schema).unwrap())
+                } else {
+                    ts_type_name(variant_type, schema)
+                }
+            } else {
+                format_cow!("'{}'", get_fieldless_variant_value(enum_def, variant))
+            }
+        })
+        .collect::<FxIndexSet<_>>();
 
-    let union = own_variants_type_names.chain(inherits_type_names).join(" | ");
+    variant_type_names.extend(
+        enum_def.inherits_types(schema).map(|inherited_type| ts_type_name(inherited_type, schema)),
+    );
+
+    let union = variant_type_names.iter().join(" | ");
 
     let enum_name = enum_def.name();
     Some(format!("export type {enum_name} = {union};"))
@@ -325,6 +355,11 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             if let Some(ts_alias) = &struct_def.estree.ts_alias {
                 Cow::Borrowed(ts_alias)
             } else {
+                if let Some(converter_name) = &struct_def.estree.via {
+                    if let Some(type_name) = get_ts_type_for_converter(converter_name, schema) {
+                        return Cow::Borrowed(type_name);
+                    }
+                }
                 Cow::Borrowed(struct_def.name())
             }
         }
@@ -332,6 +367,11 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             if let Some(ts_alias) = &enum_def.estree.ts_alias {
                 Cow::Borrowed(ts_alias)
             } else {
+                if let Some(converter_name) = &enum_def.estree.via {
+                    if let Some(type_name) = get_ts_type_for_converter(converter_name, schema) {
+                        return Cow::Borrowed(type_name);
+                    }
+                }
                 Cow::Borrowed(enum_def.name())
             }
         }
@@ -345,10 +385,10 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             name => name,
         }),
         TypeDef::Option(option_def) => {
-            Cow::Owned(format!("{} | null", ts_type_name(option_def.inner_type(schema), schema)))
+            format_cow!("{} | null", ts_type_name(option_def.inner_type(schema), schema))
         }
         TypeDef::Vec(vec_def) => {
-            Cow::Owned(format!("Array<{}>", ts_type_name(vec_def.inner_type(schema), schema)))
+            format_cow!("Array<{}>", ts_type_name(vec_def.inner_type(schema), schema))
         }
         TypeDef::Box(box_def) => ts_type_name(box_def.inner_type(schema), schema),
         TypeDef::Cell(cell_def) => ts_type_name(cell_def.inner_type(schema), schema),
@@ -373,7 +413,10 @@ fn should_add_type_field_to_struct(struct_def: &StructDef) -> bool {
     if struct_def.estree.no_type {
         false
     } else {
-        !struct_def.fields.iter().any(|field| matches!(field.name(), "type"))
+        !struct_def.fields.iter().any(|field| {
+            let field_name = field.estree.rename.as_deref().unwrap_or_else(|| field.name());
+            field_name == "type"
+        })
     }
 }
 

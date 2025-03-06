@@ -128,6 +128,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
             Self::TSInstantiationExpression(it) => {
                 Expression::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                Expression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::ComputedMemberExpression(it) => {
                 Expression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
@@ -324,6 +327,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
             Self::TSInstantiationExpression(it) => {
                 ArrayExpressionElement::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                ArrayExpressionElement::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::ComputedMemberExpression(it) => {
                 ArrayExpressionElement::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
@@ -491,6 +497,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
             Self::TSInstantiationExpression(it) => {
                 PropertyKey::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                PropertyKey::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::ComputedMemberExpression(it) => {
                 PropertyKey::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
@@ -621,6 +630,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for CallExpression<'_> {
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
+            pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
 }
@@ -633,6 +643,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for NewExpression<'_> {
             callee: CloneIn::clone_in(&self.callee, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
 }
@@ -749,6 +760,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
             }
             Self::TSInstantiationExpression(it) => {
                 Argument::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                Argument::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 Argument::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
@@ -1515,6 +1529,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             Self::TSInstantiationExpression(it) => {
                 ForStatementInit::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::V8IntrinsicExpression(it) => {
+                ForStatementInit::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::ComputedMemberExpression(it) => {
                 ForStatementInit::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
@@ -1828,6 +1845,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Function<'_> {
             return_type: CloneIn::clone_in(&self.return_type, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
             scope_id: Default::default(),
+            pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
 }
@@ -1905,6 +1923,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
             return_type: CloneIn::clone_in(&self.return_type, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
             scope_id: Default::default(),
+            pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
 }
@@ -2273,8 +2292,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclaration<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ExportDefaultDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
-            declaration: CloneIn::clone_in(&self.declaration, allocator),
             exported: CloneIn::clone_in(&self.exported, allocator),
+            declaration: CloneIn::clone_in(&self.declaration, allocator),
         }
     }
 }
@@ -2444,6 +2463,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
                     it, allocator,
                 ))
             }
+            Self::V8IntrinsicExpression(it) => ExportDefaultDeclarationKind::V8IntrinsicExpression(
+                CloneIn::clone_in(it, allocator),
+            ),
             Self::ComputedMemberExpression(it) => {
                 ExportDefaultDeclarationKind::ComputedMemberExpression(CloneIn::clone_in(
                     it, allocator,
@@ -2476,6 +2498,17 @@ impl<'new_alloc> CloneIn<'new_alloc> for ModuleExportName<'_> {
             Self::StringLiteral(it) => {
                 ModuleExportName::StringLiteral(CloneIn::clone_in(it, allocator))
             }
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for V8IntrinsicExpression<'_> {
+    type Cloned = V8IntrinsicExpression<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        V8IntrinsicExpression {
+            span: CloneIn::clone_in(&self.span, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+            arguments: CloneIn::clone_in(&self.arguments, allocator),
         }
     }
 }
@@ -2805,6 +2838,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
             }
             Self::TSInstantiationExpression(it) => {
                 JSXExpression::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::V8IntrinsicExpression(it) => {
+                JSXExpression::V8IntrinsicExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 JSXExpression::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
@@ -3881,6 +3917,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSFunctionType<'_> {
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
+            scope_id: Default::default(),
         }
     }
 }
@@ -4118,6 +4155,21 @@ impl<'alloc> CloneIn<'alloc> for CommentPosition {
     }
 }
 
+impl<'alloc> CloneIn<'alloc> for CommentAnnotation {
+    type Cloned = CommentAnnotation;
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::None => CommentAnnotation::None,
+            Self::Jsdoc => CommentAnnotation::Jsdoc,
+            Self::Legal => CommentAnnotation::Legal,
+            Self::Pure => CommentAnnotation::Pure,
+            Self::NoSideEffects => CommentAnnotation::NoSideEffects,
+            Self::Webpack => CommentAnnotation::Webpack,
+            Self::Vite => CommentAnnotation::Vite,
+        }
+    }
+}
+
 impl<'alloc> CloneIn<'alloc> for Comment {
     type Cloned = Comment;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
@@ -4128,6 +4180,7 @@ impl<'alloc> CloneIn<'alloc> for Comment {
             position: CloneIn::clone_in(&self.position, allocator),
             preceded_by_newline: CloneIn::clone_in(&self.preceded_by_newline, allocator),
             followed_by_newline: CloneIn::clone_in(&self.followed_by_newline, allocator),
+            annotation: CloneIn::clone_in(&self.annotation, allocator),
         }
     }
 }

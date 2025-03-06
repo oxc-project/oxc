@@ -1,11 +1,14 @@
 use std::cell::Cell;
 
 use oxc_ast::{
-    AstKind, Visit,
+    AstKind,
     ast::{
         BindingIdentifier, IdentifierReference, Program, TSEnumMemberName, TSModuleDeclarationName,
     },
-    visit::walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name},
+};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name},
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 

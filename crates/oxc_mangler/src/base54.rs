@@ -1,4 +1,4 @@
-use crate::InlineString;
+use oxc_data_structures::inline_string::InlineString;
 
 #[repr(C, align(64))]
 struct Aligned64([u8; 64]);
@@ -33,15 +33,15 @@ const BASE54_CHARS: Aligned64 =
 /// Get the shortest mangled name for a given n.
 /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
 //
-// Maximum length of string is 11 (`ZrN6rN6rN6r` for `u64::MAX`), but set `CAPACITY` as 12,
-// so the total size of `InlineString` is 16, including the `len` field.
-// Then initializing the `InlineString` is a single `xmm` set, and with luck it'll sit in a register
+// Maximum length of string is 6 (`xKrTKr` for `u32::MAX`), but set `CAPACITY` as 7,
+// so the total size of `InlineString` is 8, including the `u8` length field.
+// Then initializing the `InlineString` is a single instruction, and with luck it'll sit in a register
 // throughout this function.
 #[expect(clippy::items_after_statements)]
-pub fn base54(n: usize) -> InlineString<12> {
+pub fn base54(n: u32) -> InlineString<7, u8> {
     let mut str = InlineString::new();
 
-    let mut num = n;
+    let mut num = n as usize;
 
     // Base 54 at first because these are the usable first characters in JavaScript identifiers
     // <https://tc39.es/ecma262/#prod-IdentifierStart>
@@ -72,21 +72,11 @@ mod test {
 
     #[test]
     fn test_base54() {
-        assert_eq!(&*base54(0), "a");
-        assert_eq!(&*base54(25), "z");
-        assert_eq!(&*base54(26), "A");
-        assert_eq!(&*base54(51), "Z");
-        assert_eq!(&*base54(52), "$");
-        assert_eq!(&*base54(53), "_");
-        assert_eq!(&*base54(54), "aa");
-        assert_eq!(&*base54(55), "ab");
-
-        if cfg!(target_pointer_width = "64") {
-            assert_eq!(&*base54(usize::MAX), "ZrN6rN6rN6r");
-        }
-
-        if cfg!(target_pointer_width = "32") {
-            assert_eq!(&*base54(usize::MAX), "vUdzUd");
-        }
+        assert_eq!(&*base54(0), "e");
+        assert_eq!(&*base54(52), "Q");
+        assert_eq!(&*base54(53), "$");
+        assert_eq!(&*base54(54), "ee");
+        assert_eq!(&*base54(55), "te");
+        assert_eq!(&*base54(u32::MAX), "xKrTKr");
     }
 }

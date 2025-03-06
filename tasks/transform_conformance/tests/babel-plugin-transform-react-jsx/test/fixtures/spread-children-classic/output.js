@@ -1,1 +1,1 @@
-React.createElement(React.Fragment, null, ...foo);
+/* @__PURE__ */ React.createElement(React.Fragment, null, ...foo);

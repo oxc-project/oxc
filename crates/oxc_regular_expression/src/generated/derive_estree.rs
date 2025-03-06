@@ -4,7 +4,7 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ESTree, FlatStructSerializer, Serializer, StructSerializer,
+    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
     ser::{AppendTo, AppendToConcat},
 };
 
@@ -13,7 +13,7 @@ use crate::ast::*;
 impl ESTree for Pattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Pattern");
+        state.serialize_field("type", &JsonSafeString("Pattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -24,7 +24,7 @@ impl ESTree for Pattern<'_> {
 impl ESTree for Disjunction<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Disjunction");
+        state.serialize_field("type", &JsonSafeString("Disjunction"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -35,7 +35,7 @@ impl ESTree for Disjunction<'_> {
 impl ESTree for Alternative<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Alternative");
+        state.serialize_field("type", &JsonSafeString("Alternative"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("body", &self.body);
@@ -65,7 +65,7 @@ impl ESTree for Term<'_> {
 impl ESTree for BoundaryAssertion {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "BoundaryAssertion");
+        state.serialize_field("type", &JsonSafeString("BoundaryAssertion"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("kind", &self.kind);
@@ -76,10 +76,10 @@ impl ESTree for BoundaryAssertion {
 impl ESTree for BoundaryAssertionKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Start => "start".serialize(serializer),
-            Self::End => "end".serialize(serializer),
-            Self::Boundary => "boundary".serialize(serializer),
-            Self::NegativeBoundary => "negativeBoundary".serialize(serializer),
+            Self::Start => JsonSafeString("start").serialize(serializer),
+            Self::End => JsonSafeString("end").serialize(serializer),
+            Self::Boundary => JsonSafeString("boundary").serialize(serializer),
+            Self::NegativeBoundary => JsonSafeString("negativeBoundary").serialize(serializer),
         }
     }
 }
@@ -87,7 +87,7 @@ impl ESTree for BoundaryAssertionKind {
 impl ESTree for LookAroundAssertion<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "LookAroundAssertion");
+        state.serialize_field("type", &JsonSafeString("LookAroundAssertion"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("kind", &self.kind);
@@ -99,10 +99,10 @@ impl ESTree for LookAroundAssertion<'_> {
 impl ESTree for LookAroundAssertionKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Lookahead => "lookahead".serialize(serializer),
-            Self::NegativeLookahead => "negativeLookahead".serialize(serializer),
-            Self::Lookbehind => "lookbehind".serialize(serializer),
-            Self::NegativeLookbehind => "negativeLookbehind".serialize(serializer),
+            Self::Lookahead => JsonSafeString("lookahead").serialize(serializer),
+            Self::NegativeLookahead => JsonSafeString("negativeLookahead").serialize(serializer),
+            Self::Lookbehind => JsonSafeString("lookbehind").serialize(serializer),
+            Self::NegativeLookbehind => JsonSafeString("negativeLookbehind").serialize(serializer),
         }
     }
 }
@@ -110,7 +110,7 @@ impl ESTree for LookAroundAssertionKind {
 impl ESTree for Quantifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Quantifier");
+        state.serialize_field("type", &JsonSafeString("Quantifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("min", &self.min);
@@ -124,7 +124,7 @@ impl ESTree for Quantifier<'_> {
 impl ESTree for Character {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Character");
+        state.serialize_field("type", &JsonSafeString("Character"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("kind", &self.kind);
@@ -136,16 +136,16 @@ impl ESTree for Character {
 impl ESTree for CharacterKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::ControlLetter => "controlLetter".serialize(serializer),
-            Self::HexadecimalEscape => "hexadecimalEscape".serialize(serializer),
-            Self::Identifier => "identifier".serialize(serializer),
-            Self::Null => "null".serialize(serializer),
-            Self::Octal1 => "octal1".serialize(serializer),
-            Self::Octal2 => "octal2".serialize(serializer),
-            Self::Octal3 => "octal3".serialize(serializer),
-            Self::SingleEscape => "singleEscape".serialize(serializer),
-            Self::Symbol => "symbol".serialize(serializer),
-            Self::UnicodeEscape => "unicodeEscape".serialize(serializer),
+            Self::ControlLetter => JsonSafeString("controlLetter").serialize(serializer),
+            Self::HexadecimalEscape => JsonSafeString("hexadecimalEscape").serialize(serializer),
+            Self::Identifier => JsonSafeString("identifier").serialize(serializer),
+            Self::Null => JsonSafeString("null").serialize(serializer),
+            Self::Octal1 => JsonSafeString("octal1").serialize(serializer),
+            Self::Octal2 => JsonSafeString("octal2").serialize(serializer),
+            Self::Octal3 => JsonSafeString("octal3").serialize(serializer),
+            Self::SingleEscape => JsonSafeString("singleEscape").serialize(serializer),
+            Self::Symbol => JsonSafeString("symbol").serialize(serializer),
+            Self::UnicodeEscape => JsonSafeString("unicodeEscape").serialize(serializer),
         }
     }
 }
@@ -153,7 +153,7 @@ impl ESTree for CharacterKind {
 impl ESTree for CharacterClassEscape {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "CharacterClassEscape");
+        state.serialize_field("type", &JsonSafeString("CharacterClassEscape"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("kind", &self.kind);
@@ -164,12 +164,12 @@ impl ESTree for CharacterClassEscape {
 impl ESTree for CharacterClassEscapeKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::D => "d".serialize(serializer),
-            Self::NegativeD => "negativeD".serialize(serializer),
-            Self::S => "s".serialize(serializer),
-            Self::NegativeS => "negativeS".serialize(serializer),
-            Self::W => "w".serialize(serializer),
-            Self::NegativeW => "negativeW".serialize(serializer),
+            Self::D => JsonSafeString("d").serialize(serializer),
+            Self::NegativeD => JsonSafeString("negativeD").serialize(serializer),
+            Self::S => JsonSafeString("s").serialize(serializer),
+            Self::NegativeS => JsonSafeString("negativeS").serialize(serializer),
+            Self::W => JsonSafeString("w").serialize(serializer),
+            Self::NegativeW => JsonSafeString("negativeW").serialize(serializer),
         }
     }
 }
@@ -177,7 +177,7 @@ impl ESTree for CharacterClassEscapeKind {
 impl ESTree for UnicodePropertyEscape<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "UnicodePropertyEscape");
+        state.serialize_field("type", &JsonSafeString("UnicodePropertyEscape"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("negative", &self.negative);
@@ -191,7 +191,7 @@ impl ESTree for UnicodePropertyEscape<'_> {
 impl ESTree for Dot {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Dot");
+        state.serialize_field("type", &JsonSafeString("Dot"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -201,7 +201,7 @@ impl ESTree for Dot {
 impl ESTree for CharacterClass<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "CharacterClass");
+        state.serialize_field("type", &JsonSafeString("CharacterClass"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("negative", &self.negative);
@@ -215,9 +215,9 @@ impl ESTree for CharacterClass<'_> {
 impl ESTree for CharacterClassContentsKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Union => "union".serialize(serializer),
-            Self::Intersection => "intersection".serialize(serializer),
-            Self::Subtraction => "subtraction".serialize(serializer),
+            Self::Union => JsonSafeString("union").serialize(serializer),
+            Self::Intersection => JsonSafeString("intersection").serialize(serializer),
+            Self::Subtraction => JsonSafeString("subtraction").serialize(serializer),
         }
     }
 }
@@ -238,7 +238,7 @@ impl ESTree for CharacterClassContents<'_> {
 impl ESTree for CharacterClassRange {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "CharacterClassRange");
+        state.serialize_field("type", &JsonSafeString("CharacterClassRange"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("min", &self.min);
@@ -250,7 +250,7 @@ impl ESTree for CharacterClassRange {
 impl ESTree for ClassStringDisjunction<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ClassStringDisjunction");
+        state.serialize_field("type", &JsonSafeString("ClassStringDisjunction"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("strings", &self.strings);
@@ -262,7 +262,7 @@ impl ESTree for ClassStringDisjunction<'_> {
 impl ESTree for ClassString<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "ClassString");
+        state.serialize_field("type", &JsonSafeString("ClassString"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("strings", &self.strings);
@@ -274,7 +274,7 @@ impl ESTree for ClassString<'_> {
 impl ESTree for CapturingGroup<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "CapturingGroup");
+        state.serialize_field("type", &JsonSafeString("CapturingGroup"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &self.name);
@@ -286,7 +286,7 @@ impl ESTree for CapturingGroup<'_> {
 impl ESTree for IgnoreGroup<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "IgnoreGroup");
+        state.serialize_field("type", &JsonSafeString("IgnoreGroup"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("modifiers", &self.modifiers);
@@ -298,7 +298,7 @@ impl ESTree for IgnoreGroup<'_> {
 impl ESTree for Modifiers {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Modifiers");
+        state.serialize_field("type", &JsonSafeString("Modifiers"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("enabling", &self.enabling);
@@ -310,7 +310,7 @@ impl ESTree for Modifiers {
 impl ESTree for Modifier {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "Modifier");
+        state.serialize_field("type", &JsonSafeString("Modifier"));
         state.serialize_field("ignoreCase", &self.ignore_case);
         state.serialize_field("multiline", &self.multiline);
         state.serialize_field("sticky", &self.sticky);
@@ -321,7 +321,7 @@ impl ESTree for Modifier {
 impl ESTree for IndexedReference {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "IndexedReference");
+        state.serialize_field("type", &JsonSafeString("IndexedReference"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("index", &self.index);
@@ -332,7 +332,7 @@ impl ESTree for IndexedReference {
 impl ESTree for NamedReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", "NamedReference");
+        state.serialize_field("type", &JsonSafeString("NamedReference"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("name", &self.name);

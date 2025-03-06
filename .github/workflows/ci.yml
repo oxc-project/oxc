@@ -92,7 +92,7 @@ jobs:
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
@@ -105,8 +105,14 @@ jobs:
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
+      - uses: ./.github/actions/pnpm
       - run: rustup target add wasm32-wasip1-threads
       - uses: bytecodealliance/actions/wasmtime/setup@3b93676295fd6f7eaa7af2c2785539e052fa8349 # v1.1.1
+      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/parser/Cargo.toml
+      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/transform/Cargo.toml
+      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/minify/Cargo.toml
+      # Fix `index.d.ts`
+      - run: node napi/parser/scripts/fix-wasm-dts.mjs
       - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
       - run: git diff --exit-code # Must commit everything
 
@@ -141,7 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: crate-ci/typos@212923e4ff05b7fc2294a204405eec047b807138 # v1.29.9
+      - uses: crate-ci/typos@72f3776b6edc3a10a567b8e43fd0524b2a3f1419 # v1.30.1
         with:
           files: .
 
@@ -260,7 +266,7 @@ jobs:
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
-          filters: ".github/.generated_ast_watch_list.yml"
+          filters: ".github/generated/ast_changes_watch_list.yml"
 
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         if: steps.filter.outputs.src == 'true'
@@ -272,7 +278,7 @@ jobs:
 
       - name: Restore dprint plugin cache
         id: cache-restore
-        uses: actions/cache/restore@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4.2.1
+        uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           key: dprint-autofix-ci-${{ runner.os }}-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
@@ -287,7 +293,7 @@ jobs:
       - name: Save dprint plugin cache
         if: ${{ github.ref_name == 'main' }}
         id: cache-save
-        uses: actions/cache/save@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4.2.1
+        uses: actions/cache/save@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
           path: ~/.cache/dprint
@@ -303,6 +309,8 @@ jobs:
           filters: |
             src:
               - '!crates/oxc_linter/**'
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true'
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         if: steps.filter.outputs.src == 'true'
         with:
@@ -311,7 +319,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
         run: |
-          pnpm run build-dev
+          pnpm run build
           pnpm run test
           pnpm --filter e2e run test
           git diff --exit-code # Must commit everything

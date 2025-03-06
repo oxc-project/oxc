@@ -6,7 +6,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
   {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "TSTypeAnnotation",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(deco)",
@@ -23,7 +31,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
       {
         "children": [],
         "flags": "ScopeFlags(StrictMode)",
-        "id": 2,
+        "id": 3,
         "node": "Class(Foo)",
         "symbols": []
       }

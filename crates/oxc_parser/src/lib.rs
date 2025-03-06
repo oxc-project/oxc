@@ -47,7 +47,7 @@
 //!
 //! # Visitor
 //!
-//! See [oxc_ast::Visit] and [oxc_ast::VisitMut]
+//! See [`Visit`](http://docs.rs/oxc_ast_visit) and [`VisitMut`](http://docs.rs/oxc_ast_visit).
 //!
 //! # Visiting without a visitor
 //!
@@ -209,6 +209,14 @@ pub struct ParseOptions {
     ///
     /// [`ParenthesizedExpression`]: oxc_ast::ast::ParenthesizedExpression
     pub preserve_parens: bool,
+
+    /// Allow V8 runtime calls in the AST.
+    /// See: [V8's Parser::ParseV8Intrinsic](https://chromium.googlesource.com/v8/v8/+/35a14c75e397302655d7b3fbe648f9490ae84b7d/src/parsing/parser.cc#4811).
+    ///
+    /// Default: `false`
+    ///
+    /// [`V8IntrinsicExpression`]: oxc_ast::ast::V8IntrinsicExpression
+    pub allow_v8_intrinsics: bool,
 }
 
 impl Default for ParseOptions {
@@ -217,6 +225,7 @@ impl Default for ParseOptions {
             parse_regular_expression: false,
             allow_return_outside_function: false,
             preserve_parens: true,
+            allow_v8_intrinsics: false,
         }
     }
 }
@@ -343,7 +352,7 @@ use parser_parse::UniquePromise;
 struct ParserImpl<'a> {
     options: ParseOptions,
 
-    lexer: Lexer<'a>,
+    pub(crate) lexer: Lexer<'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,
@@ -583,7 +592,8 @@ impl<'a> ParserImpl<'a> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::ast::{CommentKind, Expression};
+    use oxc_ast::ast::{CommentKind, Expression, Statement};
+    use oxc_span::GetSpan;
 
     use super::*;
 
@@ -655,6 +665,45 @@ mod test {
     }
 
     #[test]
+    fn v8_intrinsics() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        {
+            let source = "%DebugPrint('Raging against the Dying Light')";
+            let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
+            let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
+            assert!(ret.errors.is_empty());
+
+            if let Some(Statement::ExpressionStatement(expr_stmt)) = ret.program.body.first() {
+                if let Expression::V8IntrinsicExpression(expr) = &expr_stmt.expression {
+                    assert_eq!(expr.span().source_text(source), source);
+                } else {
+                    panic!("Expected V8IntrinsicExpression");
+                }
+            } else {
+                panic!("Expected ExpressionStatement");
+            }
+        }
+        {
+            let source = "%DebugPrint(...illegalSpread)";
+            let opts = ParseOptions { allow_v8_intrinsics: true, ..ParseOptions::default() };
+            let ret = Parser::new(&allocator, source, source_type).with_options(opts).parse();
+            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(
+                ret.errors[0].to_string(),
+                "V8 runtime calls cannot have spread elements as arguments"
+            );
+        }
+
+        {
+            let source = "%DebugPrint('~~')";
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert_eq!(ret.errors.len(), 1);
+            assert_eq!(ret.errors[0].to_string(), "Unexpected token");
+        }
+    }
+
+    #[test]
     fn comments() {
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
@@ -714,7 +763,9 @@ mod test {
 
     // Source with length MAX_LEN + 1 fails to parse.
     // Skip this test on 32-bit systems as impossible to allocate a string longer than `isize::MAX`.
+    // Also skip running under Miri since it takes so long.
     #[cfg(target_pointer_width = "64")]
+    #[cfg(not(miri))]
     #[test]
     fn overlong_source() {
         // Build string in 16 KiB chunks for speed
@@ -743,7 +794,9 @@ mod test {
     // Source with length MAX_LEN parses OK.
     // This test takes over 1 minute on an M1 Macbook Pro unless compiled in release mode.
     // `not(debug_assertions)` is a proxy for detecting release mode.
+    // Also skip running under Miri since it takes so long.
     #[cfg(not(debug_assertions))]
+    #[cfg(not(miri))]
     #[test]
     fn legal_length_source() {
         // Build a string MAX_LEN bytes long which doesn't take too long to parse

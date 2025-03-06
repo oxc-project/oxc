@@ -201,6 +201,10 @@ impl Helper {
             Self::DecorateMetadata => "decorateMetadata",
         }
     }
+
+    pub const fn pure(self) -> bool {
+        matches!(self, Self::ClassPrivateFieldLooseKey)
+    }
 }
 
 /// Stores the state of the helper loader in [`TransformCtx`].
@@ -226,7 +230,6 @@ impl HelperLoaderStore<'_> {
 // Public methods implemented directly on `TransformCtx`, as they need access to `TransformCtx::module_imports`.
 impl<'a> TransformCtx<'a> {
     /// Load and call a helper function and return a `CallExpression`.
-    #[expect(dead_code)]
     pub fn helper_call(
         &self,
         helper: Helper,
@@ -235,7 +238,8 @@ impl<'a> TransformCtx<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> CallExpression<'a> {
         let callee = self.helper_load(helper, ctx);
-        ctx.ast.call_expression(span, callee, NONE, arguments, false)
+        let pure = helper.pure();
+        ctx.ast.call_expression_with_pure(span, callee, NONE, arguments, false, pure)
     }
 
     /// Same as [`TransformCtx::helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
@@ -247,7 +251,8 @@ impl<'a> TransformCtx<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let callee = self.helper_load(helper, ctx);
-        ctx.ast.expression_call(span, callee, NONE, arguments, false)
+        let pure = helper.pure();
+        ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, pure)
     }
 
     /// Load a helper function and return a callee expression.

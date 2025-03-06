@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.54.0] - 2025-03-04
+
+### Features
+
+- a9f0d2b ast_tools: Generate field offset assertions for more types (#9449) (overlookmotel)
+
+### Performance
+
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- 55ed1df ast/estree: Shorten `ESTree` impls for enums (#9275) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 - 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)

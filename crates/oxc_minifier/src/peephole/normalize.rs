@@ -92,6 +92,14 @@ impl<'a> Traverse<'a> for Normalize {
             *expr = e;
         }
     }
+
+    fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::set_no_side_effects(&mut e.pure, &e.callee, ctx);
+    }
+
+    fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::set_no_side_effects(&mut e.pure, &e.callee, ctx);
+    }
 }
 
 impl<'a> Normalize {
@@ -177,13 +185,17 @@ impl<'a> Normalize {
             "undefined" if ident.is_global_reference(ctx.symbols()) => {
                 // `delete undefined` returns `false`
                 // `delete void 0` returns `true`
-                if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
-                {
+                if Self::is_unary_delete_ancestor(ctx.ancestors()) {
                     return None;
                 }
                 Some(ctx.ast.void_0(ident.span))
             }
             "Infinity" if ident.is_global_reference(ctx.symbols()) => {
+                // `delete Infinity` returns `false`
+                // `delete 1/0` returns `true`
+                if Self::is_unary_delete_ancestor(ctx.ancestors()) {
+                    return None;
+                }
                 Some(ctx.ast.expression_numeric_literal(
                     ident.span,
                     f64::INFINITY,
@@ -191,11 +203,35 @@ impl<'a> Normalize {
                     NumberBase::Decimal,
                 ))
             }
-            "NaN" if ident.is_global_reference(ctx.symbols()) => Some(
-                ctx.ast.expression_numeric_literal(ident.span, f64::NAN, None, NumberBase::Decimal),
-            ),
+            "NaN" if ident.is_global_reference(ctx.symbols()) => {
+                // `delete NaN` returns `false`
+                // `delete 0/0` returns `true`
+                if Self::is_unary_delete_ancestor(ctx.ancestors()) {
+                    return None;
+                }
+                Some(ctx.ast.expression_numeric_literal(
+                    ident.span,
+                    f64::NAN,
+                    None,
+                    NumberBase::Decimal,
+                ))
+            }
             _ => None,
         }
+    }
+
+    fn is_unary_delete_ancestor<'t>(ancestors: impl Iterator<Item = Ancestor<'a, 't>>) -> bool {
+        for ancestor in ancestors {
+            match ancestor {
+                Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete() => {
+                    return true;
+                }
+                Ancestor::ParenthesizedExpressionExpression(_)
+                | Ancestor::SequenceExpressionExpressions(_) => {}
+                _ => return false,
+            }
+        }
+        false
     }
 
     fn convert_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -205,6 +241,20 @@ impl<'a> Normalize {
             return;
         }
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+    }
+
+    fn set_no_side_effects(pure: &mut bool, callee: &Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !*pure {
+            if let Some(ident) = callee.get_identifier_reference() {
+                if let Some(symbol_id) =
+                    ctx.symbols().get_reference(ident.reference_id()).symbol_id()
+                {
+                    if ctx.symbols().no_side_effects().contains(&symbol_id) {
+                        *pure = true;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -250,7 +300,11 @@ mod test {
     #[test]
     fn drop_console() {
         test("console.log()", "");
-        test("(() => console.log())()", "(() => void 0)()");
+        test("(() => console.log())()", "");
+        test(
+            "(() => { try { return console.log() } catch {} })()",
+            "(() => { try { return } catch {} })()",
+        );
     }
 
     #[test]

@@ -180,7 +180,7 @@ impl Runtime {
                 let errors = messages.into_iter().map(Into::into).collect();
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
                 let diagnostics =
-                    DiagnosticService::wrap_diagnostics(path, source.source_text, errors);
+                    DiagnosticService::wrap_diagnostics(path, &source_text, source.start, errors);
                 tx_error.send(Some(diagnostics)).unwrap();
             }
         }

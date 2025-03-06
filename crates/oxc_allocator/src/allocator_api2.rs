@@ -1,5 +1,6 @@
-// All methods just delegate to `bumpalo`, so all marked `#[inline(always)]`
-#![expect(clippy::inline_always)]
+// All methods just delegate to `bumpalo`, so all marked `#[inline(always)]`.
+// All have same safety preconditions of `bumpalo` methods of the same name.
+#![expect(clippy::inline_always, clippy::undocumented_unsafe_blocks)]
 
 use std::{alloc::Layout, ptr::NonNull};
 

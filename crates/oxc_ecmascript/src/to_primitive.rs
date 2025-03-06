@@ -13,7 +13,6 @@ pub enum ToPrimitiveResult {
     BigInt,
     String,
     Boolean,
-    #[expect(dead_code)]
     Symbol,
     Undetermined,
 }

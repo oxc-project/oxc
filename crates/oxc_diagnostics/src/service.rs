@@ -5,6 +5,7 @@ use std::{
 };
 
 use cow_utils::CowUtils;
+use miette::LabeledSpan;
 
 use crate::{
     Error, NamedSource, OxcDiagnostic, Severity,
@@ -130,6 +131,7 @@ impl DiagnosticService {
     pub fn wrap_diagnostics<P: AsRef<Path>>(
         path: P,
         source_text: &str,
+        source_start: u32,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> (PathBuf, Vec<Error>) {
         let path = path.as_ref();
@@ -141,7 +143,29 @@ impl DiagnosticService {
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
         let diagnostics = diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
+            .map(|diagnostic| {
+                if source_start == 0 {
+                    return diagnostic.with_source_code(Arc::clone(&source));
+                }
+
+                match &diagnostic.labels {
+                    None => diagnostic.with_source_code(Arc::clone(&source)),
+                    Some(labels) => {
+                        let new_labels = labels
+                            .iter()
+                            .map(|labeled_span| {
+                                LabeledSpan::new(
+                                    labeled_span.label().map(std::string::ToString::to_string),
+                                    labeled_span.offset() + source_start as usize,
+                                    labeled_span.len(),
+                                )
+                            })
+                            .collect::<Vec<_>>();
+
+                        diagnostic.with_labels(new_labels).with_source_code(Arc::clone(&source))
+                    }
+                }
+            })
             .collect();
         (path.to_path_buf(), diagnostics)
     }

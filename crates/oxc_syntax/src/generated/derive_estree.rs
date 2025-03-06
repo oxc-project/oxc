@@ -4,31 +4,120 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ESTree, FlatStructSerializer, Serializer, StructSerializer,
+    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
     ser::{AppendTo, AppendToConcat},
 };
 
+use crate::module_record::*;
 use crate::operator::*;
+
+impl ESTree for NameSpan<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("value", &self.name);
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.end();
+    }
+}
+
+impl ESTree for ImportEntry<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("importName", &self.import_name);
+        state.serialize_field("localName", &self.local_name);
+        state.serialize_field("isType", &self.is_type);
+        state.end();
+    }
+}
+
+impl ESTree for ImportImportName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
+            Self::NamespaceObject => JsonSafeString("namespaceObject").serialize(serializer),
+            Self::Default(it) => {
+                crate::serialize::ImportOrExportNameDefault(it).serialize(serializer)
+            }
+        }
+    }
+}
+
+impl ESTree for ExportEntry<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("moduleRequest", &self.module_request);
+        state.serialize_field("importName", &self.import_name);
+        state.serialize_field("exportName", &self.export_name);
+        state.serialize_field("localName", &self.local_name);
+        state.end();
+    }
+}
+
+impl ESTree for ExportImportName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
+            Self::All => JsonSafeString("all").serialize(serializer),
+            Self::AllButDefault => JsonSafeString("allButDefault").serialize(serializer),
+            Self::Null => JsonSafeString("null").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for ExportExportName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
+            Self::Default(it) => {
+                crate::serialize::ImportOrExportNameDefault(it).serialize(serializer)
+            }
+            Self::Null => JsonSafeString("null").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for ExportLocalName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
+            Self::Default(it) => crate::serialize::ExportLocalNameDefault(it).serialize(serializer),
+            Self::Null => JsonSafeString("null").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for DynamicImport {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("moduleRequest", &self.module_request);
+        state.end();
+    }
+}
 
 impl ESTree for AssignmentOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Assign => "=".serialize(serializer),
-            Self::Addition => "+=".serialize(serializer),
-            Self::Subtraction => "-=".serialize(serializer),
-            Self::Multiplication => "*=".serialize(serializer),
-            Self::Division => "/=".serialize(serializer),
-            Self::Remainder => "%=".serialize(serializer),
-            Self::Exponential => "**=".serialize(serializer),
-            Self::ShiftLeft => "<<=".serialize(serializer),
-            Self::ShiftRight => ">>=".serialize(serializer),
-            Self::ShiftRightZeroFill => ">>>=".serialize(serializer),
-            Self::BitwiseOR => "|=".serialize(serializer),
-            Self::BitwiseXOR => "^=".serialize(serializer),
-            Self::BitwiseAnd => "&=".serialize(serializer),
-            Self::LogicalOr => "||=".serialize(serializer),
-            Self::LogicalAnd => "&&=".serialize(serializer),
-            Self::LogicalNullish => "??=".serialize(serializer),
+            Self::Assign => JsonSafeString("=").serialize(serializer),
+            Self::Addition => JsonSafeString("+=").serialize(serializer),
+            Self::Subtraction => JsonSafeString("-=").serialize(serializer),
+            Self::Multiplication => JsonSafeString("*=").serialize(serializer),
+            Self::Division => JsonSafeString("/=").serialize(serializer),
+            Self::Remainder => JsonSafeString("%=").serialize(serializer),
+            Self::Exponential => JsonSafeString("**=").serialize(serializer),
+            Self::ShiftLeft => JsonSafeString("<<=").serialize(serializer),
+            Self::ShiftRight => JsonSafeString(">>=").serialize(serializer),
+            Self::ShiftRightZeroFill => JsonSafeString(">>>=").serialize(serializer),
+            Self::BitwiseOR => JsonSafeString("|=").serialize(serializer),
+            Self::BitwiseXOR => JsonSafeString("^=").serialize(serializer),
+            Self::BitwiseAnd => JsonSafeString("&=").serialize(serializer),
+            Self::LogicalOr => JsonSafeString("||=").serialize(serializer),
+            Self::LogicalAnd => JsonSafeString("&&=").serialize(serializer),
+            Self::LogicalNullish => JsonSafeString("??=").serialize(serializer),
         }
     }
 }
@@ -36,28 +125,28 @@ impl ESTree for AssignmentOperator {
 impl ESTree for BinaryOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Equality => "==".serialize(serializer),
-            Self::Inequality => "!=".serialize(serializer),
-            Self::StrictEquality => "===".serialize(serializer),
-            Self::StrictInequality => "!==".serialize(serializer),
-            Self::LessThan => "<".serialize(serializer),
-            Self::LessEqualThan => "<=".serialize(serializer),
-            Self::GreaterThan => ">".serialize(serializer),
-            Self::GreaterEqualThan => ">=".serialize(serializer),
-            Self::Addition => "+".serialize(serializer),
-            Self::Subtraction => "-".serialize(serializer),
-            Self::Multiplication => "*".serialize(serializer),
-            Self::Division => "/".serialize(serializer),
-            Self::Remainder => "%".serialize(serializer),
-            Self::Exponential => "**".serialize(serializer),
-            Self::ShiftLeft => "<<".serialize(serializer),
-            Self::ShiftRight => ">>".serialize(serializer),
-            Self::ShiftRightZeroFill => ">>>".serialize(serializer),
-            Self::BitwiseOR => "|".serialize(serializer),
-            Self::BitwiseXOR => "^".serialize(serializer),
-            Self::BitwiseAnd => "&".serialize(serializer),
-            Self::In => "in".serialize(serializer),
-            Self::Instanceof => "instanceof".serialize(serializer),
+            Self::Equality => JsonSafeString("==").serialize(serializer),
+            Self::Inequality => JsonSafeString("!=").serialize(serializer),
+            Self::StrictEquality => JsonSafeString("===").serialize(serializer),
+            Self::StrictInequality => JsonSafeString("!==").serialize(serializer),
+            Self::LessThan => JsonSafeString("<").serialize(serializer),
+            Self::LessEqualThan => JsonSafeString("<=").serialize(serializer),
+            Self::GreaterThan => JsonSafeString(">").serialize(serializer),
+            Self::GreaterEqualThan => JsonSafeString(">=").serialize(serializer),
+            Self::Addition => JsonSafeString("+").serialize(serializer),
+            Self::Subtraction => JsonSafeString("-").serialize(serializer),
+            Self::Multiplication => JsonSafeString("*").serialize(serializer),
+            Self::Division => JsonSafeString("/").serialize(serializer),
+            Self::Remainder => JsonSafeString("%").serialize(serializer),
+            Self::Exponential => JsonSafeString("**").serialize(serializer),
+            Self::ShiftLeft => JsonSafeString("<<").serialize(serializer),
+            Self::ShiftRight => JsonSafeString(">>").serialize(serializer),
+            Self::ShiftRightZeroFill => JsonSafeString(">>>").serialize(serializer),
+            Self::BitwiseOR => JsonSafeString("|").serialize(serializer),
+            Self::BitwiseXOR => JsonSafeString("^").serialize(serializer),
+            Self::BitwiseAnd => JsonSafeString("&").serialize(serializer),
+            Self::In => JsonSafeString("in").serialize(serializer),
+            Self::Instanceof => JsonSafeString("instanceof").serialize(serializer),
         }
     }
 }
@@ -65,9 +154,9 @@ impl ESTree for BinaryOperator {
 impl ESTree for LogicalOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Or => "||".serialize(serializer),
-            Self::And => "&&".serialize(serializer),
-            Self::Coalesce => "??".serialize(serializer),
+            Self::Or => JsonSafeString("||").serialize(serializer),
+            Self::And => JsonSafeString("&&").serialize(serializer),
+            Self::Coalesce => JsonSafeString("??").serialize(serializer),
         }
     }
 }
@@ -75,13 +164,13 @@ impl ESTree for LogicalOperator {
 impl ESTree for UnaryOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::UnaryPlus => "+".serialize(serializer),
-            Self::UnaryNegation => "-".serialize(serializer),
-            Self::LogicalNot => "!".serialize(serializer),
-            Self::BitwiseNot => "~".serialize(serializer),
-            Self::Typeof => "typeof".serialize(serializer),
-            Self::Void => "void".serialize(serializer),
-            Self::Delete => "delete".serialize(serializer),
+            Self::UnaryPlus => JsonSafeString("+").serialize(serializer),
+            Self::UnaryNegation => JsonSafeString("-").serialize(serializer),
+            Self::LogicalNot => JsonSafeString("!").serialize(serializer),
+            Self::BitwiseNot => JsonSafeString("~").serialize(serializer),
+            Self::Typeof => JsonSafeString("typeof").serialize(serializer),
+            Self::Void => JsonSafeString("void").serialize(serializer),
+            Self::Delete => JsonSafeString("delete").serialize(serializer),
         }
     }
 }
@@ -89,8 +178,8 @@ impl ESTree for UnaryOperator {
 impl ESTree for UpdateOperator {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Increment => "++".serialize(serializer),
-            Self::Decrement => "--".serialize(serializer),
+            Self::Increment => JsonSafeString("++").serialize(serializer),
+            Self::Decrement => JsonSafeString("--").serialize(serializer),
         }
     }
 }

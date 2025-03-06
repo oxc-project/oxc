@@ -1,12 +1,9 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/assert_layouts.rs`
 
+#![allow(unused_imports)]
+
 use std::mem::{align_of, offset_of, size_of};
-
-use nonmax::NonMaxU32;
-
-use oxc_regular_expression::ast::*;
-use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::ast::*;
 
@@ -145,13 +142,15 @@ const _: () = {
     assert!(offset_of!(CallExpression, type_parameters) == 24);
     assert!(offset_of!(CallExpression, arguments) == 32);
     assert!(offset_of!(CallExpression, optional) == 64);
+    assert!(offset_of!(CallExpression, pure) == 65);
 
-    assert!(size_of::<NewExpression>() == 64);
+    assert!(size_of::<NewExpression>() == 72);
     assert!(align_of::<NewExpression>() == 8);
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
     assert!(offset_of!(NewExpression, arguments) == 24);
     assert!(offset_of!(NewExpression, type_parameters) == 56);
+    assert!(offset_of!(NewExpression, pure) == 64);
 
     assert!(size_of::<MetaProperty>() == 56);
     assert!(align_of::<MetaProperty>() == 8);
@@ -516,6 +515,7 @@ const _: () = {
     assert!(offset_of!(Function, return_type) == 80);
     assert!(offset_of!(Function, body) == 88);
     assert!(offset_of!(Function, scope_id) == 96);
+    assert!(offset_of!(Function, pure) == 100);
 
     assert!(size_of::<FunctionType>() == 1);
     assert!(align_of::<FunctionType>() == 1);
@@ -555,6 +555,7 @@ const _: () = {
     assert!(offset_of!(ArrowFunctionExpression, return_type) == 32);
     assert!(offset_of!(ArrowFunctionExpression, body) == 40);
     assert!(offset_of!(ArrowFunctionExpression, scope_id) == 48);
+    assert!(offset_of!(ArrowFunctionExpression, pure) == 52);
 
     assert!(size_of::<YieldExpression>() == 32);
     assert!(align_of::<YieldExpression>() == 8);
@@ -724,8 +725,8 @@ const _: () = {
     assert!(size_of::<ExportDefaultDeclaration>() == 72);
     assert!(align_of::<ExportDefaultDeclaration>() == 8);
     assert!(offset_of!(ExportDefaultDeclaration, span) == 0);
-    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 8);
-    assert!(offset_of!(ExportDefaultDeclaration, exported) == 24);
+    assert!(offset_of!(ExportDefaultDeclaration, exported) == 8);
+    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 56);
 
     assert!(size_of::<ExportAllDeclaration>() == 112);
     assert!(align_of::<ExportAllDeclaration>() == 8);
@@ -747,6 +748,12 @@ const _: () = {
 
     assert!(size_of::<ModuleExportName>() == 48);
     assert!(align_of::<ModuleExportName>() == 8);
+
+    assert!(size_of::<V8IntrinsicExpression>() == 64);
+    assert!(align_of::<V8IntrinsicExpression>() == 8);
+    assert!(offset_of!(V8IntrinsicExpression, span) == 0);
+    assert!(offset_of!(V8IntrinsicExpression, name) == 8);
+    assert!(offset_of!(V8IntrinsicExpression, arguments) == 32);
 
     assert!(size_of::<BooleanLiteral>() == 16);
     assert!(align_of::<BooleanLiteral>() == 8);
@@ -1270,13 +1277,14 @@ const _: () = {
     assert!(size_of::<TSImportAttributeName>() == 48);
     assert!(align_of::<TSImportAttributeName>() == 8);
 
-    assert!(size_of::<TSFunctionType>() == 40);
+    assert!(size_of::<TSFunctionType>() == 48);
     assert!(align_of::<TSFunctionType>() == 8);
     assert!(offset_of!(TSFunctionType, span) == 0);
     assert!(offset_of!(TSFunctionType, type_parameters) == 8);
     assert!(offset_of!(TSFunctionType, this_param) == 16);
     assert!(offset_of!(TSFunctionType, params) == 24);
     assert!(offset_of!(TSFunctionType, return_type) == 32);
+    assert!(offset_of!(TSFunctionType, scope_id) == 40);
 
     assert!(size_of::<TSConstructorType>() == 40);
     assert!(align_of::<TSConstructorType>() == 8);
@@ -1389,7 +1397,10 @@ const _: () = {
     assert!(size_of::<CommentPosition>() == 1);
     assert!(align_of::<CommentPosition>() == 1);
 
-    assert!(size_of::<Comment>() == 16);
+    assert!(size_of::<CommentAnnotation>() == 1);
+    assert!(align_of::<CommentAnnotation>() == 1);
+
+    assert!(size_of::<Comment>() == 24);
     assert!(align_of::<Comment>() == 8);
     assert!(offset_of!(Comment, span) == 0);
     assert!(offset_of!(Comment, attached_to) == 8);
@@ -1397,194 +1408,7 @@ const _: () = {
     assert!(offset_of!(Comment, position) == 13);
     assert!(offset_of!(Comment, preceded_by_newline) == 14);
     assert!(offset_of!(Comment, followed_by_newline) == 15);
-
-    assert!(size_of::<NonMaxU32>() == 4);
-    assert!(align_of::<NonMaxU32>() == 4);
-
-    assert!(size_of::<NumberBase>() == 1);
-    assert!(align_of::<NumberBase>() == 1);
-
-    assert!(size_of::<BigintBase>() == 1);
-    assert!(align_of::<BigintBase>() == 1);
-
-    assert!(size_of::<AssignmentOperator>() == 1);
-    assert!(align_of::<AssignmentOperator>() == 1);
-
-    assert!(size_of::<BinaryOperator>() == 1);
-    assert!(align_of::<BinaryOperator>() == 1);
-
-    assert!(size_of::<LogicalOperator>() == 1);
-    assert!(align_of::<LogicalOperator>() == 1);
-
-    assert!(size_of::<UnaryOperator>() == 1);
-    assert!(align_of::<UnaryOperator>() == 1);
-
-    assert!(size_of::<UpdateOperator>() == 1);
-    assert!(align_of::<UpdateOperator>() == 1);
-
-    assert!(size_of::<ScopeId>() == 4);
-    assert!(align_of::<ScopeId>() == 4);
-
-    assert!(size_of::<SymbolId>() == 4);
-    assert!(align_of::<SymbolId>() == 4);
-
-    assert!(size_of::<ReferenceId>() == 4);
-    assert!(align_of::<ReferenceId>() == 4);
-
-    assert!(size_of::<Span>() == 8);
-    assert!(align_of::<Span>() == 8);
-    assert!(offset_of!(Span, start) == 0);
-    assert!(offset_of!(Span, end) == 4);
-
-    assert!(size_of::<SourceType>() == 3);
-    assert!(align_of::<SourceType>() == 1);
-
-    assert!(size_of::<Language>() == 1);
-    assert!(align_of::<Language>() == 1);
-
-    assert!(size_of::<ModuleKind>() == 1);
-    assert!(align_of::<ModuleKind>() == 1);
-
-    assert!(size_of::<LanguageVariant>() == 1);
-    assert!(align_of::<LanguageVariant>() == 1);
-
-    assert!(size_of::<Pattern>() == 48);
-    assert!(align_of::<Pattern>() == 8);
-    assert!(offset_of!(Pattern, span) == 0);
-    assert!(offset_of!(Pattern, body) == 8);
-
-    assert!(size_of::<Disjunction>() == 40);
-    assert!(align_of::<Disjunction>() == 8);
-    assert!(offset_of!(Disjunction, span) == 0);
-    assert!(offset_of!(Disjunction, body) == 8);
-
-    assert!(size_of::<Alternative>() == 40);
-    assert!(align_of::<Alternative>() == 8);
-    assert!(offset_of!(Alternative, span) == 0);
-    assert!(offset_of!(Alternative, body) == 8);
-
-    assert!(size_of::<Term>() == 16);
-    assert!(align_of::<Term>() == 8);
-
-    assert!(size_of::<BoundaryAssertion>() == 16);
-    assert!(align_of::<BoundaryAssertion>() == 8);
-    assert!(offset_of!(BoundaryAssertion, span) == 0);
-    assert!(offset_of!(BoundaryAssertion, kind) == 8);
-
-    assert!(size_of::<BoundaryAssertionKind>() == 1);
-    assert!(align_of::<BoundaryAssertionKind>() == 1);
-
-    assert!(size_of::<LookAroundAssertion>() == 56);
-    assert!(align_of::<LookAroundAssertion>() == 8);
-    assert!(offset_of!(LookAroundAssertion, span) == 0);
-    assert!(offset_of!(LookAroundAssertion, kind) == 8);
-    assert!(offset_of!(LookAroundAssertion, body) == 16);
-
-    assert!(size_of::<LookAroundAssertionKind>() == 1);
-    assert!(align_of::<LookAroundAssertionKind>() == 1);
-
-    assert!(size_of::<Quantifier>() == 56);
-    assert!(align_of::<Quantifier>() == 8);
-    assert!(offset_of!(Quantifier, span) == 0);
-    assert!(offset_of!(Quantifier, min) == 8);
-    assert!(offset_of!(Quantifier, max) == 16);
-    assert!(offset_of!(Quantifier, greedy) == 32);
-    assert!(offset_of!(Quantifier, body) == 40);
-
-    assert!(size_of::<Character>() == 16);
-    assert!(align_of::<Character>() == 8);
-    assert!(offset_of!(Character, span) == 0);
-    assert!(offset_of!(Character, kind) == 8);
-    assert!(offset_of!(Character, value) == 12);
-
-    assert!(size_of::<CharacterKind>() == 1);
-    assert!(align_of::<CharacterKind>() == 1);
-
-    assert!(size_of::<CharacterClassEscape>() == 16);
-    assert!(align_of::<CharacterClassEscape>() == 8);
-    assert!(offset_of!(CharacterClassEscape, span) == 0);
-    assert!(offset_of!(CharacterClassEscape, kind) == 8);
-
-    assert!(size_of::<CharacterClassEscapeKind>() == 1);
-    assert!(align_of::<CharacterClassEscapeKind>() == 1);
-
-    assert!(size_of::<UnicodePropertyEscape>() == 48);
-    assert!(align_of::<UnicodePropertyEscape>() == 8);
-    assert!(offset_of!(UnicodePropertyEscape, span) == 0);
-    assert!(offset_of!(UnicodePropertyEscape, negative) == 8);
-    assert!(offset_of!(UnicodePropertyEscape, strings) == 9);
-    assert!(offset_of!(UnicodePropertyEscape, name) == 16);
-    assert!(offset_of!(UnicodePropertyEscape, value) == 32);
-
-    assert!(size_of::<Dot>() == 8);
-    assert!(align_of::<Dot>() == 8);
-    assert!(offset_of!(Dot, span) == 0);
-
-    assert!(size_of::<CharacterClass>() == 48);
-    assert!(align_of::<CharacterClass>() == 8);
-    assert!(offset_of!(CharacterClass, span) == 0);
-    assert!(offset_of!(CharacterClass, negative) == 8);
-    assert!(offset_of!(CharacterClass, strings) == 9);
-    assert!(offset_of!(CharacterClass, kind) == 10);
-    assert!(offset_of!(CharacterClass, body) == 16);
-
-    assert!(size_of::<CharacterClassContentsKind>() == 1);
-    assert!(align_of::<CharacterClassContentsKind>() == 1);
-
-    assert!(size_of::<CharacterClassContents>() == 16);
-    assert!(align_of::<CharacterClassContents>() == 8);
-
-    assert!(size_of::<CharacterClassRange>() == 40);
-    assert!(align_of::<CharacterClassRange>() == 8);
-    assert!(offset_of!(CharacterClassRange, span) == 0);
-    assert!(offset_of!(CharacterClassRange, min) == 8);
-    assert!(offset_of!(CharacterClassRange, max) == 24);
-
-    assert!(size_of::<ClassStringDisjunction>() == 48);
-    assert!(align_of::<ClassStringDisjunction>() == 8);
-    assert!(offset_of!(ClassStringDisjunction, span) == 0);
-    assert!(offset_of!(ClassStringDisjunction, strings) == 8);
-    assert!(offset_of!(ClassStringDisjunction, body) == 16);
-
-    assert!(size_of::<ClassString>() == 48);
-    assert!(align_of::<ClassString>() == 8);
-    assert!(offset_of!(ClassString, span) == 0);
-    assert!(offset_of!(ClassString, strings) == 8);
-    assert!(offset_of!(ClassString, body) == 16);
-
-    assert!(size_of::<CapturingGroup>() == 64);
-    assert!(align_of::<CapturingGroup>() == 8);
-    assert!(offset_of!(CapturingGroup, span) == 0);
-    assert!(offset_of!(CapturingGroup, name) == 8);
-    assert!(offset_of!(CapturingGroup, body) == 24);
-
-    assert!(size_of::<IgnoreGroup>() == 64);
-    assert!(align_of::<IgnoreGroup>() == 8);
-    assert!(offset_of!(IgnoreGroup, span) == 0);
-    assert!(offset_of!(IgnoreGroup, modifiers) == 8);
-    assert!(offset_of!(IgnoreGroup, body) == 24);
-
-    assert!(size_of::<Modifiers>() == 16);
-    assert!(align_of::<Modifiers>() == 8);
-    assert!(offset_of!(Modifiers, span) == 0);
-    assert!(offset_of!(Modifiers, enabling) == 8);
-    assert!(offset_of!(Modifiers, disabling) == 11);
-
-    assert!(size_of::<Modifier>() == 3);
-    assert!(align_of::<Modifier>() == 1);
-    assert!(offset_of!(Modifier, ignore_case) == 0);
-    assert!(offset_of!(Modifier, multiline) == 1);
-    assert!(offset_of!(Modifier, sticky) == 2);
-
-    assert!(size_of::<IndexedReference>() == 16);
-    assert!(align_of::<IndexedReference>() == 8);
-    assert!(offset_of!(IndexedReference, span) == 0);
-    assert!(offset_of!(IndexedReference, index) == 8);
-
-    assert!(size_of::<NamedReference>() == 24);
-    assert!(align_of::<NamedReference>() == 8);
-    assert!(offset_of!(NamedReference, span) == 0);
-    assert!(offset_of!(NamedReference, name) == 8);
+    assert!(offset_of!(Comment, annotation) == 16);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -1722,13 +1546,15 @@ const _: () = {
     assert!(offset_of!(CallExpression, type_parameters) == 16);
     assert!(offset_of!(CallExpression, arguments) == 20);
     assert!(offset_of!(CallExpression, optional) == 36);
+    assert!(offset_of!(CallExpression, pure) == 37);
 
-    assert!(size_of::<NewExpression>() == 36);
+    assert!(size_of::<NewExpression>() == 40);
     assert!(align_of::<NewExpression>() == 4);
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
     assert!(offset_of!(NewExpression, arguments) == 16);
     assert!(offset_of!(NewExpression, type_parameters) == 32);
+    assert!(offset_of!(NewExpression, pure) == 36);
 
     assert!(size_of::<MetaProperty>() == 40);
     assert!(align_of::<MetaProperty>() == 4);
@@ -2079,7 +1905,7 @@ const _: () = {
     assert!(offset_of!(BindingRestElement, span) == 0);
     assert!(offset_of!(BindingRestElement, argument) == 8);
 
-    assert!(size_of::<Function>() == 60);
+    assert!(size_of::<Function>() == 64);
     assert!(align_of::<Function>() == 4);
     assert!(offset_of!(Function, span) == 0);
     assert!(offset_of!(Function, r#type) == 8);
@@ -2093,6 +1919,7 @@ const _: () = {
     assert!(offset_of!(Function, return_type) == 48);
     assert!(offset_of!(Function, body) == 52);
     assert!(offset_of!(Function, scope_id) == 56);
+    assert!(offset_of!(Function, pure) == 60);
 
     assert!(size_of::<FunctionType>() == 1);
     assert!(align_of::<FunctionType>() == 1);
@@ -2122,7 +1949,7 @@ const _: () = {
     assert!(offset_of!(FunctionBody, directives) == 8);
     assert!(offset_of!(FunctionBody, statements) == 24);
 
-    assert!(size_of::<ArrowFunctionExpression>() == 32);
+    assert!(size_of::<ArrowFunctionExpression>() == 36);
     assert!(align_of::<ArrowFunctionExpression>() == 4);
     assert!(offset_of!(ArrowFunctionExpression, span) == 0);
     assert!(offset_of!(ArrowFunctionExpression, expression) == 8);
@@ -2132,6 +1959,7 @@ const _: () = {
     assert!(offset_of!(ArrowFunctionExpression, return_type) == 20);
     assert!(offset_of!(ArrowFunctionExpression, body) == 24);
     assert!(offset_of!(ArrowFunctionExpression, scope_id) == 28);
+    assert!(offset_of!(ArrowFunctionExpression, pure) == 32);
 
     assert!(size_of::<YieldExpression>() == 20);
     assert!(align_of::<YieldExpression>() == 4);
@@ -2301,8 +2129,8 @@ const _: () = {
     assert!(size_of::<ExportDefaultDeclaration>() == 44);
     assert!(align_of::<ExportDefaultDeclaration>() == 4);
     assert!(offset_of!(ExportDefaultDeclaration, span) == 0);
-    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 8);
-    assert!(offset_of!(ExportDefaultDeclaration, exported) == 16);
+    assert!(offset_of!(ExportDefaultDeclaration, exported) == 8);
+    assert!(offset_of!(ExportDefaultDeclaration, declaration) == 36);
 
     assert!(size_of::<ExportAllDeclaration>() == 68);
     assert!(align_of::<ExportAllDeclaration>() == 4);
@@ -2324,6 +2152,12 @@ const _: () = {
 
     assert!(size_of::<ModuleExportName>() == 28);
     assert!(align_of::<ModuleExportName>() == 4);
+
+    assert!(size_of::<V8IntrinsicExpression>() == 40);
+    assert!(align_of::<V8IntrinsicExpression>() == 4);
+    assert!(offset_of!(V8IntrinsicExpression, span) == 0);
+    assert!(offset_of!(V8IntrinsicExpression, name) == 8);
+    assert!(offset_of!(V8IntrinsicExpression, arguments) == 24);
 
     assert!(size_of::<BooleanLiteral>() == 12);
     assert!(align_of::<BooleanLiteral>() == 4);
@@ -2847,13 +2681,14 @@ const _: () = {
     assert!(size_of::<TSImportAttributeName>() == 28);
     assert!(align_of::<TSImportAttributeName>() == 4);
 
-    assert!(size_of::<TSFunctionType>() == 24);
+    assert!(size_of::<TSFunctionType>() == 28);
     assert!(align_of::<TSFunctionType>() == 4);
     assert!(offset_of!(TSFunctionType, span) == 0);
     assert!(offset_of!(TSFunctionType, type_parameters) == 8);
     assert!(offset_of!(TSFunctionType, this_param) == 12);
     assert!(offset_of!(TSFunctionType, params) == 16);
     assert!(offset_of!(TSFunctionType, return_type) == 20);
+    assert!(offset_of!(TSFunctionType, scope_id) == 24);
 
     assert!(size_of::<TSConstructorType>() == 24);
     assert!(align_of::<TSConstructorType>() == 4);
@@ -2966,7 +2801,10 @@ const _: () = {
     assert!(size_of::<CommentPosition>() == 1);
     assert!(align_of::<CommentPosition>() == 1);
 
-    assert!(size_of::<Comment>() == 16);
+    assert!(size_of::<CommentAnnotation>() == 1);
+    assert!(align_of::<CommentAnnotation>() == 1);
+
+    assert!(size_of::<Comment>() == 20);
     assert!(align_of::<Comment>() == 4);
     assert!(offset_of!(Comment, span) == 0);
     assert!(offset_of!(Comment, attached_to) == 8);
@@ -2974,194 +2812,7 @@ const _: () = {
     assert!(offset_of!(Comment, position) == 13);
     assert!(offset_of!(Comment, preceded_by_newline) == 14);
     assert!(offset_of!(Comment, followed_by_newline) == 15);
-
-    assert!(size_of::<NonMaxU32>() == 4);
-    assert!(align_of::<NonMaxU32>() == 4);
-
-    assert!(size_of::<NumberBase>() == 1);
-    assert!(align_of::<NumberBase>() == 1);
-
-    assert!(size_of::<BigintBase>() == 1);
-    assert!(align_of::<BigintBase>() == 1);
-
-    assert!(size_of::<AssignmentOperator>() == 1);
-    assert!(align_of::<AssignmentOperator>() == 1);
-
-    assert!(size_of::<BinaryOperator>() == 1);
-    assert!(align_of::<BinaryOperator>() == 1);
-
-    assert!(size_of::<LogicalOperator>() == 1);
-    assert!(align_of::<LogicalOperator>() == 1);
-
-    assert!(size_of::<UnaryOperator>() == 1);
-    assert!(align_of::<UnaryOperator>() == 1);
-
-    assert!(size_of::<UpdateOperator>() == 1);
-    assert!(align_of::<UpdateOperator>() == 1);
-
-    assert!(size_of::<ScopeId>() == 4);
-    assert!(align_of::<ScopeId>() == 4);
-
-    assert!(size_of::<SymbolId>() == 4);
-    assert!(align_of::<SymbolId>() == 4);
-
-    assert!(size_of::<ReferenceId>() == 4);
-    assert!(align_of::<ReferenceId>() == 4);
-
-    assert!(size_of::<Span>() == 8);
-    assert!(align_of::<Span>() == 4);
-    assert!(offset_of!(Span, start) == 0);
-    assert!(offset_of!(Span, end) == 4);
-
-    assert!(size_of::<SourceType>() == 3);
-    assert!(align_of::<SourceType>() == 1);
-
-    assert!(size_of::<Language>() == 1);
-    assert!(align_of::<Language>() == 1);
-
-    assert!(size_of::<ModuleKind>() == 1);
-    assert!(align_of::<ModuleKind>() == 1);
-
-    assert!(size_of::<LanguageVariant>() == 1);
-    assert!(align_of::<LanguageVariant>() == 1);
-
-    assert!(size_of::<Pattern>() == 32);
-    assert!(align_of::<Pattern>() == 4);
-    assert!(offset_of!(Pattern, span) == 0);
-    assert!(offset_of!(Pattern, body) == 8);
-
-    assert!(size_of::<Disjunction>() == 24);
-    assert!(align_of::<Disjunction>() == 4);
-    assert!(offset_of!(Disjunction, span) == 0);
-    assert!(offset_of!(Disjunction, body) == 8);
-
-    assert!(size_of::<Alternative>() == 24);
-    assert!(align_of::<Alternative>() == 4);
-    assert!(offset_of!(Alternative, span) == 0);
-    assert!(offset_of!(Alternative, body) == 8);
-
-    assert!(size_of::<Term>() == 12);
-    assert!(align_of::<Term>() == 4);
-
-    assert!(size_of::<BoundaryAssertion>() == 12);
-    assert!(align_of::<BoundaryAssertion>() == 4);
-    assert!(offset_of!(BoundaryAssertion, span) == 0);
-    assert!(offset_of!(BoundaryAssertion, kind) == 8);
-
-    assert!(size_of::<BoundaryAssertionKind>() == 1);
-    assert!(align_of::<BoundaryAssertionKind>() == 1);
-
-    assert!(size_of::<LookAroundAssertion>() == 36);
-    assert!(align_of::<LookAroundAssertion>() == 4);
-    assert!(offset_of!(LookAroundAssertion, span) == 0);
-    assert!(offset_of!(LookAroundAssertion, kind) == 8);
-    assert!(offset_of!(LookAroundAssertion, body) == 12);
-
-    assert!(size_of::<LookAroundAssertionKind>() == 1);
-    assert!(align_of::<LookAroundAssertionKind>() == 1);
-
-    assert!(size_of::<Quantifier>() == 48);
-    assert!(align_of::<Quantifier>() == 8);
-    assert!(offset_of!(Quantifier, span) == 0);
-    assert!(offset_of!(Quantifier, min) == 8);
-    assert!(offset_of!(Quantifier, max) == 16);
-    assert!(offset_of!(Quantifier, greedy) == 32);
-    assert!(offset_of!(Quantifier, body) == 36);
-
-    assert!(size_of::<Character>() == 16);
-    assert!(align_of::<Character>() == 4);
-    assert!(offset_of!(Character, span) == 0);
-    assert!(offset_of!(Character, kind) == 8);
-    assert!(offset_of!(Character, value) == 12);
-
-    assert!(size_of::<CharacterKind>() == 1);
-    assert!(align_of::<CharacterKind>() == 1);
-
-    assert!(size_of::<CharacterClassEscape>() == 12);
-    assert!(align_of::<CharacterClassEscape>() == 4);
-    assert!(offset_of!(CharacterClassEscape, span) == 0);
-    assert!(offset_of!(CharacterClassEscape, kind) == 8);
-
-    assert!(size_of::<CharacterClassEscapeKind>() == 1);
-    assert!(align_of::<CharacterClassEscapeKind>() == 1);
-
-    assert!(size_of::<UnicodePropertyEscape>() == 28);
-    assert!(align_of::<UnicodePropertyEscape>() == 4);
-    assert!(offset_of!(UnicodePropertyEscape, span) == 0);
-    assert!(offset_of!(UnicodePropertyEscape, negative) == 8);
-    assert!(offset_of!(UnicodePropertyEscape, strings) == 9);
-    assert!(offset_of!(UnicodePropertyEscape, name) == 12);
-    assert!(offset_of!(UnicodePropertyEscape, value) == 20);
-
-    assert!(size_of::<Dot>() == 8);
-    assert!(align_of::<Dot>() == 4);
-    assert!(offset_of!(Dot, span) == 0);
-
-    assert!(size_of::<CharacterClass>() == 28);
-    assert!(align_of::<CharacterClass>() == 4);
-    assert!(offset_of!(CharacterClass, span) == 0);
-    assert!(offset_of!(CharacterClass, negative) == 8);
-    assert!(offset_of!(CharacterClass, strings) == 9);
-    assert!(offset_of!(CharacterClass, kind) == 10);
-    assert!(offset_of!(CharacterClass, body) == 12);
-
-    assert!(size_of::<CharacterClassContentsKind>() == 1);
-    assert!(align_of::<CharacterClassContentsKind>() == 1);
-
-    assert!(size_of::<CharacterClassContents>() == 8);
-    assert!(align_of::<CharacterClassContents>() == 4);
-
-    assert!(size_of::<CharacterClassRange>() == 40);
-    assert!(align_of::<CharacterClassRange>() == 4);
-    assert!(offset_of!(CharacterClassRange, span) == 0);
-    assert!(offset_of!(CharacterClassRange, min) == 8);
-    assert!(offset_of!(CharacterClassRange, max) == 24);
-
-    assert!(size_of::<ClassStringDisjunction>() == 28);
-    assert!(align_of::<ClassStringDisjunction>() == 4);
-    assert!(offset_of!(ClassStringDisjunction, span) == 0);
-    assert!(offset_of!(ClassStringDisjunction, strings) == 8);
-    assert!(offset_of!(ClassStringDisjunction, body) == 12);
-
-    assert!(size_of::<ClassString>() == 28);
-    assert!(align_of::<ClassString>() == 4);
-    assert!(offset_of!(ClassString, span) == 0);
-    assert!(offset_of!(ClassString, strings) == 8);
-    assert!(offset_of!(ClassString, body) == 12);
-
-    assert!(size_of::<CapturingGroup>() == 40);
-    assert!(align_of::<CapturingGroup>() == 4);
-    assert!(offset_of!(CapturingGroup, span) == 0);
-    assert!(offset_of!(CapturingGroup, name) == 8);
-    assert!(offset_of!(CapturingGroup, body) == 16);
-
-    assert!(size_of::<IgnoreGroup>() == 48);
-    assert!(align_of::<IgnoreGroup>() == 4);
-    assert!(offset_of!(IgnoreGroup, span) == 0);
-    assert!(offset_of!(IgnoreGroup, modifiers) == 8);
-    assert!(offset_of!(IgnoreGroup, body) == 24);
-
-    assert!(size_of::<Modifiers>() == 16);
-    assert!(align_of::<Modifiers>() == 4);
-    assert!(offset_of!(Modifiers, span) == 0);
-    assert!(offset_of!(Modifiers, enabling) == 8);
-    assert!(offset_of!(Modifiers, disabling) == 11);
-
-    assert!(size_of::<Modifier>() == 3);
-    assert!(align_of::<Modifier>() == 1);
-    assert!(offset_of!(Modifier, ignore_case) == 0);
-    assert!(offset_of!(Modifier, multiline) == 1);
-    assert!(offset_of!(Modifier, sticky) == 2);
-
-    assert!(size_of::<IndexedReference>() == 12);
-    assert!(align_of::<IndexedReference>() == 4);
-    assert!(offset_of!(IndexedReference, span) == 0);
-    assert!(offset_of!(IndexedReference, index) == 8);
-
-    assert!(size_of::<NamedReference>() == 16);
-    assert!(align_of::<NamedReference>() == 4);
-    assert!(offset_of!(NamedReference, span) == 0);
-    assert!(offset_of!(NamedReference, name) == 8);
+    assert!(offset_of!(Comment, annotation) == 16);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

@@ -101,7 +101,7 @@ jobs:
 
       - name: Install cargo-zigbuild
         if: ${{ contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@e03236526ace47fa2e04bebcfc6da471ebd4690c # v2.49.0
+        uses: taiki-e/install-action@3c8fc6eaa5fcff049bb133c1f540c6c2287a191f # v2.49.10
         with:
           tool: cargo-zigbuild
 
@@ -109,7 +109,7 @@ jobs:
 
       - name: Install cross
         if: ${{ !contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@e03236526ace47fa2e04bebcfc6da471ebd4690c # v2.49.0
+        uses: taiki-e/install-action@3c8fc6eaa5fcff049bb133c1f540c6c2287a191f # v2.49.10
         with:
           tool: cross
 
@@ -136,14 +136,6 @@ jobs:
           ls target/${{ matrix.target }}/release/*.@(so|dll|dylib)
           mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) napi/${name}/${name}.${{ matrix.code-target }}.node
           ls napi/${name}
-
-      - uses: ./.github/actions/pnpm
-        if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
-
-      - name: Test
-        working-directory: napi/${{ inputs.name }}
-        if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
-        run: pnpm run test
 
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
@@ -179,7 +171,7 @@ jobs:
       - uses: ./.github/actions/pnpm
 
       - name: Download Artifacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           merge-multiple: true
 

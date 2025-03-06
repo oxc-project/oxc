@@ -12,12 +12,16 @@ use rustc_hash::FxHashMap;
 
 use oxc::{
     CompilerInterface,
-    codegen::CodegenReturn,
+    allocator::Allocator,
+    codegen::{CodeGenerator, CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
+    parser::Parser,
+    semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
         EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
-        InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
+        InjectImport, JsxRuntime, ModuleRunnerTransform, ReplaceGlobalDefinesConfig,
+        RewriteExtensionsMode,
     },
 };
 use oxc_napi::OxcError;
@@ -711,5 +715,108 @@ pub fn transform(
         declaration_map: compiler.declaration_map,
         helpers_used: compiler.helpers_used,
         errors: compiler.errors.into_iter().map(OxcError::from).collect(),
+    }
+}
+
+#[derive(Default)]
+#[napi(object)]
+pub struct ModuleRunnerTransformOptions {
+    /// Enable source map generation.
+    ///
+    /// When `true`, the `sourceMap` field of transform result objects will be populated.
+    ///
+    /// @default false
+    ///
+    /// @see {@link SourceMap}
+    pub sourcemap: Option<bool>,
+}
+
+#[derive(Default)]
+#[napi(object)]
+pub struct ModuleRunnerTransformResult {
+    /// The transformed code.
+    ///
+    /// If parsing failed, this will be an empty string.
+    pub code: String,
+
+    /// The source map for the transformed code.
+    ///
+    /// This will be set if {@link TransformOptions#sourcemap} is `true`.
+    pub map: Option<SourceMap>,
+
+    // Import sources collected during transformation.
+    pub deps: Vec<String>,
+
+    // Dynamic import sources collected during transformation.
+    pub dynamic_deps: Vec<String>,
+
+    /// Parse and transformation errors.
+    ///
+    /// Oxc's parser recovers from common syntax errors, meaning that
+    /// transformed code may still be available even if there are errors in this
+    /// list.
+    pub errors: Vec<OxcError>,
+}
+
+/// Transform JavaScript code to a Vite Node runnable module.
+///
+/// @param filename The name of the file being transformed.
+/// @param sourceText the source code itself
+/// @param options The options for the transformation. See {@link
+/// ModuleRunnerTransformOptions} for more information.
+///
+/// @returns an object containing the transformed code, source maps, and any
+/// errors that occurred during parsing or transformation.
+///
+/// @deprecated Only works for Vite.
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[napi]
+pub fn module_runner_transform(
+    filename: String,
+    source_text: String,
+    options: Option<ModuleRunnerTransformOptions>,
+) -> ModuleRunnerTransformResult {
+    let file_path = Path::new(&filename);
+    let source_type = SourceType::from_path(file_path);
+    let source_type = match source_type {
+        Ok(s) => s,
+        Err(err) => {
+            return ModuleRunnerTransformResult {
+                code: String::default(),
+                map: None,
+                deps: vec![],
+                dynamic_deps: vec![],
+                errors: vec![OxcError::new(err.to_string())],
+            };
+        }
+    };
+
+    let allocator = Allocator::default();
+    let mut parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let mut program = parser_ret.program;
+
+    let SemanticBuilderReturn { semantic, errors } =
+        SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+    parser_ret.errors.extend(errors);
+
+    let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+    let (deps, dynamic_deps) =
+        ModuleRunnerTransform::default().transform(&allocator, &mut program, symbols, scopes);
+
+    let CodegenReturn { code, map, .. } = CodeGenerator::new()
+        .with_options(CodegenOptions {
+            source_map_path: options.and_then(|opts| {
+                opts.sourcemap.as_ref().and_then(|s| s.then(|| file_path.to_path_buf()))
+            }),
+            ..Default::default()
+        })
+        .build(&program);
+
+    ModuleRunnerTransformResult {
+        code,
+        map: map.map(Into::into),
+        deps,
+        dynamic_deps,
+        errors: parser_ret.errors.into_iter().map(OxcError::from).collect(),
     }
 }

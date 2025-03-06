@@ -4,6 +4,64 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.0] - 2025-03-06
+
+### Bug Fixes
+
+- 91c9932 napi: Do not support raw transfer on WASM32 (#9566) (overlookmotel)
+
+## [0.55.0] - 2025-03-05
+
+- 4056560 ast/estree: [**BREAKING**] Option to return JS-only AST (#9520) (overlookmotel)
+
+### Features
+
+- af02a87 ast/estree: `Property` have consistent field order (#9547) (overlookmotel)
+- 3e4f909 ast/estree: ESTree AST `ExportNamedDeclaration` always have `attributes` field (#9546) (overlookmotel)
+- d55dbe2 ast/estree: Raw transfer (experimental) (#9516) (overlookmotel)
+
+### Bug Fixes
+
+- a0f6f37 ast/estree: Raw transfer support `showSemanticErrors` option (#9522) (overlookmotel)
+
+### Refactor
+
+- c1a8cea ast/estree: Simplify serializing `RegExpLiteral`s (#9551) (overlookmotel)
+
+### Testing
+
+- 4378a66 ast/estree: Speed up raw transfer tests (#9521) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+- 355a4db napi/parser: [**BREAKING**] Remove `parse_without_return` API (#9455) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+- 68c77c8 napi/parser: Return semantic errors (#9460) (Boshen)
+
+### Testing
+
+- d129055 napi: Add tests for worker threads (#9408) (Boshen)
+- 48d51e3 napi: Add tests for `hashbang` field (#9386) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+- 4a5a7cf napi/parser: [**BREAKING**] Remove magic string; enable utf16 span converter by default (#9291) (Boshen)
+
+### Features
+
+
+### Performance
+
+- 61939ca ast/estree: Faster UTF-8 to UTF-16 span conversion (#9349) (overlookmotel)
+
+### Refactor
+
+- b09249c ast/estree: Rename serializers and serialization methods (#9284) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 - 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)

@@ -5,7 +5,6 @@
 #![warn(missing_docs)]
 
 mod binary_expr_visitor;
-mod code_buffer;
 mod comment;
 mod context;
 mod r#gen;
@@ -16,10 +15,10 @@ mod sourcemap_builder;
 use std::borrow::Cow;
 
 use oxc_ast::ast::{
-    BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
+    Argument, BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program,
     Statement, StringLiteral,
 };
-use oxc_data_structures::stack::Stack;
+use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::SymbolTable;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
@@ -29,8 +28,8 @@ use oxc_syntax::{
 };
 
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, code_buffer::CodeBuffer, comment::CommentsMap,
-    operator::Operator, sourcemap_builder::SourcemapBuilder,
+    binary_expr_visitor::BinaryExpressionVisitor, comment::CommentsMap, operator::Operator,
+    sourcemap_builder::SourcemapBuilder,
 };
 pub use crate::{
     context::Context,
@@ -116,19 +115,6 @@ pub struct Codegen<'a> {
     comments: CommentsMap,
 
     legal_comments: Vec<Comment>,
-    /// Start of comment that needs to be moved to the before VariableDeclarator
-    ///
-    /// For example:
-    /// ```js
-    ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
-    ///  }, b = 10000;
-    /// ```
-    /// Should be generated as:
-    /// ```js
-    ///   export const /* @__NO_SIDE_EFFECTS__ */ a = function() {
-    ///  }, b = 10000;
-    /// ```
-    start_of_annotation_comment: Option<u32>,
 
     sourcemap_builder: Option<SourcemapBuilder>,
 }
@@ -180,7 +166,6 @@ impl<'a> Codegen<'a> {
             quote: b'"',
             print_comments,
             comments: CommentsMap::default(),
-            start_of_annotation_comment: None,
             legal_comments: vec![],
             sourcemap_builder: None,
         }
@@ -492,13 +477,12 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_list_with_comments<T: Gen + GetSpan>(&mut self, items: &[T], ctx: Context) {
+    fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
             }
-            if self.print_comments && self.has_non_annotation_comment(item.span().start) {
-                self.print_expr_comments(item.span().start);
+            if self.print_expr_comments(item.span().start) {
                 self.print_indent();
             } else {
                 self.print_soft_newline();

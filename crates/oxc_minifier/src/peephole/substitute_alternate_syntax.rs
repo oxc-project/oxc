@@ -116,7 +116,11 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: Ctx<'a, '_>) {
-        self.try_compress_call_expression_arguments(expr, ctx);
+        self.try_flatten_arguments(&mut expr.arguments, ctx);
+    }
+
+    pub fn substitute_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: Ctx<'a, '_>) {
+        self.try_flatten_arguments(&mut expr.arguments, ctx);
     }
 
     pub fn substitute_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
@@ -873,13 +877,10 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `foo(...[1,2,3])` -> `foo(1,2,3)`
-    fn try_compress_call_expression_arguments(
-        &mut self,
-        node: &mut CallExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) {
+    // `new Foo(...[1,2,3])` -> `new Foo(1,2,3)`
+    fn try_flatten_arguments(&mut self, args: &mut Vec<'a, Argument<'a>>, ctx: Ctx<'a, '_>) {
         let (new_size, should_fold) =
-            node.arguments.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
+            args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
                 new_size += if let Argument::SpreadElement(spread_el) = arg {
                     if let Expression::ArrayExpression(array_expr) = &spread_el.argument {
                         should_fold = true;
@@ -893,101 +894,44 @@ impl<'a> PeepholeOptimizations {
 
                 (new_size, should_fold)
             });
+        if !should_fold {
+            return;
+        }
 
-        if should_fold {
-            let old_args =
-                std::mem::replace(&mut node.arguments, ctx.ast.vec_with_capacity(new_size));
-            let new_args = &mut node.arguments;
+        let old_args = std::mem::replace(args, ctx.ast.vec_with_capacity(new_size));
+        let new_args = args;
 
-            for arg in old_args {
-                if let Argument::SpreadElement(mut spread_el) = arg {
-                    if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
-                        for el in &mut array_expr.elements {
-                            match el {
-                                ArrayExpressionElement::SpreadElement(spread_el) => {
-                                    new_args.push(ctx.ast.argument_spread_element(
-                                        spread_el.span,
-                                        ctx.ast.move_expression(&mut spread_el.argument),
-                                    ));
-                                }
-                                ArrayExpressionElement::Elision(elision) => {
-                                    new_args.push(ctx.ast.void_0(elision.span).into());
-                                }
-                                match_expression!(ArrayExpressionElement) => {
-                                    new_args.push(
-                                        ctx.ast.move_expression(el.to_expression_mut()).into(),
-                                    );
-                                }
+        for arg in old_args {
+            if let Argument::SpreadElement(mut spread_el) = arg {
+                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
+                    for el in &mut array_expr.elements {
+                        match el {
+                            ArrayExpressionElement::SpreadElement(spread_el) => {
+                                new_args.push(ctx.ast.argument_spread_element(
+                                    spread_el.span,
+                                    ctx.ast.move_expression(&mut spread_el.argument),
+                                ));
+                            }
+                            ArrayExpressionElement::Elision(elision) => {
+                                new_args.push(ctx.ast.void_0(elision.span).into());
+                            }
+                            match_expression!(ArrayExpressionElement) => {
+                                new_args
+                                    .push(ctx.ast.move_expression(el.to_expression_mut()).into());
                             }
                         }
-                    } else {
-                        new_args.push(ctx.ast.argument_spread_element(
-                            spread_el.span,
-                            ctx.ast.move_expression(&mut spread_el.argument),
-                        ));
                     }
                 } else {
-                    new_args.push(arg);
+                    new_args.push(ctx.ast.argument_spread_element(
+                        spread_el.span,
+                        ctx.ast.move_expression(&mut spread_el.argument),
+                    ));
                 }
-            }
-            self.mark_current_function_as_changed();
-        }
-    }
-
-    pub fn substitute_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
-        if let Statement::ExpressionStatement(expr_stmt) = stmt {
-            if let Some(folded_expr) = match &mut expr_stmt.expression {
-                Expression::LogicalExpression(expr) => {
-                    self.try_compress_is_null_and_to_nullish_coalescing(expr, ctx)
-                }
-                _ => None,
-            } {
-                expr_stmt.expression = folded_expr;
-                self.mark_current_function_as_changed();
+            } else {
+                new_args.push(arg);
             }
         }
-    }
-
-    /// Compress `a == null && b` to `a ?? b`
-    ///
-    /// - `a == null && b` -> `a ?? b`
-    /// - `a != null || b` -> `a ?? b`
-    ///
-    /// This can be only done when the return value is not used.
-    /// For example when a = 1, `a == null && b` returns `false` while `a ?? b` returns `1`.
-    fn try_compress_is_null_and_to_nullish_coalescing(
-        &self,
-        expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if self.target < ESTarget::ES2020 {
-            return None;
-        }
-        let target_op = match expr.operator {
-            LogicalOperator::And => BinaryOperator::Equality,
-            LogicalOperator::Or => BinaryOperator::Inequality,
-            LogicalOperator::Coalesce => return None,
-        };
-        let Expression::BinaryExpression(binary_expr) = &mut expr.left else {
-            return None;
-        };
-        if binary_expr.operator != target_op {
-            return None;
-        }
-        let new_left_hand_expr = if binary_expr.left.is_null() {
-            ctx.ast.move_expression(&mut binary_expr.right)
-        } else if binary_expr.right.is_null() {
-            ctx.ast.move_expression(&mut binary_expr.left)
-        } else {
-            return None;
-        };
-
-        Some(ctx.ast.expression_logical(
-            expr.span,
-            new_left_hand_expr,
-            LogicalOperator::Coalesce,
-            ctx.ast.move_expression(&mut expr.right),
-        ))
+        self.mark_current_function_as_changed();
     }
 }
 
@@ -1215,25 +1159,25 @@ mod test {
 
     #[test]
     fn test_fold_true_false_comparison() {
-        test("x == true", "x == !0");
-        test("x == false", "x == !1");
-        test("x != true", "x != !0");
-        test("x < true", "x < !0");
-        test("x <= true", "x <= !0");
-        test("x > true", "x > !0");
-        test("x >= true", "x >= !0");
+        test("v = x == true", "v = x == !0");
+        test("v = x == false", "v = x == !1");
+        test("v = x != true", "v = x != !0");
+        test("v = x < true", "v = x < !0");
+        test("v = x <= true", "v = x <= !0");
+        test("v = x > true", "v = x > !0");
+        test("v = x >= true", "v = x >= !0");
 
-        test("x instanceof true", "x instanceof !0");
-        test("x + false", "x + !1");
+        test("v = x instanceof true", "v = x instanceof !0");
+        test("v = x + false", "v = x + !1");
 
         // Order: should perform the nearest.
-        test("x == x instanceof false", "x == x instanceof !1");
-        test("x in x >> true", "x in x >> !0");
-        test("x == fake(false)", "x == fake(!1)");
+        test("v = x == x instanceof false", "v = x == x instanceof !1");
+        test("v = x in x >> true", "v = x in x >> !0");
+        test("v = x == fake(false)", "v = x == fake(!1)");
 
         // The following should not be folded.
-        test("x === true", "x === !0");
-        test("x !== false", "x !== !1");
+        test("v = x === true", "v = x === !0");
+        test("v = x !== false", "v = x !== !1");
     }
 
     /// Based on https://github.com/terser/terser/blob/58ba5c163fa1684f2a63c7bc19b7ebcf85b74f73/test/compress/assignment.js
@@ -1457,7 +1401,7 @@ mod test {
     fn test_template_string_to_string() {
         test("x = `abcde`", "x = 'abcde'");
         test("x = `ab cd ef`", "x = 'ab cd ef'");
-        test_same("`hello ${name}`");
+        test_same("x = `hello ${name}`");
         test_same("tag `hello ${name}`");
         test_same("tag `hello`");
         test("x = `hello ${'foo'}`", "x = 'hello foo'");
@@ -1517,47 +1461,47 @@ mod test {
 
     #[test]
     fn test_fold_is_typeof_equals_undefined_resolved() {
-        test("var x; typeof x !== 'undefined'", "var x; x !== void 0");
-        test("var x; typeof x != 'undefined'", "var x; x !== void 0");
-        test("var x; 'undefined' !== typeof x", "var x; x !== void 0");
-        test("var x; 'undefined' != typeof x", "var x; x !== void 0");
+        test("var x; v = typeof x !== 'undefined'", "var x; v = x !== void 0");
+        test("var x; v = typeof x != 'undefined'", "var x; v = x !== void 0");
+        test("var x; v = 'undefined' !== typeof x", "var x; v = x !== void 0");
+        test("var x; v = 'undefined' != typeof x", "var x; v = x !== void 0");
 
-        test("var x; typeof x === 'undefined'", "var x; x === void 0");
-        test("var x; typeof x == 'undefined'", "var x; x === void 0");
-        test("var x; 'undefined' === typeof x", "var x; x === void 0");
-        test("var x; 'undefined' == typeof x", "var x; x === void 0");
+        test("var x; v = typeof x === 'undefined'", "var x; v = x === void 0");
+        test("var x; v = typeof x == 'undefined'", "var x; v = x === void 0");
+        test("var x; v = 'undefined' === typeof x", "var x; v = x === void 0");
+        test("var x; v = 'undefined' == typeof x", "var x; v = x === void 0");
 
         test(
-            "var x; function foo() { typeof x !== 'undefined' }",
-            "var x; function foo() { x !== void 0 }",
+            "var x; function foo() { v = typeof x !== 'undefined' }",
+            "var x; function foo() { v = x !== void 0 }",
         );
         test(
-            "typeof x !== 'undefined'; function foo() { var x }",
-            "typeof x < 'u'; function foo() { var x }",
+            "v = typeof x !== 'undefined'; function foo() { var x }",
+            "v = typeof x < 'u'; function foo() { var x }",
         );
-        test("typeof x !== 'undefined'; { var x }", "x !== void 0; var x;");
-        test("typeof x !== 'undefined'; { let x }", "typeof x < 'u'; { let x }");
-        test("typeof x !== 'undefined'; var x", "x !== void 0; var x");
+        test("v = typeof x !== 'undefined'; { var x }", "v = x !== void 0; var x;");
+        test("v = typeof x !== 'undefined'; { let x }", "v = typeof x < 'u'; { let x }");
+        test("v = typeof x !== 'undefined'; var x", "v = x !== void 0; var x");
         // input and output both errors with same TDZ error
-        test("typeof x !== 'undefined'; let x", "x !== void 0; let x");
+        test("v = typeof x !== 'undefined'; let x", "v = x !== void 0; let x");
 
-        test("typeof x.y === 'undefined'", "x.y === void 0");
-        test("typeof x.y !== 'undefined'", "x.y !== void 0");
-        test("typeof (x + '') === 'undefined'", "x + '' === void 0");
+        test("v = typeof x.y === 'undefined'", "v = x.y === void 0");
+        test("v = typeof x.y !== 'undefined'", "v = x.y !== void 0");
+        test("v = typeof (x + '') === 'undefined'", "v = x + '' === void 0");
     }
 
     /// Port from <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser_test.go#L4658>
     #[test]
     fn test_fold_is_typeof_equals_undefined() {
-        test("typeof x !== 'undefined'", "typeof x < 'u'");
-        test("typeof x != 'undefined'", "typeof x < 'u'");
-        test("'undefined' !== typeof x", "typeof x < 'u'");
-        test("'undefined' != typeof x", "typeof x < 'u'");
+        test("v = typeof x !== 'undefined'", "v = typeof x < 'u'");
+        test("v = typeof x != 'undefined'", "v = typeof x < 'u'");
+        test("v = 'undefined' !== typeof x", "v = typeof x < 'u'");
+        test("v = 'undefined' != typeof x", "v = typeof x < 'u'");
 
-        test("typeof x === 'undefined'", "typeof x > 'u'");
-        test("typeof x == 'undefined'", "typeof x > 'u'");
-        test("'undefined' === typeof x", "typeof x > 'u'");
-        test("'undefined' == typeof x", "typeof x > 'u'");
+        test("v = typeof x === 'undefined'", "v = typeof x > 'u'");
+        test("v = typeof x == 'undefined'", "v = typeof x > 'u'");
+        test("v = 'undefined' === typeof x", "v = typeof x > 'u'");
+        test("v = 'undefined' == typeof x", "v = typeof x > 'u'");
     }
 
     #[test]
@@ -1622,19 +1566,19 @@ mod test {
 
     #[test]
     fn test_fold_loose_equals_undefined() {
-        test_same("foo != null");
-        test("foo != undefined", "foo != null");
-        test("foo != void 0", "foo != null");
-        test("undefined != foo", "foo != null");
-        test("void 0 != foo", "foo != null");
+        test_same("v = foo != null");
+        test("v = foo != undefined", "v = foo != null");
+        test("v = foo != void 0", "v = foo != null");
+        test("v = undefined != foo", "v = foo != null");
+        test("v = void 0 != foo", "v = foo != null");
     }
 
     #[test]
     fn test_property_key() {
         // Object Property
         test(
-            "({ '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ })",
-            "({  0: _,   a: _,    1: _,     1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ })",
+            "v = { '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ }",
+            "v = {  0: _,   a: _,    1: _,     1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ }",
         );
         // AssignmentTargetPropertyProperty
         test(
@@ -1674,12 +1618,15 @@ mod test {
         test_same("f(...a)");
         test_same("f(...a, ...b)");
         test_same("f(...a, b, ...c)");
+        test_same("new F(...a)");
 
         test("f(...[])", "f()");
         test("f(...[1])", "f(1)");
         test("f(...[1, 2])", "f(1, 2)");
         test("f(...[1,,,3])", "f(1, void 0, void 0, 3)");
         test("f(a, ...[])", "f(a)");
+        test("new F(...[])", "new F()");
+        test("new F(...[1])", "new F(1)");
     }
 
     #[test]
@@ -1762,15 +1709,6 @@ mod test {
         test_same("var a = function f() { return f; }");
         test("var a = class C {}", "var a = class {}");
         test_same("var a = class C { foo() { return C } }");
-    }
-
-    #[test]
-    fn test_compress_is_null_and_to_nullish_coalescing() {
-        test("x == null && y", "x ?? y");
-        test("x != null || y", "x ?? y");
-        test_same("v = x == null && y");
-        test_same("v = x != null || y");
-        test("void (x == null && y)", "x ?? y");
     }
 
     #[test]

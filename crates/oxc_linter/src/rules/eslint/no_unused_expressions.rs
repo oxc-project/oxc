@@ -145,6 +145,7 @@ impl NoUnusedExpressions {
             | Expression::ImportExpression(_)
             | Expression::Super(_)
             | Expression::CallExpression(_)
+            | Expression::V8IntrinsicExpression(_)
             | Expression::UpdateExpression(_)
             | Expression::YieldExpression(_) => false,
             Expression::ConditionalExpression(conditional_expression) => {

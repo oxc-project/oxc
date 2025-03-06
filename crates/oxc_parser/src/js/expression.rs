@@ -180,6 +180,7 @@ impl<'a> ParserImpl<'a> {
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
                 self.parse_template_literal_expression(false)
             }
+            Kind::Percent => self.parse_v8_intrinsic_expression(),
             Kind::New => self.parse_new_expression(),
             Kind::Super => Ok(self.parse_super()),
             Kind::Import => self.parse_import_meta_or_call(),
@@ -586,6 +587,39 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    /// V8 Runtime calls.
+    /// See: [runtime.h](https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43)
+    pub(crate) fn parse_v8_intrinsic_expression(&mut self) -> Result<Expression<'a>> {
+        if !self.options.allow_v8_intrinsics {
+            return Err(self.unexpected());
+        }
+
+        let span = self.start_span();
+        self.expect(Kind::Percent)?;
+        let name = self.parse_identifier_name()?;
+
+        self.expect(Kind::LParen)?;
+        let arguments = self.context(Context::In, Context::Decorator, |p| {
+            p.parse_delimited_list(
+                Kind::RParen,
+                Kind::Comma,
+                /* trailing_separator */ true,
+                Self::parse_v8_intrinsic_argument,
+            )
+        })?;
+        self.expect(Kind::RParen)?;
+        Ok(self.ast.expression_v_8_intrinsic(self.end_span(span), name, arguments))
+    }
+
+    fn parse_v8_intrinsic_argument(&mut self) -> Result<Argument<'a>> {
+        if self.at(Kind::Dot3) {
+            self.error(diagnostics::v8_intrinsic_spread_elem(self.cur_token().span()));
+            self.parse_spread_element().map(Argument::SpreadElement)
+        } else {
+            self.parse_assignment_expression_or_higher().map(Argument::from)
+        }
+    }
+
     /// Section 13.3 Left-Hand-Side Expression
     pub(crate) fn parse_lhs_expression_or_higher(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
@@ -677,7 +711,16 @@ impl<'a> ParserImpl<'a> {
                         kind if kind.is_identifier_name() => {
                             self.parse_static_member_expression(lhs_span, lhs, true)?
                         }
-                        _ => break,
+                        Kind::Bang
+                        | Kind::LAngle
+                        | Kind::LParen
+                        | Kind::NoSubstitutionTemplate
+                        | Kind::ShiftLeft
+                        | Kind::TemplateHead
+                        | Kind::LBrack => break,
+                        _ => {
+                            return Err(diagnostics::unexpected_token(self.cur_token().span()));
+                        }
                     }
                 }
                 // computed member expression is not allowed in decorator
@@ -968,7 +1011,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let operator = map_unary_operator(self.cur_kind());
         self.bump_any();
-        let argument = self.parse_simple_unary_expression(span)?;
+        let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+        let mut argument = self.parse_simple_unary_expression(span)?;
+        if has_pure_comment {
+            Self::set_pure_on_call_or_new_expr(&mut argument);
+        }
         Ok(self.ast.expression_unary(self.end_span(span), operator, argument))
     }
 
@@ -987,7 +1034,12 @@ impl<'a> ParserImpl<'a> {
             }
             self.ast.expression_private_in(self.end_span(lhs_span), left, right)
         } else {
-            self.parse_unary_expression_or_higher(lhs_span)?
+            let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
+            let mut expr = self.parse_unary_expression_or_higher(lhs_span)?;
+            if has_pure_comment {
+                Self::set_pure_on_call_or_new_expr(&mut expr);
+            }
+            expr
         };
 
         self.parse_binary_expression_rest(lhs_span, lhs, lhs_precedence)
@@ -1102,20 +1154,33 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Result<Expression<'a>> {
+        let has_no_side_effects_comment =
+            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+        let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
         }
         // `() => {}`, `(x) => {}`
-        if let Some(arrow_expr) = self.try_parse_parenthesized_arrow_function_expression(
+        if let Some(mut arrow_expr) = self.try_parse_parenthesized_arrow_function_expression(
             allow_return_type_in_arrow_function,
         )? {
+            if has_no_side_effects_comment {
+                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
+                    func.pure = true;
+                }
+            }
             return Ok(arrow_expr);
         }
         // `async x => {}`
-        if let Some(arrow_expr) = self
+        if let Some(mut arrow_expr) = self
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)?
         {
+            if has_no_side_effects_comment {
+                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
+                    func.pure = true;
+                }
+            }
             return Ok(arrow_expr);
         }
 
@@ -1125,12 +1190,18 @@ impl<'a> ParserImpl<'a> {
 
         // `x => {}`
         if lhs.is_identifier_reference() && kind == Kind::Arrow {
-            return self.parse_simple_arrow_function_expression(
+            let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 span,
                 lhs,
                 /* async */ false,
                 allow_return_type_in_arrow_function,
-            );
+            )?;
+            if has_no_side_effects_comment {
+                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
+                    func.pure = true;
+                }
+            }
+            return Ok(arrow_expr);
         }
 
         if kind.is_assignment_operator() {
@@ -1141,7 +1212,56 @@ impl<'a> ParserImpl<'a> {
             );
         }
 
-        self.parse_conditional_expression_rest(span, lhs, allow_return_type_in_arrow_function)
+        let mut expr =
+            self.parse_conditional_expression_rest(span, lhs, allow_return_type_in_arrow_function)?;
+
+        if has_pure_comment {
+            Self::set_pure_on_call_or_new_expr(&mut expr);
+        }
+
+        if has_no_side_effects_comment {
+            Self::set_pure_on_function_expr(&mut expr);
+        }
+
+        Ok(expr)
+    }
+
+    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) {
+        match &mut expr.without_parentheses_mut() {
+            Expression::CallExpression(call_expr) => {
+                call_expr.pure = true;
+            }
+            Expression::NewExpression(new_expr) => {
+                new_expr.pure = true;
+            }
+            Expression::BinaryExpression(binary_expr) => {
+                Self::set_pure_on_call_or_new_expr(&mut binary_expr.left);
+            }
+            Expression::LogicalExpression(logical_expr) => {
+                Self::set_pure_on_call_or_new_expr(&mut logical_expr.left);
+            }
+            Expression::ConditionalExpression(conditional_expr) => {
+                Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test);
+            }
+            Expression::ChainExpression(chain_expr) => {
+                if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
+                    call_expr.pure = true;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) {
+        match expr {
+            Expression::FunctionExpression(func) => {
+                func.pure = true;
+            }
+            Expression::ArrowFunctionExpression(func) => {
+                func.pure = true;
+            }
+            _ => {}
+        }
     }
 
     fn parse_assignment_expression_recursive(

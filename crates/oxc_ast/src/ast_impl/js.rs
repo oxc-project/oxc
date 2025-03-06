@@ -167,6 +167,15 @@ impl<'a> Expression<'a> {
         expr
     }
 
+    /// Remove nested parentheses from this expression.
+    pub fn without_parentheses_mut(&mut self) -> &mut Self {
+        let mut expr = self;
+        while let Expression::ParenthesizedExpression(paran_expr) = expr {
+            expr = &mut paran_expr.expression;
+        }
+        expr
+    }
+
     /// Returns `true` if this [`Expression`] is an [`IdentifierReference`] with specified `name`.
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self.get_inner_expression() {
@@ -1415,6 +1424,16 @@ impl<'a> ArrowFunctionExpression<'a> {
         if self.expression {
             if let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0] {
                 return Some(&expr_stmt.expression);
+            }
+        }
+        None
+    }
+
+    /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        if self.expression {
+            if let Statement::ExpressionStatement(expr_stmt) = &mut self.body.statements[0] {
+                return Some(&mut expr_stmt.expression);
             }
         }
         None

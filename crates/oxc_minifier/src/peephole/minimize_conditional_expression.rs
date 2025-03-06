@@ -389,11 +389,10 @@ impl<'a> PeepholeOptimizations {
         }
 
         if ctx.expr_eq(&expr.alternate, &expr.consequent) {
-            // TODO:
             // "/* @__PURE__ */ a() ? b : b" => "b"
-            // if ctx.ExprCanBeRemovedIfUnused(test) {
-            // return yes
-            // }
+            if !expr.test.may_have_side_effects(&ctx) {
+                return Some(ctx.ast.move_expression(&mut expr.consequent));
+            }
 
             // "a ? b : b" => "a, b"
             let expressions = ctx.ast.vec_from_array([
@@ -452,7 +451,7 @@ impl<'a> PeepholeOptimizations {
     /// Modify `expr` if that has `target_expr` as a parent, and returns true if modified.
     ///
     /// For `target_expr` = `a`, `expr` = `a.b`, this function changes `expr` to `a?.b` and returns true.
-    fn inject_optional_chaining_if_matched(
+    pub fn inject_optional_chaining_if_matched(
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
@@ -636,7 +635,7 @@ mod test {
     fn minimize_conditional_exprs() {
         test("(a, b) ? c : d", "a, b ? c : d");
         test("!a ? b : c", "a ? c : b");
-        // test("/* @__PURE__ */ a() ? b : b", "b");
+        test("/* @__PURE__ */ a() ? b : b", "b");
         test("a ? b : b", "a, b");
         test("a ? true : false", "a");
         test("a ? false : true", "a");
@@ -658,23 +657,26 @@ mod test {
         test("a() != null ? a() : b", "a() == null ? b : a()");
         test("var a; a != null ? a : b", "var a; a ?? b");
         test("var a; (a = _a) != null ? a : b", "var a; (a = _a) ?? b");
-        test("a != null ? a : b", "a == null ? b : a"); // accessing global `a` may have a getter with side effects
-        test_es2019("var a; a != null ? a : b", "var a; a == null ? b : a");
-        test("var a; a != null ? a.b.c[d](e) : undefined", "var a; a?.b.c[d](e)");
-        test("var a; (a = _a) != null ? a.b.c[d](e) : undefined", "var a; (a = _a)?.b.c[d](e)");
-        test("a != null ? a.b.c[d](e) : undefined", "a != null && a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
+        test("v = a != null ? a : b", "v = a == null ? b : a"); // accessing global `a` may have a getter with side effects
+        test_es2019("var a; v = a != null ? a : b", "var a; v = a == null ? b : a");
+        test("var a; v = a != null ? a.b.c[d](e) : undefined", "var a; v = a?.b.c[d](e)");
         test(
-            "var a, undefined = 1; a != null ? a.b.c[d](e) : undefined",
-            "var a, undefined = 1; a == null ? undefined : a.b.c[d](e)",
+            "var a; v = (a = _a) != null ? a.b.c[d](e) : undefined",
+            "var a; v = (a = _a)?.b.c[d](e)",
+        );
+        test("v = a != null ? a.b.c[d](e) : undefined", "v = a == null ? void 0 : a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
+        test(
+            "var a, undefined = 1; v = a != null ? a.b.c[d](e) : undefined",
+            "var a, undefined = 1; v = a == null ? undefined : a.b.c[d](e)",
         );
         test_es2019(
-            "var a; a != null ? a.b.c[d](e) : undefined",
-            "var a; a != null && a.b.c[d](e)",
+            "var a; v = a != null ? a.b.c[d](e) : undefined",
+            "var a; v = a == null ? void 0 : a.b.c[d](e)",
         );
-        test("cmp !== 0 ? cmp : (bar, cmp);", "cmp === 0 && bar, cmp;");
-        test("cmp === 0 ? cmp : (bar, cmp);", "cmp === 0 || bar, cmp;");
-        test("cmp !== 0 ? (bar, cmp) : cmp;", "cmp === 0 || bar, cmp;");
-        test("cmp === 0 ? (bar, cmp) : cmp;", "cmp === 0 && bar, cmp;");
+        test("v = cmp !== 0 ? cmp : (bar, cmp);", "v = (cmp === 0 && bar, cmp);");
+        test("v = cmp === 0 ? cmp : (bar, cmp);", "v = (cmp === 0 || bar, cmp);");
+        test("v = cmp !== 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 || bar, cmp);");
+        test("v = cmp === 0 ? (bar, cmp) : cmp;", "v = (cmp === 0 && bar, cmp);");
     }
 
     #[test]

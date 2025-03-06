@@ -1,6 +1,8 @@
 use oxc_codegen::CodegenOptions;
 
-use crate::tester::{test, test_minify, test_minify_same, test_options};
+use crate::tester::{
+    test, test_minify, test_minify_same, test_options, test_same, test_with_parse_options,
+};
 
 #[test]
 fn decl() {
@@ -356,6 +358,39 @@ fn vite_special_comments() {
     );
 }
 
+// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md#semantics>
+#[test]
+fn pure_comment() {
+    test_same("/* @__PURE__ */ pureOperation();\n");
+    test_same("/* @__PURE__ */ new PureConsutrctor();\n");
+    test("/* @__PURE__ */\npureOperation();\n", "/* @__PURE__ */ pureOperation();\n");
+    test(
+        "/* @__PURE__ The comment may contain additional text */ pureOperation();\n",
+        "/* @__PURE__ */ pureOperation();\n",
+    );
+    test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
+
+    test("/* #__PURE__ */ function foo() {}\n", "function foo() {}\n");
+
+    test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
+    test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
+    test("/*#__PURE__*/ (foo(), bar());", "foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+
+    test_same("/* @__PURE__ */ a.b().c.d();\n");
+    test("/* @__PURE__ */ a().b;", "a().b;\n"); // INVALID, it does not end with a call
+    test_same("(/* @__PURE__ */ a()).b;\n");
+
+    // More
+    test_same("/* @__PURE__ */ a() || b;\n");
+    test_same("/* @__PURE__ */ a() && b;\n");
+    test_same("/* @__PURE__ */ a() ?? b;\n");
+    test_same("/* @__PURE__ */ a() ? b : c;\n");
+    test_same("/* @__PURE__ */ a.b();\n");
+    test_same("/* @__PURE__ */ a?.b();\n");
+    test_same("true && /* @__PURE__ */ noEffect();\n");
+    test_same("false || /* @__PURE__ */ noEffect();\n");
+}
+
 // followup from https://github.com/oxc-project/oxc/pull/6422
 #[test]
 fn in_expr_in_sequence_in_for_loop_init() {
@@ -469,4 +504,18 @@ fn string() {
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
     );
     test_minify(r#"foo("\n")"#, "foo(`\n`);");
+}
+
+#[test]
+fn v8_intrinsics() {
+    let parse_opts = oxc_parser::ParseOptions {
+        allow_v8_intrinsics: true,
+        ..oxc_parser::ParseOptions::default()
+    };
+
+    test_with_parse_options(
+        "const p = %DebugPrint('hi')",
+        "const p = %DebugPrint(\"hi\");\n",
+        parse_opts,
+    );
 }

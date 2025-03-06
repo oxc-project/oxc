@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 2326cef parser: Apply `pure` to argument of unary expression (#9530) (Dunqing)
+
+### Performance
+
+- 6b4a8c6 ast, codegen, transformer: Avoid allocations when converting `RegExpFlags` to string (#9550) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+### Features
+
+- 7d7f16c parser: Apply pure to rhs of binary expression (#9492) (Boshen)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+- 9b7017c parser,codegen: Pure annotations (#9351) (Boshen)
+
+### Bug Fixes
+
+- 75f06ad codegen: Do not print comments when only `annotation_comments` is enabled (#9518) (Dunqing)
+- 9c6ae9f parser: `@__NO_SIDE_EFFECTS` only affects const variable decl (#9517) (Boshen)
+- b7d5513 parser: Parse `@__NO_SIDE_EFFECTS__` between `export default` and `async function` (#9514) (Boshen)
+- 58defe3 parser: Mark expression as pure in chain expression (#9479) (sapphi-red)
+- 2a03689 parser: Mark expressions on the left side of logical and conditional expressions as pure (#9414) (sapphi-red)
+
+### Performance
+
+
+### Refactor
+
+- 19c4835 codegen: Simplify printing comments between arguments in call-like expressions (#9501) (Dunqing)
+
+## [0.53.0] - 2025-02-26
+
+### Performance
+
+- 35ee399 codegen: Use `iter::repeat_n` in `CodeBuffer` (#9325) (overlookmotel)
+
+### Refactor
+
+- 9d98444 codegen, data_structures: Move `CodeBuffer` into `oxc_data_structures` crate (#9326) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 ### Bug Fixes

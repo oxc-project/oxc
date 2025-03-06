@@ -6,14 +6,10 @@ use crate::{
     Prettier, array, dynamic_text,
     format::{
         Format,
-        print::{
-            array,
-            object::{self, ObjectLike},
-            property, template_literal,
-        },
+        print::{array, object, property, template_literal},
     },
     group, hardline, indent,
-    ir::{Doc, JoinSeparator},
+    ir::Doc,
     join, line, softline, text, wrap,
 };
 
@@ -35,8 +31,8 @@ impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
         parts.push(text!(" = "));
         parts.push(self.type_annotation.format(p));
 
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
+        if p.options.semi {
+            parts.push(text!(";"));
         }
 
         array!(p, parts)
@@ -603,7 +599,7 @@ impl<'a> Format<'a> for TSEnumDeclaration<'a> {
             parts.push(text!("enum "));
             parts.push(self.id.format(p));
             parts.push(text!(" "));
-            parts.push(object::print_object(p, &ObjectLike::TSEnumDeclaration(self)));
+            parts.push(object::print_object(p, &object::ObjectLike::TSEnumDeclaration(self)));
 
             array!(p, parts)
         })
@@ -710,8 +706,8 @@ impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
         parts.push(text!(" = "));
         parts.push(self.module_reference.format(p));
 
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
+        if p.options.semi {
+            parts.push(text!(";"));
         }
         array!(p, parts)
     }
@@ -870,8 +866,8 @@ impl<'a> Format<'a> for TSExportAssignment<'a> {
 
             parts.push(text!("export = "));
             parts.push(self.expression.format(p));
-            if let Some(semi) = p.semi() {
-                parts.push(semi);
+            if p.options.semi {
+                parts.push(text!(";"));
             }
 
             array!(p, parts)
@@ -886,8 +882,8 @@ impl<'a> Format<'a> for TSNamespaceExportDeclaration<'a> {
 
         parts.push(text!("export as namespace "));
         parts.push(self.id.format(p));
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
+        if p.options.semi {
+            parts.push(text!(";"));
         }
 
         array!(p, parts)

@@ -1,9 +1,9 @@
-commit: acbc09a8
+commit: 578ac4df
 
 parser_babel Summary:
-AST Parsed     : 2274/2292 (99.21%)
-Positive Passed: 2253/2292 (98.30%)
-Negative Passed: 1541/1662 (92.72%)
+AST Parsed     : 2303/2322 (99.18%)
+Positive Passed: 2282/2322 (98.28%)
+Negative Passed: 1546/1673 (92.41%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -40,6 +40,8 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin-non-BMP-identifier/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-2/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/invalid-TSTypeParameterInstantiation/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/invalid-TSTypeParameterInstantiation-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/satisfies-const-error/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -73,7 +75,9 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-type-named/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-script/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-script-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-optional-parameter/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts
@@ -85,7 +89,9 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-private-01/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-protected-01/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-public-01/input.ts
@@ -635,6 +641,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ (class extends f<<T>(v: T) => void> {});
    ·                 ─┬
    ·                  ╰── `{` expected
+   ╰────
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts
+
+  × Expected `{` but found `<<`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts:1:22]
+ 1 │ interface I extends f<<T>(v: T) => void> {};
+   ·                      ─┬
+   ·                       ╰── `{` expected
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
 
@@ -11325,6 +11339,54 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ───
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:2:3]
+ 1 │ class C {
+ 2 │   method();
+   ·   ──────
+ 3 │   #method();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:3:3]
+ 2 │   method();
+ 3 │   #method();
+   ·   ───────
+ 4 │   declare method();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:4:11]
+ 3 │   #method();
+ 4 │   declare method();
+   ·           ──────
+ 5 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:2:3]
+ 1 │ class C {
+ 2 │   method();
+   ·   ──────
+ 3 │   #method();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:3:3]
+ 2 │   method();
+ 3 │   #method();
+   ·   ───────
+ 4 │   declare method();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:4:11]
+ 3 │   #method();
+ 4 │   declare method();
+   ·           ──────
+ 5 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-type-named/input.js:2:13]
  1 │ var Foo;
@@ -12116,6 +12178,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × TS(1392): An import alias cannot use 'import type'
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-babel-7/input.ts:1:8]
+ 1 │ export import type A = B.C;
+   ·        ────────────────────
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/type-equals/input.ts:1:1]
  1 │ import type A = B.C;
    · ────────────────────
@@ -12124,6 +12192,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
   × TS(1392): An import alias cannot use 'import type'
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/type-equals/input.ts:2:1]
+ 1 │ import type A = B.C;
+ 2 │ import type B = C;
+   · ──────────────────
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-babel-7/input.ts:1:1]
+ 1 │ import type A = B.C;
+   · ────────────────────
+ 2 │ import type B = C;
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-babel-7/input.ts:2:1]
  1 │ import type A = B.C;
  2 │ import type B = C;
    · ──────────────────
@@ -12198,6 +12280,41 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ Foo {}
    ╰────
   help: Try insert a semicolon here
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:27]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                           ─────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:49]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                 ────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:59]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                           ────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:79]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                                               ─────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:86]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                                                      ───────────
+   ╰────
 
   × The keyword 'interface' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/new-line/input.ts:1:1]

@@ -1,6 +1,9 @@
 #![expect(clippy::needless_pass_by_value)]
 
-use oxc::{allocator::Allocator, ast::CommentKind, parser::Parser, span::SourceType};
+use oxc::{
+    allocator::Allocator, ast::CommentKind, ast_visit::utf8_to_utf16::Utf8ToUtf16, parser::Parser,
+    span::SourceType,
+};
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
@@ -101,23 +104,32 @@ pub fn parse_sync(
 
     let serializer = serde_wasm_bindgen::Serializer::json_compatible();
 
-    let program_json = ret.program.to_estree_ts_json();
+    let mut program = ret.program;
+    let span_converter = Utf8ToUtf16::new(program.source_text);
+    span_converter.convert_program(&mut program);
+    let program_json = program.to_estree_ts_json();
 
-    let comments: Vec<JsValue> = if ret.program.comments.is_empty() {
+    let mut offset_converter = span_converter.converter();
+    let comments: Vec<JsValue> = if program.comments.is_empty() {
         vec![]
     } else {
-        ret.program
+        program
             .comments
             .iter()
             .map(|comment| {
+                let value = comment.content_span().source_text(&source_text).to_string();
+                let mut span = comment.span;
+                if let Some(converter) = &mut offset_converter {
+                    converter.convert_span(&mut span);
+                }
                 Comment {
                     r#type: match comment.kind {
                         CommentKind::Line => CommentType::Line,
                         CommentKind::Block => CommentType::Block,
                     },
-                    value: comment.content_span().source_text(&source_text).to_string(),
-                    start: comment.span.start,
-                    end: comment.span.end,
+                    value,
+                    start: span.start,
+                    end: span.end,
                 }
                 .serialize(&serializer)
                 .unwrap()

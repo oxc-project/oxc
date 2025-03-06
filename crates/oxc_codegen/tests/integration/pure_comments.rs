@@ -61,6 +61,8 @@ async function* d() {}
 /* @__NO_SIDE_EFFECTS__ */ export function* b() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function c() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function* d() {}
+export default /* @__NO_SIDE_EFFECTS__ */ async function() {}
+export default /* @__NO_SIDE_EFFECTS__ */ function() {}
         ",
         // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
         r"
@@ -197,6 +199,11 @@ const defineSSRCustomElement = () => {
         ",
         "{ /* @__PURE__ */ (function() {})(); }",
         "{ /* @__PURE__ */ (() => {})(); }",
+        "
+void /* @__PURE__ */ function() {}();
+typeof /* @__PURE__ */ function() {}();
+! /* @__PURE__ */ function() {}();
+delete /* @__PURE__ */ (() => {})();",
     ];
 
     snapshot("pure_comments", &cases);

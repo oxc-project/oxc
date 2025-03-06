@@ -48,6 +48,7 @@ export type Expression =
   | TSTypeAssertion
   | TSNonNullExpression
   | TSInstantiationExpression
+  | V8IntrinsicExpression
   | MemberExpression;
 
 export interface IdentifierName extends Span {
@@ -94,8 +95,8 @@ export interface ObjectProperty extends Span {
   shorthand: boolean;
   computed: boolean;
   key: PropertyKey;
-  kind: PropertyKind;
   value: Expression;
+  kind: PropertyKind;
 }
 
 export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
@@ -273,8 +274,8 @@ export interface AssignmentTargetPropertyIdentifier extends Span {
   shorthand: true;
   computed: false;
   key: IdentifierReference;
-  kind: 'init';
   value: IdentifierReference | AssignmentTargetWithDefault;
+  kind: 'init';
 }
 
 export interface AssignmentTargetPropertyProperty extends Span {
@@ -519,8 +520,8 @@ export interface BindingProperty extends Span {
   shorthand: boolean;
   computed: boolean;
   key: PropertyKey;
-  kind: 'init';
   value: BindingPattern;
+  kind: 'init';
 }
 
 export interface ArrayPattern extends Span {
@@ -555,12 +556,6 @@ export type FunctionType =
   | 'TSDeclareFunction'
   | 'TSEmptyBodyFunctionExpression';
 
-export interface FormalParameters extends Span {
-  type: 'FormalParameters';
-  kind: FormalParameterKind;
-  items: Array<FormalParameter | FormalParameterRest>;
-}
-
 export interface FormalParameterRest extends Span {
   type: 'RestElement';
   argument: BindingPatternKind;
@@ -576,8 +571,6 @@ export type FormalParameter =
     override: boolean;
   })
   & BindingPattern;
-
-export type FormalParameterKind = 'FormalParameter' | 'UniqueFormalParameters' | 'ArrowFormalParameters' | 'Signature';
 
 export interface FunctionBody extends Span {
   type: 'BlockStatement';
@@ -766,6 +759,12 @@ export interface ExportSpecifier extends Span {
 export type ExportDefaultDeclarationKind = Function | Class | TSInterfaceDeclaration | Expression;
 
 export type ModuleExportName = IdentifierName | IdentifierReference | StringLiteral;
+
+export interface V8IntrinsicExpression extends Span {
+  type: 'V8IntrinsicExpression';
+  name: IdentifierName;
+  arguments: Array<Argument>;
+}
 
 export interface BooleanLiteral extends Span {
   type: 'Literal';

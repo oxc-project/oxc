@@ -1,0 +1,3 @@
+{
+  "extends": ["./invalid_config.json"]
+}

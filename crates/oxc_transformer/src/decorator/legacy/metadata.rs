@@ -107,9 +107,6 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
 
 impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if class.decorators.is_empty() {
-            return;
-        }
         let constructor = class.body.body.iter_mut().find_map(|item| match item {
             ClassElement::MethodDefinition(method) if method.kind.is_constructor() => Some(method),
             _ => None,
@@ -121,12 +118,7 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
             let metadata_decorator =
                 self.create_metadata_decorate("design:paramtypes", serialized_type, ctx);
 
-            if let Some(param) = constructor.value.params.items.last_mut() {
-                // We need to make sure all metadata decorators are placed after parameter decorators
-                param.decorators.push(metadata_decorator);
-            } else {
-                class.decorators.push(metadata_decorator);
-            }
+            class.decorators.push(metadata_decorator);
         }
     }
 
@@ -158,12 +150,7 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
             },
         ]);
 
-        if let Some(param) = method.value.params.items.last_mut() {
-            // We need to make sure all metadata decorators are placed after parameter decorators
-            param.decorators.extend(metadata_decorators);
-        } else {
-            method.decorators.extend(metadata_decorators);
-        }
+        method.decorators.extend(metadata_decorators);
     }
 
     #[inline]
@@ -375,7 +362,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
                     let ident1 = binding.create_read_expression(ctx);
                     let ident2 = binding.create_read_expression(ctx);
-                    let member = create_property_access(ident1, &qualified.right.name, ctx);
+                    let member = create_property_access(SPAN, ident1, &qualified.right.name, ctx);
                     Self::create_checked_value(ident2, member, ctx)
                 } else {
                     // `A.B.C` -> `typeof A !== "undefined" && (_a = A.B) !== void 0 && _a.C`
@@ -401,7 +388,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     );
 
                     let object = binding.create_read_expression(ctx);
-                    let member = create_property_access(object, &qualified.right.name, ctx);
+                    let member = create_property_access(SPAN, object, &qualified.right.name, ctx);
                     ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member)
                 }
             }
@@ -561,7 +548,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let operator = BinaryOperator::StrictEquality;
+        let operator = BinaryOperator::StrictInequality;
         let undefined = ctx.ast.expression_string_literal(SPAN, "undefined", None);
         let typeof_left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, left);
         let left_check = ctx.ast.expression_binary(SPAN, typeof_left, operator, undefined);

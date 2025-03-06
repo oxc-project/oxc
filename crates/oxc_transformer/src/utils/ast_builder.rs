@@ -65,10 +65,9 @@ pub fn wrap_statements_in_arrow_function_iife<'a>(
     let kind = FormalParameterKind::ArrowFormalParameters;
     let params = ctx.ast.alloc_formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
     let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts);
-    let arrow =
-        Expression::ArrowFunctionExpression(ctx.ast.alloc_arrow_function_expression_with_scope_id(
-            SPAN, false, false, NONE, params, NONE, body, scope_id,
-        ));
+    let arrow = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+        SPAN, false, false, NONE, params, NONE, body, scope_id, false,
+    );
     ctx.ast.expression_call(span, arrow, NONE, ctx.ast.vec(), false)
 }
 
@@ -84,10 +83,22 @@ pub fn create_prototype_member<'a>(
 
 /// `object` -> `object.a`.
 pub fn create_property_access<'a>(
+    span: Span,
     object: Expression<'a>,
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
-    Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
+    Expression::from(ctx.ast.member_expression_static(span, object, property, false))
+}
+
+/// `object` -> `object['a']`.
+pub fn create_compute_property_access<'a>(
+    span: Span,
+    object: Expression<'a>,
+    property: &str,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let expression = ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(property), None);
+    Expression::from(ctx.ast.member_expression_computed(span, object, expression, false))
 }

@@ -1,3 +1,4 @@
+import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
@@ -25,6 +26,119 @@ describe('parse', () => {
       'value': ' comment ',
     });
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
+  });
+
+  it('checks semantic', async () => {
+    const code = 'let x; let x;';
+    let ret = await parseAsync('test.js', code);
+    expect(ret.errors.length).toBe(0);
+
+    ret = await parseAsync('test.js', code, {
+      showSemanticErrors: true,
+    });
+    expect(ret.errors.length).toBe(1);
+  });
+
+  describe('TS properties', () => {
+    const code = 'let x;';
+
+    const withTsFields = {
+      type: 'Program',
+      start: 0,
+      end: 6,
+      body: [
+        {
+          type: 'VariableDeclaration',
+          start: 0,
+          end: 6,
+          declarations: [
+            {
+              type: 'VariableDeclarator',
+              start: 4,
+              end: 5,
+              id: {
+                type: 'Identifier',
+                start: 4,
+                end: 5,
+                name: 'x',
+                typeAnnotation: null,
+                optional: false,
+              },
+              init: null,
+              definite: false,
+            },
+          ],
+          kind: 'let',
+          declare: false,
+        },
+      ],
+      sourceType: 'module',
+      hashbang: null,
+    };
+
+    const withoutTsFields = {
+      type: 'Program',
+      start: 0,
+      end: 6,
+      body: [
+        {
+          type: 'VariableDeclaration',
+          start: 0,
+          end: 6,
+          declarations: [
+            {
+              type: 'VariableDeclarator',
+              start: 4,
+              end: 5,
+              id: {
+                type: 'Identifier',
+                start: 4,
+                end: 5,
+                name: 'x',
+              },
+              init: null,
+            },
+          ],
+          kind: 'let',
+        },
+      ],
+      sourceType: 'module',
+      hashbang: null,
+    };
+
+    describe('included when', () => {
+      it('filename has `.ts` extension', () => {
+        const { program } = parseSync('test.ts', code);
+        expect(program).toEqual(withTsFields);
+      });
+
+      it('`lang` option is "ts"', () => {
+        const { program } = parseSync('test.js', code, { lang: 'ts' });
+        expect(program).toEqual(withTsFields);
+      });
+
+      it('`astType` option is "ts"', () => {
+        const { program } = parseSync('test.js', code, { lang: 'js', astType: 'ts' });
+        expect(program).toEqual(withTsFields);
+      });
+    });
+
+    describe('not included when', () => {
+      it('filename has `.js` extension', () => {
+        const { program } = parseSync('test.js', code);
+        expect(program).toEqual(withoutTsFields);
+      });
+
+      it('`lang` option is "js"', () => {
+        const { program } = parseSync('test.ts', code, { lang: 'js' });
+        expect(program).toEqual(withoutTsFields);
+      });
+
+      it('`astType` option is "js"', () => {
+        const { program } = parseSync('test.ts', code, { lang: 'ts', astType: 'js' });
+        expect(program).toEqual(withoutTsFields);
+      });
+    });
   });
 
   it('`Infinity` is represented as `Infinity` number', () => {
@@ -106,6 +220,27 @@ describe('parse', () => {
             flags: '',
           },
         },
+      });
+    });
+  });
+
+  describe('hashbang', () => {
+    it('is `null` when no hashbang', () => {
+      const ret = parseSync('test.js', 'let x;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.hashbang).toBeNull();
+    });
+
+    it('is defined when hashbang', () => {
+      const ret = parseSync('test.js', '#!/usr/bin/env node\nlet x;');
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body.length).toBe(1);
+      expect(ret.program.hashbang).toEqual({
+        type: 'Hashbang',
+        start: 0,
+        end: 19,
+        value: '/usr/bin/env node',
       });
     });
   });
@@ -252,5 +387,20 @@ describe('error', () => {
       'message': 'Expected a semicolon or an implicit semicolon after a statement, but found none',
       'severity': 'Error',
     });
+  });
+});
+
+describe('worker', () => {
+  it('should run', async () => {
+    const code = await new Promise((resolve, reject) => {
+      const worker = new Worker('./test/worker.mjs');
+      worker.on('error', (err) => {
+        reject(err);
+      });
+      worker.on('exit', (code) => {
+        resolve(code);
+      });
+    });
+    expect(code).toBe(0);
   });
 });

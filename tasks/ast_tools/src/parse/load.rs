@@ -64,13 +64,13 @@ pub fn load_file(
 }
 
 fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<(StructSkeleton, /* is_meta */ bool)> {
-    let (name, is_meta) = get_type_name(&item.attrs, &item.ident)?;
-    Some((StructSkeleton { name, file_id, item }, is_meta))
+    let (name, is_foreign, is_meta) = get_type_name(&item.attrs, &item.ident)?;
+    Some((StructSkeleton { name, is_foreign, file_id, item }, is_meta))
 }
 
 fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<(EnumSkeleton, /* is_meta */ bool)> {
-    let (name, is_meta) = get_type_name(&item.attrs, &item.ident)?;
-    Some((EnumSkeleton { name, file_id, item, inherits: vec![] }, is_meta))
+    let (name, is_foreign, is_meta) = get_type_name(&item.attrs, &item.ident)?;
+    Some((EnumSkeleton { name, is_foreign, file_id, item, inherits: vec![] }, is_meta))
 }
 
 fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
@@ -96,7 +96,7 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
             let where_clause = input.parse::<Option<WhereClause>>()?;
             assert!(where_clause.is_none(), "Types with `where` clauses are not supported");
 
-            let Some((name, false)) = get_type_name(&attrs, &ident) else {
+            let Some((name, false, false)) = get_type_name(&attrs, &ident) else {
                 panic!("Enum in `inherit_variants!` macro must have `#[ast]` attr: {ident}");
             };
 
@@ -126,7 +126,7 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
             }
 
             let item = ItemEnum { attrs, vis, enum_token, ident, generics, brace_token, variants };
-            Ok(EnumSkeleton { name, file_id, item, inherits })
+            Ok(EnumSkeleton { name, is_foreign: false, file_id, item, inherits })
         })
         .expect("Failed to parse contents of `inherit_variants!` macro");
 
@@ -147,7 +147,7 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
 fn get_type_name(
     attrs: &[Attribute],
     ident: &Ident,
-) -> Option<(/* type name */ String, /* is_meta */ bool)> {
+) -> Option<(/* type name */ String, /* is_foreign */ bool, /* is_meta */ bool)> {
     let mut has_ast_attr = false;
     let mut has_meta_attr = false;
     let mut foreign_name = None;
@@ -178,9 +178,13 @@ fn get_type_name(
             !has_ast_attr,
             "Type cannot be tagged with both `#[ast]` and `#[ast_meta]`: `{ident}`"
         );
-        Some((ident_name(ident), true))
+        Some((ident_name(ident), false, true))
     } else if has_ast_attr {
-        Some((foreign_name.unwrap_or_else(|| ident_name(ident)), false))
+        if let Some(foreign_name) = foreign_name {
+            Some((foreign_name, true, false))
+        } else {
+            Some((ident_name(ident), false, false))
+        }
     } else {
         None
     }

@@ -79,11 +79,11 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         // with a block statement, this way we can ensure can insert statement correctly.
         // e.g. `if (true) statement` to `if (true) { statement }`
         if !allow_multiple_statements {
-            new_stmt = Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
+            new_stmt = ctx.ast.statement_block_with_scope_id(
                 SPAN,
                 ctx.ast.vec1(new_stmt),
                 parent_scope_id,
-            ));
+            );
         }
         *stmt = new_stmt;
     }
@@ -253,7 +253,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let for_statement_scope_id =
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
 
-            let for_statement = Statement::ForStatement(ctx.ast.alloc_for_statement_with_scope_id(
+            let for_statement = ctx.ast.statement_for_with_scope_id(
                 SPAN,
                 Some(ctx.ast.for_statement_init_variable_declaration(
                     SPAN,
@@ -329,14 +329,10 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                         );
                     }
 
-                    Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
-                        SPAN,
-                        body,
-                        for_of_scope_id,
-                    ))
+                    ctx.ast.statement_block_with_scope_id(SPAN, body, for_of_scope_id)
                 },
                 for_statement_scope_id,
-            ));
+            );
 
             ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(for_statement), block_scope_id)
         };
@@ -408,7 +404,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 ctx.ast.expression_null_literal(SPAN),
                             ),
                         ),
-                        Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
+                        ctx.ast.statement_block_with_scope_id(
                             SPAN,
                             ctx.ast.vec1(ctx.ast.statement_expression(
                                 SPAN,
@@ -429,7 +425,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 ),
                             )),
                             if_block_scope_id,
-                        )),
+                        ),
                         None,
                     )
                 };
@@ -447,14 +443,14 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                         ctx.ast.statement_if(
                             SPAN,
                             iterator_had_error_key.create_read_expression(ctx),
-                            Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
+                            ctx.ast.statement_block_with_scope_id(
                                 SPAN,
                                 ctx.ast.vec1(ctx.ast.statement_throw(
                                     SPAN,
                                     iterator_error_key.create_read_expression(ctx),
                                 )),
                                 if_block_scope_id,
-                            )),
+                            ),
                             None,
                         )
                     };

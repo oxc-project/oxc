@@ -448,6 +448,7 @@ impl Tester {
                 .as_ref()
                 .map_or_else(ConfigStoreBuilder::empty, |v| {
                     ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
+                        .unwrap()
                 })
                 .with_plugins(self.plugins)
                 .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))

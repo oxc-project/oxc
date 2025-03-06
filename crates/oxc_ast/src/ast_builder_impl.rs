@@ -2,7 +2,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{Allocator, Box, FromIn, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, IntoIn, Vec};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
@@ -262,7 +262,7 @@ impl<'a> AstBuilder<'a> {
         body: FunctionBody<'a>,
         scope_id: ScopeId,
     ) -> Box<'a, Function<'a>> {
-        self.alloc_function_with_scope_id(
+        self.alloc_function_with_scope_id_and_pure(
             span,
             r#type,
             id,
@@ -275,6 +275,49 @@ impl<'a> AstBuilder<'a> {
             NONE,
             Some(body),
             scope_id,
+            false,
+        )
+    }
+
+    /// Build a [`Function`] with `scope_id`.
+    #[expect(clippy::too_many_arguments)]
+    #[inline]
+    pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
+        self,
+        span: Span,
+        r#type: FunctionType,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        declare: bool,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
+        scope_id: ScopeId,
+    ) -> Box<'a, Function<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+    {
+        self.alloc_function_with_scope_id_and_pure(
+            span,
+            r#type,
+            id,
+            generator,
+            r#async,
+            declare,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            body,
+            scope_id,
+            false,
         )
     }
 
@@ -333,17 +376,5 @@ impl<'a> AstBuilder<'a> {
             }),
             self.allocator,
         )
-    }
-
-    /// Create an [`JSXOpeningElement`].
-    #[inline]
-    pub fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
-        JSXOpeningFragment { span }
-    }
-
-    /// Create an [`JSXClosingElement`].
-    #[inline]
-    pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
-        JSXClosingFragment { span }
     }
 }

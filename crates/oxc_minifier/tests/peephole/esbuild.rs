@@ -134,7 +134,7 @@ fn js_parser_test() {
     test("class x { ['-2147483649'] = y }", "class x { '-2147483649' = y;}");
     test("class Foo { static {} }", "class Foo {}");
     test("class Foo { static { 123 } }", "class Foo {}");
-    // test("class Foo { static { /* @__PURE__ */ foo() } }", "class Foo {}");
+    test("class Foo { static { /* @__PURE__ */ foo() } }", "class Foo {}");
     test("class Foo { static { foo() } }", "class Foo { static { foo(); }}");
     test("x: break x", "");
     test("x: { break x; foo() }", "");
@@ -143,7 +143,7 @@ fn js_parser_test() {
     // test("x: { y: { z: { foo(); break x; } } }", "x: { foo(); break x;}");
     // test("x: { class X { static { new X } } }", "{ class X { static {  new X(); } }}");
     test("(() => {}) ? a : b", "a;");
-    // test("x = `a${1 + `b${2}c` + 3}d`", "x = `a1b2c3d`;");
+    test("x = `a${1 + `b${2}c` + 3}d`", "x = 'a1b2c3d';");
     test("x = 1 ? a : b", "x = a;");
     test("x = 0 ? a : b", "x = b;");
     test("x; 1 ? 0 : ()=>{}; (()=>{})()", "x;");
@@ -313,14 +313,14 @@ fn js_parser_test() {
     test("a = `${b}` + ''", "a = `${b}`;");
     test("a = '' + typeof b", "a = typeof b;");
     test("a = typeof b + ''", "a = typeof b;");
-    // test("a = [] + `${b}`", "a = `${b}`;");
-    // test("a = `${b}` + []", "a = `${b}`;");
+    test("a = [] + `${b}`", "a = `${b}`;");
+    test("a = `${b}` + []", "a = `${b}`;");
     // test("a = [] + typeof b", "a = typeof b;");
     // test("a = typeof b + []", "a = typeof b;");
-    // test("a = [b] + `${b}`", "a = [b] + `${b}`;");
-    // test("a = `${b}` + [b]", "a = `${b}` + [b];");
-    // test("a = {} + `${b}`", "a = `[object Object]${b}`;");
-    // test("a = `${b}` + {}", "a = `${b}[object Object]`;");
+    test("a = [b] + `${b}`", "a = [b] + `${b}`;");
+    test("a = `${b}` + [b]", "a = `${b}` + [b];");
+    test("a = {} + `${b}`", "a = `[object Object]${b}`;");
+    test("a = `${b}` + {}", "a = `${b}[object Object]`;");
     test("a = {} + typeof b", "a = {} + typeof b;");
     test("a = typeof b + {}", "a = typeof b + {};");
     test("a = {toString:()=>1} + `${b}`", "a = { toString: () => 1 } + `${b}`;");
@@ -427,7 +427,7 @@ fn js_parser_test() {
     test("a = Number(undefined)", "a = NaN;");
     test("a = Number(null)", "a = 0;");
     // test("a = Number(b ? !c : !d)", "a = +(b ? !c : !d);");
-    // test("a = String(x)", "a = String(x);");
+    test("a = String(x)", "a = String(x);");
     test("a = String('x'); var String", "a = String('x');var String;");
     test("a = String()", "a = '';");
     test("a = String('x')", "a = 'x';");
@@ -623,15 +623,15 @@ fn js_parser_test() {
     test("a ? b() : b()", "a, b();");
     test("a ? b?.() : b?.()", "a, b?.();");
     test("a ? b?.[c] : b?.[c]", "a, b?.[c];");
-    test("a ? b == c : b == c", "a, b == c;");
+    test("a ? b == c : b == c", "a, b, c;");
     test("a ? b.c(d + e[f]) : b.c(d + e[f])", "a, b.c(d + e[f]);");
-    // test("a ? -b : !b", "a ? -b : b;");
+    test("a ? -b : !b", "a ? -b : b;");
     test("a ? b() : b(c)", "a ? b() : b(c);");
     test("a ? b(c) : b(d)", "a ? b(c) : b(d);");
     test("a ? b?.c : b.c", "a ? b?.c : b.c;");
     test("a ? b?.() : b()", "a ? b?.() : b();");
     test("a ? b?.[c] : b[c]", "a ? b?.[c] : b[c];");
-    test("a ? b == c : b != c", "a ? b == c : b != c;");
+    test("a ? b == c : b != c", "a, b, c;");
     test("a ? b.c(d + e[f]) : b.c(d + e[g])", "a ? b.c(d + e[f]) : b.c(d + e[g]);");
     test("(a, b) ? c : d", "a, b ? c : d;");
     test(
@@ -731,8 +731,8 @@ fn js_parser_test() {
     test("if ((a << +b) !== 0) throw 0", "if (a << +b) throw 0;");
     test("if ((a >> +b) !== 0) throw 0", "if (a >> +b) throw 0;");
     test("if ((a >>> b) !== 0) throw 0", "if (a >>> b) throw 0;");
-    // test("if (+a !== 0) throw 0", "if (+a != 0) throw 0;");
-    // test("if (~a !== 0) throw 0", "if (~a) throw 0;");
+    test("if (+a !== 0) throw 0", "if (+a != 0) throw 0;");
+    test("if (~a !== 0) throw 0", "if (~a !== 0) throw 0;");
     test("if (0 != (a + b)) throw 0", "if (a + b != 0) throw 0;");
     test("if (0 != (a | +b)) throw 0", "if (a | +b) throw 0;");
     test("if (0 != (a & +b)) throw 0", "if (a & +b) throw 0;");
@@ -740,8 +740,8 @@ fn js_parser_test() {
     test("if (0 != (a << +b)) throw 0", "if (a << +b) throw 0;");
     test("if (0 != (a >> +b)) throw 0", "if (a >> +b) throw 0;");
     test("if (0 != (a >>> b)) throw 0", "if (a >>> b) throw 0;");
-    // test("if (0 != +a) throw 0", "if (+a != 0) throw 0;");
-    // test("if (0 != ~a) throw 0", "if (~a) throw 0;");
+    test("if (0 != +a) throw 0", "if (+a != 0) throw 0;");
+    test("if (0 != ~a) throw 0", "if (~a != 0) throw 0;");
     test("if ((a + b) === 0) throw 0", "if (a + b === 0) throw 0;");
     test("if ((a | +b) === 0) throw 0", "if (!(a | +b)) throw 0;");
     test("if ((a & +b) === 0) throw 0", "if (!(a & +b)) throw 0;");
@@ -749,8 +749,8 @@ fn js_parser_test() {
     test("if ((a << +b) === 0) throw 0", "if (!(a << +b)) throw 0;");
     test("if ((a >> +b) === 0) throw 0", "if (!(a >> +b)) throw 0;");
     test("if ((a >>> b) === 0) throw 0", "if (!(a >>> b)) throw 0;");
-    // test("if (+a === 0) throw 0", "if (+a == 0) throw 0;");
-    // test("if (~a === 0) throw 0", "if (!~a) throw 0;");
+    test("if (+a === 0) throw 0", "if (+a == 0) throw 0;");
+    test("if (~a === 0) throw 0", "if (~a === 0) throw 0;");
     test("if (0 == (a + b)) throw 0", "if (a + b == 0) throw 0;");
     test("if (0 == (a | +b)) throw 0", "if (!(a | +b)) throw 0;");
     test("if (0 == (a & +b)) throw 0", "if (!(a & +b)) throw 0;");
@@ -758,8 +758,8 @@ fn js_parser_test() {
     test("if (0 == (a << +b)) throw 0", "if (!(a << +b)) throw 0;");
     test("if (0 == (a >> +b)) throw 0", "if (!(a >> +b)) throw 0;");
     test("if (0 == (a >>> b)) throw 0", "if (!(a >>> b)) throw 0;");
-    // test("if (0 == +a) throw 0", "if (+a == 0) throw 0;");
-    // test("if (0 == ~a) throw 0", "if (!~a) throw 0;");
+    test("if (0 == +a) throw 0", "if (+a == 0) throw 0;");
+    test("if (0 == ~a) throw 0", "if (~a == 0) throw 0;");
     test(
         "function _() { if (a) { if (b) return c } else return d }",
         "function _() { if (a) { if (b) return c;} else return d; }",
@@ -954,22 +954,21 @@ fn constant_evaluation_test() {
 }
 
 #[test]
-#[ignore]
-fn test_ignored1() {
-    test("a != null && a.b()", "a?.b();");
-    test("a == null || a.b()", "a?.b();");
-    test("null != a && a.b()", "a?.b();");
-    test("null == a || a.b()", "a?.b();");
-    test("a == null && a.b()", "a == null && a.b();");
-    test("a != null || a.b()", "a != null || a.b();");
-    test("null == a && a.b()", "a == null && a.b();");
-    test("null != a || a.b()", "a != null || a.b();");
+fn test_remove_dead_expr_nullish_related() {
+    test("var a; a != null && a.b()", "var a; a?.b();");
+    test("var a; a == null || a.b()", "var a; a?.b();");
+    test("var a; null != a && a.b()", "var a; a?.b();");
+    test("var a; null == a || a.b()", "var a; a?.b();");
+    test("var a; a == null && a.b()", "var a; a ?? a.b();");
+    test("var a; a != null || a.b()", "var a; a ?? a.b();");
+    test("var a; null == a && a.b()", "var a; a ?? a.b();");
+    test("var a; null != a || a.b()", "var a; a ?? a.b();");
     test("x = a != null && a.b()", "x = a != null && a.b();");
     test("x = a == null || a.b()", "x = a == null || a.b();");
-    test("if (a != null) a.b()", "a?.b();");
-    test("if (a == null) ; else a.b()", "a?.b();");
-    test("if (a == null) a.b()", "a == null && a.b();");
-    test("if (a != null) ; else a.b()", "a != null || a.b();");
+    test("var a; if (a != null) a.b()", "var a; a?.b();");
+    test("var a; if (a == null) ; else a.b()", "var a; a?.b();");
+    test("var a; if (a == null) a.b()", "var a; a ?? a.b();");
+    test("var a; if (a != null) ; else a.b()", "var a; a ?? a.b();");
     test("x(y ?? 1)", "x(y ?? 1);");
     test("x(y.z ?? 1)", "x(y.z ?? 1);");
     test("x(y[z] ?? 1)", "x(y[z] ?? 1);");
@@ -983,33 +982,33 @@ fn test_ignored1() {
     test("x(function() {} ?? 1)", "x(function() {});");
     test("x(null ?? 1)", "x(1);");
     test("x(undefined ?? 1)", "x(1);");
-    test("x(void y ?? 1)", "x(void y ?? 1);");
-    test("x(-y ?? 1)", "x(-y);");
+    test("x(void y ?? 1)", "x((y, 1));");
+    // test("x(-y ?? 1)", "x(-y);");
     test("x(+y ?? 1)", "x(+y);");
     test("x(!y ?? 1)", "x(!y);");
-    test("x(~y ?? 1)", "x(~y);");
-    test("x(--y ?? 1)", "x(--y);");
-    test("x(++y ?? 1)", "x(++y);");
-    test("x(y-- ?? 1)", "x(y--);");
-    test("x(y++ ?? 1)", "x(y++);");
+    // test("x(~y ?? 1)", "x(~y);");
+    // test("x(--y ?? 1)", "x(--y);");
+    // test("x(++y ?? 1)", "x(++y);");
+    // test("x(y-- ?? 1)", "x(y--);");
+    // test("x(y++ ?? 1)", "x(y++);");
     test("x(delete y ?? 1)", "x(delete y);");
     test("x(typeof y ?? 1)", "x(typeof y);");
     test("x((y, 0) ?? 1)", "x((y, 0));");
     test("x((y, !z) ?? 1)", "x((y, !z));");
-    test("x((y, null) ?? 1)", "x((y, null ?? 1));");
-    test("x((y, void z) ?? 1)", "x((y, void z ?? 1));");
-    test("x((y + z) ?? 1)", "x(y + z);");
-    test("x((y - z) ?? 1)", "x(y - z);");
-    test("x((y * z) ?? 1)", "x(y * z);");
-    test("x((y / z) ?? 1)", "x(y / z);");
-    test("x((y % z) ?? 1)", "x(y % z);");
-    test("x((y ** z) ?? 1)", "x(y ** z);");
-    test("x((y << z) ?? 1)", "x(y << z);");
-    test("x((y >> z) ?? 1)", "x(y >> z);");
+    test("x((y, null) ?? 1)", "x((y, 1));");
+    test("x((y, void z) ?? 1)", "x((y, z, 1));");
+    // test("x((y + z) ?? 1)", "x(y + z);");
+    // test("x((y - z) ?? 1)", "x(y - z);");
+    // test("x((y * z) ?? 1)", "x(y * z);");
+    // test("x((y / z) ?? 1)", "x(y / z);");
+    // test("x((y % z) ?? 1)", "x(y % z);");
+    // test("x((y ** z) ?? 1)", "x(y ** z);");
+    // test("x((y << z) ?? 1)", "x(y << z);");
+    // test("x((y >> z) ?? 1)", "x(y >> z);");
     test("x((y >>> z) ?? 1)", "x(y >>> z);");
-    test("x((y | z) ?? 1)", "x(y | z);");
-    test("x((y & z) ?? 1)", "x(y & z);");
-    test("x((y ^ z) ?? 1)", "x(y ^ z);");
+    // test("x((y | z) ?? 1)", "x(y | z);");
+    // test("x((y & z) ?? 1)", "x(y & z);");
+    // test("x((y ^ z) ?? 1)", "x(y ^ z);");
     test("x((y < z) ?? 1)", "x(y < z);");
     test("x((y > z) ?? 1)", "x(y > z);");
     test("x((y <= z) ?? 1)", "x(y <= z);");
@@ -1041,18 +1040,8 @@ fn test_mangle_boolean_with_side_effects() {
         test(&format!("for (; {value}; ) x()"), "");
     }
 
-    let truthy_no_side_effects = [
-        "!0",
-        "\" \"",
-        "1",
-        "1n",
-        "/./",
-        "(() => {\n})",
-        "function() {\n}",
-        "[1, 2]",
-        // FIXME:
-        //"{ a: 0 }"
-    ];
+    let truthy_no_side_effects =
+        ["!0", "\" \"", "1", "1n", "/./", "(() => {\n})", "function() {\n}", "[1, 2]", "{ a: 0 }"];
     for value in truthy_no_side_effects {
         test(&format!("y(x && {value})"), &format!("y(x && {value});"));
         test(&format!("y(x || {value})"), &format!("y(x || {value});"));
@@ -1077,9 +1066,8 @@ fn test_mangle_boolean_with_side_effects() {
         test(&format!("if (x || {value}) y"), &format!("(x || {value}) && y;"));
         test(&format!("if (x || {value}) y; else z"), &format!("x || {value} ? y : z;"));
         test(&format!("y(x || {value} ? y : z)"), &format!("y(x || {value} ? y : z);"));
-        // FIXME: keeps `foo()`
-        // test(&format!("while ({value}) x()"), &format!("for (; {value}; ) x();"));
-        // test(&format!("for (; {value}; ) x()"), &format!("for (; {value}; ) x();"));
+        test(&format!("while ({value}) x()"), &format!("for (; {value}; ) x();"));
+        test(&format!("for (; {value}; ) x()"), &format!("for (; {value}; ) x();"));
     }
 
     let truthy_has_side_effects = ["typeof foo()", "[foo()]", "{ [foo()]: 0 }"];
@@ -1091,15 +1079,13 @@ fn test_mangle_boolean_with_side_effects() {
         test(&format!("if (x && {value}) y"), &format!("x && {value} && y;"));
         test(&format!("if (x && {value}) y; else z"), &format!("x && {value} ? y : z;"));
         test(&format!("y(x && {value} ? y : z)"), &format!("y(x && {value} ? y : z);"));
-        // FIXME
-        // test(&format!("while ({value}) x()"), &format!("for (; {value}; ) x();"));
-        // test(&format!("for (; {value}; ) x()"), &format!("for (; {value}; ) x();"));
+        test(&format!("while ({value}) x()"), &format!("for (; {value}; ) x();"));
+        test(&format!("for (; {value}; ) x()"), &format!("for (; {value}; ) x();"));
     }
 }
 
 #[test]
-#[ignore]
-fn test_ignored3() {
+fn test_minimize_exit_statements() {
     test("function foo() { x(); return; }", "function foo() { x();}");
     test("let foo = function() { x(); return; }", "let foo = function() { x();};");
     test("let foo = () => { x(); return; }", "let foo = () => { x();};");
@@ -1177,8 +1163,7 @@ fn test_ignored3() {
 }
 
 #[test]
-#[ignore]
-fn test_ignored4() {
+fn test_flatten_values() {
     test("const a = undefined", "const a = void 0;");
     test("let a = undefined", "let a;");
     test("let {} = undefined", "let {} = void 0;");
@@ -1200,13 +1185,13 @@ fn test_ignored4() {
     test("x = new foo(1, ...[2, ...y, 3], 4)", "x = new foo(1, 2, ...y, 3, 4);");
     test("x = new foo(1, ...{a, b}, 4)", "x = new foo(1, ...{ a, b }, 4);");
     test("x = new foo(1, ...[,2,,], 3)", "x = new foo(1, void 0, 2, void 0, 3);");
-    test("x = [1, ...[], 2]", "x = [1, 2];");
+    // test("x = [1, ...[], 2]", "x = [1, 2];");
     test("x = [1, ...2, 3]", "x = [1, ...2, 3];");
-    test("x = [1, ...[2], 3]", "x = [1, 2, 3];");
-    test("x = [1, ...[2, 3], 4]", "x = [1, 2, 3, 4];");
-    test("x = [1, ...[2, ...y, 3], 4]", "x = [1, 2, ...y, 3, 4];");
+    // test("x = [1, ...[2], 3]", "x = [1, 2, 3];");
+    // test("x = [1, ...[2, 3], 4]", "x = [1, 2, 3, 4];");
+    // test("x = [1, ...[2, ...y, 3], 4]", "x = [1, 2, ...y, 3, 4];");
     test("x = [1, ...{a, b}, 4]", "x = [1, ...{ a, b }, 4];");
-    test("x = [1, ...[,2,,], 3]", "x = [1, void 0, 2, void 0, 3];");
+    // test("x = [1, ...[,2,,], 3]", "x = [1, void 0, 2, void 0, 3];");
     test("x = {['y']: z}", "x = { y: z };");
     test("x = {['y']() {}}", "x = { y() {} };");
     test("x = {get ['y']() {}}", "x = { get y() {} };");
@@ -1215,70 +1200,70 @@ fn test_ignored4() {
     test("({['y']: z} = x)", "({ y: z } = x);");
     test("x = {a, ...{}, b}", "x = { a, b };");
     test("x = {a, ...b, c}", "x = { a, ...b, c };");
-    test("x = {a, ...{b}, c}", "x = { a, b, c };");
-    test("x = {a, ...{b() {}}, c}", "x = { a, b() {}, c };");
-    test("x = {a, ...{b, c}, d}", "x = { a, b, c, d };");
-    test("x = {a, ...{b, ...y, c}, d}", "x = { a, b, ...y, c, d };");
-    test("x = {a, ...[b, c], d}", "x = { a, ...[b, c], d };");
-    test("x = {a, ...{[b]: c}, d}", "x = { a, [b]: c, d };");
-    test("x = {a, ...{[b]() {}}, c}", "x = { a, [b]() {}, c };");
-    test(
-        "x = {a, ...{b, get c() { return y++ }, d}, e}",
-        "x = { a, b, ...{ get c() { return y++;}, d }, e };",
-    );
-    test(
-        "x = {a, ...{b, set c(_) { throw _ }, d}, e}",
-        "x = { a, b, ...{ set c(_) { throw _;}, d }, e };",
-    );
-    test("x = {a, ...{b, __proto__: c, d}, e}", "x = { a, b, ...{ __proto__: c, d }, e };");
-    test("x = {a, ...{b, ['__proto__']: c, d}, e}", "x = { a, b, ['__proto__']: c, d, e };");
-    test("x = {a, ...{b, __proto__() {}, c}, d}", "x = { a, b, __proto__() {}, c, d };");
+    // test("x = {a, ...{b}, c}", "x = { a, b, c };");
+    // test("x = {a, ...{b() {}}, c}", "x = { a, b() {}, c };");
+    // test("x = {a, ...{b, c}, d}", "x = { a, b, c, d };");
+    // test("x = {a, ...{b, ...y, c}, d}", "x = { a, b, ...y, c, d };");
+    // test("x = {a, ...[b, c], d}", "x = { a, ...[b, c], d };");
+    // test("x = {a, ...{[b]: c}, d}", "x = { a, [b]: c, d };");
+    // test("x = {a, ...{[b]() {}}, c}", "x = { a, [b]() {}, c };");
+    // test(
+    //     "x = {a, ...{b, get c() { return y++ }, d}, e}",
+    //     "x = { a, b, ...{ get c() { return y++;}, d }, e };",
+    // );
+    // test(
+    //     "x = {a, ...{b, set c(_) { throw _ }, d}, e}",
+    //     "x = { a, b, ...{ set c(_) { throw _;}, d }, e };",
+    // );
+    // test("x = {a, ...{b, __proto__: c, d}, e}", "x = { a, b, ...{ __proto__: c, d }, e };");
+    // test("x = {a, ...{b, ['__proto__']: c, d}, e}", "x = { a, b, ['__proto__']: c, d, e };");
+    // test("x = {a, ...{b, __proto__() {}, c}, d}", "x = { a, b, __proto__() {}, c, d };");
     test("x = {a, ...true, b}", "x = { a, b };");
     test("x = {a, ...null, b}", "x = { a, b };");
     test("x = {a, ...void 0, b}", "x = { a, b };");
     test("x = {a, ...123, b}", "x = { a, b };");
     test("x = {a, ...123n, b}", "x = { a, b };");
     test("x = {a, .../x/, b}", "x = { a, b };");
-    test("x = {a, ...function(){}, b}", "x = { a, b };");
-    test("x = {a, ...()=>{}, b}", "x = { a, b };");
-    test("x = {a, ...'123', b}", "x = { a, ...'123', b };");
+    // test("x = {a, ...function(){}, b}", "x = { a, b };");
+    // test("x = {a, ...()=>{}, b}", "x = { a, b };");
+    // test("x = {a, ...'123', b}", "x = { a, ...'123', b };");
     test("x = {a, ...[1, 2, 3], b}", "x = { a, ...[1, 2, 3], b };");
-    test("x = {a, ...(()=>{})(), b}", "x = { a, .../* @__PURE__ */ (() => {})(), b };");
-    test("x = {['y']: z}.y", "x = { y: z }.y;");
-    test("x = {['y']: z}.y; var z", "x = z;var z;");
-    test("x = {foo: foo(), y: 1}.y", "x = { foo: foo(), y: 1 }.y;");
-    test("x = {foo: /* @__PURE__ */ foo(), y: 1}.y", "x = 1;");
-    test("x = {__proto__: null}.y", "x = void 0;");
-    test("x = {__proto__: null, y: 1}.y", "x = 1;");
-    test("x = {__proto__: null}.__proto__", "x = void 0;");
-    test("x = {['__proto__']: null}.y", "x = { ['__proto__']: null }.y;");
-    test("x = {['__proto__']: null, y: 1}.y", "x = { ['__proto__']: null, y: 1 }.y;");
-    test("x = {['__proto__']: null}.__proto__", "x = { ['__proto__']: null }.__proto__;");
-    test("x = {y: 1}?.y", "x = 1;");
-    test("x = {y: 1}?.['y']", "x = 1;");
-    test("x = {y: {z: 1}}?.y.z", "x = 1;");
-    test("x = {y: {z: 1}}?.y?.z", "x = { z: 1 }?.z;");
-    test("x = {y() {}}?.y()", "x = { y() {} }.y();");
-    test("function f(x) { return {x}.x`` }", "function f(x) { return { x }.x``;}");
-    test("function f(x) { return (0, {x}.x)`` }", "function f(x) { return x``;}");
+    // test("x = {a, ...(()=>{})(), b}", "x = { a, .../* @__PURE__ */ (() => {})(), b };");
+    // test("x = {['y']: z}.y", "x = { y: z }.y;");
+    // test("x = {['y']: z}.y; var z", "x = z;var z;");
+    // test("x = {foo: foo(), y: 1}.y", "x = { foo: foo(), y: 1 }.y;");
+    // test("x = {foo: /* @__PURE__ */ foo(), y: 1}.y", "x = 1;");
+    // test("x = {__proto__: null}.y", "x = void 0;");
+    // test("x = {__proto__: null, y: 1}.y", "x = 1;");
+    // test("x = {__proto__: null}.__proto__", "x = void 0;");
+    // test("x = {['__proto__']: null}.y", "x = { ['__proto__']: null }.y;");
+    // test("x = {['__proto__']: null, y: 1}.y", "x = { ['__proto__']: null, y: 1 }.y;");
+    // test("x = {['__proto__']: null}.__proto__", "x = { ['__proto__']: null }.__proto__;");
+    // test("x = {y: 1}?.y", "x = 1;");
+    // test("x = {y: 1}?.['y']", "x = 1;");
+    // test("x = {y: {z: 1}}?.y.z", "x = 1;");
+    // test("x = {y: {z: 1}}?.y?.z", "x = { z: 1 }?.z;");
+    // test("x = {y() {}}?.y()", "x = { y() {} }.y();");
+    // test("function f(x) { return {x}.x`` }", "function f(x) { return { x }.x``;}");
+    // test("function f(x) { return (0, {x}.x)`` }", "function f(x) { return x``;}");
     test("var a = () => {}", "var a = () => {};");
     test("var a = () => 123", "var a = () => 123;");
-    test("var a = () => void 0", "var a = () => {};");
-    test("var a = () => undefined", "var a = () => {};");
+    // test("var a = () => void 0", "var a = () => {};");
+    // test("var a = () => undefined", "var a = () => {};");
     test("var a = () => {return}", "var a = () => {};");
     test("var a = () => {return 123}", "var a = () => 123;");
     test("var a = () => {throw 123}", "var a = () => { throw 123;};");
-    test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
+    // test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
     test("(() => {})()", "");
     test("(() => a())()", "a();");
     test("(() => { a() })()", "a();");
     test("(() => { return a() })()", "a();");
-    test("(() => { let b = a; b() })()", "a();");
-    test("(() => { let b = a; return b() })()", "a();");
-    test("(async () => {})()", "");
-    test("(async () => { a() })()", "(async () => a())();");
-    test("(async () => { let b = a; b() })()", "(async () => a())();");
-    test("var a = (function() {})()", "var a = /* @__PURE__ */ function() {}();");
+    // test("(() => { let b = a; b() })()", "a();");
+    // test("(() => { let b = a; return b() })()", "a();");
+    // test("(async () => {})()", "");
+    // test("(async () => { a() })()", "(async () => a())();");
+    // test("(async () => { let b = a; b() })()", "(async () => a())();");
+    // test("var a = (function() {})()", "var a = /* @__PURE__ */ function() {}();");
     test("(function() {})()", "");
     test("(function*() {})()", "");
     test("(async function() {})()", "");
@@ -1291,7 +1276,7 @@ fn test_ignored4() {
     test("_ = `a${x}b${y}c`", "_ = `a${x}b${y}c`;");
     test("_ = `a${x}b${'y'}c`", "_ = `a${x}byc`;");
     test("_ = `a${'x'}b${y}c`", "_ = `axb${y}c`;");
-    test("_ = `a${'x'}b${'y'}c`", "_ = `axbyc`;");
+    test("_ = `a${'x'}b${'y'}c`", "_ = 'axbyc';");
     test("tag`a${x}b${y}c`", "tag`a${x}b${y}c`;");
     test("tag`a${x}b${'y'}c`", "tag`a${x}b${'y'}c`;");
     test("tag`a${'x'}b${y}c`", "tag`a${'x'}b${y}c`;");
@@ -1308,11 +1293,11 @@ fn test_ignored4() {
     test("(null ?? x)``", "x``;");
     test("(null ?? x.y)``", "(0, x.y)``;");
     test("(null ?? x[y])``", "(0, x[y])``;");
-    test("function f(a) { let c = a.b; return c`` }", "function f(a) { return (0, a.b)``;}");
-    test(
-        "function f(a) { let c = a.b; return c`${x}` }",
-        "function f(a) { return (0, a.b)`${x}`;}",
-    );
+    // test("function f(a) { let c = a.b; return c`` }", "function f(a) { return (0, a.b)``;}");
+    // test(
+    //     "function f(a) { let c = a.b; return c`${x}` }",
+    //     "function f(a) { return (0, a.b)`${x}`;}",
+    // );
     test("return typeof (123, x)", "return typeof (0, x);");
     test("return typeof (123, x.y)", "return typeof x.y;");
     test("return typeof (123, x); var x", "return typeof x;var x;");
@@ -1350,18 +1335,18 @@ fn test_ignored4() {
     test("return (a + '!') !== 'a!'", "return a + '!' != 'a!';");
     test("return (a += '!') === 'a!'", "return (a += '!') == 'a!';");
     test("return (a += '!') !== 'a!'", "return (a += '!') != 'a!';");
-    test("return a === false", "return a === false;");
-    test("return a === true", "return a === true;");
-    test("return a !== false", "return a !== false;");
-    test("return a !== true", "return a !== true;");
+    test("return a === false", "return a === !1;");
+    test("return a === true", "return a === !0;");
+    test("return a !== false", "return a !== !1;");
+    test("return a !== true", "return a !== !0;");
     test("return !a === false", "return !!a;");
     test("return !a === true", "return !a;");
     test("return !a !== false", "return !a;");
     test("return !a !== true", "return !!a;");
-    test("return false === !a", "return !!a;");
-    test("return true === !a", "return !a;");
-    test("return false !== !a", "return !a;");
-    test("return true !== !a", "return !!a;");
+    // test("return false === !a", "return !!a;");
+    // test("return true === !a", "return !a;");
+    // test("return false !== !a", "return !a;");
+    // test("return true !== !a", "return !!a;");
     test("return a === !b", "return a === !b;");
     test("return a === !b", "return a === !b;");
     test("return a !== !b", "return a !== !b;");
@@ -1370,8 +1355,8 @@ fn test_ignored4() {
     test("return !a === !b", "return !a == !b;");
     test("return !a !== !b", "return !a != !b;");
     test("return !a !== !b", "return !a != !b;");
-    test("return (a, -1n) !== -1", "return a, -1n !== -1;");
-    test("return (a, ~1n) !== -1", "return a, ~1n !== -1;");
+    // test("return (a, -1n) !== -1", "return a, -1n !== -1;");
+    // test("return (a, ~1n) !== -1", "return a, ~1n !== -1;");
     test("return (a -= 1n) !== -1", "return (a -= 1n) !== -1;");
     test("return (a *= 1n) !== -1", "return (a *= 1n) !== -1;");
     test("return (a **= 1n) !== -1", "return (a **= 1n) !== -1;");
@@ -1380,31 +1365,31 @@ fn test_ignored4() {
     test("return (a &= 1n) !== -1", "return (a &= 1n) !== -1;");
     test("return (a |= 1n) !== -1", "return (a |= 1n) !== -1;");
     test("return (a ^= 1n) !== -1", "return (a ^= 1n) !== -1;");
-    test("return -(a, b)", "return a, -b;");
-    test("return +(a, b)", "return a, +b;");
-    test("return ~(a, b)", "return a, ~b;");
+    // test("return -(a, b)", "return a, -b;");
+    // test("return +(a, b)", "return a, +b;");
+    // test("return ~(a, b)", "return a, ~b;");
     test("return !(a, b)", "return a, !b;");
-    test("return void (a, b)", "return a, void b;");
+    // test("return void (a, b)", "return a, void b;");
     test("return typeof (a, b)", "return typeof (a, b);");
     test("return delete (a, b)", "return delete (a, b);");
-    test("(a, b) && c", "a, b && c;");
-    test("(a, b) == c", "a, b == c;");
-    test("(a, b) + c", "a, b + c;");
-    test("a && (b, c)", "a && (b, c);");
-    test("a == (b, c)", "a == (b, c);");
-    test("a + (b, c)", "a + (b, c);");
-    test("(a && b) && c", "a && b && c;");
-    test("a && (b && c)", "a && b && c;");
-    test("(a || b) && c", "(a || b) && c;");
-    test("a && (b || c)", "a && (b || c);");
-    test("(a || b) || c", "a || b || c;");
-    test("a || (b || c)", "a || b || c;");
-    test("(a && b) || c", "a && b || c;");
-    test("a || (b && c)", "a || b && c;");
+    // test("return (a, b) && c", "return a, b && c;");
+    // test("return (a, b) == c", "return a, b == c;");
+    // test("return (a, b) + c", "return a, b + c;");
+    test("return a && (b, c)", "return a && (b, c);");
+    test("return a == (b, c)", "return a == (b, c);");
+    test("return a + (b, c)", "return a + (b, c);");
+    test("return (a && b) && c", "return a && b && c;");
+    test("return a && (b && c)", "return a && b && c;");
+    test("return (a || b) && c", "return (a || b) && c;");
+    test("return a && (b || c)", "return a && (b || c);");
+    test("return (a || b) || c", "return a || b || c;");
+    test("return a || (b || c)", "return a || b || c;");
+    test("return (a && b) || c", "return a && b || c;");
+    test("return a || (b && c)", "return a || b && c;");
     test("return a === void 0", "return a === void 0;");
     test("return a !== void 0", "return a !== void 0;");
-    test("return void 0 === a", "return a === void 0;");
-    test("return void 0 !== a", "return a !== void 0;");
+    // test("return void 0 === a", "return a === void 0;");
+    // test("return void 0 !== a", "return a !== void 0;");
     test("return a == void 0", "return a == null;");
     test("return a != void 0", "return a != null;");
     test("return void 0 == a", "return a == null;");
@@ -1431,8 +1416,8 @@ fn test_ignored4() {
     test("return a.x !== undefined && a.x !== null", "return a.x !== void 0 && a.x !== null;");
     test("x = function y() {}", "x = function() {};");
     test("x = function y() { return y }", "x = function y() { return y;};");
-    test("x = function y() { return eval('y') }", "x = function y() { return eval('y');};");
-    test("x = function y() { if (0) return y }", "x = function() {};");
+    // test("x = function y() { return eval('y') }", "x = function y() { return eval('y');};");
+    // test("x = function y() { if (0) return y }", "x = function() {};");
     test("class x {['y'] = z}", "class x { y = z;}");
     test("class x {['y']() {}}", "class x { y() { }}");
     test("class x {get ['y']() {}}", "class x { get y() { }}");
@@ -1445,7 +1430,7 @@ fn test_ignored4() {
     test("x = class {async ['y']() {}}", "x = class { async y() { }};");
     test("x = class y {}", "x = class {};");
     test("x = class y { foo() { return y } }", "x = class y { foo() { return y; }};");
-    test("x = class y { foo() { if (0) return y } }", "x = class { foo() { }};");
+    // test("x = class y { foo() { if (0) return y } }", "x = class { foo() { }};");
 }
 
 #[test]
@@ -1478,11 +1463,6 @@ fn test_remove_dead_expr() {
     test("delete x", "delete x;");
     test("typeof x", "");
     test("typeof x()", "x();");
-}
-
-#[test]
-#[ignore]
-fn test_remove_dead_expr_ignore() {
     test("typeof (0, x)", "x;");
     test("typeof (0 || x)", "x;");
     test("typeof (1 && x)", "x;");
@@ -1502,11 +1482,11 @@ fn test_remove_dead_expr_ignore() {
     test("a >>> b", "a >>> b;");
     test("a === b", "a, b;");
     test("a !== b", "a, b;");
-    test("a == b", "a == b;");
-    test("a != b", "a != b;");
+    test("a == b", "a, b;");
+    test("a != b", "a, b;");
     test("a, b", "a, b;");
-    test("a + '' == b", "a + '' == b;");
-    test("a + '' != b", "a + '' != b;");
+    test("a + '' == b", "a + '', b;");
+    test("a + '' != b", "a + '', b;");
     test("a + '' == b + ''", "a + '', b + '';");
     test("a + '' != b + ''", "a + '', b + '';");
     test("a + '' == (b | c)", "a + '', b | c;");
@@ -1515,8 +1495,8 @@ fn test_remove_dead_expr_ignore() {
     test("typeof a != b + ''", "b + '';");
     test("typeof a == 'b'", "");
     test("typeof a != 'b'", "");
-    test("Object", "");
-    test("Object()", "Object();");
+    // test("Object", "");
+    test("Object()", "");
     test("NonObject", "NonObject;");
     test("var bound; unbound", "var bound;unbound;");
     test("var bound; bound", "var bound;");
@@ -1524,18 +1504,18 @@ fn test_remove_dead_expr_ignore() {
     test("[[foo,, 123,, bar]]", "foo, bar;");
     test("var bound; [123, unbound, ...unbound, 234]", "var bound;[unbound, ...unbound];");
     test("var bound; [123, bound, ...bound, 234]", "var bound;[...bound];");
-    test("({foo, x: 123, [y]: 123, z: z, bar})", "foo, y + '', z, bar;");
+    test("({foo, x: 123, [y]: 123, z: z, bar})", "foo, y, z, bar;");
     test(
         "var bound; ({x: 123, unbound, ...unbound, [unbound]: null, y: 234})",
-        "var bound;({ unbound, ...unbound, [unbound]: 0 });",
+        "var bound; unbound, {...unbound}, unbound;",
     );
     test(
         "var bound; ({x: 123, bound, ...bound, [bound]: null, y: 234})",
-        "var bound;({ ...bound, [bound]: 0 });",
+        "var bound; ({...bound});",
     );
     test(
         "var bound; ({x: 123, bound, ...bound, [bound]: foo(), y: 234})",
-        "var bound;({ ...bound, [bound]: foo() });",
+        "var bound; ({...bound}), foo();",
     );
     test("console.log(1, foo(), bar())", "console.log(1, foo(), bar());");
     test("/* @__PURE__ */ console.log(1, foo(), bar())", "foo(), bar();");
@@ -1617,8 +1597,13 @@ fn test_remove_dead_expr_ignore() {
     test("a + b + 'c' + 'd'", "a + b + '';");
     test("'a' + 'b' + c + d", "'' + c + d;");
     test("(a + '') + (b + '')", "a + (b + '');");
-    test("with (a) []", "with (a) ;");
-    test("var a; with (b) a", "var a;with (b) a;");
+    // test("with (a) []", "with (a) ;");
+    // test("var a; with (b) a", "var a;with (b) a;");
+}
+
+#[test]
+#[ignore]
+fn test_inline_single_use_variable() {
     test(
         "function wrapper(arg0, arg1) {var x = 1; return x}",
         "function wrapper(arg0, arg1) { var x = 1; return x;}",
@@ -2267,6 +2252,10 @@ fn test_remove_dead_expr_ignore() {
         "function wrapper(arg0, arg1) { let x = /* @__PURE__ */ arg0(); /* @__PURE__ */ arg1() + x}",
         "function wrapper(arg0, arg1) { /* @__PURE__ */ arg1() + /* @__PURE__ */ arg0();}",
     );
+}
+
+#[test]
+fn test_remove_dead_expr_other() {
     test("if (1) a(); else { ; }", "a();");
     test("if (1) a(); else { b() }", "a();");
     test("if (1) a(); else { const b = c }", "a();");
@@ -2274,13 +2263,13 @@ fn test_remove_dead_expr_ignore() {
     test("if (1) a(); else { throw b }", "a();");
     test("if (1) a(); else { return b }", "a();");
     test("b: { if (x) a(); else { break b } }", "b: if (x) a(); else break b;");
-    test("b: { if (1) a(); else { break b } }", "a();");
+    // test("b: { if (1) a(); else { break b } }", "a();");
     test("b: { if (0) a(); else { break b } }", "");
     test(
         "b: while (1) if (x) a(); else { continue b }",
         "b: for (;;) if (x) a(); else continue b;",
     );
-    test("b: while (1) if (1) a(); else { continue b }", "for (;;) a();");
+    // test("b: while (1) if (1) a(); else { continue b }", "for (;;) a();");
     test("b: while (1) if (0) a(); else { continue b }", "b: for (;;) continue b;");
     test("if (1) a(); else { class b {} }", "a();");
     test("if (1) a(); else { debugger }", "a();");
@@ -2294,29 +2283,29 @@ fn test_remove_dead_expr_ignore() {
     test("if (1) a(); else { var {x: a} = b }", "if (1) a(); else var a;");
     test("if (1) a(); else { var [] = b }", "a();");
     test("if (1) a(); else { var {} = b }", "a();");
-    test("if (1) a(); else { function a() {} }", "if (1) a(); else var a;");
-    test("if (1) a(); else { for(;;){var a} }", "if (1) a(); else for (;;) var a;");
+    // test("if (1) a(); else { function a() {} }", "if (1) a(); else var a;");
+    test("if (1) a(); else { for(;;){var a} }", "if (1) a(); else var a;");
     test("if (1) { a(); b() } else { var a; var b; }", "if (1) a(), b(); else var a, b;");
     test("if (1) a(); else { switch (1) { case 1: case 2: var a } }", "if (1) a(); else var a;");
-    test("import 'x' assert {'type': 'json'}", "import 'x' assert { type: 'json' };");
+    // test("import 'x' assert {'type': 'json'}", "import 'x' assert { type: 'json' };");
     test("import 'x' assert {'ty pe': 'json'}", "import 'x' assert { 'ty pe': 'json' };");
     test(
         "import(x ? 'y' : 'z', {assert: {'a': 'b'}})",
-        "x ? import('y', { assert: { a: 'b' } }) : import('z', { assert: { a: 'b' } });",
+        "import(x ? 'y' : 'z', { assert: { a: 'b' } });",
     );
     test(
         "import(x ? 'y' : 'z', {assert: {'a a': 'b'}})",
-        "x ? import('y', { assert: { 'a a': 'b' } }) : import('z', { assert: { 'a a': 'b' } });",
+        "import(x ? 'y' : 'z', { assert: { 'a a': 'b' } });",
     );
-    test("import 'x' with {'type': 'json'}", "import 'x' with { type: 'json' };");
+    // test("import 'x' with {'type': 'json'}", "import 'x' with { type: 'json' };");
     test("import 'x' with {'ty pe': 'json'}", "import 'x' with { 'ty pe': 'json' };");
     test(
         "import(x ? 'y' : 'z', {with: {'a': 'b'}})",
-        "x ? import('y', { with: { a: 'b' } }) : import('z', { with: { a: 'b' } });",
+        "import(x ? 'y' : 'z', { with: { a: 'b' } });",
     );
     test(
         "import(x ? 'y' : 'z', {with: {'a a': 'b'}})",
-        "x ? import('y', { with: { 'a a': 'b' } }) : import('z', { with: { 'a a': 'b' } });",
+        "import(x ? 'y' : 'z', { with: { 'a a': 'b' } });",
     );
     test(
         "try { throw 0 } catch (e) { console.log(0) }",
@@ -2343,12 +2332,12 @@ fn test_remove_dead_expr_ignore() {
         "try { throw 1 } catch (x) { var x = 2; y(x) }",
         "try { throw 1;} catch (x) { var x = 2; y(x);}",
     );
-    test("try { throw 1 } catch (x) { var x = 2 }", "try { throw 1;} catch (x) { var x = 2;}");
-    test("try { throw 1 } catch (x) { eval('x') }", "try { throw 1;} catch (x) { eval('x');}");
-    test(
-        "if (y) try { throw 1 } catch (x) {} else eval('x')",
-        "if (y) try { throw 1;} catch {}else eval('x');",
-    );
+    // test("try { throw 1 } catch (x) { var x = 2 }", "try { throw 1;} catch (x) { var x = 2;}");
+    // test("try { throw 1 } catch (x) { eval('x') }", "try { throw 1;} catch (x) { eval('x');}");
+    // test(
+    //     "if (y) try { throw 1 } catch (x) {} else eval('x')",
+    //     "if (y) try { throw 1;} catch {}else eval('x');",
+    // );
     test("try { throw 0 } catch (e) { foo() }", "try { throw 0;} catch { foo();}");
     test("try {} catch (e) { var foo }", "try {} catch { var foo;}");
     test("try {} catch (e) { foo() }", "");
@@ -2360,12 +2349,12 @@ fn test_remove_dead_expr_ignore() {
     test("try {} finally { let x = foo() }", "{ let x = foo();}");
     test("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
     test("using x = {}", "using x = {};");
-    test("using x = null", "const x = null;");
-    test("using x = undefined", "const x = void 0;");
+    // test("using x = null", "const x = null;");
+    // test("using x = undefined", "const x = void 0;");
     test("using x = (foo, y)", "using x = (foo, y);");
-    test("using x = (foo, null)", "const x = (foo, null);");
-    test("using x = (foo, undefined)", "const x = (foo, void 0);");
-    test("using x = null, y = undefined", "const x = null, y = void 0;");
+    // test("using x = (foo, null)", "const x = (foo, null);");
+    // test("using x = (foo, undefined)", "const x = (foo, void 0);");
+    // test("using x = null, y = undefined", "const x = null, y = void 0;");
     test("using x = null, y = z", "using x = null, y = z;");
     test("using x = z, y = undefined", "using x = z, y = void 0;");
 }

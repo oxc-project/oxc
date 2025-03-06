@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
@@ -48,7 +48,10 @@ fn bench_estree(criterion: &mut Criterion) {
                     .parse()
                     .program;
                 runner.run(|| {
-                    Utf8ToUtf16::new().convert(&mut program);
+                    let span_converter = Utf8ToUtf16::new(program.source_text);
+                    span_converter.convert_program(&mut program);
+                    span_converter.convert_comments(&mut program.comments);
+
                     program.to_estree_ts_json();
                     program
                 });

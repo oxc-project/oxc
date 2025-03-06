@@ -2,7 +2,8 @@ use rustc_hash::FxHashMap;
 use std::cell::Cell;
 
 use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::ToInt32;
 use oxc_semantic::{ScopeFlags, ScopeId};
@@ -100,10 +101,17 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let is_already_declared = self.enums.contains_key(&enum_name);
 
+        let has_potential_side_effect = decl.members.iter().any(|member| {
+            matches!(
+                member.initializer,
+                Some(Expression::NewExpression(_) | Expression::CallExpression(_))
+            )
+        });
+
         let statements =
             self.transform_ts_enum_members(decl.scope_id(), &mut decl.members, &param_binding, ctx);
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
-        let callee = Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
+        let callee = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -116,7 +124,8 @@ impl<'a> TypeScriptEnum<'a> {
             NONE,
             Some(body),
             func_scope_id,
-        ));
+            false,
+        );
 
         let var_symbol_id = decl.id.symbol_id();
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
@@ -137,7 +146,14 @@ impl<'a> TypeScriptEnum<'a> {
             ast.vec1(Argument::from(expression))
         };
 
-        let call_expression = ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let call_expression = ast.expression_call_with_pure(
+            SPAN,
+            callee,
+            NONE,
+            arguments,
+            false,
+            !has_potential_side_effect,
+        );
 
         if is_already_declared {
             let op = AssignmentOperator::Assign;

@@ -63,7 +63,7 @@ pub struct BabelOptions {
 struct PluginPresetEntries(Vec<PluginPresetEntry>);
 
 /// <https://babeljs.io/docs/options#pluginpreset-entries>
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
 enum PluginPresetEntry {
     String(String),

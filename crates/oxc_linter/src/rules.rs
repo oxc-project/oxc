@@ -7,6 +7,8 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    pub mod no_absolute_path;
+    pub mod no_mutable_exports;
     // pub mod no_deprecated;
     // pub mod no_unused_modules;
     pub mod default;
@@ -33,6 +35,7 @@ mod import {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
+    pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
     pub mod default_param_last;
@@ -153,6 +156,7 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
+    pub mod operator_assignment;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
@@ -293,6 +297,7 @@ mod react {
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
+    pub mod no_namespace;
     pub mod no_render_return_value;
     pub mod no_set_state;
     pub mod no_string_refs;
@@ -316,6 +321,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
     pub mod consistent_function_scoping;
@@ -462,6 +468,7 @@ mod oxc {
     pub mod no_const_enum;
     pub mod no_map_spread;
     pub mod no_optional_chaining;
+    pub mod no_redundant_constructor_init;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
@@ -517,12 +524,14 @@ mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
+    pub mod no_nesting;
     pub mod no_new_statics;
     pub mod no_promise_in_callback;
     pub mod no_return_in_finally;
     pub mod param_names;
     pub mod prefer_await_to_callbacks;
     pub mod prefer_await_to_then;
+    pub mod prefer_catch;
     pub mod spec_only;
     pub mod valid_params;
 }
@@ -546,6 +555,7 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_unused_modules,
     eslint::array_callback_return,
     eslint::constructor_super,
+    eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
     eslint::default_param_last,
@@ -664,6 +674,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::operator_assignment,
     eslint::prefer_promise_reject_errors,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
@@ -688,6 +699,8 @@ oxc_macros::declare_all_lint_rules! {
     import::default,
     import::export,
     import::first,
+    import::no_absolute_path,
+    import::no_mutable_exports,
     import::no_named_default,
     import::no_namespace,
     import::max_dependencies,
@@ -842,17 +855,20 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_const_enum,
     oxc::no_map_spread,
     oxc::no_optional_chaining,
+    oxc::no_redundant_constructor_init,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_nesting,
     promise::no_promise_in_callback,
     promise::no_callback_in_promise,
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,
+    promise::prefer_catch,
     promise::prefer_await_to_callbacks,
     promise::prefer_await_to_then,
     promise::spec_only,
@@ -871,6 +887,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_undef,
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
+    react::no_namespace,
     react::no_array_index_key,
     react::no_children_prop,
     react::no_danger_with_children,
@@ -936,6 +953,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_date_clone,
     unicorn::consistent_empty_array_spread,
     unicorn::consistent_existence_index_check,
     unicorn::consistent_function_scoping,

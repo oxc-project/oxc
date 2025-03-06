@@ -8,7 +8,7 @@ use crate::{
     Format, Prettier, array,
     format::print::{assignment, function, property},
     group, hardline, if_break, indent,
-    ir::{Doc, JoinSeparator},
+    ir::Doc,
     join, line, softline, text,
 };
 
@@ -310,8 +310,8 @@ pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassPropertyLike<'
     let mut result =
         assignment::print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
 
-    if let Some(semi) = p.semi() {
-        return array!(p, [result, semi]);
+    if p.options.semi {
+        return array!(p, [result, text!(";")]);
     }
 
     result
@@ -434,7 +434,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     parts.push(indent!(
         p,
-        [group!(p, [softline!(), join!(p, JoinSeparator::CommaLine, implements_docs)])]
+        [group!(p, [softline!(), join!(p, array!(p, [text!(","), line!()]), implements_docs)])]
     ));
     parts.push(text!(" "));
 

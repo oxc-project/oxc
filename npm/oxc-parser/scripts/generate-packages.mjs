@@ -95,7 +95,7 @@ function writeManifest() {
   const content = JSON.stringify(manifestData, null, 2);
   fs.writeFileSync(manifestPath, content);
 
-  let files = ['bindings.js', 'index.js', 'index.d.ts'];
+  let files = ['bindings.js', 'index.js', 'index.d.ts', 'deserialize-js.js', 'deserialize-ts.js'];
   for (const file of files) {
     fs.copyFileSync(resolve(BINARY_ROOT, file), resolve(packageRoot, file));
   }

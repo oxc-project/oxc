@@ -25,6 +25,7 @@
     "@oxc-project/types": "workspace:^"
   },
   "devDependencies": {
+    "@codspeed/vitest-plugin": "^4.0.0",
     "vitest": "catalog:"
   }
 }

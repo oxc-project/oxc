@@ -4,6 +4,92 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.0] - 2025-03-06
+
+### Features
+
+- a92b863 minifier: Keep indirect access more precisely (#9562) (sapphi-red)
+
+### Bug Fixes
+
+- 7a220a3 minifier: Keep indirect access for `delete` and `typeof` (#9563) (sapphi-red)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 9321439 minifier: Merge throw statements at the end (#9539) (sapphi-red)
+- 803f061 minifier: Apply `__NO_SIDE_EFFECTS__` (#9533) (Boshen)
+
+### Testing
+
+- dc1465e minifier: Enable some tests in minimize_conditions (#9543) (sapphi-red)
+- 0a5c73b minifier: Enable some tests in peephole directory (#9542) (sapphi-red)
+- 55e7ee9 minifier: Enable some esbuild tests (#9540) (sapphi-red)
+
+## [0.54.0] - 2025-03-04
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+- 64f4a82 ecmascript: Handle pure call expression in chain expressions (#9480) (sapphi-red)
+- 32139d2 ecmascript: Support `/* @__PURE__ */` in may_have_side_effects (#9409) (sapphi-red)
+- f5453f6 minifier: Flatten spread args in new expressions (#9512) (sapphi-red)
+- f8073f3 minifier: Support if with side effects in dead code elimination (#9502) (sapphi-red)
+- 10eb8f7 minifier: Use `remove_unused_expression` in `try_fold_sequence_expression` in `remove_dead_code` (#9467) (sapphi-red)
+- 70916db minifier: Remove unused expression in for init and update (#9466) (sapphi-red)
+- 26fde56 minifier: Inline simple IIFEs in `remove_unused_expression` (#9465) (sapphi-red)
+- ec2193e minifier: Support extracting arguments in pure calls in `remove_unused_expression` (#9463) (sapphi-red)
+- 007051c minifier: Compress `a != null && a.b()` to `a?.b()` in `remove_unused_expression` (#9459) (sapphi-red)
+- 50fce20 minifier: Support binary expression in `remove_unused_expression` (#9456) (sapphi-red)
+- ed9ede3 minifier: Support conditional expression in `remove_unused_expression` (#9432) (sapphi-red)
+- 3520538 minifier: Support object expression in `remove_unused_expression` (#9430) (sapphi-red)
+- fb8a93d minifier: Improve array expression handling in `remove_unused_expression` (#9427) (sapphi-red)
+- ff477cd minifier: Support template literals in `remove_unused_expression` (#9426) (sapphi-red)
+- 0d26113 minifier: Compress `/* @__PURE__ */ a() ? b : b` to `b` (#9410) (sapphi-red)
+- 7d7f16c parser: Apply pure to rhs of binary expression (#9492) (Boshen)
+
+### Bug Fixes
+
+- f5bbd5d ecmascript: Fix toString for negative numbers (#9508) (sapphi-red)
+- d2cd975 ecmascript: Fix may_have_side_effects for `${a() === b}` (#9478) (sapphi-red)
+- 584d847 ecmascript: Objects passed to template literals may have side effects (#9425) (sapphi-red)
+- 1fff993 minifier: Correctly remove dead code in `try` with `finally` (#9503) (sapphi-red)
+- 0b96ebe minifier: Don't inline IIFE with parameters (#9477) (sapphi-red)
+- 071c84c minifier: Skip `try_fold_stmt_in_boolean_context` on `ExpressionStatement` (#9458) (sapphi-red)
+- 306284d minifier: Call mark_current_function_as_changed in remove_unused_expression (#9457) (sapphi-red)
+
+### Refactor
+
+- bbb450c minifier: Move `a != null && b` -> `a ?? b` compression to `remove_unused_expression` (#9468) (sapphi-red)
+- b93774c minifier: Move `try_fold_iife` to `remove_unused_expression` (#9464) (sapphi-red)
+- 96a9719 minifier: Use `may_have_side_effects` in `remove_unused_expression` (#9413) (sapphi-red)
+
+### Testing
+
+- c187b11 ecmascript: Add comments and tests for cases where `ToPropertyKey` throws an error (#9429) (sapphi-red)
+
+## [0.53.0] - 2025-02-26
+
+### Features
+
+- e10fb97 ecmascript: Improve may_have_side_effects for `.length` (#9366) (sapphi-red)
+- 35e5ca9 ecmascript: Improve may_have_side_effects for `instanceof` (#9365) (sapphi-red)
+- 11012c6 ecmascript: Improve ValueType for coalesce operator (#9354) (sapphi-red)
+- b7998fd ecmascript: To_number for object without toString (#9353) (sapphi-red)
+- e51d563 minifier: Concatenate strings with template literals on right side (#9356) (sapphi-red)
+- 9d7db54 minifier: Concatenate strings with template literals (#9355) (sapphi-red)
+
+### Bug Fixes
+
+- f5c8698 ecmascript: Correct may_have_side_effects for classes (#9367) (sapphi-red)
+- d3ed128 minifier: Do not remove `=== 0` if the lhs can be NaN (#9352) (sapphi-red)
+
+### Refactor
+
+- faf966f ecmascript: Don't check side effects in constant_evaluation (#9122) (sapphi-red)
+
 ## [0.52.0] - 2025-02-21
 
 ### Features

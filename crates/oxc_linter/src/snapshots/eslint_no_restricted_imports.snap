@@ -76,9 +76,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:9]
+   ╭─[no_restricted_imports.tsx:1:1]
  1 │ export {a} from "fs";
-   ·         ─
+   · ─────────────────────
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'foo' import from 'fs' is restricted.
@@ -800,9 +800,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:10]
+   ╭─[no_restricted_imports.tsx:1:1]
  1 │ export { foo } from 'import1';
-   ·          ───
+   · ──────────────────────────────
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
@@ -812,9 +812,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'import1' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:10]
+   ╭─[no_restricted_imports.tsx:1:1]
  1 │ export { foo } from 'import1';
-   ·          ───
+   · ──────────────────────────────
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'import-foo' import is restricted from being used.
@@ -825,9 +825,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Please use import-bar instead.
 
   ⚠ eslint(no-restricted-imports): 'import-foo' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:10]
+   ╭─[no_restricted_imports.tsx:1:1]
  1 │ export { foo } from 'import-foo';
-   ·          ───
+   · ─────────────────────────────────
    ╰────
   help: Please use import-bar instead.
 
@@ -853,9 +853,9 @@ source: crates/oxc_linter/src/tester.rs
   help: usage of import1 private modules not allowed.
 
   ⚠ eslint(no-restricted-imports): 'import1/private/foo' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:10]
+   ╭─[no_restricted_imports.tsx:1:1]
  1 │ export { foo } from 'import1/private/foo';
-   ·          ───
+   · ──────────────────────────────────────────
    ╰────
   help: usage of import1 private modules not allowed.
 
@@ -907,9 +907,9 @@ source: crates/oxc_linter/src/tester.rs
   help: usage of import1 private modules not allowed.
 
   ⚠ eslint(no-restricted-imports): 'import1/private/bar' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:10]
+   ╭─[no_restricted_imports.tsx:1:1]
  1 │ export { foo } from 'import1/private/bar';
-   ·          ───
+   · ──────────────────────────────────────────
    ╰────
   help: usage of import1 private modules not allowed.
 

@@ -92,7 +92,8 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{NONE, VisitMut, ast::*, visit::walk_mut::walk_expression};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, GetSpan, SPAN};
@@ -648,7 +649,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             body.statements.push(return_statement);
         }
 
-        Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
+        ctx.ast.expression_function_with_scope_id_and_pure(
             arrow_function_expr.span,
             FunctionType::FunctionExpression,
             None,
@@ -661,7 +662,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             arrow_function_expr.return_type,
             Some(body),
             scope_id,
-        ))
+            false,
+        )
     }
 
     /// Check whether the given [`Ancestor`] is a class method-like node.
@@ -952,14 +954,14 @@ impl<'a> ArrowFunctionConverter<'a> {
         );
         let statements = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, init));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
-        let init = ctx.ast.alloc_arrow_function_expression_with_scope_id(
-            SPAN, true, false, NONE, params, NONE, body, scope_id,
+        let init = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+            SPAN, true, false, NONE, params, NONE, body, scope_id, false,
         );
         ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
-            Some(Expression::ArrowFunctionExpression(init)),
+            Some(init),
             false,
         )
     }

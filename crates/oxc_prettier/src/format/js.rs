@@ -17,7 +17,7 @@ use crate::{
         },
     },
     group, hardline, indent,
-    ir::{Doc, JoinSeparator},
+    ir::Doc,
     join, line, softline, text, utils, wrap,
 };
 
@@ -70,8 +70,8 @@ impl<'a> Format<'a> for Directive<'a> {
             parts.push(dynamic_text!(p, &not_quoted_raw_text));
             parts.push(enclosing_quote());
         }
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
+        if p.options.semi {
+            parts.push(text!(";"));
         }
 
         array!(p, parts)
@@ -291,8 +291,8 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             parts.push(group!(p, [indent!(p, [softline!(), self.test.format(p)]), softline!()]));
             parts.push(text!(")"));
 
-            if let Some(semi) = p.semi() {
-                parts.push(semi);
+            if p.options.semi {
+                parts.push(text!(";"));
             }
 
             array!(p, parts)
@@ -577,10 +577,8 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 }
             }
 
-            if parent_for_loop_span.is_none_or(|span| span == self.span) {
-                if let Some(semi) = p.semi() {
-                    parts.push(semi);
-                }
+            if parent_for_loop_span.is_none_or(|span| span == self.span) && p.options.semi {
+                parts.push(text!(";"));
             }
 
             group!(p, parts)
@@ -796,6 +794,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::TSTypeAssertion(expr) => expr.format(p),
             Self::TSNonNullExpression(expr) => expr.format(p),
             Self::TSInstantiationExpression(expr) => expr.format(p),
+            Self::V8IntrinsicExpression(expr) => expr.format(p),
         }
     }
 }
@@ -861,8 +860,7 @@ impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         utils::replace_end_of_line(
             p,
-            literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote),
-            JoinSeparator::Literalline,
+            &literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote),
         )
     }
 }
@@ -1269,7 +1267,7 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
             for expr in &self.expressions {
                 parts.push(expr.format(p));
             }
-            group!(p, [join!(p, JoinSeparator::CommaLine, parts)])
+            group!(p, [join!(p, array!(p, [text!(","), line!()]), parts)])
         })
     }
 }
@@ -1317,11 +1315,7 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
 
 impl<'a> Format<'a> for TemplateElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        utils::replace_end_of_line(
-            p,
-            dynamic_text!(p, self.value.raw.as_str()),
-            JoinSeparator::Literalline,
-        )
+        utils::replace_end_of_line(p, &dynamic_text!(p, self.value.raw.as_str()))
     }
 }
 
@@ -1488,8 +1482,8 @@ impl<'a> Format<'a> for BindingPattern<'a> {
             parts.push(text!("?"));
         }
 
-        if let Some(typ) = &self.type_annotation {
-            parts.push(array!(p, [text!(": "), typ.type_annotation.format(p)]));
+        if let Some(ty) = &self.type_annotation {
+            parts.push(array!(p, [text!(": "), ty.type_annotation.format(p)]));
         }
 
         array!(p, parts)
@@ -1547,6 +1541,17 @@ impl<'a> Format<'a> for AssignmentPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, AssignmentPattern, {
             array!(p, [self.left.format(p), text!(" = "), self.right.format(p)])
+        })
+    }
+}
+
+impl<'a> Format<'a> for V8IntrinsicExpression<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        wrap!(p, self, V8IntrinsicExpression, {
+            call_expression::print_call_expression(
+                p,
+                &call_expression::CallExpressionLike::V8Intrinsic(self),
+            )
         })
     }
 }

@@ -11,7 +11,8 @@ use wasm_bindgen::prelude::*;
 
 use oxc::{
     allocator::Allocator,
-    ast::{Comment as OxcComment, CommentKind, Visit, ast::Program, utf8_to_utf16::Utf8ToUtf16},
+    ast::{Comment as OxcComment, CommentKind, ast::Program},
+    ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16},
     codegen::{CodeGenerator, CodegenOptions},
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
@@ -66,6 +67,9 @@ pub struct Oxc {
 
     #[wasm_bindgen(readonly, skip_typescript, js_name = "codegenText")]
     pub codegen_text: String,
+
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "codegenSourcemapText")]
+    pub codegen_sourcemap_text: Option<String>,
 
     #[wasm_bindgen(readonly, skip_typescript, js_name = "formattedText")]
     pub formatted_text: String,
@@ -178,7 +182,7 @@ impl Oxc {
         let parser_options = parser_options.unwrap_or_default();
         let _linter_options = linter_options.unwrap_or_default();
         let minifier_options = minifier_options.unwrap_or_default();
-        let _codegen_options = codegen_options.unwrap_or_default();
+        let codegen_options = codegen_options.unwrap_or_default();
         let transform_options = transform_options.unwrap_or_default();
         let control_flow_options = control_flow_options.unwrap_or_default();
 
@@ -203,6 +207,9 @@ impl Oxc {
             preserve_parens: parser_options
                 .preserve_parens
                 .unwrap_or(default_parser_options.preserve_parens),
+            allow_v8_intrinsics: parser_options
+                .allow_v8_intrinsics
+                .unwrap_or(default_parser_options.allow_v8_intrinsics),
         };
         let ParserReturn { mut program, errors, module_record, .. } =
             Parser::new(&allocator, source_text, source_type)
@@ -252,10 +259,22 @@ impl Oxc {
                     IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions::default())
                         .build(&program);
                 if ret.errors.is_empty() {
-                    self.codegen_text = CodeGenerator::new().build(&ret.program).code;
+                    let codegen_result = CodeGenerator::new()
+                        .with_options(CodegenOptions {
+                            source_map_path: codegen_options
+                                .enable_sourcemap
+                                .unwrap_or_default()
+                                .then(|| path.clone()),
+                            ..CodegenOptions::default()
+                        })
+                        .build(&ret.program);
+                    self.codegen_text = codegen_result.code;
+                    self.codegen_sourcemap_text =
+                        codegen_result.map.map(|map| map.to_json_string());
                 } else {
                     self.save_diagnostics(ret.errors.into_iter().collect::<Vec<_>>());
                     self.codegen_text = String::new();
+                    self.codegen_sourcemap_text = None;
                 }
                 return Ok(());
             }
@@ -301,14 +320,19 @@ impl Oxc {
             None
         };
 
-        self.codegen_text = CodeGenerator::new()
+        let codegen_result = CodeGenerator::new()
             .with_symbol_table(symbol_table)
             .with_options(CodegenOptions {
                 minify: minifier_options.whitespace.unwrap_or_default(),
+                source_map_path: codegen_options
+                    .enable_sourcemap
+                    .unwrap_or_default()
+                    .then(|| path.clone()),
                 ..CodegenOptions::default()
             })
-            .build(&program)
-            .code;
+            .build(&program);
+        self.codegen_text = codegen_result.code;
+        self.codegen_sourcemap_text = codegen_result.map.map(|map| map.to_json_string());
         self.ir = format!("{:#?}", program.body);
         self.convert_ast(&mut program);
 
@@ -471,22 +495,37 @@ impl Oxc {
     }
 
     fn convert_ast(&mut self, program: &mut Program) {
-        Utf8ToUtf16::new().convert(program);
+        let span_converter = Utf8ToUtf16::new(program.source_text);
+        span_converter.convert_program(program);
         self.ast_json = program.to_pretty_estree_ts_json();
-        self.comments = Self::map_comments(program.source_text, &program.comments);
+
+        self.comments = Self::map_comments(program.source_text, &program.comments, &span_converter);
     }
 
-    fn map_comments(source_text: &str, comments: &[OxcComment]) -> Vec<Comment> {
+    fn map_comments(
+        source_text: &str,
+        comments: &[OxcComment],
+        span_converter: &Utf8ToUtf16,
+    ) -> Vec<Comment> {
+        let mut offset_converter = span_converter.converter();
+
         comments
             .iter()
-            .map(|comment| Comment {
-                r#type: match comment.kind {
-                    CommentKind::Line => CommentType::Line,
-                    CommentKind::Block => CommentType::Block,
-                },
-                value: comment.content_span().source_text(source_text).to_string(),
-                start: comment.span.start,
-                end: comment.span.end,
+            .map(|comment| {
+                let value = comment.content_span().source_text(source_text).to_string();
+                let mut span = comment.span;
+                if let Some(converter) = &mut offset_converter {
+                    converter.convert_span(&mut span);
+                }
+                Comment {
+                    r#type: match comment.kind {
+                        CommentKind::Line => CommentType::Line,
+                        CommentKind::Block => CommentType::Block,
+                    },
+                    value,
+                    start: span.start,
+                    end: span.end,
+                }
             })
             .collect()
     }

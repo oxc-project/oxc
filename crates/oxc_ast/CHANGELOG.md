@@ -4,6 +4,90 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.0] - 2025-03-06
+
+- 48a0394 ast: [**BREAKING**] Add `scope_id` to `TSFunctionType` (#9559) (camc314)
+
+### Features
+
+
+### Bug Fixes
+
+- bbb4f98 semantic: Insert binding into correct scope for TSInferType (#9567) (camc314)
+
+## [0.55.0] - 2025-03-05
+
+- 4056560 ast/estree: [**BREAKING**] Option to return JS-only AST (#9520) (overlookmotel)
+
+### Features
+
+- 59a9f1d ast: Add `AstBuilder::*_with_pure` etc methods (#9417) (Dunqing)
+- af02a87 ast/estree: `Property` have consistent field order (#9547) (overlookmotel)
+- 3e4f909 ast/estree: ESTree AST `ExportNamedDeclaration` always have `attributes` field (#9546) (overlookmotel)
+- d55dbe2 ast/estree: Raw transfer (experimental) (#9516) (overlookmotel)
+
+### Performance
+
+- 6b4a8c6 ast, codegen, transformer: Avoid allocations when converting `RegExpFlags` to string (#9550) (overlookmotel)
+
+### Refactor
+
+- 734b6b6 ast: `RegExpFlags::to_string` return flags in alphabetical order (#9548) (overlookmotel)
+- c1a8cea ast/estree: Simplify serializing `RegExpLiteral`s (#9551) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+- abb15e0 ast: [**BREAKING**] Add `pure` field to `Function`, `CallExpression`, and `NewExpression` (#9207) (overlookmotel)
+
+### Features
+
+- 26fde56 minifier: Inline simple IIFEs in `remove_unused_expression` (#9465) (sapphi-red)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+- 9b7017c parser,codegen: Pure annotations (#9351) (Boshen)
+
+### Bug Fixes
+
+- b371fdc estree/ast: Camel-case `typeAnnotation` field (#9420) (overlookmotel)
+
+### Performance
+
+- 10e4431 ast/estree: Skip escaping identifiers (#9398) (overlookmotel)
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- 8916335 ast/estree: Convert enums with converters on variants (#9438) (overlookmotel)
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Features
+
+- 5c775ea ast/estree: Enable serialization without TS fields (#9285) (overlookmotel)
+
+### Bug Fixes
+
+- 6a8f53f ast/estree: Visit `JSXOpeningFragment` and `JSXClosingFragment` (#9342) (overlookmotel)
+- e303767 ast/estree: Fix ESTree AST for imports and exports (#9282) (overlookmotel)
+
+### Performance
+
+- 82adab9 ast/estree: Speed up building UTF8-UTF16 translation table with SIMD (#9359) (overlookmotel)
+- 61939ca ast/estree: Faster UTF-8 to UTF-16 span conversion (#9349) (overlookmotel)
+- 1bfc459 ast/estree: Pre-allocate `CodeBuffer` for JSON output (#9340) (overlookmotel)
+
+### Refactor
+
+- 7427900 ast: Re-order `ExportDefaultDeclaration` fields (#9348) (overlookmotel)
+- b09249c ast/estree: Rename serializers and serialization methods (#9284) (overlookmotel)
+- 55ed1df ast/estree: Shorten `ESTree` impls for enums (#9275) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 - 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)

@@ -49,7 +49,8 @@ use std::mem;
 
 use metadata::LegacyDecoratorMetadata;
 use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
-use oxc_ast::{NONE, Visit, VisitMut, ast::*};
+use oxc_ast::{NONE, ast::*};
+use oxc_ast_visit::{Visit, VisitMut};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
@@ -630,8 +631,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let scope_id = ctx.create_child_scope(class.scope_id(), ScopeFlags::ClassStaticBlock);
-        let static_block = ctx.ast.alloc_static_block_with_scope_id(SPAN, decorations, scope_id);
-        let element = ClassElement::StaticBlock(static_block);
+        let element = ctx.ast.class_element_static_block_with_scope_id(SPAN, decorations, scope_id);
         class.body.body.push(element);
     }
 
@@ -903,10 +903,10 @@ impl<'a> LegacyDecorator<'a, '_> {
     ) -> Statement<'a> {
         let export_default_class_reference = ctx.ast.module_declaration_export_default_declaration(
             SPAN,
+            ctx.ast.module_export_name_identifier_name(SPAN, "default"),
             ExportDefaultDeclarationKind::Identifier(
                 ctx.ast.alloc(class_binding.create_read_reference(ctx)),
             ),
-            ctx.ast.module_export_name_identifier_name(SPAN, "default"),
         );
         Statement::from(export_default_class_reference)
     }

@@ -32,10 +32,8 @@ impl ScopeId {
     /// # SAFETY
     /// `idx` must not be `u32::MAX`.
     pub const unsafe fn new_unchecked(idx: u32) -> Self {
-        unsafe {
-            // SAFETY: Caller must ensure `idx` is not `u32::MAX`
-            Self(NonMaxU32::new_unchecked(idx))
-        }
+        // SAFETY: Caller must ensure `idx` is not `u32::MAX`
+        unsafe { Self(NonMaxU32::new_unchecked(idx)) }
     }
 }
 
@@ -79,6 +77,7 @@ bitflags! {
         const SetAccessor      = 1 << 8;
         const CatchClause      = 1 << 9;
         const DirectEval       = 1 << 10; // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval>
+        const TsConditional    = 1 << 11;
         const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
     }
 }
@@ -148,6 +147,10 @@ impl ScopeFlags {
     #[inline]
     pub fn is_catch_clause(&self) -> bool {
         self.contains(Self::CatchClause)
+    }
+
+    pub fn is_ts_conditional(&self) -> bool {
+        self.contains(Self::TsConditional)
     }
 
     #[inline]

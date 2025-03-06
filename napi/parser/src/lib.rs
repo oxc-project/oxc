@@ -9,18 +9,34 @@ use napi_derive::napi;
 use oxc::{
     allocator::Allocator,
     ast::CommentKind,
+    ast_visit::utf8_to_utf16::Utf8ToUtf16,
     parser::{ParseOptions, Parser, ParserReturn},
+    semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
 use oxc_napi::OxcError;
 
 mod convert;
+mod raw_transfer;
+mod raw_transfer_types;
 mod types;
+pub use raw_transfer::{get_buffer_offset, parse_sync_raw, raw_transfer_supported};
 pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
-fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
-    match options.lang.as_deref() {
+mod generated {
+    // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
+    #[cfg(debug_assertions)]
+    pub mod assert_layouts;
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum AstType {
+    JavaScript,
+    TypeScript,
+}
+
+fn get_source_and_ast_type(filename: &str, options: &ParserOptions) -> (SourceType, AstType) {
+    let source_type = match options.lang.as_deref() {
         Some("js") => SourceType::mjs(),
         Some("jsx") => SourceType::jsx(),
         Some("ts") => SourceType::ts(),
@@ -35,7 +51,21 @@ fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
             }
             source_type
         }
-    }
+    };
+
+    let ast_type = match options.ast_type.as_deref() {
+        Some("js") => AstType::JavaScript,
+        Some("ts") => AstType::TypeScript,
+        _ => {
+            if source_type.is_javascript() {
+                AstType::JavaScript
+            } else {
+                AstType::TypeScript
+            }
+        }
+    };
+
+    (source_type, ast_type)
 }
 
 fn parse<'a>(
@@ -52,59 +82,68 @@ fn parse<'a>(
         .parse()
 }
 
-/// Parse without returning anything.
-///
-/// This is for benchmark purposes such as measuring napi communication overhead.
-#[napi]
-pub fn parse_without_return(filename: String, source_text: String, options: Option<ParserOptions>) {
-    let options = options.unwrap_or_default();
-    let allocator = Allocator::default();
-    let source_type = get_source_type(&filename, &options);
-    parse(&allocator, source_type, &source_text, &options);
-}
-
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
-    let source_type = get_source_type(filename, options);
-    let mut ret = parse(&allocator, source_type, &source_text, options);
+    let (source_type, ast_type) = get_source_and_ast_type(filename, options);
+    let ret = parse(&allocator, source_type, &source_text, options);
+
+    let mut program = ret.program;
+    let mut module_record = ret.module_record;
     let mut errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
 
-    let mut comments = ret
-        .program
-        .comments
-        .iter()
-        .map(|comment| Comment {
-            r#type: match comment.kind {
-                CommentKind::Line => String::from("Line"),
-                CommentKind::Block => String::from("Block"),
-            },
-            value: comment.content_span().source_text(&source_text).to_string(),
-            start: comment.span.start,
-            end: comment.span.end,
-        })
-        .collect::<Vec<Comment>>();
-
-    // Empty `comments` so comment spans don't get converted twice
-    ret.program.comments.clear();
-
-    let mut converter = Utf8ToUtf16::new();
-    converter.convert(&mut ret.program);
-    converter.convert_module_record(&mut ret.module_record);
-
-    for comment in &mut comments {
-        comment.start = converter.convert_offset(comment.start);
-        comment.end = converter.convert_offset(comment.end);
+    if options.show_semantic_errors == Some(true) {
+        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+        errors.extend(semantic_ret.errors.into_iter().map(OxcError::from));
     }
 
-    for error in &mut errors {
-        for label in &mut error.labels {
-            label.start = converter.convert_offset(label.start);
-            label.end = converter.convert_offset(label.end);
+    // Convert spans to UTF-16
+    let span_converter = Utf8ToUtf16::new(&source_text);
+    span_converter.convert_program(&mut program);
+
+    // Convert comments
+    let mut offset_converter = span_converter.converter();
+    let comments = program
+        .comments
+        .iter()
+        .map(|comment| {
+            let value = comment.content_span().source_text(&source_text).to_string();
+            let mut span = comment.span;
+            if let Some(converter) = offset_converter.as_mut() {
+                converter.convert_span(&mut span);
+            }
+
+            Comment {
+                r#type: match comment.kind {
+                    CommentKind::Line => String::from("Line"),
+                    CommentKind::Block => String::from("Block"),
+                },
+                value,
+                start: span.start,
+                end: span.end,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    // Convert spans in module record to UTF-16
+    span_converter.convert_module_record(&mut module_record);
+
+    // Convert spans in errors to UTF-16
+    if let Some(mut converter) = span_converter.converter() {
+        for error in &mut errors {
+            for label in &mut error.labels {
+                converter.convert_offset(&mut label.start);
+                converter.convert_offset(&mut label.end);
+            }
         }
     }
 
-    let program = ret.program.to_estree_ts_json();
-    let module = EcmaScriptModule::from(&ret.module_record);
+    let program = match ast_type {
+        AstType::JavaScript => program.to_estree_js_json(),
+        AstType::TypeScript => program.to_estree_ts_json(),
+    };
+
+    let module = EcmaScriptModule::from(&module_record);
+
     ParseResult { program, module, comments, errors }
 }
 

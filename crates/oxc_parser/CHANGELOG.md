@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 2326cef parser: Apply `pure` to argument of unary expression (#9530) (Dunqing)
+
+### Bug Fixes
+
+- a88eb56 parser: Parsing errors occur when type parameters are followed by `as` or `satisfies` (#9553) (Dunqing)
+- 2c6e3f1 parser: Fix false positive parsing optional member expr (#9534) (camc314)
+
+## [0.54.0] - 2025-03-04
+
+- 098f652 codegen: [**BREAKING**] Add `CommentAnnotation` to avoid parsing comments again (#9506) (Boshen)
+
+- a8d1d48 parser,codegen: [**BREAKING**] Parse and print`#__NO_SIDE_EFFECTS__` (#9496) (Boshen)
+
+- a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
+
+### Features
+
+- 7d7f16c parser: Apply pure to rhs of binary expression (#9492) (Boshen)
+- 2a08b14 parser: Support V8 intrinsics (#9379) (injuly)
+- 9b7017c parser,codegen: Pure annotations (#9351) (Boshen)
+
+### Bug Fixes
+
+- 9c6ae9f parser: `@__NO_SIDE_EFFECTS` only affects const variable decl (#9517) (Boshen)
+- b7d5513 parser: Parse `@__NO_SIDE_EFFECTS__` between `export default` and `async function` (#9514) (Boshen)
+- 01de74c parser: Correctly fail parsing when parsing `foo.bar?.` (#9499) (camc314)
+- 58defe3 parser: Mark expression as pure in chain expression (#9479) (sapphi-red)
+- 2a03689 parser: Mark expressions on the left side of logical and conditional expressions as pure (#9414) (sapphi-red)
+
+### Performance
+
+
+## [0.53.0] - 2025-02-26
+
+### Performance
+
+- 61939ca ast/estree: Faster UTF-8 to UTF-16 span conversion (#9349) (overlookmotel)
+
+### Refactor
+
+- 7427900 ast: Re-order `ExportDefaultDeclaration` fields (#9348) (overlookmotel)
+- b09249c ast/estree: Rename serializers and serialization methods (#9284) (overlookmotel)
+- 4e9e8cf lexer: Reduce scope of `unsafe` blocks (#9320) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 - 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)

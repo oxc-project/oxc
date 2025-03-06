@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- 29041fb data_structures: Move `InlineString` into `oxc_data_structures` crate (#9549) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Features
+
+- f21740e data_structures: Add `CodeBuffer::print_bytes_iter_unchecked` method (#9337) (overlookmotel)
+
+### Bug Fixes
+
+- 54d59f1 data_structures: Stack types correctly report allocation size if allocation failure during grow (#9317) (overlookmotel)
+
+### Documentation
+
+- 8bd3e39 data_structures: Uppercase SAFETY comments (#9330) (overlookmotel)
+
+### Refactor
+
+- 9d98444 codegen, data_structures: Move `CodeBuffer` into `oxc_data_structures` crate (#9326) (overlookmotel)
+- 6a4e892 data_structures: Add debug assertion to `CodeBuffer::peek_nth_char_back` and improve safety docs (#9336) (overlookmotel)
+- fc46218 data_structures: `CodeBuffer::print_str` use `Vec::extend_from_slice` (#9332) (overlookmotel)
+- 690bae5 data_structures: Stack types const assert `T` is not zero-size type (#9318) (overlookmotel)
+- 10ba2ea data_structures: Reduce scope of `unsafe` blocks (#9316) (overlookmotel)
+- beb8382 data_structures: `CodeBuffer::print_bytes_unchecked` take a byte slice (#9327) (overlookmotel)
+
 ## [0.49.0] - 2025-02-10
 
 - bec8fee data_structures: [**BREAKING**] Rename `Stack::last_unchecked_mut` method (#8911) (overlookmotel)

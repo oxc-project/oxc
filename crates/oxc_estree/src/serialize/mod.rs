@@ -1,21 +1,22 @@
 // Methods which are trivial or just delegate to other methods are marked `#[inline(always)]`
 #![expect(clippy::inline_always)]
 
+use oxc_data_structures::code_buffer::CodeBuffer;
+
 mod blanket;
-mod buffer;
 mod config;
 mod formatter;
 mod primitives;
 mod sequences;
 mod strings;
 mod structs;
-use buffer::Buffer;
 use config::{Config, ConfigJS, ConfigTS};
 use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use sequences::SequenceSerializer;
+pub use strings::JsonSafeString;
 pub use structs::{FlatStructSerializer, StructSerializer};
 
 /// Trait for types which can be serialized to ESTree.
@@ -47,10 +48,10 @@ trait SerializerPrivate: Sized {
     type Formatter: Formatter;
 
     /// Get mutable reference to buffer.
-    fn buffer_mut(&mut self) -> &mut Buffer;
+    fn buffer_mut(&mut self) -> &mut CodeBuffer;
 
     /// Get mutable references to buffer and formatter.
-    fn buffer_and_formatter_mut(&mut self) -> (&mut Buffer, &mut Self::Formatter);
+    fn buffer_and_formatter_mut(&mut self) -> (&mut CodeBuffer, &mut Self::Formatter);
 }
 
 /// ESTree serializer which produces compact JSON, including TypeScript fields.
@@ -67,7 +68,7 @@ pub type PrettyJSSerializer = ESTreeSerializer<ConfigJS, PrettyFormatter>;
 
 /// ESTree serializer.
 pub struct ESTreeSerializer<C: Config, F: Formatter> {
-    buffer: Buffer,
+    buffer: CodeBuffer,
     formatter: F,
     #[expect(unused)]
     config: C,
@@ -76,7 +77,12 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
     pub fn new() -> Self {
-        Self { buffer: Buffer::new(), formatter: F::new(), config: C::new() }
+        Self { buffer: CodeBuffer::new(), formatter: F::new(), config: C::new() }
+    }
+
+    /// Create new [`ESTreeSerializer`] with specified buffer capacity.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self { buffer: CodeBuffer::with_capacity(capacity), formatter: F::new(), config: C::new() }
     }
 
     /// Consume this [`ESTreeSerializer`] and convert buffer to string.
@@ -114,13 +120,13 @@ impl<C: Config, F: Formatter> SerializerPrivate for &mut ESTreeSerializer<C, F> 
 
     /// Get mutable reference to buffer.
     #[inline(always)]
-    fn buffer_mut(&mut self) -> &mut Buffer {
+    fn buffer_mut(&mut self) -> &mut CodeBuffer {
         &mut self.buffer
     }
 
     /// Get mutable references to buffer and formatter.
     #[inline(always)]
-    fn buffer_and_formatter_mut(&mut self) -> (&mut Buffer, &mut F) {
+    fn buffer_and_formatter_mut(&mut self) -> (&mut CodeBuffer, &mut F) {
         (&mut self.buffer, &mut self.formatter)
     }
 }

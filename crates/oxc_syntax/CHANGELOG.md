@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.0] - 2025-03-06
+
+### Bug Fixes
+
+- bbb4f98 semantic: Insert binding into correct scope for TSInferType (#9567) (camc314)
+
+## [0.55.0] - 2025-03-05
+
+### Features
+
+- d55dbe2 ast/estree: Raw transfer (experimental) (#9516) (overlookmotel)
+
+## [0.54.0] - 2025-03-04
+
+### Performance
+
+- b0a0a82 ast/estree: Reduce overhead serializing static strings (#9396) (overlookmotel)
+
+### Refactor
+
+- dcff40c ast_tools: Generate layout assertions in multiple crates (#9448) (overlookmotel)
+
+## [0.53.0] - 2025-02-26
+
+### Refactor
+
+- 55ed1df ast/estree: Shorten `ESTree` impls for enums (#9275) (overlookmotel)
+- 12e89e0 syntax: Reduce scope of `unsafe` blocks (#9322) (overlookmotel)
+
 ## [0.52.0] - 2025-02-21
 
 - 216b33f ast/estree: [**BREAKING**] Replace `serde` with custom `ESTree` serializer (#9256) (overlookmotel)

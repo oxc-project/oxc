@@ -126,7 +126,7 @@ pub struct JSXFragment<'a> {
 }
 
 /// JSX Opening Fragment (`<>`)
-#[ast]
+#[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXOpeningFragment {
@@ -135,7 +135,7 @@ pub struct JSXOpeningFragment {
 }
 
 /// JSX Closing Fragment (`</>`)
-#[ast]
+#[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXClosingFragment {
@@ -147,20 +147,18 @@ pub struct JSXClosingFragment {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
-#[estree(
-    custom_serialize,
-    custom_ts_def = "type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpression"
-)]
 pub enum JSXElementName<'a> {
     /// `<div />`
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
     /// `<Apple />`
+    #[estree(via = JSXElementIdentifierReference)]
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 1,
     /// `<Apple:Orange />`
     NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 2,
     /// `<Apple.Orange />`
     MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 3,
     /// `<this />`
+    #[estree(via = JSXElementThisExpression)]
     ThisExpression(Box<'a, ThisExpression>) = 4,
 }
 
@@ -229,16 +227,14 @@ pub struct JSXMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
-#[estree(
-    custom_serialize,
-    custom_ts_def = "type JSXMemberExpressionObject = JSXIdentifier | JSXMemberExpression"
-)]
 pub enum JSXMemberExpressionObject<'a> {
     /// `<Apple.Orange />`
+    #[estree(via = JSXElementIdentifierReference)]
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
     /// `<Apple.Orange.Banana />`
     MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 1,
     /// `<this.Orange />`
+    #[estree(via = JSXElementThisExpression)]
     ThisExpression(Box<'a, ThisExpression>) = 2,
 }
 
@@ -430,6 +426,7 @@ pub struct JSXIdentifier<'a> {
     /// Node location in source code
     pub span: Span,
     /// The name of the identifier.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 

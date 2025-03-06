@@ -82,9 +82,10 @@ mod test {
 
     #[test]
     fn minimize_nots_with_binary_expressions() {
-        test("!(x === undefined)", "x !== void 0");
-        test("!(typeof(x) === 'undefined')", "typeof x > 'u'");
-        test("!(x === void 0)", "x !== void 0");
+        test("!(x === undefined)", "x");
+        test("!(typeof(x) === 'undefined')", "");
+        test("!(typeof(x()) === 'undefined')", "x()");
+        test("!(x === void 0)", "x");
         test("!!delete x.y", "delete x.y");
         test("!!!delete x.y", "delete x.y");
         test("!!!!delete x.y", "delete x.y");

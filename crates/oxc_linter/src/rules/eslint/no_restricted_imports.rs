@@ -234,32 +234,317 @@ declare_oxc_lint!(
     /// It applies to static imports only, not dynamic ones.
     ///
     /// ### Why is this bad?
-    ///Some imports might not make sense in a particular environment. For example, Node.js’ fs module would not make sense in an environment that didn’t have a file system.
+    /// Some imports might not make sense in a particular environment.
+    /// For example, Node.js’ fs module would not make sense in an environment that didn’t have a file system.
     ///
-    /// Some modules provide similar or identical functionality, think lodash and underscore. Your project may have standardized on a module. You want to make sure that the other alternatives are not being used as this would unnecessarily bloat the project and provide a higher maintenance cost of two dependencies when one would suffice.
+    /// Some modules provide similar or identical functionality, think lodash and underscore. Your project may have standardized on a module.
+    /// You want to make sure that the other alternatives are not being used as this would unnecessarily bloat the project
+    /// and provide a higher maintenance cost of two dependencies when one would suffice.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
+    /// /*eslint no-restricted-imports: ["error", "disallowed-import"]"*/
+    ///
+    /// import foo from 'disallowed-import';
+    /// export * from 'disallowed-import';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", "fs"]*/
+    ///
+    /// import crypto from 'crypto';
+    /// export * from "bar";
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// You may also specify a custom message for a particular module using the `name` and `message` properties inside an object,
+    /// where the value of the name is the `name` of the module and message property contains the custom message.
+    /// The custom message will be displayed as a help text for the user.
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// /*eslint no-restricted-imports: ["error", {
-    ///     "name": "disallowed-import",
-    ///     "message": "Please use 'allowed-import' instead"
+    ///   "name": "disallowed-import",
+    ///   "message": "Please use 'allowed-import' instead"
     /// }]*/
     ///
     /// import foo from 'disallowed-import';
     /// ```
     ///
-    /// Examples of **correct** code for this rule:
+    /// #### paths
+    ///
+    /// This is an object option whose value is an array containing the names of the modules you want to restrict.
+    ///
+    /// ```json
+    /// {"rules: {"no-restricted-imports": ["error", { "paths": ["import1", "import2"] }]}}
+    /// ``
+    ///
+    /// Examples of **incorrect** code for `paths`:
+    ///
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", {"name": "fs"}]*/
+    /// /*eslint no-restricted-imports: ["error", { "paths": ["cluster"] }]*/
+    ///
+    /// import cluster from 'cluster';
+    /// ```
+    ///
+    /// Custom messages for a particular module can also be specified in `paths` array using objects with `name` and `message`.
+    ///
+    /// ```json
+    /// "no-restricted-imports": ["error", {
+    ///   "paths": [{
+    ///     "name": "import-foo",
+    ///     "message": "Please use import-bar instead."
+    ///   }, {
+    ///     "name": "import-baz",
+    ///     "message": "Please use import-quux instead."
+    ///   }]
+    /// }]
+    /// ````
+    ///
+    /// ##### importNames
+    ///
+    /// This option in `paths` is an array and can be used to specify the names of certain bindings exported from a module.
+    /// Import names specified inside `paths` array affect the module specified in the `name` property of corresponding object,
+    /// so it is required to specify the `name` property first when you are using `importNames` or `message` option.
+    ///
+    /// Specifying `"default"` string inside the `importNames` array will restrict the default export from being imported.
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { paths: [{
+    ///   "name": "foo",
+    ///   "importNames": ["default"]
+    /// }, {
+    ///   "name": "bar",
+    ///   "importNames": ["Baz"]
+    /// }]}]*/
+    ///
+    /// import DisallowedObject from "foo";
+    /// import {Baz} from "far";
+    /// ```
+    ///
+    /// ##### allowImportNames
+    ///
+    /// This option is an array. Inverse of `importNames`, `allowImportNames` allows the imports that are specified inside this array.
+    /// So it restricts all imports from a module, except specified allowed ones.
+    ///
+    /// Note: `allowImportNames` cannot be used in combination with `importNames`.
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { paths: [{
+    ///   "name": "foo",
+    ///   "allowImportNames": ["AllowedObject"],
+    ///   "message": "Please use only 'AllowedObject' from 'foo'."
+    /// }]}]*/
+    ///
+    /// import { DisallowedObject } from "foo";
+    /// ```
+    ///
+    /// #### allowTypeImports
+    ///
+    /// Whether to allow type-only imports for a path. Default: `false`.
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```typescript
+    /// /*eslint no-restricted-imports: ["error", { paths: [{
+    ///   "name": "foo",
+    ///   "allowTypeImports": true
+    /// }]}]*/
+    ///
+    /// import foo from 'import-foo';
+    /// export { Foo } from 'import-foo';
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// /*eslint no-restricted-imports: ["error", { paths: [{
+    ///   "name": "foo",
+    ///   "allowTypeImports": true
+    /// }]}]*/
+    ///
+    /// import type foo from 'import-foo';
+    /// export type { Foo } from 'import-foo';
+    /// ```
+    ///
+    /// #### patterns
+    ///
+    /// This is also an object option whose value is an array.
+    /// This option allows you to specify multiple modules to restrict using `gitignore`-style patterns or regular expressions.
+    ///
+    /// Where `paths` option takes exact import paths, `patterns` option can be used to specify the import paths with more flexibility,
+    /// allowing for the restriction of multiple modules within the same directory. For example:
+    ///
+    /// ```json
+    /// "no-restricted-imports": ["error", {
+    ///   "paths": [{
+    ///     "name": "import-foo",
+    ///   }]
+    /// }]
+    /// ```
+    /// This configuration restricts import of the `import-foo` module
+    /// but wouldn’t restrict the import of `import-foo/bar` or `import-foo/baz`. You can use `patterns` to restrict both:
+    ///
+    /// ```json
+    /// "no-restricted-imports": ["error", {
+    ///   "paths": [{
+    ///     "name": "import-foo",
+    ///   }],
+    ///   "patterns": [{
+    ///     "group": ["import-foo/ba*"],
+    ///   }]
+    /// }]
+    /// ```
+    ///
+    /// This configuration restricts imports not just from `import-foo` using path,
+    /// but also `import-foo/bar` and `import-foo/baz` using `patterns`.
+    ///
+    /// You can also use regular expressions to restrict modules (see the `regex` option).
+    ///
+    /// Examples of **incorrect** code for `patterns` option:
+    ///
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { "patterns": ["lodash/*"] }]*/
+    ///
+    /// import pick from 'lodash/pick';
+    /// ```
+    ///
+    /// Examples of **correct** code for `patterns` option:
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { "patterns": ["crypto/*"] }]*/
     ///
     /// import crypto from 'crypto';
-    /// export { foo } from "bar";
+    /// ```
+    ///
+    /// ##### group
+    ///
+    /// The `patterns` array can also include objects. The `group` property is used to specify the `gitignore`-style patterns
+    /// for restricting modules and the `message` property is used to specify a custom message.
+    ///
+    /// Either of the `group` or `regex` properties is required when using the `patterns` option.
+    ///
+    /// Examples of **incorrect** code for `group` option:
+    ///
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    ///   group: ["lodash/*"],
+    ///   message: "Please use the default import from 'lodash' instead."
+    /// }]}]*/
+    ///
+    /// import pick from 'lodash/pick';
+    /// ```
+    ///
+    /// ##### regex
+    ///
+    /// The `regex` property is used to specify the regex patterns for restricting modules.
+    ///
+    /// Note: `regex` cannot be used in combination with `group`.
+    ///
+    /// **Warning**: This rule uses the [Rust-Regex](https://docs.rs/regex/latest/regex/), which supports not all features of JS-Regex,
+    /// like Lookahead and Lookbehinds.
+    ///
+    /// Examples of **incorrect** code for `regex` option:
+    /// ````js
+    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    ///   regex: "@app/(api|enums).*",
+    /// }]}]*/
+    ///
+    /// import Foo from '@app/api';
+    /// import Bar from '@app/api/bar';
+    /// import Baz from '@app/api/baz';
+    /// import Bux from '@app/api/enums/foo';
+    /// ```
+    ///
+    /// ##### caseSensitive
+    ///
+    /// This is a boolean option and sets the patterns specified in the `group` property to be case-sensitive when `true`. Default is `false`.
+    ///
+    /// **Warning**: It will not apply case-sensitive checks to `regex`. `regex` uses Rust-RegEx which has its own implementation of case-sensitive.
+    ///
+    /// ##### importNames
+    ///
+    /// You can also specify `importNames` within objects inside the `patterns` array.
+    /// In this case, the specified names apply only to the associated `group` or `regex` property.
+    ///
+    /// Examples of **incorrect** code for `importNames` in `patterns`:
+    ///
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    ///   group: ["utils/*"],
+    ///   importNames: ['isEmpty'],
+    ///   message: "Use 'isEmpty' from lodash instead."
+    /// }]}]*/
+    ///
+    /// import { isEmpty } from 'utils/collection-utils';
+    /// ```
+    ///
+    /// ##### allowImportNames
+    ///
+    /// You can also specify `allowImportNames` within objects inside the `patterns` array.
+    /// In this case, the specified names apply only to the associated `group` or `regex` property.
+    ///
+    /// Note: `allowImportNames` cannot be used in combination with `importNames`, `importNamePattern` or `allowImportNamePattern`.
+    ///
+    /// ##### importNamePattern
+    ///
+    /// This option allows you to use regex patterns to restrict import names.
+    ///
+    /// Examples of **incorrect** code for `importNamePattern` option:
+    ///
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    ///   group: ["foo/*"],
+    ///   importNamePattern: '^(is|has)',
+    ///   message: "Use 'is*' and 'has*' functions from baz/bar instead"
+    /// }]}]*/
+    ///
+    /// import { isSomething, hasSomething } from 'foo/bar';
+    /// ```
+    ///
+    /// ##### allowImportNamePattern
+    ///
+    /// This is a string option. Inverse of `importNamePattern`, this option allows imports that matches the specified regex pattern.
+    /// So it restricts all imports from a module, except specified allowed patterns.
+    ///
+    /// Note: `allowImportNamePattern` cannot be used in combination with `importNames`, `importNamePattern` or `allowImportNames`.
+    ///
+    /// ```json
+    /// "no-restricted-imports": ["error", {
+    ///   "patterns": [{
+    ///     "group": ["import-foo/*"],
+    ///     "allowImportNamePattern": "^foo",
+    ///   }]
+    /// }]
+    /// ```
+    ///
+    /// Examples of **incorrect** code for `allowImportNamePattern` option:
+    ///
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    ///   group: ["utils/*"],
+    ///   allowImportNamePattern: '^has'
+    /// }]}]*/
+    ///
+    /// import { isEmpty } from 'utils/collection-utils';
+    /// ```
+    ///
+    /// Examples of **correct** code for `allowImportNamePattern` option:
+    ///
+    /// ```js
+    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    ///   group: ["utils/*"],
+    ///   allowImportNamePattern: '^is'
+    /// }]}]*/
+    ///
+    /// import { isEmpty } from 'utils/collection-utils';
     /// ```
     NoRestrictedImports,
     eslint,
-    nursery,
+    restriction,
 );
 
 fn add_configuration_path_from_object(
@@ -873,8 +1158,12 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let diagnostic =
-                get_diagnostic_from_import_name_result_path(entry.span, source, result, path);
+            let diagnostic = get_diagnostic_from_import_name_result_path(
+                entry.statement_span,
+                source,
+                result,
+                path,
+            );
 
             ctx.diagnostic(diagnostic);
         }
@@ -900,7 +1189,10 @@ impl NoRestrictedImports {
                 }
                 GlobResult::Found => {
                     let diagnostic = get_diagnostic_from_import_name_result_pattern(
-                        entry.span, source, result, pattern,
+                        entry.statement_span,
+                        source,
+                        result,
+                        pattern,
                     );
 
                     found_errors.push(diagnostic);
@@ -910,7 +1202,10 @@ impl NoRestrictedImports {
 
             if pattern.get_regex_result(module_request.name()) {
                 ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
-                    entry.span, source, result, pattern,
+                    entry.statement_span,
+                    source,
+                    result,
+                    pattern,
                 ));
             }
         }
@@ -1813,7 +2108,6 @@ fn test() {
         ),
         (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export * as ns from "fs";"#, Some(serde_json::json!(["fs"]))),
-        // ToDo: wrong span
         (r#"export {a} from "fs";"#, Some(serde_json::json!(["fs"]))),
         (
             r#"export {foo as b} from "fs";"#,
@@ -1865,7 +2159,6 @@ fn test() {
                  }]
             }])),
         ),
-        // ToDo: wrong span
         (
             r#"export * as ns from "fs";"#,
             Some(serde_json::json!([{

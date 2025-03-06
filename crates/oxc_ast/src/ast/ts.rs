@@ -282,7 +282,9 @@ pub use match_ts_type;
 /// ## Reference
 /// * [TypeScript Handbook - Conditional Types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html)
 #[ast(visit)]
-#[scope]
+#[scope(
+    flags = ScopeFlags::TsConditional,
+)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConditionalType<'a> {
@@ -969,7 +971,6 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub this_param: Option<TSThisParameter<'a>>,
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
@@ -1006,7 +1007,6 @@ pub struct TSMethodSignature<'a> {
     pub kind: TSMethodSignatureKind,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1020,7 +1020,6 @@ pub struct TSMethodSignature<'a> {
 pub struct TSConstructSignatureDeclaration<'a> {
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1032,6 +1031,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[estree(rename = "Identifier")]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
+    #[estree(json_safe)]
     pub name: Atom<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
@@ -1323,6 +1323,7 @@ pub enum TSImportAttributeName<'a> {
 /// //             ^^^^ return_type
 /// ```
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSFunctionType<'a> {
@@ -1342,7 +1343,6 @@ pub struct TSFunctionType<'a> {
     /// ```
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters. Akin to [`Function::params`].
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     /// Return type of the function.
     /// ```ts
@@ -1350,6 +1350,8 @@ pub struct TSFunctionType<'a> {
     /// //             ^^^^
     /// ```
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
+
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[ast(visit)]
@@ -1359,7 +1361,6 @@ pub struct TSConstructorType<'a> {
     pub span: Span,
     pub r#abstract: bool,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
 }

@@ -90,12 +90,7 @@ impl<'a> ToJsString<'a> for NumericLiteral<'a> {
     fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
         use oxc_syntax::number::ToJsString;
         let value = self.value;
-        let s = value.to_js_string();
-        Some(if value == 0.0 {
-            Cow::Borrowed("0")
-        } else {
-            Cow::Owned(if value.is_sign_negative() && value != 0.0 { format!("-{s}") } else { s })
-        })
+        Some(if value == 0.0 { Cow::Borrowed("0") } else { Cow::Owned(value.to_js_string()) })
     }
 }
 

@@ -50,7 +50,7 @@ declare_oxc_lint!(
 
 fn constant_short_circuit(lhs_name: &str, expr_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Unexpected constant {lhs_name:?} on the left-hand side of a {expr_name:?} expression"
+        "Unexpected constant {lhs_name} on the left-hand side of a {expr_name:?} expression"
     ))
     .with_help("This expression always evaluates to the constant on the left-hand side")
     .with_label(span)

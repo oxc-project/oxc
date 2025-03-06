@@ -7,7 +7,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
+use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions,
     LintService, LintServiceOptions, Linter, Oxlintrc, loader::LINT_PARTIAL_LOADER_EXT,
@@ -59,6 +59,11 @@ impl Runner for LintRunner {
             experimental_nested_config,
             ..
         } = self.options;
+
+        let use_nested_config = experimental_nested_config &&
+            // If the `--config` option is explicitly passed, we should not search for nested config files
+            // as the passed config file takes absolute precedence.
+            basic_options.config.is_none();
 
         let mut paths = paths;
         let provided_path_count = paths.len();
@@ -151,7 +156,7 @@ impl Runner for LintRunner {
             if provided_path_count > 0 {
                 if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
                     number_of_files: 0,
-                    number_of_rules: 0,
+                    number_of_rules: None,
                     threads_count: rayon::current_num_threads(),
                     start_time: now.elapsed(),
                 }) {
@@ -175,12 +180,7 @@ impl Runner for LintRunner {
         let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
         let mut nested_configs = FxHashMap::<PathBuf, ConfigStore>::default();
 
-        let use_nested_config =
-            // If the `--config` option is explicitly passed, we should not search for nested config files
-            // as the passed config file takes absolute precedence.
-            basic_options.config.is_none();
-
-        if experimental_nested_config && use_nested_config {
+        if use_nested_config {
             // get all of the unique directories among the paths to use for search for
             // oxlint config files in those directories
             // e.g. `/some/file.js` and `/some/other/file.js` would both result in `/some`
@@ -200,9 +200,28 @@ impl Runner for LintRunner {
 
             // iterate over each config and build the ConfigStore
             for (dir, oxlintrc) in nested_oxlintrc {
+                // TODO(refactor): clean up all of the error handling in this function
+                let builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
+                    Ok(builder) => builder,
+                    Err(e) => {
+                        let handler = GraphicalReportHandler::new();
+                        let mut err = String::new();
+                        handler
+                            .render_report(&mut err, &OxcDiagnostic::error(e.to_string()))
+                            .unwrap();
+                        stdout
+                            .write_all(
+                                format!("Failed to parse configuration file.\n{err}\n").as_bytes(),
+                            )
+                            .or_else(Self::check_for_writer_error)
+                            .unwrap();
+                        stdout.flush().unwrap();
+
+                        return CliRunResult::InvalidOptionConfig;
+                    }
+                }
                 // TODO(perf): figure out if we can avoid cloning `filter`
-                let builder =
-                    ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter.clone());
+                .with_filters(filter.clone());
                 match builder.build() {
                     Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
                     Err(diagnostic) => {
@@ -230,8 +249,22 @@ impl Runner for LintRunner {
         } else {
             None
         };
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter);
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc) {
+            Ok(builder) => builder,
+            Err(e) => {
+                let handler = GraphicalReportHandler::new();
+                let mut err = String::new();
+                handler.render_report(&mut err, &OxcDiagnostic::error(e.to_string())).unwrap();
+                stdout
+                    .write_all(format!("Failed to parse configuration file.\n{err}\n").as_bytes())
+                    .or_else(Self::check_for_writer_error)
+                    .unwrap();
+                stdout.flush().unwrap();
+
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
+        .with_filters(filter);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
@@ -981,5 +1014,30 @@ mod test {
             "oxlint-no-console.json",
         ];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_explicit_config() {
+        // Check that referencing a config file that extends other config files works as expected
+        let args = &["--config", "extends_rules_config.json", "console.js"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_extends_config() {
+        // Check that using a config that extends a config which extends a config works
+        let args = &["--config", "relative_paths/extends_extends_config.json", "console.js"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_extends_overrides() {
+        // Check that using a config with overrides works as expected
+        let args = &["--experimental-nested-config", "overrides"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
+
+        // Check that using a config which extends a config with overrides works as expected
+        let args = &["--experimental-nested-config", "overrides_same_directory"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "0.15.12"
+version = "0.15.13"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -22,6 +22,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_diagnostics = { workspace = true }
@@ -43,6 +44,7 @@ fast-glob = { workspace = true }
 globset = { workspace = true }
 ignore = { workspace = true }
 itertools = { workspace = true }
+javascript-globals = { workspace = true }
 json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
 lazy_static = { workspace = true }

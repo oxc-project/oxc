@@ -7,23 +7,25 @@ working directory:
 ----------
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
-   ,-[fixtures/vue/debugger.vue:2:5]
- 1 | 
- 2 |     debugger
+   ,-[fixtures/vue/debugger.vue:6:5]
+ 5 | <script>
+ 6 |     debugger
    :     ^^^^^^^^
+ 7 | </script>
    `----
   help: Delete this code.
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
-   ,-[fixtures/vue/debugger.vue:3:5]
- 2 |     let foo: T; // test ts syntax
- 3 |     debugger;
-   :     ^^^^^^^^^
-   `----
+    ,-[fixtures/vue/debugger.vue:11:5]
+ 10 |     let foo: T; // test ts syntax
+ 11 |     debugger;
+    :     ^^^^^^^^^
+ 12 | </script>
+    `----
   help: Delete this code.
 
 Found 2 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 99 rules using 1 threads.
+Finished in <variable>ms on 1 file with 100 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

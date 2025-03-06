@@ -1,4 +1,24 @@
-use super::{Buffer, ESTree, Serializer};
+use oxc_data_structures::code_buffer::CodeBuffer;
+
+use super::{ESTree, Serializer};
+
+/// A string which does not need any escaping in JSON.
+///
+/// This provides better performance when you know that the string definitely contains no characters
+/// that require escaping, as it avoids the cost of checking that.
+///
+/// If the string does in fact contain characters that did need escaping, it will result in invalid JSON.
+pub struct JsonSafeString<'s>(pub &'s str);
+
+impl ESTree for JsonSafeString<'_> {
+    #[inline(always)]
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        let buffer = serializer.buffer_mut();
+        buffer.print_ascii_byte(b'"');
+        buffer.print_str(self.0);
+        buffer.print_ascii_byte(b'"');
+    }
+}
 
 /// [`ESTree`] implementation for string slice.
 impl ESTree for str {
@@ -62,8 +82,8 @@ static ESCAPE: [Escape; 256] = {
 /// Write string to buffer.
 /// String is wrapped in `"`s, and with any characters which are not valid in JSON escaped.
 #[inline(always)]
-fn write_str(s: &str, buffer: &mut Buffer) {
-    buffer.push_ascii_byte(b'"');
+fn write_str(s: &str, buffer: &mut CodeBuffer) {
+    buffer.print_ascii_byte(b'"');
 
     let bytes = s.as_bytes();
 
@@ -80,7 +100,7 @@ fn write_str(s: &str, buffer: &mut Buffer) {
             // Therefore current `index` must mark the end of a valid UTF8 character sequence.
             // `start` is either the start of string, or after an ASCII character,
             // therefore always the start of a valid UTF8 character sequence.
-            unsafe { buffer.push_bytes(&bytes[start..index]) };
+            unsafe { buffer.print_bytes_unchecked(&bytes[start..index]) };
         }
 
         write_char_escape(escape, byte, buffer);
@@ -92,18 +112,18 @@ fn write_str(s: &str, buffer: &mut Buffer) {
         // SAFETY: `bytes` is derived from a `&str`.
         // `start` is either the start of string, or after an ASCII character,
         // therefore always the start of a valid UTF8 character sequence.
-        unsafe { buffer.push_bytes(&bytes[start..]) };
+        unsafe { buffer.print_bytes_unchecked(&bytes[start..]) };
     }
 
-    buffer.push_ascii_byte(b'"');
+    buffer.print_ascii_byte(b'"');
 }
 
-fn write_char_escape(escape: Escape, byte: u8, buffer: &mut Buffer) {
+fn write_char_escape(escape: Escape, byte: u8, buffer: &mut CodeBuffer) {
     #[expect(clippy::if_not_else)]
     if escape != Escape::UU {
-        buffer.push_ascii_byte(b'\\');
+        buffer.print_ascii_byte(b'\\');
         // SAFETY: All values of `Escape` are ASCII
-        unsafe { buffer.push_ascii_byte_unchecked(escape as u8) };
+        unsafe { buffer.print_byte_unchecked(escape as u8) };
     } else {
         static HEX_DIGITS: [u8; 16] = *b"0123456789abcdef";
         let bytes = [
@@ -115,7 +135,7 @@ fn write_char_escape(escape: Escape, byte: u8, buffer: &mut Buffer) {
             HEX_DIGITS[(byte & 0xF) as usize],
         ];
         // SAFETY: `bytes` contains only ASCII bytes
-        unsafe { buffer.push_bytes(&bytes) }
+        unsafe { buffer.print_bytes_unchecked(&bytes) }
     }
 }
 

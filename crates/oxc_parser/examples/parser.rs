@@ -2,7 +2,7 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::utf8_to_utf16::Utf8ToUtf16;
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -41,7 +41,7 @@ fn main() -> Result<(), String> {
     if show_ast || show_estree {
         println!("AST:");
         if show_estree {
-            Utf8ToUtf16::new().convert(&mut program);
+            Utf8ToUtf16::new(&source_text).convert_program(&mut program);
         }
         println!("{}", program.to_pretty_estree_ts_json());
     }

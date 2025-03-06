@@ -515,21 +515,19 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     ) {
         let had_props = !props.is_empty();
         let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec_from_iter(props.drain(..)), None);
-        let new_expr = if let Some(call_expr) = expr.take() {
-            let callee = transform_ctx.helper_load(Helper::ObjectSpread2, ctx);
+        let arguments = if let Some(call_expr) = expr.take() {
             let arg = Expression::CallExpression(ctx.ast.alloc(call_expr));
-            let mut arguments = ctx.ast.vec1(Argument::from(arg));
+            let arg = Argument::from(arg);
             if had_props {
                 let empty_object = ctx.ast.expression_object(SPAN, ctx.ast.vec(), None);
-                arguments.push(Argument::from(empty_object));
-                arguments.push(Argument::from(obj));
+                ctx.ast.vec_from_array([arg, Argument::from(empty_object), Argument::from(obj)])
+            } else {
+                ctx.ast.vec1(arg)
             }
-            ctx.ast.call_expression(SPAN, callee, NONE, arguments, false)
         } else {
-            let callee = transform_ctx.helper_load(Helper::ObjectSpread2, ctx);
-            let arguments = ctx.ast.vec1(Argument::from(obj));
-            ctx.ast.call_expression(SPAN, callee, NONE, arguments, false)
+            ctx.ast.vec1(Argument::from(obj))
         };
+        let new_expr = transform_ctx.helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
         expr.replace(new_expr);
     }
 }
@@ -673,9 +671,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             let span = stmt.span();
             (span, ctx.ast.vec1(ctx.ast.move_statement(stmt)))
         };
-        *stmt = Statement::BlockStatement(
-            ctx.ast.alloc_block_statement_with_scope_id(span, stmts, scope_id),
-        );
+        *stmt = ctx.ast.statement_block_with_scope_id(span, stmts, scope_id);
         scope_id
     }
 

@@ -1382,7 +1382,7 @@ impl<'a> ParserImpl<'a> {
             kind if kind.is_update_operator() => true,
             Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At => true,
             kind if kind.is_binary_operator() => true,
-            kind => kind.is_identifier(),
+            kind => kind.is_ts_identifier(self.ctx.has_yield(), self.ctx.has_await()),
         }
     }
 
@@ -1403,7 +1403,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => {
                 matches!(self.peek_kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
             }
-            kind => kind.is_identifier(),
+            _ => false,
         }
     }
 }

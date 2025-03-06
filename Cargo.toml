@@ -25,7 +25,7 @@ unit-bindings = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
 tail_expr_drop_order = "warn"
 unsafe_op_in_unsafe_fn = "warn"
-unused_unsafe = "allow"
+unused_unsafe = "warn"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
@@ -51,7 +51,7 @@ rc_buffer = "warn"
 rc_mutex = "warn"
 rest_pat_in_fully_bound_structs = "warn"
 unnecessary_safety_comment = "warn"
-undocumented_unsafe_blocks = "allow" # FIXME
+undocumented_unsafe_blocks = "warn"
 infinite_loop = "warn"
 map_with_unused_argument_over_ranges = "warn"
 unused_result_ok = "warn"
@@ -101,29 +101,30 @@ doc_lazy_continuation = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.52.0", path = "crates/oxc" }
-oxc_allocator = { version = "0.52.0", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.52.0", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.52.0", path = "crates/oxc_ast_macros" }
-oxc_cfg = { version = "0.52.0", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.52.0", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.52.0", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.52.0", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.52.0", path = "crates/oxc_ecmascript" }
-oxc_estree = { version = "0.52.0", path = "crates/oxc_estree" }
-oxc_isolated_declarations = { version = "0.52.0", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.52.0", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.52.0", path = "crates/oxc_minifier" }
-oxc_napi = { version = "0.52.0", path = "crates/oxc_napi" }
-oxc_parser = { version = "0.52.0", path = "crates/oxc_parser" }
-oxc_parser_napi = { version = "0.52.0", path = "napi/parser" }
-oxc_regular_expression = { version = "0.52.0", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.52.0", path = "crates/oxc_semantic" }
-oxc_span = { version = "0.52.0", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.52.0", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.52.0", path = "napi/transform" }
-oxc_transformer = { version = "0.52.0", path = "crates/oxc_transformer" }
-oxc_traverse = { version = "0.52.0", path = "crates/oxc_traverse" }
+oxc = { version = "0.56.0", path = "crates/oxc" }
+oxc_allocator = { version = "0.56.0", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.56.0", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.56.0", path = "crates/oxc_ast_macros" }
+oxc_ast_visit = { version = "0.56.0", path = "crates/oxc_ast_visit" }
+oxc_cfg = { version = "0.56.0", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.56.0", path = "crates/oxc_codegen" }
+oxc_data_structures = { version = "0.56.0", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.56.0", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.56.0", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.56.0", path = "crates/oxc_estree" }
+oxc_isolated_declarations = { version = "0.56.0", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.56.0", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.56.0", path = "crates/oxc_minifier" }
+oxc_napi = { version = "0.56.0", path = "crates/oxc_napi" }
+oxc_parser = { version = "0.56.0", path = "crates/oxc_parser" }
+oxc_parser_napi = { version = "0.56.0", path = "napi/parser" }
+oxc_regular_expression = { version = "0.56.0", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.56.0", path = "crates/oxc_semantic" }
+oxc_span = { version = "0.56.0", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.56.0", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.56.0", path = "napi/transform" }
+oxc_transformer = { version = "0.56.0", path = "crates/oxc_transformer" }
+oxc_traverse = { version = "0.56.0", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_linter = { path = "crates/oxc_linter" }
@@ -151,7 +152,7 @@ unicode-id-start = "1"
 oxc-browserslist = "2.0.0"
 oxc_index = "3"
 oxc_resolver = "4"
-oxc_sourcemap = "2"
+oxc_sourcemap = "3"
 
 #
 allocator-api2 = "0.2.21"
@@ -159,7 +160,11 @@ assert-unchecked = "0.1.2"
 base64 = "0.22.1"
 bitflags = "2.8.0"
 bpaf = "0.9.16"
-bumpalo = "3.17.0"
+# `bumpalo` must be pinned to exactly this version.
+# `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
+# of `bumpalo` which may change in a future version.
+# This is a temporary situation - we'll replace `bumpalo` with our own allocator.
+bumpalo = "=3.17.0"
 compact_str = "0.8.1"
 console = "0.15.10"
 console_error_panic_hook = "0.1.7"
@@ -169,7 +174,7 @@ criterion2 = { version = "3.0.0", default-features = false }
 encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.6", default-features = false }
-fast-glob = "0.4.3"
+fast-glob = "0.4.4"
 fixedbitset = "0.5.7"
 flate2 = "1.0.35"
 futures = "0.3.31"
@@ -181,6 +186,7 @@ ignore = "0.4.23"
 insta = "1.42.1"
 itertools = "0.14.0"
 itoa = "1.0.14"
+javascript-globals = "1.0.0"
 jemallocator = "0.5.4"
 json-strip-comments = "1.0.4"
 language-tags = "0.3.2"

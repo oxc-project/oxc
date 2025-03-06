@@ -141,6 +141,8 @@ pub enum Expression<'a> {
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
     /// See [`TSInstantiationExpression`] for AST node details.
     TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+    /// See [`V8IntrinsicExpression`] for AST node details.
+    V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
 
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
@@ -194,6 +196,7 @@ macro_rules! match_expression {
             | $ty::ComputedMemberExpression(_)
             | $ty::StaticMemberExpression(_)
             | $ty::PrivateFieldExpression(_)
+            | $ty::V8IntrinsicExpression(_)
     };
 }
 pub use match_expression;
@@ -209,6 +212,7 @@ pub use match_expression;
 #[estree(rename = "Identifier")]
 pub struct IdentifierName<'a> {
     pub span: Span,
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 
@@ -224,6 +228,7 @@ pub struct IdentifierName<'a> {
 pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
     /// Reference ID
     ///
@@ -246,6 +251,7 @@ pub struct IdentifierReference<'a> {
 pub struct BindingIdentifier<'a> {
     pub span: Span,
     /// The identifier name being bound.
+    #[estree(json_safe)]
     pub name: Atom<'a>,
     /// Unique identifier for this binding.
     ///
@@ -267,6 +273,7 @@ pub struct BindingIdentifier<'a> {
 #[estree(rename = "Identifier")]
 pub struct LabelIdentifier<'a> {
     pub span: Span,
+    #[estree(json_safe)]
     pub name: Atom<'a>,
 }
 
@@ -324,7 +331,7 @@ pub enum ArrayExpressionElement<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize, ts_alias = "null")]
+#[estree(via = ElisionConverter)]
 pub struct Elision {
     pub span: Span,
 }
@@ -363,11 +370,7 @@ pub enum ObjectPropertyKind<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    rename = "Property",
-    field_order(span, method, shorthand, computed, key, kind, value),
-    custom_serialize
-)]
+#[estree(rename = "Property", field_order(span, method, shorthand, computed, key, value, kind))]
 pub struct ObjectProperty<'a> {
     pub span: Span,
     pub kind: PropertyKind,
@@ -576,6 +579,10 @@ pub struct CallExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
+    /// `true` if the call expression is marked with a `/* @__PURE__ */` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// `new C()` in `class C {}; new C();`
@@ -599,6 +606,10 @@ pub struct NewExpression<'a> {
     pub arguments: Vec<'a, Argument<'a>>,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// `import.meta` in `console.log(import.meta);`
@@ -921,7 +932,7 @@ pub enum AssignmentTargetProperty<'a> {
 #[estree(
     rename = "Property",
     add_fields(method = False, shorthand = True, computed = False, kind = Init),
-    field_order(span, method, shorthand, computed, binding, kind, init),
+    field_order(span, method, shorthand, computed, binding, init, kind),
 )]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
@@ -1552,8 +1563,7 @@ pub struct ObjectPattern<'a> {
 #[estree(
     rename = "Property",
     add_fields(method = False, kind = Init),
-    field_order(span, method, shorthand, computed, key, kind, value),
-    custom_serialize,
+    field_order(span, method, shorthand, computed, key, value, kind),
 )]
 pub struct BindingProperty<'a> {
     pub span: Span,
@@ -1683,7 +1693,6 @@ pub struct Function<'a> {
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     /// The TypeScript return type annotation.
     #[ts]
@@ -1702,6 +1711,10 @@ pub struct Function<'a> {
     /// ```
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
+    /// `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 #[ast]
@@ -1721,7 +1734,7 @@ pub enum FunctionType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
-    custom_serialize,
+    via = FormalParametersConverter,
     add_ts_def = "
         interface FormalParameterRest extends Span {
             type: 'RestElement';
@@ -1764,7 +1777,7 @@ pub struct FormalParameter<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
-#[estree(no_rename_variants)]
+#[estree(no_rename_variants, no_ts_def)]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter = 0,
@@ -1808,7 +1821,6 @@ pub struct ArrowFunctionExpression<'a> {
     pub r#async: bool,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[estree(ts_type = "ParamPattern[]")]
     pub params: Box<'a, FormalParameters<'a>>,
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
@@ -1817,6 +1829,10 @@ pub struct ArrowFunctionExpression<'a> {
     #[estree(via = ArrowFunctionExpressionBody)]
     pub body: Box<'a, FunctionBody<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
+    /// `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    #[builder(default)]
+    #[estree(skip)]
+    pub pure: bool,
 }
 
 /// Generator Function Definitions
@@ -2446,7 +2462,6 @@ pub enum ImportAttributeKey<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(custom_serialize)]
 pub struct ExportNamedDeclaration<'a> {
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,
@@ -2474,9 +2489,9 @@ pub struct ExportNamedDeclaration<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ExportDefaultDeclaration<'a> {
     pub span: Span,
-    pub declaration: ExportDefaultDeclarationKind<'a>,
     #[estree(skip)]
     pub exported: ModuleExportName<'a>, // the `default` Keyword
+    pub declaration: ExportDefaultDeclarationKind<'a>,
 }
 
 /// Export All Declaration
@@ -2561,4 +2576,15 @@ pub enum ModuleExportName<'a> {
     /// For `local` in `ExportSpecifier`: `foo` in `export { foo }`
     IdentifierReference(IdentifierReference<'a>) = 1,
     StringLiteral(StringLiteral<'a>) = 2,
+}
+
+/// Intrinsics in Google's V8 engine, like `%GetOptimizationStatus`.
+/// See: [runtime.h](https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43)
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+pub struct V8IntrinsicExpression<'a> {
+    pub span: Span,
+    pub name: IdentifierName<'a>,
+    pub arguments: Vec<'a, Argument<'a>>,
 }

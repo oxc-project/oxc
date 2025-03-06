@@ -52,25 +52,6 @@ For TypeScript code, the AST is broadly aligned with
 [typescript-eslint](https://typescript-eslint.io/packages/parser/)'s format, though there may be some
 differences.
 
-### UTF8 vs UTF16 byte offsets
-
-The `span` value returned from the ASTs and diagnostics is in UTF8 byte offsets. Converting to UTF16 byte offsets:
-
-```js
-let sourceTextUtf8 = new TextEncoder().encode(sourceText);
-
-const convertToUtf8 = (sourceTextUtf8, d) => {
-  return new TextDecoder().decode(sourceTextUtf8.slice(0, d)).length;
-};
-
-const diagnostics = result.errors.map((d) => ({
-  from: convertToUtf8(sourceTextUtf8, d.start),
-  to: convertToUtf8(sourceTextUtf8, d.end),
-  severity: d.severity.toLowerCase(),
-  message: d.message,
-}));
-```
-
 ### Vite
 
 `wasm-pack build --target web` is used for the wasm build.

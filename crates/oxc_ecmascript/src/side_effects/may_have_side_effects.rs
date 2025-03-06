@@ -1,7 +1,8 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
+    constant_evaluation::DetermineValueType, is_global_reference::IsGlobalReference,
+    to_numeric::ToNumeric, to_primitive::ToPrimitive,
 };
 
 /// Returns true if subtree changes application state.
@@ -34,9 +35,7 @@ impl MayHaveSideEffects for Expression<'_> {
             | Expression::ArrowFunctionExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::Super(_) => false,
-            Expression::TemplateLiteral(template) => {
-                template.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
-            }
+            Expression::TemplateLiteral(e) => e.may_have_side_effects(is_global_reference),
             Expression::UnaryExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::LogicalExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::ParenthesizedExpression(e) => {
@@ -58,8 +57,14 @@ impl MayHaveSideEffects for Expression<'_> {
             Expression::ArrayExpression(e) => e.may_have_side_effects(is_global_reference),
             Expression::ClassExpression(e) => e.may_have_side_effects(is_global_reference),
             // NOTE: private in can throw `TypeError`
-            Expression::StaticMemberExpression(e) => e.may_have_side_effects(is_global_reference),
-            Expression::ComputedMemberExpression(e) => e.may_have_side_effects(is_global_reference),
+            Expression::ChainExpression(e) => {
+                e.expression.may_have_side_effects(is_global_reference)
+            }
+            match_member_expression!(Expression) => {
+                self.to_member_expression().may_have_side_effects(is_global_reference)
+            }
+            Expression::CallExpression(e) => e.may_have_side_effects(is_global_reference),
+            Expression::NewExpression(e) => e.may_have_side_effects(is_global_reference),
             _ => true,
         }
     }
@@ -74,6 +79,18 @@ impl MayHaveSideEffects for IdentifierReference<'_> {
             // NOTE: we ignore TDZ errors
             _ => is_global_reference.is_global_reference(self) != Some(false),
         }
+    }
+}
+
+impl MayHaveSideEffects for TemplateLiteral<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        self.expressions.iter().any(|e| {
+            // ToString is called for each expression.
+            // If the expression is a Symbol or ToPrimitive returns a Symbol, an error is thrown.
+            // ToPrimitive returns the value as-is for non-Object values, so we can use it instead of ToString here.
+            e.to_primitive(is_global_reference).is_symbol() != Some(false)
+                || e.may_have_side_effects(is_global_reference)
+        })
     }
 }
 
@@ -121,8 +138,26 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
                 self.left.may_have_side_effects(is_global_reference)
                     || self.right.may_have_side_effects(is_global_reference)
             }
-            BinaryOperator::In | BinaryOperator::Instanceof => {
-                // instanceof and in can throw `TypeError`
+            BinaryOperator::Instanceof => {
+                // When the following conditions are met, instanceof won't throw `TypeError`.
+                // - the right hand side is a known global reference which is a function
+                // - the left hand side is not a proxy
+                if let Expression::Identifier(right_ident) = &self.right {
+                    let name = right_ident.name.as_str();
+                    // Any known global non-constructor functions can be allowed here.
+                    // But because non-constructor functions are not likely to be used, we ignore them.
+                    if is_known_global_constructor(name)
+                        && is_global_reference.is_global_reference(right_ident) == Some(true)
+                        && !self.left.value_type(is_global_reference).is_undetermined()
+                    {
+                        return false;
+                    }
+                }
+                // instanceof can throw `TypeError`
+                true
+            }
+            BinaryOperator::In => {
+                // in can throw `TypeError`
                 true
             }
             BinaryOperator::Addition => {
@@ -200,6 +235,56 @@ impl MayHaveSideEffects for BinaryExpression<'_> {
     }
 }
 
+/// Whether the name matches any known global constructors.
+///
+/// <https://tc39.es/ecma262/multipage/global-object.html#sec-constructor-properties-of-the-global-object>
+fn is_known_global_constructor(name: &str) -> bool {
+    // technically, we need to exclude the constructors that are not supported by the target
+    matches!(
+        name,
+        "AggregateError"
+            | "Array"
+            | "ArrayBuffer"
+            | "BigInt"
+            | "BigInt64Array"
+            | "BitUint64Array"
+            | "Boolean"
+            | "DataView"
+            | "Date"
+            | "Error"
+            | "EvalError"
+            | "FinalizationRegistry"
+            | "Float32Array"
+            | "Float64Array"
+            | "Function"
+            | "Int8Array"
+            | "Int16Array"
+            | "Int32Array"
+            | "Iterator"
+            | "Map"
+            | "Number"
+            | "Object"
+            | "Promise"
+            | "Proxy"
+            | "RangeError"
+            | "ReferenceError"
+            | "RegExp"
+            | "Set"
+            | "SharedArrayBuffer"
+            | "String"
+            | "Symbol"
+            | "SyntaxError"
+            | "TypeError"
+            | "Uint8Array"
+            | "Uint8ClampedArray"
+            | "Uint16Array"
+            | "Uint32Array"
+            | "URIError"
+            | "WeakMap"
+            | "WeakSet"
+    )
+}
+
 impl MayHaveSideEffects for LogicalExpression<'_> {
     fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
         self.left.may_have_side_effects(is_global_reference)
@@ -219,9 +304,7 @@ impl MayHaveSideEffects for ArrayExpressionElement<'_> {
             ArrayExpressionElement::SpreadElement(e) => match &e.argument {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
                 Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => {
-                    t.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
-                }
+                Expression::TemplateLiteral(t) => t.may_have_side_effects(is_global_reference),
                 _ => true,
             },
             match_expression!(ArrayExpressionElement) => {
@@ -239,9 +322,7 @@ impl MayHaveSideEffects for ObjectPropertyKind<'_> {
             ObjectPropertyKind::SpreadProperty(e) => match &e.argument {
                 Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
                 Expression::StringLiteral(_) => false,
-                Expression::TemplateLiteral(t) => {
-                    t.expressions.iter().any(|e| e.may_have_side_effects(is_global_reference))
-                }
+                Expression::TemplateLiteral(t) => t.may_have_side_effects(is_global_reference),
                 _ => true,
             },
         }
@@ -260,6 +341,8 @@ impl MayHaveSideEffects for PropertyKey<'_> {
         match self {
             PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {
+                // ToPropertyKey(key) throws an error when ToPrimitive(key) throws an Error
+                // But we can ignore that by using the assumption.
                 self.to_expression().may_have_side_effects(is_global_reference)
             }
         }
@@ -267,7 +350,25 @@ impl MayHaveSideEffects for PropertyKey<'_> {
 }
 
 impl MayHaveSideEffects for Class<'_> {
+    /// Based on <https://github.com/evanw/esbuild/blob/v0.25.0/internal/js_ast/js_ast_helpers.go#L2320>
     fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        if !self.decorators.is_empty() {
+            return true;
+        }
+
+        // NOTE: extending a value that is neither constructors nor null, throws an error
+        // but that error is ignored here (it is included in the assumption)
+        // Example cases: `class A extends 0 {}`, `class A extends (async function() {}) {}`
+        // Considering these cases is difficult and requires to de-opt most classes with a super class.
+        // To allow classes with a super class to be removed, we ignore this side effect.
+        if self
+            .super_class
+            .as_ref()
+            .is_some_and(|sup| sup.may_have_side_effects(is_global_reference))
+        {
+            return true;
+        }
+
         self.body.body.iter().any(|element| element.may_have_side_effects(is_global_reference))
     }
 }
@@ -278,31 +379,126 @@ impl MayHaveSideEffects for ClassElement<'_> {
             // TODO: check side effects inside the block
             ClassElement::StaticBlock(block) => !block.body.is_empty(),
             ClassElement::MethodDefinition(e) => {
-                e.r#static && e.key.may_have_side_effects(is_global_reference)
+                !e.decorators.is_empty() || e.key.may_have_side_effects(is_global_reference)
             }
             ClassElement::PropertyDefinition(e) => {
-                e.r#static
-                    && (e.key.may_have_side_effects(is_global_reference)
-                        || e.value
+                !e.decorators.is_empty()
+                    || e.key.may_have_side_effects(is_global_reference)
+                    || (e.r#static
+                        && e.value
                             .as_ref()
                             .is_some_and(|v| v.may_have_side_effects(is_global_reference)))
             }
             ClassElement::AccessorProperty(e) => {
-                e.r#static && e.key.may_have_side_effects(is_global_reference)
+                !e.decorators.is_empty() || e.key.may_have_side_effects(is_global_reference)
             }
             ClassElement::TSIndexSignature(_) => false,
         }
     }
 }
 
+impl MayHaveSideEffects for ChainElement<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
+            ChainElement::CallExpression(e) => e.may_have_side_effects(is_global_reference),
+            ChainElement::TSNonNullExpression(e) => {
+                e.expression.may_have_side_effects(is_global_reference)
+            }
+            match_member_expression!(ChainElement) => {
+                self.to_member_expression().may_have_side_effects(is_global_reference)
+            }
+        }
+    }
+}
+
+impl MayHaveSideEffects for MemberExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
+            MemberExpression::ComputedMemberExpression(e) => {
+                e.may_have_side_effects(is_global_reference)
+            }
+            MemberExpression::StaticMemberExpression(e) => {
+                e.may_have_side_effects(is_global_reference)
+            }
+            MemberExpression::PrivateFieldExpression(_) => true,
+        }
+    }
+}
+
 impl MayHaveSideEffects for StaticMemberExpression<'_> {
-    fn may_have_side_effects(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
-        true
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        property_access_may_have_side_effects(
+            &self.object,
+            &self.property.name,
+            is_global_reference,
+        )
     }
 }
 
 impl MayHaveSideEffects for ComputedMemberExpression<'_> {
-    fn may_have_side_effects(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
-        true
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match &self.expression {
+            Expression::StringLiteral(s) => {
+                property_access_may_have_side_effects(&self.object, &s.value, is_global_reference)
+            }
+            Expression::TemplateLiteral(t) if t.is_no_substitution_template() => {
+                property_access_may_have_side_effects(
+                    &self.object,
+                    &t.quasi().expect("template literal must have at least one quasi"),
+                    is_global_reference,
+                )
+            }
+            _ => true,
+        }
+    }
+}
+
+fn property_access_may_have_side_effects(
+    object: &Expression,
+    property: &str,
+    is_global_reference: &impl IsGlobalReference,
+) -> bool {
+    match property {
+        "length" => {
+            !(matches!(object, Expression::ArrayExpression(_))
+                || object.value_type(is_global_reference).is_string())
+        }
+        _ => true,
+    }
+}
+
+impl MayHaveSideEffects for CallExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        if self.pure {
+            self.arguments.iter().any(|e| e.may_have_side_effects(is_global_reference))
+        } else {
+            true
+        }
+    }
+}
+
+impl MayHaveSideEffects for NewExpression<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        if self.pure {
+            self.arguments.iter().any(|e| e.may_have_side_effects(is_global_reference))
+        } else {
+            true
+        }
+    }
+}
+
+impl MayHaveSideEffects for Argument<'_> {
+    fn may_have_side_effects(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+        match self {
+            Argument::SpreadElement(e) => match &e.argument {
+                Expression::ArrayExpression(arr) => arr.may_have_side_effects(is_global_reference),
+                Expression::StringLiteral(_) => false,
+                Expression::TemplateLiteral(t) => t.may_have_side_effects(is_global_reference),
+                _ => true,
+            },
+            match_expression!(Argument) => {
+                self.to_expression().may_have_side_effects(is_global_reference)
+            }
+        }
     }
 }

@@ -199,6 +199,59 @@ export interface JsxOptions {
   refresh?: boolean | ReactRefreshOptions
 }
 
+/**
+ * Transform JavaScript code to a Vite Node runnable module.
+ *
+ * @param filename The name of the file being transformed.
+ * @param sourceText the source code itself
+ * @param options The options for the transformation. See {@link
+ * ModuleRunnerTransformOptions} for more information.
+ *
+ * @returns an object containing the transformed code, source maps, and any
+ * errors that occurred during parsing or transformation.
+ *
+ * @deprecated Only works for Vite.
+ */
+export declare function moduleRunnerTransform(filename: string, sourceText: string, options?: ModuleRunnerTransformOptions | undefined | null): ModuleRunnerTransformResult
+
+export interface ModuleRunnerTransformOptions {
+  /**
+   * Enable source map generation.
+   *
+   * When `true`, the `sourceMap` field of transform result objects will be populated.
+   *
+   * @default false
+   *
+   * @see {@link SourceMap}
+   */
+  sourcemap?: boolean
+}
+
+export interface ModuleRunnerTransformResult {
+  /**
+   * The transformed code.
+   *
+   * If parsing failed, this will be an empty string.
+   */
+  code: string
+  /**
+   * The source map for the transformed code.
+   *
+   * This will be set if {@link TransformOptions#sourcemap} is `true`.
+   */
+  map?: SourceMap
+  deps: Array<string>
+  dynamicDeps: Array<string>
+  /**
+   * Parse and transformation errors.
+   *
+   * Oxc's parser recovers from common syntax errors, meaning that
+   * transformed code may still be available even if there are errors in this
+   * list.
+   */
+  errors: Array<OxcError>
+}
+
 export interface OxcError {
   severity: Severity
   message: string
