@@ -92,7 +92,7 @@ jobs:
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
@@ -105,8 +105,14 @@ jobs:
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
+      - uses: ./.github/actions/pnpm
       - run: rustup target add wasm32-wasip1-threads
       - uses: bytecodealliance/actions/wasmtime/setup@3b93676295fd6f7eaa7af2c2785539e052fa8349 # v1.1.1
+      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/parser/Cargo.toml
+      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/transform/Cargo.toml
+      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/minify/Cargo.toml
+      # Fix `index.d.ts`
+      - run: node napi/parser/scripts/fix-wasm-dts.mjs
       - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
       - run: git diff --exit-code # Must commit everything
 
