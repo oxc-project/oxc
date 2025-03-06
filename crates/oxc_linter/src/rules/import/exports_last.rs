@@ -73,9 +73,9 @@ impl Rule for ExportsLast {
 }
 
 fn is_exports_declaration(statement: &Statement) -> bool {
-    statement.as_module_declaration().is_some_and(|declation| {
+    statement.as_module_declaration().is_some_and(|declaration| {
         matches!(
-            declation,
+            declaration,
             ModuleDeclaration::ExportAllDeclaration(_)
                 | ModuleDeclaration::ExportDefaultDeclaration(_)
                 | ModuleDeclaration::ExportNamedDeclaration(_)
