@@ -2332,7 +2332,10 @@ fn test_remove_dead_expr_other() {
         "try { throw 1 } catch (x) { var x = 2; y(x) }",
         "try { throw 1;} catch (x) { var x = 2; y(x);}",
     );
-    // test("try { throw 1 } catch (x) { var x = 2 }", "try { throw 1;} catch (x) { var x = 2;}");
+    test(
+        "try { throw 1 } catch (x) { var x = 2 }; y(x)",
+        "try { throw 1;} catch (x) { var x = 2;} y(x);",
+    );
     // test("try { throw 1 } catch (x) { eval('x') }", "try { throw 1;} catch (x) { eval('x');}");
     // test(
     //     "if (y) try { throw 1 } catch (x) {} else eval('x')",
