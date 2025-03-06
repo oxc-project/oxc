@@ -37,6 +37,12 @@ pub struct ParserOptions {
     ///
     /// @default false
     pub show_semantic_errors: Option<bool>,
+
+    /// Whether enable experimental raw transfer.
+    ///
+    /// The `experimentalRawTransfer` significantly improving speed by eliminating JSON serialization.
+    /// @default false
+    pub experimental_raw_transfer: Option<bool>,
 }
 
 #[napi]

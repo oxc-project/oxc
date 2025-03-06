@@ -168,6 +168,13 @@ export interface ParserOptions {
    * @default false
    */
   showSemanticErrors?: boolean
+  /**
+   * Whether enable experimental raw transfer.
+   *
+   * The `experimentalRawTransfer` significantly improving speed by eliminating JSON serialization.
+   * @default false
+   */
+  experimentalRawTransfer?: boolean
 }
 
 /** Parse synchronously. */
