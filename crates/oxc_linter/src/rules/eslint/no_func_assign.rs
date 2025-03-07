@@ -19,13 +19,46 @@ declare_oxc_lint!(
     /// Disallow reassigning `function` declarations
     ///
     /// ### Why is this bad?
-    /// Overwriting/reassigning a function written as a FunctionDeclaration is often indicative of a mistake or issue.
     ///
-    /// ### Example
+    /// Overwriting/reassigning a function written as a FunctionDeclaration is often indicative of
+    /// a mistake or issue.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
     /// function foo() {}
     /// foo = bar;
+    /// ```
+    ///
+    /// ```javascript
+    /// function foo() {
+    ///   foo = bar;
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// let a = function hello() {
+    ///   hello = 123;
+    /// };
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// let foo = function () {}
+    /// foo = bar;
+    /// ```
+    ///
+    /// ```javascript
+    /// function baz(baz) { // `baz` is shadowed.
+    ///   baz = bar;
+    /// }
+    /// ```
+    ///
+    /// ```
+    /// function qux() {
+    ///   const qux = bar;  // `qux` is shadowed.
+    /// }
     /// ```
     NoFuncAssign,
     eslint,
@@ -72,6 +105,7 @@ fn test() {
         ("function foo() { [foo] = bar; }", None),
         ("(function() { ({x: foo = 0} = bar); function foo() { }; })();", None),
         ("var a = function foo() { foo = 123; };", None),
+        ("let a = function hello() { hello = 123;};", None),
     ];
 
     Tester::new(NoFuncAssign::NAME, NoFuncAssign::PLUGIN, pass, fail).test_and_snapshot();
