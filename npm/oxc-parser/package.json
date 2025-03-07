@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.56.0",
+  "version": "0.56.1",
   "main": "index.js",
   "browser": "browser.js",
   "description": "Oxc Parser Node API",
@@ -35,7 +35,7 @@
   "dependencies": {
     "@oxc-project/types": "workspace:^"
   },
-   "engines": {
+  "engines": {
     "node": ">=14.0.0"
   },
   "napi": {

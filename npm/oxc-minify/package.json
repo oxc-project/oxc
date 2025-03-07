@@ -1,6 +1,6 @@
 {
   "name": "oxc-minify",
-  "version": "0.56.0",
+  "version": "0.56.1",
   "main": "index.js",
   "browser": "browser.js",
   "description": "Oxc minify Node API",
@@ -29,7 +29,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-   "engines": {
+  "engines": {
     "node": ">=14.0.0"
   },
   "napi": {
