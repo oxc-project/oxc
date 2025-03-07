@@ -134,6 +134,7 @@ fn test() {
                 "parserOptions": { "ecmaVersion": 2019 }
             })),
         ),
+        ("var Object;", None),
         ("var undefined;", None),
         ("var undefined;var undefined", None),
         (
@@ -152,9 +153,13 @@ fn test() {
             })),
         ),
         ("var normal, undefined; var undefined;", None),
+        (r#"import { undefined as undef } from "bar";"#, None)
     ];
 
     let fail = vec![
+        ("var undefined = 5;", None),
+        ("function NaN(){}", None),
+        ("try {} catch(eval){}", None),
         ("function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }", None),
         (
             "function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }",
@@ -198,6 +203,9 @@ fn test() {
         ("class undefined { }", None),
         ("class foo { undefined(undefined) { } }", None),
         ("class foo { #undefined(undefined) { } }", None),
+        ("class Infinity {}", None),
+        (r#"import { undefined } from "bar";"#, None),
+        (r#"import NaN from "foo";"#, None)
     ];
 
     Tester::new(NoShadowRestrictedNames::NAME, NoShadowRestrictedNames::PLUGIN, pass, fail)
