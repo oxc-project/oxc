@@ -10,6 +10,7 @@ use std::{
     hash::{Hash, Hasher},
     mem::ManuallyDrop,
     ops::{Deref, DerefMut},
+    ptr,
 };
 
 use bumpalo::collections::String as BumpaloString;
@@ -114,6 +115,51 @@ impl<'alloc> String<'alloc> {
             let (ptr, len, capacity, bump) = inner.into_raw_parts_with_alloc();
             Self(ManuallyDrop::new(BumpaloString::from_raw_parts_in(ptr, len, capacity, bump)))
         }
+    }
+
+    /// Create a new [`String`] from a fixed-size &str array, allocated in the given `allocator`.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::{Allocator, String};
+    ///
+    /// let allocator = Allocator::default();
+    /// let string = String::from_strs_array_in(["hello", "world"], &allocator);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the sum of length of all strings exceeds `usize::MAX`.
+    #[inline]
+    pub fn from_strs_array_in<const N: usize>(
+        strings: [&str; N],
+        allocator: &'alloc Allocator,
+    ) -> String<'alloc> {
+        let len = strings.iter().fold(0usize, |l, s| l.checked_add(s.len()).unwrap());
+
+        let mut ptr = Vec::with_capacity_in(len, allocator);
+
+        let mut dst = ptr.as_mut_ptr();
+        for str in strings {
+            let len = str.len();
+
+            // SAFETY:
+            // `src` is obtained from a `&str`
+            // `dst` is obtained from a properly allocated `Vec<u8>` with sufficient
+            // capacity to hold all strings.
+            // Both `src` and `dst` are properly aligned for `u8`.
+            // No overlapping, because we've copying from a `&str` to a newly allocated buffer.
+            unsafe {
+                let src = str.as_ptr();
+                ptr::copy_nonoverlapping(src, dst, len);
+                dst = dst.add(len);
+            }
+        }
+
+        // SAFETY:
+        // `ptr` was allocated with correct size for `[&str, len]`.
+        // `len` is the sum of lengths of all strings.
+        unsafe { String::from_raw_parts_in(ptr.as_mut_ptr(), len, len, allocator) }
     }
 
     /// Creates a new [`String`] from a length, capacity, and pointer.
@@ -248,5 +294,35 @@ impl Hash for String<'_> {
     #[inline]
     fn hash<H: Hasher>(&self, hasher: &mut H) {
         self.as_str().hash(hasher);
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use crate::Allocator;
+    use crate::String;
+
+    #[test]
+    fn string_from_array() {
+        let hello = "hello";
+        let world = std::string::String::from("world");
+        let allocator = Allocator::default();
+        let string = String::from_strs_array_in([hello, &world, "!"], &allocator);
+        assert_eq!(string, "helloworld!");
+    }
+
+    #[test]
+    fn string_from_empty_array() {
+        let allocator = Allocator::default();
+        let string = String::from_strs_array_in([], &allocator);
+        assert_eq!(string, "");
+    }
+
+    #[test]
+    fn string_from_maybe_empty_str_array() {
+        let allocator = Allocator::default();
+        let string = String::from_strs_array_in(["", "hello", ""], &allocator);
+        assert_eq!(string, "hello");
     }
 }
