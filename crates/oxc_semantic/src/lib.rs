@@ -27,6 +27,7 @@ mod builder;
 mod checker;
 mod class;
 mod diagnostics;
+mod is_global_reference;
 mod jsdoc;
 mod label;
 mod node;
@@ -36,11 +37,12 @@ mod symbol;
 mod unresolved_stack;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+pub use is_global_reference::IsGlobalReference;
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodes};
 pub use scope::ScopeTree;
 pub use stats::Stats;
-pub use symbol::{IsGlobalReference, SymbolTable};
+pub use symbol::SymbolTable;
 
 use class::ClassTable;
 

@@ -1,7 +1,6 @@
 use std::{fmt, mem};
 
 use oxc_allocator::{Allocator, FromIn, Vec as ArenaVec};
-use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::{Idx, IndexVec};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
@@ -244,7 +243,7 @@ impl SymbolTable {
 
     /// Get a resolved or unresolved reference.
     ///
-    /// [`ReferenceId`]s can be found in [`IdentifierReference`] and similar nodes.
+    /// [`ReferenceId`]s can be found in [oxc_ast::ast::IdentifierReference] and similar nodes.
     #[inline]
     pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference {
         &self.references[reference_id]
@@ -340,49 +339,5 @@ impl SymbolTable {
 
     pub fn no_side_effects(&self) -> &FxHashSet<SymbolId> {
         &self.no_side_effects
-    }
-}
-
-/// Checks whether the a identifier reference is a global value or not.
-pub trait IsGlobalReference {
-    fn is_global_reference(&self, _symbols: &SymbolTable) -> bool;
-    fn is_global_reference_name(&self, name: &str, _symbols: &SymbolTable) -> bool;
-}
-
-impl IsGlobalReference for ReferenceId {
-    fn is_global_reference(&self, symbols: &SymbolTable) -> bool {
-        symbols.references[*self].symbol_id().is_none()
-    }
-
-    fn is_global_reference_name(&self, _name: &str, _symbols: &SymbolTable) -> bool {
-        panic!("This function is pointless to be called.");
-    }
-}
-
-impl IsGlobalReference for IdentifierReference<'_> {
-    fn is_global_reference(&self, symbols: &SymbolTable) -> bool {
-        self.reference_id
-            .get()
-            .is_some_and(|reference_id| reference_id.is_global_reference(symbols))
-    }
-
-    fn is_global_reference_name(&self, name: &str, symbols: &SymbolTable) -> bool {
-        self.name == name && self.is_global_reference(symbols)
-    }
-}
-
-impl IsGlobalReference for Expression<'_> {
-    fn is_global_reference(&self, symbols: &SymbolTable) -> bool {
-        if let Expression::Identifier(ident) = self {
-            return ident.is_global_reference(symbols);
-        }
-        false
-    }
-
-    fn is_global_reference_name(&self, name: &str, symbols: &SymbolTable) -> bool {
-        if let Expression::Identifier(ident) = self {
-            return ident.is_global_reference_name(name, symbols);
-        }
-        false
     }
 }
