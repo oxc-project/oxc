@@ -105,7 +105,7 @@ fn test() {
         ("function foo() { [foo] = bar; }", None),
         ("(function() { ({x: foo = 0} = bar); function foo() { }; })();", None),
         ("var a = function foo() { foo = 123; };", None),
-        ("let a = function hello() { hello = 123;};", None)
+        ("let a = function hello() { hello = 123;};", None),
     ];
 
     Tester::new(NoFuncAssign::NAME, NoFuncAssign::PLUGIN, pass, fail).test_and_snapshot();
