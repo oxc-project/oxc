@@ -49,7 +49,7 @@
     ],
     "wasm": {
       "browser": {
-        "fs": false
+        "fs": true
       }
     }
   }
