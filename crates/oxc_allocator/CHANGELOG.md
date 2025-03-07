@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.1] - 2025-03-07
+
+### Features
+
+- 8b51a75 allocator: Add `String::from_strs_array_in` (#9329) (Dunqing)
+
 ## [0.55.0] - 2025-03-05
 
 ### Features
