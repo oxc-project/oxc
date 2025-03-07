@@ -146,8 +146,6 @@ jobs:
             cp napi/${name}/${file} npm/oxc-${name}/${file}
           done
 
-      - run: pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_json_path} --npm-dir ${npm_dir}
-
       - name: Check Publish
         run: |
           # Check subpackages
@@ -183,12 +181,9 @@ jobs:
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          # Publish subpackages first
-          for package in ${npm_dir}/*
-          do
-            pnpm publish $package/ ${PUBLISH_FLAGS}
-          done
-
-          # publish root package last
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          # Publish sub-packages and adds `optionalDependencies` to `package_json_path`.
+          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_json_path} --npm-dir ${npm_dir}
           pnpm publish npm/oxc-${name}/ ${PUBLISH_FLAGS}
