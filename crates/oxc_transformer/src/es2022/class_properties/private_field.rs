@@ -2133,7 +2133,6 @@ impl<'a> ClassProperties<'a, '_> {
     /// * Setter: `_prop.call(_assertClassBrand(Class, object), value)`
     /// * Prop: `_privateFieldSet(_prop, object, value)`
     /// * Prop binding is `None`: `_writeOnlyError("#method")`
-    #[expect(clippy::too_many_arguments)]
     fn create_private_setter(
         &self,
         private_name: &str,

@@ -287,7 +287,6 @@ impl<'a> AstBuilder<'a> {
     }
 
     /// Build a [`Function`] with `scope_id`.
-    #[expect(clippy::too_many_arguments)]
     #[inline]
     pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
         self,

@@ -49,7 +49,6 @@ pub struct EnumDef {
 
 impl EnumDef {
     /// Create new [`EnumDef`].
-    #[expect(clippy::too_many_arguments)]
     pub fn new(
         id: TypeId,
         name: String,
