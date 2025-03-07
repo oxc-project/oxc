@@ -153,7 +153,7 @@ fn test() {
             })),
         ),
         ("var normal, undefined; var undefined;", None),
-        (r#"import { undefined as undef } from "bar";"#, None)
+        (r#"import { undefined as undef } from "bar";"#, None),
     ];
 
     let fail = vec![
@@ -205,7 +205,7 @@ fn test() {
         ("class foo { #undefined(undefined) { } }", None),
         ("class Infinity {}", None),
         (r#"import { undefined } from "bar";"#, None),
-        (r#"import NaN from "foo";"#, None)
+        (r#"import NaN from "foo";"#, None),
     ];
 
     Tester::new(NoShadowRestrictedNames::NAME, NoShadowRestrictedNames::PLUGIN, pass, fail)
