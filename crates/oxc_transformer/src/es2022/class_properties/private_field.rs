@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString};
+use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
@@ -2176,10 +2176,8 @@ impl<'a> ClassProperties<'a, '_> {
         private_name: &str,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut message = ArenaString::with_capacity_in(private_name.len() + 1, ctx.ast.allocator);
-        message.push('#');
-        message.push_str(private_name);
-        let message = ctx.ast.expression_string_literal(SPAN, message.into_bump_str(), None);
+        let message = ctx.ast.atom_from_strs_array(["#", private_name]);
+        let message = ctx.ast.expression_string_literal(SPAN, message, None);
         self.ctx.helper_call_expr(helper, SPAN, ctx.ast.vec1(Argument::from(message)), ctx)
     }
 

@@ -48,7 +48,7 @@ use compact_str::ToCompactString;
 use rustc_hash::FxHashMap;
 use std::iter;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeTree, SymbolFlags, SymbolId, SymbolTable};
@@ -641,15 +641,9 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     /// Generate a unique import binding name like `__vite_ssr_import_{uid}__`.
     fn generate_import_binding_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
-        let uid = self.import_uid.to_compact_string();
+        let uid_str = &self.import_uid.to_compact_string();
         self.import_uid += 1;
-        let capacity = 20 + uid.len();
-        let mut string = ArenaString::with_capacity_in(capacity, ctx.ast.allocator);
-        string.push_str("__vite_ssr_import_");
-        string.push_str(&uid);
-        string.push_str("__");
-        debug_assert_eq!(string.len(), capacity);
-        Atom::from(string)
+        ctx.ast.atom_from_strs_array(["__vite_ssr_import_", uid_str, "__"])
     }
 
     /// Generate a unique import binding whose name is like `__vite_ssr_import_{uid}__`.

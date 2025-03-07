@@ -70,7 +70,7 @@ use std::{borrow::Cow, cell::RefCell};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{
     NONE,
     ast::{Argument, CallExpression, Expression},
@@ -313,13 +313,7 @@ impl<'a> HelperLoaderStore<'a> {
 
     // Construct string directly in arena without an intermediate temp allocation
     fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Atom<'a> {
-        let helper_name = helper.name();
-        let len = self.module_name.len() + "/helpers/".len() + helper_name.len();
-        let mut source = ArenaString::with_capacity_in(len, ctx.ast.allocator);
-        source.push_str(&self.module_name);
-        source.push_str("/helpers/");
-        source.push_str(helper_name);
-        Atom::from(source)
+        ctx.ast.atom_from_strs_array([&self.module_name, "/helpers/", helper.name()])
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
