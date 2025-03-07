@@ -65,7 +65,9 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
             match c {
                 'x' if is_hex(&p, 2) => {
                     for _ in 0..2 {
-                        result.push(p.next().unwrap().to_ascii_uppercase());
+                        if let Some(nxt) = p.next() {
+                            result.push(nxt.to_ascii_uppercase());
+                        }
                     }
                 }
                 'u' => {
@@ -88,20 +90,26 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
                             p.next();
                             result.push('{');
                             for _ in 0..count {
-                                result.push(p.next().unwrap().to_ascii_uppercase());
+                                if let Some(nxt) = p.next() {
+                                    result.push(nxt.to_ascii_uppercase());
+                                }
                             }
                             p.next();
                             result.push('}');
                         }
                     } else if is_hex(&p, 4) {
                         for _ in 0..4 {
-                            result.push(p.next().unwrap().to_ascii_uppercase());
+                            if let Some(nxt) = p.next() {
+                                result.push(nxt.to_ascii_uppercase());
+                            }
                         }
                     }
                 }
                 'c' if is_regex => {
                     if matches!(p.clone().next(), Some(c) if c.is_ascii_lowercase()) {
-                        result.push(p.next().unwrap().to_ascii_uppercase());
+                        if let Some(nxt) = p.next() {
+                            result.push(nxt.to_ascii_uppercase());
+                        }
                     }
                 }
                 _ => {}
