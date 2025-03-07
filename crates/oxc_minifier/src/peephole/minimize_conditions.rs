@@ -175,7 +175,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
     fn try_compress_normal_assignment_to_combined_logical_assignment(
-        &mut self,
+        &self,
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> bool {

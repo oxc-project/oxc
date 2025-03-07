@@ -59,7 +59,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_static_member_expr(
-        e: &mut StaticMemberExpression<'a>,
+        e: &StaticMemberExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
@@ -71,7 +71,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_computed_member_expr(
-        e: &mut ComputedMemberExpression<'a>,
+        e: &ComputedMemberExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
@@ -93,7 +93,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_optional_chain(
-        chain_expr: &mut ChainExpression<'a>,
+        chain_expr: &ChainExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let member_expr = chain_expr.expression.as_member_expression()?;
@@ -557,7 +557,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_binary_typeof_comparison(
-        bin_expr: &mut BinaryExpression<'a>,
+        bin_expr: &BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
