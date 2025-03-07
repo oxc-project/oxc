@@ -102,7 +102,7 @@ pub struct SemanticBuilder<'a> {
 
     pub(crate) cfg: Option<ControlFlowGraphBuilder<'a>>,
 
-    pub(crate) class_table_builder: ClassTableBuilder,
+    pub(crate) class_table_builder: ClassTableBuilder<'a>,
 
     ast_node_records: Vec<NodeId>,
 }

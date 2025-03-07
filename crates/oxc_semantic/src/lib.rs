@@ -73,7 +73,7 @@ pub struct Semantic<'a> {
     /// Symbol table containing all symbols in the program and their references.
     symbols: SymbolTable,
 
-    classes: ClassTable,
+    classes: ClassTable<'a>,
 
     /// Parsed comments.
     comments: &'a oxc_allocator::Vec<'a, Comment>,
