@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.56.5] - 2025-03-07
+
+### Refactor
+
+- 5103322 semantic: Move `IsGlobalReference` to its own file (#9592) (Boshen)
+- b7484b8 semantic: Remove `CompactStr` usage from `ClassTable` (#9591) (Boshen)
+
 ## [0.56.3] - 2025-03-07
 
 ### Features
