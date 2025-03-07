@@ -1,11 +1,11 @@
-use runtime::Runtime;
-use std::ffi::OsStr;
 use std::{
+    ffi::OsStr,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use oxc_diagnostics::DiagnosticSender;
+use runtime::Runtime;
 
 use crate::Linter;
 

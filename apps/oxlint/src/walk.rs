@@ -1,8 +1,7 @@
+use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
+
 use ignore::{DirEntry, overrides::Override};
 use oxc_span::VALID_EXTENSIONS;
-use std::ffi::OsStr;
-use std::sync::Arc;
-use std::{path::PathBuf, sync::mpsc};
 
 use crate::cli::IgnoreOptions;
 

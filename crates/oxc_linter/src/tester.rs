@@ -1,15 +1,16 @@
+use std::{
+    env,
+    ffi::OsStr,
+    path::{Path, PathBuf},
+    sync::Arc,
+    sync::mpsc,
+};
+
 use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use serde::Deserialize;
 use serde_json::Value;
-use std::ffi::OsStr;
-use std::sync::Arc;
-use std::{
-    env,
-    path::{Path, PathBuf},
-    sync::mpsc,
-};
 
 use crate::{
     AllowWarnDeny, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions, Linter,

@@ -1,32 +1,33 @@
-use super::LintServiceOptions;
-use crate::fixer::{Fixer, Message};
-use crate::{
-    Linter,
-    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, PartialLoader},
-    module_record::ModuleRecord,
-    utils::read_to_string,
+use std::{
+    borrow::Cow,
+    ffi::OsStr,
+    fs,
+    mem::take,
+    path::{Path, PathBuf},
+    rc::Rc,
+    sync::{Arc, mpsc},
 };
+
 use indexmap::IndexSet;
+use rayon::iter::ParallelDrainRange;
+use rayon::{Scope, iter::IntoParallelRefIterator, prelude::ParallelIterator};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use self_cell::self_cell;
+use smallvec::SmallVec;
+
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
-use rayon::iter::ParallelDrainRange;
-use rayon::{Scope, iter::IntoParallelRefIterator, prelude::ParallelIterator};
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
-use self_cell::self_cell;
-use smallvec::SmallVec;
-use std::borrow::Cow;
-use std::mem::take;
-use std::rc::Rc;
-use std::sync::mpsc;
-use std::{
-    ffi::OsStr,
-    fs,
-    path::{Path, PathBuf},
-    sync::Arc,
+
+use super::LintServiceOptions;
+use crate::{
+    Fixer, Linter, Message,
+    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXT, PartialLoader},
+    module_record::ModuleRecord,
+    utils::read_to_string,
 };
 
 pub struct Runtime {
