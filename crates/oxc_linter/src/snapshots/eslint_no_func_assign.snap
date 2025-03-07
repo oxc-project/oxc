@@ -56,3 +56,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─┬─
    ·                           ╰── foo is re-assigned here
    ╰────
+
+  ⚠ eslint(no-func-assign): 'hello' is a function.
+   ╭─[no_func_assign.tsx:1:28]
+ 1 │ let a = function hello() { hello = 123;};
+   ·                            ──┬──
+   ·                              ╰── hello is re-assigned here
+   ╰────
