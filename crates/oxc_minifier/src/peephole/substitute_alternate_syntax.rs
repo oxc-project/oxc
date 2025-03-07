@@ -78,6 +78,12 @@ impl<'a> PeepholeOptimizations {
         prop: &mut MethodDefinition<'a>,
         ctx: Ctx<'a, '_>,
     ) {
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -86,6 +92,12 @@ impl<'a> PeepholeOptimizations {
         prop: &mut PropertyDefinition<'a>,
         ctx: Ctx<'a, '_>,
     ) {
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -94,6 +106,12 @@ impl<'a> PeepholeOptimizations {
         prop: &mut AccessorProperty<'a>,
         ctx: Ctx<'a, '_>,
     ) {
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -847,9 +865,7 @@ impl<'a> PeepholeOptimizations {
         };
         let PropertyKey::StringLiteral(s) = key else { return };
         let value = s.value.as_str();
-        // Uncaught SyntaxError: Classes may not have a field named 'constructor'
-        // Uncaught SyntaxError: Class constructor may not be a private method
-        if matches!(value, "__proto__" | "prototype" | "constructor" | "#constructor") {
+        if value == "__proto__" {
             return;
         }
         if is_identifier_name(value) {
@@ -1104,6 +1120,68 @@ impl<'a> LatePeepholeOptimizations {
                 | "BigInt64Array"
                 | "BigUint64Array"
         )
+    }
+}
+
+struct ClassPropertyKeyParent {
+    pub ty: ClassPropertyKeyParentType,
+    /// Whether the property is static.
+    pub r#static: bool,
+}
+
+impl ClassPropertyKeyParent {
+    /// Whether the key should be kept as a computed property to avoid early errors.
+    ///
+    /// <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
+    /// <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>
+    /// <https://arai-a.github.io/ecma262-compare/?pr=2417&id=sec-class-definitions-static-semantics-early-errors>
+    fn should_keep_as_computed_property(&self, key: &str) -> bool {
+        match key {
+            "prototype" => self.r#static,
+            "constructor" => match self.ty {
+                // Uncaught SyntaxError: Class constructor may not be an accessor
+                ClassPropertyKeyParentType::MethodDefinition => !self.r#static,
+                // Uncaught SyntaxError: Classes may not have a field named 'constructor'
+                // Uncaught SyntaxError: Class constructor may not be a private method
+                ClassPropertyKeyParentType::AccessorProperty
+                | ClassPropertyKeyParentType::PropertyDefinition => true,
+            },
+            "#constructor" => true,
+            _ => false,
+        }
+    }
+}
+
+enum ClassPropertyKeyParentType {
+    PropertyDefinition,
+    AccessorProperty,
+    MethodDefinition,
+}
+
+impl From<&PropertyDefinition<'_>> for ClassPropertyKeyParent {
+    fn from(prop: &PropertyDefinition<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::PropertyDefinition, r#static: prop.r#static }
+    }
+}
+
+impl From<&AccessorProperty<'_>> for ClassPropertyKeyParent {
+    fn from(accessor: &AccessorProperty<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::AccessorProperty, r#static: accessor.r#static }
+    }
+}
+
+impl From<&MethodDefinition<'_>> for ClassPropertyKeyParent {
+    fn from(method: &MethodDefinition<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::MethodDefinition, r#static: method.r#static }
+    }
+}
+
+impl<T> From<&mut T> for ClassPropertyKeyParent
+where
+    ClassPropertyKeyParent: for<'a> std::convert::From<&'a T>,
+{
+    fn from(prop: &mut T) -> Self {
+        (&*prop).into()
     }
 }
 
@@ -1607,10 +1685,34 @@ mod test {
         );
 
         test("class C { ['-1']() {} }", "class C { '-1'() {} }");
-        test_same("class C { ['prototype']() {} }");
         test_same("class C { ['__proto__']() {} }");
-        test_same("class C { ['constructor']() {} }");
-        test_same("class C { ['#constructor']() {} }");
+
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>
+        // <https://arai-a.github.io/ecma262-compare/?pr=2417&id=sec-class-definitions-static-semantics-early-errors>
+        test_same("class C { static ['prototype']() {} }"); // class C { static prototype() {} } is an early error
+        test_same("class C { static ['prototype'] = 0 }"); // class C { prototype = 0 } is an early error
+        test_same("class C { static accessor ['prototype'] = 0 }"); // class C { accessor prototype = 0 } is an early error
+        test("class C { ['prototype']() {} }", "class C { prototype() {} }");
+        test("class C { ['prototype'] = 0 }", "class C { prototype = 0 }");
+        test("class C { accessor ['prototype'] = 0 }", "class C { accessor prototype = 0 }");
+        test_same("class C { ['constructor'] = 0 }"); // class C { constructor = 0 } is an early error
+        test_same("class C { accessor ['constructor'] = 0 }"); // class C { accessor constructor = 0 } is an early error
+        test_same("class C { static ['constructor'] = 0 }"); // class C { static constructor = 0 } is an early error
+        test_same("class C { static accessor ['constructor'] = 0 }"); // class C { static accessor constructor = 0 } is an early error
+        test_same("class C { ['constructor']() {} }"); // computed `constructor` is not treated as a constructor
+        test_same("class C { *['constructor']() {} }"); // class C { *constructor() {} } is an early error
+        test_same("class C { async ['constructor']() {} }"); // class C { async constructor() {} } is an early error
+        test_same("class C { async *['constructor']() {} }"); // class C { async *constructor() {} } is an early error
+        test_same("class C { get ['constructor']() {} }"); // class C { get constructor() {} } is an early error
+        test_same("class C { set ['constructor'](v) {} }"); // class C { set constructor(v) {} } is an early error
+        test("class C { static ['constructor']() {} }", "class C { static constructor() {} }");
+        test_same("class C { ['#constructor'] = 0 }"); // class C { #constructor = 0 } is an early error
+        test_same("class C { accessor ['#constructor'] = 0 }"); // class C { accessor #constructor = 0 } is an early error
+        test_same("class C { ['#constructor']() {} }"); // class C { #constructor() {} } is an early error
+        test_same("class C { static ['#constructor'] = 0 }"); // class C { static #constructor = 0 } is an early error
+        test_same("class C { static accessor ['#constructor'] = 0 }"); // class C { static accessor #constructor = 0 } is an early error
+        test_same("class C { static ['#constructor']() {} }"); // class C { static #constructor() {} } is an early error
     }
 
     #[test]
