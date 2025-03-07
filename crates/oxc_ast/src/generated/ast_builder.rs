@@ -3,11 +3,7 @@
 
 //! AST node factories
 
-#![expect(
-    clippy::default_trait_access,
-    clippy::too_many_arguments,
-    clippy::fn_params_excessive_bools
-)]
+#![expect(clippy::default_trait_access)]
 
 use std::cell::Cell;
 

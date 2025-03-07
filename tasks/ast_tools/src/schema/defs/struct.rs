@@ -45,7 +45,6 @@ pub struct StructDef {
 
 impl StructDef {
     /// Create new [`StructDef`].
-    #[expect(clippy::too_many_arguments)]
     pub fn new(
         id: TypeId,
         name: String,

@@ -69,11 +69,7 @@ impl Generator for AstBuilderGenerator {
             //! AST node factories
 
             //!@@line_break
-            #![expect(
-                clippy::default_trait_access,
-                clippy::too_many_arguments,
-                clippy::fn_params_excessive_bools,
-            )]
+            #![expect(clippy::default_trait_access)]
 
             ///@@line_break
             use std::cell::Cell;
@@ -192,7 +188,6 @@ fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) 
 /// Build a pair of builder methods for a struct.
 ///
 /// This is a separate function as may need to be called twice, with and without semantic ID fields.
-#[expect(clippy::too_many_arguments)]
 fn generate_builder_methods_for_struct_impl(
     struct_def: &StructDef,
     params: &[Param],
@@ -485,7 +480,6 @@ fn generate_builder_method_for_enum_variant(
     output2
 }
 
-#[expect(clippy::too_many_arguments, clippy::similar_names)]
 fn generate_builder_method_for_enum_variant_impl(
     enum_def: &EnumDef,
     struct_def: &StructDef,

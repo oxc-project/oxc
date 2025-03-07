@@ -443,7 +443,6 @@ mod lint_options {
     }
 
     #[test]
-    #[expect(clippy::similar_names)]
     fn multiple_paths() {
         let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
         let file_foo = temp_dir.path().join("foo.js");

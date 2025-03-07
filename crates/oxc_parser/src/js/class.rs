@@ -384,7 +384,6 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    #[expect(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_method_definition(
         &mut self,
         span: Span,
@@ -449,7 +448,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// `FieldDefinition`[?Yield, ?Await] ;
-    #[expect(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_property_definition(
         &mut self,
         span: Span,
@@ -501,7 +499,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// <https://github.com/tc39/proposal-decorators>
-    #[expect(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_accessor_property(
         &mut self,
         span: Span,

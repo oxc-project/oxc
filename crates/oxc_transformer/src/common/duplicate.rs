@@ -54,7 +54,6 @@ impl<'a> TransformCtx<'a> {
     ///
     /// Returns 3 `Expression`s. The first may be an `AssignmentExpression`,
     /// and must be inserted into output first.
-    #[expect(clippy::similar_names)]
     pub(crate) fn duplicate_expression_twice(
         &self,
         expr: Expression<'a>,
