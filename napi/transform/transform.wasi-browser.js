@@ -4,11 +4,17 @@ import {
   WASI as __WASI,
   createOnMessage as __wasmCreateOnMessageForFsProxy,
 } from '@napi-rs/wasm-runtime'
-
+import { memfs } from '@napi-rs/wasm-runtime/fs'
 import __wasmUrl from './transform.wasm32-wasi.wasm?url'
+
+export const { fs: __fs, vol: __volume } = memfs()
 
 const __wasi = new __WASI({
   version: 'preview1',
+  fs: __fs,
+  preopens: {
+    '/': '/',
+  },
 })
 
 const __emnapiContext = __emnapiGetDefaultContext()
@@ -33,6 +39,7 @@ const {
     const worker = new Worker(new URL('./wasi-worker-browser.mjs', import.meta.url), {
       type: 'module',
     })
+    worker.addEventListener('message', __wasmCreateOnMessageForFsProxy(__fs))
 
     return worker
   },
