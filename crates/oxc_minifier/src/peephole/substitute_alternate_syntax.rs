@@ -22,6 +22,16 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
     pub fn substitute_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: Ctx<'a, '_>) {
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
+        if !prop.method {
+            if let PropertyKey::StringLiteral(str) = &prop.key {
+                // "{ __proto__ }" sets prototype, while "{ ['__proto__'] }" does not
+                if str.value == "__proto__" {
+                    return;
+                }
+            }
+        }
+
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -865,9 +875,6 @@ impl<'a> PeepholeOptimizations {
         };
         let PropertyKey::StringLiteral(s) = key else { return };
         let value = s.value.as_str();
-        if value == "__proto__" {
-            return;
-        }
         if is_identifier_name(value) {
             *computed = false;
             *key = PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(s.span, s.value));
@@ -1685,7 +1692,20 @@ mod test {
         );
 
         test("class C { ['-1']() {} }", "class C { '-1'() {} }");
-        test_same("class C { ['__proto__']() {} }");
+
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
+        test_same("v = ({ ['__proto__']: 0 })"); // { __proto__: 0 } will have `isProtoSetter = true`
+        test("v = ({ ['__proto__']() {} })", "v = ({ __proto__() {} })");
+        test("({ ['__proto__']: _ } = {})", "({ __proto__: _ } = {})");
+        test("class C { ['__proto__'] = 0 }", "class C { __proto__ = 0 }");
+        test("class C { ['__proto__']() {} }", "class C { __proto__() {} }");
+        test("class C { accessor ['__proto__'] = 0 }", "class C { accessor __proto__ = 0 }");
+        test("class C { static ['__proto__'] = 0 }", "class C { static __proto__ = 0 }");
+        test(
+            "class C { static accessor ['__proto__'] = 0 }",
+            "class C { static accessor __proto__ = 0 }",
+        );
+        test("class C { static static ['__proto__']() {} }", "class C { static __proto__() {} }");
 
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>
