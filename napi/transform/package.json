@@ -2,22 +2,9 @@
   "name": "@oxc-transform/binding",
   "private": true,
   "scripts": {
-    "build-dev": "napi --no-dts-cache build --platform",
-    "build": "napi --no-dts-cache build --platform --release",
+    "build-dev": "napi --package-json-path ../../npm/oxc-transform/package.json --no-dts-cache build --platform",
+    "build": "pnpm run build-dev --release",
     "test": "vitest --typecheck run ./test && tsc"
-  },
-  "napi": {
-    "binaryName": "transform",
-    "targets": [
-      "x86_64-pc-windows-msvc",
-      "aarch64-pc-windows-msvc",
-      "x86_64-unknown-linux-gnu",
-      "aarch64-unknown-linux-gnu",
-      "x86_64-unknown-linux-musl",
-      "aarch64-unknown-linux-musl",
-      "x86_64-apple-darwin",
-      "aarch64-apple-darwin"
-    ]
   },
   "devDependencies": {
     "vitest": "catalog:"

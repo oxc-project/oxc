@@ -8,7 +8,7 @@ The returned JavaScript AST follows the [ESTree](https://github.com/estree/estre
 
 It is fully aligned with Acorn's AST, and any deviation would be considered a bug.
 
-The returned TypeScript AST will conform to (`@typescript-eslint/typescript-estree`)[https://www.npmjs.com/package/@typescript-eslint/typescript-estree] in the near future.
+The returned TypeScript AST will conform to [@typescript-eslint/typescript-estree](https://www.npmjs.com/package/@typescript-eslint/typescript-estree) in the near future.
 
 ### AST Types
 

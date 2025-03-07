@@ -2,24 +2,10 @@
   "name": "@oxc-parser/binding",
   "private": true,
   "scripts": {
-    "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
-    "build": "napi build --no-dts-cache --platform --js bindings.js --release",
+    "build-dev": "napi build --package-json-path ../../npm/oxc-parser/package.json --no-dts-cache --platform --js bindings.js",
+    "build": "pnpm run build-dev --release",
     "test": "vitest --typecheck run ./test && tsc",
     "bench": "vitest bench --run ./bench.bench.mjs"
-  },
-  "napi": {
-    "binaryName": "parser",
-    "targets": [
-      "x86_64-pc-windows-msvc",
-      "aarch64-pc-windows-msvc",
-      "x86_64-unknown-linux-gnu",
-      "aarch64-unknown-linux-gnu",
-      "x86_64-unknown-linux-musl",
-      "aarch64-unknown-linux-musl",
-      "x86_64-apple-darwin",
-      "aarch64-apple-darwin"
-    ],
-    "dtsHeaderFile": "header.js"
   },
   "dependencies": {
     "@oxc-project/types": "workspace:^"
