@@ -146,7 +146,7 @@ jobs:
             cp napi/${name}/${file} npm/oxc-${name}/${file}
           done
 
-      - run: pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_json_path} --npm-dir ${npm_dir} --dry-run
+      - run: pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_json_path} --npm-dir ${npm_dir}
 
       - name: Check Publish
         run: |
