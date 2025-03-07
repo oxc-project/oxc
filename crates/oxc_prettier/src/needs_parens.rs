@@ -560,9 +560,6 @@ impl<'a> Prettier<'a> {
                 AssignmentTarget::TSTypeAssertion(e) => {
                     Self::starts_with_no_lookahead_token(&e.expression, span)
                 }
-                AssignmentTarget::TSInstantiationExpression(e) => {
-                    Self::starts_with_no_lookahead_token(&e.expression, span)
-                }
             },
             match_member_expression!(Expression) => {
                 Self::starts_with_no_lookahead_token(e.to_member_expression().object(), span)
@@ -605,9 +602,6 @@ impl<'a> Prettier<'a> {
                             Self::starts_with_no_lookahead_token(&e.expression, span)
                         }
                         SimpleAssignmentTarget::TSTypeAssertion(e) => {
-                            Self::starts_with_no_lookahead_token(&e.expression, span)
-                        }
-                        SimpleAssignmentTarget::TSInstantiationExpression(e) => {
                             Self::starts_with_no_lookahead_token(&e.expression, span)
                         }
                     }

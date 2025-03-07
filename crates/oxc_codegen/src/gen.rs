@@ -1912,7 +1912,6 @@ impl GenExpr for SimpleAssignmentTarget<'_> {
             Self::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSTypeAssertion(e) => e.print_expr(p, precedence, ctx),
-            Self::TSInstantiationExpression(e) => e.print_expr(p, precedence, ctx),
         }
     }
 }

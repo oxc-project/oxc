@@ -878,9 +878,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTarget<'_> {
             Self::TSTypeAssertion(it) => {
                 AssignmentTarget::TSTypeAssertion(CloneIn::clone_in(it, allocator))
             }
-            Self::TSInstantiationExpression(it) => {
-                AssignmentTarget::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
             Self::ComputedMemberExpression(it) => {
                 AssignmentTarget::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
@@ -918,9 +915,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for SimpleAssignmentTarget<'_> {
             }
             Self::TSTypeAssertion(it) => {
                 SimpleAssignmentTarget::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                SimpleAssignmentTarget::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 SimpleAssignmentTarget::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
@@ -1007,11 +1001,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetMaybeDefault<'_> {
             }
             Self::TSTypeAssertion(it) => {
                 AssignmentTargetMaybeDefault::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                AssignmentTargetMaybeDefault::TSInstantiationExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
             }
             Self::ComputedMemberExpression(it) => {
                 AssignmentTargetMaybeDefault::ComputedMemberExpression(CloneIn::clone_in(
@@ -1579,9 +1568,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementLeft<'_> {
             }
             Self::TSTypeAssertion(it) => {
                 ForStatementLeft::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                ForStatementLeft::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 ForStatementLeft::ComputedMemberExpression(CloneIn::clone_in(it, allocator))

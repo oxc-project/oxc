@@ -1808,9 +1808,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             SimpleAssignmentTarget::TSTypeAssertion(it) => {
                 self.visit_ts_type_assertion(it);
             }
-            SimpleAssignmentTarget::TSInstantiationExpression(it) => {
-                self.visit_ts_instantiation_expression(it);
-            }
             match_member_expression!(SimpleAssignmentTarget) => {
                 self.visit_member_expression(it.to_member_expression());
             }

@@ -215,6 +215,14 @@ pub fn invalid_assignment(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn invalid_lhs_assignment(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The left-hand side of an assignment expression must be a variable or a property access.",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn new_optional_chain(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Optional chaining cannot appear in the callee of new expressions")
         .with_label(span)

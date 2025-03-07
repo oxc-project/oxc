@@ -2804,31 +2804,6 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build a [`SimpleAssignmentTarget::TSInstantiationExpression`].
-    ///
-    /// This node contains a [`TSInstantiationExpression`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_parameters`
-    #[inline]
-    pub fn simple_assignment_target_ts_instantiation_expression<T1>(
-        self,
-        span: Span,
-        expression: Expression<'a>,
-        type_parameters: T1,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
-    {
-        SimpleAssignmentTarget::TSInstantiationExpression(self.alloc_ts_instantiation_expression(
-            span,
-            expression,
-            type_parameters,
-        ))
-    }
-
     /// Build an [`AssignmentTargetPattern::ArrayAssignmentTarget`].
     ///
     /// This node contains an [`ArrayAssignmentTarget`] that will be stored in the memory arena.

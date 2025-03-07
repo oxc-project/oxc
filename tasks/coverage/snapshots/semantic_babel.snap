@@ -2361,24 +2361,24 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-binary-operator/input.ts
-semantic error: Unresolved references mismatch:
-after transform: ["a", "b", "c"]
-rebuilt        : ["a", "c"]
+semantic error: Unresolved reference IDs mismatch for "b":
+after transform: [ReferenceId(1)]
+rebuilt        : [ReferenceId(2)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-binary-operator-babel-7/input.ts
-semantic error: Unresolved references mismatch:
-after transform: ["a", "b", "c"]
-rebuilt        : ["a", "c"]
+semantic error: Unresolved reference IDs mismatch for "b":
+after transform: [ReferenceId(1)]
+rebuilt        : [ReferenceId(2)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-optional-chain/input.ts
-semantic error: Unresolved references mismatch:
-after transform: ["a", "c"]
-rebuilt        : ["a"]
+semantic error: Unresolved reference IDs mismatch for "c":
+after transform: [ReferenceId(1), ReferenceId(3)]
+rebuilt        : [ReferenceId(4)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-optional-chain-babel-7/input.ts
-semantic error: Unresolved references mismatch:
-after transform: ["a", "c"]
-rebuilt        : ["a"]
+semantic error: Unresolved reference IDs mismatch for "c":
+after transform: [ReferenceId(1), ReferenceId(3)]
+rebuilt        : [ReferenceId(4)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/new/input.ts
 semantic error: Unresolved references mismatch:

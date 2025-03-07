@@ -1837,9 +1837,6 @@ pub mod walk_mut {
                 visitor.visit_ts_non_null_expression(it)
             }
             SimpleAssignmentTarget::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            SimpleAssignmentTarget::TSInstantiationExpression(it) => {
-                visitor.visit_ts_instantiation_expression(it)
-            }
             match_member_expression!(SimpleAssignmentTarget) => {
                 visitor.visit_member_expression(it.to_member_expression_mut())
             }

@@ -492,9 +492,6 @@ impl ContentEq for AssignmentTarget<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -517,9 +514,6 @@ impl ContentEq for SimpleAssignmentTarget<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -573,9 +567,6 @@ impl ContentEq for AssignmentTargetMaybeDefault<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -897,9 +888,6 @@ impl ContentEq for ForStatementLeft<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }

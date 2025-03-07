@@ -28,7 +28,6 @@ impl<'a> Expression<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSTypeAssertion(_)
                 | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
         )
     }
 
@@ -839,7 +838,6 @@ impl<'a> SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => Some(&mut expr.expression),
             Self::TSNonNullExpression(expr) => Some(&mut expr.expression),
             Self::TSTypeAssertion(expr) => Some(&mut expr.expression),
-            Self::TSInstantiationExpression(expr) => Some(&mut expr.expression),
             _ => None,
         }
     }

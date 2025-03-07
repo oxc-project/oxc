@@ -238,7 +238,6 @@ export type SimpleAssignmentTarget =
   | TSSatisfiesExpression
   | TSNonNullExpression
   | TSTypeAssertion
-  | TSInstantiationExpression
   | MemberExpression;
 
 export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTarget;
