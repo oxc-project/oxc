@@ -45,7 +45,7 @@
       "armv7-unknown-linux-gnueabihf",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
-      "wasm32-wasip1"
+      "wasm32-wasip1-threads"
     ]
   }
 }
