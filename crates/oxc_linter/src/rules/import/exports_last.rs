@@ -57,15 +57,16 @@ impl Rule for ExportsLast {
         let Some(root) = ctx.nodes().root_node() else {
             return;
         };
-        let AstKind::Program(program) = root.kind() else { unreachable!() };
-        let body = &program.body;
-        let find_res =
-            body.iter().rev().find_position(|statement| !is_exports_declaration(statement));
-        if let Some((index, _)) = find_res {
-            let end = body.len() - index;
-            for statement in &body[0..end] {
-                if is_exports_declaration(statement) {
-                    ctx.diagnostic(exports_last_diagnostic(statement.span()));
+        if let AstKind::Program(program) = root.kind() {
+            let body = &program.body;
+            let find_res =
+                body.iter().rev().find_position(|statement| !is_exports_declaration(statement));
+            if let Some((index, _)) = find_res {
+                let end = body.len() - index;
+                for statement in &body[0..end] {
+                    if is_exports_declaration(statement) {
+                        ctx.diagnostic(exports_last_diagnostic(statement.span()));
+                    }
                 }
             }
         }
