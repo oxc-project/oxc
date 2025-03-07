@@ -1,9 +1,9 @@
+use runtime::Runtime;
+use std::ffi::OsStr;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use std::ffi::OsStr;
-use runtime::Runtime;
 
 use oxc_diagnostics::DiagnosticSender;
 

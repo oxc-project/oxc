@@ -40,64 +40,78 @@ pub struct Runtime {
     pub(super) test_source: std::sync::RwLock<Option<String>>,
 }
 
-struct SectionContent<'a> {
-    source: JavaScriptSource<'a>,
-    /// None if the parsing failed. The corresponding item with the same index in `ResolvedModule::section_module_records` would contain the errors.
-    semantic: Option<Semantic<'a>>,
+/// Output of `Runtime::process_path`
+struct ModuleProcessOutput {
+    /// All paths in `Runtime` are store as `OsStr`, because `OsStr` hash is faster
+    /// than `Path` - go checkout their source code.
+    path: Arc<OsStr>,
+    processed_module: ProcessedModule,
 }
 
-type SectionContents<'a> = SmallVec<[SectionContent<'a>; 1]>;
+/// A module processed from a path
+#[derive(Default)]
+struct ProcessedModule {
+    /// Module records of source sections, or diagnostics if parsing failed on that section.
+    ///
+    /// Modules with special extensions such as .vue could contain multiple source sections (see `PartialLoader::PartialLoader`).
+    /// Plain ts/js modules have one section. Using `SmallVec` to avoid allocations for plain modules.
+    section_module_records: SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>,
+
+    /// Source code and semantic of the module.
+    ///
+    /// This value is required for linter to run on the module. If import plugin is enabled,
+    /// dependencies are also processed as `ProcessedModule` to construct the module graph, but
+    /// not for linting. For these modules, `content` is set to `None`.
+    content: Option<ModuleContent>,
+}
+
+/// ModuleRecord with all specifiers in import statements resolved to real paths.
+struct ResolvedModuleRecord {
+    module_record: Arc<ModuleRecord>,
+    requested_module_paths: Vec<(/*specifier*/ CompactStr, Arc<OsStr>)>,
+}
+
+self_cell! {
+    struct ModuleContent {
+        owner: ModuleContentOwner,
+        #[not_covariant]
+        dependent: SectionContents,
+    }
+}
+// Safety: dependent borrows from owner. They're safe to be sent together.
+unsafe impl Send for ModuleContent {}
 
 struct ModuleContentOwner {
     source_text: String,
     allocator: Allocator,
 }
 
-self_cell! {
-    struct ModuleContent {
-        owner: ModuleContentOwner,
-        // in the same order as resolvedModule.records
-        #[not_covariant]
-        dependent: SectionContents,
-    }
+/// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
+type SectionContents<'a> = SmallVec<[SectionContent<'a>; 1]>;
+struct SectionContent<'a> {
+    source: JavaScriptSource<'a>,
+    /// None if section parsing failed. The corresponding item with the same index in
+    /// `ProcessedModule.section_module_records` would be `Err(Vec<OxcDiagnostic>)`.
+    semantic: Option<Semantic<'a>>,
 }
 
-// Safety: dependent borrows from owner. They're safe to be sent together.
-unsafe impl Send for ModuleContent {}
-
-struct ResolvedModuleRecord {
-    module_record: Arc<ModuleRecord>,
-    requested_module_paths: Vec<(/*specifier*/ CompactStr, Arc<OsStr>)>,
-}
-
-#[derive(Default)]
-struct ResolvedModule {
-    section_module_records: SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>,
-    content: Option<ModuleContent>,
-}
-
-struct ModuleResolveOutput {
-    path: Arc<OsStr>,
-    resolved_module: ResolvedModule,
-}
-
+/// A module ready for linting. A `EntryModule` is generated for each path in `runtime.paths`
+///
+/// It's basically the same as `ProcessedModule`, except `content` is non-Option.
 struct EntryModule {
     path: Arc<OsStr>,
     section_module_records: SmallVec<[Result<Arc<ModuleRecord>, Vec<OxcDiagnostic>>; 1]>,
     content: ModuleContent,
 }
 impl EntryModule {
-    fn from_resolved_module(path: Arc<OsStr>, resolved_module: ResolvedModule) -> Option<Self> {
-        let content = resolved_module.content?;
+    fn from_processed_module(path: Arc<OsStr>, processed_module: ProcessedModule) -> Option<Self> {
+        let content = processed_module.content?;
         Some(Self {
             path,
-            section_module_records: resolved_module
+            section_module_records: processed_module
                 .section_module_records
                 .into_iter()
-                .map(|record_result| match record_result {
-                    Ok(record) => Ok(record.module_record),
-                    Err(err) => Err(err.clone()),
-                })
+                .map(|record_result| record_result.map(|ok| ok.module_record))
                 .collect(),
             content,
         })
@@ -114,6 +128,7 @@ impl Runtime {
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
+
             #[cfg(test)]
             test_source: std::sync::RwLock::new(None),
         }
@@ -175,6 +190,10 @@ impl Runtime {
         })
     }
 
+    /// Prepare entry modules for linting.
+    ///
+    /// `on_entry` is called for each entry modules in `self.paths` when it's ready for linting,
+    /// which means all its dependencies are resolved if import plugin is enabled.
     fn resolve_modules<'a>(
         &'a mut self,
         scope: &Scope<'a>,
@@ -184,53 +203,99 @@ impl Runtime {
     ) {
         if self.resolver.is_none() {
             self.paths.par_iter().for_each(|path| {
-                let output = self.process_path(Arc::clone(&path), check_syntax_errors, tx_error);
+                let output = self.process_path(Arc::clone(path), check_syntax_errors, tx_error);
                 let entry =
-                    EntryModule::from_resolved_module(output.path, output.resolved_module).unwrap();
+                    EntryModule::from_processed_module(output.path, output.processed_module)
+                        .unwrap();
                 on_entry(self, entry);
             });
             return;
         }
-        self.paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(&Path::new(a)));
+        // The goal of code below is to construct the module graph bootstrapped by the entry modules (`self.paths`),
+        // and call `on_entry` when all dependencies of that entry is resolved. We want to call `on_entry` for each
+        // entry as soon as possible, so that the memory for source texts and semantics can be released early.
+
+        // Sorting paths to make deeper paths appear first.
+        // Consider a typical scenario:
+        //
+        // - src/index.js
+        // - src/a/foo.js
+        // - src/b/bar.js
+        // ..... (thousands of sources)
+        // - src/very/deep/path/baz.js
+        //
+        // All paths above are in `self.paths`. `src/index.js`, the entrypoint of the application, references
+        // almost all the other paths as its direct or indirect dependencies.
+        //
+        // If we construct the module graph starting from `src/index.js`, contents (sources and semantics) of
+        // all these paths must stay in memory (because they are both entries and part of `src/index.js` dependencies)
+        // until the last dependency is processed.
+        // The more efficient way is to start from "leaf" modules: their dependencies are ready earlier, thus we
+        // can run lint on them and then released their content earlier.
+        //
+        // But how can we know which ones are "leaf" modules before parsing event starts? Here we heuristically
+        // assume that deeper paths are more likely to be leaf modules. This is obviously not always true, but good
+        // enough for real world codebases.
+        self.paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
+
+        // The general idea is processing entries in groups. We start from a group of entries that is small
+        // enough to hold in memory but big enough to make full use of the rayon thread pool. We build the
+        // module graph from this group of entries, run lint them, drop their content but keep the module
+        // graph, and then move on to the next group.
+        let entry_group_size = rayon::current_num_threads();
+
+        // only stores entry modules in current group
+        let mut entry_modules: Vec<EntryModule> = Vec::with_capacity(entry_group_size);
+
+        // downgrade self to immutable reference so it can be shared among spawned tasks.
         let me: &Self = self;
+
+        // the module graph
         let mut modules_by_path =
             FxHashMap::<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>>::default();
+
+        // `encountered_paths` prevents duplicated processing.
+        // It is a superset of keys of `modules_by_path` as it also contains paths that are queued to process.
         let mut encountered_paths =
             FxHashSet::<Arc<OsStr>>::with_capacity_and_hasher(me.paths.len(), FxBuildHasher);
-        let entry_group_size = rayon::current_num_threads();
-        let mut entry_modules: Vec<EntryModule> = Vec::with_capacity(entry_group_size);
 
         let mut module_relationships =
             Vec::<(Arc<OsStr>, SmallVec<[Vec<(/*specifier*/ CompactStr, Arc<OsStr>)>; 1]>)>::new();
 
-        let (tx_resolve_output, rx_resolve_output) = mpsc::channel::<ModuleResolveOutput>();
+        let (tx_resolve_output, rx_resolve_output) = mpsc::channel::<ModuleProcessOutput>();
 
         let mut group_start = 0usize;
         while group_start < me.paths.len() {
-            let mut unresolved_module_count = 0;
-            while unresolved_module_count < entry_group_size && group_start < me.paths.len() {
+            let mut pending_module_count = 0;
+
+            // Spawning tasks to processing entries
+            while pending_module_count < entry_group_size && group_start < me.paths.len() {
                 let path = &me.paths[group_start];
                 group_start += 1;
-                if encountered_paths.insert(path.clone()) {
-                    unresolved_module_count += 1;
-                    let path = path.clone();
+                if encountered_paths.insert(Arc::clone(path)) {
+                    pending_module_count += 1;
+                    let path = Arc::clone(path);
                     let tx_resolve_output = tx_resolve_output.clone();
                     scope.spawn(move |_| {
                         tx_resolve_output
                             .send(me.process_path(path, check_syntax_errors, tx_error))
                             .unwrap();
-                    })
+                    });
                 }
             }
-            while unresolved_module_count > 0 {
-                let Ok(ModuleResolveOutput { path, mut resolved_module }) =
+
+            // Loop until all queued modules in this group are processed
+            while pending_module_count > 0 {
+                let Ok(ModuleProcessOutput { path, mut processed_module }) =
                     rx_resolve_output.try_recv()
                 else {
+                    // Don't block on receiving rx_resolve_output.
+                    // Instead, yield this thread so it can help process modules or run lint.
                     rayon::yield_now();
                     continue;
                 };
-                unresolved_module_count -= 1;
-                let records: SmallVec<[Arc<ModuleRecord>; 1]> = resolved_module
+                pending_module_count -= 1;
+                let records: SmallVec<[Arc<ModuleRecord>; 1]> = processed_module
                     .section_module_records
                     .iter()
                     .filter_map(|resolved_module_record| {
@@ -240,7 +305,7 @@ impl Runtime {
 
                 modules_by_path.insert(Arc::clone(&path), records);
 
-                for record_result in &resolved_module.section_module_records {
+                for record_result in &processed_module.section_module_records {
                     let Ok(record) = record_result.as_ref() else {
                         continue;
                     };
@@ -248,7 +313,7 @@ impl Runtime {
                         if encountered_paths.insert(Arc::clone(dep_path)) {
                             scope.spawn({
                                 let tx_resolve_output = tx_resolve_output.clone();
-                                let dep_path = dep_path.clone();
+                                let dep_path = Arc::clone(dep_path);
                                 move |_| {
                                     tx_resolve_output
                                         .send(me.process_path(
@@ -259,14 +324,14 @@ impl Runtime {
                                         .unwrap();
                                 }
                             });
-                            unresolved_module_count += 1;
+                            pending_module_count += 1;
                         }
                     }
                 }
 
                 module_relationships.push((
                     Arc::clone(&path),
-                    resolved_module
+                    processed_module
                         .section_module_records
                         .iter_mut()
                         .filter_map(|record_result| {
@@ -275,12 +340,14 @@ impl Runtime {
                         .collect(),
                 ));
 
-                if let Some(entry_module) = EntryModule::from_resolved_module(path, resolved_module)
+                if let Some(entry_module) =
+                    EntryModule::from_processed_module(path, processed_module)
                 {
                     entry_modules.push(entry_module);
                 }
             }
 
+            // Writing to `loaded_modules` based on `module_relationships`
             module_relationships.par_drain(..).for_each(|(path, requested_module_paths)| {
                 if requested_module_paths.is_empty() {
                     return;
@@ -293,13 +360,14 @@ impl Runtime {
                     let mut loaded_modules = record.loaded_modules.write().unwrap();
                     for (specifier, dep_path) in requested_module_paths {
                         // TODO: revise how to store multiple sections in loaded_modules
-                        let Some(dep_module_record) = modules_by_path[&dep_path].first() else {
+                        let Some(dep_module_record) = modules_by_path[&dep_path].last() else {
                             continue;
                         };
                         loaded_modules.insert(specifier, Arc::clone(dep_module_record));
                     }
                 }
             });
+            #[expect(clippy::iter_with_drain)]
             for entry in entry_modules.drain(..) {
                 let on_entry = on_entry.clone();
                 scope.spawn(move |_| {
@@ -396,7 +464,7 @@ impl Runtime {
 
         *self.test_source.write().unwrap() = Some(source_text.to_owned());
 
-        let mut messages = Mutex::new(Vec::<Message<'a>>::new());
+        let messages = Mutex::new(Vec::<Message<'a>>::new());
         rayon::scope(|scope| {
             self.resolve_modules(scope, check_syntax_errors, tx_error, |me, mut module| {
                 module.content.with_dependent_mut(|_owner, dependent| {
@@ -430,20 +498,20 @@ impl Runtime {
         path: Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
-    ) -> ModuleResolveOutput {
+    ) -> ModuleProcessOutput {
         let Some(ext) = Path::new(&path).extension().and_then(OsStr::to_str) else {
-            return ModuleResolveOutput { path, resolved_module: ResolvedModule::default() };
+            return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
         };
         let Some(source_type_and_text) = self.get_source_type_and_text(Path::new(&path), ext)
         else {
-            return ModuleResolveOutput { path, resolved_module: ResolvedModule::default() };
+            return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
         };
 
         let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
                 tx_error.send(Some((Path::new(&path).to_path_buf(), vec![e]))).unwrap();
-                return ModuleResolveOutput { path, resolved_module: ResolvedModule::default() };
+                return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
             }
         };
         let mut records = SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
@@ -476,9 +544,9 @@ impl Runtime {
             );
         }
 
-        ModuleResolveOutput {
+        ModuleProcessOutput {
             path,
-            resolved_module: ResolvedModule {
+            processed_module: ProcessedModule {
                 section_module_records: records,
                 content: module_content,
             },

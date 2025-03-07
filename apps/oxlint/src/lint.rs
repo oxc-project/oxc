@@ -359,7 +359,7 @@ impl Runner for LintRunner {
         let mut lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
-        
+
         let number_of_rules = lint_service.linter().number_of_rules();
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
