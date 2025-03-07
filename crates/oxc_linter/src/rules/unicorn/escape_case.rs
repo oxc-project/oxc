@@ -107,9 +107,7 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
                 }
                 'c' if is_regex => {
                     if matches!(p.clone().next(), Some(c) if c.is_ascii_lowercase()) {
-                        if let Some(nxt) = p.next() {
-                            result.push(nxt.to_ascii_uppercase());
-                        }
+                        result.push(p.next().unwrap().to_ascii_uppercase());
                     }
                 }
                 _ => {}
