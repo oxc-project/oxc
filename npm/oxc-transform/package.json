@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.56.3",
+  "version": "0.56.4",
   "main": "index.js",
   "browser": "browser.js",
   "description": "Oxc transform Node API",
