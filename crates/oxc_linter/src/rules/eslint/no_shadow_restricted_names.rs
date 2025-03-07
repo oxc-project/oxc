@@ -18,12 +18,27 @@ pub struct NoShadowRestrictedNames;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow redefine the global variables like 'undefined', 'NaN', 'Infinity', 'eval', 'arguments'.
+    /// Disallows the redefining of global variables such as `undefined`, `NaN`, `Infinity`, `eval`
+    /// and `arguments`.
     ///
     /// ### Why is this bad?
     ///
+    /// Value properties of the Global Object `NaN`, `Infinity`, `undefined` as well as the strict
+    /// mode restricted identifiers `eval` and `arguments` are considered to be restricted names in
+    /// JavaScript. Defining them to mean something else can have unintended consequences and
+    /// confuse others reading the code. For example, there’s nothing preventing you from
+    /// writing:
     ///
-    /// ### Example
+    /// ```javascript
+    /// var undefined = "foo";
+    /// ```
+    ///
+    /// Then any code used within the same scope would not get the global undefined, but rather the
+    /// local version with a very different meaning.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function NaN(){}
     ///
@@ -32,6 +47,28 @@ declare_oxc_lint!(
     /// var undefined = 5;
     ///
     /// try {} catch(eval){}
+    /// ```
+    ///
+    /// ```javascript
+    /// import NaN from "foo";
+    ///
+    /// import { undefined } from "bar";
+    ///
+    /// class Infinity {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var Object;
+    ///
+    /// function f(a, b){}
+    ///
+    /// // Exception: `undefined` may be shadowed if the variable is never assigned a value.
+    /// var undefined;
+    /// ```
+    ///
+    /// ```javascript
+    /// import { undefined as undef } from "bar";
     /// ```
     NoShadowRestrictedNames,
     eslint,
@@ -97,6 +134,7 @@ fn test() {
                 "parserOptions": { "ecmaVersion": 2019 }
             })),
         ),
+        ("var Object;", None),
         ("var undefined;", None),
         ("var undefined;var undefined", None),
         (
@@ -115,9 +153,13 @@ fn test() {
             })),
         ),
         ("var normal, undefined; var undefined;", None),
+        (r#"import { undefined as undef } from "bar";"#, None),
     ];
 
     let fail = vec![
+        ("var undefined = 5;", None),
+        ("function NaN(){}", None),
+        ("try {} catch(eval){}", None),
         ("function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }", None),
         (
             "function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }",
@@ -161,6 +203,9 @@ fn test() {
         ("class undefined { }", None),
         ("class foo { undefined(undefined) { } }", None),
         ("class foo { #undefined(undefined) { } }", None),
+        ("class Infinity {}", None),
+        (r#"import { undefined } from "bar";"#, None),
+        (r#"import NaN from "foo";"#, None),
     ];
 
     Tester::new(NoShadowRestrictedNames::NAME, NoShadowRestrictedNames::PLUGIN, pass, fail)
