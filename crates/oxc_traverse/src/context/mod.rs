@@ -3,7 +3,7 @@ use oxc_ast::{
     AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
 };
-use oxc_semantic::{ScopeTree, Scoping, SymbolTable};
+use oxc_semantic::Scoping;
 use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -208,32 +208,16 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.scoping.scopes`.
     #[inline]
-    pub fn scopes(&self) -> &ScopeTree {
-        self.scoping.scopes()
+    pub fn scoping(&self) -> &Scoping {
+        self.scoping.scoping()
     }
 
     /// Get mutable scopes tree.
     ///
     /// Shortcut for `ctx.scoping.scopes_mut`.
     #[inline]
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
-        self.scoping.scopes_mut()
-    }
-
-    /// Get symbols table.
-    ///
-    /// Shortcut for `ctx.scoping.symbols`.
-    #[inline]
-    pub fn symbols(&self) -> &SymbolTable {
-        self.scoping.symbols()
-    }
-
-    /// Get mutable symbols table.
-    ///
-    /// Shortcut for `ctx.scoping.symbols_mut`.
-    #[inline]
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        self.scoping.symbols_mut()
+    pub fn scopes_mut(&mut self) -> &mut Scoping {
+        self.scoping.scoping_mut()
     }
 
     /// Get iterator over scopes, starting with current scope and working up.
@@ -393,7 +377,7 @@ impl<'a> TraverseCtx<'a> {
         name: &str,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        self.generate_uid(name, self.scopes().root_scope_id(), flags)
+        self.generate_uid(name, self.scoping().root_scope_id(), flags)
     }
 
     /// Generate UID based on node.

@@ -31,20 +31,16 @@ mod is_global_reference;
 mod jsdoc;
 mod label;
 mod node;
-mod scope;
 mod scoping;
 mod stats;
-mod symbol;
 mod unresolved_stack;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodes};
-pub use scope::ScopeTree;
 pub use scoping::Scoping;
 pub use stats::Stats;
-pub use symbol::SymbolTable;
 
 use class::ClassTable;
 
@@ -114,19 +110,16 @@ impl<'a> Semantic<'a> {
         &self.nodes
     }
 
-    /// The [`ScopeTree`] containing scopes and what identifier names are bound in
-    /// each one.
-    pub fn scopes(&self) -> &ScopeTree {
-        &self.scoping.scopes
+    pub fn scoping(&self) -> &Scoping {
+        &self.scoping
+    }
+
+    pub fn scoping_mut(&mut self) -> &mut Scoping {
+        &mut self.scoping
     }
 
     pub fn classes(&self) -> &ClassTable {
         &self.classes
-    }
-
-    /// Get a mutable reference to the [`ScopeTree`].
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
-        &mut self.scoping.scopes
     }
 
     pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {
@@ -160,17 +153,6 @@ impl<'a> Semantic<'a> {
         &self.jsdoc
     }
 
-    /// [`SymbolTable`] containing all symbols in the program and their
-    /// [`Reference`]s.
-    pub fn symbols(&self) -> &SymbolTable {
-        &self.scoping.symbols
-    }
-
-    /// Get a mutable reference to the [`SymbolTable`].
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        &mut self.scoping.symbols
-    }
-
     pub fn unused_labels(&self) -> &Vec<NodeId> {
         &self.unused_labels
     }
@@ -188,9 +170,9 @@ impl<'a> Semantic<'a> {
         #[expect(clippy::cast_possible_truncation)]
         Stats::new(
             self.nodes.len() as u32,
-            self.scoping.scopes.scopes_len() as u32,
-            self.scoping.symbols.symbols_len() as u32,
-            self.scoping.symbols.references.len() as u32,
+            self.scoping.scopes_len() as u32,
+            self.scoping.symbols_len() as u32,
+            self.scoping.references.len() as u32,
         )
     }
 
@@ -199,12 +181,12 @@ impl<'a> Semantic<'a> {
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;
         };
-        self.scopes().root_unresolved_references().contains_key(id.name.as_str())
+        self.scoping.root_unresolved_references().contains_key(id.name.as_str())
     }
 
     /// Find which scope a symbol is declared in
     pub fn symbol_scope(&self, symbol_id: SymbolId) -> ScopeId {
-        self.scoping.symbols.get_symbol_scope_id(symbol_id)
+        self.scoping.get_symbol_scope_id(symbol_id)
     }
 
     /// Get all resolved references for a symbol
@@ -212,15 +194,15 @@ impl<'a> Semantic<'a> {
         &self,
         symbol_id: SymbolId,
     ) -> impl Iterator<Item = &Reference> + '_ + use<'_> {
-        self.scoping.symbols.get_resolved_references(symbol_id)
+        self.scoping.get_resolved_references(symbol_id)
     }
 
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
-        self.nodes.get_node(self.scoping.symbols.get_symbol_declaration(symbol_id))
+        self.nodes.get_node(self.scoping.get_symbol_declaration(symbol_id))
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
-        self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+        self.scoping.root_unresolved_references().contains_key(ident.name.as_str())
     }
 
     pub fn reference_name(&self, reference: &Reference) -> &str {
@@ -270,7 +252,7 @@ mod tests {
         let semantic = get_semantic(&allocator, source, SourceType::default());
 
         let top_level_a =
-            semantic.scopes().get_binding(semantic.scopes().root_scope_id(), "a").unwrap();
+            semantic.scoping().get_binding(semantic.scoping().root_scope_id(), "a").unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
         match decl.kind() {

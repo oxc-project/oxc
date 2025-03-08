@@ -45,8 +45,8 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             let mut var_scope_ids = vec![];
 
             // Collect all scopes where variable hoisting can occur
-            for scope_id in builder.scoping.scopes.scope_ancestors(target_scope_id) {
-                let flags = builder.scoping.scopes.scope_flags(scope_id);
+            for scope_id in builder.scoping.scope_ancestors(target_scope_id) {
+                let flags = builder.scoping.scope_flags(scope_id);
                 if flags.is_var() {
                     target_scope_id = scope_id;
                     break;
@@ -68,9 +68,9 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
                         // remove current scope binding and add to target scope
                         // avoid same symbols appear in multi-scopes
-                        builder.scoping.scopes.remove_binding(scope_id, &name);
-                        builder.scoping.scopes.add_binding(target_scope_id, &name, symbol_id);
-                        builder.scoping.symbols.symbol_scope_ids[symbol_id] = target_scope_id;
+                        builder.scoping.remove_binding(scope_id, &name);
+                        builder.scoping.add_binding(target_scope_id, &name, symbol_id);
+                        builder.scoping.symbol_scope_ids[symbol_id] = target_scope_id;
                         break;
                     }
                 }
@@ -106,7 +106,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                         Expression::ArrowFunctionExpression(func) => func.pure,
                         _ => false,
                     } {
-                        builder.scoping.symbols.no_side_effects.insert(symbol_id);
+                        builder.scoping.no_side_effects.insert(symbol_id);
                     }
                 }
             }
@@ -169,7 +169,7 @@ impl<'a> Binder<'a> for Function<'a> {
         let scope_flags = builder.current_scope_flags();
         if let Some(ident) = &self.id {
             if is_function_part_of_if_statement(self, builder) {
-                let symbol_id = builder.scoping.symbols.create_symbol(
+                let symbol_id = builder.scoping.create_symbol(
                     ident.span,
                     ident.name.into(),
                     SymbolFlags::Function,
@@ -215,7 +215,7 @@ impl<'a> Binder<'a> for Function<'a> {
         if let Some(AstKind::ObjectProperty(prop)) =
             builder.nodes.parent_kind(builder.current_node_id)
         {
-            let flags = builder.scoping.scopes.scope_flags_mut(current_scope_id);
+            let flags = builder.scoping.scope_flags_mut(current_scope_id);
             match prop.kind {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
@@ -226,7 +226,7 @@ impl<'a> Binder<'a> for Function<'a> {
         // Save `@__NO_SIDE_EFFECTS__`
         if self.pure {
             if let Some(symbold_id) = self.id.as_ref().and_then(|id| id.symbol_id.get()) {
-                builder.scoping.symbols.no_side_effects.insert(symbold_id);
+                builder.scoping.no_side_effects.insert(symbold_id);
             }
         }
     }
@@ -439,17 +439,17 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let scope_id =
-            if matches!(
-                builder.nodes.parent_kind(builder.current_node_id),
-                Some(AstKind::TSInferType(_))
-            ) {
-                builder.scoping.scopes.scope_ancestors(builder.current_scope_id).find(|scope_id| {
-                    builder.scoping.scopes.scope_flags(*scope_id).is_ts_conditional()
-                })
-            } else {
-                None
-            };
+        let scope_id = if matches!(
+            builder.nodes.parent_kind(builder.current_node_id),
+            Some(AstKind::TSInferType(_))
+        ) {
+            builder
+                .scoping
+                .scope_ancestors(builder.current_scope_id)
+                .find(|scope_id| builder.scoping.scope_flags(*scope_id).is_ts_conditional())
+        } else {
+            None
+        };
 
         let symbol_id = builder.declare_symbol_on_scope(
             self.name.span,
