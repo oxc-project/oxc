@@ -143,29 +143,27 @@ impl Rule for JsxFilenameExtension {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let jsx_elt = ctx
-            .nodes()
-            .iter()
-            .find(|&&x| matches!(x.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_)));
-        let file_extension = ctx.file_path().extension().and_then(OsStr::to_str).unwrap_or("");
-        let has_ext_allowed = self.extensions.contains(&CompactStr::new(file_extension));
+    let file_extension = ctx.file_path().extension().and_then(OsStr::to_str).unwrap_or("");
+    let has_ext_allowed = self.extensions.contains(&CompactStr::new(file_extension));
 
-        if let Some(jsx_elt) = jsx_elt {
-            if !has_ext_allowed {
-                ctx.diagnostic(no_jsx_with_filename_extension_diagnostic(
-                    file_extension,
-                    jsx_elt.span(),
-                ));
-            }
+    if !has_ext_allowed {
+        if let Some(jsx_elt) = ctx.nodes().iter().find(|&&x| matches!(x.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_))) {
+            ctx.diagnostic(no_jsx_with_filename_extension_diagnostic(
+                file_extension,
+                jsx_elt.span(),
+            ));
+        }
+        return;
+    }
+
+    if matches!(self.allow, AllowType::AsNeeded) {
+        if self.ignore_files_without_code && ctx.nodes().len() == 1 {
             return;
         }
-
-        if matches!(self.allow, AllowType::AsNeeded) && has_ext_allowed {
-            if self.ignore_files_without_code && ctx.nodes().len() == 1 {
-                return;
-            }
+        if ctx.nodes().iter().all(|&x| !matches!(x.kind(), AstKind::JSXElement(_) | AstKind::JSXFragment(_))) {
             ctx.diagnostic(extension_only_for_jsx_diagnostic(file_extension));
         }
+    }
     }
 }
 
