@@ -35,6 +35,8 @@ export interface MangleOptions {
   toplevel?: boolean
   /** Debug mangled names. */
   debug?: boolean
+  /** Pass true to mangle properties. */
+  manglePrivateClassNames?: boolean
 }
 
 /**

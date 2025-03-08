@@ -54,11 +54,18 @@ pub struct MangleOptions {
 
     /// Debug mangled names.
     pub debug: Option<bool>,
+
+    /// Pass true to mangle properties.
+    pub mangle_private_class_names: Option<bool>,
 }
 
 impl From<&MangleOptions> for oxc_minifier::MangleOptions {
     fn from(o: &MangleOptions) -> Self {
-        Self { top_level: o.toplevel.unwrap_or(false), debug: o.debug.unwrap_or(false) }
+        Self {
+            top_level: o.toplevel.unwrap_or(false),
+            debug: o.debug.unwrap_or(false),
+            mangle_private_class_names: o.mangle_private_class_names.unwrap_or(false),
+        }
     }
 }
 

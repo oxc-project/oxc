@@ -57,12 +57,7 @@ impl Minifier {
             Stats::default()
         };
         let symbol_table = self.options.mangle.map(|options| {
-            let semantic = SemanticBuilder::new()
-                .with_stats(stats)
-                .with_scope_tree_child_ids(true)
-                .build(program)
-                .semantic;
-            Mangler::default().with_options(options).build_with_semantic(semantic, program)
+            Mangler::new().with_options(options).with_stats(stats).build(allocator, program)
         });
         MinifierReturn { symbol_table }
     }

@@ -9,10 +9,12 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_index::Idx;
-use oxc_semantic::{ScopeTree, Semantic, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_semantic::{ScopeTree, Semantic, SemanticBuilder, Stats, SymbolId, SymbolTable};
 use oxc_span::Atom;
 
 pub(crate) mod base54;
+mod private_name;
+use private_name::PrivateClassNameMangler;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
@@ -23,6 +25,9 @@ pub struct MangleOptions {
     ///
     /// Uses base54 if false.
     pub debug: bool,
+
+    /// Whether to mangle private class names.
+    pub mangle_private_class_names: bool,
 }
 
 type Slot = usize;
@@ -148,6 +153,7 @@ type Slot = usize;
 #[derive(Default)]
 pub struct Mangler {
     options: MangleOptions,
+    stats: Option<Stats>,
 }
 
 impl Mangler {
@@ -162,32 +168,59 @@ impl Mangler {
         self
     }
 
-    /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
-    /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
-    pub fn build(self, program: &Program<'_>) -> SymbolTable {
-        let semantic =
-            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
-        self.build_with_semantic(semantic, program)
+    pub fn with_stats(mut self, stats: Stats) -> Self {
+        self.stats = Some(stats);
+        self
     }
 
+    pub fn mangle_private_class_names<'a>(
+        &self,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+    ) {
+        if !self.options.mangle_private_class_names {
+            return;
+        }
+        if self.options.debug {
+            PrivateClassNameMangler::new(allocator, debug_name).build(program);
+        } else {
+            PrivateClassNameMangler::new(allocator, base54).build(program);
+        }
+    }
+
+    /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
+    /// Pass the symbol table to oxc_codegen to generate the mangled code.
+    ///
     /// # Panics
     ///
     /// Panics if the child_ids does not exist in scope_tree.
     #[must_use]
-    pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> SymbolTable {
-        if self.options.debug {
+    pub fn build<'a>(&self, allocator: &'a Allocator, program: &mut Program<'a>) -> SymbolTable {
+        let semantic_builder = SemanticBuilder::new().with_scope_tree_child_ids(true);
+        let semantic_builder = if let Some(stats) = self.stats {
+            semantic_builder.with_stats(stats)
+        } else {
+            semantic_builder
+        };
+        let semantic = semantic_builder.build(program).semantic;
+
+        let symbols_table = if self.options.debug {
             self.build_with_symbols_and_scopes_impl(semantic, program, debug_name)
         } else {
             self.build_with_symbols_and_scopes_impl(semantic, program, base54)
-        }
+        };
+
+        self.mangle_private_class_names(allocator, program);
+
+        symbols_table
     }
 
     fn build_with_symbols_and_scopes_impl<
         const CAPACITY: usize,
         G: Fn(u32) -> InlineString<CAPACITY, u8>,
     >(
-        self,
+        &self,
         semantic: Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
@@ -365,7 +398,7 @@ impl Mangler {
     }
 
     fn tally_slot_frequencies<'a>(
-        &'a self,
+        &self,
         symbol_table: &SymbolTable,
         exported_symbols: &FxHashSet<SymbolId>,
         scope_tree: &ScopeTree,

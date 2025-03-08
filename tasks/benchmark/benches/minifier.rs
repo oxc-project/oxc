@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_mangler::Mangler;
+use oxc_mangler::{MangleOptions, Mangler};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -57,11 +57,15 @@ fn bench_mangler(criterion: &mut Criterion) {
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let semantic =
-                    SemanticBuilder::new().with_scope_tree_child_ids(true).build(&program).semantic;
+                let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
                 runner.run(|| {
-                    let _ = Mangler::new().build_with_semantic(semantic, &program);
+                    let _ = Mangler::new()
+                        .with_options(MangleOptions {
+                            debug: false,
+                            top_level: true,
+                            mangle_private_class_names: true,
+                        })
+                        .build(&allocator, &mut program);
                 });
             });
         });
