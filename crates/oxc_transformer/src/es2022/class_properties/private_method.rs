@@ -62,9 +62,9 @@ impl<'a> ClassProperties<'a, '_> {
         // strict mode flag if parent scope is not strict mode.
         let scope_id = function.scope_id();
         let new_parent_id = ctx.current_scope_id();
-        ctx.scopes_mut().change_parent_id(scope_id, Some(new_parent_id));
+        ctx.scopes_mut().change_scope_parent_id(scope_id, Some(new_parent_id));
         let is_strict_mode = ctx.current_scope_flags().is_strict_mode();
-        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+        let flags = ctx.scopes_mut().scope_flags_mut(scope_id);
         *flags -= ScopeFlags::GetAccessor | ScopeFlags::SetAccessor;
         if !is_strict_mode {
             // TODO: Needs to remove all child scopes' strict mode flag if child scope

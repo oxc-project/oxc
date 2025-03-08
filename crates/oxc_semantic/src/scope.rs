@@ -26,15 +26,15 @@ pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, Refer
 /// `SoA` (Struct of Arrays) for memory efficiency.
 pub struct ScopeTree {
     /// Maps a scope to the parent scope it belongs in.
-    parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
+    scope_parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
 
     /// Runtime flag for constructing child_ids.
-    pub(crate) build_child_ids: bool,
+    pub(crate) scope_build_child_ids: bool,
 
     /// Maps a scope to its node id.
-    node_ids: IndexVec<ScopeId, NodeId>,
+    scope_node_ids: IndexVec<ScopeId, NodeId>,
 
-    flags: IndexVec<ScopeId, ScopeFlags>,
+    scope_flags: IndexVec<ScopeId, ScopeFlags>,
 
     pub(crate) cell: ScopeTreeCell,
 }
@@ -48,13 +48,13 @@ impl fmt::Debug for ScopeTree {
 impl Default for ScopeTree {
     fn default() -> Self {
         Self {
-            parent_ids: IndexVec::new(),
-            build_child_ids: false,
-            node_ids: IndexVec::new(),
-            flags: IndexVec::new(),
+            scope_parent_ids: IndexVec::new(),
+            scope_build_child_ids: false,
+            scope_node_ids: IndexVec::new(),
+            scope_flags: IndexVec::new(),
             cell: ScopeTreeCell::new(Allocator::default(), |allocator| ScopeTreeInner {
                 bindings: IndexVec::new(),
-                child_ids: ArenaVec::new_in(allocator),
+                scope_child_ids: ArenaVec::new_in(allocator),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
             }),
         }
@@ -76,7 +76,7 @@ pub struct ScopeTreeInner<'cell> {
     pub(crate) bindings: IndexVec<ScopeId, Bindings<'cell>>,
 
     /// Maps a scope to direct children scopes.
-    child_ids: ArenaVec<'cell, ArenaVec<'cell, ScopeId>>,
+    scope_child_ids: ArenaVec<'cell, ArenaVec<'cell, ScopeId>>,
 
     pub(crate) root_unresolved_references: UnresolvedReferences<'cell>,
 }
@@ -87,8 +87,8 @@ impl ScopeTree {
     /// Returns the number of scopes found in the program. Includes the root
     /// program scope.
     #[inline]
-    pub fn len(&self) -> usize {
-        self.parent_ids.len()
+    pub fn scopes_len(&self) -> usize {
+        self.scope_parent_ids.len()
     }
 
     /// Returns `true` if there are no scopes in the program.
@@ -96,20 +96,20 @@ impl ScopeTree {
     /// This will always return `false` when semantic analysis has completed
     /// since there is a root scope.
     #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.parent_ids.is_empty()
+    pub fn scopes_is_empty(&self) -> bool {
+        self.scope_parent_ids.is_empty()
     }
 
     /// Iterate over the scopes that contain a scope.
     ///
     /// The first element of this iterator will be the scope itself. This
     /// guarantees the iterator will have at least 1 element.
-    pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        std::iter::successors(Some(scope_id), |&scope_id| self.parent_ids[scope_id])
+    pub fn scope_ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
+        std::iter::successors(Some(scope_id), |&scope_id| self.scope_parent_ids[scope_id])
     }
 
-    pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
-        self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
+    pub fn scope_descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
+        self.scope_parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
     }
 
     /// Get the root [`Program`] scope id.
@@ -124,8 +124,8 @@ impl ScopeTree {
     ///
     /// This is a shorthand for `scope.get_flags(scope.root_scope_id())`.
     #[inline]
-    pub fn root_flags(&self) -> ScopeFlags {
-        self.flags[self.root_scope_id()]
+    pub fn root_scope_flags(&self) -> ScopeFlags {
+        self.scope_flags[self.root_scope_id()]
     }
 
     #[inline]
@@ -180,33 +180,33 @@ impl ScopeTree {
     }
 
     #[inline]
-    pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
-        self.flags[scope_id]
+    pub fn scope_flags(&self, scope_id: ScopeId) -> ScopeFlags {
+        self.scope_flags[scope_id]
     }
 
     #[inline]
-    pub fn get_flags_mut(&mut self, scope_id: ScopeId) -> &mut ScopeFlags {
-        &mut self.flags[scope_id]
+    pub fn scope_flags_mut(&mut self, scope_id: ScopeId) -> &mut ScopeFlags {
+        &mut self.scope_flags[scope_id]
     }
 
     /// Get [`ScopeFlags`] for a new child scope under `parent_scope_id`.
     pub fn get_new_scope_flags(&self, flags: ScopeFlags, parent_scope_id: ScopeId) -> ScopeFlags {
         // https://tc39.es/ecma262/#sec-strict-mode-code
-        flags | self.get_flags(parent_scope_id) & ScopeFlags::StrictMode
+        flags | self.scope_flags(parent_scope_id) & ScopeFlags::StrictMode
     }
 
     #[inline]
-    pub fn get_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
-        self.parent_ids[scope_id]
+    pub fn get_scope_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
+        self.scope_parent_ids[scope_id]
     }
 
-    pub fn set_parent_id(&mut self, scope_id: ScopeId, parent_id: Option<ScopeId>) {
-        self.parent_ids[scope_id] = parent_id;
-        if self.build_child_ids {
+    pub fn set_scope_parent_id(&mut self, scope_id: ScopeId, parent_id: Option<ScopeId>) {
+        self.scope_parent_ids[scope_id] = parent_id;
+        if self.scope_build_child_ids {
             // Set this scope as child of parent scope
             if let Some(parent_id) = parent_id {
                 self.cell.with_dependent_mut(|_allocator, inner| {
-                    inner.child_ids[parent_id.index()].push(scope_id);
+                    inner.scope_child_ids[parent_id.index()].push(scope_id);
                 });
             }
         }
@@ -215,17 +215,18 @@ impl ScopeTree {
     /// Change the parent scope of a scope.
     ///
     /// This will also remove the scope from the child list of the old parent and add it to the new parent.
-    pub fn change_parent_id(&mut self, scope_id: ScopeId, new_parent_id: Option<ScopeId>) {
-        let old_parent_id = mem::replace(&mut self.parent_ids[scope_id], new_parent_id);
-        if self.build_child_ids {
+    pub fn change_scope_parent_id(&mut self, scope_id: ScopeId, new_parent_id: Option<ScopeId>) {
+        let old_parent_id = mem::replace(&mut self.scope_parent_ids[scope_id], new_parent_id);
+        if self.scope_build_child_ids {
             self.cell.with_dependent_mut(|_allocator, inner| {
                 // Remove this scope from old parent scope
                 if let Some(old_parent_id) = old_parent_id {
-                    inner.child_ids[old_parent_id.index()].retain(|&child_id| child_id != scope_id);
+                    inner.scope_child_ids[old_parent_id.index()]
+                        .retain(|&child_id| child_id != scope_id);
                 }
                 // And add it to new parent scope
                 if let Some(parent_id) = new_parent_id {
-                    inner.child_ids[parent_id.index()].push(scope_id);
+                    inner.scope_child_ids[parent_id.index()].push(scope_id);
                 }
             });
         }
@@ -233,12 +234,13 @@ impl ScopeTree {
 
     /// Delete a scope.
     pub fn delete_scope(&mut self, scope_id: ScopeId) {
-        if self.build_child_ids {
+        if self.scope_build_child_ids {
             self.cell.with_dependent_mut(|_allocator, inner| {
-                inner.child_ids[scope_id.index()].clear();
-                let parent_id = self.parent_ids[scope_id];
+                inner.scope_child_ids[scope_id.index()].clear();
+                let parent_id = self.scope_parent_ids[scope_id];
                 if let Some(parent_id) = parent_id {
-                    inner.child_ids[parent_id.index()].retain(|&child_id| child_id != scope_id);
+                    inner.scope_child_ids[parent_id.index()]
+                        .retain(|&child_id| child_id != scope_id);
                 }
             });
         }
@@ -283,7 +285,7 @@ impl ScopeTree {
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
-        for scope_id in self.ancestors(scope_id) {
+        for scope_id in self.scope_ancestors(scope_id) {
             if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
             }
@@ -302,7 +304,7 @@ impl ScopeTree {
     /// [`AstNode`]: crate::AstNode
     #[inline]
     pub fn get_node_id(&self, scope_id: ScopeId) -> NodeId {
-        self.node_ids[scope_id]
+        self.scope_node_ids[scope_id]
     }
 
     /// Iterate over all bindings declared in the entire program.
@@ -330,22 +332,25 @@ impl ScopeTree {
 
     /// Return whether this `ScopeTree` has child IDs recorded
     #[inline]
-    pub fn has_child_ids(&self) -> bool {
-        self.build_child_ids
+    pub fn has_scope_child_ids(&self) -> bool {
+        self.scope_build_child_ids
     }
 
     /// Get the child scopes of a scope
     #[inline]
-    pub fn get_child_ids(&self, scope_id: ScopeId) -> &[ScopeId] {
-        &self.cell.borrow_dependent().child_ids[scope_id.index()]
+    pub fn get_scope_child_ids(&self, scope_id: ScopeId) -> &[ScopeId] {
+        &self.cell.borrow_dependent().scope_child_ids[scope_id.index()]
     }
 
-    pub fn iter_all_child_ids(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        let mut stack = self.cell.borrow_dependent().child_ids[scope_id.index()]
+    pub fn iter_all_scope_child_ids(
+        &self,
+        scope_id: ScopeId,
+    ) -> impl Iterator<Item = ScopeId> + '_ {
+        let mut stack = self.cell.borrow_dependent().scope_child_ids[scope_id.index()]
             .iter()
             .copied()
             .collect::<Vec<_>>();
-        let child_ids = &self.cell.borrow_dependent().child_ids;
+        let child_ids = &self.cell.borrow_dependent().scope_child_ids;
         std::iter::from_fn(move || {
             if let Some(scope_id) = stack.pop() {
                 if let Some(children) = child_ids.get(scope_id.index()) {
@@ -360,7 +365,7 @@ impl ScopeTree {
 
     pub fn remove_child_scopes(&mut self, scope_id: ScopeId, child_scope_ids: &[ScopeId]) {
         self.cell.with_dependent_mut(|_allocator, inner| {
-            inner.child_ids[scope_id.index()]
+            inner.scope_child_ids[scope_id.index()]
                 .retain(|scope_id| !child_scope_ids.contains(scope_id));
         });
     }
@@ -373,17 +378,17 @@ impl ScopeTree {
         node_id: NodeId,
         flags: ScopeFlags,
     ) -> ScopeId {
-        let scope_id = self.parent_ids.push(parent_id);
-        self.flags.push(flags);
+        let scope_id = self.scope_parent_ids.push(parent_id);
+        self.scope_flags.push(flags);
         self.cell.with_dependent_mut(|allocator, inner| {
             inner.bindings.push(Bindings::new_in(allocator));
         });
-        self.node_ids.push(node_id);
-        if self.build_child_ids {
+        self.scope_node_ids.push(node_id);
+        if self.scope_build_child_ids {
             self.cell.with_dependent_mut(|allocator, inner| {
-                inner.child_ids.push(ArenaVec::new_in(allocator));
+                inner.scope_child_ids.push(ArenaVec::new_in(allocator));
                 if let Some(parent_id) = parent_id {
-                    inner.child_ids[parent_id.index()].push(scope_id);
+                    inner.scope_child_ids[parent_id.index()].push(scope_id);
                 }
             });
         }
@@ -444,15 +449,15 @@ impl ScopeTree {
 
     /// Reserve memory for an `additional` number of scopes.
     pub fn reserve(&mut self, additional: usize) {
-        self.parent_ids.reserve(additional);
-        self.flags.reserve(additional);
+        self.scope_parent_ids.reserve(additional);
+        self.scope_flags.reserve(additional);
         self.cell.with_dependent_mut(|_allocator, inner| {
             inner.bindings.reserve(additional);
         });
-        self.node_ids.reserve(additional);
-        if self.build_child_ids {
+        self.scope_node_ids.reserve(additional);
+        if self.scope_build_child_ids {
             self.cell.with_dependent_mut(|_allocator, inner| {
-                inner.child_ids.reserve(additional);
+                inner.scope_child_ids.reserve(additional);
             });
         }
     }
@@ -461,7 +466,7 @@ impl ScopeTree {
         self.cell.with_dependent_mut(|_allocator, inner| {
             for bindings in &mut inner.bindings {
                 bindings.retain(|_name, symbol_id| {
-                    let flags = symbol_table.get_flags(*symbol_id);
+                    let flags = symbol_table.symbol_flags(*symbol_id);
                     !flags.intersects(
                         SymbolFlags::TypeAlias
                             | SymbolFlags::Interface

@@ -65,7 +65,7 @@ impl<'a> JsxSelf<'a, '_> {
 
     fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {
         for scope_id in ctx.ancestor_scopes() {
-            let flags = ctx.scopes().get_flags(scope_id);
+            let flags = ctx.scopes().scope_flags(scope_id);
             if flags.is_block() || flags.is_arrow() {
                 continue;
             }

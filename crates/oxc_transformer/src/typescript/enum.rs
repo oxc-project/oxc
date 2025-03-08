@@ -79,7 +79,7 @@ impl<'a> TypeScriptEnum<'a> {
         let ast = ctx.ast;
 
         let is_export = export_span.is_some();
-        let is_not_top_scope = !ctx.scopes().get_flags(ctx.current_scope_id()).is_top();
+        let is_not_top_scope = !ctx.scopes().scope_flags(ctx.current_scope_id()).is_top();
 
         let enum_name = decl.id.name;
         let func_scope_id = decl.scope_id();
@@ -573,7 +573,7 @@ impl IdentifierReferenceRename<'_, '_> {
             return true;
         };
 
-        let symbol_scope_id = symbol_table.get_scope_id(symbol_id);
+        let symbol_scope_id = symbol_table.get_symbol_scope_id(symbol_id);
         // Don't need to rename the identifier when it references a nested enum member:
         //
         // ```ts

@@ -165,13 +165,14 @@ impl Rule for NoEval {
                 let Some((span, name)) = mem_expr.static_property_info() else { return };
 
                 if name == "eval" {
-                    let scope_id = ctx.scopes().ancestors(parent.scope_id()).find(|scope_id| {
-                        let scope_flags = ctx.scopes().get_flags(*scope_id);
-                        scope_flags.is_var() && !scope_flags.is_arrow()
-                    });
+                    let scope_id =
+                        ctx.scopes().scope_ancestors(parent.scope_id()).find(|scope_id| {
+                            let scope_flags = ctx.scopes().scope_flags(*scope_id);
+                            scope_flags.is_var() && !scope_flags.is_arrow()
+                        });
 
                     let scope_id = scope_id.unwrap();
-                    let scope_flags = ctx.scopes().get_flags(scope_id);
+                    let scope_flags = ctx.scopes().scope_flags(scope_id);
 
                     // The `TsModuleBlock` shouldn't be considered
                     if scope_flags.is_ts_module_block() {

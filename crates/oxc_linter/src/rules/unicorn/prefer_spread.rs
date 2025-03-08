@@ -212,7 +212,7 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
         Expression::Identifier(ident) => {
             if let Some(symbol_id) = ast_util::get_symbol_id_of_variable(ident, ctx) {
                 let symbol_table = ctx.semantic().symbols();
-                let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+                let node = ctx.nodes().get_node(symbol_table.get_symbol_declaration(symbol_id));
 
                 if let AstKind::VariableDeclarator(variable_declarator) = node.kind() {
                     if let Some(ref_expr) = &variable_declarator.init {

@@ -309,7 +309,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     func_body,
                     scope_id,
                 ));
-            *ctx.scopes_mut().get_flags_mut(scope_id) =
+            *ctx.scopes_mut().scope_flags_mut(scope_id) =
                 ScopeFlags::Function | ScopeFlags::StrictMode;
             ctx.ast.expression_parenthesized(SPAN, function_expr)
         };
@@ -460,14 +460,14 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         let symbol_id = id.symbol_id();
         // Only `enum`, `class`, `function` and `namespace` can be re-declared in same scope
         ctx.symbols()
-            .get_flags(symbol_id)
+            .symbol_flags(symbol_id)
             .intersects(SymbolFlags::RegularEnum | SymbolFlags::Class | SymbolFlags::Function)
             || {
                 // ```
                 // namespace Foo {}
                 // namespace Foo {} // is redeclaration
                 // ```
-                let redeclarations = ctx.symbols().get_redeclarations(symbol_id);
+                let redeclarations = ctx.symbols().get_symbol_redeclarations(symbol_id);
                 !redeclarations.is_empty() && redeclarations.contains(&id.span)
             }
     }

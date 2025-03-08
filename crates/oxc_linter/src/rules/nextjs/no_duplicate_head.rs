@@ -48,17 +48,17 @@ declare_oxc_lint!(
 impl Rule for NoDuplicateHead {
     fn run_on_symbol(&self, symbol_id: oxc_semantic::SymbolId, ctx: &LintContext<'_>) {
         let symbols = ctx.symbols();
-        let name = symbols.get_name(symbol_id);
+        let name = symbols.symbol_name(symbol_id);
         if name != "Head" {
             return;
         }
 
-        let flags = symbols.get_flags(symbol_id);
+        let flags = symbols.symbol_flags(symbol_id);
         if !flags.is_import() {
             return;
         }
 
-        let scope_id = symbols.get_scope_id(symbol_id);
+        let scope_id = symbols.get_symbol_scope_id(symbol_id);
         if scope_id != ctx.scopes().root_scope_id() {
             return;
         }
