@@ -5,21 +5,21 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
 
 fn no_return_wrap_diagnostic(span: Span, issue: &ReturnWrapper) -> OxcDiagnostic {
-    let warn_msg: CompactStr = match issue {
-        ReturnWrapper::Resolve => "Avoid wrapping return values in Promise.resolve".into(),
-        ReturnWrapper::Reject => "Expected throw instead of Promise.reject".into(),
+    let warn_msg = match issue {
+        ReturnWrapper::Resolve => "Avoid wrapping return values in Promise.resolve",
+        ReturnWrapper::Reject => "Expected throw instead of Promise.reject",
     };
 
-    let help_msg: CompactStr = match issue {
+    let help_msg = match issue {
         ReturnWrapper::Resolve => {
-            "Return the value being passed into Promise.resolve instead".into()
+            "Return the value being passed into Promise.resolve instead"
         }
-        ReturnWrapper::Reject => "Throw the value being passed into Promise.reject instead".into(),
+        ReturnWrapper::Reject => "Throw the value being passed into Promise.reject instead",
     };
 
     OxcDiagnostic::warn(warn_msg).with_help(help_msg).with_label(span)
@@ -135,7 +135,7 @@ declare_oxc_lint!(
     ///
     NoReturnWrap,
     promise,
-    nursery,
+    style,
     pending
 );
 
