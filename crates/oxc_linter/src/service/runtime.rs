@@ -236,7 +236,7 @@ impl Runtime {
         //
         // But it's impossible to know which ones are "leaf" modules before parsing even starts. Here we assume
         // deeper paths are more likely to be leaf modules  (src/very/deep/path/baz.js is likely to have
-        // fewer dependencies than src/index.js). 
+        // fewer dependencies than src/index.js).
         // This heuristic is not always true, but it works well enough for real world codebases.
         self.paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
 
