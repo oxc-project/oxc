@@ -3,7 +3,7 @@ use oxc_ast::{
     AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
 };
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::{ScopeTree, Scoping, SymbolTable};
 use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -616,9 +616,9 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// # SAFETY
     /// This function must not be public to maintain soundness of [`TraverseAncestry`].
-    pub(crate) fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
+    pub(crate) fn new(scoping: Scoping, allocator: &'a Allocator) -> Self {
         let ancestry = TraverseAncestry::new();
-        let scoping = TraverseScoping::new(scopes, symbols);
+        let scoping = TraverseScoping::new(scoping);
         let ast = AstBuilder::new(allocator);
         Self { ancestry, scoping, ast }
     }

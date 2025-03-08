@@ -6,7 +6,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
+use oxc_semantic::{NodeId, Reference, ScopeTree, Scoping, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -384,7 +384,8 @@ impl TraverseScoping {
 // Methods used internally within crate
 impl TraverseScoping {
     /// Create new `TraverseScoping`
-    pub(super) fn new(scopes: ScopeTree, symbols: SymbolTable) -> Self {
+    pub(super) fn new(scoping: Scoping) -> Self {
+        let (symbols, scopes) = scoping.into_symbols_scopes();
         Self {
             scopes,
             symbols,
@@ -397,8 +398,8 @@ impl TraverseScoping {
     }
 
     /// Consume [`TraverseScoping`] and return [`SymbolTable`] and [`ScopeTree`].
-    pub(super) fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
-        (self.symbols, self.scopes)
+    pub(super) fn into_scoping(self) -> Scoping {
+        Scoping::new(self.symbols, self.scopes)
     }
 
     /// Set current scope ID

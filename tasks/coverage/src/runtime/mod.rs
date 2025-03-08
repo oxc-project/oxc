@@ -183,17 +183,13 @@ impl Test262RuntimeCase {
         let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
 
         if transform {
-            let (symbols, scopes) =
-                SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+            let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
             let mut options = TransformOptions::enable_all();
             options.jsx.refresh = None;
             options.helper_loader.mode = HelperLoaderMode::External;
             options.typescript.only_remove_type_imports = true;
-            Transformer::new(&allocator, self.path(), &options).build_with_symbols_and_scopes(
-                symbols,
-                scopes,
-                &mut program,
-            );
+            Transformer::new(&allocator, self.path(), &options)
+                .build_with_scoping(scoping, &mut program);
         }
 
         let symbol_table = if minify {
