@@ -396,6 +396,12 @@ impl ArrayExpressionElement<'_> {
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
     }
+
+    /// Returns `true` if this array expression element is a [spread](SpreadElement).
+    #[inline]
+    pub fn is_spread(&self) -> bool {
+        matches!(self, Self::SpreadElement(_))
+    }
 }
 
 impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {

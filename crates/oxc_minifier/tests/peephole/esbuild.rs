@@ -359,9 +359,9 @@ fn js_parser_test() {
     test("a = 'ȧḃċ'.length", "a = 3;");
     test("a = '👯‍♂️'.length", "a = 5;");
     test("a = 'abc'[-1]", "a = 'abc'[-1];");
-    // test("a = 'abc'[-0]", "a = 'a';");
-    // test("a = 'abc'[0]", "a = 'a';");
-    // test("a = 'abc'[2]", "a = 'c';");
+    test("a = 'abc'[-0]", "a = 'a';");
+    test("a = 'abc'[0]", "a = 'a';");
+    test("a = 'abc'[2]", "a = 'c';");
     test("a = 'abc'[3]", "a = 'abc'[3];");
     test("a = 'abc'[NaN]", "a = 'abc'[NaN];");
     test("a = 'abc'[-1e100]", "a = 'abc'[-1e100];");
