@@ -70,12 +70,7 @@ pub struct Semantic<'a> {
     /// The Abstract Syntax Tree (AST) nodes.
     nodes: AstNodes<'a>,
 
-    /// The scope tree containing scopes and what identifier names are bound in
-    /// each one.
-    scopes: ScopeTree,
-
-    /// Symbol table containing all symbols in the program and their references.
-    symbols: SymbolTable,
+    scoping: Scoping,
 
     classes: ClassTable<'a>,
 
@@ -96,12 +91,12 @@ pub struct Semantic<'a> {
 impl<'a> Semantic<'a> {
     /// Extract [`Scoping`] from [`Semantic`].
     pub fn into_scoping(self) -> Scoping {
-        Scoping::new(self.symbols, self.scopes)
+        self.scoping
     }
 
     /// Extract [`Scoping`] and [`AstNode`] from the [`Semantic`].
     pub fn into_scoping_and_nodes(self) -> (Scoping, AstNodes<'a>) {
-        (Scoping::new(self.symbols, self.scopes), self.nodes)
+        (self.scoping, self.nodes)
     }
 
     /// Source code of the JavaScript/TypeScript program being analyzed.
@@ -122,7 +117,7 @@ impl<'a> Semantic<'a> {
     /// The [`ScopeTree`] containing scopes and what identifier names are bound in
     /// each one.
     pub fn scopes(&self) -> &ScopeTree {
-        &self.scopes
+        &self.scoping.scopes
     }
 
     pub fn classes(&self) -> &ClassTable {
@@ -131,7 +126,7 @@ impl<'a> Semantic<'a> {
 
     /// Get a mutable reference to the [`ScopeTree`].
     pub fn scopes_mut(&mut self) -> &mut ScopeTree {
-        &mut self.scopes
+        &mut self.scoping.scopes
     }
 
     pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {
@@ -168,12 +163,12 @@ impl<'a> Semantic<'a> {
     /// [`SymbolTable`] containing all symbols in the program and their
     /// [`Reference`]s.
     pub fn symbols(&self) -> &SymbolTable {
-        &self.symbols
+        &self.scoping.symbols
     }
 
     /// Get a mutable reference to the [`SymbolTable`].
     pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        &mut self.symbols
+        &mut self.scoping.symbols
     }
 
     pub fn unused_labels(&self) -> &Vec<NodeId> {
@@ -193,9 +188,9 @@ impl<'a> Semantic<'a> {
         #[expect(clippy::cast_possible_truncation)]
         Stats::new(
             self.nodes.len() as u32,
-            self.scopes.scopes_len() as u32,
-            self.symbols.symbols_len() as u32,
-            self.symbols.references.len() as u32,
+            self.scoping.scopes.scopes_len() as u32,
+            self.scoping.symbols.symbols_len() as u32,
+            self.scoping.symbols.references.len() as u32,
         )
     }
 
@@ -209,7 +204,7 @@ impl<'a> Semantic<'a> {
 
     /// Find which scope a symbol is declared in
     pub fn symbol_scope(&self, symbol_id: SymbolId) -> ScopeId {
-        self.symbols.get_symbol_scope_id(symbol_id)
+        self.scoping.symbols.get_symbol_scope_id(symbol_id)
     }
 
     /// Get all resolved references for a symbol
@@ -217,11 +212,11 @@ impl<'a> Semantic<'a> {
         &self,
         symbol_id: SymbolId,
     ) -> impl Iterator<Item = &Reference> + '_ + use<'_> {
-        self.symbols.get_resolved_references(symbol_id)
+        self.scoping.symbols.get_resolved_references(symbol_id)
     }
 
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
-        self.nodes.get_node(self.symbols.get_symbol_declaration(symbol_id))
+        self.nodes.get_node(self.scoping.symbols.get_symbol_declaration(symbol_id))
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
