@@ -1388,8 +1388,8 @@ fn test_flatten_values() {
     test("return a || (b && c)", "return a || b && c;");
     test("return a === void 0", "return a === void 0;");
     test("return a !== void 0", "return a !== void 0;");
-    // test("return void 0 === a", "return a === void 0;");
-    // test("return void 0 !== a", "return a !== void 0;");
+    test("return void 0 === a", "return a === void 0;");
+    test("return void 0 !== a", "return a !== void 0;");
     test("return a == void 0", "return a == null;");
     test("return a != void 0", "return a != null;");
     test("return void 0 == a", "return a == null;");

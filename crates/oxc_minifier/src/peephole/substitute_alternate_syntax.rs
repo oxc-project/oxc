@@ -187,7 +187,7 @@ impl<'a> PeepholeOptimizations {
 
     fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
         if e.operator.is_equality()
-            && (e.left.is_literal() || e.left.is_no_substitution_template())
+            && (e.left.is_literal() || e.left.is_no_substitution_template() || e.left.is_void_0())
             && !e.right.is_literal()
         {
             std::mem::swap(&mut e.left, &mut e.right);
@@ -1636,6 +1636,25 @@ mod test {
         test_same("v = typeof foo == 'object' && foo !== null"); // cannot be folded because accessing foo might have a side effect
         test_same("var foo, bar; v = typeof foo == 'object' && bar !== null");
         test_same("var foo; v = typeof foo == 'string' && foo !== null");
+    }
+
+    #[test]
+    fn test_swap_binary_expressions() {
+        test_same("v = a === 0");
+        test("v = 0 === a", "v = a === 0");
+        test_same("v = a === '0'");
+        test("v = '0' === a", "v = a === '0'");
+        test("v = a === `0`", "v = a === '0'");
+        test("v = `0` === a", "v = a === '0'");
+        test_same("v = a === void 0");
+        test("v = void 0 === a", "v = a === void 0");
+
+        test_same("v = a !== 0");
+        test("v = 0 !== a", "v = a !== 0");
+        test_same("v = a == 0");
+        test("v = 0 == a", "v = a == 0");
+        test_same("v = a != 0");
+        test("v = 0 != a", "v = a != 0");
     }
 
     #[test]
