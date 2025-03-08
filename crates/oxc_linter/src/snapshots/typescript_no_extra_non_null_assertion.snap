@@ -13,14 +13,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                          ▲
    ╰────
 
-  × Identifier `bar` has already been declared
-   ╭─[no_extra_non_null_assertion.tsx:1:14]
- 1 │ function foo(bar: number | undefined) { const bar: number = bar!!!; }
-   ·              ───────────┬───────────          ─────┬─────
-   ·                         │                          ╰── It can not be redeclared here
-   ·                         ╰── `bar` has already been declared here
-   ╰────
-
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:58]
  1 │ const foo: { bar: number } | null = null; const bar = foo!!.bar; 
