@@ -16,9 +16,7 @@ fn no_return_wrap_diagnostic(span: Span, issue: &ReturnWrapper) -> OxcDiagnostic
     };
 
     let help_msg = match issue {
-        ReturnWrapper::Resolve => {
-            "Return the value being passed into Promise.resolve instead"
-        }
+        ReturnWrapper::Resolve => "Return the value being passed into Promise.resolve instead",
         ReturnWrapper::Reject => "Throw the value being passed into Promise.reject instead",
     };
 
