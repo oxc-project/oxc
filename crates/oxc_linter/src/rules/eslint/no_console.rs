@@ -217,6 +217,7 @@ fn test() {
 
     let fail = vec![
         ("console.log()", None, None),
+        ("(console.log())", None, None),
         ("console.log(foo)", None, None),
         ("console.error(foo)", None, None),
         ("console.info(foo)", None, None),
