@@ -1,8 +1,9 @@
 use crate::{ScopeTree, SymbolTable};
 
+#[derive(Default)]
 pub struct Scoping {
-    symbols: SymbolTable,
-    scopes: ScopeTree,
+    pub(crate) symbols: SymbolTable,
+    pub(crate) scopes: ScopeTree,
 }
 
 impl Scoping {
