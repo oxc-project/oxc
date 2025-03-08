@@ -315,8 +315,8 @@ fn js_parser_test() {
     test("a = typeof b + ''", "a = typeof b;");
     test("a = [] + `${b}`", "a = `${b}`;");
     test("a = `${b}` + []", "a = `${b}`;");
-    // test("a = [] + typeof b", "a = typeof b;");
-    // test("a = typeof b + []", "a = typeof b;");
+    test("a = [] + typeof b", "a = typeof b;");
+    test("a = typeof b + []", "a = typeof b;");
     test("a = [b] + `${b}`", "a = [b] + `${b}`;");
     test("a = `${b}` + [b]", "a = `${b}` + [b];");
     test("a = {} + `${b}`", "a = `[object Object]${b}`;");
