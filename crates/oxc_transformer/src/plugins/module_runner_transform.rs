@@ -328,7 +328,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let mut local = specifier.unbox().local;
                 local.name = self.generate_import_binding_name(ctx);
                 let binding = BoundIdentifier::from_binding_ident(&local);
-                ctx.symbols_mut().set_name(binding.symbol_id, &binding.name);
+                ctx.symbols_mut().set_symbol_name(binding.symbol_id, &binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
 
                 let kind = BindingPatternKind::BindingIdentifier(ctx.alloc(local));

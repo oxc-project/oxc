@@ -37,7 +37,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         module_record: &'s ModuleRecord,
         symbol_id: SymbolId,
     ) -> Self {
-        let flags = semantic.symbols().get_flags(symbol_id);
+        let flags = semantic.symbols().symbol_flags(symbol_id);
         Self { semantic, module_record, id: symbol_id, flags, span: OnceCell::new() }
     }
 
@@ -48,7 +48,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     #[inline]
     pub fn name(&self) -> &str {
-        self.symbols().get_name(self.id)
+        self.symbols().symbol_name(self.id)
     }
 
     #[inline]
@@ -58,7 +58,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     #[inline]
     pub fn scope_id(&self) -> ScopeId {
-        self.symbols().get_scope_id(self.id)
+        self.symbols().get_symbol_scope_id(self.id)
     }
 
     #[inline]
@@ -80,12 +80,12 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// Is this [`Symbol`] declared in the root scope?
     pub fn is_root(&self) -> bool {
-        self.symbols().get_scope_id(self.id) == self.scopes().root_scope_id()
+        self.symbols().get_symbol_scope_id(self.id) == self.scopes().root_scope_id()
     }
 
     #[inline]
     fn declaration_id(&self) -> NodeId {
-        self.symbols().get_declaration(self.id)
+        self.symbols().get_symbol_declaration(self.id)
     }
 
     #[inline]
@@ -159,13 +159,13 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 _ => break,
             }
         }
-        self.symbols().get_span(self.id)
+        self.symbols().symbol_span(self.id)
     }
 
     /// <https://github.com/oxc-project/oxc/issues/4739>
     fn clean_binding_id(&self, binding: &BindingPattern) -> Span {
         if binding.kind.is_destructuring_pattern() {
-            return self.symbols().get_span(self.id);
+            return self.symbols().symbol_span(self.id);
         }
         let own = binding.kind.span();
         binding.type_annotation.as_ref().map_or(own, |ann| Span::new(own.start, ann.span.start))
@@ -185,7 +185,7 @@ impl<'a> Symbol<'_, 'a> {
 
     #[inline]
     fn is_in_ts_namespace(&self) -> bool {
-        self.scopes().get_flags(self.scope_id()).is_ts_module_block()
+        self.scopes().scope_flags(self.scope_id()).is_ts_module_block()
     }
 
     /// We need to do this due to limitations of [`Semantic`].

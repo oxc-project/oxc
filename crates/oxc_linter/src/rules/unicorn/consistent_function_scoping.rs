@@ -153,7 +153,7 @@ impl Rule for ConsistentFunctionScoping {
                     }
 
                     let func_scope_id = function.scope_id();
-                    if let Some(parent_scope_id) = ctx.scopes().get_parent_id(func_scope_id) {
+                    if let Some(parent_scope_id) = ctx.scopes().get_scope_parent_id(func_scope_id) {
                         // Example: const foo = function bar() {};
                         // The bar function scope id is 1. In order to ignore this rule,
                         // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
@@ -193,7 +193,7 @@ impl Rule for ConsistentFunctionScoping {
             };
 
         // if the function is declared at the root scope, we don't need to check anything
-        if ctx.symbols().get_scope_id(function_declaration_symbol_id)
+        if ctx.symbols().get_symbol_scope_id(function_declaration_symbol_id)
             == ctx.scopes().root_scope_id()
         {
             return;
@@ -222,10 +222,11 @@ impl Rule for ConsistentFunctionScoping {
         }
 
         let parent_scope_ids = {
-            let mut current_scope_id = ctx.symbols().get_scope_id(function_declaration_symbol_id);
+            let mut current_scope_id =
+                ctx.symbols().get_symbol_scope_id(function_declaration_symbol_id);
             let mut parent_scope_ids = FxHashSet::default();
             parent_scope_ids.insert(current_scope_id);
-            while let Some(parent_scope_id) = ctx.scopes().get_parent_id(current_scope_id) {
+            while let Some(parent_scope_id) = ctx.scopes().get_scope_parent_id(current_scope_id) {
                 parent_scope_ids.insert(parent_scope_id);
                 current_scope_id = parent_scope_id;
             }
@@ -235,7 +236,7 @@ impl Rule for ConsistentFunctionScoping {
         for reference_id in function_body_var_references {
             let reference = ctx.symbols().get_reference(reference_id);
             let Some(symbol_id) = reference.symbol_id() else { continue };
-            let scope_id = ctx.symbols().get_scope_id(symbol_id);
+            let scope_id = ctx.symbols().get_symbol_scope_id(symbol_id);
             if parent_scope_ids.contains(&scope_id) && symbol_id != function_declaration_symbol_id {
                 return;
             }

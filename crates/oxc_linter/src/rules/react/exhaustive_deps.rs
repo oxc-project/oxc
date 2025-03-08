@@ -477,11 +477,11 @@ impl Rule for ExhaustiveDeps {
 
         for dependency in &declared_dependencies {
             if let Some(symbol_id) = dependency.symbol_id {
-                let dependency_scope_id = ctx.semantic().symbols().get_scope_id(symbol_id);
+                let dependency_scope_id = ctx.semantic().symbols().get_symbol_scope_id(symbol_id);
                 if !(ctx
                     .semantic()
                     .scopes()
-                    .ancestors(component_scope_id)
+                    .scope_ancestors(component_scope_id)
                     .skip(1)
                     .contains(&dependency_scope_id)
                     || dependency.chain.len() == 1 && dependency.chain[0] == "current")
@@ -794,7 +794,11 @@ fn is_identifier_a_dependency<'a>(
     //   return <div />;
     // }
     // ```
-    if scopes.ancestors(component_scope_id).skip(1).any(|parent| parent == declaration.scope_id()) {
+    if scopes
+        .scope_ancestors(component_scope_id)
+        .skip(1)
+        .any(|parent| parent == declaration.scope_id())
+    {
         return false;
     }
 
@@ -807,7 +811,7 @@ fn is_identifier_a_dependency<'a>(
     //   }, []);
     //  return <div />;
     // }
-    if scopes.iter_all_child_ids(component_scope_id).any(|id| id == declaration.scope_id()) {
+    if scopes.iter_all_scope_child_ids(component_scope_id).any(|id| id == declaration.scope_id()) {
         return false;
     }
 

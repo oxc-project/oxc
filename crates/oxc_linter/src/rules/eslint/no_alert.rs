@@ -66,7 +66,7 @@ fn is_global_this_ref_or_global_window<'a>(
     expr: &Expression<'a>,
 ) -> bool {
     if let Expression::ThisExpression(_) = expr {
-        if ctx.scopes().get_flags(scope_id).is_top() {
+        if ctx.scopes().scope_flags(scope_id).is_top() {
             return true;
         }
     }

@@ -135,7 +135,7 @@ pub fn check_semantic_after_transform(
     let allocator = Allocator::default();
     let program = program.clone_in(&allocator);
     let scoping_rebuilt = SemanticBuilder::new()
-        .with_scope_tree_child_ids(scoping_after_transform.scopes().has_child_ids())
+        .with_scope_tree_child_ids(scoping_after_transform.scopes().has_scope_child_ids())
         .build(&program)
         .semantic
         .into_scoping();
@@ -349,15 +349,16 @@ impl PostTransformChecker<'_, '_> {
             }
 
             // Check flags match
-            let flags =
-                self.get_pair(scope_ids, |scoping, scope_id| scoping.scopes().get_flags(scope_id));
+            let flags = self
+                .get_pair(scope_ids, |scoping, scope_id| scoping.scopes().scope_flags(scope_id));
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Scope flags mismatch", scope_ids, flags);
             }
 
             // Check parents match
-            let parent_ids = self
-                .get_pair(scope_ids, |scoping, scope_id| scoping.scopes().get_parent_id(scope_id));
+            let parent_ids = self.get_pair(scope_ids, |scoping, scope_id| {
+                scoping.scopes().get_scope_parent_id(scope_id)
+            });
             let is_match = match parent_ids.into_parts() {
                 (Some(parent_id_after_transform), Some(parent_id_rebuilt)) => {
                     let parent_ids = Pair::new(parent_id_after_transform, parent_id_rebuilt);
@@ -371,9 +372,9 @@ impl PostTransformChecker<'_, '_> {
             }
 
             // Check children match
-            if self.scoping_after_transform.scopes().has_child_ids() {
+            if self.scoping_after_transform.scopes().has_scope_child_ids() {
                 let child_ids = self.get_pair(scope_ids, |scoping, scope_id| {
-                    scoping.scopes().get_child_ids(scope_id).to_vec()
+                    scoping.scopes().get_scope_child_ids(scope_id).to_vec()
                 });
                 if self.remap_scope_ids_sets(&child_ids).is_mismatch() {
                     self.errors.push_mismatch("Scope children mismatch", scope_ids, child_ids);
@@ -388,7 +389,7 @@ impl PostTransformChecker<'_, '_> {
         for symbol_ids in self.symbol_ids_map.pairs() {
             // Check names match
             let names = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping.symbols().get_name(symbol_id).to_string()
+                scoping.symbols().symbol_name(symbol_id).to_string()
             });
             if names.is_mismatch() {
                 self.errors.push_mismatch("Symbol name mismatch", symbol_ids, &names);
@@ -397,22 +398,24 @@ impl PostTransformChecker<'_, '_> {
             let mismatch_title = |field| format!("Symbol {field} mismatch for {symbol_name:?}");
 
             // Check flags match
-            let flags = self
-                .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols().get_flags(symbol_id));
+            let flags = self.get_pair(symbol_ids, |scoping, symbol_id| {
+                scoping.symbols().symbol_flags(symbol_id)
+            });
             if flags.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("flags"), symbol_ids, flags);
             }
 
             // Check spans match
-            let spans = self
-                .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols().get_span(symbol_id));
+            let spans = self.get_pair(symbol_ids, |scoping, symbol_id| {
+                scoping.symbols().symbol_span(symbol_id)
+            });
             if spans.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("span"), symbol_ids, spans);
             }
 
             // Check scope IDs match
             let scope_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping.symbols().get_scope_id(symbol_id)
+                scoping.symbols().get_symbol_scope_id(symbol_id)
             });
             if self.remap_scope_ids(scope_ids).is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("scope ID"), symbol_ids, scope_ids);
@@ -439,7 +442,7 @@ impl PostTransformChecker<'_, '_> {
 
             // Check redeclarations match
             let redeclaration_spans = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                let mut spans = scoping.symbols().get_redeclarations(symbol_id).to_vec();
+                let mut spans = scoping.symbols().get_symbol_redeclarations(symbol_id).to_vec();
                 spans.sort_unstable();
                 spans
             });
@@ -467,7 +470,7 @@ impl PostTransformChecker<'_, '_> {
                 let mismatch_strs = self.get_pair(reference_ids, |scoping, reference_id| {
                     match scoping.symbols().get_reference(reference_id).symbol_id() {
                         Some(symbol_id) => {
-                            let symbol_name = scoping.symbols().get_name(symbol_id);
+                            let symbol_name = scoping.symbols().symbol_name(symbol_id);
                             format!("{symbol_id:?} {symbol_name:?}")
                         }
                         None => "<None>".to_string(),

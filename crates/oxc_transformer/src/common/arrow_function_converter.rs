@@ -513,11 +513,11 @@ impl<'a> ArrowFunctionConverter<'a> {
         let this_var = self.this_var_stack.last_or_init(|| {
             let target_scope_id = ctx
                 .scopes()
-                .ancestors(arrow_scope_id)
+                .scope_ancestors(arrow_scope_id)
                 // Skip arrow function scope
                 .skip(1)
                 .find(|&scope_id| {
-                    let scope_flags = ctx.scopes().get_flags(scope_id);
+                    let scope_flags = ctx.scopes().scope_flags(scope_id);
                     scope_flags.intersects(
                         ScopeFlags::Function | ScopeFlags::Top | ScopeFlags::ClassStaticBlock,
                     ) && !scope_flags.contains(ScopeFlags::Arrow)
@@ -635,7 +635,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     ) -> Expression<'a> {
         let arrow_function_expr = arrow_function_expr.unbox();
         let scope_id = arrow_function_expr.scope_id();
-        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+        let flags = ctx.scopes_mut().scope_flags_mut(scope_id);
         *flags &= !ScopeFlags::Arrow;
 
         let mut body = arrow_function_expr.body;
@@ -875,9 +875,9 @@ impl<'a> ArrowFunctionConverter<'a> {
         binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let original_scope_id = ctx.symbols().get_scope_id(binding.symbol_id);
+        let original_scope_id = ctx.symbols().get_symbol_scope_id(binding.symbol_id);
         if target_scope_id != original_scope_id {
-            ctx.symbols_mut().set_scope_id(binding.symbol_id, target_scope_id);
+            ctx.symbols_mut().set_symbol_scope_id(binding.symbol_id, target_scope_id);
             ctx.scopes_mut().move_binding(original_scope_id, target_scope_id, &binding.name);
         }
     }
@@ -1014,7 +1014,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Rename the `arguments` symbol to a new name.
     fn rename_arguments_symbol(symbol_id: SymbolId, name: CompactStr, ctx: &mut TraverseCtx<'a>) {
-        let scope_id = ctx.symbols().get_scope_id(symbol_id);
+        let scope_id = ctx.symbols().get_symbol_scope_id(symbol_id);
         ctx.rename_symbol(symbol_id, scope_id, name);
     }
 
@@ -1170,7 +1170,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         // `_this = this;`
         if let Some(this_var) = this_var {
-            let is_constructor = ctx.scopes().get_flags(target_scope_id).is_constructor();
+            let is_constructor = ctx.scopes().scope_flags(target_scope_id).is_constructor();
             let init = if is_constructor && *self.constructor_super_stack.last() {
                 // `super()` is called in the constructor body, so we need to insert `_this = this;`
                 // after `super()` call. Because `this` is not available before `super()` call.

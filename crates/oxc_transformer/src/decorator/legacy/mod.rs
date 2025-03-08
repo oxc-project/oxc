@@ -399,7 +399,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             let old_class_symbol_id = ident.symbol_id.replace(Some(new_class_binding.symbol_id));
             let old_class_symbol_id = old_class_symbol_id.expect("class always has a symbol id");
 
-            *ctx.symbols_mut().get_flags_mut(old_class_symbol_id) =
+            *ctx.symbols_mut().symbol_flags_mut(old_class_symbol_id) =
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
         });

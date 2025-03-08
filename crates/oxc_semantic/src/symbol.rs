@@ -19,12 +19,12 @@ use rustc_hash::FxHashSet;
 /// `redeclare_variables` (32 bytes per symbol), store `Option<RedeclarationId>` (4 bytes).
 /// That ID indexes into `redeclarations` where the actual `Vec<Span>` is stored.
 pub struct SymbolTable {
-    pub(crate) spans: IndexVec<SymbolId, Span>,
-    pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
-    pub(crate) scope_ids: IndexVec<SymbolId, ScopeId>,
+    pub(crate) symbol_spans: IndexVec<SymbolId, Span>,
+    pub(crate) symbol_flags: IndexVec<SymbolId, SymbolFlags>,
+    pub(crate) symbol_scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
-    pub(crate) declarations: IndexVec<SymbolId, NodeId>,
-    redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
+    pub(crate) symbol_declarations: IndexVec<SymbolId, NodeId>,
+    symbol_redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
     pub references: IndexVec<ReferenceId, Reference>,
 
@@ -44,15 +44,15 @@ impl Default for SymbolTable {
     fn default() -> Self {
         let allocator = Allocator::default();
         Self {
-            spans: IndexVec::new(),
-            flags: IndexVec::new(),
-            scope_ids: IndexVec::new(),
-            declarations: IndexVec::new(),
-            redeclarations: IndexVec::new(),
+            symbol_spans: IndexVec::new(),
+            symbol_flags: IndexVec::new(),
+            symbol_scope_ids: IndexVec::new(),
+            symbol_declarations: IndexVec::new(),
+            symbol_redeclarations: IndexVec::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
             inner: SymbolTableCell::new(allocator, |allocator| SymbolTableInner {
-                names: ArenaVec::new_in(allocator),
+                symbol_names: ArenaVec::new_in(allocator),
                 resolved_references: ArenaVec::new_in(allocator),
                 redeclaration_spans: ArenaVec::new_in(allocator),
             }),
@@ -69,7 +69,7 @@ self_cell::self_cell!(
 );
 
 struct SymbolTableInner<'cell> {
-    names: ArenaVec<'cell, Atom<'cell>>,
+    symbol_names: ArenaVec<'cell, Atom<'cell>>,
     resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
     redeclaration_spans: ArenaVec<'cell, ArenaVec<'cell, Span>>,
 }
@@ -77,18 +77,18 @@ struct SymbolTableInner<'cell> {
 impl SymbolTable {
     /// Returns the number of symbols in this table.
     #[inline]
-    pub fn len(&self) -> usize {
-        self.spans.len()
+    pub fn symbols_len(&self) -> usize {
+        self.symbol_spans.len()
     }
 
     /// Returns `true` if this table contains no symbols.
     #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.spans.is_empty()
+    pub fn symbols_is_empty(&self) -> bool {
+        self.symbol_spans.is_empty()
     }
 
-    pub fn names(&self) -> impl Iterator<Item = &str> + '_ {
-        self.inner.borrow_dependent().names.iter().map(Atom::as_str)
+    pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
+        self.inner.borrow_dependent().symbol_names.iter().map(Atom::as_str)
     }
 
     pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
@@ -118,31 +118,34 @@ impl SymbolTable {
     ///      .collect::<Vec<_>>();
     /// ```
     pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
+        self.symbol_spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
     /// Get the [`Span`] of the [`AstNode`] declaring a symbol.
     ///
     /// [`AstNode`]: crate::node::AstNode
     #[inline]
-    pub fn get_span(&self, symbol_id: SymbolId) -> Span {
-        self.spans[symbol_id]
+    pub fn symbol_span(&self, symbol_id: SymbolId) -> Span {
+        self.symbol_spans[symbol_id]
     }
 
     /// Get the identifier name a symbol is bound to.
     #[inline]
-    pub fn get_name(&self, symbol_id: SymbolId) -> &str {
-        &self.inner.borrow_dependent().names[symbol_id.index()]
+    pub fn symbol_name(&self, symbol_id: SymbolId) -> &str {
+        &self.inner.borrow_dependent().symbol_names[symbol_id.index()]
     }
 
     /// Rename a symbol.
     ///
     /// Returns the old name.
     #[inline]
-    pub fn set_name(&mut self, symbol_id: SymbolId, name: &str) -> &str {
+    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: &str) -> &str {
         self.inner
             .with_dependent_mut(|allocator, inner| {
-                mem::replace(&mut inner.names[symbol_id.index()], Atom::from_in(name, allocator))
+                mem::replace(
+                    &mut inner.symbol_names[symbol_id.index()],
+                    Atom::from_in(name, allocator),
+                )
             })
             .as_str()
     }
@@ -151,19 +154,19 @@ impl SymbolTable {
     ///
     /// To find how a symbol is used, use [`SymbolTable::get_resolved_references`].
     #[inline]
-    pub fn get_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
-        self.flags[symbol_id]
+    pub fn symbol_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
+        self.symbol_flags[symbol_id]
     }
 
     /// Get a mutable reference to a symbol's [flags](SymbolFlags).
     #[inline]
-    pub fn get_flags_mut(&mut self, symbol_id: SymbolId) -> &mut SymbolFlags {
-        &mut self.flags[symbol_id]
+    pub fn symbol_flags_mut(&mut self, symbol_id: SymbolId) -> &mut SymbolFlags {
+        &mut self.symbol_flags[symbol_id]
     }
 
     #[inline]
-    pub fn get_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
-        if let Some(redeclaration_id) = self.redeclarations[symbol_id] {
+    pub fn get_symbol_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
+        if let Some(redeclaration_id) = self.symbol_redeclarations[symbol_id] {
             &self.inner.borrow_dependent().redeclaration_spans[redeclaration_id.index()]
         } else {
             static EMPTY: &[Span] = &[];
@@ -172,18 +175,18 @@ impl SymbolTable {
     }
 
     #[inline]
-    pub fn union_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
-        self.flags[symbol_id] |= includes;
+    pub fn union_symbol_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
+        self.symbol_flags[symbol_id] |= includes;
     }
 
     #[inline]
-    pub fn set_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
-        self.scope_ids[symbol_id] = scope_id;
+    pub fn set_symbol_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
+        self.symbol_scope_ids[symbol_id] = scope_id;
     }
 
     #[inline]
-    pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
-        self.scope_ids[symbol_id]
+    pub fn get_symbol_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
+        self.symbol_scope_ids[symbol_id]
     }
 
     /// Get the ID of the AST node declaring a symbol.
@@ -197,8 +200,8 @@ impl SymbolTable {
     /// [`BindingIdentifier`]: oxc_ast::ast::BindingIdentifier
     /// [`BindingPattern`]: oxc_ast::ast::BindingPattern
     #[inline]
-    pub fn get_declaration(&self, symbol_id: SymbolId) -> NodeId {
-        self.declarations[symbol_id]
+    pub fn get_symbol_declaration(&self, symbol_id: SymbolId) -> NodeId {
+        self.symbol_declarations[symbol_id]
     }
 
     pub fn create_symbol(
@@ -209,19 +212,19 @@ impl SymbolTable {
         scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
-        self.spans.push(span);
-        self.flags.push(flags);
-        self.scope_ids.push(scope_id);
-        self.declarations.push(node_id);
+        self.symbol_spans.push(span);
+        self.symbol_flags.push(flags);
+        self.symbol_scope_ids.push(scope_id);
+        self.symbol_declarations.push(node_id);
         self.inner.with_dependent_mut(|allocator, inner| {
-            inner.names.push(Atom::from_in(name, allocator));
+            inner.symbol_names.push(Atom::from_in(name, allocator));
             inner.resolved_references.push(ArenaVec::new_in(allocator));
         });
-        self.redeclarations.push(None)
+        self.symbol_redeclarations.push(None)
     }
 
-    pub fn add_redeclaration(&mut self, symbol_id: SymbolId, span: Span) {
-        if let Some(redeclaration_id) = self.redeclarations[symbol_id] {
+    pub fn add_symbol_redeclaration(&mut self, symbol_id: SymbolId, span: Span) {
+        if let Some(redeclaration_id) = self.symbol_redeclarations[symbol_id] {
             self.inner.with_dependent_mut(|_, inner| {
                 inner.redeclaration_spans[redeclaration_id.index()].push(span);
             });
@@ -231,7 +234,7 @@ impl SymbolTable {
                 v.push(span);
                 let redeclaration_id = inner.redeclaration_spans.len();
                 inner.redeclaration_spans.push(v);
-                self.redeclarations[symbol_id] =
+                self.symbol_redeclarations[symbol_id] =
                     Some(RedeclarationId::from_usize(redeclaration_id));
             });
         };
@@ -258,7 +261,7 @@ impl SymbolTable {
     /// not resolved.
     #[inline]
     pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
-        self.get_name(self.references[reference_id].symbol_id()?).into()
+        self.symbol_name(self.references[reference_id].symbol_id()?).into()
     }
 
     /// Returns `true` if the corresponding [`Reference`] is resolved to a symbol.
@@ -294,7 +297,7 @@ impl SymbolTable {
     /// If symbol is `const`, always returns `false`.
     /// Otherwise, returns `true` if the symbol is assigned to somewhere in AST.
     pub fn symbol_is_mutated(&self, symbol_id: SymbolId) -> bool {
-        if self.flags[symbol_id].contains(SymbolFlags::ConstVariable) {
+        if self.symbol_flags[symbol_id].contains(SymbolFlags::ConstVariable) {
             false
         } else {
             self.get_resolved_references(symbol_id).any(Reference::is_write)
@@ -326,12 +329,12 @@ impl SymbolTable {
     }
 
     pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
-        self.spans.reserve(additional_symbols);
-        self.flags.reserve(additional_symbols);
-        self.scope_ids.reserve(additional_symbols);
-        self.declarations.reserve(additional_symbols);
+        self.symbol_spans.reserve(additional_symbols);
+        self.symbol_flags.reserve(additional_symbols);
+        self.symbol_scope_ids.reserve(additional_symbols);
+        self.symbol_declarations.reserve(additional_symbols);
         self.inner.with_dependent_mut(|_allocator, inner| {
-            inner.names.reserve(additional_symbols);
+            inner.symbol_names.reserve(additional_symbols);
             inner.resolved_references.reserve(additional_symbols);
         });
         self.references.reserve(additional_references);

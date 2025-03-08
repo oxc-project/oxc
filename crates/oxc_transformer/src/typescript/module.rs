@@ -123,7 +123,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         let binding = ctx.ast.binding_pattern(binding_pattern_kind, NONE, false);
         let decl_span = decl.span;
 
-        let flags = ctx.symbols_mut().get_flags_mut(decl.id.symbol_id());
+        let flags = ctx.symbols_mut().symbol_flags_mut(decl.id.symbol_id());
         flags.remove(SymbolFlags::Import);
 
         let (kind, init) = match &mut decl.module_reference {

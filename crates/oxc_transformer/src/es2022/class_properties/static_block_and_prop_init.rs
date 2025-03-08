@@ -82,10 +82,10 @@ impl<'a> ClassProperties<'a, '_> {
         replacer.visit_statements(stmts);
 
         let scope_flags = outer_scope_strict_flag | ScopeFlags::Function | ScopeFlags::Arrow;
-        *ctx.scopes_mut().get_flags_mut(scope_id) = scope_flags;
+        *ctx.scopes_mut().scope_flags_mut(scope_id) = scope_flags;
 
         let outer_scope_id = ctx.current_scope_id();
-        ctx.scopes_mut().change_parent_id(scope_id, Some(outer_scope_id));
+        ctx.scopes_mut().change_scope_parent_id(scope_id, Some(outer_scope_id));
 
         wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
     }
@@ -308,7 +308,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         if self.make_sloppy_mode {
             let scope_id = scope_id.get().unwrap();
-            *self.ctx.scopes_mut().get_flags_mut(scope_id) -= ScopeFlags::StrictMode;
+            *self.ctx.scopes_mut().scope_flags_mut(scope_id) -= ScopeFlags::StrictMode;
         }
     }
 
@@ -543,7 +543,7 @@ impl<'a> StaticVisitor<'a, '_, '_> {
         if self.scope_depth == 0 {
             let scope_id = scope_id.get().unwrap();
             let current_scope_id = self.ctx.current_scope_id();
-            self.ctx.scopes_mut().change_parent_id(scope_id, Some(current_scope_id));
+            self.ctx.scopes_mut().change_scope_parent_id(scope_id, Some(current_scope_id));
         }
     }
 }

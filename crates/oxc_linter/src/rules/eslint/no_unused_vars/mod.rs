@@ -375,9 +375,9 @@ impl Symbol<'_, '_> {
 
     fn is_in_declare_global(&self) -> bool {
         self.scopes()
-            .ancestors(self.scope_id())
+            .scope_ancestors(self.scope_id())
             .filter(|&scope_id| {
-                let flags = self.scopes().get_flags(scope_id);
+                let flags = self.scopes().scope_flags(scope_id);
                 flags.contains(ScopeFlags::TsModuleBlock)
             })
             .any(|ambient_module_scope_id| {

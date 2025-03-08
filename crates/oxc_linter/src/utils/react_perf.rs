@@ -100,11 +100,12 @@ where
         // Symbols declared at the root scope won't (or, at least, shouldn't) be
         // re-assigned inside component render functions, so we can safely
         // ignore them.
-        if ctx.symbols().get_scope_id(symbol_id) == ctx.scopes().root_scope_id() {
+        if ctx.symbols().get_symbol_scope_id(symbol_id) == ctx.scopes().root_scope_id() {
             return;
         }
 
-        let declaration_node = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+        let declaration_node =
+            ctx.nodes().get_node(ctx.symbols().get_symbol_declaration(symbol_id));
         if let Some((decl_span, init_span)) =
             self.check_for_violation_on_ast_kind(&declaration_node.kind(), symbol_id)
         {

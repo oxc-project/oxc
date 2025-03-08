@@ -423,7 +423,7 @@ impl NoMapSpread {
         }
 
         if self.ignore_args {
-            let declaration = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+            let declaration = ctx.nodes().get_node(ctx.symbols().get_symbol_declaration(symbol_id));
             if matches!(declaration.kind(), AstKind::FormalParameter(_)) {
                 return true;
             }
@@ -677,13 +677,13 @@ where
                 else {
                     return;
                 };
-                let declaration_scope = self.ctx.symbols().get_scope_id(symbol_id);
+                let declaration_scope = self.ctx.symbols().get_symbol_scope_id(symbol_id);
 
                 // symbol is not declared within the mapper callback
                 if !self
                     .ctx
                     .scopes()
-                    .ancestors(declaration_scope)
+                    .scope_ancestors(declaration_scope)
                     .any(|parent_id| parent_id == self.cb_scope_id)
                 {
                     return;
@@ -691,7 +691,7 @@ where
 
                 // walk the declaration
                 let declaration_node =
-                    self.ctx.nodes().get_node(self.ctx.symbols().get_declaration(symbol_id));
+                    self.ctx.nodes().get_node(self.ctx.symbols().get_symbol_declaration(symbol_id));
                 self.visit_kind(declaration_node.kind());
             }
             _ => {}

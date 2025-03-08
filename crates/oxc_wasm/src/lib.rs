@@ -427,7 +427,7 @@ impl Oxc {
             fn enter_scope(&mut self, _: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
                 let scope_id = scope_id.get().unwrap();
                 let scopes = self.scoping.scopes();
-                let flags = scopes.get_flags(scope_id);
+                let flags = scopes.scope_flags(scope_id);
                 self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
                 self.indent_in();
 
@@ -435,7 +435,7 @@ impl Oxc {
                 if !bindings.is_empty() {
                     self.write_line("Bindings: {");
                     for (name, &symbol_id) in bindings {
-                        let symbol_flags = self.scoping.symbols().get_flags(symbol_id);
+                        let symbol_flags = self.scoping.symbols().symbol_flags(symbol_id);
                         self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
                     }
                     self.write_line("}");
@@ -470,10 +470,10 @@ impl Oxc {
         let data = symbols
             .symbol_ids()
             .map(|symbol_id| Data {
-                span: symbols.get_span(symbol_id),
-                name: symbols.get_name(symbol_id).into(),
-                flags: symbols.get_flags(symbol_id),
-                scope_id: symbols.get_scope_id(symbol_id),
+                span: symbols.symbol_span(symbol_id),
+                name: symbols.symbol_name(symbol_id).into(),
+                flags: symbols.symbol_flags(symbol_id),
+                scope_id: symbols.get_symbol_scope_id(symbol_id),
                 resolved_references: symbols
                     .get_resolved_reference_ids(symbol_id)
                     .iter()

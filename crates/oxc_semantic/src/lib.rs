@@ -193,8 +193,8 @@ impl<'a> Semantic<'a> {
         #[expect(clippy::cast_possible_truncation)]
         Stats::new(
             self.nodes.len() as u32,
-            self.scopes.len() as u32,
-            self.symbols.len() as u32,
+            self.scopes.scopes_len() as u32,
+            self.symbols.symbols_len() as u32,
             self.symbols.references.len() as u32,
         )
     }
@@ -209,7 +209,7 @@ impl<'a> Semantic<'a> {
 
     /// Find which scope a symbol is declared in
     pub fn symbol_scope(&self, symbol_id: SymbolId) -> ScopeId {
-        self.symbols.get_scope_id(symbol_id)
+        self.symbols.get_symbol_scope_id(symbol_id)
     }
 
     /// Get all resolved references for a symbol
@@ -221,7 +221,7 @@ impl<'a> Semantic<'a> {
     }
 
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
-        self.nodes.get_node(self.symbols.get_declaration(symbol_id))
+        self.nodes.get_node(self.symbols.get_symbol_declaration(symbol_id))
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {

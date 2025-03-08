@@ -426,7 +426,7 @@ impl<'a> ClassProperties<'a, '_> {
             } else {
                 // Class must be default export `export default class {}`, as all other class declarations
                 // always have a name. Set class name.
-                *ctx.symbols_mut().get_flags_mut(temp_binding.symbol_id) = SymbolFlags::Class;
+                *ctx.symbols_mut().symbol_flags_mut(temp_binding.symbol_id) = SymbolFlags::Class;
                 class.id = Some(temp_binding.create_binding_identifier(ctx));
             }
         }

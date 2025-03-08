@@ -517,7 +517,7 @@ impl<'a> Codegen<'a> {
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
         if let Some(symbol_table) = &self.symbol_table {
             if let Some(symbol_id) = ident.symbol_id.get() {
-                let name = symbol_table.get_name(symbol_id);
+                let name = symbol_table.symbol_name(symbol_id);
                 // SAFETY: Hack the lifetime to be part of the allocator.
                 return unsafe { std::mem::transmute_copy(&name) };
             }
