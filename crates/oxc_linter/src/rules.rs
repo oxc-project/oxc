@@ -7,6 +7,7 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    pub mod exports_last;
     pub mod no_absolute_path;
     pub mod no_anonymous_default_export;
     pub mod no_mutable_exports;
@@ -695,6 +696,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::yoda,
     import::default,
     import::export,
+    import::exports_last,
     import::first,
     import::no_anonymous_default_export,
     import::no_absolute_path,
