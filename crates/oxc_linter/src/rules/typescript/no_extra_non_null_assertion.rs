@@ -121,6 +121,8 @@ fn test() {
     ];
 
     let fail = vec![
+        "const foo: { bar: number } | null = null; const bar = foo!!!.bar;",
+        "function foo(bar: number | undefined) { const bar: number = bar!!!; }",
         "const foo: { bar: number } | null = null; const bar = foo!!.bar; ",
         "function foo(bar: number | undefined) { const a: number = bar!!; }",
         "function foo(bar?: { n: number }) { return bar!?.n; }",
