@@ -639,6 +639,7 @@ fn test_property_access() {
     test("[].length", false);
     test("[]['length']", false);
     test("[][`length`]", false);
+    test("(foo() + '').length", true);
 
     test("a[0]", true);
     test("''[-1]", true); // String.prototype[-1] may be overridden

@@ -479,6 +479,10 @@ fn property_access_may_have_side_effects(
     property: &str,
     is_global_reference: &impl IsGlobalReference,
 ) -> bool {
+    if object.may_have_side_effects(is_global_reference) {
+        return true;
+    }
+
     match property {
         "length" => {
             !(matches!(object, Expression::ArrayExpression(_))
