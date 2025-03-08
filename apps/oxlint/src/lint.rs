@@ -1,7 +1,7 @@
 use std::{
     env, fs,
     io::{ErrorKind, Write},
-    path::{Path, PathBuf},
+    path::{Path, PathBuf, absolute},
     time::Instant,
 };
 
@@ -133,8 +133,10 @@ impl Runner for LintRunner {
                 let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
 
                 paths.retain_mut(|p| {
-                    // Append cwd to all paths
-                    let mut path = self.cwd.join(&p);
+                    // Try to prepend cwd to all paths
+                    let Ok(mut path) = absolute(self.cwd.join(&p)) else {
+                        return false;
+                    };
 
                     std::mem::swap(p, &mut path);
 
@@ -611,6 +613,16 @@ mod test {
     fn ignore_flow_import_plugin_directory() {
         let args = &["--import-plugin", "-A all", "-D no-cycle", "fixtures/flow/"];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    // https://github.com/oxc-project/oxc/issues/9023
+    fn ignore_file_current_dir() {
+        let args1 = &[];
+        let args2 = &["."];
+        Tester::new()
+            .with_cwd("fixtures/ignore_file_current_dir".into())
+            .test_and_snapshot_multiple(&[args1, args2]);
     }
 
     #[test]
