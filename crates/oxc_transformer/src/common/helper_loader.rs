@@ -167,6 +167,7 @@ pub enum Helper {
     Decorate,
     DecorateParam,
     DecorateMetadata,
+    UsingCtx,
 }
 
 impl Helper {
@@ -199,6 +200,7 @@ impl Helper {
             Self::Decorate => "decorate",
             Self::DecorateParam => "decorateParam",
             Self::DecorateMetadata => "decorateMetadata",
+            Self::UsingCtx => "usingCtx",
         }
     }
 
