@@ -157,6 +157,8 @@ impl<'a> PeepholeOptimizations {
             Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
             Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
             Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
+            Expression::FunctionExpression(e) => self.try_remove_name_from_functions(e, ctx),
+            Expression::ClassExpression(e) => self.try_remove_name_from_classes(e, ctx),
             _ => {}
         }
 
@@ -956,6 +958,30 @@ impl<'a> PeepholeOptimizations {
         }
         self.mark_current_function_as_changed();
     }
+
+    /// Remove name from function expressions if it is not used.
+    ///
+    /// e.g. `var a = function f() {}` -> `var a = function () {}`
+    ///
+    /// This compression is not safe if the code relies on `Function::name`.
+    fn try_remove_name_from_functions(&mut self, func: &mut Function<'a>, ctx: Ctx<'a, '_>) {
+        if func.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id())) {
+            func.id = None;
+            self.mark_current_function_as_changed();
+        }
+    }
+
+    /// Remove name from class expressions if it is not used.
+    ///
+    /// e.g. `var a = class C {}` -> `var a = class {}`
+    ///
+    /// This compression is not safe if the code relies on `Function::name`.
+    fn try_remove_name_from_classes(&mut self, class: &mut Class<'a>, ctx: Ctx<'a, '_>) {
+        if class.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id())) {
+            class.id = None;
+            self.mark_current_function_as_changed();
+        }
+    }
 }
 
 impl<'a> LatePeepholeOptimizations {
@@ -963,7 +989,6 @@ impl<'a> LatePeepholeOptimizations {
         if let Expression::NewExpression(e) = expr {
             Self::try_compress_typed_array_constructor(e, ctx);
         }
-        Self::remove_name_from_expressions(expr, ctx);
 
         if let Some(folded_expr) = match expr {
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
@@ -1082,30 +1107,6 @@ impl<'a> LatePeepholeOptimizations {
                     }
                 };
             }
-        }
-    }
-
-    /// Remove name from function / class expressions if it is not used.
-    ///
-    /// - `var a = function f() {}` -> `var a = function () {}`
-    /// - `var a = class C {}` -> `var a = class {}`
-    ///
-    /// This compression is not safe if the code relies on `Function::name`.
-    fn remove_name_from_expressions(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        match expr {
-            Expression::FunctionExpression(func) => {
-                if func.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
-                {
-                    func.id = None;
-                }
-            }
-            Expression::ClassExpression(class) => {
-                if class.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
-                {
-                    class.id = None;
-                }
-            }
-            _ => {}
         }
     }
 
