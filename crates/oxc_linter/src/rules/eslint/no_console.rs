@@ -27,12 +27,53 @@ pub struct NoConsole(Box<NoConsoleConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConsoleConfig {
-    /// A list of methods allowed to be used.
+    /// ### What it does
     ///
+    /// Disallow the use of console.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// In JavaScript that is designed to be executed in the browser, it’s considered a best
+    /// practice to avoid using methods on console. Such messages are considered to be for
+    /// debugging purposes and therefore not suitable to ship to the client. In general, calls
+    /// using console should be stripped before being pushed to production.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // allowed: ['info']
-    /// console.log('foo'); // will error
-    /// console.info('bar'); // will not error
+    /// console.log("Log a debug level message.");
+    /// console.warn("Log a warn level message.");
+    /// console.error("Log an error level message.");
+    /// console.log = foo();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///  ```javascript
+    /// // custom console
+    /// Console.log("Hello world!");
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// ### allow
+    ///
+    /// `{ "allow": string[] }`
+    ///
+    /// The `allow` option permits the given list of console methods to be used as exceptions to
+    /// this rule.
+    ///
+    /// Say the option was configured as `{ "allow": ["info"] }` then the rule would behave as
+    /// follows:
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```javascript
+    /// console.log('foo');
+    /// ```
+    ///
+    /// Example of **incorrect** code for this option:
+    /// ```javascript
+    /// console.info('foo');
     /// ```
     pub allow: Vec<CompactStr>,
 }
@@ -177,6 +218,7 @@ fn test() {
 
     let fail = vec![
         ("console.log()", None, None),
+        ("(console.log())", None, None),
         ("console.log(foo)", None, None),
         ("console.error(foo)", None, None),
         ("console.info(foo)", None, None),
