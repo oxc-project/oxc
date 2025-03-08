@@ -20,9 +20,8 @@ pub struct ESTreeStruct {
     /// e.g. `#[estree(ts_alias = "null")]` means this type won't have a type def generated,
     /// and any struct / enum referencing it will substitute `null` as the type.
     pub ts_alias: Option<String>,
-    /// Custom TS type definition. Does not include `export`.
-    /// Empty string if type should not have a TS type definition.
-    pub custom_ts_def: Option<String>,
+    /// Type should not have a TS type definition.
+    pub no_ts_def: bool,
     /// Additional custom TS type definition to add along with the generated one.
     /// Does not include `export`.
     pub add_ts_def: Option<String>,
@@ -38,9 +37,8 @@ pub struct ESTreeEnum {
     /// e.g. `#[estree(ts_alias = "null")]` means this type won't have a type def generated,
     /// and any struct / enum referencing it will substitute `null` as the type.
     pub ts_alias: Option<String>,
-    /// Custom TS type definition. Does not include `export`.
-    /// Empty string if type should not have a TS type definition.
-    pub custom_ts_def: Option<String>,
+    /// Type should not have a TS type definition.
+    pub no_ts_def: bool,
     /// Additional custom TS type definition to add along with the generated one.
     /// Does not include `export`.
     pub add_ts_def: Option<String>,
