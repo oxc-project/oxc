@@ -28,6 +28,7 @@ pub struct NoConsole(Box<NoConsoleConfig>);
 #[derive(Debug, Default, Clone)]
 pub struct NoConsoleConfig {
     /// ### What it does
+    ///
     /// Disallow the use of console.
     ///
     /// ### Why is this bad?
