@@ -234,16 +234,18 @@ impl Runtime {
         // The more efficient way is to start from "leaf" modules: their dependencies are ready earlier, thus we
         // can run lint on them and then released their content earlier.
         //
-        // But how can we know which ones are "leaf" modules before parsing event starts? Here we heuristically
-        // assume that deeper paths are more likely to be leaf modules. This is obviously not always true, but good
-        // enough for real world codebases.
+        // But it's impossible to know which ones are "leaf" modules before parsing even starts. Here we assume
+        // deeper paths are more likely to be leaf modules  (src/very/deep/path/baz.js is likely to have
+        // fewer dependencies than src/index.js). 
+        // This heuristic is not always true, but it works well enough for real world codebases.
         self.paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
 
-        // The general idea is processing entries in groups. We start from a group of entries that is small
-        // enough to hold in memory but big enough to make full use of the rayon thread pool. We build the
-        // module graph from this group of entries, run lint them, drop their content but keep the module
+        // The general idea is processing entries and their dependencies in groups. We start from a group of entries
+        // that is small enough to hold in memory but big enough to make use of the rayon thread pool. We build the
+        // module graph from this group of entries, run lint on them, drop their content but keep the module
         // graph, and then move on to the next group.
-        let entry_group_size = rayon::current_num_threads();
+        // This size is empirical based on AFFiNE@97cc814a.
+        let entry_group_size = rayon::current_num_threads() * 4;
 
         // only stores entry modules in current group
         let mut entry_modules: Vec<EntryModule> = Vec::with_capacity(entry_group_size);
