@@ -24,6 +24,9 @@ mod to_numeric;
 mod to_primitive;
 mod to_string;
 
+// other
+mod to_integer_index;
+
 pub mod constant_evaluation;
 pub mod is_global_reference;
 pub mod side_effects;
@@ -44,6 +47,7 @@ pub use self::{
     to_big_int::ToBigInt,
     to_boolean::ToBoolean,
     to_int_32::ToInt32,
+    to_integer_index::ToIntegerIndex,
     to_number::ToNumber,
     to_primitive::ToPrimitive,
     to_string::ToJsString,
