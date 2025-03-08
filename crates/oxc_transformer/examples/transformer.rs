@@ -55,7 +55,7 @@ fn main() {
         }
     }
 
-    let (symbols, scopes) = ret.semantic.into_symbol_table_and_scope_tree();
+    let scoping = ret.semantic.into_scoping();
 
     let mut transform_options = if let Some(babel_options_path) = babel_options_path {
         let babel_options_path = Path::new(&babel_options_path);
@@ -74,11 +74,8 @@ fn main() {
 
     transform_options.helper_loader.mode = HelperLoaderMode::External;
 
-    let ret = Transformer::new(&allocator, path, &transform_options).build_with_symbols_and_scopes(
-        symbols,
-        scopes,
-        &mut program,
-    );
+    let ret = Transformer::new(&allocator, path, &transform_options)
+        .build_with_scoping(scoping, &mut program);
 
     if !ret.errors.is_empty() {
         println!("Transformer Errors:");

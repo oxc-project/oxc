@@ -51,7 +51,7 @@ use std::iter;
 use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeTree, SymbolFlags, SymbolId, SymbolTable};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx, traverse_mut};
@@ -89,11 +89,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         mut self,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
-        symbols: SymbolTable,
-        scopes: ScopeTree,
+        scoping: Scoping,
     ) -> (Vec<String>, Vec<String>) {
-        traverse_mut(&mut self, allocator, program, symbols, scopes);
-
+        traverse_mut(&mut self, allocator, program, scoping);
         (self.deps, self.dynamic_deps)
     }
 }
@@ -819,19 +817,17 @@ mod test {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let mut program = ret.program;
-        let (mut symbols, mut scopes) =
-            SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+        let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
         if is_jsx {
             let mut jsx_options = JsxOptions::enable();
             jsx_options.runtime = JsxRuntime::Classic;
             jsx_options.jsx_plugin = true;
             let ctx = TransformCtx::new(Path::new(""), &TransformOptions::default());
             let mut jsx = Jsx::new(jsx_options, None, AstBuilder::new(&allocator), &ctx);
-
-            (symbols, scopes) = traverse_mut(&mut jsx, &allocator, &mut program, symbols, scopes);
+            scoping = traverse_mut(&mut jsx, &allocator, &mut program, scoping);
         }
         let mut module_runner_transform = ModuleRunnerTransform::default();
-        traverse_mut(&mut module_runner_transform, &allocator, &mut program, symbols, scopes);
+        traverse_mut(&mut module_runner_transform, &allocator, &mut program, scoping);
 
         if !ret.errors.is_empty() {
             return Err(ret.errors);

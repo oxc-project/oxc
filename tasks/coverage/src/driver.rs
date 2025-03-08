@@ -103,11 +103,9 @@ impl CompilerInterface for Driver {
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
-            if let Some(errors) = check_semantic_after_transform(
-                &transformer_return.symbols,
-                &transformer_return.scopes,
-                program,
-            ) {
+            if let Some(errors) =
+                check_semantic_after_transform(&transformer_return.scoping, program)
+            {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());
             }
