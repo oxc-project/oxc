@@ -2062,9 +2062,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "4.2.0"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c4d9cffbd24c3a874bd44cce4384cb73bf732c4fe4aa99c4406b2e0c4027bb"
+checksum = "2d4c283b540cae2f6429d1147168cda9abb6d3ecfc99cde8132df7141fe1cc3f"
 dependencies = [
  "cfg-if",
  "indexmap",
@@ -2072,7 +2072,6 @@ dependencies = [
  "once_cell",
  "papaya",
  "rustc-hash",
- "seize",
  "serde",
  "serde_json",
  "simdutf8",
