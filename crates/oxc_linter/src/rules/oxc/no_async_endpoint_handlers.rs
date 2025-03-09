@@ -219,12 +219,12 @@ impl NoAsyncEndpointHandlers {
                 };
 
                 // Cannot check imported handlers without cross-file analysis.
-                let flags = ctx.symbols().get_flags(symbol_id);
+                let flags = ctx.symbols().symbol_flags(symbol_id);
                 if flags.is_import() {
                     return;
                 }
 
-                let decl_id = ctx.symbols().get_declaration(symbol_id);
+                let decl_id = ctx.symbols().get_symbol_declaration(symbol_id);
                 let decl_node = ctx.nodes().get_node(decl_id);
                 let registered_at = registered_at.or(Some(handler.span));
                 match decl_node.kind() {

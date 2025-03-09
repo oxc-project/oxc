@@ -45,8 +45,8 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             let mut var_scope_ids = vec![];
 
             // Collect all scopes where variable hoisting can occur
-            for scope_id in builder.scope.ancestors(target_scope_id) {
-                let flags = builder.scope.get_flags(scope_id);
+            for scope_id in builder.scope.scope_ancestors(target_scope_id) {
+                let flags = builder.scope.scope_flags(scope_id);
                 if flags.is_var() {
                     target_scope_id = scope_id;
                     break;
@@ -70,7 +70,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                         // avoid same symbols appear in multi-scopes
                         builder.scope.remove_binding(scope_id, &name);
                         builder.scope.add_binding(target_scope_id, &name, symbol_id);
-                        builder.symbols.scope_ids[symbol_id] = target_scope_id;
+                        builder.symbols.symbol_scope_ids[symbol_id] = target_scope_id;
                         break;
                     }
                 }
@@ -215,7 +215,7 @@ impl<'a> Binder<'a> for Function<'a> {
         if let Some(AstKind::ObjectProperty(prop)) =
             builder.nodes.parent_kind(builder.current_node_id)
         {
-            let flags = builder.scope.get_flags_mut(current_scope_id);
+            let flags = builder.scope.scope_flags_mut(current_scope_id);
             match prop.kind {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
@@ -445,8 +445,8 @@ impl<'a> Binder<'a> for TSTypeParameter<'a> {
         ) {
             builder
                 .scope
-                .ancestors(builder.current_scope_id)
-                .find(|scope_id| builder.scope.get_flags(*scope_id).is_ts_conditional())
+                .scope_ancestors(builder.current_scope_id)
+                .find(|scope_id| builder.scope.scope_flags(*scope_id).is_ts_conditional())
         } else {
             None
         };

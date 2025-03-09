@@ -579,7 +579,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             // Remove `SymbolFlags::CatchVariable`.
             param.pattern.bound_names(&mut |ident| {
                 ctx.symbols_mut()
-                    .get_flags_mut(ident.symbol_id())
+                    .symbol_flags_mut(ident.symbol_id())
                     .remove(SymbolFlags::CatchVariable);
             });
             Self::replace_rest_element(
@@ -616,7 +616,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 );
                 // Move the bindings from the for init scope to scope of the loop body.
                 for ident in bound_names {
-                    ctx.symbols_mut().set_scope_id(ident.symbol_id(), new_scope_id);
+                    ctx.symbols_mut().set_symbol_scope_id(ident.symbol_id(), new_scope_id);
                     ctx.scopes_mut().move_binding(scope_id, new_scope_id, ident.name.into());
                 }
             }
@@ -761,7 +761,8 @@ impl<'a> ObjectRestSpread<'a, '_> {
             ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, Some(init), false));
         let decl = ctx.ast.variable_declaration(SPAN, kind, declarations, false);
         decl.bound_names(&mut |ident| {
-            *ctx.symbols_mut().get_flags_mut(ident.symbol_id()) = SymbolFlags::BlockScopedVariable;
+            *ctx.symbols_mut().symbol_flags_mut(ident.symbol_id()) =
+                SymbolFlags::BlockScopedVariable;
         });
         decl
     }
@@ -810,8 +811,8 @@ impl<'a> ObjectRestSpread<'a, '_> {
         let symbols = ctx.symbols();
         decl.id.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
-            scope_id = symbols.get_scope_id(symbol_id);
-            symbol_flags.insert(symbols.get_flags(symbol_id));
+            scope_id = symbols.get_symbol_scope_id(symbol_id);
+            symbol_flags.insert(symbols.symbol_flags(symbol_id));
         });
 
         let state = State::new(decl.kind, symbol_flags, scope_id);

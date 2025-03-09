@@ -192,10 +192,10 @@ impl Mangler {
         let (scoping, ast_nodes) = semantic.into_scoping_and_nodes();
         let (mut symbol_table, scope_tree) = scoping.into_symbols_scopes();
 
-        assert!(scope_tree.has_child_ids(), "child_id needs to be generated");
+        assert!(scope_tree.has_scope_child_ids(), "child_id needs to be generated");
 
         // TODO: implement opt-out of direct-eval in a branch of scopes.
-        if scope_tree.root_flags().contains_direct_eval() {
+        if scope_tree.root_scope_flags().contains_direct_eval() {
             return symbol_table;
         }
 
@@ -208,7 +208,8 @@ impl Mangler {
         let allocator = Allocator::default();
 
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots = Vec::from_iter_in(iter::repeat_n(0, symbol_table.len()), &allocator);
+        let mut slots =
+            Vec::from_iter_in(iter::repeat_n(0, symbol_table.symbols_len()), &allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
@@ -242,7 +243,8 @@ impl Mangler {
 
             slot += remaining_count;
             if slot_liveness.len() < slot {
-                slot_liveness.resize_with(slot, || FixedBitSet::with_capacity(scope_tree.len()));
+                slot_liveness
+                    .resize_with(slot, || FixedBitSet::with_capacity(scope_tree.scopes_len()));
             }
 
             // Sort `bindings` in declaration order.
@@ -258,7 +260,7 @@ impl Mangler {
                 // parent, so we need to include the scope where it is declared.
                 // (for cases like `function foo() { { var x; let y; } }`)
                 let declared_scope_id =
-                    ast_nodes.get_node(symbol_table.get_declaration(symbol_id)).scope_id();
+                    ast_nodes.get_node(symbol_table.get_symbol_declaration(symbol_id)).scope_id();
 
                 // Calculate the scope ids that this symbol is alive in.
                 let lived_scope_ids = symbol_table
@@ -266,7 +268,9 @@ impl Mangler {
                     .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id())
                     .chain([scope_id, declared_scope_id])
                     .flat_map(|used_scope_id| {
-                        scope_tree.ancestors(used_scope_id).take_while(|s_id| *s_id != scope_id)
+                        scope_tree
+                            .scope_ancestors(used_scope_id)
+                            .take_while(|s_id| *s_id != scope_id)
                     });
 
                 // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
@@ -354,7 +358,7 @@ impl Mangler {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    symbol_table.set_name(symbol_id, new_name);
+                    symbol_table.set_symbol_name(symbol_id, new_name);
                 }
             }
         }
@@ -379,12 +383,12 @@ impl Mangler {
 
         for (symbol_id, slot) in slots.iter().copied().enumerate() {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if symbol_table.get_scope_id(symbol_id) == root_scope_id
+            if symbol_table.get_symbol_scope_id(symbol_id) == root_scope_id
                 && (!self.options.top_level || exported_symbols.contains(&symbol_id))
             {
                 continue;
             }
-            if is_special_name(symbol_table.get_name(symbol_id)) {
+            if is_special_name(symbol_table.symbol_name(symbol_id)) {
                 continue;
             }
             let index = slot;

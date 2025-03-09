@@ -24,13 +24,13 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
         if index != 0 {
             result.push(',');
         }
-        let flags = scope_tree.get_flags(scope_id);
+        let flags = scope_tree.scope_flags(scope_id);
         result.push('{');
         let child_ids = semantic
             .scopes()
-            .descendants_from_root()
+            .scope_descendants_from_root()
             .filter(|id| {
-                scope_tree.get_parent_id(*id).is_some_and(|parent_id| parent_id == scope_id)
+                scope_tree.get_scope_parent_id(*id).is_some_and(|parent_id| parent_id == scope_id)
             })
             .collect::<Vec<_>>();
         result.push_str("\"children\":");
@@ -55,7 +55,8 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
             }
             result.push('{');
             result.push_str(
-                format!("\"flags\": \"{:?}\",", semantic.symbols().get_flags(symbol_id)).as_str(),
+                format!("\"flags\": \"{:?}\",", semantic.symbols().symbol_flags(symbol_id))
+                    .as_str(),
             );
             result.push_str(format!("\"id\": {},", symbol_id.index()).as_str());
             result.push_str(format!("\"name\": {name:?},").as_str());
@@ -64,7 +65,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                     "\"node\": {:?},",
                     semantic
                         .nodes()
-                        .kind(semantic.symbols().get_declaration(symbol_id))
+                        .kind(semantic.symbols().get_symbol_declaration(symbol_id))
                         .debug_name()
                 )
                 .as_str(),

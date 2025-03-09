@@ -323,7 +323,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                     // Handle the for-of statement move to the body of new for-statement
                     let for_statement_body_scope_id = for_of_scope_id;
                     {
-                        ctx.scopes_mut().change_parent_id(
+                        ctx.scopes_mut().change_scope_parent_id(
                             for_statement_body_scope_id,
                             Some(for_statement_scope_id),
                         );

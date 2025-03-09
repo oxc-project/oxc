@@ -692,7 +692,7 @@ impl<'a> Symbol<'_, 'a> {
             return false;
         }
 
-        for scope_id in self.scopes().ancestors(call_scope_id) {
+        for scope_id in self.scopes().scope_ancestors(call_scope_id) {
             if scope_id == container_id {
                 return true;
             } else if scope_id == decl_scope_id {

@@ -239,7 +239,8 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
             let symbols = ctx.semantic().symbols();
             let reference_id = ident.reference_id();
             symbols.get_reference(reference_id).symbol_id().and_then(|symbol_id| {
-                let decl = ctx.semantic().nodes().get_node(symbols.get_declaration(symbol_id));
+                let decl =
+                    ctx.semantic().nodes().get_node(symbols.get_symbol_declaration(symbol_id));
                 let var_decl = decl.kind().as_variable_declarator()?;
 
                 match &var_decl.init {

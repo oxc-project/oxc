@@ -13,8 +13,8 @@ fn test_only_program() {
     let root = semantic.scopes().root_scope_id();
 
     // ScopeTree contains a single root scope
-    assert_eq!(scopes.len(), 1);
-    assert!(!scopes.is_empty());
+    assert_eq!(scopes.scopes_len(), 1);
+    assert!(!scopes.scopes_is_empty());
 
     // Root scope is associated with the Program
     let root_node_id = scopes.get_node_id(root);
@@ -22,8 +22,8 @@ fn test_only_program() {
     assert!(matches!(root_node.kind(), AstKind::Program(_)));
 
     // ancestors
-    assert_eq!(scopes.ancestors(root).count(), 1);
-    assert!(scopes.get_parent_id(root).is_none());
+    assert_eq!(scopes.scope_ancestors(root).count(), 1);
+    assert!(scopes.get_scope_parent_id(root).is_none());
 }
 
 #[test]
@@ -101,10 +101,10 @@ fn test_function_level_strict() {
         .is_in_scope(ScopeFlags::StrictMode | ScopeFlags::Function)
         .expect(|(semantic, symbol_id)| -> Result<(), &'static str> {
             let scope_id = semantic.symbol_scope(symbol_id);
-            let Some(parent_scope_id) = semantic.scopes().get_parent_id(scope_id) else {
+            let Some(parent_scope_id) = semantic.scopes().get_scope_parent_id(scope_id) else {
                 return Err("Expected x's scope to have a parent");
             };
-            let parent_flags = semantic.scopes().get_flags(parent_scope_id);
+            let parent_flags = semantic.scopes().scope_flags(parent_scope_id);
             if parent_flags.contains(ScopeFlags::Top) {
                 Ok(())
             } else {
@@ -236,9 +236,9 @@ fn get_child_ids() {
     let scoping = semantic.into_scoping();
     let scopes = scoping.scopes();
 
-    let child_scope_ids = scopes.get_child_ids(scopes.root_scope_id());
+    let child_scope_ids = scopes.get_scope_child_ids(scopes.root_scope_id());
     assert_eq!(child_scope_ids.len(), 1);
-    let child_scope_ids = scopes.get_child_ids(child_scope_ids[0]);
+    let child_scope_ids = scopes.get_scope_child_ids(child_scope_ids[0]);
     assert!(child_scope_ids.is_empty());
 }
 
@@ -270,7 +270,7 @@ fn test_eval() {
     for code in direct_evals {
         let tester = SemanticTester::js(code);
         let semantic = tester.build();
-        assert!(semantic.scopes().root_flags().contains_direct_eval());
+        assert!(semantic.scopes().root_scope_flags().contains_direct_eval());
     }
 
     let indirect_evals = [
@@ -282,6 +282,6 @@ fn test_eval() {
     for code in indirect_evals {
         let tester = SemanticTester::js(code);
         let semantic = tester.build();
-        assert!(!semantic.scopes().root_flags().contains_direct_eval());
+        assert!(!semantic.scopes().root_scope_flags().contains_direct_eval());
     }
 }

@@ -156,7 +156,7 @@ impl ClassStaticBlock {
 
         // Re-use the static block's scope for the arrow function.
         // Always strict mode since we're in a class.
-        *ctx.scopes_mut().get_flags_mut(scope_id) =
+        *ctx.scopes_mut().scope_flags_mut(scope_id) =
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode;
         wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
     }

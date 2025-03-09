@@ -182,7 +182,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[must_use]
     pub fn with_scope_tree_child_ids(mut self, yes: bool) -> Self {
-        self.scope.build_child_ids = yes;
+        self.scope.scope_build_child_ids = yes;
         self
     }
 
@@ -262,8 +262,8 @@ impl<'a> SemanticBuilder<'a> {
                 #[expect(clippy::cast_possible_truncation)]
                 let actual_stats = Stats::new(
                     self.nodes.len() as u32,
-                    self.scope.len() as u32,
-                    self.symbols.len() as u32,
+                    self.scope.scopes_len() as u32,
+                    self.symbols.symbols_len() as u32,
                     self.symbols.references.len() as u32,
                 );
                 stats.assert_accurate(actual_stats);
@@ -307,8 +307,8 @@ impl<'a> SemanticBuilder<'a> {
         self.source_type.is_typescript_definition()
             || self
                 .scope
-                .ancestors(self.current_scope_id)
-                .any(|scope_id| self.scope.get_flags(scope_id).is_ts_module_block())
+                .scope_ancestors(self.current_scope_id)
+                .any(|scope_id| self.scope.scope_flags(scope_id).is_ts_module_block())
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
@@ -365,7 +365,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[inline]
     pub(crate) fn current_scope_flags(&self) -> ScopeFlags {
-        self.scope.get_flags(self.current_scope_id)
+        self.scope.scope_flags(self.current_scope_id)
     }
 
     /// Is the current scope in strict mode?
@@ -394,7 +394,7 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
-            self.symbols.union_flag(symbol_id, includes);
+            self.symbols.union_symbol_flag(symbol_id, includes);
             self.add_redeclare_variable(symbol_id, span);
             return symbol_id;
         }
@@ -432,8 +432,8 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self.scope.get_binding(scope_id, name).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
         })?;
-        if report_error && self.symbols.get_flags(symbol_id).intersects(excludes) {
-            let symbol_span = self.symbols.get_span(symbol_id);
+        if report_error && self.symbols.symbol_flags(symbol_id).intersects(excludes) {
+            let symbol_span = self.symbols.symbol_span(symbol_id);
             self.error(redeclaration(name, symbol_span, span));
         }
         Some(symbol_id)
@@ -484,7 +484,7 @@ impl<'a> SemanticBuilder<'a> {
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
-                let symbol_flags = self.symbols.get_flags(symbol_id);
+                let symbol_flags = self.symbols.symbol_flags(symbol_id);
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
 
@@ -537,7 +537,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub(crate) fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.symbols.add_redeclaration(symbol_id, span);
+        self.symbols.add_symbol_redeclaration(symbol_id, span);
     }
 }
 
@@ -560,12 +560,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // `get_parent_id` always returns `Some` because this method is not called for `Program`.
         // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
         // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
-        let parent_id = self.scope.get_parent_id(self.current_scope_id);
+        let parent_id = self.scope.get_scope_parent_id(self.current_scope_id);
 
         debug_assert!(parent_id.is_some());
         if let Some(parent_id) = parent_id {
-            if self.scope.get_flags(self.current_scope_id).contains_direct_eval() {
-                self.scope.get_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
+            if self.scope.scope_flags(self.current_scope_id).contains_direct_eval() {
+                self.scope.scope_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
             }
             self.current_scope_id = parent_id;
         }
@@ -709,13 +709,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         // Move all bindings from catch clause param scope to catch clause body scope
         // to make it easier to resolve references and check redeclare errors
-        if self.scope.get_flags(parent_scope_id).is_catch_clause() {
+        if self.scope.scope_flags(parent_scope_id).is_catch_clause() {
             self.scope.cell.with_dependent_mut(|allocator, inner| {
                 if !inner.bindings[parent_scope_id].is_empty() {
                     let mut parent_bindings = Bindings::new_in(allocator);
                     mem::swap(&mut inner.bindings[parent_scope_id], &mut parent_bindings);
                     for &symbol_id in parent_bindings.values() {
-                        self.symbols.set_scope_id(symbol_id, self.current_scope_id);
+                        self.symbols.set_symbol_scope_id(symbol_id, self.current_scope_id);
                     }
                     inner.bindings[self.current_scope_id] = parent_bindings;
                 }
@@ -2069,7 +2069,9 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::CallExpression(call_expr) => {
                 if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
-                    self.scope.get_flags_mut(self.current_scope_id).insert(ScopeFlags::DirectEval);
+                    self.scope
+                        .scope_flags_mut(self.current_scope_id)
+                        .insert(ScopeFlags::DirectEval);
                 }
             }
             _ => {}
@@ -2111,10 +2113,10 @@ impl<'a> SemanticBuilder<'a> {
             };
 
             // Ambient modules cannot be value modules
-            if self.symbols.get_flags(symbol_id).intersects(SymbolFlags::Ambient) {
+            if self.symbols.symbol_flags(symbol_id).intersects(SymbolFlags::Ambient) {
                 continue;
             }
-            self.symbols.union_flag(symbol_id, SymbolFlags::ValueModule);
+            self.symbols.union_symbol_flag(symbol_id, SymbolFlags::ValueModule);
         }
     }
 

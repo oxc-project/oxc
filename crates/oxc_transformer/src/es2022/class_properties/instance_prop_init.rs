@@ -104,7 +104,7 @@ impl<'a> Visit<'a> for InstanceInitializerVisitor<'a, '_> {
 impl<'a> InstanceInitializerVisitor<'a, '_> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: ScopeId) {
-        self.ctx.scopes_mut().change_parent_id(scope_id, Some(self.parent_scope_id));
+        self.ctx.scopes_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
     }
 
     /// Check if symbol referenced by `ident` is shadowed by a binding in constructor's scope.
@@ -126,7 +126,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         // This is an improvement over Babel.
         let reference_id = ident.reference_id();
         if let Some(ident_symbol_id) = self.ctx.symbols().get_reference(reference_id).symbol_id() {
-            let scope_id = self.ctx.symbols().get_scope_id(ident_symbol_id);
+            let scope_id = self.ctx.symbols().get_symbol_scope_id(ident_symbol_id);
             if self.scope_ids_stack.contains(&scope_id) {
                 return;
             }
@@ -212,6 +212,6 @@ impl FastInstanceInitializerVisitor<'_, '_> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get().unwrap();
-        self.ctx.scopes_mut().change_parent_id(scope_id, Some(self.parent_scope_id));
+        self.ctx.scopes_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
     }
 }

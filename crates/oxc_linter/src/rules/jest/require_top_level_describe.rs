@@ -142,7 +142,7 @@ impl RequireTopLevelDescribe {
     ) {
         let node = possible_jest_node.node;
         let scopes = ctx.scopes();
-        let is_top = scopes.get_flags(node.scope_id()).is_top();
+        let is_top = scopes.scope_flags(node.scope_id()).is_top();
 
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

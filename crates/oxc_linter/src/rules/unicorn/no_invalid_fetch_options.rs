@@ -130,7 +130,7 @@ fn is_invalid_fetch_options<'a>(
                     let reference = symbols.get_reference(reference_id);
 
                     if let Some(symbol_id) = reference.symbol_id() {
-                        if ctx.symbols().get_flags(symbol_id).is_enum() {
+                        if ctx.symbols().symbol_flags(symbol_id).is_enum() {
                             let decl = ctx.semantic().symbol_declaration(symbol_id);
                             let enum_member_res: Option<CompactStr> = match decl.kind() {
                                 AstKind::TSEnumDeclaration(enum_decl) => {
@@ -169,7 +169,8 @@ fn is_invalid_fetch_options<'a>(
                         continue;
                     };
 
-                    let decl = ctx.semantic().nodes().get_node(symbols.get_declaration(symbol_id));
+                    let decl =
+                        ctx.semantic().nodes().get_node(symbols.get_symbol_declaration(symbol_id));
 
                     match decl.kind() {
                         AstKind::VariableDeclarator(declarator) => match &declarator.init {

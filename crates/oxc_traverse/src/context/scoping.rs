@@ -54,7 +54,7 @@ impl TraverseScoping {
     /// Get current scope flags
     #[inline]
     pub fn current_scope_flags(&self) -> ScopeFlags {
-        self.scopes.get_flags(self.current_scope_id)
+        self.scopes.scope_flags(self.current_scope_id)
     }
 
     /// Get scopes tree
@@ -83,7 +83,7 @@ impl TraverseScoping {
 
     /// Get iterator over scopes, starting with current scope and working up
     pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
-        self.scopes.ancestors(self.current_scope_id)
+        self.scopes.scope_ancestors(self.current_scope_id)
     }
 
     /// Create new scope as child of provided scope.
@@ -133,7 +133,7 @@ impl TraverseScoping {
 
     fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
         // Remove these scopes from parent's children
-        if self.scopes.has_child_ids() {
+        if self.scopes.has_scope_child_ids() {
             self.scopes.remove_child_scopes(self.current_scope_id, child_scope_ids);
         }
 
@@ -142,7 +142,7 @@ impl TraverseScoping {
 
         // Set scopes as children of new scope instead
         for &child_id in child_scope_ids {
-            self.scopes.set_parent_id(child_id, Some(new_scope_id));
+            self.scopes.set_scope_parent_id(child_id, Some(new_scope_id));
         }
 
         new_scope_id
@@ -165,9 +165,9 @@ impl TraverseScoping {
 
         let child_ids = collector.scope_ids;
         if !child_ids.is_empty() {
-            let parent_id = self.scopes.get_parent_id(scope_id);
+            let parent_id = self.scopes.get_scope_parent_id(scope_id);
             for child_id in child_ids {
-                self.scopes.set_parent_id(child_id, parent_id);
+                self.scopes.set_scope_parent_id(child_id, parent_id);
             }
         }
 
@@ -375,7 +375,7 @@ impl TraverseScoping {
     #[expect(clippy::needless_pass_by_value)]
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
         // Rename symbol
-        let old_name = self.symbols.set_name(symbol_id, new_name.as_str());
+        let old_name = self.symbols.set_symbol_name(symbol_id, new_name.as_str());
         // Rename binding
         self.scopes.rename_binding(scope_id, symbol_id, old_name, new_name.as_str());
     }
@@ -432,7 +432,7 @@ impl TraverseScoping {
             .root_unresolved_references()
             .keys()
             .copied()
-            .chain(self.symbols.names())
+            .chain(self.symbols.symbol_names())
             .filter(|name| name.as_bytes().first() == Some(&b'_'))
             .map(CompactStr::from)
             .collect()

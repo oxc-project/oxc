@@ -375,7 +375,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Add `"use strict"` directive if outer scope is not strict mode
         // TODO: This should be parent scope if insert `_super` function as expression before class expression.
         let outer_scope_id = ctx.current_block_scope_id();
-        let directives = if ctx.scopes().get_flags(outer_scope_id).is_strict_mode() {
+        let directives = if ctx.scopes().scope_flags(outer_scope_id).is_strict_mode() {
             ctx.ast.vec()
         } else {
             ctx.ast.vec1(ctx.ast.use_strict_directive())

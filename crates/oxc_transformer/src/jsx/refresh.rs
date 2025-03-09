@@ -307,7 +307,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let current_scope_id = ctx.current_scope_id();
-        if !ctx.scopes().get_flags(current_scope_id).is_function() {
+        if !ctx.scopes().scope_flags(current_scope_id).is_function() {
             return;
         }
 
@@ -339,7 +339,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
                     ctx.scopes()
                         .find_binding(
-                            ctx.scopes().get_parent_id(ctx.current_scope_id()).unwrap(),
+                            ctx.scopes().get_scope_parent_id(ctx.current_scope_id()).unwrap(),
                             binding_name.as_str(),
                         )
                         .map(|symbol_id| {

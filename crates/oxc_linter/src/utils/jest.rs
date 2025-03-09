@@ -211,14 +211,14 @@ fn collect_ids_referenced_to_import<'a, 'c>(
         .enumerate()
         .filter_map(|(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if semantic.symbols().get_flags(symbol_id).is_import() {
-                let id = semantic.symbols().get_declaration(symbol_id);
+            if semantic.symbols().symbol_flags(symbol_id).is_import() {
+                let id = semantic.symbols().get_symbol_declaration(symbol_id);
                 let Some(AstKind::ImportDeclaration(import_decl)) =
                     semantic.nodes().parent_kind(id)
                 else {
                     return None;
                 };
-                let name = semantic.symbols().get_name(symbol_id);
+                let name = semantic.symbols().symbol_name(symbol_id);
 
                 if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
                     let original = find_original_name(import_decl, name);
