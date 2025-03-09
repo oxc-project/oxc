@@ -2,7 +2,7 @@
   "name": "oxc-parser",
   "version": "0.56.5",
   "main": "index.js",
-  "browser": "browser.js",
+  "browser": "wasm.js",
   "description": "Oxc Parser Node API",
   "keywords": [
     "oxc",
@@ -23,7 +23,8 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "browser.js",
+    "wrap.js",
+    "wasm.js",
     "bindings.js",
     "deserialize-js.js",
     "deserialize-ts.js"
