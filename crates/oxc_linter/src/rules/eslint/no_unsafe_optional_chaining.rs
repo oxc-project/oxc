@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, ArrayExpressionElement, AssignmentTarget, Expression, match_assignment_target_pattern},
+    ast::{
+        Argument, ArrayExpressionElement, AssignmentTarget, Expression,
+        match_assignment_target_pattern,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -124,6 +127,13 @@ impl Rule for NoUnsafeOptionalChaining {
                     Self::check_unsafe_usage(&target.init, ctx);
                 }
             }
+            AstKind::ArrayExpression(arr_expr) => {
+                for elem in &arr_expr.elements {
+                    if let ArrayExpressionElement::SpreadElement(spread_exp) = elem {
+                        Self::check_unsafe_usage(&spread_exp.argument, ctx);
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -163,17 +173,6 @@ impl NoUnsafeOptionalChaining {
             },
             Expression::AwaitExpression(expr) => {
                 Self::check_undefined_short_circuit(&expr.argument, error_type, ctx);
-            }
-            Expression::ExpressionStatement(expr) => {
-             let Expression::ArrayExpression(arr_expr) = expr.expression else {return;};
-                println!("aa {expr:?}");
-
-                for elem in arr_expr.elements.iter() {
-                    if let ArrayExpressionElement::SpreadElement(spread_exp) = elem {
-                        println!("foo {elem:?}");
-                        Self::check_undefined_short_circuit(&spread_exp.argument, error_type, ctx);
-                    }
-                }
             }
             Expression::ConditionalExpression(expr) => {
                 Self::check_undefined_short_circuit(&expr.consequent, error_type, ctx);
@@ -277,6 +276,7 @@ fn test() {
         ("x?.f?.<T>();", None),
         ("f?.<Q>();", None),
         ("a?.c?.b<c>", None),
+        ("const baz = {...obj?.foo };", None),
     ];
 
     let fail = vec![
@@ -285,8 +285,9 @@ fn test() {
         ("async function foo() { with ( await obj?.foo) {}; }", None),
         ("(foo ? obj?.foo : obj?.bar).bar", None),
         ("const a = [...obj?.foo];", None),
-      //  ("const b = [...c, ...obj?.foo];", None),
-       // ("const c = () => ([...(obj?.foo)]);", None),
+        ("const b = [...c, ...obj?.foo];", None),
+        ("const s = [], t = [...obj?.foo];", None),
+        ("const c = () => ([...(obj?.foo)]);", None),
     ];
 
     Tester::new(NoUnsafeOptionalChaining::NAME, NoUnsafeOptionalChaining::PLUGIN, pass, fail)
