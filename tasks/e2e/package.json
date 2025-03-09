@@ -6,8 +6,8 @@
     "test": "vitest run ./test"
   },
   "devDependencies": {
-    "@oxc-minify/binding": "workspace:^",
-    "@oxc-transform/binding": "workspace:^",
+    "oxc-minify": "workspace:^",
+    "oxc-transform": "workspace:^",
     "antd": "^5.23.1",
     "fs-require": "^1.6.0",
     "memfs": "^4.17.0",
