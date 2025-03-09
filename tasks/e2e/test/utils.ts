@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { minify as oxcMinify } from '@oxc-minify/binding';
-import { transform as oxcTransform } from '@oxc-transform/binding';
+import { minify as oxcMinify } from 'oxc-minify';
+import { transform as oxcTransform } from 'oxc-transform';
 import { createFsRequire } from 'fs-require';
 import { Volume } from 'memfs';
 

@@ -1,12 +1,64 @@
 {
-  "name": "@oxc-minify/binding",
-  "private": true,
+  "name": "oxc-minify",
+  "version": "0.56.5",
+  "main": "index.js",
+  "browser": "browser.js",
   "scripts": {
-    "build-dev": "napi build --package-json-path ../../npm/oxc-minify/package.json --no-dts-cache --platform",
+    "build-dev": "napi build --no-dts-cache --platform",
     "build": "pnpm run build-dev --release",
     "test": "vitest --typecheck run ./test && tsc"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "description": "Oxc Minifier Node API",
+  "keywords": [
+    "oxc",
+    "minify"
+  ],
+  "author": "Boshen and oxc contributors",
+  "license": "MIT",
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc.git",
+    "directory": "napi/minify"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": [
+    "index.d.ts",
+    "index.js",
+    "browser.js"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "devDependencies": {
     "vitest": "catalog:"
+  },
+  "napi": {
+    "binaryName": "minify",
+    "packageName": "@oxc-minify/binding",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "armv7-unknown-linux-gnueabihf",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "wasm32-wasip1-threads"
+    ],
+    "wasm": {
+      "browser": {
+        "fs": true
+      }
+    }
   }
 }

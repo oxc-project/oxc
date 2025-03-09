@@ -7,7 +7,7 @@ on:
     branches:
       - main
     paths:
-      - npm/oxc-transform/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
+      - napi/transform/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

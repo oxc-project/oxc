@@ -30,7 +30,7 @@ jobs:
         with:
           static-checking: localIsNew
           file-url: https://unpkg.com/oxc-${{ inputs.name }}@latest/package.json
-          file-name: npm/oxc-${{ inputs.name }}/package.json
+          file-name: napi/${{ inputs.name }}/package.json
 
       - name: Set version name
         if: steps.version.outputs.changed == 'true'
@@ -122,7 +122,7 @@ jobs:
       id-token: write # for `pnpm publish --provenance`
     env:
       name: ${{ inputs.name }}
-      package_json_path: npm/oxc-${{ inputs.name }}/package.json
+      package_path: napi/${{ inputs.name }}
       npm_dir: release-dir
       PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
@@ -136,15 +136,9 @@ jobs:
 
       - run: mkdir -p release-dir
 
-      - run: pnpm napi create-npm-dirs --package-json-path ${package_json_path} --npm-dir ${npm_dir}
+      - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
 
-      - run: pnpm napi artifacts --package-json-path ${package_json_path} --build-output-dir napi/${name} --npm-dir ${npm_dir}
-
-      - name: Copy files
-        run: |
-          jq -r '.files[]' ${package_json_path} | while read -r file ; do
-            cp napi/${name}/${file} npm/oxc-${name}/${file}
-          done
+      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path} --npm-dir ${npm_dir}
 
       - name: Check Publish
         run: |
@@ -166,17 +160,17 @@ jobs:
           done
 
           # Check root package
-          echo ${package_json_path}
-          ls npm/oxc-${name}
-          cat ${package_json_path}
+          echo ${package_path}
+          ls ${package_path}
+          cat ${package_path}/package.json
           # Check publish files exist
-          jq -r '.files[]' ${package_json_path} | while read -r file ; do
-            if ! [ -f npm/oxc-${name}/$file ]; then
-              echo "File does not exist." npm/oxc-${name}/$file
+          jq -r '.files[]' ${package_path}/package.json | while read -r file ; do
+            if ! [ -f ${package_path}/$file ]; then
+              echo "File does not exist." ${package_path}/$file
               exit 1
             fi
           done
-          pnpm publish npm/oxc-${name}/ ${PUBLISH_FLAGS} --dry-run
+          pnpm publish ${package_path}/ ${PUBLISH_FLAGS} --dry-run
 
       - name: Publish
         env:
@@ -184,6 +178,6 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          # Publish sub-packages and adds `optionalDependencies` to `package_json_path`.
-          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_json_path} --npm-dir ${npm_dir}
-          pnpm publish npm/oxc-${name}/ ${PUBLISH_FLAGS}
+          # Publish sub-packages and adds `optionalDependencies` to `package_path`.
+          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
