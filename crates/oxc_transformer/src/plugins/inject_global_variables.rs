@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::Scoping;
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::identifier;
 use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
@@ -109,8 +109,7 @@ impl From<&InjectImport> for DotDefineState<'_> {
 
 #[must_use]
 pub struct InjectGlobalVariablesReturn {
-    pub symbols: SymbolTable,
-    pub scopes: ScopeTree,
+    pub scoping: Scoping,
 }
 
 /// Injects import statements for global variables.
@@ -149,12 +148,10 @@ impl<'a> InjectGlobalVariables<'a> {
 
     pub fn build(
         &mut self,
-        symbols: SymbolTable,
-        scopes: ScopeTree,
+        scoping: Scoping,
         program: &mut Program<'a>,
     ) -> InjectGlobalVariablesReturn {
-        let mut symbols = symbols;
-        let mut scopes = scopes;
+        let mut scoping = scoping;
         // Step 1: slow path where visiting the AST is required to replace dot defines.
         let dot_defines = self
             .config
@@ -166,7 +163,7 @@ impl<'a> InjectGlobalVariables<'a> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            (symbols, scopes) = traverse_mut(self, self.ast.allocator, program, symbols, scopes);
+            scoping = traverse_mut(self, self.ast.allocator, program, scoping);
         }
 
         // Step 2: find all the injects that are referenced.
@@ -184,7 +181,8 @@ impl<'a> InjectGlobalVariables<'a> {
                         if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
                             false
                         } else {
-                            scopes
+                            scoping
+                                .scopes()
                                 .root_unresolved_references()
                                 .contains_key(i.specifier.local().as_str())
                         }
@@ -195,12 +193,12 @@ impl<'a> InjectGlobalVariables<'a> {
             .collect::<Vec<_>>();
 
         if injects.is_empty() {
-            return InjectGlobalVariablesReturn { symbols, scopes };
+            return InjectGlobalVariablesReturn { scoping };
         }
 
         self.inject_imports(&injects, program);
 
-        InjectGlobalVariablesReturn { symbols, scopes }
+        InjectGlobalVariablesReturn { scoping }
     }
 
     fn inject_imports(&self, injects: &[InjectImport], program: &mut Program<'a>) {

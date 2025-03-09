@@ -10,7 +10,7 @@ use std::path::Path;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::Scoping;
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
@@ -70,8 +70,7 @@ pub use crate::{
 #[non_exhaustive]
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,
-    pub symbols: SymbolTable,
-    pub scopes: ScopeTree,
+    pub scoping: Scoping,
     /// Helpers used by this transform.
     #[deprecated = "Internal usage only"]
     pub helpers_used: FxHashMap<Helper, String>,
@@ -101,10 +100,9 @@ impl<'a> Transformer<'a> {
         }
     }
 
-    pub fn build_with_symbols_and_scopes(
+    pub fn build_with_scoping(
         mut self,
-        symbols: SymbolTable,
-        scopes: ScopeTree,
+        scoping: Scoping,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
@@ -138,10 +136,10 @@ impl<'a> Transformer<'a> {
             x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
         };
 
-        let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
+        let scoping = traverse_mut(&mut transformer, allocator, program, scoping);
         let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
         #[expect(deprecated)]
-        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes, helpers_used }
+        TransformerReturn { errors: self.ctx.take_errors(), scoping, helpers_used }
     }
 }
 

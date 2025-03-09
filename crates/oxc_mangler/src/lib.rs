@@ -177,22 +177,20 @@ impl Mangler {
     #[must_use]
     pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> SymbolTable {
         if self.options.debug {
-            self.build_with_symbols_and_scopes_impl(semantic, program, debug_name)
+            self.build_with_semantic_impl(semantic, program, debug_name)
         } else {
-            self.build_with_symbols_and_scopes_impl(semantic, program, base54)
+            self.build_with_semantic_impl(semantic, program, base54)
         }
     }
 
-    fn build_with_symbols_and_scopes_impl<
-        const CAPACITY: usize,
-        G: Fn(u32) -> InlineString<CAPACITY, u8>,
-    >(
+    fn build_with_semantic_impl<const CAPACITY: usize, G: Fn(u32) -> InlineString<CAPACITY, u8>>(
         self,
         semantic: Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
     ) -> SymbolTable {
-        let (mut symbol_table, scope_tree, ast_nodes) = semantic.into_symbols_scopes_nodes();
+        let (scoping, ast_nodes) = semantic.into_scoping_and_nodes();
+        let (mut symbol_table, scope_tree) = scoping.into_symbols_scopes();
 
         assert!(scope_tree.has_child_ids(), "child_id needs to be generated");
 

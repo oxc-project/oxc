@@ -49,9 +49,8 @@ impl Minifier {
         let stats = if let Some(compress) = self.options.compress {
             let semantic = SemanticBuilder::new().build(program).semantic;
             let stats = semantic.stats();
-            let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-            Compressor::new(allocator, compress)
-                .build_with_symbols_and_scopes(symbols, scopes, program);
+            let scoping = semantic.into_scoping();
+            Compressor::new(allocator, compress).build_with_scoping(scoping, program);
             stats
         } else {
             Stats::default()

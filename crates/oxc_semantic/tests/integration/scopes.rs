@@ -233,7 +233,8 @@ fn get_child_ids() {
     )
     .with_scope_tree_child_ids(true);
     let semantic = test.build();
-    let (_symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+    let scoping = semantic.into_scoping();
+    let scopes = scoping.scopes();
 
     let child_scope_ids = scopes.get_child_ids(scopes.root_scope_id());
     assert_eq!(child_scope_ids.len(), 1);

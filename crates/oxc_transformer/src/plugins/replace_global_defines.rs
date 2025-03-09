@@ -5,7 +5,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::VisitMut;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
-use oxc_semantic::{IsGlobalReference, ScopeFlags, ScopeTree, SymbolTable};
+use oxc_semantic::{IsGlobalReference, ScopeFlags, Scoping};
 use oxc_span::{CompactStr, SPAN, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx, traverse_mut};
@@ -204,8 +204,7 @@ impl ReplaceGlobalDefinesConfig {
 
 #[must_use]
 pub struct ReplaceGlobalDefinesReturn {
-    pub symbols: SymbolTable,
-    pub scopes: ScopeTree,
+    pub scoping: Scoping,
 }
 
 /// Replace Global Defines.
@@ -278,12 +277,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     pub fn build(
         &mut self,
-        symbols: SymbolTable,
-        scopes: ScopeTree,
+        scoping: Scoping,
         program: &mut Program<'a>,
     ) -> ReplaceGlobalDefinesReturn {
-        let (symbols, scopes) = traverse_mut(self, self.allocator, program, symbols, scopes);
-        ReplaceGlobalDefinesReturn { symbols, scopes }
+        let scoping = traverse_mut(self, self.allocator, program, scoping);
+        ReplaceGlobalDefinesReturn { scoping }
     }
 
     // Construct a new expression because we don't have ast clone right now.

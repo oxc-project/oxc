@@ -260,7 +260,7 @@ impl<'a> Keys<'a> {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_semantic::{ScopeTree, SymbolTable};
+    use oxc_semantic::{ScopeTree, Scoping, SymbolTable};
     use oxc_traverse::ReusableTraverseCtx;
 
     use super::Keys;
@@ -268,9 +268,8 @@ mod test {
     macro_rules! setup {
         ($ctx:ident) => {
             let allocator = Allocator::default();
-            let scopes = ScopeTree::default();
-            let symbols = SymbolTable::default();
-            let ctx = ReusableTraverseCtx::new(scopes, symbols, &allocator);
+            let scoping = Scoping::new(SymbolTable::default(), ScopeTree::default());
+            let ctx = ReusableTraverseCtx::new(scoping, &allocator);
             // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
             let mut ctx = unsafe { ctx.unwrap() };
             let $ctx = &mut ctx;

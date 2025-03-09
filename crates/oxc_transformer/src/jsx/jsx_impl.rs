@@ -1111,7 +1111,7 @@ mod test {
 
     use oxc_allocator::Allocator;
     use oxc_ast::ast::Expression;
-    use oxc_semantic::{ScopeTree, SymbolTable};
+    use oxc_semantic::{ScopeTree, Scoping, SymbolTable};
     use oxc_syntax::{node::NodeId, scope::ScopeFlags};
     use oxc_traverse::ReusableTraverseCtx;
 
@@ -1125,7 +1125,8 @@ mod test {
             let mut scopes = ScopeTree::default();
             scopes.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
 
-            let traverse_ctx = ReusableTraverseCtx::new(scopes, SymbolTable::default(), &allocator);
+            let scoping = Scoping::new(SymbolTable::default(), scopes);
+            let traverse_ctx = ReusableTraverseCtx::new(scoping, &allocator);
             // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
             let mut traverse_ctx = unsafe { traverse_ctx.unwrap() };
             let $traverse_ctx = &mut traverse_ctx;

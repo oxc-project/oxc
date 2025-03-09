@@ -32,6 +32,7 @@ mod jsdoc;
 mod label;
 mod node;
 mod scope;
+mod scoping;
 mod stats;
 mod symbol;
 mod unresolved_stack;
@@ -41,6 +42,7 @@ pub use is_global_reference::IsGlobalReference;
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodes};
 pub use scope::ScopeTree;
+pub use scoping::Scoping;
 pub use stats::Stats;
 pub use symbol::SymbolTable;
 
@@ -92,14 +94,14 @@ pub struct Semantic<'a> {
 }
 
 impl<'a> Semantic<'a> {
-    /// Extract [`SymbolTable`] and [`ScopeTree`] from [`Semantic`].
-    pub fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
-        (self.symbols, self.scopes)
+    /// Extract [`Scoping`] from [`Semantic`].
+    pub fn into_scoping(self) -> Scoping {
+        Scoping::new(self.symbols, self.scopes)
     }
 
-    /// Extract [`SymbolTable`], [`ScopeTree`] and [`AstNode`] from the [`Semantic`].
-    pub fn into_symbols_scopes_nodes(self) -> (SymbolTable, ScopeTree, AstNodes<'a>) {
-        (self.symbols, self.scopes, self.nodes)
+    /// Extract [`Scoping`] and [`AstNode`] from the [`Semantic`].
+    pub fn into_scoping_and_nodes(self) -> (Scoping, AstNodes<'a>) {
+        (Scoping::new(self.symbols, self.scopes), self.nodes)
     }
 
     /// Source code of the JavaScript/TypeScript program being analyzed.

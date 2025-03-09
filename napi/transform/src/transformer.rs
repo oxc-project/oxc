@@ -799,9 +799,9 @@ pub fn module_runner_transform(
         SemanticBuilder::new().with_check_syntax_error(true).build(&program);
     parser_ret.errors.extend(errors);
 
-    let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+    let scoping = semantic.into_scoping();
     let (deps, dynamic_deps) =
-        ModuleRunnerTransform::default().transform(&allocator, &mut program, symbols, scopes);
+        ModuleRunnerTransform::default().transform(&allocator, &mut program, scoping);
 
     let CodegenReturn { code, map, .. } = CodeGenerator::new()
         .with_options(CodegenOptions {
