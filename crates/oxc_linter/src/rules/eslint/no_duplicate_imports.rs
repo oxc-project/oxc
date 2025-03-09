@@ -62,7 +62,7 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    /// ### includeExports
+    /// #### includeExports
     ///
     /// `{ "includeExports": boolean }`
     ///
