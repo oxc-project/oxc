@@ -212,7 +212,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
         .filter_map(|(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
             if semantic.scoping().symbol_flags(symbol_id).is_import() {
-                let id = semantic.scoping().get_symbol_declaration(symbol_id);
+                let id = semantic.scoping().symbol_declaration(symbol_id);
                 let Some(AstKind::ImportDeclaration(import_decl)) =
                     semantic.nodes().parent_kind(id)
                 else {

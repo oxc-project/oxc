@@ -559,7 +559,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // `get_parent_id` always returns `Some` because this method is not called for `Program`.
         // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
         // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
-        let parent_id = self.scoping.get_scope_parent_id(self.current_scope_id);
+        let parent_id = self.scoping.scope_parent_id(self.current_scope_id);
 
         debug_assert!(parent_id.is_some());
         if let Some(parent_id) = parent_id {

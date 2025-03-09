@@ -98,7 +98,7 @@ fn has_assignment_before_node(
         }
     }
 
-    let declaration_id = symbol_table.get_symbol_declaration(symbol_id);
+    let declaration_id = symbol_table.symbol_declaration(symbol_id);
     let AstKind::VariableDeclarator(decl) = ctx.nodes().kind(declaration_id) else {
         return false;
     };

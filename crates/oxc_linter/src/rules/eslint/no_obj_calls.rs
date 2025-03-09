@@ -99,7 +99,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
         return None;
     };
 
-    let decl = nodes.get_node(symbols.get_symbol_declaration(binding_id));
+    let decl = nodes.get_node(symbols.symbol_declaration(binding_id));
     match decl.kind() {
         AstKind::VariableDeclarator(parent_decl) => {
             if !parent_decl.id.kind.is_binding_identifier() {

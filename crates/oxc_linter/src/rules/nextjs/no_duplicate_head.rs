@@ -58,7 +58,7 @@ impl Rule for NoDuplicateHead {
             return;
         }
 
-        let scope_id = symbols.get_symbol_scope_id(symbol_id);
+        let scope_id = symbols.symbol_scope_id(symbol_id);
         if scope_id != ctx.scoping().root_scope_id() {
             return;
         }

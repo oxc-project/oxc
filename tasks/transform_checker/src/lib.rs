@@ -354,7 +354,7 @@ impl PostTransformChecker<'_, '_> {
             }
 
             // Check parents match
-            let parent_ids = self.get_pair(scope_ids, Scoping::get_scope_parent_id);
+            let parent_ids = self.get_pair(scope_ids, Scoping::scope_parent_id);
             let is_match = match parent_ids.into_parts() {
                 (Some(parent_id_after_transform), Some(parent_id_rebuilt)) => {
                     let parent_ids = Pair::new(parent_id_after_transform, parent_id_rebuilt);
@@ -406,7 +406,7 @@ impl PostTransformChecker<'_, '_> {
             }
 
             // Check scope IDs match
-            let scope_ids = self.get_pair(symbol_ids, Scoping::get_symbol_scope_id);
+            let scope_ids = self.get_pair(symbol_ids, Scoping::symbol_scope_id);
             if self.remap_scope_ids(scope_ids).is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("scope ID"), symbol_ids, scope_ids);
             }
@@ -427,7 +427,7 @@ impl PostTransformChecker<'_, '_> {
 
             // Check redeclarations match
             let redeclaration_spans = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                let mut spans = scoping.get_symbol_redeclarations(symbol_id).to_vec();
+                let mut spans = scoping.symbol_redeclarations(symbol_id).to_vec();
                 spans.sort_unstable();
                 spans
             });

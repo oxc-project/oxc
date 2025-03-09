@@ -126,7 +126,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         // This is an improvement over Babel.
         let reference_id = ident.reference_id();
         if let Some(ident_symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id() {
-            let scope_id = self.ctx.scoping().get_symbol_scope_id(ident_symbol_id);
+            let scope_id = self.ctx.scoping().symbol_scope_id(ident_symbol_id);
             if self.scope_ids_stack.contains(&scope_id) {
                 return;
             }

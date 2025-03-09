@@ -467,7 +467,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 // namespace Foo {}
                 // namespace Foo {} // is redeclaration
                 // ```
-                let redeclarations = ctx.scoping().get_symbol_redeclarations(symbol_id);
+                let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
                 !redeclarations.is_empty() && redeclarations.contains(&id.span)
             }
     }

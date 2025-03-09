@@ -82,7 +82,7 @@ fn check_and_diagnostic(
 }
 
 fn get_symbol_kind<'a>(symbol_id: SymbolId, ctx: &LintContext<'a>) -> AstKind<'a> {
-    ctx.nodes().get_node(ctx.scoping().get_symbol_declaration(symbol_id)).kind()
+    ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind()
 }
 
 #[test]

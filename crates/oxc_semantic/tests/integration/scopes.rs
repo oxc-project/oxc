@@ -23,7 +23,7 @@ fn test_only_program() {
 
     // ancestors
     assert_eq!(scopes.scope_ancestors(root).count(), 1);
-    assert!(scopes.get_scope_parent_id(root).is_none());
+    assert!(scopes.scope_parent_id(root).is_none());
 }
 
 #[test]
@@ -101,7 +101,7 @@ fn test_function_level_strict() {
         .is_in_scope(ScopeFlags::StrictMode | ScopeFlags::Function)
         .expect(|(semantic, symbol_id)| -> Result<(), &'static str> {
             let scope_id = semantic.symbol_scope(symbol_id);
-            let Some(parent_scope_id) = semantic.scoping().get_scope_parent_id(scope_id) else {
+            let Some(parent_scope_id) = semantic.scoping().scope_parent_id(scope_id) else {
                 return Err("Expected x's scope to have a parent");
             };
             let parent_flags = semantic.scoping().scope_flags(parent_scope_id);

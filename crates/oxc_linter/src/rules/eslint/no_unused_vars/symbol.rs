@@ -57,7 +57,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     #[inline]
     pub fn scope_id(&self) -> ScopeId {
-        self.scoping().get_symbol_scope_id(self.id)
+        self.scoping().symbol_scope_id(self.id)
     }
 
     #[inline]
@@ -79,12 +79,12 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// Is this [`Symbol`] declared in the root scope?
     pub fn is_root(&self) -> bool {
-        self.scoping().get_symbol_scope_id(self.id) == self.scoping().root_scope_id()
+        self.scoping().symbol_scope_id(self.id) == self.scoping().root_scope_id()
     }
 
     #[inline]
     fn declaration_id(&self) -> NodeId {
-        self.scoping().get_symbol_declaration(self.id)
+        self.scoping().symbol_declaration(self.id)
     }
 
     #[inline]

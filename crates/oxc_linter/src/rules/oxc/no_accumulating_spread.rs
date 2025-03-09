@@ -140,7 +140,7 @@ impl Rule for NoAccumulatingSpread {
         let Some(referenced_symbol_id) = reference.symbol_id() else {
             return;
         };
-        let declaration_id = symbols.get_symbol_declaration(referenced_symbol_id);
+        let declaration_id = symbols.symbol_declaration(referenced_symbol_id);
         let Some(declaration) = ctx.nodes().parent_node(declaration_id) else {
             return;
         };

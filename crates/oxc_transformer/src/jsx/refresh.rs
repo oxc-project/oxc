@@ -339,7 +339,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
                     ctx.scoping()
                         .find_binding(
-                            ctx.scoping().get_scope_parent_id(ctx.current_scope_id()).unwrap(),
+                            ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
                             binding_name.as_str(),
                         )
                         .map(|symbol_id| {

@@ -91,7 +91,7 @@ impl Rule for ConsistentExistenceIndexCheck {
             return;
         };
 
-        let declaration_node_id = ctx.scoping().get_symbol_declaration(symbol_id);
+        let declaration_node_id = ctx.scoping().symbol_declaration(symbol_id);
         let node = ctx.nodes().get_node(declaration_node_id);
 
         if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {

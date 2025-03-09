@@ -811,7 +811,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         let symbols = ctx.scoping();
         decl.id.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
-            scope_id = symbols.get_symbol_scope_id(symbol_id);
+            scope_id = symbols.symbol_scope_id(symbol_id);
             symbol_flags.insert(symbols.symbol_flags(symbol_id));
         });
 

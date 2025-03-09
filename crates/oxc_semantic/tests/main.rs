@@ -30,7 +30,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
             .scoping()
             .scope_descendants_from_root()
             .filter(|id| {
-                scope_tree.get_scope_parent_id(*id).is_some_and(|parent_id| parent_id == scope_id)
+                scope_tree.scope_parent_id(*id).is_some_and(|parent_id| parent_id == scope_id)
             })
             .collect::<Vec<_>>();
         result.push_str("\"children\":");
@@ -65,7 +65,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                     "\"node\": {:?},",
                     semantic
                         .nodes()
-                        .kind(semantic.scoping().get_symbol_declaration(symbol_id))
+                        .kind(semantic.scoping().symbol_declaration(symbol_id))
                         .debug_name()
                 )
                 .as_str(),

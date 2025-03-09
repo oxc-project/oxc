@@ -152,7 +152,7 @@ impl TraverseScoping {
 
         let child_ids = collector.scope_ids;
         if !child_ids.is_empty() {
-            let parent_id = self.scoping.get_scope_parent_id(scope_id);
+            let parent_id = self.scoping.scope_parent_id(scope_id);
             for child_id in child_ids {
                 self.scoping.set_scope_parent_id(child_id, parent_id);
             }

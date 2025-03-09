@@ -469,7 +469,7 @@ impl Oxc {
                 span: scoping.symbol_span(symbol_id),
                 name: scoping.symbol_name(symbol_id).into(),
                 flags: scoping.symbol_flags(symbol_id),
-                scope_id: scoping.get_symbol_scope_id(symbol_id),
+                scope_id: scoping.symbol_scope_id(symbol_id),
                 resolved_references: scoping
                     .get_resolved_reference_ids(symbol_id)
                     .iter()

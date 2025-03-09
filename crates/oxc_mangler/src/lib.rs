@@ -258,7 +258,7 @@ impl Mangler {
                 // parent, so we need to include the scope where it is declared.
                 // (for cases like `function foo() { { var x; let y; } }`)
                 let declared_scope_id =
-                    ast_nodes.get_node(scoping.get_symbol_declaration(symbol_id)).scope_id();
+                    ast_nodes.get_node(scoping.symbol_declaration(symbol_id)).scope_id();
 
                 // Calculate the scope ids that this symbol is alive in.
                 let lived_scope_ids = scoping
@@ -377,7 +377,7 @@ impl Mangler {
 
         for (symbol_id, slot) in slots.iter().copied().enumerate() {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if scoping.get_symbol_scope_id(symbol_id) == root_scope_id
+            if scoping.symbol_scope_id(symbol_id) == root_scope_id
                 && (!self.options.top_level || exported_symbols.contains(&symbol_id))
             {
                 continue;

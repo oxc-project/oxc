@@ -284,7 +284,7 @@ pub fn get_declaration_of_variable<'a, 'b>(
 ) -> Option<&'b AstNode<'a>> {
     let symbol_id = get_symbol_id_of_variable(ident, semantic)?;
     let symbol_table = semantic.scoping();
-    Some(semantic.nodes().get_node(symbol_table.get_symbol_declaration(symbol_id)))
+    Some(semantic.nodes().get_node(symbol_table.symbol_declaration(symbol_id)))
 }
 
 pub fn get_declaration_from_reference_id<'a, 'b>(
@@ -293,7 +293,7 @@ pub fn get_declaration_from_reference_id<'a, 'b>(
 ) -> Option<&'b AstNode<'a>> {
     let symbol_table = semantic.scoping();
     let symbol_id = symbol_table.get_reference(reference_id).symbol_id()?;
-    Some(semantic.nodes().get_node(symbol_table.get_symbol_declaration(symbol_id)))
+    Some(semantic.nodes().get_node(symbol_table.symbol_declaration(symbol_id)))
 }
 
 pub fn get_symbol_id_of_variable(
@@ -569,7 +569,7 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
             let Some(symbol_id) = reference.symbol_id() else {
                 return true;
             };
-            let decl = ctx.nodes().get_node(ctx.scoping().get_symbol_declaration(symbol_id));
+            let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
                     if let Some(init) = &decl.init {

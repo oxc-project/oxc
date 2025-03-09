@@ -224,7 +224,7 @@ impl NoAsyncEndpointHandlers {
                     return;
                 }
 
-                let decl_id = ctx.scoping().get_symbol_declaration(symbol_id);
+                let decl_id = ctx.scoping().symbol_declaration(symbol_id);
                 let decl_node = ctx.nodes().get_node(decl_id);
                 let registered_at = registered_at.or(Some(handler.span));
                 match decl_node.kind() {

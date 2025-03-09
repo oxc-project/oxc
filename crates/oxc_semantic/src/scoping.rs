@@ -211,7 +211,7 @@ impl Scoping {
     }
 
     #[inline]
-    pub fn get_symbol_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
+    pub fn symbol_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
         if let Some(redeclaration_id) = self.symbol_redeclarations[symbol_id] {
             &self.cell.borrow_dependent().redeclaration_spans[redeclaration_id.index()]
         } else {
@@ -231,7 +231,7 @@ impl Scoping {
     }
 
     #[inline]
-    pub fn get_symbol_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
+    pub fn symbol_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
         self.symbol_scope_ids[symbol_id]
     }
 
@@ -246,7 +246,7 @@ impl Scoping {
     /// [`BindingIdentifier`]: oxc_ast::ast::BindingIdentifier
     /// [`BindingPattern`]: oxc_ast::ast::BindingPattern
     #[inline]
-    pub fn get_symbol_declaration(&self, symbol_id: SymbolId) -> NodeId {
+    pub fn symbol_declaration(&self, symbol_id: SymbolId) -> NodeId {
         self.symbol_declarations[symbol_id]
     }
 
@@ -521,7 +521,7 @@ impl Scoping {
     }
 
     #[inline]
-    pub fn get_scope_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
+    pub fn scope_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
         self.scope_parent_ids[scope_id]
     }
 

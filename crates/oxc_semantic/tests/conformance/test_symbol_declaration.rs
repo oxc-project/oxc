@@ -75,7 +75,7 @@ impl ConformanceTest for SymbolDeclarationTest {
         symbol_id: oxc_semantic::SymbolId,
         semantic: &Semantic<'_>,
     ) -> TestResult {
-        let declaration_id = semantic.scoping().get_symbol_declaration(symbol_id);
+        let declaration_id = semantic.scoping().symbol_declaration(symbol_id);
         let declaration = semantic.nodes().get_node(declaration_id);
         let span = semantic.scoping().symbol_span(symbol_id);
 

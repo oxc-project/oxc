@@ -573,7 +573,7 @@ impl IdentifierReferenceRename<'_, '_> {
             return true;
         };
 
-        let symbol_scope_id = scoping.get_symbol_scope_id(symbol_id);
+        let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
         // Don't need to rename the identifier when it references a nested enum member:
         //
         // ```ts

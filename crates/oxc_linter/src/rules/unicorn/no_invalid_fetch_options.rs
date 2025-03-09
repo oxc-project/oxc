@@ -169,7 +169,7 @@ fn is_invalid_fetch_options<'a>(
                         continue;
                     };
 
-                    let decl = ctx.nodes().get_node(symbols.get_symbol_declaration(symbol_id));
+                    let decl = ctx.nodes().get_node(symbols.symbol_declaration(symbol_id));
 
                     match decl.kind() {
                         AstKind::VariableDeclarator(declarator) => match &declarator.init {

@@ -875,7 +875,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let original_scope_id = ctx.scoping().get_symbol_scope_id(binding.symbol_id);
+        let original_scope_id = ctx.scoping().symbol_scope_id(binding.symbol_id);
         if target_scope_id != original_scope_id {
             ctx.scoping_mut().set_symbol_scope_id(binding.symbol_id, target_scope_id);
             ctx.scoping_mut().move_binding(original_scope_id, target_scope_id, &binding.name);
@@ -1014,7 +1014,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Rename the `arguments` symbol to a new name.
     fn rename_arguments_symbol(symbol_id: SymbolId, name: CompactStr, ctx: &mut TraverseCtx<'a>) {
-        let scope_id = ctx.scoping().get_symbol_scope_id(symbol_id);
+        let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
         ctx.rename_symbol(symbol_id, scope_id, name);
     }
 

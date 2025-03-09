@@ -477,7 +477,7 @@ impl Rule for ExhaustiveDeps {
 
         for dependency in &declared_dependencies {
             if let Some(symbol_id) = dependency.symbol_id {
-                let dependency_scope_id = ctx.scoping().get_symbol_scope_id(symbol_id);
+                let dependency_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
                 if !(ctx
                     .semantic()
                     .scoping()

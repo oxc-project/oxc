@@ -184,7 +184,7 @@ impl<'a> Semantic<'a> {
 
     /// Find which scope a symbol is declared in
     pub fn symbol_scope(&self, symbol_id: SymbolId) -> ScopeId {
-        self.scoping.get_symbol_scope_id(symbol_id)
+        self.scoping.symbol_scope_id(symbol_id)
     }
 
     /// Get all resolved references for a symbol
@@ -196,7 +196,7 @@ impl<'a> Semantic<'a> {
     }
 
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
-        self.nodes.get_node(self.scoping.get_symbol_declaration(symbol_id))
+        self.nodes.get_node(self.scoping.symbol_declaration(symbol_id))
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
