@@ -27,7 +27,7 @@ impl Default for NoObjCalls {
     }
 }
 
-declare_oxc_lint! {
+declare_oxc_lint!(
     /// ### What it does
     /// Disallow calling some global objects as functions
     ///
@@ -65,7 +65,7 @@ declare_oxc_lint! {
     NoObjCalls,
     eslint,
     correctness,
-}
+);
 
 fn is_global_obj(s: &str) -> bool {
     NON_CALLABLE_GLOBALS.contains(&s)

@@ -12,7 +12,7 @@ use crate::{
     utils::{get_element_type, get_jsx_attribute_name},
 };
 
-declare_oxc_lint! {
+declare_oxc_lint!(
     /// ### What it does
     ///
     /// Certain reserved DOM elements do not support ARIA roles, states and
@@ -36,7 +36,7 @@ declare_oxc_lint! {
     jsx_a11y,
     correctness,
     fix
-}
+);
 
 #[derive(Debug, Default, Clone)]
 pub struct AriaUnsupportedElements;
