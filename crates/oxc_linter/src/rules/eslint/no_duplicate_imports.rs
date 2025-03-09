@@ -153,88 +153,70 @@ impl Rule for NoDuplicateImports {
 
         if self.include_exports {
             for entry in &module_record.star_export_entries {
-                if let Some(module_request) = &entry.module_request {
-                    let source = &module_request.name;
-                    let span = entry.span;
+                let Some(module_request) = &entry.module_request else {
+                    continue;
+                };
+                let source = &module_request.name;
+                let span = entry.span;
 
-                    if entry.import_name.is_all_but_default() {
-                        if let Some(existing) = import_map.get(source) {
-                            if existing
-                                .iter()
-                                .any(|(t, _, _)| matches!(t, ImportType::AllButDefault))
-                            {
-                                ctx.diagnostic(no_duplicate_exports_diagnostic(
-                                    source,
-                                    span,
-                                    existing.first().unwrap().1,
-                                ));
-                                continue;
-                            }
-                        }
-                        if let Some(existing) = side_effect_import_map.get(source) {
+                if entry.import_name.is_all_but_default() {
+                    if let Some(existing) = import_map.get(source) {
+                        if existing.iter().any(|(t, _, _)| matches!(t, ImportType::AllButDefault)) {
                             ctx.diagnostic(no_duplicate_exports_diagnostic(
                                 source,
                                 span,
-                                *existing.first().unwrap(),
+                                existing.first().unwrap().1,
                             ));
                             continue;
                         }
-                        import_map.entry(source).or_default().push((
-                            ImportType::AllButDefault,
+                    }
+                    if let Some(existing) = side_effect_import_map.get(source) {
+                        ctx.diagnostic(no_duplicate_exports_diagnostic(
+                            source,
                             span,
-                            ModuleType::Export,
+                            *existing.first().unwrap(),
                         ));
                         continue;
                     }
-                    if let Some(existing) = import_map.get(source) {
-                        if existing.iter().any(|(t, _, _)| {
-                            matches!(t, ImportType::Named | ImportType::SideEffect)
-                        }) {
-                            ctx.diagnostic(no_duplicate_exports_diagnostic(
-                                source,
-                                span,
-                                existing.first().unwrap().1,
-                            ));
-                            continue;
-                        }
-                    }
-
                     import_map.entry(source).or_default().push((
-                        ImportType::SideEffect,
+                        ImportType::AllButDefault,
                         span,
                         ModuleType::Export,
                     ));
+                    continue;
                 }
+                if let Some(existing) = import_map.get(source) {
+                    if existing
+                        .iter()
+                        .any(|(t, _, _)| matches!(t, ImportType::Named | ImportType::SideEffect))
+                    {
+                        ctx.diagnostic(no_duplicate_exports_diagnostic(
+                            source,
+                            span,
+                            existing.first().unwrap().1,
+                        ));
+                        continue;
+                    }
+                }
+
+                import_map.entry(source).or_default().push((
+                    ImportType::SideEffect,
+                    span,
+                    ModuleType::Export,
+                ));
             }
 
             for entry in &module_record.indirect_export_entries {
-                if let Some(module_request) = &entry.module_request {
-                    let source = &module_request.name;
-                    let span = entry.span;
+                let Some(module_request) = &entry.module_request else {
+                    continue;
+                };
+                let source = &module_request.name;
+                let span = entry.span;
 
-                    if let Some(existing) = import_map.get(source) {
-                        if entry.import_name == ExportImportName::All {
-                            if existing.iter().any(|(t, _, _)| {
-                                matches!(t, ImportType::Default | ImportType::Namespace)
-                            }) {
-                                ctx.diagnostic(no_duplicate_exports_diagnostic(
-                                    source,
-                                    span,
-                                    existing.first().unwrap().1,
-                                ));
-                                continue;
-                            }
-
-                            continue;
-                        }
-
-                        if existing.iter().any(|(t, _, module_type)| {
-                            (matches!(
-                                t,
-                                ImportType::Named | ImportType::SideEffect | ImportType::Default
-                            ) && *module_type == ModuleType::Export)
-                                || (matches!(t, ImportType::Default)
-                                    && *module_type == ModuleType::Import)
+                if let Some(existing) = import_map.get(source) {
+                    if entry.import_name == ExportImportName::All {
+                        if existing.iter().any(|(t, _, _)| {
+                            matches!(t, ImportType::Default | ImportType::Namespace)
                         }) {
                             ctx.diagnostic(no_duplicate_exports_diagnostic(
                                 source,
@@ -243,13 +225,32 @@ impl Rule for NoDuplicateImports {
                             ));
                             continue;
                         }
+
+                        continue;
                     }
-                    import_map.entry(source).or_default().push((
-                        ImportType::Named,
-                        span,
-                        ModuleType::Export,
-                    ));
+
+                    if existing.iter().any(|(t, _, module_type)| {
+                        (matches!(
+                            t,
+                            ImportType::Named | ImportType::SideEffect | ImportType::Default
+                        ) && *module_type == ModuleType::Export)
+                            || (matches!(t, ImportType::Default)
+                                && *module_type == ModuleType::Import)
+                    }) {
+                        ctx.diagnostic(no_duplicate_exports_diagnostic(
+                            source,
+                            span,
+                            existing.first().unwrap().1,
+                        ));
+                        continue;
+                    }
                 }
+
+                import_map.entry(source).or_default().push((
+                    ImportType::Named,
+                    span,
+                    ModuleType::Export,
+                ));
             }
         }
     }
