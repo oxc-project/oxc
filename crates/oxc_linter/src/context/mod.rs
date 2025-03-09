@@ -119,7 +119,7 @@ impl<'a> LintContext<'a> {
     pub fn cfg(&self) -> &ControlFlowGraph {
         // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
         // assert the existence of control flow so it should always be `Some`.
-        unsafe { self.semantic().cfg().unwrap_unchecked() }
+        unsafe { self.parent.semantic.cfg().unwrap_unchecked() }
     }
 
     /// List of all disable directives in the file being linted.
@@ -131,7 +131,7 @@ impl<'a> LintContext<'a> {
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
-        span.source_text(self.semantic().source_text())
+        span.source_text(self.parent.semantic.source_text())
     }
 
     /// Path to the file currently being linted.

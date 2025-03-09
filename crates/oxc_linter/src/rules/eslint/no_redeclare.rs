@@ -61,7 +61,7 @@ impl Rule for NoRedeclare {
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
-        let symbol_table = ctx.semantic().scoping();
+        let symbol_table = ctx.scoping();
         let decl_node_id = symbol_table.get_symbol_declaration(symbol_id);
         match ctx.nodes().kind(decl_node_id) {
             AstKind::VariableDeclarator(var) => {

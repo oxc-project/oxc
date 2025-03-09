@@ -67,7 +67,6 @@ impl Rule for RequireProperty {
         let resolved_namespace_tag_name = settings.resolve_tag_name("namespace");
 
         for jsdoc in ctx
-            .semantic()
             .jsdoc()
             .iter_all()
             .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))

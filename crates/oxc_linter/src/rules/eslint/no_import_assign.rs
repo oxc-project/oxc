@@ -52,7 +52,7 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
 
 impl Rule for NoImportAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().scoping();
+        let symbol_table = ctx.scoping();
         if symbol_table.symbol_flags(symbol_id).is_import() {
             let kind = ctx.nodes().kind(symbol_table.get_symbol_declaration(symbol_id));
             let is_namespace_specifier = matches!(kind, AstKind::ImportNamespaceSpecifier(_));

@@ -185,8 +185,7 @@ impl Rule for MaxLinesPerFunction {
         let source_text = ctx.source_text();
 
         let comment_lines = if self.skip_comments {
-            ctx.semantic()
-                .comments_range(span.start..span.end)
+            ctx.comments_range(span.start..span.end)
                 .map(|comment| count_comment_lines(comment, source_text))
                 .sum()
         } else {

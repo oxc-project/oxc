@@ -75,11 +75,8 @@ impl Rule for CheckAccess {
             access_related_tag_names.insert(settings.resolve_tag_name(level));
         }
 
-        for jsdoc in ctx
-            .semantic()
-            .jsdoc()
-            .iter_all()
-            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+        for jsdoc in
+            ctx.jsdoc().iter_all().filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
         {
             let mut access_related_tags_count = 0;
             for tag in jsdoc.tags() {

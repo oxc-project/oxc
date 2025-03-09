@@ -120,7 +120,7 @@ fn is_invalid_fetch_options<'a>(
         } else if key_ident_name == "method" {
             match &obj_prop.value {
                 Expression::StaticMemberExpression(s) => {
-                    let symbols = ctx.semantic().scoping();
+                    let symbols = ctx.scoping();
                     let Expression::Identifier(ident_ref) = &s.object else {
                         continue;
                     };
@@ -162,15 +162,14 @@ fn is_invalid_fetch_options<'a>(
                     method_name = extract_method_name_from_template_literal(template_lit);
                 }
                 Expression::Identifier(value_ident) => {
-                    let symbols = ctx.semantic().scoping();
+                    let symbols = ctx.scoping();
                     let reference_id = value_ident.reference_id();
 
                     let Some(symbol_id) = symbols.get_reference(reference_id).symbol_id() else {
                         continue;
                     };
 
-                    let decl =
-                        ctx.semantic().nodes().get_node(symbols.get_symbol_declaration(symbol_id));
+                    let decl = ctx.nodes().get_node(symbols.get_symbol_declaration(symbol_id));
 
                     match decl.kind() {
                         AstKind::VariableDeclarator(declarator) => match &declarator.init {

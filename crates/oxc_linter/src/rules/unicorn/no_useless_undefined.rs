@@ -184,7 +184,6 @@ impl Rule for NoUselessUndefined {
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| {
                                 let delete_span = if let Some(comment) = ctx
-                                    .semantic()
                                     .comments_range(ret_stmt.span.start..ret_stmt.span.end)
                                     .last()
                                 {

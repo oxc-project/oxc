@@ -204,7 +204,7 @@ impl Rule for ExhaustiveDeps {
         };
 
         let component_scope_id = {
-            match get_enclosing_function(node, ctx.semantic()).map(oxc_semantic::AstNode::kind) {
+            match get_enclosing_function(node, ctx).map(oxc_semantic::AstNode::kind) {
                 Some(AstKind::Function(func)) => func.scope_id(),
                 Some(AstKind::ArrowFunctionExpression(arrow_func)) => arrow_func.scope_id(),
                 // If we hit here, it means that the hook is called at the top level which isn't allowed, so lets bail out.
@@ -383,7 +383,7 @@ impl Rule for ExhaustiveDeps {
         if is_effect {
             for r#ref in refs_inside_cleanups {
                 if let Expression::Identifier(ident) = r#ref.object.get_inner_expression() {
-                    let reference = ctx.semantic().scoping().get_reference(ident.reference_id());
+                    let reference = ctx.scoping().get_reference(ident.reference_id());
                     let has_write_reference = reference.symbol_id().is_some_and(|symbol_id| {
                         ctx.semantic().symbol_references(symbol_id).any(|reference| {
                             ctx.nodes().parent_node(reference.node_id()).is_some_and(|parent| {
@@ -477,7 +477,7 @@ impl Rule for ExhaustiveDeps {
 
         for dependency in &declared_dependencies {
             if let Some(symbol_id) = dependency.symbol_id {
-                let dependency_scope_id = ctx.semantic().scoping().get_symbol_scope_id(symbol_id);
+                let dependency_scope_id = ctx.scoping().get_symbol_scope_id(symbol_id);
                 if !(ctx
                     .semantic()
                     .scoping()
@@ -768,7 +768,7 @@ fn is_identifier_a_dependency<'a>(
     component_scope_id: ScopeId,
 ) -> bool {
     // if it is a global e.g. `console` or `window`, then it's not a dependency
-    if ctx.semantic().scoping().root_unresolved_references().contains_key(ident_name.as_str()) {
+    if ctx.scoping().root_unresolved_references().contains_key(ident_name.as_str()) {
         return false;
     }
 

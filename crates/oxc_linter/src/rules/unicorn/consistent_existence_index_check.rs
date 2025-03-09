@@ -132,7 +132,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                     let mut operator_replacement_text = operator_source.to_string();
 
                     for (index, text) in operator_matches {
-                        let comments = ctx.semantic().comments_range(operator_start..operator_end);
+                        let comments = ctx.comments_range(operator_start..operator_end);
 
                         let start = operator_start + u32::try_from(index).unwrap_or(0);
                         let length = u32::try_from(text.len()).unwrap_or(0);

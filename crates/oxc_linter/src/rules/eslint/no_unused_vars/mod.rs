@@ -206,7 +206,7 @@ impl Rule for NoUnusedVars {
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol = Symbol::new(ctx.semantic().as_ref(), ctx.module_record(), symbol_id);
+        let symbol = Symbol::new(ctx, ctx.module_record(), symbol_id);
         if Self::should_skip_symbol(&symbol) {
             return;
         }

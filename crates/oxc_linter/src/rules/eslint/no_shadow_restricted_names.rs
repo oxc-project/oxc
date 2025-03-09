@@ -85,7 +85,7 @@ impl Rule for NoShadowRestrictedNames {
 
         if name == "undefined" {
             // Allow to declare `undefined` variable but not allow to assign value to it.
-            let node_id = ctx.semantic().scoping().get_symbol_declaration(symbol_id);
+            let node_id = ctx.scoping().get_symbol_declaration(symbol_id);
             if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) {
                 if declarator.init.is_none()
                     && ctx

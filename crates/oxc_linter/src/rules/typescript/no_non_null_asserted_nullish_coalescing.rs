@@ -90,7 +90,7 @@ fn has_assignment_before_node(
     ctx: &LintContext,
     parent_span_end: u32,
 ) -> bool {
-    let symbol_table = ctx.semantic().scoping();
+    let symbol_table = ctx.scoping();
 
     for reference in symbol_table.get_resolved_references(symbol_id) {
         if reference.is_write() && ctx.semantic().reference_span(reference).end < parent_span_end {

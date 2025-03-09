@@ -99,7 +99,6 @@ impl Rule for NoSinglePromiseInPromiseMethods {
                 let elem_text = fixer.source_range(first.span());
 
                 let is_directly_in_await = ctx
-                    .semantic()
                     .nodes()
                     // get first non-parenthesis parent node
                     .ancestors(node.id())
@@ -127,7 +126,7 @@ fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
 }
 
 fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    for parent in ctx.semantic().nodes().ancestors(call_node_id).skip(1) {
+    for parent in ctx.nodes().ancestors(call_node_id).skip(1) {
         match parent.kind() {
             AstKind::CallExpression(_)
             | AstKind::VariableDeclarator(_)

@@ -219,7 +219,6 @@ impl Rule for CheckTagNames {
         let is_ambient = is_dts || is_declare;
 
         for jsdoc in ctx
-            .semantic()
             .jsdoc()
             .iter_all()
             .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
