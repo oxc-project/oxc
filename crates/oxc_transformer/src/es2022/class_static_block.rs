@@ -156,7 +156,7 @@ impl ClassStaticBlock {
 
         // Re-use the static block's scope for the arrow function.
         // Always strict mode since we're in a class.
-        *ctx.scopes_mut().scope_flags_mut(scope_id) =
+        *ctx.scoping_mut().scope_flags_mut(scope_id) =
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode;
         wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
     }
@@ -260,7 +260,7 @@ impl<'a> Keys<'a> {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_semantic::{ScopeTree, Scoping, SymbolTable};
+    use oxc_semantic::Scoping;
     use oxc_traverse::ReusableTraverseCtx;
 
     use super::Keys;
@@ -268,7 +268,7 @@ mod test {
     macro_rules! setup {
         ($ctx:ident) => {
             let allocator = Allocator::default();
-            let scoping = Scoping::new(SymbolTable::default(), ScopeTree::default());
+            let scoping = Scoping::default();
             let ctx = ReusableTraverseCtx::new(scoping, &allocator);
             // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
             let mut ctx = unsafe { ctx.unwrap() };

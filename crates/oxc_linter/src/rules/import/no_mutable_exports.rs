@@ -111,7 +111,7 @@ fn get_reference_declaration<'a>(
     reference_id: ReferenceId,
     ctx: &'a LintContext,
 ) -> Option<&'a VariableDeclaration<'a>> {
-    let reference = ctx.symbols().get_reference(reference_id);
+    let reference = ctx.scoping().get_reference(reference_id);
     let symbol_id = reference.symbol_id()?;
     let reference_node = ctx.symbol_declaration(symbol_id);
     if matches!(reference_node.kind(), AstKind::VariableDeclarator(_)) {

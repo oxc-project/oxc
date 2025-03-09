@@ -18,7 +18,7 @@ use oxc::{
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
-        ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolTable,
+        ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags,
         dot::{DebugDot, DebugDotContext},
     },
     span::{SourceType, Span},
@@ -249,7 +249,7 @@ impl Oxc {
                 self.scope_text = Self::get_scope_text(&program, &scoping);
             }
             if run_options.symbol.unwrap_or_default() {
-                self.symbols = self.get_symbols_text(scoping.symbols())?;
+                self.symbols = self.get_symbols_text(&scoping)?;
             }
         }
 
@@ -315,13 +315,13 @@ impl Oxc {
                     CompressOptions::all_false()
                 }),
             };
-            Minifier::new(options).build(&allocator, &mut program).symbol_table
+            Minifier::new(options).build(&allocator, &mut program).scoping
         } else {
             None
         };
 
         let codegen_result = CodeGenerator::new()
-            .with_symbol_table(symbol_table)
+            .with_scoping(symbol_table)
             .with_options(CodegenOptions {
                 minify: minifier_options.whitespace.unwrap_or_default(),
                 source_map_path: codegen_options
@@ -426,16 +426,15 @@ impl Oxc {
         impl Visit<'_> for ScopesTextWriter<'_> {
             fn enter_scope(&mut self, _: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
                 let scope_id = scope_id.get().unwrap();
-                let scopes = self.scoping.scopes();
-                let flags = scopes.scope_flags(scope_id);
+                let flags = self.scoping.scope_flags(scope_id);
                 self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
                 self.indent_in();
 
-                let bindings = scopes.get_bindings(scope_id);
+                let bindings = self.scoping.get_bindings(scope_id);
                 if !bindings.is_empty() {
                     self.write_line("Bindings: {");
                     for (name, &symbol_id) in bindings {
-                        let symbol_flags = self.scoping.symbols().symbol_flags(symbol_id);
+                        let symbol_flags = self.scoping.symbol_flags(symbol_id);
                         self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
                     }
                     self.write_line("}");
@@ -453,10 +452,7 @@ impl Oxc {
         writer.scope_text
     }
 
-    fn get_symbols_text(
-        &self,
-        symbols: &SymbolTable,
-    ) -> Result<JsValue, serde_wasm_bindgen::Error> {
+    fn get_symbols_text(&self, scoping: &Scoping) -> Result<JsValue, serde_wasm_bindgen::Error> {
         #[derive(Serialize)]
         struct Data {
             span: Span,
@@ -467,22 +463,22 @@ impl Oxc {
             references: Vec<Reference>,
         }
 
-        let data = symbols
+        let data = scoping
             .symbol_ids()
             .map(|symbol_id| Data {
-                span: symbols.symbol_span(symbol_id),
-                name: symbols.symbol_name(symbol_id).into(),
-                flags: symbols.symbol_flags(symbol_id),
-                scope_id: symbols.get_symbol_scope_id(symbol_id),
-                resolved_references: symbols
+                span: scoping.symbol_span(symbol_id),
+                name: scoping.symbol_name(symbol_id).into(),
+                flags: scoping.symbol_flags(symbol_id),
+                scope_id: scoping.get_symbol_scope_id(symbol_id),
+                resolved_references: scoping
                     .get_resolved_reference_ids(symbol_id)
                     .iter()
                     .copied()
                     .collect::<Vec<_>>(),
-                references: symbols
+                references: scoping
                     .get_resolved_reference_ids(symbol_id)
                     .iter()
-                    .map(|reference_id| symbols.get_reference(*reference_id).clone())
+                    .map(|reference_id| scoping.get_reference(*reference_id).clone())
                     .collect::<Vec<_>>(),
             })
             .collect::<Vec<_>>();

@@ -31,34 +31,28 @@ mod is_global_reference;
 mod jsdoc;
 mod label;
 mod node;
-mod scope;
 mod scoping;
 mod stats;
-mod symbol;
 mod unresolved_stack;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodes};
-pub use scope::ScopeTree;
 pub use scoping::Scoping;
 pub use stats::Stats;
-pub use symbol::SymbolTable;
 
 use class::ClassTable;
 
 /// Semantic analysis of a JavaScript/TypeScript program.
 ///
 /// [`Semantic`] contains the results of analyzing a program, including the
-/// [`Abstract Syntax Tree (AST)`], [`scope tree`], [`symbol table`], and
-/// [`control flow graph (CFG)`].
+/// [`Abstract Syntax Tree (AST)`], [`scoping`], and [`control flow graph (CFG)`].
 ///
 /// Do not construct this struct directly; instead, use [`SemanticBuilder`].
 ///
 /// [`Abstract Syntax Tree (AST)`]: crate::AstNodes
-/// [`scope tree`]: crate::ScopeTree
-/// [`symbol table`]: crate::SymbolTable
+/// [`scoping`]: crate::Scoping
 /// [`control flow graph (CFG)`]: crate::ControlFlowGraph
 pub struct Semantic<'a> {
     /// Source code of the JavaScript/TypeScript program being analyzed.
@@ -114,19 +108,16 @@ impl<'a> Semantic<'a> {
         &self.nodes
     }
 
-    /// The [`ScopeTree`] containing scopes and what identifier names are bound in
-    /// each one.
-    pub fn scopes(&self) -> &ScopeTree {
-        &self.scoping.scopes
+    pub fn scoping(&self) -> &Scoping {
+        &self.scoping
+    }
+
+    pub fn scoping_mut(&mut self) -> &mut Scoping {
+        &mut self.scoping
     }
 
     pub fn classes(&self) -> &ClassTable {
         &self.classes
-    }
-
-    /// Get a mutable reference to the [`ScopeTree`].
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
-        &mut self.scoping.scopes
     }
 
     pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {
@@ -160,17 +151,6 @@ impl<'a> Semantic<'a> {
         &self.jsdoc
     }
 
-    /// [`SymbolTable`] containing all symbols in the program and their
-    /// [`Reference`]s.
-    pub fn symbols(&self) -> &SymbolTable {
-        &self.scoping.symbols
-    }
-
-    /// Get a mutable reference to the [`SymbolTable`].
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        &mut self.scoping.symbols
-    }
-
     pub fn unused_labels(&self) -> &Vec<NodeId> {
         &self.unused_labels
     }
@@ -188,9 +168,9 @@ impl<'a> Semantic<'a> {
         #[expect(clippy::cast_possible_truncation)]
         Stats::new(
             self.nodes.len() as u32,
-            self.scoping.scopes.scopes_len() as u32,
-            self.scoping.symbols.symbols_len() as u32,
-            self.scoping.symbols.references.len() as u32,
+            self.scoping.scopes_len() as u32,
+            self.scoping.symbols_len() as u32,
+            self.scoping.references.len() as u32,
         )
     }
 
@@ -199,12 +179,12 @@ impl<'a> Semantic<'a> {
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;
         };
-        self.scopes().root_unresolved_references().contains_key(id.name.as_str())
+        self.scoping.root_unresolved_references().contains_key(id.name.as_str())
     }
 
     /// Find which scope a symbol is declared in
     pub fn symbol_scope(&self, symbol_id: SymbolId) -> ScopeId {
-        self.scoping.symbols.get_symbol_scope_id(symbol_id)
+        self.scoping.get_symbol_scope_id(symbol_id)
     }
 
     /// Get all resolved references for a symbol
@@ -212,15 +192,15 @@ impl<'a> Semantic<'a> {
         &self,
         symbol_id: SymbolId,
     ) -> impl Iterator<Item = &Reference> + '_ + use<'_> {
-        self.scoping.symbols.get_resolved_references(symbol_id)
+        self.scoping.get_resolved_references(symbol_id)
     }
 
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
-        self.nodes.get_node(self.scoping.symbols.get_symbol_declaration(symbol_id))
+        self.nodes.get_node(self.scoping.get_symbol_declaration(symbol_id))
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
-        self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+        self.scoping.root_unresolved_references().contains_key(ident.name.as_str())
     }
 
     pub fn reference_name(&self, reference: &Reference) -> &str {
@@ -270,7 +250,7 @@ mod tests {
         let semantic = get_semantic(&allocator, source, SourceType::default());
 
         let top_level_a =
-            semantic.scopes().get_binding(semantic.scopes().root_scope_id(), "a").unwrap();
+            semantic.scoping().get_binding(semantic.scoping().root_scope_id(), "a").unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
         match decl.kind() {
@@ -289,7 +269,7 @@ mod tests {
         let source = "function Fn() {}";
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
-        let scopes = semantic.scopes();
+        let scopes = semantic.scoping();
 
         assert!(scopes.get_binding(scopes.root_scope_id(), "Fn").is_some());
     }
@@ -319,7 +299,7 @@ mod tests {
         let allocator = Allocator::default();
         let source_type: SourceType = SourceType::default().with_typescript(true);
         let semantic = get_semantic(&allocator, source, source_type);
-        assert_eq!(semantic.symbols().references.len(), 1);
+        assert_eq!(semantic.scoping().references.len(), 1);
     }
 
     #[test]
@@ -433,7 +413,7 @@ mod tests {
         for (source_type, source, flags) in sources {
             let semantic = get_semantic(&alloc, source, source_type);
             let a_id =
-                semantic.scopes().get_root_binding(&target_symbol_name).unwrap_or_else(|| {
+                semantic.scoping().get_root_binding(&target_symbol_name).unwrap_or_else(|| {
                     panic!("no references for '{target_symbol_name}' found");
                 });
             let a_refs: Vec<_> = semantic.symbol_references(a_id).collect();

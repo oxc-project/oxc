@@ -47,7 +47,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicateHead {
     fn run_on_symbol(&self, symbol_id: oxc_semantic::SymbolId, ctx: &LintContext<'_>) {
-        let symbols = ctx.symbols();
+        let symbols = ctx.scoping();
         let name = symbols.symbol_name(symbol_id);
         if name != "Head" {
             return;
@@ -59,7 +59,7 @@ impl Rule for NoDuplicateHead {
         }
 
         let scope_id = symbols.get_symbol_scope_id(symbol_id);
-        if scope_id != ctx.scopes().root_scope_id() {
+        if scope_id != ctx.scoping().root_scope_id() {
             return;
         }
 

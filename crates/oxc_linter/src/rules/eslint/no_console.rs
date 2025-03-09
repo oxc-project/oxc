@@ -132,7 +132,7 @@ impl Rule for NoConsole {
         };
 
         if ident.name == "console"
-            && ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
             && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
         {
             if let Some((mem_span, _)) = mem.static_property_info() {

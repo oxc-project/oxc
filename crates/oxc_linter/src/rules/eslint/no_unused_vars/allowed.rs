@@ -63,7 +63,7 @@ impl Symbol<'_, '_> {
     }
 
     pub fn is_in_declared_module(&self) -> bool {
-        let scopes = self.scopes();
+        let scopes = self.scoping();
         let nodes = self.nodes();
         scopes.scope_ancestors(self.scope_id())
             .map(|scope_id| scopes.get_node_id(scope_id))

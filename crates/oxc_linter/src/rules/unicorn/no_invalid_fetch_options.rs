@@ -120,7 +120,7 @@ fn is_invalid_fetch_options<'a>(
         } else if key_ident_name == "method" {
             match &obj_prop.value {
                 Expression::StaticMemberExpression(s) => {
-                    let symbols = ctx.semantic().symbols();
+                    let symbols = ctx.semantic().scoping();
                     let Expression::Identifier(ident_ref) = &s.object else {
                         continue;
                     };
@@ -130,7 +130,7 @@ fn is_invalid_fetch_options<'a>(
                     let reference = symbols.get_reference(reference_id);
 
                     if let Some(symbol_id) = reference.symbol_id() {
-                        if ctx.symbols().symbol_flags(symbol_id).is_enum() {
+                        if ctx.scoping().symbol_flags(symbol_id).is_enum() {
                             let decl = ctx.semantic().symbol_declaration(symbol_id);
                             let enum_member_res: Option<CompactStr> = match decl.kind() {
                                 AstKind::TSEnumDeclaration(enum_decl) => {
@@ -162,7 +162,7 @@ fn is_invalid_fetch_options<'a>(
                     method_name = extract_method_name_from_template_literal(template_lit);
                 }
                 Expression::Identifier(value_ident) => {
-                    let symbols = ctx.semantic().symbols();
+                    let symbols = ctx.semantic().scoping();
                     let reference_id = value_ident.reference_id();
 
                     let Some(symbol_id) = symbols.get_reference(reference_id).symbol_id() else {

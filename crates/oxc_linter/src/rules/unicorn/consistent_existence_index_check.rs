@@ -86,12 +86,12 @@ impl Rule for ConsistentExistenceIndexCheck {
             return;
         };
 
-        let Some(symbol_id) = ctx.symbols().get_reference(identifier.reference_id()).symbol_id()
+        let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
         else {
             return;
         };
 
-        let declaration_node_id = ctx.symbols().get_symbol_declaration(symbol_id);
+        let declaration_node_id = ctx.scoping().get_symbol_declaration(symbol_id);
         let node = ctx.nodes().get_node(declaration_node_id);
 
         if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {

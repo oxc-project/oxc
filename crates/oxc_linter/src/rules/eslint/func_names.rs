@@ -329,7 +329,7 @@ impl Rule for FuncNames {
                             |name| {
                                 // if this name shadows a variable in the outer scope **and** that name is referenced
                                 // inside the function body, it is unsafe to add a name to this function
-                                if ctx.scopes().find_binding(func.scope_id(), &name).is_some_and(
+                                if ctx.scoping().find_binding(func.scope_id(), &name).is_some_and(
                                     |shadowed_var| {
                                         ctx.semantic().symbol_references(shadowed_var).any(
                                             |reference| {

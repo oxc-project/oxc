@@ -45,9 +45,9 @@ const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 
 impl Rule for NoJasmineGlobals {
     fn run_once(&self, ctx: &LintContext) {
-        let symbol_table = ctx.symbols();
+        let symbol_table = ctx.scoping();
         let jasmine_references = ctx
-            .scopes()
+            .scoping()
             .root_unresolved_references()
             .iter()
             .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(key));

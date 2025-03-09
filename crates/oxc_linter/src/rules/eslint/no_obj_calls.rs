@@ -80,9 +80,9 @@ fn resolve_global_binding<'a, 'b: 'a>(
     scope_id: ScopeId,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
-    let scope = ctx.scopes();
+    let scope = ctx.scoping();
     let nodes = ctx.nodes();
-    let symbols = ctx.symbols();
+    let symbols = ctx.scoping();
 
     if ctx.is_reference_to_global_variable(ident) {
         return Some(ident.name.as_str());

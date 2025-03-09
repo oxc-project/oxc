@@ -160,7 +160,7 @@ impl Rule for PreferSetHas {
         {
             return;
         }
-        let symbol_table = ctx.symbols();
+        let symbol_table = ctx.scoping();
 
         let mut references = symbol_table.get_resolved_references(symbol_id).peekable();
 

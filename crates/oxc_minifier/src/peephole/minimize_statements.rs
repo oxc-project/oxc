@@ -514,7 +514,7 @@ impl<'a> PeepholeOptimizations {
                     let consequent = if body.len() == 1 {
                         body.remove(0)
                     } else {
-                        let scope_id = ScopeId::new(ctx.scopes().scopes_len() as u32);
+                        let scope_id = ScopeId::new(ctx.scoping().scopes_len() as u32);
                         let block_stmt =
                             ctx.ast.block_statement_with_scope_id(span, body, scope_id);
                         Statement::BlockStatement(ctx.ast.alloc(block_stmt))

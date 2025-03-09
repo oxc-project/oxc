@@ -71,7 +71,7 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
         let AstKind::LogicalExpression(expr) = node.kind() else { return };
         let Expression::TSNonNullExpression(ts_non_null_expr) = &expr.left else { return };
         if let Expression::Identifier(ident) = &ts_non_null_expr.expression {
-            if let Some(symbol_id) = ctx.scopes().get_binding(node.scope_id(), &ident.name) {
+            if let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), &ident.name) {
                 if !has_assignment_before_node(symbol_id, ctx, expr.span.end) {
                     return;
                 }
@@ -90,7 +90,7 @@ fn has_assignment_before_node(
     ctx: &LintContext,
     parent_span_end: u32,
 ) -> bool {
-    let symbol_table = ctx.semantic().symbols();
+    let symbol_table = ctx.semantic().scoping();
 
     for reference in symbol_table.get_resolved_references(symbol_id) {
         if reference.is_write() && ctx.semantic().reference_span(reference).end < parent_span_end {

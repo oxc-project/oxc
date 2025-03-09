@@ -156,7 +156,7 @@ impl<'a> OptionalChaining<'a, '_> {
             CallContext::Binding(binding) => {
                 binding.name != ident.name
                     || binding.symbol_id.is_some_and(|symbol_id| {
-                        ctx.symbols()
+                        ctx.scoping()
                             .get_reference(ident.reference_id())
                             .symbol_id()
                             .is_some_and(|id| id != symbol_id)

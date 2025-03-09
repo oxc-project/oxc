@@ -399,7 +399,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             let old_class_symbol_id = ident.symbol_id.replace(Some(new_class_binding.symbol_id));
             let old_class_symbol_id = old_class_symbol_id.expect("class always has a symbol id");
 
-            *ctx.symbols_mut().symbol_flags_mut(old_class_symbol_id) =
+            *ctx.scoping_mut().symbol_flags_mut(old_class_symbol_id) =
                 SymbolFlags::BlockScopedVariable;
             BoundIdentifier::new(ident.name, old_class_symbol_id)
         });
@@ -1010,7 +1010,7 @@ impl<'a> ClassReferenceChanger<'a, '_> {
     // Check if the identifier reference is a reference to the class
     fn is_class_reference(&self, ident: &IdentifierReference<'a>) -> bool {
         self.ctx
-            .symbols()
+            .scoping()
             .get_reference(ident.reference_id())
             .symbol_id()
             .is_some_and(|symbol_id| self.class_binding.symbol_id == symbol_id)

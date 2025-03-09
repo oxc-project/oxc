@@ -169,7 +169,7 @@ impl NoConstantBinaryExpression {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
                         && ctx
-                            .scopes()
+                            .scoping()
                             .root_unresolved_references()
                             .contains_key(ident.name.as_str());
                 }
@@ -294,7 +294,7 @@ impl NoConstantBinaryExpression {
             },
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    let unresolved_references = ctx.scopes().root_unresolved_references();
+                    let unresolved_references = ctx.scoping().root_unresolved_references();
                     if (ident.name == "String" || ident.name == "Number")
                         && unresolved_references.contains_key(ident.name.as_str())
                     {
@@ -346,7 +346,7 @@ impl NoConstantBinaryExpression {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ctx.env_contains_var(ident.name.as_str())
                         && ctx
-                            .scopes()
+                            .scoping()
                             .root_unresolved_references()
                             .contains_key(ident.name.as_str());
                 }

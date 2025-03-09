@@ -59,7 +59,7 @@ impl Rule for SymbolDescription {
 
         if ident.name == "Symbol"
             && call_expr.arguments.len() == 0
-            && ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
         {
             ctx.diagnostic(symbol_description_diagnostic(call_expr.span));
         }

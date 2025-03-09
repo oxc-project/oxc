@@ -16,7 +16,7 @@ struct TestContext<'a> {
 }
 
 fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>) -> String {
-    let scope_tree = semantic.scopes();
+    let scope_tree = semantic.scoping();
     let mut result = String::default();
 
     result.push('[');
@@ -27,7 +27,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
         let flags = scope_tree.scope_flags(scope_id);
         result.push('{');
         let child_ids = semantic
-            .scopes()
+            .scoping()
             .scope_descendants_from_root()
             .filter(|id| {
                 scope_tree.get_scope_parent_id(*id).is_some_and(|parent_id| parent_id == scope_id)
@@ -55,7 +55,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
             }
             result.push('{');
             result.push_str(
-                format!("\"flags\": \"{:?}\",", semantic.symbols().symbol_flags(symbol_id))
+                format!("\"flags\": \"{:?}\",", semantic.scoping().symbol_flags(symbol_id))
                     .as_str(),
             );
             result.push_str(format!("\"id\": {},", symbol_id.index()).as_str());
@@ -65,7 +65,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                     "\"node\": {:?},",
                     semantic
                         .nodes()
-                        .kind(semantic.symbols().get_symbol_declaration(symbol_id))
+                        .kind(semantic.scoping().get_symbol_declaration(symbol_id))
                         .debug_name()
                 )
                 .as_str(),
@@ -74,7 +74,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                 result.push_str("\"references\": ");
                 result.push('[');
                 semantic
-                    .symbols()
+                    .scoping()
                     .get_resolved_reference_ids(symbol_id)
                     .iter()
                     .enumerate()
@@ -82,7 +82,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                         if index != 0 {
                             result.push(',');
                         }
-                        let reference = &semantic.symbols().get_reference(reference_id);
+                        let reference = &semantic.scoping().get_reference(reference_id);
                         result.push('{');
                         result
                             .push_str(format!("\"flags\": \"{:?}\",", reference.flags()).as_str());
@@ -107,7 +107,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
 }
 
 fn run_scope_snapshot_test(ctx: &TestContext<'_>) -> String {
-    let scopes = vec![ctx.semantic.scopes().root_scope_id()].into_iter();
+    let scopes = vec![ctx.semantic.scoping().root_scope_id()].into_iter();
     // this is a JSON object
     let scopes = get_scope_snapshot(&ctx.semantic, scopes);
 

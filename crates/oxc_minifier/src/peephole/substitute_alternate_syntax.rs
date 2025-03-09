@@ -965,7 +965,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This compression is not safe if the code relies on `Function::name`.
     fn try_remove_name_from_functions(&mut self, func: &mut Function<'a>, ctx: Ctx<'a, '_>) {
-        if func.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id())) {
+        if func.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
             func.id = None;
             self.mark_current_function_as_changed();
         }
@@ -977,7 +977,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This compression is not safe if the code relies on `Function::name`.
     fn try_remove_name_from_classes(&mut self, class: &mut Class<'a>, ctx: Ctx<'a, '_>) {
-        if class.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id())) {
+        if class.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
             class.id = None;
             self.mark_current_function_as_changed();
         }
@@ -1101,7 +1101,7 @@ impl<'a> LatePeepholeOptimizations {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
-                        || !ctx.symbols().symbol_is_used(ident.symbol_id())
+                        || !ctx.scoping().symbol_is_used(ident.symbol_id())
                     {
                         catch.param = None;
                     }

@@ -8,7 +8,7 @@ use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOption
 use oxc_mangler::{MangleOptions, Mangler};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
-use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn, SymbolTable};
+use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
 use oxc_transformer::{
     InjectGlobalVariables, InjectGlobalVariablesConfig, ReplaceGlobalDefines,
@@ -270,7 +270,7 @@ pub trait CompilerInterface {
         Compressor::new(allocator, options).build(program);
     }
 
-    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> SymbolTable {
+    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> Scoping {
         Mangler::new().with_options(options).build(program)
     }
 
@@ -278,13 +278,13 @@ pub trait CompilerInterface {
         &self,
         program: &Program<'_>,
         source_path: &Path,
-        symbol_table: Option<SymbolTable>,
+        scoping: Option<Scoping>,
         options: CodegenOptions,
     ) -> CodegenReturn {
         let mut options = options;
         if self.enable_sourcemap() {
             options.source_map_path = Some(source_path.to_path_buf());
         }
-        CodeGenerator::new().with_options(options).with_symbol_table(symbol_table).build(program)
+        CodeGenerator::new().with_options(options).with_scoping(scoping).build(program)
     }
 }

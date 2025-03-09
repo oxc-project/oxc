@@ -257,7 +257,7 @@ impl<'a> ClassProperties<'a, '_> {
                 // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
                 // because no bindings to clash with.
                 self.instance_inits_constructor_scope_id =
-                    if ctx.scopes().get_bindings(constructor_scope_id).is_empty() {
+                    if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
                         None
                     } else {
                         Some(constructor_scope_id)
@@ -266,7 +266,7 @@ impl<'a> ClassProperties<'a, '_> {
             }
         } else {
             // No existing constructor - create scope for one
-            let constructor_scope_id = ctx.scopes_mut().add_scope(
+            let constructor_scope_id = ctx.scoping_mut().add_scope(
                 Some(class_scope_id),
                 NodeId::DUMMY,
                 ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
@@ -426,7 +426,7 @@ impl<'a> ClassProperties<'a, '_> {
             } else {
                 // Class must be default export `export default class {}`, as all other class declarations
                 // always have a name. Set class name.
-                *ctx.symbols_mut().symbol_flags_mut(temp_binding.symbol_id) = SymbolFlags::Class;
+                *ctx.scoping_mut().symbol_flags_mut(temp_binding.symbol_id) = SymbolFlags::Class;
                 class.id = Some(temp_binding.create_binding_identifier(ctx));
             }
         }
@@ -838,14 +838,14 @@ fn create_new_weakmap<'a>(
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let symbol_id = *symbol_id
-        .get_or_insert_with(|| ctx.scopes().find_binding(ctx.current_scope_id(), "WeakMap"));
+        .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), "WeakMap"));
     let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakMap"), symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, ctx.ast.vec(), NONE, true)
 }
 
 /// Create `new WeakSet()` expression.
 fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-    let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "WeakSet");
+    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "WeakSet");
     let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakSet"), symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, ctx.ast.vec(), NONE, true)
 }

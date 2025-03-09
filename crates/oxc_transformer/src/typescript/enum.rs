@@ -79,7 +79,7 @@ impl<'a> TypeScriptEnum<'a> {
         let ast = ctx.ast;
 
         let is_export = export_span.is_some();
-        let is_not_top_scope = !ctx.scopes().scope_flags(ctx.current_scope_id()).is_top();
+        let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
 
         let enum_name = decl.id.name;
         let func_scope_id = decl.scope_id();
@@ -325,7 +325,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Infinity");
+            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Infinity");
             ctx.create_ident_expr(
                 SPAN,
                 Atom::from("Infinity"),
@@ -566,14 +566,14 @@ impl IdentifierReferenceRename<'_, '_> {
             return false;
         };
 
-        let symbol_table = self.ctx.scoping.symbols();
-        let Some(symbol_id) = symbol_table.get_reference(ident.reference_id()).symbol_id() else {
+        let scoping = self.ctx.scoping.scoping();
+        let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
             // No symbol found, yet the name is found in previous_enum_members.
             // It must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
             return true;
         };
 
-        let symbol_scope_id = symbol_table.get_symbol_scope_id(symbol_id);
+        let symbol_scope_id = scoping.get_symbol_scope_id(symbol_id);
         // Don't need to rename the identifier when it references a nested enum member:
         //
         // ```ts

@@ -3,7 +3,7 @@ use oxc_ast::{
     AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
 };
-use oxc_semantic::{ScopeTree, Scoping, SymbolTable};
+use oxc_semantic::Scoping;
 use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -34,7 +34,7 @@ pub use scoping::TraverseScoping;
 ///
 /// Provides ability to:
 /// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`ancestors`].
-/// * Get scopes tree and symbols table via [`scopes`], [`symbols`], [`scopes_mut`], [`symbols_mut`],
+/// * Get scopes tree and symbols table via [`scoping`] and [`scoping_mut`],
 ///   [`ancestor_scopes`].
 /// * Create AST nodes via AST builder [`ast`].
 /// * Allocate into arena via [`alloc`].
@@ -96,7 +96,7 @@ pub use scoping::TraverseScoping;
 ///             _ => return,
 ///         };
 ///
-///         let scope_tree_mut = ctx.scoping.scopes_mut();
+///         let scoping_mut = ctx.scoping.scoping_mut();
 ///
 ///         dbg!(right);
 ///     }
@@ -106,9 +106,8 @@ pub use scoping::TraverseScoping;
 /// [`parent`]: `TraverseCtx::parent`
 /// [`ancestor`]: `TraverseCtx::ancestor`
 /// [`ancestors`]: `TraverseCtx::ancestors`
-/// [`scopes`]: `TraverseCtx::scopes`
-/// [`symbols`]: `TraverseCtx::symbols`
-/// [`scopes_mut`]: `TraverseCtx::scopes_mut`
+/// [`scoping`]: `TraverseCtx::scoping`
+/// [`scoping_mut`]: `TraverseCtx::scoping_mut`
 /// [`symbols_mut`]: `TraverseCtx::symbols_mut`
 /// [`ancestor_scopes`]: `TraverseCtx::ancestor_scopes`
 /// [`ast`]: `TraverseCtx::ast`
@@ -208,32 +207,16 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.scoping.scopes`.
     #[inline]
-    pub fn scopes(&self) -> &ScopeTree {
-        self.scoping.scopes()
+    pub fn scoping(&self) -> &Scoping {
+        self.scoping.scoping()
     }
 
     /// Get mutable scopes tree.
     ///
     /// Shortcut for `ctx.scoping.scopes_mut`.
     #[inline]
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
-        self.scoping.scopes_mut()
-    }
-
-    /// Get symbols table.
-    ///
-    /// Shortcut for `ctx.scoping.symbols`.
-    #[inline]
-    pub fn symbols(&self) -> &SymbolTable {
-        self.scoping.symbols()
-    }
-
-    /// Get mutable symbols table.
-    ///
-    /// Shortcut for `ctx.scoping.symbols_mut`.
-    #[inline]
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        self.scoping.symbols_mut()
+    pub fn scoping_mut(&mut self) -> &mut Scoping {
+        self.scoping.scoping_mut()
     }
 
     /// Get iterator over scopes, starting with current scope and working up.
@@ -393,7 +376,7 @@ impl<'a> TraverseCtx<'a> {
         name: &str,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        self.generate_uid(name, self.scopes().root_scope_id(), flags)
+        self.generate_uid(name, self.scoping().root_scope_id(), flags)
     }
 
     /// Generate UID based on node.

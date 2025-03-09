@@ -578,7 +578,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             let scope_id = clause.body.scope_id();
             // Remove `SymbolFlags::CatchVariable`.
             param.pattern.bound_names(&mut |ident| {
-                ctx.symbols_mut()
+                ctx.scoping_mut()
                     .symbol_flags_mut(ident.symbol_id())
                     .remove(SymbolFlags::CatchVariable);
             });
@@ -616,8 +616,8 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 );
                 // Move the bindings from the for init scope to scope of the loop body.
                 for ident in bound_names {
-                    ctx.symbols_mut().set_symbol_scope_id(ident.symbol_id(), new_scope_id);
-                    ctx.scopes_mut().move_binding(scope_id, new_scope_id, ident.name.into());
+                    ctx.scoping_mut().set_symbol_scope_id(ident.symbol_id(), new_scope_id);
+                    ctx.scoping_mut().move_binding(scope_id, new_scope_id, ident.name.into());
                 }
             }
         }
@@ -761,7 +761,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, id, Some(init), false));
         let decl = ctx.ast.variable_declaration(SPAN, kind, declarations, false);
         decl.bound_names(&mut |ident| {
-            *ctx.symbols_mut().symbol_flags_mut(ident.symbol_id()) =
+            *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
                 SymbolFlags::BlockScopedVariable;
         });
         decl
@@ -808,7 +808,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         // TODO: improve this by getting the value only once.
         let mut scope_id = ctx.current_scope_id();
         let mut symbol_flags = kind_to_symbol_flags(decl.kind);
-        let symbols = ctx.symbols();
+        let symbols = ctx.scoping();
         decl.id.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
             scope_id = symbols.get_symbol_scope_id(symbol_id);
@@ -1096,7 +1096,7 @@ impl<'a> SpreadPair<'a> {
             let key_expression = ctx.ast.expression_array(SPAN, self.keys, None);
 
             let key_expression = if self.all_primitives
-                && ctx.scoping.current_scope_id() != ctx.scopes().root_scope_id()
+                && ctx.scoping.current_scope_id() != ctx.scoping().root_scope_id()
             {
                 // Move the key_expression to the root scope.
                 let bound_identifier = ctx.generate_uid_in_root_scope(

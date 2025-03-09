@@ -90,9 +90,9 @@ impl<'a> TransformCtx<'a> {
         let temp_var_binding = match &expr {
             Expression::Identifier(ident) => {
                 let reference_id = ident.reference_id();
-                let reference = ctx.symbols().get_reference(reference_id);
+                let reference = ctx.scoping().get_reference(reference_id);
                 if let Some(symbol_id) = reference.symbol_id() {
-                    if !mutated_symbol_needs_temp_var || !ctx.symbols().symbol_is_mutated(symbol_id)
+                    if !mutated_symbol_needs_temp_var || !ctx.scoping().symbol_is_mutated(symbol_id)
                     {
                         // Reading bound identifier cannot have side effects, so no need for temp var
                         let binding = BoundIdentifier::new(ident.name, symbol_id);
@@ -104,7 +104,7 @@ impl<'a> TransformCtx<'a> {
                 }
 
                 // Previously `x += 1` (`x` read + write), but moving to `_x = x` (`x` read only)
-                let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+                let reference = ctx.scoping_mut().get_reference_mut(reference_id);
                 *reference.flags_mut() = ReferenceFlags::Read;
 
                 self.var_declarations.create_uid_var(&ident.name, ctx)

@@ -101,7 +101,7 @@ fn is_expr_global_builtin<'a, 'b>(
 ) -> Option<&'b str> {
     match expr {
         Expression::Identifier(ident) => {
-            if !ctx.scopes().root_unresolved_references().contains_key(ident.name.as_str()) {
+            if !ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
                 return None;
             }
 

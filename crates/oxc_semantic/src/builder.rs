@@ -24,9 +24,17 @@ use oxc_syntax::{
 };
 
 use crate::{
-    JSDocFinder, Semantic, binder::Binder, checker, class::ClassTableBuilder,
-    diagnostics::redeclaration, jsdoc::JSDocBuilder, label::UnusedLabels, node::AstNodes,
-    scope::Bindings, scoping::Scoping, stats::Stats, unresolved_stack::UnresolvedReferencesStack,
+    JSDocFinder, Semantic,
+    binder::Binder,
+    checker,
+    class::ClassTableBuilder,
+    diagnostics::redeclaration,
+    jsdoc::JSDocBuilder,
+    label::UnusedLabels,
+    node::AstNodes,
+    scoping::{Bindings, Scoping},
+    stats::Stats,
+    unresolved_stack::UnresolvedReferencesStack,
 };
 
 macro_rules! control_flow {
@@ -112,7 +120,7 @@ impl Default for SemanticBuilder<'_> {
 impl<'a> SemanticBuilder<'a> {
     pub fn new() -> Self {
         let scoping = Scoping::default();
-        let current_scope_id = scoping.scopes.root_scope_id();
+        let current_scope_id = scoping.root_scope_id();
 
         Self {
             source_text: "",
@@ -171,7 +179,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[must_use]
     pub fn with_scope_tree_child_ids(mut self, yes: bool) -> Self {
-        self.scoping.scopes.scope_build_child_ids = yes;
+        self.scoping.scope_build_child_ids = yes;
         self
     }
 
@@ -216,7 +224,7 @@ impl<'a> SemanticBuilder<'a> {
             self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
         }
         if self.source_type.is_typescript_definition() {
-            let scope_id = self.scoping.scopes.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
+            let scope_id = self.scoping.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
             // Use counts of nodes, scopes, symbols, and references to pre-allocate sufficient capacity
@@ -239,8 +247,11 @@ impl<'a> SemanticBuilder<'a> {
                 (stats_with_excess, Some(stats))
             };
             self.nodes.reserve(stats.nodes as usize);
-            self.scoping.scopes.reserve(stats.scopes as usize);
-            self.scoping.symbols.reserve(stats.symbols as usize, stats.references as usize);
+            self.scoping.reserve(
+                stats.symbols as usize,
+                stats.references as usize,
+                stats.scopes as usize,
+            );
 
             // Visit AST to generate scopes tree etc
             self.visit_program(program);
@@ -251,9 +262,9 @@ impl<'a> SemanticBuilder<'a> {
                 #[expect(clippy::cast_possible_truncation)]
                 let actual_stats = Stats::new(
                     self.nodes.len() as u32,
-                    self.scoping.scopes.scopes_len() as u32,
-                    self.scoping.symbols.symbols_len() as u32,
-                    self.scoping.symbols.references.len() as u32,
+                    self.scoping.scopes_len() as u32,
+                    self.scoping.symbols_len() as u32,
+                    self.scoping.references.len() as u32,
                 );
                 stats.assert_accurate(actual_stats);
             }
@@ -265,7 +276,7 @@ impl<'a> SemanticBuilder<'a> {
         if self.check_syntax_error && !self.source_type.is_typescript() {
             checker::check_unresolved_exports(&self);
         }
-        self.scoping.scopes.set_root_unresolved_references(
+        self.scoping.set_root_unresolved_references(
             self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
         );
 
@@ -295,9 +306,8 @@ impl<'a> SemanticBuilder<'a> {
         self.source_type.is_typescript_definition()
             || self
                 .scoping
-                .scopes
                 .scope_ancestors(self.current_scope_id)
-                .any(|scope_id| self.scoping.scopes.scope_flags(scope_id).is_ts_module_block())
+                .any(|scope_id| self.scoping.scope_flags(scope_id).is_ts_module_block())
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
@@ -354,7 +364,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[inline]
     pub(crate) fn current_scope_flags(&self) -> ScopeFlags {
-        self.scoping.scopes.scope_flags(self.current_scope_id)
+        self.scoping.scope_flags(self.current_scope_id)
     }
 
     /// Is the current scope in strict mode?
@@ -383,20 +393,15 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
-            self.scoping.symbols.union_symbol_flag(symbol_id, includes);
+            self.scoping.union_symbol_flag(symbol_id, includes);
             self.add_redeclare_variable(symbol_id, span);
             return symbol_id;
         }
 
-        let symbol_id = self.scoping.symbols.create_symbol(
-            span,
-            name,
-            includes,
-            scope_id,
-            self.current_node_id,
-        );
+        let symbol_id =
+            self.scoping.create_symbol(span, name, includes, scope_id, self.current_node_id);
 
-        self.scoping.scopes.add_binding(scope_id, name, symbol_id);
+        self.scoping.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
 
@@ -423,11 +428,11 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scoping.scopes.get_binding(scope_id, name).or_else(|| {
+        let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
         })?;
-        if report_error && self.scoping.symbols.symbol_flags(symbol_id).intersects(excludes) {
-            let symbol_span = self.scoping.symbols.symbol_span(symbol_id);
+        if report_error && self.scoping.symbol_flags(symbol_id).intersects(excludes) {
+            let symbol_span = self.scoping.symbol_span(symbol_id);
             self.error(redeclaration(name, symbol_span, span));
         }
         Some(symbol_id)
@@ -441,7 +446,7 @@ impl<'a> SemanticBuilder<'a> {
         name: Atom<'a>,
         reference: Reference,
     ) -> ReferenceId {
-        let reference_id = self.scoping.symbols.create_reference(reference);
+        let reference_id = self.scoping.create_reference(reference);
 
         self.unresolved_references.current_mut().entry(name).or_default().push(reference_id);
         reference_id
@@ -455,14 +460,14 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = self.scoping.symbols.create_symbol(
+        let symbol_id = self.scoping.create_symbol(
             span,
             name,
             includes,
             self.current_scope_id,
             self.current_node_id,
         );
-        self.scoping.scopes.insert_binding(scope_id, name, symbol_id);
+        self.scoping.insert_binding(scope_id, name, symbol_id);
         symbol_id
     }
 
@@ -476,11 +481,11 @@ impl<'a> SemanticBuilder<'a> {
         for (name, mut references) in current_refs.drain() {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
-            let bindings = self.scoping.scopes.get_bindings(self.current_scope_id);
+            let bindings = self.scoping.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
-                let symbol_flags = self.scoping.symbols.symbol_flags(symbol_id);
+                let symbol_flags = self.scoping.symbol_flags(symbol_id);
                 references.retain(|&reference_id| {
-                    let reference = &mut self.scoping.symbols.references[reference_id];
+                    let reference = &mut self.scoping.references[reference_id];
 
                     let flags = reference.flags_mut();
 
@@ -512,7 +517,7 @@ impl<'a> SemanticBuilder<'a> {
                         *flags = ReferenceFlags::Type;
                     }
                     reference.set_symbol_id(symbol_id);
-                    self.scoping.symbols.add_resolved_reference(symbol_id, reference_id);
+                    self.scoping.add_resolved_reference(symbol_id, reference_id);
 
                     false
                 });
@@ -531,7 +536,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub(crate) fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.scoping.symbols.add_symbol_redeclaration(symbol_id, span);
+        self.scoping.add_symbol_redeclaration(symbol_id, span);
     }
 }
 
@@ -539,9 +544,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     // NB: Not called for `Program`
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let parent_scope_id = self.current_scope_id;
-        let flags = self.scoping.scopes.get_new_scope_flags(flags, parent_scope_id);
+        let flags = self.scoping.get_new_scope_flags(flags, parent_scope_id);
         self.current_scope_id =
-            self.scoping.scopes.add_scope(Some(parent_scope_id), self.current_node_id, flags);
+            self.scoping.add_scope(Some(parent_scope_id), self.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
 
         self.unresolved_references.increment_scope_depth();
@@ -554,12 +559,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // `get_parent_id` always returns `Some` because this method is not called for `Program`.
         // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
         // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
-        let parent_id = self.scoping.scopes.get_scope_parent_id(self.current_scope_id);
+        let parent_id = self.scoping.get_scope_parent_id(self.current_scope_id);
 
         debug_assert!(parent_id.is_some());
         if let Some(parent_id) = parent_id {
-            if self.scoping.scopes.scope_flags(self.current_scope_id).contains_direct_eval() {
-                self.scoping.scopes.scope_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
+            if self.scoping.scope_flags(self.current_scope_id).contains_direct_eval() {
+                self.scoping.scope_flags_mut(parent_id).insert(ScopeFlags::DirectEval);
             }
             self.current_scope_id = parent_id;
         }
@@ -613,7 +618,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.source_type.is_strict() || program.has_use_strict_directive() {
             flags |= ScopeFlags::StrictMode;
         }
-        self.current_scope_id = self.scoping.scopes.add_scope(None, self.current_node_id, flags);
+        self.current_scope_id = self.scoping.add_scope(None, self.current_node_id, flags);
         program.scope_id.set(Some(self.current_scope_id));
         // NB: Don't call `self.unresolved_references.increment_scope_depth()`
         // as scope depth is initialized as 1 already (the scope depth for `Program`).
@@ -703,17 +708,23 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         // Move all bindings from catch clause param scope to catch clause body scope
         // to make it easier to resolve references and check redeclare errors
-        if self.scoping.scopes.scope_flags(parent_scope_id).is_catch_clause() {
-            self.scoping.scopes.cell.with_dependent_mut(|allocator, inner| {
-                if !inner.bindings[parent_scope_id].is_empty() {
+        if self.scoping.scope_flags(parent_scope_id).is_catch_clause() {
+            let parent_bindings = self.scoping.cell.with_dependent_mut(|allocator, cell| {
+                if cell.bindings[parent_scope_id].is_empty() {
+                    None
+                } else {
                     let mut parent_bindings = Bindings::new_in(allocator);
-                    mem::swap(&mut inner.bindings[parent_scope_id], &mut parent_bindings);
-                    for &symbol_id in parent_bindings.values() {
-                        self.scoping.symbols.set_symbol_scope_id(symbol_id, self.current_scope_id);
-                    }
-                    inner.bindings[self.current_scope_id] = parent_bindings;
+                    mem::swap(&mut cell.bindings[parent_scope_id], &mut parent_bindings);
+                    let parent_symbol_ids = parent_bindings.values().copied().collect::<Vec<_>>();
+                    cell.bindings[self.current_scope_id] = parent_bindings;
+                    Some(parent_symbol_ids)
                 }
             });
+            if let Some(parent_bindings) = parent_bindings {
+                for symbol_id in parent_bindings {
+                    self.scoping.set_symbol_scope_id(symbol_id, self.current_scope_id);
+                }
+            }
         }
 
         self.visit_statements(&it.body);
@@ -2064,7 +2075,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CallExpression(call_expr) => {
                 if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
                     self.scoping
-                        .scopes
                         .scope_flags_mut(self.current_scope_id)
                         .insert(ScopeFlags::DirectEval);
                 }
@@ -2108,10 +2118,10 @@ impl<'a> SemanticBuilder<'a> {
             };
 
             // Ambient modules cannot be value modules
-            if self.scoping.symbols.symbol_flags(symbol_id).intersects(SymbolFlags::Ambient) {
+            if self.scoping.symbol_flags(symbol_id).intersects(SymbolFlags::Ambient) {
                 continue;
             }
-            self.scoping.symbols.union_symbol_flag(symbol_id, SymbolFlags::ValueModule);
+            self.scoping.union_symbol_flag(symbol_id, SymbolFlags::ValueModule);
         }
     }
 

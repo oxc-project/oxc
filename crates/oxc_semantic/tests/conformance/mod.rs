@@ -103,7 +103,7 @@ impl SemanticConformance {
             }
 
             // Run symbol tests
-            for symbol_id in semantic.symbols().symbol_ids() {
+            for symbol_id in semantic.scoping().symbol_ids() {
                 self.record_results(
                     &mut diagnostics,
                     test.as_ref(),

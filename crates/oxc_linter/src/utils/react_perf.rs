@@ -63,7 +63,7 @@ where
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
-        if node.scope_id() == ctx.scopes().root_scope_id() {
+        if node.scope_id() == ctx.scoping().root_scope_id() {
             return;
         }
 
@@ -94,18 +94,18 @@ where
         let Expression::Identifier(ident) = expr else {
             return;
         };
-        let Some(symbol_id) = ctx.symbols().get_reference(ident.reference_id()).symbol_id() else {
+        let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
             return;
         };
         // Symbols declared at the root scope won't (or, at least, shouldn't) be
         // re-assigned inside component render functions, so we can safely
         // ignore them.
-        if ctx.symbols().get_symbol_scope_id(symbol_id) == ctx.scopes().root_scope_id() {
+        if ctx.scoping().get_symbol_scope_id(symbol_id) == ctx.scoping().root_scope_id() {
             return;
         }
 
         let declaration_node =
-            ctx.nodes().get_node(ctx.symbols().get_symbol_declaration(symbol_id));
+            ctx.nodes().get_node(ctx.scoping().get_symbol_declaration(symbol_id));
         if let Some((decl_span, init_span)) =
             self.check_for_violation_on_ast_kind(&declaration_node.kind(), symbol_id)
         {

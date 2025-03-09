@@ -87,8 +87,8 @@ impl Rule for NoExtendNative {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let symbols = ctx.symbols();
-        for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
+        let symbols = ctx.scoping();
+        for reference_id_list in ctx.scoping().root_unresolved_references_ids() {
             for reference_id in reference_id_list {
                 let reference = symbols.get_reference(reference_id);
                 let name = ctx.semantic().reference_name(reference);

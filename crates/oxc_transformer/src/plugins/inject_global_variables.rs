@@ -182,7 +182,6 @@ impl<'a> InjectGlobalVariables<'a> {
                             false
                         } else {
                             scoping
-                                .scopes()
                                 .root_unresolved_references()
                                 .contains_key(i.specifier.local().as_str())
                         }

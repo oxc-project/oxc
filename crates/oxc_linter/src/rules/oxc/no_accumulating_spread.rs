@@ -133,7 +133,7 @@ impl Rule for NoAccumulatingSpread {
             return;
         };
 
-        let symbols = ctx.semantic().symbols();
+        let symbols = ctx.semantic().scoping();
 
         // get the AST node + symbol id of the declaration of the identifier
         let reference = symbols.get_reference(ident.reference_id());

@@ -77,7 +77,7 @@ declare_oxc_lint!(
 
 impl Rule for NoShadowRestrictedNames {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let name = ctx.symbols().symbol_name(symbol_id);
+        let name = ctx.scoping().symbol_name(symbol_id);
 
         if !PRE_DEFINE_VAR.contains_key(name) {
             return;
@@ -85,11 +85,11 @@ impl Rule for NoShadowRestrictedNames {
 
         if name == "undefined" {
             // Allow to declare `undefined` variable but not allow to assign value to it.
-            let node_id = ctx.semantic().symbols().get_symbol_declaration(symbol_id);
+            let node_id = ctx.semantic().scoping().get_symbol_declaration(symbol_id);
             if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) {
                 if declarator.init.is_none()
                     && ctx
-                        .symbols()
+                        .scoping()
                         .get_resolved_references(symbol_id)
                         .all(|reference| !reference.is_write())
                 {
@@ -98,10 +98,10 @@ impl Rule for NoShadowRestrictedNames {
             }
         }
 
-        let span = ctx.symbols().symbol_span(symbol_id);
+        let span = ctx.scoping().symbol_span(symbol_id);
         ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
 
-        for &span in ctx.symbols().get_symbol_redeclarations(symbol_id) {
+        for &span in ctx.scoping().get_symbol_redeclarations(symbol_id) {
             ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
         }
     }

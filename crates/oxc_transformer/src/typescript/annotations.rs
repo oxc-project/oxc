@@ -83,7 +83,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                                 || self.type_identifier_names.contains(&specifier.exported.name())
                                 || matches!(
                                     &specifier.local, ModuleExportName::IdentifierReference(ident)
-                                    if ctx.symbols().get_reference(ident.reference_id()).is_type()
+                                    if ctx.scoping().get_reference(ident.reference_id()).is_type()
                                 ))
                         });
                         // Keep the export declaration if there are still specifiers after removing type exports
@@ -598,18 +598,18 @@ impl<'a> TypeScriptAnnotations<'a, '_> {
     }
 
     pub fn has_value_reference(&self, name: &str, ctx: &TraverseCtx<'a>) -> bool {
-        if let Some(symbol_id) = ctx.scopes().get_root_binding(name) {
+        if let Some(symbol_id) = ctx.scoping().get_root_binding(name) {
             // `import T from 'mod'; const T = 1;` The T has a value redeclaration
             // `import T from 'mod'; type T = number;` The T has a type redeclaration
             // If the symbol is still a value symbol after SymbolFlags::Import is removed, then it's a value redeclaration.
             // That means the import is shadowed, and we can safely remove the import.
             let has_value_redeclaration =
-                (ctx.symbols().symbol_flags(symbol_id) - SymbolFlags::Import).is_value();
+                (ctx.scoping().symbol_flags(symbol_id) - SymbolFlags::Import).is_value();
             if has_value_redeclaration {
                 return false;
             }
             if ctx
-                .symbols()
+                .scoping()
                 .get_resolved_references(symbol_id)
                 .any(|reference| !reference.is_type())
             {

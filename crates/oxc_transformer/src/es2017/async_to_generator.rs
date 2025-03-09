@@ -232,7 +232,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let scope_id = func.scope_id.replace(Some(new_scope_id)).unwrap();
             // We need to change the parent id to new scope id because we need to this function's body inside the wrapper function,
             // and then the new scope id will be wrapper function's scope id.
-            ctx.scopes_mut().change_scope_parent_id(scope_id, Some(new_scope_id));
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(new_scope_id));
             if !needs_move_parameters_to_inner_function {
                 // We need to change formal parameters's scope back to the original scope,
                 // because we only move out the function body.
@@ -320,14 +320,14 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
             let scope_id = wrapper_function.scope_id.replace(Some(wrapper_scope_id)).unwrap();
             // Change the parent scope of the function scope with the current scope.
-            ctx.scopes_mut().change_scope_parent_id(scope_id, Some(wrapper_scope_id));
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(wrapper_scope_id));
             // If there is an id, then we will use it as the name of caller_function,
             // and the caller_function is inside the wrapper function.
             // so we need to move the id to the new scope.
             if let Some(id) = id.as_ref() {
                 Self::move_binding_identifier_to_target_scope(wrapper_scope_id, id, ctx);
                 let symbol_id = id.symbol_id();
-                *ctx.symbols_mut().symbol_flags_mut(symbol_id) =
+                *ctx.scoping_mut().symbol_flags_mut(symbol_id) =
                     SymbolFlags::FunctionScopedVariable;
             }
             (scope_id, wrapper_scope_id)
@@ -406,7 +406,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
             let scope_id = wrapper_function.scope_id.replace(Some(wrapper_scope_id)).unwrap();
             // Change the parent scope of the function scope with the current scope.
-            ctx.scopes_mut().change_scope_parent_id(scope_id, Some(wrapper_scope_id));
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(wrapper_scope_id));
             (scope_id, wrapper_scope_id)
         };
         let body = wrapper_function.body.take().unwrap();
@@ -458,7 +458,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
             // The generator function will move to this function, so we need
             // to change the parent scope of the generator function to the scope of this function.
-            ctx.scopes_mut().change_scope_parent_id(generator_scope_id, Some(scope_id));
+            ctx.scoping_mut().change_scope_parent_id(generator_scope_id, Some(scope_id));
 
             let params = Self::create_empty_params(ctx);
             let id = Some(bound_ident.create_binding_identifier(ctx));
@@ -487,7 +487,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
         let params = ctx.alloc(ctx.ast.move_formal_parameters(&mut arrow.params));
         let generator_function_id = arrow.scope_id();
-        ctx.scopes_mut().scope_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
+        ctx.scoping_mut().scope_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
         let function_name = Self::infer_function_name_from_parent_node(ctx);
 
         if function_name.is_none() && !Self::is_function_length_affected(&params) {
@@ -503,7 +503,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
         // The generator function will move to inside wrapper, so we need
         // to change the parent scope of the generator function to the wrapper function.
-        ctx.scopes_mut().change_scope_parent_id(generator_function_id, Some(wrapper_scope_id));
+        ctx.scoping_mut().change_scope_parent_id(generator_function_id, Some(wrapper_scope_id));
 
         let bound_ident = Self::create_bound_identifier(
             None,
@@ -663,7 +663,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         bound_ident: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "arguments");
+        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "arguments");
         let arguments_ident = Argument::from(ctx.create_ident_expr(
             SPAN,
             Atom::from("arguments"),
@@ -897,12 +897,12 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
 impl<'a> Visit<'a> for BindingMover<'a, '_> {
     /// Visits a binding identifier and moves it to the target scope.
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
-        let symbols = self.ctx.symbols();
+        let symbols = self.ctx.scoping();
         let symbol_id = ident.symbol_id();
         let current_scope_id = symbols.get_symbol_scope_id(symbol_id);
-        let scopes = self.ctx.scopes_mut();
+        let scopes = self.ctx.scoping_mut();
         scopes.move_binding(current_scope_id, self.target_scope_id, ident.name.as_str());
-        let symbols = self.ctx.symbols_mut();
+        let symbols = self.ctx.scoping_mut();
         symbols.set_symbol_scope_id(symbol_id, self.target_scope_id);
     }
 }

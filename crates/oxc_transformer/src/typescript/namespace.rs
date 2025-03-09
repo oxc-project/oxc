@@ -221,7 +221,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 Statement::TSImportEqualsDeclaration(decl)
                     if !self.only_remove_type_imports
                         && ctx
-                            .symbols()
+                            .scoping()
                             .get_resolved_references(decl.id.symbol_id())
                             .all(Reference::is_type) =>
                 {
@@ -238,7 +238,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         if new_stmts.is_empty() {
             // Delete the scope binding that `ctx.generate_uid` created above,
             // as no binding is actually being created
-            ctx.scopes_mut().remove_binding(scope_id, uid_binding.name.as_str());
+            ctx.scoping_mut().remove_binding(scope_id, uid_binding.name.as_str());
 
             return;
         }
@@ -309,7 +309,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     func_body,
                     scope_id,
                 ));
-            *ctx.scopes_mut().scope_flags_mut(scope_id) =
+            *ctx.scoping_mut().scope_flags_mut(scope_id) =
                 ScopeFlags::Function | ScopeFlags::StrictMode;
             ctx.ast.expression_parenthesized(SPAN, function_expr)
         };
@@ -459,7 +459,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     fn is_redeclaration_namespace(id: &BindingIdentifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let symbol_id = id.symbol_id();
         // Only `enum`, `class`, `function` and `namespace` can be re-declared in same scope
-        ctx.symbols()
+        ctx.scoping()
             .symbol_flags(symbol_id)
             .intersects(SymbolFlags::RegularEnum | SymbolFlags::Class | SymbolFlags::Function)
             || {
@@ -467,7 +467,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 // namespace Foo {}
                 // namespace Foo {} // is redeclaration
                 // ```
-                let redeclarations = ctx.symbols().get_symbol_redeclarations(symbol_id);
+                let redeclarations = ctx.scoping().get_symbol_redeclarations(symbol_id);
                 !redeclarations.is_empty() && redeclarations.contains(&id.span)
             }
     }

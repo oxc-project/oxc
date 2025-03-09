@@ -9,7 +9,7 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_index::Idx;
-use oxc_semantic::{ScopeTree, Semantic, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_semantic::{Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::Atom;
 
 pub(crate) mod base54;
@@ -165,7 +165,7 @@ impl Mangler {
     /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
-    pub fn build(self, program: &Program<'_>) -> SymbolTable {
+    pub fn build(self, program: &Program<'_>) -> Scoping {
         let semantic =
             SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
         self.build_with_semantic(semantic, program)
@@ -175,7 +175,7 @@ impl Mangler {
     ///
     /// Panics if the child_ids does not exist in scope_tree.
     #[must_use]
-    pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> SymbolTable {
+    pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> Scoping {
         if self.options.debug {
             self.build_with_semantic_impl(semantic, program, debug_name)
         } else {
@@ -188,15 +188,14 @@ impl Mangler {
         semantic: Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
-    ) -> SymbolTable {
-        let (scoping, ast_nodes) = semantic.into_scoping_and_nodes();
-        let (mut symbol_table, scope_tree) = scoping.into_symbols_scopes();
+    ) -> Scoping {
+        let (mut scoping, ast_nodes) = semantic.into_scoping_and_nodes();
 
-        assert!(scope_tree.has_scope_child_ids(), "child_id needs to be generated");
+        assert!(scoping.has_scope_child_ids(), "child_id needs to be generated");
 
         // TODO: implement opt-out of direct-eval in a branch of scopes.
-        if scope_tree.root_scope_flags().contains_direct_eval() {
-            return symbol_table;
+        if scoping.root_scope_flags().contains_direct_eval() {
+            return scoping;
         }
 
         let (exported_names, exported_symbols) = if self.options.top_level {
@@ -208,8 +207,7 @@ impl Mangler {
         let allocator = Allocator::default();
 
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots =
-            Vec::from_iter_in(iter::repeat_n(0, symbol_table.symbols_len()), &allocator);
+        let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), &allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
@@ -219,7 +217,7 @@ impl Mangler {
         // Walk down the scope tree and assign a slot number for each symbol.
         // It is possible to do this in a loop over the symbol list,
         // but walking down the scope tree seems to generate a better code.
-        for (scope_id, bindings) in scope_tree.iter_bindings() {
+        for (scope_id, bindings) in scoping.iter_bindings() {
             if bindings.is_empty() {
                 continue;
             }
@@ -244,7 +242,7 @@ impl Mangler {
             slot += remaining_count;
             if slot_liveness.len() < slot {
                 slot_liveness
-                    .resize_with(slot, || FixedBitSet::with_capacity(scope_tree.scopes_len()));
+                    .resize_with(slot, || FixedBitSet::with_capacity(scoping.scopes_len()));
             }
 
             // Sort `bindings` in declaration order.
@@ -260,17 +258,15 @@ impl Mangler {
                 // parent, so we need to include the scope where it is declared.
                 // (for cases like `function foo() { { var x; let y; } }`)
                 let declared_scope_id =
-                    ast_nodes.get_node(symbol_table.get_symbol_declaration(symbol_id)).scope_id();
+                    ast_nodes.get_node(scoping.get_symbol_declaration(symbol_id)).scope_id();
 
                 // Calculate the scope ids that this symbol is alive in.
-                let lived_scope_ids = symbol_table
+                let lived_scope_ids = scoping
                     .get_resolved_references(symbol_id)
                     .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id())
                     .chain([scope_id, declared_scope_id])
                     .flat_map(|used_scope_id| {
-                        scope_tree
-                            .scope_ancestors(used_scope_id)
-                            .take_while(|s_id| *s_id != scope_id)
+                        scoping.scope_ancestors(used_scope_id).take_while(|s_id| *s_id != scope_id)
                     });
 
                 // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
@@ -281,16 +277,15 @@ impl Mangler {
         let total_number_of_slots = slot_liveness.len();
 
         let frequencies = self.tally_slot_frequencies(
-            &symbol_table,
+            &scoping,
             &exported_symbols,
-            &scope_tree,
             total_number_of_slots,
             &slots,
             &allocator,
         );
 
-        let root_unresolved_references = scope_tree.root_unresolved_references();
-        let root_bindings = scope_tree.get_bindings(scope_tree.root_scope_id());
+        let root_unresolved_references = scoping.root_unresolved_references();
+        let root_bindings = scoping.get_bindings(scoping.root_scope_id());
 
         let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, &allocator);
 
@@ -358,24 +353,23 @@ impl Mangler {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    symbol_table.set_symbol_name(symbol_id, new_name);
+                    scoping.set_symbol_name(symbol_id, new_name);
                 }
             }
         }
 
-        symbol_table
+        scoping
     }
 
     fn tally_slot_frequencies<'a>(
         &'a self,
-        symbol_table: &SymbolTable,
+        scoping: &Scoping,
         exported_symbols: &FxHashSet<SymbolId>,
-        scope_tree: &ScopeTree,
         total_number_of_slots: usize,
         slots: &[Slot],
         allocator: &'a Allocator,
     ) -> Vec<'a, SlotFrequency<'a>> {
-        let root_scope_id = scope_tree.root_scope_id();
+        let root_scope_id = scoping.root_scope_id();
         let mut frequencies = Vec::with_capacity_in(total_number_of_slots, allocator);
         for _ in 0..total_number_of_slots {
             frequencies.push(SlotFrequency::new(allocator));
@@ -383,18 +377,17 @@ impl Mangler {
 
         for (symbol_id, slot) in slots.iter().copied().enumerate() {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if symbol_table.get_symbol_scope_id(symbol_id) == root_scope_id
+            if scoping.get_symbol_scope_id(symbol_id) == root_scope_id
                 && (!self.options.top_level || exported_symbols.contains(&symbol_id))
             {
                 continue;
             }
-            if is_special_name(symbol_table.symbol_name(symbol_id)) {
+            if is_special_name(scoping.symbol_name(symbol_id)) {
                 continue;
             }
             let index = slot;
             frequencies[index].slot = slot;
-            frequencies[index].frequency +=
-                symbol_table.get_resolved_reference_ids(symbol_id).len();
+            frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));

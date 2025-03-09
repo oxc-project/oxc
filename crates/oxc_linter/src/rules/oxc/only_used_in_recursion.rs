@@ -380,7 +380,7 @@ fn is_recursive_call(
     ctx: &LintContext,
 ) -> bool {
     if let Expression::Identifier(identifier) = &call_expr.callee {
-        if let Some(symbol_id) = ctx.symbols().get_reference(identifier.reference_id()).symbol_id()
+        if let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
         {
             return symbol_id == function_symbol_id;
         }
@@ -412,7 +412,7 @@ fn get_jsx_element_symbol_id<'a>(
         | JSXElementName::ThisExpression(_) => None,
     }?;
 
-    ctx.symbols().get_reference(node.reference_id()).symbol_id()
+    ctx.scoping().get_reference(node.reference_id()).symbol_id()
 }
 
 enum Direction {

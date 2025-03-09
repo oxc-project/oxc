@@ -130,13 +130,13 @@ impl<'a> ClassProperties<'a, '_> {
                         // `_prop.call(object)`
                         create_call_call(prop_ident, object, span, ctx)
                     } else {
-                        ctx.symbols_mut()
+                        ctx.scoping_mut()
                             .delete_resolved_reference(class_symbol_id, object_reference_id);
                         // `_prop`
                         prop_ident
                     }
                 } else {
-                    ctx.symbols_mut()
+                    ctx.scoping_mut()
                         .delete_resolved_reference(class_symbol_id, object_reference_id);
                     // `_prop._`
                     Self::create_underscore_member_expression(prop_ident, span, ctx)
@@ -212,7 +212,7 @@ impl<'a> ClassProperties<'a, '_> {
             if let Some(class_symbol_id) = class_symbol_id {
                 if let Expression::Identifier(ident) = object {
                     let reference_id = ident.reference_id();
-                    if let Some(symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id() {
+                    if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
                         if symbol_id == class_symbol_id {
                             return Some((class_symbol_id, reference_id));
                         }
@@ -618,7 +618,7 @@ impl<'a> ClassProperties<'a, '_> {
             );
 
             // Delete reference for `object` as `object.#prop` has been removed
-            ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
+            ctx.scoping_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
 
             if operator == AssignmentOperator::Assign {
                 // `Class.#prop = value` -> `_prop._ = value`
@@ -992,7 +992,7 @@ impl<'a> ClassProperties<'a, '_> {
             let (get_expr, object, class_ident) = if let Some(object_reference) = object_reference {
                 // Delete reference for `object` as `object.#prop` is being removed
                 let (class_symbol_id, object_reference_id) = object_reference;
-                ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
+                ctx.scoping_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
 
                 // `_prop._`
                 let get_expr = Self::create_underscore_member_expression(prop_ident, SPAN, ctx);

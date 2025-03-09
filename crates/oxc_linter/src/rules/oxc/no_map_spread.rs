@@ -411,7 +411,7 @@ impl NoMapSpread {
         reference_id: ReferenceId,
         call_site: Span,
     ) -> bool {
-        let Some(symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id() else {
+        let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
             return false;
         };
         // Call is to a self-defined `map` call.
@@ -423,7 +423,7 @@ impl NoMapSpread {
         }
 
         if self.ignore_args {
-            let declaration = ctx.nodes().get_node(ctx.symbols().get_symbol_declaration(symbol_id));
+            let declaration = ctx.nodes().get_node(ctx.scoping().get_symbol_declaration(symbol_id));
             if matches!(declaration.kind(), AstKind::FormalParameter(_)) {
                 return true;
             }
@@ -441,7 +441,7 @@ fn has_reads_after(
     symbol_id: SymbolId,
     span: Span,
 ) -> bool {
-    let symbols = ctx.symbols();
+    let symbols = ctx.scoping();
     let nodes = ctx.nodes();
     symbols
         // skip the reference within the spread itself
@@ -673,16 +673,16 @@ where
             // variable declared within the map callback.
             Expression::Identifier(ident) => {
                 let Some(symbol_id) =
-                    self.ctx.symbols().get_reference(ident.reference_id()).symbol_id()
+                    self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
                 else {
                     return;
                 };
-                let declaration_scope = self.ctx.symbols().get_symbol_scope_id(symbol_id);
+                let declaration_scope = self.ctx.scoping().get_symbol_scope_id(symbol_id);
 
                 // symbol is not declared within the mapper callback
                 if !self
                     .ctx
-                    .scopes()
+                    .scoping()
                     .scope_ancestors(declaration_scope)
                     .any(|parent_id| parent_id == self.cb_scope_id)
                 {
@@ -691,7 +691,7 @@ where
 
                 // walk the declaration
                 let declaration_node =
-                    self.ctx.nodes().get_node(self.ctx.symbols().get_symbol_declaration(symbol_id));
+                    self.ctx.nodes().get_node(self.ctx.scoping().get_symbol_declaration(symbol_id));
                 self.visit_kind(declaration_node.kind());
             }
             _ => {}

@@ -215,7 +215,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let Some((binding, property)) = ident
             .reference_id
             .get()
-            .and_then(|id| ctx.symbols().get_reference(id).symbol_id())
+            .and_then(|id| ctx.scoping().get_reference(id).symbol_id())
             .and_then(|id| self.import_bindings.get(&id))
         else {
             return;
@@ -328,7 +328,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let mut local = specifier.unbox().local;
                 local.name = self.generate_import_binding_name(ctx);
                 let binding = BoundIdentifier::from_binding_ident(&local);
-                ctx.symbols_mut().set_symbol_name(binding.symbol_id, &binding.name);
+                ctx.scoping_mut().set_symbol_name(binding.symbol_id, &binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
 
                 let kind = BindingPatternKind::BindingIdentifier(ctx.alloc(local));
@@ -614,12 +614,12 @@ impl<'a> ModuleRunnerTransform<'a> {
     ) -> ArrayExpressionElement<'a> {
         let BindingIdentifier { name, symbol_id, .. } = ident;
 
-        let scopes = ctx.scopes_mut();
+        let scopes = ctx.scoping_mut();
         scopes.remove_binding(scopes.root_scope_id(), &name);
 
         let symbol_id = symbol_id.get().unwrap();
         // Do not need to insert if there no identifiers that point to this symbol
-        if !ctx.symbols().get_resolved_reference_ids(symbol_id).is_empty() {
+        if !ctx.scoping().get_resolved_reference_ids(symbol_id).is_empty() {
             self.import_bindings.insert(symbol_id, (binding.clone(), Some(key)));
         }
 
@@ -726,7 +726,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let statement = ctx.ast.statement_return(SPAN, Some(expr));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(statement));
         let r#type = FunctionType::FunctionExpression;
-        let scope_id = ctx.create_child_scope(ctx.scopes().root_scope_id(), ScopeFlags::Function);
+        let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
         ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
             r#type,

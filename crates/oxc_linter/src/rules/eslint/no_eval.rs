@@ -123,13 +123,13 @@ impl Rule for NoEval {
                     });
 
                 for name in globals {
-                    let Some(references) = ctx.scopes().root_unresolved_references().get(name)
+                    let Some(references) = ctx.scoping().root_unresolved_references().get(name)
                     else {
                         continue;
                     };
 
                     for reference_id in references {
-                        let reference = ctx.symbols().get_reference(*reference_id);
+                        let reference = ctx.scoping().get_reference(*reference_id);
                         let node = ctx.nodes().get_node(reference.node_id());
                         let mut parent = Self::outermost_mem_expr(node, ctx).unwrap();
 
@@ -166,13 +166,13 @@ impl Rule for NoEval {
 
                 if name == "eval" {
                     let scope_id =
-                        ctx.scopes().scope_ancestors(parent.scope_id()).find(|scope_id| {
-                            let scope_flags = ctx.scopes().scope_flags(*scope_id);
+                        ctx.scoping().scope_ancestors(parent.scope_id()).find(|scope_id| {
+                            let scope_flags = ctx.scoping().scope_flags(*scope_id);
                             scope_flags.is_var() && !scope_flags.is_arrow()
                         });
 
                     let scope_id = scope_id.unwrap();
-                    let scope_flags = ctx.scopes().scope_flags(scope_id);
+                    let scope_flags = ctx.scoping().scope_flags(scope_id);
 
                     // The `TsModuleBlock` shouldn't be considered
                     if scope_flags.is_ts_module_block() {
@@ -185,7 +185,7 @@ impl Rule for NoEval {
                     let is_valid = if scope_flags.is_top() {
                         program.source_type.is_script()
                     } else {
-                        let node = ctx.nodes().get_node(ctx.scopes().get_node_id(scope_id));
+                        let node = ctx.nodes().get_node(ctx.scoping().get_node_id(scope_id));
                         ast_util::is_default_this_binding(ctx, node, true)
                             && (!scope_flags.is_strict_mode() || scope_flags.is_arrow())
                     };

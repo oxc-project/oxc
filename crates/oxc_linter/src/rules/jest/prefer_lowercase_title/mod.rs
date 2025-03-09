@@ -210,7 +210,7 @@ impl Rule for PreferLowercaseTitle {
             return;
         };
 
-        let scopes = ctx.scopes();
+        let scopes = ctx.scoping();
 
         let ignores = Self::populate_ignores(&self.ignore);
 

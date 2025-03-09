@@ -128,7 +128,7 @@ impl<'a> PeepholeOptimizations {
     fn wrap_to_avoid_ambiguous_else(&mut self, if_stmt: &mut IfStatement<'a>, ctx: Ctx<'a, '_>) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
             if if2.consequent.is_jump_statement() && if2.alternate.is_some() {
-                let scope_id = ScopeId::new(ctx.scoping.scopes().scopes_len() as u32);
+                let scope_id = ScopeId::new(ctx.scoping.scoping().scopes_len() as u32);
                 if_stmt.consequent = Statement::BlockStatement(ctx.ast.alloc(
                     ctx.ast.block_statement_with_scope_id(
                         if_stmt.consequent.span(),

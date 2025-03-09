@@ -195,14 +195,14 @@ impl Test262RuntimeCase {
         let symbol_table = if minify {
             Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
                 .build(&allocator, &mut program)
-                .symbol_table
+                .scoping
         } else {
             None
         };
 
         let mut text = CodeGenerator::new()
             .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
-            .with_symbol_table(symbol_table)
+            .with_scoping(symbol_table)
             .build(&program)
             .code;
         if is_only_strict {

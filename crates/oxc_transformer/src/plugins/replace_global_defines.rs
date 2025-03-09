@@ -329,7 +329,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !ident.is_global_reference(ctx.symbols()) {
+        if !ident.is_global_reference(ctx.scoping()) {
             return None;
         }
         for (key, value) in &self.config.0.identifier.identifier_defines {
@@ -569,7 +569,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         })
                     }
                     Expression::Identifier(ident) => {
-                        if !ident.is_global_reference(ctx.symbols()) {
+                        if !ident.is_global_reference(ctx.scoping()) {
                             return false;
                         }
                         cur_part_name = &ident.name;

@@ -104,7 +104,7 @@ impl<'a> Visit<'a> for InstanceInitializerVisitor<'a, '_> {
 impl<'a> InstanceInitializerVisitor<'a, '_> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: ScopeId) {
-        self.ctx.scopes_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
+        self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
     }
 
     /// Check if symbol referenced by `ident` is shadowed by a binding in constructor's scope.
@@ -114,7 +114,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         // with same `ScopeId` every time here, but `ScopeTree` doesn't allow that, and we also
         // take a `&mut ScopeTree` in `reparent_scope`, so borrow-checker doesn't allow that.
         let Some(constructor_symbol_id) =
-            self.ctx.scopes().get_binding(self.constructor_scope_id, &ident.name)
+            self.ctx.scoping().get_binding(self.constructor_scope_id, &ident.name)
         else {
             return;
         };
@@ -125,8 +125,8 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         // Even though there's a binding `n` in constructor, it doesn't shadow the use of `n` in init.
         // This is an improvement over Babel.
         let reference_id = ident.reference_id();
-        if let Some(ident_symbol_id) = self.ctx.symbols().get_reference(reference_id).symbol_id() {
-            let scope_id = self.ctx.symbols().get_symbol_scope_id(ident_symbol_id);
+        if let Some(ident_symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id() {
+            let scope_id = self.ctx.scoping().get_symbol_scope_id(ident_symbol_id);
             if self.scope_ids_stack.contains(&scope_id) {
                 return;
             }
@@ -212,6 +212,6 @@ impl FastInstanceInitializerVisitor<'_, '_> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get().unwrap();
-        self.ctx.scopes_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
+        self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.parent_scope_id));
     }
 }

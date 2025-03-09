@@ -73,7 +73,7 @@ impl Rule for NoArrayConstructor {
             return;
         };
 
-        if ident.is_global_reference_name("Array", ctx.symbols())
+        if ident.is_global_reference_name("Array", ctx.scoping())
             && arguments.len() != 1
             && type_parameters.is_none()
             && !optional

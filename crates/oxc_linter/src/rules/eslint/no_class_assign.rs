@@ -36,7 +36,7 @@ declare_oxc_lint!(
 
 impl Rule for NoClassAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().symbols();
+        let symbol_table = ctx.semantic().scoping();
         if symbol_table.symbol_flags(symbol_id).is_class() {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
