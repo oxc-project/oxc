@@ -19,12 +19,19 @@ impl<'a> ParserImpl<'a> {
         allow_question: bool,
     ) -> Result<BindingPattern<'a>> {
         let mut kind = self.parse_binding_pattern_kind()?;
-        let optional = if allow_question && self.is_ts { self.eat(Kind::Question) } else { false };
+        let optional = if allow_question && self.is_ts {
+            let span = self.start_span();
+            if self.eat(Kind::Question) { Some(self.end_span(span)) } else { None }
+        } else {
+            None
+        };
         let type_annotation = self.parse_ts_type_annotation()?;
         if let Some(type_annotation) = &type_annotation {
             Self::extend_binding_pattern_span_end(type_annotation.span, &mut kind);
+        } else if let Some(span) = optional {
+            Self::extend_binding_pattern_span_end(span, &mut kind);
         }
-        Ok(self.ast.binding_pattern(kind, type_annotation, optional))
+        Ok(self.ast.binding_pattern(kind, type_annotation, optional.is_some()))
     }
 
     pub(crate) fn parse_binding_pattern_kind(&mut self) -> Result<BindingPatternKind<'a>> {
