@@ -91,7 +91,7 @@ declare_oxc_lint!(
     /// import { merge, find } from 'module';
     ///
     /// // cannot be merged with the above import
-    ///  export * as something from 'module';
+    /// export * as something from 'module';
     ///
     /// // cannot be written differently
     /// export * from 'module';
