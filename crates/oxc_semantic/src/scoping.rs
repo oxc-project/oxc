@@ -42,7 +42,7 @@ pub struct Scoping {
     pub(crate) symbol_declarations: IndexVec<SymbolId, NodeId>,
     symbol_redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
-    pub references: IndexVec<ReferenceId, Reference>,
+    pub(crate) references: IndexVec<ReferenceId, Reference>,
 
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
