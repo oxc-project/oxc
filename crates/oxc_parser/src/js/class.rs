@@ -512,12 +512,12 @@ impl<'a> ParserImpl<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
+        self.asi()?;
         let r#type = if r#abstract {
             AccessorPropertyType::TSAbstractAccessorProperty
         } else {
             AccessorPropertyType::AccessorProperty
         };
-
         let decorators = self.consume_decorators();
         Ok(self.ast.class_element_accessor_property(
             self.end_span(span),

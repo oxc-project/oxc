@@ -15737,13 +15737,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:10:15]
   9 │     accessor static h: any;
  10 │     accessor i() {}
-    ·               ─
+    ·               ▲
  11 │     accessor get j() { return false; }
     ╰────
+  help: Try insert a semicolon here
 
   × Expected `,` but found `*`
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/canFollowGetSetKeyword.ts:11:5]
