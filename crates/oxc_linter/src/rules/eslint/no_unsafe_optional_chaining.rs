@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, AssignmentTarget, Expression, match_assignment_target_pattern},
+    ast::{Argument, ArrayExpressionElement, AssignmentTarget, Expression, match_assignment_target_pattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -164,6 +164,17 @@ impl NoUnsafeOptionalChaining {
             Expression::AwaitExpression(expr) => {
                 Self::check_undefined_short_circuit(&expr.argument, error_type, ctx);
             }
+            Expression::ExpressionStatement(expr) => {
+             let Expression::ArrayExpression(arr_expr) = expr.expression else {return;};
+                println!("aa {expr:?}");
+
+                for elem in arr_expr.elements.iter() {
+                    if let ArrayExpressionElement::SpreadElement(spread_exp) = elem {
+                        println!("foo {elem:?}");
+                        Self::check_undefined_short_circuit(&spread_exp.argument, error_type, ctx);
+                    }
+                }
+            }
             Expression::ConditionalExpression(expr) => {
                 Self::check_undefined_short_circuit(&expr.consequent, error_type, ctx);
                 Self::check_undefined_short_circuit(&expr.alternate, error_type, ctx);
@@ -273,6 +284,9 @@ fn test() {
         ("with (obj?.foo) {};", None),
         ("async function foo() { with ( await obj?.foo) {}; }", None),
         ("(foo ? obj?.foo : obj?.bar).bar", None),
+        ("const a = [...obj?.foo];", None),
+      //  ("const b = [...c, ...obj?.foo];", None),
+       // ("const c = () => ([...(obj?.foo)]);", None),
     ];
 
     Tester::new(NoUnsafeOptionalChaining::NAME, NoUnsafeOptionalChaining::PLUGIN, pass, fail)
