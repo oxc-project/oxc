@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: taiki-e/install-action@3c8fc6eaa5fcff049bb133c1f540c6c2287a191f # v2.49.10
+      - uses: taiki-e/install-action@1e1237f7a4f2d8bc638667e95fe2579653d6db09 # v2.49.17
         with:
           tool: zizmor
 
@@ -34,7 +34,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@b56ba49b26e50535fa1e7f7db0f4f7b4bf65d80d # v3.28.10
+        uses: github/codeql-action/upload-sarif@6bb031afdd8eb862ea3fc1848194185e076637e5 # v3.28.11
         with:
           sarif_file: results.sarif
           category: zizmor
