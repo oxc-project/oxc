@@ -397,7 +397,10 @@ impl Runtime {
                     return;
                 }
                 let records = &modules_by_path[&path];
-                assert_eq!(records.len(), requested_module_paths.len());
+                assert_eq!(
+                    records.len(), requested_module_paths.len(),
+                    "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
+                );
                 for (record, requested_module_paths) in
                     records.iter().zip(requested_module_paths.into_iter())
                 {
