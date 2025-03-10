@@ -17,18 +17,16 @@ pub struct NoLonelyIf;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow if statements as the only statement in else blocks
+    /// Disallow `if` statements as the only statement in `else` blocks
     ///
     /// ### Why is this bad?
     ///
-    /// If an if statement is the only statement in the else block, it is often clearer to use an
-    /// else if form.
+    /// When an `if` statement is the only statement in an `else` block, it is often clearer to use
+    /// an `else if` instead.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
-    ///
     /// ```js
     /// if (condition) {
     ///   // ...
@@ -75,7 +73,7 @@ declare_oxc_lint!(
     ///   // ...
     /// } else {
     ///   if (anotherCondition) {
-    ///       // ...
+    ///     // ...
     ///   }
     ///   doSomething();
     /// }
@@ -137,6 +135,12 @@ fn test() {
         "if (a) {;} else if (b) {;}",
         "if (a) {;} else { if (b) {;} ; }",
         "if (a) if (a) {} else { if (b) {} } else {}",
+        "if (a) {
+           if (b) {} else { }
+         } else {
+           if (c) {  } 
+           if (d) {  } 
+          }",
     ];
 
     let fail = vec![
