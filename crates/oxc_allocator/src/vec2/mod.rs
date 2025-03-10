@@ -90,9 +90,9 @@
 //! [`IndexMut`]: https://doc.rust-lang.org/std/ops/trait.IndexMut.html
 //! [`vec!`]: ../../macro.vec.html
 
-use super::raw_vec::RawVec;
-use crate::Bump;
-use crate::collections::CollectionAllocErr;
+mod raw_vec;
+
+use bumpalo::{Bump, collections::CollectionAllocErr};
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
 use core::fmt;
@@ -106,8 +106,7 @@ use core::ops::{Index, IndexMut, RangeBounds};
 use core::ptr;
 use core::ptr::NonNull;
 use core::slice;
-#[cfg(feature = "std")]
-use std::io;
+use raw_vec::RawVec;
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)
@@ -1664,37 +1663,37 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     }
 }
 
-#[cfg(feature = "boxed")]
-impl<'bump, T> Vec<'bump, T> {
-    /// Converts the vector into [`Box<[T]>`][owned slice].
-    ///
-    /// Note that this will drop any excess capacity.
-    ///
-    /// [owned slice]: ../../boxed/struct.Box.html
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec, vec};
-    ///
-    /// let b = Bump::new();
-    ///
-    /// let v = vec![in &b; 1, 2, 3];
-    ///
-    /// let slice = v.into_boxed_slice();
-    /// ```
-    pub fn into_boxed_slice(mut self) -> crate::boxed::Box<'bump, [T]> {
-        use crate::boxed::Box;
+// #[cfg(feature = "boxed")]
+// impl<'bump, T> Vec<'bump, T> {
+//     /// Converts the vector into [`Box<[T]>`][owned slice].
+//     ///
+//     /// Note that this will drop any excess capacity.
+//     ///
+//     /// [owned slice]: ../../boxed/struct.Box.html
+//     ///
+//     /// # Examples
+//     ///
+//     /// ```
+//     /// use bumpalo::{Bump, collections::Vec, vec};
+//     ///
+//     /// let b = Bump::new();
+//     ///
+//     /// let v = vec![in &b; 1, 2, 3];
+//     ///
+//     /// let slice = v.into_boxed_slice();
+//     /// ```
+//     pub fn into_boxed_slice(mut self) -> crate::boxed::Box<'bump, [T]> {
+//         use crate::boxed::Box;
 
-        // Unlike `alloc::vec::Vec` shrinking here isn't necessary as `bumpalo::boxed::Box` doesn't own memory.
-        unsafe {
-            let slice = slice::from_raw_parts_mut(self.as_mut_ptr(), self.len);
-            let output: Box<'bump, [T]> = Box::from_raw(slice);
-            mem::forget(self);
-            output
-        }
-    }
-}
+//         // Unlike `alloc::vec::Vec` shrinking here isn't necessary as `bumpalo::boxed::Box` doesn't own memory.
+//         unsafe {
+//             let slice = slice::from_raw_parts_mut(self.as_mut_ptr(), self.len);
+//             let output: Box<'bump, [T]> = Box::from_raw(slice);
+//             mem::forget(self);
+//             output
+//         }
+//     }
+// }
 
 impl<'bump, T: 'bump + Clone> Vec<'bump, T> {
     /// Resizes the `Vec` in-place so that `len` is equal to `new_len`.
@@ -2287,12 +2286,12 @@ impl<'bump, T: 'bump> AsMut<[T]> for Vec<'bump, T> {
     }
 }
 
-#[cfg(feature = "boxed")]
-impl<'bump, T: 'bump> From<Vec<'bump, T>> for crate::boxed::Box<'bump, [T]> {
-    fn from(v: Vec<'bump, T>) -> crate::boxed::Box<'bump, [T]> {
-        v.into_boxed_slice()
-    }
-}
+// #[cfg(feature = "boxed")]
+// impl<'bump, T: 'bump> From<Vec<'bump, T>> for crate::boxed::Box<'bump, [T]> {
+//     fn from(v: Vec<'bump, T>) -> crate::boxed::Box<'bump, [T]> {
+//         v.into_boxed_slice()
+//     }
+// }
 
 impl<'bump, T: 'bump> Borrow<[T]> for Vec<'bump, T> {
     #[inline]
@@ -2713,45 +2712,45 @@ where
     }
 }
 
-#[cfg(feature = "std")]
-impl<'bump> io::Write for Vec<'bump, u8> {
-    #[inline]
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.extend_from_slice_copy(buf);
-        Ok(buf.len())
-    }
+// #[cfg(feature = "std")]
+// impl<'bump> io::Write for Vec<'bump, u8> {
+//     #[inline]
+//     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+//         self.extend_from_slice_copy(buf);
+//         Ok(buf.len())
+//     }
 
-    #[inline]
-    fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
-        self.extend_from_slice_copy(buf);
-        Ok(())
-    }
+//     #[inline]
+//     fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+//         self.extend_from_slice_copy(buf);
+//         Ok(())
+//     }
 
-    #[inline]
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
+//     #[inline]
+//     fn flush(&mut self) -> io::Result<()> {
+//         Ok(())
+//     }
+// }
 
-#[cfg(feature = "serde")]
-mod serialize {
-    use super::*;
+// #[cfg(feature = "serde")]
+// mod serialize {
+//     use super::*;
 
-    use serde::{Serialize, Serializer, ser::SerializeSeq};
+//     use serde::{Serialize, Serializer, ser::SerializeSeq};
 
-    impl<'a, T> Serialize for Vec<'a, T>
-    where
-        T: Serialize,
-    {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-        {
-            let mut seq = serializer.serialize_seq(Some(self.len))?;
-            for e in self.iter() {
-                seq.serialize_element(e)?;
-            }
-            seq.end()
-        }
-    }
-}
+//     impl<'a, T> Serialize for Vec<'a, T>
+//     where
+//         T: Serialize,
+//     {
+//         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//         where
+//             S: Serializer,
+//         {
+//             let mut seq = serializer.serialize_seq(Some(self.len))?;
+//             for e in self.iter() {
+//                 seq.serialize_element(e)?;
+//             }
+//             seq.end()
+//         }
+//     }
+// }
