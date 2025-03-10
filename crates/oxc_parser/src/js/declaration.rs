@@ -104,7 +104,7 @@ impl<'a> ParserImpl<'a> {
             let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
             let type_annotation = self.parse_ts_type_annotation()?;
             if let Some(type_annotation) = &type_annotation {
-                Self::extend_binding_pattern_span_end(type_annotation.span, &mut binding_kind);
+                Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
