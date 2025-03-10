@@ -9449,12 +9449,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The text content.
+    /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_child_text<A>(self, span: Span, value: A) -> JSXChild<'a>
+    pub fn jsx_child_text<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> JSXChild<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        JSXChild::Text(self.alloc_jsx_text(span, value))
+        JSXChild::Text(self.alloc_jsx_text(span, value, raw))
     }
 
     /// Build a [`JSXChild::Element`].
@@ -9569,12 +9570,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The text content.
+    /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn jsx_text<A>(self, span: Span, value: A) -> JSXText<'a>
+    pub fn jsx_text<A>(self, span: Span, value: A, raw: Option<Atom<'a>>) -> JSXText<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        JSXText { span, value: value.into_in(self.allocator) }
+        JSXText { span, value: value.into_in(self.allocator), raw }
     }
 
     /// Build a [`JSXText`], and store it in the memory arena.
@@ -9584,12 +9586,18 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The text content.
+    /// * `raw`: The raw string as it appears in source code.
     #[inline]
-    pub fn alloc_jsx_text<A>(self, span: Span, value: A) -> Box<'a, JSXText<'a>>
+    pub fn alloc_jsx_text<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+    ) -> Box<'a, JSXText<'a>>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        Box::new_in(self.jsx_text(span, value), self.allocator)
+        Box::new_in(self.jsx_text(span, value, raw), self.allocator)
     }
 
     /// Build a [`TSThisParameter`].
