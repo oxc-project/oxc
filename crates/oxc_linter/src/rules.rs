@@ -529,6 +529,7 @@ mod promise {
     pub mod no_new_statics;
     pub mod no_promise_in_callback;
     pub mod no_return_in_finally;
+    pub mod no_return_wrap;
     pub mod param_names;
     pub mod prefer_await_to_callbacks;
     pub mod prefer_await_to_then;
@@ -863,6 +864,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_return_wrap,
     promise::no_nesting,
     promise::no_promise_in_callback,
     promise::no_callback_in_promise,
