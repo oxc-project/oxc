@@ -898,10 +898,11 @@ const _: () = {
     assert!(offset_of!(JSXSpreadChild, span) == 0);
     assert!(offset_of!(JSXSpreadChild, expression) == 8);
 
-    assert!(size_of::<JSXText>() == 24);
+    assert!(size_of::<JSXText>() == 40);
     assert!(align_of::<JSXText>() == 8);
     assert!(offset_of!(JSXText, span) == 0);
     assert!(offset_of!(JSXText, value) == 8);
+    assert!(offset_of!(JSXText, raw) == 24);
 
     assert!(size_of::<TSThisParameter>() == 24);
     assert!(align_of::<TSThisParameter>() == 8);
@@ -2302,10 +2303,11 @@ const _: () = {
     assert!(offset_of!(JSXSpreadChild, span) == 0);
     assert!(offset_of!(JSXSpreadChild, expression) == 8);
 
-    assert!(size_of::<JSXText>() == 16);
+    assert!(size_of::<JSXText>() == 24);
     assert!(align_of::<JSXText>() == 4);
     assert!(offset_of!(JSXText, span) == 0);
     assert!(offset_of!(JSXText, value) == 8);
+    assert!(offset_of!(JSXText, raw) == 16);
 
     assert!(size_of::<TSThisParameter>() == 20);
     assert!(align_of::<TSThisParameter>() == 4);
