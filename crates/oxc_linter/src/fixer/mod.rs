@@ -8,6 +8,7 @@ use crate::LintContext;
 
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
+use oxc_allocator::{Allocator, CloneIn};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -222,6 +223,19 @@ pub struct Message<'a> {
     pub fix: Option<Fix<'a>>,
     span: Span,
     fixed: bool,
+}
+
+impl<'new> CloneIn<'new> for Message<'_> {
+    type Cloned = Message<'new>;
+
+    fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
+        Message {
+            error: self.error.clone(),
+            fix: self.fix.clone_in(allocator),
+            span: self.span,
+            fixed: self.fixed,
+        }
+    }
 }
 
 impl<'a> Message<'a> {

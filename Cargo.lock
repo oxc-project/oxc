@@ -1108,6 +1108,7 @@ checksum = "8c9c992b02b5b4c94ea26e32fe5bccb7aa7d9f390ab5c1221ff895bc7ea8b652"
 dependencies = [
  "equivalent",
  "hashbrown 0.15.2",
+ "rayon",
  "serde",
 ]
 
@@ -1835,6 +1836,7 @@ dependencies = [
  "fast-glob",
  "globset",
  "ignore",
+ "indexmap",
  "insta",
  "itertools",
  "javascript-globals",
@@ -1859,7 +1861,6 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "papaya",
  "phf",
  "project-root",
  "rayon",
@@ -1867,9 +1868,11 @@ dependencies = [
  "rust-lapper",
  "rustc-hash",
  "schemars",
+ "self_cell",
  "serde",
  "serde_json",
  "simdutf8",
+ "smallvec",
 ]
 
 [[package]]
