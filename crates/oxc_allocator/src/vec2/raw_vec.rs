@@ -655,7 +655,7 @@ impl<T> RawVec<'_, T> {
                 Some(layout) => {
                     debug_assert!(new_layout.align() == layout.align());
 
-                    realloc(self.a, self.ptr.cast(), layout, new_cap)
+                    realloc(self.a, self.ptr.cast(), layout, new_layout.size())
                 }
                 None => self.a.allocate(new_layout),
             };
