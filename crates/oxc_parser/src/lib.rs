@@ -199,15 +199,16 @@ pub struct ParseOptions {
     /// [`return`]: oxc_ast::ast::ReturnStatement
     pub allow_return_outside_function: bool,
 
-    /// Emit [`ParenthesizedExpression`]s in AST.
+    /// Emit [`ParenthesizedExpression`]s and [`TSParenthesizedType`] in AST.
     ///
     /// If this option is `true`, parenthesized expressions are represented by
-    /// (non-standard) [`ParenthesizedExpression`] nodes that have a single `expression` property
-    /// containing the expression inside parentheses.
+    /// (non-standard) [`ParenthesizedExpression`] and [`TSParenthesizedType`] nodes
+    /// that have a single `expression` property containing the expression inside parentheses.
     ///
     /// Default: `true`
     ///
     /// [`ParenthesizedExpression`]: oxc_ast::ast::ParenthesizedExpression
+    /// [`TSParenthesizedType`]: oxc_ast::ast::TSParenthesizedType
     pub preserve_parens: bool,
 
     /// Allow V8 runtime calls in the AST.
