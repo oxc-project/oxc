@@ -89,6 +89,7 @@
 //! [`Index`]: https://doc.rust-lang.org/std/ops/trait.Index.html
 //! [`IndexMut`]: https://doc.rust-lang.org/std/ops/trait.IndexMut.html
 //! [`vec!`]: ../../macro.vec.html
+#![expect(clippy::undocumented_unsafe_blocks)]
 
 mod raw_vec;
 
@@ -109,7 +110,7 @@ use core::slice;
 use raw_vec::RawVec;
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
-    p.offset(offset)
+    unsafe { p.offset(offset) }
 }
 
 fn partition_dedup_by<T, F>(s: &mut [T], mut same_bucket: F) -> (&mut [T], &mut [T])
@@ -190,7 +191,7 @@ where
             if !same_bucket(&mut *ptr_read, &mut *prev_ptr_write) {
                 if next_read != next_write {
                     let ptr_write = prev_ptr_write.offset(1);
-                    mem::swap(&mut *ptr_read, &mut *ptr_write);
+                    core::ptr::swap(ptr_read, ptr_write);
                 }
                 next_write += 1;
             }
@@ -201,12 +202,13 @@ where
     s.split_at_mut(next_write)
 }
 
+#[expect(clippy::cast_possible_wrap)]
 unsafe fn offset_from<T>(p: *const T, origin: *const T) -> isize
 where
     T: Sized,
 {
     let pointee_size = mem::size_of::<T>();
-    assert!(0 < pointee_size && pointee_size <= isize::max_value() as usize);
+    assert!(0 < pointee_size && isize::try_from(pointee_size).is_ok());
 
     // This is the same sequence that Clang emits for pointer subtraction.
     // It can be neither `nsw` nor `nuw` because the input is treated as
@@ -666,7 +668,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         capacity: usize,
         bump: &'bump Bump,
     ) -> Vec<'bump, T> {
-        Vec { buf: RawVec::from_raw_parts_in(ptr, capacity, bump), len: length }
+        unsafe { Vec { buf: RawVec::from_raw_parts_in(ptr, capacity, bump), len: length } }
     }
 
     /// Returns a shared reference to the allocator backing this `Vec`.
@@ -871,7 +873,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     ///
     /// assert_eq!(slice, [3, 2, 1]);
     /// ```
-    pub fn into_bump_slice_mut(mut self) -> &'bump mut [T] {
+    pub fn into_bump_slice_mut(self) -> &'bump mut [T] {
         let ptr = self.as_mut_ptr();
         let len = self.len();
         mem::forget(self);
@@ -1064,7 +1066,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(&*x, &[0, 1, 2, 3]);
     /// ```
     #[inline]
-    pub fn as_mut_ptr(&mut self) -> *mut T {
+    pub fn as_mut_ptr(&self) -> *mut T {
         // We shadow the slice method of the same name to avoid going through
         // `deref_mut`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
@@ -1354,7 +1356,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         F: FnMut(&mut T) -> K,
         K: PartialEq,
     {
-        self.dedup_by(|a, b| key(a) == key(b))
+        self.dedup_by(|a, b| key(a) == key(b));
     }
 
     /// Removes all but the first of consecutive elements in the vector satisfying a given equality
@@ -1471,7 +1473,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     pub fn append(&mut self, other: &mut Self) {
         unsafe {
-            self.append_elements(other.as_slice() as _);
+            self.append_elements(std::ptr::from_ref(other.as_slice()));
             other.set_len(0);
         }
     }
@@ -1479,11 +1481,13 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// Appends elements to `Self` from other buffer.
     #[inline]
     unsafe fn append_elements(&mut self, other: *const [T]) {
-        let count = (*other).len();
-        self.reserve(count);
-        let len = self.len();
-        ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len), count);
-        self.len += count;
+        unsafe {
+            let count = (*other).len();
+            self.reserve(count);
+            let len = self.len();
+            ptr::copy_nonoverlapping(other.cast::<T>(), self.as_mut_ptr().add(len), count);
+            self.len += count;
+        }
     }
 
     /// Creates a draining iterator that removes the specified range in the vector
@@ -1582,7 +1586,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn clear(&mut self) {
-        self.truncate(0)
+        self.truncate(0);
     }
 
     /// Returns the number of elements in the vector, also referred to
@@ -1729,7 +1733,7 @@ impl<'bump, T: 'bump + Clone> Vec<'bump, T> {
         let len = self.len();
 
         if new_len > len {
-            self.extend_with(new_len - len, ExtendElement(value))
+            self.extend_with(new_len - len, ExtendElement(value));
         } else {
             self.truncate(new_len);
         }
@@ -1759,7 +1763,7 @@ impl<'bump, T: 'bump + Clone> Vec<'bump, T> {
     ///
     /// [`extend`]: #method.extend
     pub fn extend_from_slice(&mut self, other: &[T]) {
-        self.extend(other.iter().cloned())
+        self.extend(other.iter().cloned());
     }
 }
 
@@ -1881,9 +1885,9 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
         //   range from the bump.
         unsafe {
             // Copy the contents of each slice onto the end of `self`
-            slices.iter().for_each(|slice| {
+            for slice in slices {
                 self.extend_from_slice_copy_unchecked(slice);
-            });
+            }
         }
     }
 }
@@ -1962,7 +1966,7 @@ impl<'a> SetLenOnDrop<'a> {
     }
 }
 
-impl<'a> Drop for SetLenOnDrop<'a> {
+impl Drop for SetLenOnDrop<'_> {
     #[inline]
     fn drop(&mut self) {
         *self.len = self.local_len;
@@ -1990,7 +1994,7 @@ impl<'bump, T: 'bump + PartialEq> Vec<'bump, T> {
     /// ```
     #[inline]
     pub fn dedup(&mut self) {
-        self.dedup_by(|a, b| a == b)
+        self.dedup_by(|a, b| a == b);
     }
 }
 
@@ -2021,11 +2025,11 @@ impl<'bump, T: 'bump + Clone> Clone for Vec<'bump, T> {
 impl<'bump, T: 'bump + Hash> Hash for Vec<'bump, T> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        Hash::hash(&**self, state)
+        Hash::hash(&**self, state);
     }
 }
 
-impl<'bump, T, I> Index<I> for Vec<'bump, T>
+impl<T, I> Index<I> for Vec<'_, T>
 where
     I: ::core::slice::SliceIndex<[T]>,
 {
@@ -2037,7 +2041,7 @@ where
     }
 }
 
-impl<'bump, T, I> IndexMut<I> for Vec<'bump, T>
+impl<T, I> IndexMut<I> for Vec<'_, T>
 where
     I: ::core::slice::SliceIndex<[T]>,
 {
@@ -2090,15 +2094,16 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
     ///     println!("{}", s);
     /// }
     /// ```
+    #[expect(clippy::cast_possible_wrap)]
     #[inline]
-    fn into_iter(mut self) -> IntoIter<'bump, T> {
+    fn into_iter(self) -> IntoIter<'bump, T> {
         unsafe {
             let begin = self.as_mut_ptr();
             // assume(!begin.is_null());
             let end = if mem::size_of::<T>() == 0 {
-                arith_offset(begin as *const i8, self.len() as isize) as *const T
+                arith_offset(begin as *const i8, self.len() as isize).cast::<T>()
             } else {
-                begin.add(self.len()) as *const T
+                begin.add(self.len()).cast_const()
             };
             mem::forget(self);
             IntoIter { phantom: PhantomData, ptr: begin, end }
@@ -2106,7 +2111,7 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
     }
 }
 
-impl<'a, 'bump, T> IntoIterator for &'a Vec<'bump, T> {
+impl<'a, T> IntoIterator for &'a Vec<'_, T> {
     type Item = &'a T;
     type IntoIter = slice::Iter<'a, T>;
 
@@ -2115,7 +2120,7 @@ impl<'a, 'bump, T> IntoIterator for &'a Vec<'bump, T> {
     }
 }
 
-impl<'a, 'bump, T> IntoIterator for &'a mut Vec<'bump, T> {
+impl<'a, T> IntoIterator for &'a mut Vec<'_, T> {
     type Item = &'a mut T;
     type IntoIter = slice::IterMut<'a, T>;
 
@@ -2192,9 +2197,9 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
 /// append the entire slice at once.
 ///
 /// [`copy_from_slice`]: https://doc.rust-lang.org/std/primitive.slice.html#method.copy_from_slice
-impl<'a, 'bump, T: 'a + Copy> Extend<&'a T> for Vec<'bump, T> {
+impl<'a, T: 'a + Copy> Extend<&'a T> for Vec<'_, T> {
     fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
-        self.extend(iter.into_iter().cloned())
+        self.extend(iter.into_iter().copied());
     }
 }
 
@@ -2307,13 +2312,13 @@ impl<'bump, T: 'bump> BorrowMut<[T]> for Vec<'bump, T> {
     }
 }
 
-impl<'bump, T> Drop for Vec<'bump, T> {
+impl<T> Drop for Vec<'_, T> {
     fn drop(&mut self) {
         unsafe {
             // use drop for [T]
             // use a raw slice to refer to the elements of the vector as weakest necessary type;
             // could avoid questions of validity in certain cases
-            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len))
+            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len));
         }
         // RawVec handles deallocation
     }
@@ -2351,7 +2356,7 @@ pub struct IntoIter<'bump, T> {
     end: *const T,
 }
 
-impl<'bump, T: fmt::Debug> fmt::Debug for IntoIter<'bump, T> {
+impl<T: fmt::Debug> fmt::Debug for IntoIter<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("IntoIter").field(&self.as_slice()).finish()
     }
@@ -2395,12 +2400,12 @@ impl<'bump, T: 'bump> IntoIter<'bump, T> {
     /// assert_eq!(into_iter.next().unwrap(), 'z');
     /// ```
     pub fn as_mut_slice(&mut self) -> &mut [T] {
-        unsafe { slice::from_raw_parts_mut(self.ptr as *mut T, self.len()) }
+        unsafe { slice::from_raw_parts_mut(self.ptr.cast_mut(), self.len()) }
     }
 }
 
-unsafe impl<'bump, T: Send> Send for IntoIter<'bump, T> {}
-unsafe impl<'bump, T: Sync> Sync for IntoIter<'bump, T> {}
+unsafe impl<T: Send> Send for IntoIter<'_, T> {}
+unsafe impl<T: Sync> Sync for IntoIter<'_, T> {}
 
 impl<'bump, T: 'bump> Iterator for IntoIter<'bump, T> {
     type Item = T;
@@ -2408,13 +2413,13 @@ impl<'bump, T: 'bump> Iterator for IntoIter<'bump, T> {
     #[inline]
     fn next(&mut self) -> Option<T> {
         unsafe {
-            if self.ptr as *const _ == self.end {
+            if self.ptr.cast() == self.end {
                 None
             } else if mem::size_of::<T>() == 0 {
                 // purposefully don't use 'ptr.offset' because for
                 // vectors with 0-size elements this would return the
                 // same pointer.
-                self.ptr = arith_offset(self.ptr as *const i8, 1) as *mut T;
+                self.ptr = arith_offset(self.ptr.cast::<i8>(), 1) as *mut T;
 
                 // Make up a value of this ZST.
                 Some(mem::zeroed())
@@ -2427,6 +2432,7 @@ impl<'bump, T: 'bump> Iterator for IntoIter<'bump, T> {
         }
     }
 
+    #[expect(clippy::cast_sign_loss)]
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let exact = if mem::size_of::<T>() == 0 {
@@ -2451,7 +2457,7 @@ impl<'bump, T: 'bump> DoubleEndedIterator for IntoIter<'bump, T> {
                 None
             } else if mem::size_of::<T>() == 0 {
                 // See above for why 'ptr.offset' isn't used
-                self.end = arith_offset(self.end as *const i8, -1) as *mut T;
+                self.end = arith_offset(self.end.cast::<i8>(), -1) as *mut T;
 
                 // Make up a value of this ZST.
                 Some(mem::zeroed())
@@ -2468,7 +2474,7 @@ impl<'bump, T: 'bump> ExactSizeIterator for IntoIter<'bump, T> {}
 
 impl<'bump, T: 'bump> FusedIterator for IntoIter<'bump, T> {}
 
-impl<'bump, T> Drop for IntoIter<'bump, T> {
+impl<T> Drop for IntoIter<'_, T> {
     fn drop(&mut self) {
         // drop all remaining elements
         self.for_each(drop);
@@ -2494,15 +2500,15 @@ impl<'a, 'bump, T: 'a + 'bump + fmt::Debug> fmt::Debug for Drain<'a, 'bump, T> {
     }
 }
 
-unsafe impl<'a, 'bump, T: Sync> Sync for Drain<'a, 'bump, T> {}
-unsafe impl<'a, 'bump, T: Send> Send for Drain<'a, 'bump, T> {}
+unsafe impl<T: Sync> Sync for Drain<'_, '_, T> {}
+unsafe impl<T: Send> Send for Drain<'_, '_, T> {}
 
-impl<'a, 'bump, T> Iterator for Drain<'a, 'bump, T> {
+impl<T> Iterator for Drain<'_, '_, T> {
     type Item = T;
 
     #[inline]
     fn next(&mut self) -> Option<T> {
-        self.iter.next().map(|elt| unsafe { ptr::read(elt as *const _) })
+        self.iter.next().map(|elt| unsafe { ptr::read(std::ptr::from_ref(elt)) })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -2510,14 +2516,14 @@ impl<'a, 'bump, T> Iterator for Drain<'a, 'bump, T> {
     }
 }
 
-impl<'a, 'bump, T> DoubleEndedIterator for Drain<'a, 'bump, T> {
+impl<T> DoubleEndedIterator for Drain<'_, '_, T> {
     #[inline]
     fn next_back(&mut self) -> Option<T> {
-        self.iter.next_back().map(|elt| unsafe { ptr::read(elt as *const _) })
+        self.iter.next_back().map(|elt| unsafe { ptr::read(std::ptr::from_ref(elt)) })
     }
 }
 
-impl<'a, 'bump, T> Drop for Drain<'a, 'bump, T> {
+impl<T> Drop for Drain<'_, '_, T> {
     fn drop(&mut self) {
         // exhaust self first
         self.for_each(drop);
@@ -2539,9 +2545,9 @@ impl<'a, 'bump, T> Drop for Drain<'a, 'bump, T> {
     }
 }
 
-impl<'a, 'bump, T> ExactSizeIterator for Drain<'a, 'bump, T> {}
+impl<T> ExactSizeIterator for Drain<'_, '_, T> {}
 
-impl<'a, 'bump, T> FusedIterator for Drain<'a, 'bump, T> {}
+impl<T> FusedIterator for Drain<'_, '_, T> {}
 
 /// A splicing iterator for `Vec`.
 ///
@@ -2553,7 +2559,7 @@ pub struct Splice<'a, 'bump, I: Iterator + 'a + 'bump> {
     replace_with: I,
 }
 
-impl<'a, 'bump, I: Iterator> Iterator for Splice<'a, 'bump, I> {
+impl<I: Iterator> Iterator for Splice<'_, '_, I> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -2565,15 +2571,15 @@ impl<'a, 'bump, I: Iterator> Iterator for Splice<'a, 'bump, I> {
     }
 }
 
-impl<'a, 'bump, I: Iterator> DoubleEndedIterator for Splice<'a, 'bump, I> {
+impl<I: Iterator> DoubleEndedIterator for Splice<'_, '_, I> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.drain.next_back()
     }
 }
 
-impl<'a, 'bump, I: Iterator> ExactSizeIterator for Splice<'a, 'bump, I> {}
+impl<I: Iterator> ExactSizeIterator for Splice<'_, '_, I> {}
 
-impl<'a, 'bump, I: Iterator> Drop for Splice<'a, 'bump, I> {
+impl<I: Iterator> Drop for Splice<'_, '_, I> {
     fn drop(&mut self) {
         self.drain.by_ref().for_each(drop);
 
@@ -2616,40 +2622,46 @@ impl<'a, 'bump, I: Iterator> Drop for Splice<'a, 'bump, I> {
 }
 
 /// Private helper methods for `Splice::drop`
-impl<'a, 'bump, T> Drain<'a, 'bump, T> {
+impl<T> Drain<'_, '_, T> {
     /// The range from `self.vec.len` to `self.tail_start` contains elements
     /// that have been moved out.
     /// Fill that range as much as possible with new elements from the `replace_with` iterator.
     /// Return whether we filled the entire range. (`replace_with.next()` didn’t return `None`.)
     unsafe fn fill<I: Iterator<Item = T>>(&mut self, replace_with: &mut I) -> bool {
-        let vec = self.vec.as_mut();
-        let range_start = vec.len;
-        let range_end = self.tail_start;
-        let range_slice =
-            slice::from_raw_parts_mut(vec.as_mut_ptr().add(range_start), range_end - range_start);
+        unsafe {
+            let vec = self.vec.as_mut();
+            let range_start = vec.len;
+            let range_end = self.tail_start;
+            let range_slice = slice::from_raw_parts_mut(
+                vec.as_mut_ptr().add(range_start),
+                range_end - range_start,
+            );
 
-        for place in range_slice {
-            if let Some(new_item) = replace_with.next() {
-                ptr::write(place, new_item);
-                vec.len += 1;
-            } else {
-                return false;
+            for place in range_slice {
+                if let Some(new_item) = replace_with.next() {
+                    ptr::write(place, new_item);
+                    vec.len += 1;
+                } else {
+                    return false;
+                }
             }
+            true
         }
-        true
     }
 
     /// Make room for inserting more elements before the tail.
     unsafe fn move_tail(&mut self, extra_capacity: usize) {
-        let vec = self.vec.as_mut();
-        let used_capacity = self.tail_start + self.tail_len;
-        vec.buf.reserve(used_capacity, extra_capacity);
+        unsafe {
+            let vec = self.vec.as_mut();
+            let used_capacity = self.tail_start + self.tail_len;
+            vec.buf.reserve(used_capacity, extra_capacity);
 
-        let new_tail_start = self.tail_start + extra_capacity;
-        let src = vec.as_ptr().add(self.tail_start);
-        let dst = vec.as_mut_ptr().add(new_tail_start);
-        ptr::copy(src, dst, self.tail_len);
-        self.tail_start = new_tail_start;
+            let new_tail_start = self.tail_start + extra_capacity;
+            let src = vec.as_ptr().add(self.tail_start);
+            let dst = vec.as_mut_ptr().add(new_tail_start);
+            ptr::copy(src, dst, self.tail_len);
+            self.tail_start = new_tail_start;
+        }
     }
 }
 
@@ -2666,7 +2678,7 @@ where
     pred: F,
 }
 
-impl<'a, 'bump, T, F> Iterator for DrainFilter<'a, 'bump, T, F>
+impl<T, F> Iterator for DrainFilter<'_, '_, T, F>
 where
     F: FnMut(&mut T) -> bool,
 {
@@ -2700,7 +2712,7 @@ where
     }
 }
 
-impl<'a, 'bump, T, F> Drop for DrainFilter<'a, 'bump, T, F>
+impl<T, F> Drop for DrainFilter<'_, '_, T, F>
 where
     F: FnMut(&mut T) -> bool,
 {
