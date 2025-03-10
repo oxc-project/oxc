@@ -2257,6 +2257,7 @@ impl ESTree for JSXText<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
+        state.serialize_field("raw", &self.raw);
         state.end();
     }
 }
