@@ -31,6 +31,7 @@ mod es2020;
 mod es2021;
 mod es2022;
 mod jsx;
+mod proposals;
 mod regexp;
 mod typescript;
 
@@ -49,6 +50,7 @@ use es2020::ES2020;
 use es2021::ES2021;
 use es2022::ES2022;
 use jsx::Jsx;
+use proposals::explicit_resource_management::ExplicitResourceManagement;
 use regexp::RegExp;
 use rustc_hash::FxHashMap;
 use typescript::TypeScript;
@@ -120,6 +122,7 @@ impl<'a> Transformer<'a> {
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
             decorator: Decorator::new(self.decorator, &self.ctx),
+            explicit_resource_management: ExplicitResourceManagement::new(&self.ctx),
             x0_typescript: program
                 .source_type
                 .is_typescript()
@@ -147,6 +150,7 @@ struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
     decorator: Decorator<'a, 'ctx>,
+    explicit_resource_management: ExplicitResourceManagement<'a, 'ctx>,
     x1_jsx: Jsx<'a, 'ctx>,
     x2_es2022: ES2022<'a, 'ctx>,
     x2_es2021: ES2021<'a, 'ctx>,
@@ -167,6 +171,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.enter_program(program, ctx);
         }
         self.x1_jsx.enter_program(program, ctx);
+        self.explicit_resource_management.enter_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -207,6 +212,10 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_variable_declarator(decl, ctx);
         }
+    }
+
+    fn enter_block_statement(&mut self, node: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.explicit_resource_management.enter_block_statement(node, ctx);
     }
 
     fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -269,6 +278,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_static_block(block, ctx);
         self.x2_es2022.enter_static_block(block, ctx);
+        self.explicit_resource_management.enter_static_block(block, ctx);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -372,6 +382,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
 
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_function_body(body, ctx);
+        self.explicit_resource_management.enter_function_body(body, ctx);
     }
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -480,6 +491,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statements(stmts, ctx);
         }
+        self.explicit_resource_management.enter_statements(stmts, ctx);
     }
 
     fn exit_arrow_function_expression(
@@ -536,6 +548,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.exit_statement(stmt, ctx);
         }
         self.decorator.enter_statement(stmt, ctx);
+        self.explicit_resource_management.enter_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
@@ -555,6 +568,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.enter_statement(stmt, ctx);
         }
         self.x2_es2018.enter_statement(stmt, ctx);
+        self.explicit_resource_management.enter_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -595,6 +609,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_for_of_statement(stmt, ctx);
         }
+        self.explicit_resource_management.enter_for_of_statement(stmt, ctx);
         self.x2_es2018.enter_for_of_statement(stmt, ctx);
     }
 

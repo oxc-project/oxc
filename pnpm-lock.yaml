@@ -116,6 +116,8 @@ importers:
 
   npm/runtime: {}
 
+  npm/wasm-web: {}
+
   tasks/compat_data:
     devDependencies:
       degit:
@@ -162,6 +164,9 @@ importers:
         specifier: ^7.25.9
         version: 7.25.9(@babel/core@7.26.9)
       '@babel/plugin-proposal-decorators':
+        specifier: ^7.25.9
+        version: 7.25.9(@babel/core@7.26.9)
+      '@babel/plugin-proposal-explicit-resource-management':
         specifier: ^7.25.9
         version: 7.25.9(@babel/core@7.26.9)
       '@babel/plugin-transform-arrow-functions':
@@ -389,6 +394,12 @@ packages:
 
   '@babel/plugin-proposal-decorators@7.25.9':
     resolution: {integrity: sha512-smkNLL/O1ezy9Nhy4CNosc4Va+1wo5w4gzSZeLe6y6dM4mmHfYOCPolXQPHQxonZCF+ZyebxN9vqOolkYrSn5g==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+
+  '@babel/plugin-proposal-explicit-resource-management@7.25.9':
+    resolution: {integrity: sha512-EbtfSvb6s4lZwef1nH52nw4DTUAvHY6bl1mbLgEHUkR6L8j4WY70mM/InB8Ozgdlok/7etbiSW+Wc88ZebZAKQ==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -3662,6 +3673,11 @@ snapshots:
       '@babel/plugin-syntax-decorators': 7.25.9(@babel/core@7.26.9)
     transitivePeerDependencies:
       - supports-color
+
+  '@babel/plugin-proposal-explicit-resource-management@7.25.9(@babel/core@7.26.9)':
+    dependencies:
+      '@babel/core': 7.26.9
+      '@babel/helper-plugin-utils': 7.26.5
 
   '@babel/plugin-syntax-decorators@7.25.9(@babel/core@7.26.9)':
     dependencies:
