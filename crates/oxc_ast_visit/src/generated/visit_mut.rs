@@ -3156,7 +3156,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_identifier(&mut it.namespace);
-        visitor.visit_jsx_identifier(&mut it.property);
+        visitor.visit_jsx_identifier(&mut it.name);
         visitor.leave_node(kind);
     }
 

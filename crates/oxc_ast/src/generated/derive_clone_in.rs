@@ -2670,7 +2670,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXNamespacedName<'_> {
         JSXNamespacedName {
             span: CloneIn::clone_in(&self.span, allocator),
             namespace: CloneIn::clone_in(&self.namespace, allocator),
-            property: CloneIn::clone_in(&self.property, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
         }
     }
 }

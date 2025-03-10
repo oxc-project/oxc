@@ -2061,7 +2061,7 @@ impl ESTree for JSXNamespacedName<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("namespace", &self.namespace);
-        state.serialize_field("property", &self.property);
+        state.serialize_field("name", &self.name);
         state.end();
     }
 }

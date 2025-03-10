@@ -45,8 +45,8 @@ impl<'a> Format<'a> for JSXElementName<'a> {
 impl<'a> Format<'a> for JSXNamespacedName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let namespace_doc = self.namespace.format(p);
-        let property_doc = self.property.format(p);
-        array!(p, [namespace_doc, text!(":"), property_doc])
+        let name_doc = self.name.format(p);
+        array!(p, [namespace_doc, text!(":"), name_doc])
     }
 }
 

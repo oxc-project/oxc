@@ -848,7 +848,7 @@ export type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpres
 export interface JSXNamespacedName extends Span {
   type: 'JSXNamespacedName';
   namespace: JSXIdentifier;
-  property: JSXIdentifier;
+  name: JSXIdentifier;
 }
 
 export interface JSXMemberExpression extends Span {

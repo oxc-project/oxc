@@ -8933,15 +8933,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_element_name_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXElementName<'a> {
-        JSXElementName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
+        JSXElementName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, name))
     }
 
     /// Build a [`JSXElementName::MemberExpression`].
@@ -8980,15 +8980,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXNamespacedName<'a> {
-        JSXNamespacedName { span, namespace, property }
+        JSXNamespacedName { span, namespace, name }
     }
 
     /// Build a [`JSXNamespacedName`], and store it in the memory arena.
@@ -8998,15 +8998,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn alloc_jsx_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> Box<'a, JSXNamespacedName<'a>> {
-        Box::new_in(self.jsx_namespaced_name(span, namespace, property), self.allocator)
+        Box::new_in(self.jsx_namespaced_name(span, namespace, name), self.allocator)
     }
 
     /// Build a [`JSXMemberExpression`].
@@ -9308,15 +9308,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_attribute_name_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXAttributeName<'a> {
-        JSXAttributeName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
+        JSXAttributeName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, name))
     }
 
     /// Build a [`JSXAttributeValue::StringLiteral`].

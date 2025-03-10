@@ -842,7 +842,7 @@ const _: () = {
     assert!(align_of::<JSXNamespacedName>() == 8);
     assert!(offset_of!(JSXNamespacedName, span) == 0);
     assert!(offset_of!(JSXNamespacedName, namespace) == 8);
-    assert!(offset_of!(JSXNamespacedName, property) == 32);
+    assert!(offset_of!(JSXNamespacedName, name) == 32);
 
     assert!(size_of::<JSXMemberExpression>() == 48);
     assert!(align_of::<JSXMemberExpression>() == 8);
@@ -2246,7 +2246,7 @@ const _: () = {
     assert!(align_of::<JSXNamespacedName>() == 4);
     assert!(offset_of!(JSXNamespacedName, span) == 0);
     assert!(offset_of!(JSXNamespacedName, namespace) == 8);
-    assert!(offset_of!(JSXNamespacedName, property) == 24);
+    assert!(offset_of!(JSXNamespacedName, name) == 24);
 
     assert!(size_of::<JSXMemberExpression>() == 32);
     assert!(align_of::<JSXMemberExpression>() == 4);

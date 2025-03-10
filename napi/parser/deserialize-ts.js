@@ -1233,7 +1233,7 @@ function deserializeJSXNamespacedName(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     namespace: deserializeJSXIdentifier(pos + 8),
-    property: deserializeJSXIdentifier(pos + 32),
+    name: deserializeJSXIdentifier(pos + 32),
   };
 }
 

@@ -432,7 +432,7 @@ impl<'a> ParserImpl<'a> {
                 JSXElementName::IdentifierReference(rhs),
             ) => lhs.name == rhs.name,
             (JSXElementName::NamespacedName(lhs), JSXElementName::NamespacedName(rhs)) => {
-                lhs.namespace.name == rhs.namespace.name && lhs.property.name == rhs.property.name
+                lhs.namespace.name == rhs.namespace.name && lhs.name.name == rhs.name.name
             }
             (JSXElementName::MemberExpression(lhs), JSXElementName::MemberExpression(rhs)) => {
                 Self::jsx_member_expression_eq(lhs, rhs)

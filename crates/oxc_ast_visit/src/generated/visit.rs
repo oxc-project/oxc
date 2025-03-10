@@ -3022,7 +3022,7 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_identifier(&it.namespace);
-        visitor.visit_jsx_identifier(&it.property);
+        visitor.visit_jsx_identifier(&it.name);
         visitor.leave_node(kind);
     }
 

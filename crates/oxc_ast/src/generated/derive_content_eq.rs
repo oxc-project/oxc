@@ -1552,7 +1552,7 @@ impl ContentEq for JSXElementName<'_> {
 impl ContentEq for JSXNamespacedName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.namespace, &other.namespace)
-            && ContentEq::content_eq(&self.property, &other.property)
+            && ContentEq::content_eq(&self.name, &other.name)
     }
 }
 
