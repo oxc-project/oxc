@@ -5,10 +5,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-fn no_lonely_if_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
+fn no_lonely_if_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `if` as the only statement in an `else` block")
-        .with_help("Consider using `else if` instead")
-        .with_labels([span, span1])
+        .with_help("Consider using `else if` instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -110,20 +110,20 @@ impl Rule for NoLonelyIf {
                 return;
             };
 
-            if let Statement::BlockStatement(b) = only_stmt {
-                if b.body.len() == 1 {
-                    if let Some(Statement::IfStatement(lonely_if)) = b.body.first() {
-                        ctx.diagnostic(no_lonely_if_diagnostic(
-                            Span::new(lonely_if.span.start, lonely_if.span.start + 2),
-                            Span::new(if_stmt.span.start, if_stmt.span.start + 2),
-                        ));
+            if let Statement::BlockStatement(inner_block) = only_stmt {
+                if inner_block.body.len() == 1 {
+                    if let Some(Statement::IfStatement(lonely_if)) = inner_block.body.first() {
+                        ctx.diagnostic(no_lonely_if_diagnostic(Span::new(
+                            lonely_if.span.start,
+                            lonely_if.span.start + 2,
+                        )));
                     };
                 }
             } else if let Statement::IfStatement(lonely_if) = only_stmt {
-                ctx.diagnostic(no_lonely_if_diagnostic(
-                    Span::new(lonely_if.span.start, lonely_if.span.start + 2),
-                    Span::new(if_stmt.span.start, if_stmt.span.start + 2),
-                ));
+                ctx.diagnostic(no_lonely_if_diagnostic(Span::new(
+                    lonely_if.span.start,
+                    lonely_if.span.start + 2,
+                )));
             };
         }
     }
