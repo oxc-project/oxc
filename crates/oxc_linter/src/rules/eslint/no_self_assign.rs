@@ -94,70 +94,75 @@ impl NoSelfAssign {
                     }
                 }
 
-                if let Some(member_target) = simple_assignment_target.as_member_expression() {
-                    if let Some(member_expr) = right.without_parentheses().get_member_expr() {
-                        if self.is_member_expression_same_reference(member_expr, member_target) {
-                            ctx.diagnostic(no_self_assign_diagnostic(member_expr.span()));
-                        }
-                    }
+                let Some(member_target) = simple_assignment_target.as_member_expression() else {
+                    return;
+                };
+
+                let Some(member_expr) = right.without_parentheses().get_member_expr() else {
+                    return;
+                };
+
+                if self.is_member_expression_same_reference(member_expr, member_target) {
+                    ctx.diagnostic(no_self_assign_diagnostic(member_expr.span()));
                 }
             }
 
             AssignmentTarget::ArrayAssignmentTarget(array_pattern) => {
-                if let Expression::ArrayExpression(array_expr) = right.without_parentheses() {
-                    let end =
-                        std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
-                    let mut i = 0;
-                    while i < end {
-                        let left = array_pattern.elements[i].as_ref();
-                        let right = &array_expr.elements[i];
+                let Expression::ArrayExpression(array_expr) = right.without_parentheses() else {
+                    return;
+                };
+                let end = std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
+                let mut i = 0;
+                while i < end {
+                    let left = array_pattern.elements[i].as_ref();
+                    let right = &array_expr.elements[i];
 
-                        if let Some(left) = left {
-                            if let Some(left_target) = left.as_assignment_target() {
-                                if let Some(expr) = right.as_expression() {
-                                    self.each_self_assignment(left_target, expr, ctx);
-                                }
+                    if let Some(left) = left {
+                        if let Some(left_target) = left.as_assignment_target() {
+                            if let Some(expr) = right.as_expression() {
+                                self.each_self_assignment(left_target, expr, ctx);
                             }
                         }
-
-                        // After a spread element, those indices are unknown.
-                        if let ArrayExpressionElement::SpreadElement(_) = right {
-                            break;
-                        }
-
-                        i += 1;
                     }
+
+                    // After a spread element, those indices are unknown.
+                    if let ArrayExpressionElement::SpreadElement(_) = right {
+                        break;
+                    }
+
+                    i += 1;
                 }
             }
 
             AssignmentTarget::ObjectAssignmentTarget(object_pattern) => {
-                if let Expression::ObjectExpression(object_expr) = right.get_inner_expression() {
-                    if !object_expr.properties.is_empty() {
-                        let mut start_j = 0;
-                        let mut i = object_expr.properties.len();
-                        while i >= 1 {
-                            if let ObjectPropertyKind::SpreadProperty(_) =
-                                object_expr.properties[i - 1]
-                            {
-                                start_j = i;
-                                break;
-                            }
-                            i -= 1;
+                let Expression::ObjectExpression(object_expr) = right.get_inner_expression() else {
+                    return;
+                };
+
+                if !object_expr.properties.is_empty() {
+                    let mut start_j = 0;
+                    let mut i = object_expr.properties.len();
+                    while i >= 1 {
+                        if let ObjectPropertyKind::SpreadProperty(_) = object_expr.properties[i - 1]
+                        {
+                            start_j = i;
+                            break;
                         }
+                        i -= 1;
+                    }
 
-                        let mut i = 0;
-                        while i < object_pattern.properties.len() {
-                            let mut j = start_j;
-                            while j < object_expr.properties.len() {
-                                let left = &object_pattern.properties[i];
-                                let right = &object_expr.properties[j];
+                    let mut i = 0;
+                    while i < object_pattern.properties.len() {
+                        let mut j = start_j;
+                        while j < object_expr.properties.len() {
+                            let left = &object_pattern.properties[i];
+                            let right = &object_expr.properties[j];
 
-                                self.each_property_self_assignment(left, right, ctx);
+                            self.each_property_self_assignment(left, right, ctx);
 
-                                j += 1;
-                            }
-                            i += 1;
+                            j += 1;
                         }
+                        i += 1;
                     }
                 }
             }
@@ -232,16 +237,18 @@ impl NoSelfAssign {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1)
                 if id1.init.is_none() =>
             {
-                if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
-                    if let ObjectProperty { method: false, value: expr, span, key, .. } =
-                        &**obj_prop
-                    {
-                        if key.static_name().is_some_and(|name| name == id1.binding.name) {
-                            if let Expression::Identifier(id2) = expr.without_parentheses() {
-                                if id1.binding.name == id2.name {
-                                    ctx.diagnostic(no_self_assign_diagnostic(*span));
-                                }
-                            }
+                let ObjectPropertyKind::ObjectProperty(obj_prop) = right else {
+                    return;
+                };
+
+                let ObjectProperty { method: false, value: expr, span, key, .. } = &**obj_prop
+                else {
+                    return;
+                };
+                if key.static_name().is_some_and(|name| name == id1.binding.name) {
+                    if let Expression::Identifier(id2) = expr.without_parentheses() {
+                        if id1.binding.name == id2.name {
+                            ctx.diagnostic(no_self_assign_diagnostic(*span));
                         }
                     }
                 }
@@ -255,14 +262,17 @@ impl NoSelfAssign {
                         return;
                     }
                 };
-                if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
-                    if let ObjectProperty { method: false, value: expr, key, .. } = &**obj_prop {
-                        let property_name = property.name.static_name();
-                        let key_name = key.static_name();
-                        if property_name.is_some() && property_name == key_name {
-                            self.each_self_assignment(left, expr, ctx);
-                        }
-                    }
+                let ObjectPropertyKind::ObjectProperty(obj_prop) = right else {
+                    return;
+                };
+                let ObjectProperty { method: false, value: expr, key, .. } = &**obj_prop else {
+                    return;
+                };
+
+                let property_name = property.name.static_name();
+                let key_name = key.static_name();
+                if property_name.is_some() && property_name == key_name {
+                    self.each_self_assignment(left, expr, ctx);
                 }
             }
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => {}
