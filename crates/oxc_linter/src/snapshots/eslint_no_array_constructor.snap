@@ -24,6 +24,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
    ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array();
+   · ───────
+   ╰────
+  help: Use an array literal instead
+
+  ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
+   ╭─[no_array_constructor.tsx:1:1]
  1 │ new Array(x, y)
    · ───────────────
    ╰────
@@ -38,6 +45,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
    ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array(...args);
+   · ──────────────────
+   ╰────
+  help: Use an array literal instead
+
+  ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(x, y)
+   · ───────────
+   ╰────
+  help: Use an array literal instead
+
+  ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
+   ╭─[no_array_constructor.tsx:1:1]
  1 │ Array(x, y)
    · ───────────
    ╰────
@@ -47,5 +68,40 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_array_constructor.tsx:1:1]
  1 │ Array(0, 1, 2)
    · ──────────────
+   ╰────
+  help: Use an array literal instead
+
+  ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(0, 1, 2)
+   · ──────────────
+   ╰────
+  help: Use an array literal instead
+
+  ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(...args);
+   · ──────────────
+   ╰────
+  help: Use an array literal instead
+
+  ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(...args);
+   · ──────────────
+   ╰────
+  help: Use an array literal instead
+
+  ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(1, 2, ...args);
+   · ────────────────────
+   ╰────
+  help: Use an array literal instead
+
+  ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(1, 2, ...args);
+   · ────────────────────
    ╰────
   help: Use an array literal instead

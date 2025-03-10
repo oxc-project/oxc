@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
@@ -64,6 +67,19 @@ impl Rule for NoArrayConstructor {
                 &new_expr.type_parameters,
                 false,
             ),
+            AstKind::ExpressionStatement(expr_stmt) => {
+                if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
+                    (
+                        call_expr.span,
+                        &call_expr.callee,
+                        &call_expr.arguments,
+                        &call_expr.type_parameters,
+                        call_expr.optional,
+                    )
+                } else {
+                    return;
+                }
+            }
             _ => {
                 return;
             }
@@ -73,8 +89,11 @@ impl Rule for NoArrayConstructor {
             return;
         };
 
+        // Checks if last argument is a spread element such as `Array(...args)` or `Array(1, 2, ...args)`.
+        let last_arg_is_spread = arguments.last().is_some_and(Argument::is_spread);
+
         if ident.is_global_reference_name("Array", ctx.scoping())
-            && arguments.len() != 1
+            && (arguments.len() != 1 || last_arg_is_spread)
             && type_parameters.is_none()
             && !optional
         {
@@ -121,8 +140,11 @@ fn test() {
         ("Array();", None),
         ("new Array(x, y)", None),
         ("new Array(0, 1, 2)", None),
+        ("new Array(...args);", None),
         ("Array(x, y)", None),
         ("Array(0, 1, 2)", None),
+        ("Array(...args);", None),
+        ("Array(1, 2, ...args);", None),
     ];
 
     Tester::new(NoArrayConstructor::NAME, NoArrayConstructor::PLUGIN, pass, fail)
