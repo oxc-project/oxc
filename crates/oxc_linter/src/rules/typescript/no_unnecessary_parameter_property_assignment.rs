@@ -8,24 +8,25 @@ use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_redundant_constructor_init_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Explicit initialization of public members is redundant")
-        .with_help("Remove the explicit initialization")
+fn no_unnecessary_parameter_property_assignment_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Assignment of parameter property is unnecessary")
+        .with_help("Remove the unnecessary assignment")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct NoRedundantConstructorInit;
+pub struct NoUnnecessaryParameterPropertyAssignment;
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevents redundant initialization of class members within a constructor.
+    /// Prevents unnecessary assignment of parameter properties.
     ///
     /// ### Why is this bad?
     ///
-    /// Arguments marked as `public` within a constructor are automatically initialized.
-    /// Providing an explicit initialization is redundant and can be removed.
+    /// Constructor parameters marked with one of the visibility modifiers
+    /// public, private, protected, or readonly are automatically initialized.
+    /// Providing an explicit assignment is unnecessary and can be removed.
     ///
     /// ### Examples
     ///
@@ -44,13 +45,13 @@ declare_oxc_lint!(
     ///   constructor(public name: unknown) {}
     /// }
     /// ```
-    NoRedundantConstructorInit,
-    oxc,
-    correctness,
+    NoUnnecessaryParameterPropertyAssignment,
+    typescript,
+    nursery, // TODO: import tests from typescript-eslint, fix them and change back to correctness
     pending,
 );
 
-impl Rule for NoRedundantConstructorInit {
+impl Rule for NoUnnecessaryParameterPropertyAssignment {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::MethodDefinition(method) = node.kind() else {
             return;
@@ -96,7 +97,9 @@ impl Rule for NoRedundantConstructorInit {
                     continue;
                 }
 
-                ctx.diagnostic(no_redundant_constructor_init_diagnostic(assignment_expr.span));
+                ctx.diagnostic(no_unnecessary_parameter_property_assignment_diagnostic(
+                    assignment_expr.span,
+                ));
             }
         }
     }
@@ -196,6 +199,11 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoRedundantConstructorInit::NAME, NoRedundantConstructorInit::PLUGIN, pass, fail)
-        .test_and_snapshot();
+    Tester::new(
+        NoUnnecessaryParameterPropertyAssignment::NAME,
+        NoUnnecessaryParameterPropertyAssignment::PLUGIN,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }
