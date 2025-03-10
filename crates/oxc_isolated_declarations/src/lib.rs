@@ -79,7 +79,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
+    pub fn build(mut self, program: &'a Program<'a>) -> IsolatedDeclarationsReturn<'a> {
         self.internal_annotations = self
             .strip_internal
             .then(|| Self::build_internal_annotations(program))
@@ -132,7 +132,7 @@ impl<'a> IsolatedDeclarations<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    fn transform_program(&mut self, program: &Program<'a>) -> ArenaVec<'a, Statement<'a>> {
+    fn transform_program(&mut self, program: &'a Program<'a>) -> ArenaVec<'a, Statement<'a>> {
         let has_import_or_export = program.body.iter().any(Statement::is_module_declaration);
 
         if has_import_or_export {
@@ -144,7 +144,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn transform_program_without_module_declaration(
         &mut self,
-        stmts: &ArenaVec<'a, Statement<'a>>,
+        stmts: &'a ArenaVec<'a, Statement<'a>>,
     ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
@@ -166,7 +166,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn transform_statements_on_demand(
         &mut self,
-        stmts: &ArenaVec<'a, Statement<'a>>,
+        stmts: &'a ArenaVec<'a, Statement<'a>>,
     ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 

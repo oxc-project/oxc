@@ -105,7 +105,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn transform_ts_module_block(
         &mut self,
-        block: &ArenaBox<'a, TSModuleBlock<'a>>,
+        block: &'a ArenaBox<'a, TSModuleBlock<'a>>,
     ) -> ArenaBox<'a, TSModuleBlock<'a>> {
         // We need to enter a new scope for the module block, avoid add binding to the parent scope
         // TODO: doesn't have a scope_id!
@@ -117,7 +117,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub(crate) fn transform_ts_module_declaration(
         &mut self,
-        decl: &ArenaBox<'a, TSModuleDeclaration<'a>>,
+        decl: &'a ArenaBox<'a, TSModuleDeclaration<'a>>,
     ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         if decl.declare {
             return decl.clone_in(self.ast.allocator);
@@ -153,7 +153,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub(crate) fn transform_declaration(
         &mut self,
-        decl: &Declaration<'a>,
+        decl: &'a Declaration<'a>,
         check_binding: bool,
     ) -> Option<Declaration<'a>> {
         match decl {

@@ -105,6 +105,9 @@ impl<'alloc> String<'alloc> {
     /// Caller must ensure this `Vec<u8>` comprises a valid UTF-8 string.
     //
     // `#[inline(always)]` because this is a no-op at runtime
+    // Allowing the following clippy rule because this function will take out the `Vec`'s data and
+    // then it would be logically uninitialized, so it shouldn't be used after calling this function.
+    #[expect(clippy::needless_pass_by_value)]
     #[inline(always)]
     pub unsafe fn from_utf8_unchecked(bytes: Vec<'alloc, u8>) -> String<'alloc> {
         // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
@@ -112,8 +115,10 @@ impl<'alloc> String<'alloc> {
         // SAFETY: Conversion is safe because both types store data in arena in same way.
         // Lifetime of returned `String` is same as lifetime of original `Vec<u8>`.
         unsafe {
-            let inner = ManuallyDrop::into_inner(bytes.0);
-            let (ptr, len, capacity, bump) = inner.into_raw_parts_with_alloc();
+            let ptr = bytes.as_mut_ptr();
+            let len = bytes.len();
+            let capacity = bytes.capacity();
+            let bump = bytes.bump();
             Self(ManuallyDrop::new(BumpaloString::from_raw_parts_in(ptr, len, capacity, bump)))
         }
     }
