@@ -50,7 +50,14 @@ declare_oxc_lint!(
 );
 
 fn is_hex(iter: &Chars, count: usize) -> bool {
-    iter.clone().take(count).all(|c| c.is_ascii_hexdigit())
+    let mut iter = iter.clone();
+    for _ in 0..count {
+        match iter.next() {
+            Some(c) if c.is_ascii_hexdigit() => continue,
+            _ => return false,
+        }
+    }
+    true
 }
 
 // /(?<=(?:^|[^\\])(?:\\\\)*\\)(?<data>x[\dA-Fa-f]{2}|u[\dA-Fa-f]{4}|u{[\dA-Fa-f]+})/g
@@ -196,6 +203,8 @@ fn test() {
         r#"const foo = new RegExp("/\u{1D306}/", "u")"#,
         r#"const foo = new RegExp("/\ca/")"#,
         r#"const foo = new RegExp("/\cA/")"#,
+        // Issue: <https://github.com/oxc-project/oxc/issues/9583>
+        r"const foo = e`\u`;",
     ];
 
     let fail = vec![
