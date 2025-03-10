@@ -16,6 +16,7 @@ use std::{
 };
 
 use allocator_api2::vec::Vec as InnerVec;
+use assert_unchecked::assert_unchecked;
 use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
@@ -200,6 +201,54 @@ impl<'alloc, T> Vec<'alloc, T> {
         // unique ownership of the data (no aliasing).
         // `ptr` was created from a `&mut [T]`.
         unsafe { Box::from_non_null(ptr) }
+    }
+
+    /// Appends an element to the end of the [`Vec`].
+    ///
+    /// # Panics
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_allocator::{Allocator, Vec};
+    /// # let allocator = Allocator::new();
+    /// let mut vec = Vec::new_in(&allocator);
+    /// vec.push(1);
+    /// vec.push(2);
+    /// vec.push(3);
+    /// assert_eq!(vec, [1, 2, 3]);
+    /// ```
+    //
+    // Override `allocator_api2::vec::Vec`'s `push` method, because it's inefficient.
+    //
+    // Its fast path is for the case when the `Vec` is full to capacity, and needs to grow.
+    // But growth strategy is doubling, so it's far more common that there is already sufficient
+    // capacity. So that should be the fast path.
+    //
+    // Achieve this by delegating the slow path to `push_slow`, which is marked `#[cold]`
+    // and `#[inline(never)]`. Both branches just call `push` on the inner `Vec`, but this arrangement
+    // guides the compiler to optimize `push` for the common case.
+    #[inline(always)]
+    pub fn push(&mut self, value: T) {
+        if self.len() == self.capacity() {
+            // SAFETY: Vector is full to capacity
+            unsafe { self.push_slow(value) };
+        } else {
+            self.0.push(value);
+        }
+    }
+
+    /// Push when vector is already full to capacity.
+    /// i.e. `self.len() == self.capacity()`.
+    ///
+    /// # SAFETY
+    /// Vector must be full to capacity.
+    #[cold]
+    #[inline(never)]
+    unsafe fn push_slow(&mut self, value: T) {
+        // SAFETY: Caller guarantees vector is full to capacity
+        unsafe { assert_unchecked!(self.len() == self.capacity()) };
+        self.0.push(value);
     }
 }
 
