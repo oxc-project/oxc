@@ -196,6 +196,8 @@ impl<'alloc> String<'alloc> {
     /// * The memory at `ptr` needs to have been previously allocated by the same [`Allocator`].
     /// * `length` needs to be less than or equal to `capacity`.
     /// * `capacity` needs to be the correct value.
+    /// * The region of memory starting at `ptr` and spanning `length` bytes must contain a valid
+    ///   UTF-8 string.
     ///
     /// Violating these may cause problems like corrupting the allocator's internal data structures.
     ///
@@ -205,7 +207,6 @@ impl<'alloc> String<'alloc> {
     ///
     /// # Examples
     /// ```
-    /// use std::mem;
     /// use oxc_allocator::{Allocator, String};
     ///
     /// let allocator = Allocator::default();
