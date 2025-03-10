@@ -43,7 +43,7 @@ pub struct Runtime {
 
 /// Output of `Runtime::process_path`
 struct ModuleProcessOutput {
-    /// All paths in `Runtime` are store as `OsStr`, because `OsStr` hash is faster
+    /// All paths in `Runtime` are stored as `OsStr`, because `OsStr` hash is faster
     /// than `Path` - go checkout their source code.
     path: Arc<OsStr>,
     processed_module: ProcessedModule,
@@ -66,10 +66,15 @@ struct ProcessedModule {
     content: Option<ModuleContent>,
 }
 
+struct ResolvedModuleRequest {
+    specifier: CompactStr,
+    resolved_requested_path: Arc<OsStr>,
+}
+
 /// ModuleRecord with all specifiers in import statements resolved to real paths.
 struct ResolvedModuleRecord {
     module_record: Arc<ModuleRecord>,
-    requested_module_paths: Vec<(/*specifier*/ CompactStr, Arc<OsStr>)>,
+    resolved_module_requests: Vec<ResolvedModuleRequest>,
 }
 
 self_cell! {
@@ -96,15 +101,16 @@ struct SectionContent<'a> {
     semantic: Option<Semantic<'a>>,
 }
 
-/// A module ready for linting. A `EntryModule` is generated for each path in `runtime.paths`
+/// A module with its source text and semantic, ready to be linted.
 ///
-/// It's basically the same as `ProcessedModule`, except `content` is non-Option.
-struct EntryModule {
+/// A `ModuleWithContent` is generated for each path in `runtime.paths`. It's basically the same
+/// as `ProcessedModule`, except `content` is non-Option.
+struct ModuleToLint {
     path: Arc<OsStr>,
     section_module_records: SmallVec<[Result<Arc<ModuleRecord>, Vec<OxcDiagnostic>>; 1]>,
     content: ModuleContent,
 }
-impl EntryModule {
+impl ModuleToLint {
     fn from_processed_module(path: Arc<OsStr>, processed_module: ProcessedModule) -> Option<Self> {
         let content = processed_module.content?;
         Some(Self {
@@ -193,22 +199,22 @@ impl Runtime {
 
     /// Prepare entry modules for linting.
     ///
-    /// `on_entry` is called for each entry modules in `self.paths` when it's ready for linting,
+    /// `on_module_to_lint` is called for each entry modules in `self.paths` when it's ready for linting,
     /// which means all its dependencies are resolved if import plugin is enabled.
     fn resolve_modules<'a>(
         &'a mut self,
         scope: &Scope<'a>,
         check_syntax_errors: bool,
         tx_error: &'a DiagnosticSender,
-        on_entry: impl Fn(&'a Self, EntryModule) + Send + Sync + Clone + 'a,
+        on_module_to_lint: impl Fn(&'a Self, ModuleToLint) + Send + Sync + Clone + 'a,
     ) {
         if self.resolver.is_none() {
             self.paths.par_iter().for_each(|path| {
                 let output = self.process_path(Arc::clone(path), check_syntax_errors, tx_error);
                 let entry =
-                    EntryModule::from_processed_module(output.path, output.processed_module)
+                    ModuleToLint::from_processed_module(output.path, output.processed_module)
                         .unwrap();
-                on_entry(self, entry);
+                on_module_to_lint(self, entry);
             });
             return;
         }
@@ -240,82 +246,98 @@ impl Runtime {
         // This heuristic is not always true, but it works well enough for real world codebases.
         self.paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
 
-        // The general idea is processing entries and their dependencies in groups. We start from a group of entries
-        // that is small enough to hold in memory but big enough to make use of the rayon thread pool. We build the
-        // module graph from this group of entries, run lint on them, drop their content but keep the module
+        // The general idea is processing `self.paths` and their dependencies in groups. We start from a group of modules
+        // in `self.paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
+        // We build the module graph from one group, run lint on them, drop sources and semantics but keep the module
         // graph, and then move on to the next group.
         // This size is empirical based on AFFiNE@97cc814a.
-        let entry_group_size = rayon::current_num_threads() * 4;
+        let group_size = rayon::current_num_threads() * 4;
 
-        // only stores entry modules in current group
-        let mut entry_modules: Vec<EntryModule> = Vec::with_capacity(entry_group_size);
+        // Stores modules that belongs to `self.paths` in current group.
+        // They are passed to `on_module_to_lint` at the end of each group.
+        let mut modules_to_lint: Vec<ModuleToLint> = Vec::with_capacity(group_size);
 
-        // downgrade self to immutable reference so it can be shared among spawned tasks.
+        // Set self to immutable reference so it can be shared among spawned tasks.
         let me: &Self = self;
 
-        // the module graph
+        // The module graph keyed by module paths. It is looked up when populating `loaded_modules`.
+        // The values are module records of sections (check the docs of `ProcessedModule.section_module_records`)
+        // Its entries are kept across groups because modules discovered in former groups could be referenced by modules in latter groups.
         let mut modules_by_path =
-            FxHashMap::<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>>::default();
+            FxHashMap::<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>>::with_capacity_and_hasher(
+                me.paths.len(),
+                FxBuildHasher,
+            );
 
         // `encountered_paths` prevents duplicated processing.
         // It is a superset of keys of `modules_by_path` as it also contains paths that are queued to process.
         let mut encountered_paths =
             FxHashSet::<Arc<OsStr>>::with_capacity_and_hasher(me.paths.len(), FxBuildHasher);
 
-        let mut module_relationships =
-            Vec::<(Arc<OsStr>, SmallVec<[Vec<(/*specifier*/ CompactStr, Arc<OsStr>)>; 1]>)>::new();
+        // Resolved module requests from modules in current group.
+        // This is used to populate `loaded_modules` at the end of each group.
+        let mut module_paths_and_resolved_requests =
+            Vec::<(Arc<OsStr>, SmallVec<[Vec<ResolvedModuleRequest>; 1]>)>::new();
 
-        let (tx_resolve_output, rx_resolve_output) = mpsc::channel::<ModuleProcessOutput>();
+        // There are two kinds of threads. Let's call them the graph thread and module threads.
+        // - The graph thread is the one thread that calls `resolve_modules`. It's the only thread that updates the module graph, so no need for locks.
+        // - Module threads accept paths and produces `ModuleProcessOutput` (the logic is in `self.process_path`). They are isolated to each
+        //   other and paralleled in the rayon thread pool.
 
+        // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
+        let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
+
+        // The cursor of `self.paths` that points to the start path of the next group.
         let mut group_start = 0usize;
+
+        // The group loop. Each iteration of this loop processes a group of modules.
         while group_start < me.paths.len() {
+            // How many modules are queued but not processed in this group.
             let mut pending_module_count = 0;
 
-            // Spawning tasks to processing entries
-            while pending_module_count < entry_group_size && group_start < me.paths.len() {
+            // Bootstrap the group by processing modules to be linted.
+            while pending_module_count < group_size && group_start < me.paths.len() {
                 let path = &me.paths[group_start];
                 group_start += 1;
+
+                // Check if this module to be linted is already processed as a dependency in former groups
                 if encountered_paths.insert(Arc::clone(path)) {
                     pending_module_count += 1;
                     let path = Arc::clone(path);
-                    let tx_resolve_output = tx_resolve_output.clone();
+                    let tx_process_output = tx_process_output.clone();
                     scope.spawn(move |_| {
-                        tx_resolve_output
+                        tx_process_output
                             .send(me.process_path(path, check_syntax_errors, tx_error))
                             .unwrap();
                     });
                 }
             }
 
-            // Loop until all queued modules in this group are processed
+            // Loop until all queued modules in this group are processed.
+            // Each iteration adds one module to the module graph.
             while pending_module_count > 0 {
                 let Ok(ModuleProcessOutput { path, mut processed_module }) =
-                    rx_resolve_output.try_recv()
+                    // Most heavy-lifting is done in the module threads. The graph thread would be mostly idle if it
+                    // only updates the graph and blocks on awaiting `rx_process_output`.
+                    // To avoid this waste, the graph module peeks the `rx_process_output` without blocking, and ...
+                    rx_process_output.try_recv()
                 else {
-                    // Don't block on receiving rx_resolve_output.
-                    // Instead, yield this thread so it can help process modules or run lint.
+                    // yield if `rx_process_output` is empty, giving rayon chances to dispatch module processing or linting to this thread.
                     rayon::yield_now();
                     continue;
                 };
                 pending_module_count -= 1;
-                let records: SmallVec<[Arc<ModuleRecord>; 1]> = processed_module
-                    .section_module_records
-                    .iter()
-                    .filter_map(|resolved_module_record| {
-                        Some(Arc::clone(&resolved_module_record.as_ref().ok()?.module_record))
-                    })
-                    .collect();
 
-                modules_by_path.insert(Arc::clone(&path), records);
-
+                // Spawns tasks for processing dependencies to module threads
                 for record_result in &processed_module.section_module_records {
                     let Ok(record) = record_result.as_ref() else {
                         continue;
                     };
-                    for (_, dep_path) in &record.requested_module_paths {
+                    for request in &record.resolved_module_requests {
+                        let dep_path = &request.resolved_requested_path;
                         if encountered_paths.insert(Arc::clone(dep_path)) {
                             scope.spawn({
-                                let tx_resolve_output = tx_resolve_output.clone();
+                                let tx_resolve_output = tx_process_output.clone();
                                 let dep_path = Arc::clone(dep_path);
                                 move |_| {
                                     tx_resolve_output
@@ -332,26 +354,45 @@ impl Runtime {
                     }
                 }
 
-                module_relationships.push((
+                // Populate this module to `modules_by_path`
+                modules_by_path.insert(
+                    Arc::clone(&path),
+                    processed_module
+                        .section_module_records
+                        .iter()
+                        .filter_map(|resolved_module_record| {
+                            Some(Arc::clone(&resolved_module_record.as_ref().ok()?.module_record))
+                        })
+                        .collect(),
+                );
+
+                // We want to write to `loaded_modules` when the dependencies of this module are processed, but it's hard
+                // to track when that happens, so here we store dependency relationships in `module_paths_and_resolved_requests`,
+                // and use it to populate `loaded_modules` after `pending_module_count` reaches 0. That's when all dependencies
+                // in this group are processed.
+                module_paths_and_resolved_requests.push((
                     Arc::clone(&path),
                     processed_module
                         .section_module_records
                         .iter_mut()
                         .filter_map(|record_result| {
-                            Some(take(&mut record_result.as_mut().ok()?.requested_module_paths))
+                            Some(take(&mut record_result.as_mut().ok()?.resolved_module_requests))
                         })
                         .collect(),
                 ));
 
+                // This module has `content` which means it's one of `self.paths`.
+                // Store it to `modules_to_lint`
                 if let Some(entry_module) =
-                    EntryModule::from_processed_module(path, processed_module)
+                    ModuleToLint::from_processed_module(path, processed_module)
                 {
-                    entry_modules.push(entry_module);
+                    modules_to_lint.push(entry_module);
                 }
-            }
+            } // while pending_module_count > 0
 
-            // Writing to `loaded_modules` based on `module_relationships`
-            module_relationships.par_drain(..).for_each(|(path, requested_module_paths)| {
+            // Now all dependencies in this group are processed.
+            // Writing to `loaded_modules` based on `module_paths_and_resolved_requests`
+            module_paths_and_resolved_requests.par_drain(..).for_each(|(path, requested_module_paths)| {
                 if requested_module_paths.is_empty() {
                     return;
                 }
@@ -361,18 +402,20 @@ impl Runtime {
                     records.iter().zip(requested_module_paths.into_iter())
                 {
                     let mut loaded_modules = record.loaded_modules.write().unwrap();
-                    for (specifier, dep_path) in requested_module_paths {
+                    for request in requested_module_paths {
                         // TODO: revise how to store multiple sections in loaded_modules
-                        let Some(dep_module_record) = modules_by_path[&dep_path].last() else {
+                        let Some(dep_module_record) =
+                            modules_by_path[&request.resolved_requested_path].last()
+                        else {
                             continue;
                         };
-                        loaded_modules.insert(specifier, Arc::clone(dep_module_record));
+                        loaded_modules.insert(request.specifier, Arc::clone(dep_module_record));
                     }
                 }
             });
             #[expect(clippy::iter_with_drain)]
-            for entry in entry_modules.drain(..) {
-                let on_entry = on_entry.clone();
+            for entry in modules_to_lint.drain(..) {
+                let on_entry = on_module_to_lint.clone();
                 scope.spawn(move |_| {
                     on_entry(me, entry);
                 });
@@ -385,8 +428,8 @@ impl Runtime {
     #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
         rayon::scope(|scope| {
-            self.resolve_modules(scope, true, tx_error, |me, mut entry_module| {
-                entry_module.content.with_dependent_mut(|owner, sections| {
+            self.resolve_modules(scope, true, tx_error, |me, mut module_to_lint| {
+                module_to_lint.content.with_dependent_mut(|owner, sections| {
                     // If there are fixes, we will accumulate all of them and write to the file at the end.
                     // This means we do not write multiple times to the same file if there are multiple sources
                     // in the same file (for example, multiple scripts in an `.astro` file).
@@ -396,11 +439,11 @@ impl Runtime {
                     // source code after each fix.
                     let mut fix_offset: i32 = 0;
 
-                    let path = Path::new(&entry_module.path);
+                    let path = Path::new(&module_to_lint.path);
 
-                    assert_eq!(entry_module.section_module_records.len(), sections.len());
+                    assert_eq!(module_to_lint.section_module_records.len(), sections.len());
                     for (record_result, section) in
-                        entry_module.section_module_records.into_iter().zip(sections.drain(..))
+                        module_to_lint.section_module_records.into_iter().zip(sections.drain(..))
                     {
                         let mut messages = match record_result {
                             Ok(module_record) => me.linter.run(
@@ -637,21 +680,24 @@ impl Runtime {
 
         let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
 
-        let mut requested_module_paths: Vec<(CompactStr, Arc<OsStr>)> = vec![];
+        let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
         // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
             // Retrieve all dependent modules from this module.
             let dir = path.parent().unwrap();
-            requested_module_paths = module_record
+            resolved_module_requests = module_record
                 .requested_modules
-                .par_iter()
-                .filter_map(|(specifier, _)| {
+                .keys()
+                .filter_map(|specifier| {
                     let resolution = resolver.resolve(dir, specifier).ok()?;
-                    Some((specifier.clone(), Arc::<OsStr>::from(resolution.path().as_os_str())))
+                    Some(ResolvedModuleRequest {
+                        specifier: specifier.clone(),
+                        resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
+                    })
                 })
                 .collect();
         }
-        Ok((ResolvedModuleRecord { module_record, requested_module_paths }, semantic))
+        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic))
     }
 }
