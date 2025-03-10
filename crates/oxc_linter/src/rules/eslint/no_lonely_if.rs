@@ -92,11 +92,11 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        let Some(ref alt) = if_stmt.alternate else {
+        let Some(ref alternate) = if_stmt.alternate else {
             return;
         };
 
-        let BlockStatement(b) = alt else {
+        let BlockStatement(b) = alternate else {
             return;
         };
 
@@ -112,16 +112,14 @@ impl Rule for NoLonelyIf {
 
             if let Statement::BlockStatement(b) = only_stmt {
                 if b.body.len() == 1 {
-                    if let Some(Statement::IfStatement(lone_if)) = b.body.first() {
+                    if let Some(Statement::IfStatement(lonely_if)) = b.body.first() {
                         ctx.diagnostic(no_lonely_if_diagnostic(
-                            Span::new(lone_if.span.start, lone_if.span.start + 2),
+                            Span::new(lonely_if.span.start, lonely_if.span.start + 2),
                             Span::new(if_stmt.span.start, if_stmt.span.start + 2),
                         ));
                     };
                 }
-            };
-
-            if let Statement::IfStatement(lonely_if) = only_stmt {
+            } else if let Statement::IfStatement(lonely_if) = only_stmt {
                 ctx.diagnostic(no_lonely_if_diagnostic(
                     Span::new(lonely_if.span.start, lonely_if.span.start + 2),
                     Span::new(if_stmt.span.start, if_stmt.span.start + 2),
