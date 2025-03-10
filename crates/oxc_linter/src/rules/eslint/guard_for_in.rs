@@ -16,15 +16,47 @@ pub struct GuardForIn;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// This rule is aimed at preventing unexpected behavior that could arise from using a for in loop without filtering the results in the loop. As such, it will warn when for in loops do not filter their results with an if statement.
+    ///
+    /// Require for-in loops to include an if statement.
     ///
     /// ### Why is this bad?
     ///
+    /// Looping over objects with a `for in` loop will include properties that are inherited through
+    /// the prototype chain. Using a `for in` loop without filtering the results in the loop can
+    /// lead to unexpected items in your for loop which can then lead to unexpected behaviour.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
     /// ```javascript
     /// for (key in foo) {
+    ///   doSomething(key);
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// for (key in foo) {
+    ///   if (Object.hasOwn(foo, key)) {
     ///     doSomething(key);
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// for (key in foo) {
+    ///   if (Object.prototype.hasOwnProperty.call(foo, key)) {
+    ///     doSomething(key);
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// ```javascript
+    /// for (key in foo) {
+    ///    if ({}.hasOwnProperty.call(foo, key)) {
+    ///        doSomething(key);
+    ///    }
     /// }
     /// ```
     GuardForIn,
