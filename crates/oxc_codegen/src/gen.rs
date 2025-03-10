@@ -2431,7 +2431,7 @@ impl Gen for JSXNamespacedName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.namespace.print(p, ctx);
         p.print_colon();
-        self.property.print(p, ctx);
+        self.name.print(p, ctx);
     }
 }
 

@@ -178,7 +178,7 @@ pub struct JSXNamespacedName<'a> {
     /// Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     pub namespace: JSXIdentifier<'a>,
     /// Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
-    pub property: JSXIdentifier<'a>,
+    pub name: JSXIdentifier<'a>,
 }
 
 /// JSX Member Expression

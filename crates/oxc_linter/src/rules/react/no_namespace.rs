@@ -51,7 +51,7 @@ impl Rule for NoNamespace {
                 if let JSXElementName::NamespacedName(namespaced_name) = &element.name {
                     let component_name_with_ns = format!(
                         "{}:{}",
-                        namespaced_name.namespace.name, namespaced_name.property.name
+                        namespaced_name.namespace.name, namespaced_name.name.name
                     );
 
                     ctx.diagnostic(no_namespace_diagnostic(

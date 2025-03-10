@@ -3350,10 +3350,10 @@ unsafe fn walk_jsx_namespaced_name<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_NAMESPACE) as *mut JSXIdentifier,
         ctx,
     );
-    ctx.retag_stack(AncestorType::JSXNamespacedNameProperty);
+    ctx.retag_stack(AncestorType::JSXNamespacedNameName);
     walk_jsx_identifier(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_PROPERTY) as *mut JSXIdentifier,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_NAME) as *mut JSXIdentifier,
         ctx,
     );
     ctx.pop_stack(pop_token);

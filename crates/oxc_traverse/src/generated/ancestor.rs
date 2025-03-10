@@ -202,7 +202,7 @@ pub(crate) enum AncestorType {
     JSXFragmentClosingFragment = 179,
     JSXFragmentChildren = 180,
     JSXNamespacedNameNamespace = 181,
-    JSXNamespacedNameProperty = 182,
+    JSXNamespacedNameName = 182,
     JSXMemberExpressionObject = 183,
     JSXMemberExpressionProperty = 184,
     JSXExpressionContainerExpression = 185,
@@ -665,8 +665,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::JSXFragmentChildren as u16,
     JSXNamespacedNameNamespace(JSXNamespacedNameWithoutNamespace<'a, 't>) =
         AncestorType::JSXNamespacedNameNamespace as u16,
-    JSXNamespacedNameProperty(JSXNamespacedNameWithoutProperty<'a, 't>) =
-        AncestorType::JSXNamespacedNameProperty as u16,
+    JSXNamespacedNameName(JSXNamespacedNameWithoutName<'a, 't>) =
+        AncestorType::JSXNamespacedNameName as u16,
     JSXMemberExpressionObject(JSXMemberExpressionWithoutObject<'a, 't>) =
         AncestorType::JSXMemberExpressionObject as u16,
     JSXMemberExpressionProperty(JSXMemberExpressionWithoutProperty<'a, 't>) =
@@ -1472,7 +1472,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_jsx_namespaced_name(self) -> bool {
-        matches!(self, Self::JSXNamespacedNameNamespace(_) | Self::JSXNamespacedNameProperty(_))
+        matches!(self, Self::JSXNamespacedNameNamespace(_) | Self::JSXNamespacedNameName(_))
     }
 
     #[inline]
@@ -2403,7 +2403,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::JSXFragmentClosingFragment(a) => a.address(),
             Self::JSXFragmentChildren(a) => a.address(),
             Self::JSXNamespacedNameNamespace(a) => a.address(),
-            Self::JSXNamespacedNameProperty(a) => a.address(),
+            Self::JSXNamespacedNameName(a) => a.address(),
             Self::JSXMemberExpressionObject(a) => a.address(),
             Self::JSXMemberExpressionProperty(a) => a.address(),
             Self::JSXExpressionContainerExpression(a) => a.address(),
@@ -10881,8 +10881,7 @@ impl<'a, 't> GetAddress for JSXFragmentWithoutChildren<'a, 't> {
 pub(crate) const OFFSET_JSX_NAMESPACED_NAME_SPAN: usize = offset_of!(JSXNamespacedName, span);
 pub(crate) const OFFSET_JSX_NAMESPACED_NAME_NAMESPACE: usize =
     offset_of!(JSXNamespacedName, namespace);
-pub(crate) const OFFSET_JSX_NAMESPACED_NAME_PROPERTY: usize =
-    offset_of!(JSXNamespacedName, property);
+pub(crate) const OFFSET_JSX_NAMESPACED_NAME_NAME: usize = offset_of!(JSXNamespacedName, name);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10898,9 +10897,9 @@ impl<'a, 't> JSXNamespacedNameWithoutNamespace<'a, 't> {
     }
 
     #[inline]
-    pub fn property(self) -> &'t JSXIdentifier<'a> {
+    pub fn name(self) -> &'t JSXIdentifier<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_PROPERTY)
+            &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_NAME)
                 as *const JSXIdentifier<'a>)
         }
     }
@@ -10915,12 +10914,12 @@ impl<'a, 't> GetAddress for JSXNamespacedNameWithoutNamespace<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct JSXNamespacedNameWithoutProperty<'a, 't>(
+pub struct JSXNamespacedNameWithoutName<'a, 't>(
     pub(crate) *const JSXNamespacedName<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> JSXNamespacedNameWithoutProperty<'a, 't> {
+impl<'a, 't> JSXNamespacedNameWithoutName<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_SPAN) as *const Span) }
@@ -10935,7 +10934,7 @@ impl<'a, 't> JSXNamespacedNameWithoutProperty<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for JSXNamespacedNameWithoutProperty<'a, 't> {
+impl<'a, 't> GetAddress for JSXNamespacedNameWithoutName<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
