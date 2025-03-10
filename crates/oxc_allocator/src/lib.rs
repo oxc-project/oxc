@@ -25,6 +25,7 @@ mod from_raw_parts;
 pub mod hash_map;
 pub mod string;
 mod vec;
+mod vec2;
 
 pub use address::{Address, GetAddress};
 pub use allocator::Allocator;
