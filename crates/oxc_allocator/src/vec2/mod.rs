@@ -1802,7 +1802,7 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
     /// this function will likely be deprecated (but still available).
     ///
     /// To copy and append the data from multiple source slices at once, see
-    /// [`extend_from_slices_copy`].
+    /// [`Vec::extend_from_slices_copy`].
     ///
     /// # Examples
     ///
