@@ -117,7 +117,8 @@ impl<'alloc> String<'alloc> {
         }
     }
 
-    /// Create a new [`String`] from a fixed-size &str array, allocated in the given `allocator`.
+    /// Create a new [`String`] from a fixed-size array of `&str`s concatenated together,
+    /// allocated in the given `allocator`.
     ///
     /// # Examples
     /// ```
@@ -135,31 +136,55 @@ impl<'alloc> String<'alloc> {
         strings: [&str; N],
         allocator: &'alloc Allocator,
     ) -> String<'alloc> {
-        let len = strings.iter().fold(0usize, |l, s| l.checked_add(s.len()).unwrap());
+        // Calculate total length of all the strings concatenated.
+        // We have to use `checked_add` here to guard against additions wrapping around
+        // if some of the input `&str`s are very long, or there's many of them.
+        let total_len = strings.iter().fold(0usize, |len, s| len.checked_add(s.len()).unwrap());
 
-        let mut ptr = Vec::with_capacity_in(len, allocator);
+        // Create a `Vec<u8>` with sufficient capacity to contain all the `strings` concatenated.
+        // Note: If `total_len == 0`, this does not allocate, and `vec.as_mut_ptr()` is a dangling pointer.
+        let mut vec = Vec::with_capacity_in(total_len, allocator);
 
-        let mut dst = ptr.as_mut_ptr();
+        let mut dst = vec.as_mut_ptr();
         for str in strings {
+            let src = str.as_ptr();
             let len = str.len();
 
             // SAFETY:
-            // `src` is obtained from a `&str`
-            // `dst` is obtained from a properly allocated `Vec<u8>` with sufficient
-            // capacity to hold all strings.
-            // Both `src` and `dst` are properly aligned for `u8`.
-            // No overlapping, because we've copying from a `&str` to a newly allocated buffer.
-            unsafe {
-                let src = str.as_ptr();
-                ptr::copy_nonoverlapping(src, dst, len);
-                dst = dst.add(len);
-            }
+            // `src` is obtained from a `&str` with length `len`, so is valid for reading `len` bytes.
+            // `dst` is within bounds of `vec`'s allocation. So is `dst + len`.
+            // `u8` has no alignment requirements, so `src` and `dst` are sufficiently aligned.
+            // No overlapping, because we're copying from an existing `&str` to a newly allocated buffer.
+            //
+            // If `str` is empty, `len` is 0.
+            // If `total_len == 0`, `dst` is a dangling pointer, *not* valid for read or write of a `u8`.
+            // `copy_nonoverlapping` requires that `src` and `dst must both
+            // "be valid for reads of `count * size_of::<T>()` bytes".
+            // However, safety docs for `std::ptr` (https://doc.rust-lang.org/std/ptr/index.html#safety)
+            // state that:
+            // "For memory accesses of size zero, *every* pointer is valid, including the null pointer".
+            // So we do not need any special handling of zero-size `&str`s to satisfy safety constraints.
+            unsafe { ptr::copy_nonoverlapping(src, dst, len) };
+
+            // SAFETY: We allocated sufficient capacity in `vec` for all the strings concatenated.
+            // So `dst.add(len)` cannot go out of bounds.
+            //
+            // If `total_len` is 0, `dst` may be an invalid dangling pointer and adding to it would be UB.
+            // But if that is the case, `len` must be 0 too.
+            // Docs for `*mut T::add` preface the safety requirements for being in bounds and provenance
+            // with "If the computed offset is non-zero". So they don't apply in the case where `len == 0`.
+            // So we do not need any special handling of zero-size `&str`s to satisfy safety constraints.
+            dst = unsafe { dst.add(len) };
         }
 
-        // SAFETY:
-        // `ptr` was allocated with correct size for `[&str, len]`.
-        // `len` is the sum of lengths of all strings.
-        unsafe { String::from_raw_parts_in(ptr.as_mut_ptr(), len, len, allocator) }
+        debug_assert_eq!(dst as usize - vec.as_ptr() as usize, total_len);
+
+        // SAFETY: We have written `total_len` bytes to `vec`'s backing memory
+        unsafe { vec.set_len(total_len) };
+
+        // SAFETY: All the data added to `vec` has been `&str`s, so the contents of `vec` is guaranteed
+        // to be a valid UTF-8 string
+        unsafe { String::from_utf8_unchecked(vec) }
     }
 
     /// Creates a new [`String`] from a length, capacity, and pointer.
@@ -299,12 +324,24 @@ impl Hash for String<'_> {
 
 #[cfg(test)]
 mod test {
-
-    use crate::Allocator;
-    use crate::String;
+    use crate::{Allocator, String};
 
     #[test]
-    fn string_from_array() {
+    fn string_from_array_len_1() {
+        let allocator = Allocator::default();
+        let string = String::from_strs_array_in(["hello"], &allocator);
+        assert_eq!(string, "hello");
+    }
+
+    #[test]
+    fn string_from_array_len_2() {
+        let allocator = Allocator::default();
+        let string = String::from_strs_array_in(["hello", "world!"], &allocator);
+        assert_eq!(string, "helloworld!");
+    }
+
+    #[test]
+    fn string_from_array_len_3() {
         let hello = "hello";
         let world = std::string::String::from("world");
         let allocator = Allocator::default();
@@ -320,7 +357,14 @@ mod test {
     }
 
     #[test]
-    fn string_from_maybe_empty_str_array() {
+    fn string_from_array_of_empty_strs() {
+        let allocator = Allocator::default();
+        let string = String::from_strs_array_in(["", "", ""], &allocator);
+        assert_eq!(string, "");
+    }
+
+    #[test]
+    fn string_from_array_containing_some_empty_strs() {
         let allocator = Allocator::default();
         let string = String::from_strs_array_in(["", "hello", ""], &allocator);
         assert_eq!(string, "hello");
