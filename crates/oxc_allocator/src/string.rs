@@ -13,6 +13,7 @@ use std::{
     ptr,
 };
 
+use assert_unchecked::assert_unchecked;
 use bumpalo::collections::String as BumpaloString;
 pub use simdutf8::basic::Utf8Error;
 use simdutf8::basic::from_utf8;
@@ -137,10 +138,46 @@ impl<'alloc> String<'alloc> {
         allocator: &'alloc Allocator,
     ) -> String<'alloc> {
         // Calculate total length of all the strings concatenated.
+        //
         // We have to use `checked_add` here to guard against additions wrapping around
         // if some of the input `&str`s are very long, or there's many of them.
-        let total_len = strings.iter().fold(0usize, |len, s| len.checked_add(s.len()).unwrap());
+        //
+        // However, `&str`s have max length of `isize::MAX`.
+        // https://users.rust-lang.org/t/does-str-reliably-have-length-isize-max/126777
+        // Use `assert_unchecked!` to communicate this invariant to compiler, which allows it to
+        // optimize out the overflow checks where some of `strings` are static, so their size is known.
+        //
+        // e.g. `String::from_strs_array_in(["__vite_ssr_import_", str, "__"])`, for example,
+        // requires no checks at all, because the static parts have total length of 20 bytes,
+        // and `str` has max length of `isize::MAX`. `isize::MAX as usize + 20` cannot overflow `usize`.
+        // Compiler can see that, and removes the overflow check.
+        // https://godbolt.org/z/MGh44Yz5d
+        #[expect(clippy::checked_conversions)]
+        let total_len = strings.iter().fold(0usize, |total_len, s| {
+            let len = s.len();
+            // SAFETY: `&str`s have maximum length of `isize::MAX`
+            unsafe { assert_unchecked!(len <= (isize::MAX as usize)) };
+            total_len.checked_add(len).unwrap()
+        });
 
+        // Create actual `String` in a separate function, to ensure that `from_strs_array_in`
+        // is inlined, so that compiler has knowledge to remove the overflow checks above.
+        // When some of `strings` are static, this function is usually only a single instruction.
+        // Compiler can choose whether or not to inline `from_strs_array_with_total_len`.
+        // SAFETY: `total_len` has been calculated correctly above
+        unsafe { Self::from_strs_array_with_total_len_in(strings, total_len, allocator) }
+    }
+
+    /// Create a new [`String`] from a fixed-size array of `&str`s concatenated together,
+    /// allocated in the given `allocator`, with provided `total_len`.
+    ///
+    /// # SAFETY
+    /// `total_len` must be the total length of all `strings` concatenated.
+    unsafe fn from_strs_array_with_total_len_in<const N: usize>(
+        strings: [&str; N],
+        total_len: usize,
+        allocator: &'alloc Allocator,
+    ) -> String<'alloc> {
         // Create a `Vec<u8>` with sufficient capacity to contain all the `strings` concatenated.
         // Note: If `total_len == 0`, this does not allocate, and `vec.as_mut_ptr()` is a dangling pointer.
         let mut vec = Vec::with_capacity_in(total_len, allocator);
