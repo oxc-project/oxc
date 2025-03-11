@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_array_constructor_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use `new` to create arrays")
+    OxcDiagnostic::warn("The array literal notation [] is preferable.")
         .with_help("Use an array literal instead")
         .with_label(span)
 }
@@ -67,19 +67,6 @@ impl Rule for NoArrayConstructor {
                 &new_expr.type_parameters,
                 false,
             ),
-            AstKind::ExpressionStatement(expr_stmt) => {
-                if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                    (
-                        call_expr.span,
-                        &call_expr.callee,
-                        &call_expr.arguments,
-                        &call_expr.type_parameters,
-                        call_expr.optional,
-                    )
-                } else {
-                    return;
-                }
-            }
             _ => {
                 return;
             }
