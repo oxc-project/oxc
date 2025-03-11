@@ -81,6 +81,8 @@ fn test() {
         ("x == x", None),
         ("x != x", None),
         ("x > x", None),
+        ("x > (x)", None),
+        ("(x) > x", None),
         ("x < x", None),
         ("x >= x", None),
         ("x <= x", None),
