@@ -319,29 +319,23 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                             _ => decl.into_expression(),
                         };
 
-                        inner_block.push(Statement::VariableDeclaration(ctx.ast.alloc(
-                            ctx.ast.variable_declaration(
+                        inner_block.push(Statement::VariableDeclaration(
+                            ctx.ast.alloc_variable_declaration(
                                 span,
                                 VariableDeclarationKind::Var,
                                 ctx.ast.vec1(ctx.ast.variable_declarator(
                                     span,
                                     VariableDeclarationKind::Var,
-                                    ctx.ast.binding_pattern(
-                                        BindingPatternKind::BindingIdentifier(
-                                            ctx.ast.alloc(var_id.create_binding_identifier(ctx)),
-                                        ),
-                                        NONE,
-                                        false,
-                                    ),
+                                    var_id.create_binding_pattern(ctx),
                                     Some(expr),
                                     false,
                                 )),
                                 false,
                             ),
-                        )));
+                        ));
 
-                        program_body.push(Statement::ExportNamedDeclaration(ctx.ast.alloc(
-                            ctx.ast.export_named_declaration(
+                        program_body.push(Statement::ExportNamedDeclaration(
+                            ctx.ast.alloc_export_named_declaration(
                                 SPAN,
                                 None,
                                 ctx.ast.vec1(ctx.ast.export_specifier(
@@ -356,7 +350,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                                 ImportOrExportKind::Value,
                                 NONE,
                             ),
-                        )));
+                        ));
                     }
                     Statement::ExportNamedDeclaration(ref mut export_named_declaration) => {
                         let Some(ref mut decl) = export_named_declaration.declaration else {
@@ -443,8 +437,8 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                             _ => unreachable!(),
                         };
 
-                        program_body.push(Statement::ExportNamedDeclaration(ctx.ast.alloc(
-                            ctx.ast.export_named_declaration(
+                        program_body.push(Statement::ExportNamedDeclaration(
+                            ctx.ast.alloc_export_named_declaration(
                                 SPAN,
                                 None,
                                 export_specifiers,
@@ -452,7 +446,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                                 export_named_declaration.export_kind,
                                 NONE,
                             ),
-                        )));
+                        ));
                     }
                     Statement::ClassDeclaration(class_decl) => {
                         inner_block.push(Self::transform_class_decl(class_decl.unbox(), ctx));
@@ -493,9 +487,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             ctx.scoping_mut().change_scope_parent_id(*id, Some(block_scope_id));
         }
 
-        program_body.push(Statement::BlockStatement(
-            ctx.ast.alloc(ctx.ast.block_statement_with_scope_id(SPAN, inner_block, block_scope_id)),
-        ));
+        program_body.push(ctx.ast.statement_block_with_scope_id(SPAN, inner_block, block_scope_id));
 
         std::mem::swap(&mut node.body, &mut program_body);
     }
@@ -787,13 +779,12 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
+                AssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,
                     using_ctx.create_read_expression(ctx),
                     ctx.ast.identifier_name(SPAN, "e"),
                     false,
-                ))
-                .into(),
+                )),
                 ident.create_read_expression(ctx),
             ),
         );
@@ -850,7 +841,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         *ctx.scoping_mut().symbol_flags_mut(id.symbol_id()) = SymbolFlags::FunctionScopedVariable;
 
-        Statement::VariableDeclaration(ctx.ast.alloc(ctx.ast.variable_declaration(
+        Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
             ctx.ast.vec1(ctx.ast.variable_declarator(
@@ -865,6 +856,6 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                 false,
             )),
             false,
-        )))
+        ))
     }
 }
