@@ -3102,24 +3102,22 @@ impl ESTree for TSImportType<'_> {
 
 impl ESTree for TSImportAttributes<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportAttributes"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("attributesKeyword", &self.attributes_keyword);
-        state.serialize_field("elements", &self.elements);
-        state.end();
+        crate::serialize::TSImportAttributesConverter(self).serialize(serializer)
     }
 }
 
 impl ESTree for TSImportAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportAttribute"));
+        state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
+        state.serialize_field("method", &crate::serialize::False(self));
+        state.serialize_field("shorthand", &crate::serialize::True(self));
+        state.serialize_field("computed", &crate::serialize::False(self));
+        state.serialize_field("key", &self.name);
         state.serialize_field("value", &self.value);
+        state.serialize_field("kind", &crate::serialize::Init(self));
         state.end();
     }
 }

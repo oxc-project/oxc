@@ -505,6 +505,86 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
     }
 }
 
+#[ast_meta]
+#[estree(
+    ts_type = "ObjectExpression",
+    raw_deser = "
+        const start = DESER[u32](POS_OFFSET.span.start);
+        const end = DESER[u32](POS_OFFSET.span.end);
+        const attributesKeyword = DESER[IdentifierName](POS_OFFSET.attributes_keyword);
+        const properties = DESER[Vec<TSImportAttribute>](POS_OFFSET.elements);
+        const result = {
+            type: 'ObjectExpression',
+            start,
+            end,
+            properties: [
+                {
+                    type: 'Property',
+                    start,
+                    end,
+                    method: false,
+                    shorthand: false,
+                    computed: false,
+                    key: attributesKeyword,
+                    value: {
+                        type: 'ObjectExpression',
+                        start,
+                        end,
+                        properties,
+                    },
+                    kind: 'init',
+                },
+            ],
+        };
+        result
+    "
+)]
+pub struct TSImportAttributesConverter<'a, 'b>(pub &'b TSImportAttributes<'a>);
+
+impl ESTree for TSImportAttributesConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ObjectExpression"));
+        state.serialize_field("start", &self.0.span.start);
+        state.serialize_field("end", &self.0.span.end);
+        state.serialize_field("properties", &[TSImportAttributesWithClauseConverter(self.0)]);
+        state.end();
+    }
+}
+
+struct TSImportAttributesWithClauseConverter<'a, 'b>(&'b TSImportAttributes<'a>);
+
+impl ESTree for TSImportAttributesWithClauseConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("Property"));
+        // TODO: span
+        state.serialize_field("start", &self.0.span.end);
+        state.serialize_field("end", &self.0.span.end);
+        state.serialize_field("method", &false);
+        state.serialize_field("shorthand", &false);
+        state.serialize_field("computed", &false);
+        state.serialize_field("key", &self.0.attributes_keyword);
+        state.serialize_field("value", &TSImportAttributesElementsConverter(self.0));
+        state.serialize_field("kind", &"init");
+        state.end();
+    }
+}
+
+struct TSImportAttributesElementsConverter<'a, 'b>(&'b TSImportAttributes<'a>);
+
+impl ESTree for TSImportAttributesElementsConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ObjectExpression"));
+        // TODO: span
+        state.serialize_field("start", &self.0.span.start);
+        state.serialize_field("end", &self.0.span.end);
+        state.serialize_field("properties", &self.0.elements);
+        state.end();
+    }
+}
+
 // --------------------
 // JSX
 // --------------------

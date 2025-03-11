@@ -1780,22 +1780,47 @@ function deserializeTSImportType(pos) {
 }
 
 function deserializeTSImportAttributes(pos) {
-  return {
-    type: 'TSImportAttributes',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    attributesKeyword: deserializeIdentifierName(pos + 8),
-    elements: deserializeVecTSImportAttribute(pos + 32),
+  const start = deserializeU32(pos);
+  const end = deserializeU32(pos + 4);
+  const attributesKeyword = deserializeIdentifierName(pos + 8);
+  const properties = deserializeVecTSImportAttribute(pos + 32);
+  const result = {
+    type: 'ObjectExpression',
+    start,
+    end,
+    properties: [
+      {
+        type: 'Property',
+        start,
+        end,
+        method: false,
+        shorthand: false,
+        computed: false,
+        key: attributesKeyword,
+        value: {
+          type: 'ObjectExpression',
+          start,
+          end,
+          properties,
+        },
+        kind: 'init',
+      },
+    ],
   };
+  return result;
 }
 
 function deserializeTSImportAttribute(pos) {
   return {
-    type: 'TSImportAttribute',
+    type: 'Property',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    name: deserializeTSImportAttributeName(pos + 8),
+    method: false,
+    shorthand: true,
+    computed: false,
+    key: deserializeTSImportAttributeName(pos + 8),
     value: deserializeExpression(pos + 56),
+    kind: 'init',
   };
 }
 

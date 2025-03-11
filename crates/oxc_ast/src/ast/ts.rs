@@ -1289,6 +1289,7 @@ pub struct TSImportType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(via = TSImportAttributesConverter)]
 pub struct TSImportAttributes<'a> {
     pub span: Span,
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
@@ -1300,8 +1301,14 @@ pub struct TSImportAttributes<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // Pluralize as `TSImportAttributeList` to avoid naming clash with `TSImportAttributes`.
 #[plural(TSImportAttributeList)]
+#[estree(
+    rename = "Property",
+    add_fields(method = False, shorthand = True, computed = False, kind = Init),
+    field_order(span, method, shorthand, computed, name, value, kind),
+)]
 pub struct TSImportAttribute<'a> {
     pub span: Span,
+    #[estree(rename = "key")]
     pub name: TSImportAttributeName<'a>,
     pub value: Expression<'a>,
 }
