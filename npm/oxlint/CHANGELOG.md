@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.14] - 2025-03-11
+
+### Features
+
+- 3fce826 linter: Add support for `extends` property in oxlintrc (#9217) (camchenry)
+
 ## [0.15.13] - 2025-03-04
 
 ### Documentation

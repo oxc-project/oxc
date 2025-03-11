@@ -4,6 +4,63 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.14] - 2025-03-11
+
+- 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
+
+- 3c6f140 semantic: [**BREAKING**] Make `Scoping` methods consistent (#9628) (Boshen)
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+### Features
+
+- 0815fe8 linter: Add `promise/no-return-wrap` (#9537) (therewillbecode)
+- ae7bb75 linter: Add react/jsx-filename-extension rule (#9474) (Cédric DIRAND)
+- 50327f3 linter: Add import/exports-last (#9578) (yefan)
+- 75e4b8d linter: Add import/no-anonymous-default-export rule (#9481) (yefan)
+- 2f08b16 linter: Add `promise/prefer-catch` (#9488) (therewillbecode)
+- 41f32ea linter: Allow adding more overrides via `extends` configs (#9475) (camchenry)
+- fb7cf10 linter: Allowing `plugins` to be extended with `extends` (#9473) (camchenry)
+- fc74849 linter: Inherit `rules` via the extended config files (#9308) (camchenry)
+- 3fce826 linter: Add support for `extends` property in oxlintrc (#9217) (camchenry)
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
+### Bug Fixes
+
+- 2d42569 linter: Rule `eslint/no-unsafe-optional-chaining` (#9632) (therewillbecode)
+- a9d7df9 linter: False positive in `unicorn/escape-case` (#9638) (shulaoda)
+- 3831819 linter: Fix example lint declaration and macro syntax (#9626) (Uli)
+- 4ca62ab linter: Output right file line and column for `.vue`, `.astro` and `.svelte` files (#9484) (Sysix)
+- 3105159 linter: Do not output number of rules with nested configs (#9476) (camchenry)
+- 5ecda01 linter: Support nested extending (#9472) (camchenry)
+
+### Documentation
+
+- b7c61e9 linter: Improve docs for `eslint-guard-for-in` (#9658) (therewillbecode)
+- 1cc43f7 linter: Improve the documentation of `eslint-no-console` (#9612) (therewillbecode)
+- 608bb77 linter: Improve the docs and add test case for `typescript-no-extra-non-null-assertion` (#9609) (therewillbecode)
+- 43add5d linter: Better docs for `typescript-no-non-null-asserted-nullish-coalescing` rule (#9610) (therewillbecode)
+- bd90ce6 linter: Improve the docs and add test cases for `eslint-no-shadow-restricted-names` (#9597) (therewillbecode)
+- a0c9f7c linter: Improve the documentation of `eslint-no-func-assign` (#9596) (therewillbecode)
+- ec922e9 linter: Improve the documentation of `typescript-consistent-type-definitions` (#9575) (therewillbecode)
+- 165c89d linter: Improve the documentation of `typescript-no-namespace` (#9545) (therewillbecode)
+
+### Refactor
+
+- c174600 linter: Improve `eslint/no-duplicate-imports` (#9627) (therewillbecode)
+- 31ba425 linter: Improve `eslint/no-self-assign` (#9635) (therewillbecode)
+- 03a40df linter: Access scoping from `ctx` directly (#9624) (Boshen)
+- be5e5dc linter: Improve `unicorn/escape-case` (#9568) (shulaoda)
+- b7f82fc linter: Improve `unicorn/error-message` (#9560) (shulaoda)
+- 069ef2d linter: Improve `promise/no-nesting` (#9544) (therewillbecode)
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+### Testing
+
+- 934a387 linter: Remove test dependency on oxlint (#9513) (camchenry)
+
 ## [0.15.13] - 2025-03-04
 
 - a5cde10 visit_ast: [**BREAKING**] Add `oxc_visit_ast` crate (#9428) (Boshen)
