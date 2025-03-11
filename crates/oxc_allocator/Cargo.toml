@@ -22,6 +22,7 @@ doctest = false
 oxc_estree = { workspace = true, optional = true }
 
 allocator-api2 = { workspace = true }
+assert-unchecked = { workspace = true }
 bumpalo = { workspace = true, features = ["allocator-api2", "collections"] }
 hashbrown = { workspace = true, default-features = false, features = ["inline-more", "allocator-api2"] }
 rustc-hash = { workspace = true }
