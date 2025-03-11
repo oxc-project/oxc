@@ -562,8 +562,8 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                         decl.init = Some(
                             ctx.ast.expression_call(
                                 SPAN,
-                                ctx.ast
-                                    .member_expression_static(
+                                Expression::from(
+                                    ctx.ast.member_expression_static(
                                         SPAN,
                                         using_ctx
                                             .as_ref()
@@ -574,10 +574,10 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                                             if needs_await { "a" } else { "u" },
                                         ),
                                         false,
-                                    )
-                                    .into(),
+                                    ),
+                                ),
                                 NONE,
-                                ctx.ast.vec1(old_init.into()),
+                                ctx.ast.vec1(Argument::from(old_init)),
                                 false,
                             ),
                         );
@@ -691,25 +691,18 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             // `await using foo = bar;` -> `const foo = _usingCtx.a(bar);`
             for decl in &mut variable_declaration.declarations {
                 if let Some(old_init) = decl.init.take() {
-                    decl.init = Some(
-                        ctx.ast.expression_call(
+                    decl.init = Some(ctx.ast.expression_call(
+                        SPAN,
+                        Expression::from(ctx.ast.member_expression_static(
                             SPAN,
-                            ctx.ast
-                                .member_expression_static(
-                                    SPAN,
-                                    using_ctx.as_ref().unwrap().create_read_expression(ctx),
-                                    ctx.ast.identifier_name(
-                                        SPAN,
-                                        if is_await_using { "a" } else { "u" },
-                                    ),
-                                    false,
-                                )
-                                .into(),
-                            NONE,
-                            ctx.ast.vec1(old_init.into()),
+                            using_ctx.as_ref().unwrap().create_read_expression(ctx),
+                            ctx.ast.identifier_name(SPAN, if is_await_using { "a" } else { "u" }),
                             false,
-                        ),
-                    );
+                        )),
+                        NONE,
+                        ctx.ast.vec1(Argument::from(old_init)),
+                        false,
+                    ));
                 }
             }
         }
@@ -810,14 +803,12 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         // `_usingCtx.d()`
         let expr = ctx.ast.expression_call(
             SPAN,
-            ctx.ast
-                .member_expression_static(
-                    SPAN,
-                    using_ctx.create_read_expression(ctx),
-                    ctx.ast.identifier_name(SPAN, "d"),
-                    false,
-                )
-                .into(),
+            Expression::from(ctx.ast.member_expression_static(
+                SPAN,
+                using_ctx.create_read_expression(ctx),
+                ctx.ast.identifier_name(SPAN, "d"),
+                false,
+            )),
             NONE,
             ctx.ast.vec(),
             false,
