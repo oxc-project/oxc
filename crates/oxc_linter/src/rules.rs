@@ -411,6 +411,7 @@ mod unicorn {
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
+    pub mod require_post_message_target_origin;
     pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
@@ -1044,6 +1045,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
+    unicorn::require_post_message_target_origin,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
