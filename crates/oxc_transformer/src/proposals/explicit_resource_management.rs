@@ -184,64 +184,19 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         }
     }
 
-    /// Transform a block statement or switch statement.
+    /// Transform block statement or switch statement.
     ///
-    /// Block statement:
-    /// ```js
-    /// {
-    ///   using x = y();
-    /// }
-    /// ```
-    /// ->
-    /// ```js
-    /// try {
-    ///   var _usingCtx = babelHelpers.usingCtx();
-    ///   const x = _usingCtx.u(y());
-    /// } catch (_) {
-    ///   _usingCtx.e = _;
-    /// } finally {
-    ///   _usingCtx.d();
-    /// }
-    /// ```
-    ///
-    /// Switch statement:
-    /// ```js
-    /// switch (s) {
-    ///   case 1: using x = y();
-    /// }
-    /// ```
-    /// ->
-    /// ```js
-    /// try {
-    ///   var _usingCtx = babelHelpers.usingCtx();
-    ///   switch (s) {
-    ///     case 1: const x = _usingCtx.u(y());
-    ///   }
-    /// } catch (_) {
-    ///   _usingCtx.e = _;
-    /// } finally {
-    ///   _usingCtx.d();
-    /// }
-    /// ```
+    /// See [`Self::transform_block_statement`] and [`Self::transform_switch_statement`]
+    /// for transformed output.
+    //
+    // `#[inline]` because this is a hot path, and most `Statement`s are not `BlockStatement`s
+    // or `SwitchStatement`s. We want the common path for "nothing to do here" not to incur the cost of
+    // a function call.
+    #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::BlockStatement(block_stmt) => {
-                let scope_id = block_stmt.scope_id();
-                if let Some(replacement) = self.transform_statements(
-                    &mut block_stmt.body,
-                    Some(scope_id),
-                    ctx.current_scope_id(),
-                    ctx.current_hoist_scope_id(),
-                    ctx,
-                ) {
-                    *stmt = replacement;
-                }
-            }
-            Statement::SwitchStatement(_) => {
-                if let Some(replacement) = self.transform_switch_statement(stmt, ctx) {
-                    *stmt = replacement;
-                }
-            }
+            Statement::BlockStatement(_) => self.transform_block_statement(stmt, ctx),
+            Statement::SwitchStatement(_) => self.transform_switch_statement(stmt, ctx),
             _ => {}
         }
     }
@@ -497,7 +452,41 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 }
 
 impl<'a> ExplicitResourceManagement<'a, '_> {
-    /// This function returns `None` if the switch statement was not transformed.
+    /// Transform block statement.
+    ///
+    /// Input:
+    /// ```js
+    /// {
+    ///   using x = y();
+    /// }
+    /// ```
+    /// Output:
+    /// ```js
+    /// try {
+    ///   var _usingCtx = babelHelpers.usingCtx();
+    ///   const x = _usingCtx.u(y());
+    /// } catch (_) {
+    ///   _usingCtx.e = _;
+    /// } finally {
+    ///   _usingCtx.d();
+    /// }
+    /// ```
+    fn transform_block_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::BlockStatement(block_stmt) = stmt else { unreachable!() };
+
+        let scope_id = block_stmt.scope_id();
+        if let Some(replacement) = self.transform_statements(
+            &mut block_stmt.body,
+            Some(scope_id),
+            ctx.current_scope_id(),
+            ctx.current_hoist_scope_id(),
+            ctx,
+        ) {
+            *stmt = replacement;
+        }
+    }
+
+    /// Transform switch statement.
     ///
     /// Input:
     /// ```js
@@ -526,11 +515,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     ///   _usingCtx.d();
     /// }
     /// ```
-    fn transform_switch_statement(
-        &self,
-        stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
+    fn transform_switch_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut using_ctx = None;
         let mut needs_await = false;
         let current_scope_id = ctx.current_scope_id();
@@ -589,7 +574,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             }
         }
 
-        let using_ctx = using_ctx?;
+        let Some(using_ctx) = using_ctx else { return };
 
         let block_stmt_sid = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::empty());
 
@@ -618,10 +603,8 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         };
 
         let catch = Self::create_catch_clause(&using_ctx, ctx.current_scope_id(), ctx);
-
         let finally = Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
-
-        Some(ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally)))
+        *stmt = ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally));
     }
 
     /// Transforms:
