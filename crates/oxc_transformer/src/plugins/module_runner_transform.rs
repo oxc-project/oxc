@@ -1,52 +1,54 @@
-/// Module runner transform
-///
-/// This plugin is used to transform import statement to import by `__vite_ssr_import__`
-/// and export statement to export by `__vite_ssr_exports__`, these functions will be
-/// injected by Vite node.
-///
-/// ## Example
-///
-/// Input:
-/// ```js
-/// import { foo } from 'vue';
-/// import vue from 'vue';
-/// import * as vue from 'vue';
-///
-/// foo();
-/// console.log(vue.version);
-/// console.log(vue.zoo());
-/// ```
-///
-/// Output:
-/// ```js
-/// const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });
-/// const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['default'] });
-/// const __vite_ssr_import_2__ = await __vite_ssr_import__('vue');
-/// (0, __vite_ssr_import_0__.foo)();
-/// console.log(__vite_ssr_import_2__.version);
-/// console.log(__vite_ssr_import_2__.zoo());
-/// ```
-///
-/// ## Implementation
-///
-/// Based on [Vite](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/ssrTransform.ts)'s ssrTransform.
-///
-/// All tests are copy-pasted from (ssrTransform.spec.ts)[https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/__tests__/ssrTransform.spec.ts]
-///
-/// ## Integrate into main `Transformer` in future
-///
-/// There are few problems to integrate this transform into the main transformer:
-///
-/// 1. In Vite, it will collect import deps and dynamic import deps during the transform process, and return them
-/// at the end of function. We can do this, but how to pass them into the js side?
-///
-/// 2. In case other plugins will insert imports/exports, we must transform them in `exit_program`, but it will pose
-/// another problem: how to transform identifiers which refer to imports? We must collect some information from imports,
-/// but it is already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifiers,
-/// dynamic imports, and import meta.
+//! Module runner transform
+//!
+//! This plugin is used to transform import statement to import by `__vite_ssr_import__`
+//! and export statement to export by `__vite_ssr_exports__`, these functions will be
+//! injected by Vite node.
+//!
+//! ## Example
+//!
+//! Input:
+//! ```js
+//! import { foo } from 'vue';
+//! import vue from 'vue';
+//! import * as vue from 'vue';
+//!
+//! foo();
+//! console.log(vue.version);
+//! console.log(vue.zoo());
+//! ```
+//!
+//! Output:
+//! ```js
+//! const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });
+//! const __vite_ssr_import_1__ = await __vite_ssr_import__('vue', { importedNames: ['default'] });
+//! const __vite_ssr_import_2__ = await __vite_ssr_import__('vue');
+//! (0, __vite_ssr_import_0__.foo)();
+//! console.log(__vite_ssr_import_2__.version);
+//! console.log(__vite_ssr_import_2__.zoo());
+//! ```
+//!
+//! ## Implementation
+//!
+//! Based on [Vite](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/ssrTransform.ts)'s ssrTransform.
+//!
+//! All tests are copy-pasted from [ssrTransform.spec.ts](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/__tests__/ssrTransform.spec.ts).
+//!
+//! ## Integrate into main `Transformer` in future
+//!
+//! There are few problems to integrate this transform into the main transformer:
+//!
+//! 1. In Vite, it will collect import deps and dynamic import deps during the transform process, and return them
+//! at the end of function. We can do this, but how to pass them into the js side?
+//!
+//! 2. In case other plugins will insert imports/exports, we must transform them in `exit_program`, but it will pose
+//! another problem: how to transform identifiers which refer to imports? We must collect some information from imports,
+//! but it is already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifiers,
+//! dynamic imports, and import meta.
+
+use std::iter;
+
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashMap;
-use std::iter;
 
 use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
