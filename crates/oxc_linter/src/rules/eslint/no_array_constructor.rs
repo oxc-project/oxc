@@ -10,8 +10,8 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_array_constructor_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The array literal notation [] is preferable.")
-        .with_help("Use an array literal instead")
+    OxcDiagnostic::warn("Avoid calls to the `Array` constructor")
+        .with_help("Use array literal notation [] instead.")
         .with_label(span)
 }
 
