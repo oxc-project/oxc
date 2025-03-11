@@ -63,9 +63,13 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     ///
     /// * `for (using x of y) {}` -> `for (const _x of y) { using x = _x; }`
     /// * `for await (using x of y) {}` -> `for (const _x of y) { await using x = _x; }`
-    fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let for_of_stmt_scope_id = node.scope_id();
-        let ForStatementLeft::VariableDeclaration(decl) = &mut node.left else { return };
+    fn enter_for_of_statement(
+        &mut self,
+        for_of_stmt: &mut ForOfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let for_of_stmt_scope_id = for_of_stmt.scope_id();
+        let ForStatementLeft::VariableDeclaration(decl) = &mut for_of_stmt.left else { return };
         if !matches!(
             decl.kind,
             VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
@@ -90,7 +94,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
 
         // `using x = _x;`
-        let stmt = Statement::from(ctx.ast.declaration_variable(
+        let using_stmt = Statement::from(ctx.ast.declaration_variable(
             SPAN,
             variable_decl_kind,
             ctx.ast.vec1(ctx.ast.variable_declarator(
@@ -103,15 +107,15 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             false,
         ));
 
-        if let Statement::BlockStatement(body) = &mut node.body {
+        if let Statement::BlockStatement(body) = &mut for_of_stmt.body {
             // `for (const _x of y) { x(); }` -> `for (const _x of y) { using x = _x; x(); }`
-            body.body.insert(0, stmt);
+            body.body.insert(0, using_stmt);
         } else {
             // `for (const _x of y) x();` -> `for (const _x of y) { using x = _x; x(); }`
-            let old_body = ctx.ast.move_statement(&mut node.body);
+            let old_body = ctx.ast.move_statement(&mut for_of_stmt.body);
 
-            let new_body = ctx.ast.vec_from_array([stmt, old_body]);
-            node.body = ctx.ast.statement_block_with_scope_id(
+            let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
+            for_of_stmt.body = ctx.ast.statement_block_with_scope_id(
                 SPAN,
                 new_body,
                 ctx.create_child_scope(for_of_stmt_scope_id, ScopeFlags::empty()),
@@ -139,12 +143,12 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     ///   }
     /// }
     /// ```
-    fn enter_static_block(&mut self, node: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
-        let scope_id = node.scope_id();
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        let scope_id = block.scope_id();
         if let Some(replacement) =
-            self.transform_statements(&mut node.body, None, scope_id, scope_id, ctx)
+            self.transform_statements(&mut block.body, None, scope_id, scope_id, ctx)
         {
-            node.body = ctx.ast.vec1(replacement);
+            block.body = ctx.ast.vec1(replacement);
         }
     }
 
@@ -168,15 +172,15 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     ///   }
     /// }
     /// ```
-    fn enter_function_body(&mut self, node: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(replacement) = self.transform_statements(
-            &mut node.statements,
+            &mut body.statements,
             None,
             ctx.current_hoist_scope_id(),
             ctx.current_hoist_scope_id(),
             ctx,
         ) {
-            node.statements = ctx.ast.vec1(replacement);
+            body.statements = ctx.ast.vec1(replacement);
         }
     }
 
@@ -219,8 +223,8 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     ///   _usingCtx.d();
     /// }
     /// ```
-    fn enter_statement(&mut self, node: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        match node {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        match stmt {
             Statement::BlockStatement(block_stmt) => {
                 let scope_id = block_stmt.scope_id();
                 if let Some(replacement) = self.transform_statements(
@@ -230,12 +234,12 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                     ctx.current_hoist_scope_id(),
                     ctx,
                 ) {
-                    *node = replacement;
+                    *stmt = replacement;
                 }
             }
             Statement::SwitchStatement(_) => {
-                if let Some(replacement) = self.transform_switch_statement(node, ctx) {
-                    *node = replacement;
+                if let Some(replacement) = self.transform_switch_statement(stmt, ctx) {
+                    *stmt = replacement;
                 }
             }
             _ => {}
@@ -244,9 +248,9 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
     /// Move any top level `using` declarations within a block statement,
     /// allowing `enter_statement` to transform them.
-    fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.top_level_using.clear();
-        if !node.body.iter().any(|stmt| match stmt {
+        if !program.body.iter().any(|stmt| match stmt {
             Statement::VariableDeclaration(var_decl) => matches!(
                 var_decl.kind,
                 VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
@@ -256,7 +260,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             return;
         }
 
-        let program_body = ctx.ast.move_vec(&mut node.body);
+        let program_body = ctx.ast.move_vec(&mut program.body);
 
         let mut scopes_to_skip_move: Vec<ScopeId> = Vec::new();
 
@@ -488,7 +492,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
         program_body.push(ctx.ast.statement_block_with_scope_id(SPAN, inner_block, block_scope_id));
 
-        std::mem::swap(&mut node.body, &mut program_body);
+        std::mem::swap(&mut program.body, &mut program_body);
     }
 }
 
@@ -524,29 +528,29 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     /// ```
     fn transform_switch_statement(
         &self,
-        node: &mut Statement<'a>,
+        stmt: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let mut using_ctx = None;
         let mut needs_await = false;
         let current_scope_id = ctx.current_scope_id();
 
-        let Statement::SwitchStatement(switch_stmt) = node else { unreachable!() };
+        let Statement::SwitchStatement(switch_stmt) = stmt else { unreachable!() };
 
         let switch_stmt_scope_id = switch_stmt.scope_id();
 
         for case in &mut switch_stmt.cases {
-            for stmt in &mut case.consequent {
-                let Statement::VariableDeclaration(stmt) = stmt else { continue };
+            for case_stmt in &mut case.consequent {
+                let Statement::VariableDeclaration(var_decl) = case_stmt else { continue };
                 if !matches!(
-                    stmt.kind,
+                    var_decl.kind,
                     VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
                 ) {
                     continue;
                 };
-                needs_await = needs_await || stmt.kind == VariableDeclarationKind::AwaitUsing;
+                needs_await = needs_await || var_decl.kind == VariableDeclarationKind::AwaitUsing;
 
-                stmt.kind = VariableDeclarationKind::Const;
+                var_decl.kind = VariableDeclarationKind::Const;
 
                 using_ctx = using_ctx.or_else(|| {
                     Some(ctx.generate_uid(
@@ -556,7 +560,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                     ))
                 });
 
-                for decl in &mut stmt.declarations {
+                for decl in &mut var_decl.declarations {
                     if let Some(old_init) = decl.init.take() {
                         decl.init = Some(
                             ctx.ast.expression_call(
@@ -607,7 +611,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                     )),
                     false,
                 )),
-                ctx.ast.move_statement(node),
+                ctx.ast.move_statement(stmt),
             ]);
 
             ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
@@ -649,7 +653,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     /// Returns `Some` if the statements were transformed, `None` otherwise.
     fn transform_statements(
         &mut self,
-        node: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
         scope_id: Option<ScopeId>,
         parent_scope_id: ScopeId,
         hoist_scope_id: ScopeId,
@@ -659,7 +663,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let mut using_ctx = None;
 
-        for stmt in node.iter_mut() {
+        for stmt in stmts.iter_mut() {
             let address = stmt.address();
             let Statement::VariableDeclaration(variable_declaration) = stmt else { continue };
             if !matches!(
@@ -708,7 +712,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let using_ctx = using_ctx?;
 
-        let mut stmts = ctx.ast.move_vec(&mut *node);
+        let mut stmts = ctx.ast.move_vec(stmts);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
         let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
