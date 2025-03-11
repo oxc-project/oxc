@@ -28,19 +28,36 @@ declare_oxc_lint!(
     /// These aliases are going to be removed in the next major version of Jest - see [jestjs/jest#13164](https://github.com/jestjs/jest/issues/13164) for more.
     /// This rule will makes it easier to search for all occurrences of the method within code, and it ensures consistency among the method names used.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// expect(a).toBeCalled();
-    /// expect(a).toBeCalledTimes();
-    /// expect(a).toBeCalledWith();
-    /// expect(a).lastCalledWith();
-    /// expect(a).nthCalledWith();
-    /// expect(a).toReturn();
-    /// expect(a).toReturnTimes();
-    /// expect(a).toReturnWith();
-    /// expect(a).lastReturnedWith();
-    /// expect(a).nthReturnedWith();
-    /// expect(a).toThrowError();
+    /// expect(a).toBeCalled()
+    /// expect(a).toBeCalledTimes()
+    /// expect(a).toBeCalledWith()
+    /// expect(a).lastCalledWith()
+    /// expect(a).nthCalledWith()
+    /// expect(a).toReturn()
+    /// expect(a).toReturnTimes()
+    /// expect(a).toReturnWith()
+    /// expect(a).lastReturnedWith()
+    /// expect(a).nthReturnedWith()
+    /// expect(a).toThrowError()
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// expect(a).toHaveBeenCalled()
+    /// expect(a).toHaveBeenCalledTimes()
+    /// expect(a).toHaveBeenCalledWith()
+    /// expect(a).toHaveBeenLastCalledWith()
+    /// expect(a).toHaveBeenNthCalledWith()
+    /// expect(a).toHaveReturned()
+    /// expect(a).toHaveReturnedTimes()
+    /// expect(a).toHaveReturnedWith()
+    /// expect(a).toHaveLastReturnedWith()
+    /// expect(a).toHaveNthReturnedWith()
+    /// expect(a).toThrow()
     /// ```
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-alias-methods.md),
@@ -52,6 +69,30 @@ declare_oxc_lint!(
     ///      "vitest/no-alias-methods": "error"
     ///   }
     /// }
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with vitest:
+    /// ```javascript
+    /// expect(a).toBeCalled()
+    /// expect(a).toBeCalledTimes()
+    /// expect(a).not["toThrowError"]()
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with vitest:
+    /// ```javascript
+    /// expect(a).toHaveBeenCalled()
+    /// expect(a).toHaveBeenCalledTimes()
+    /// expect(a).toHaveBeenCalledWith()
+    /// expect(a).toHaveBeenLastCalledWith()
+    /// expect(a).toHaveBeenNthCalledWith()
+    /// expect(a).toHaveReturned()
+    /// expect(a).toHaveReturnedTimes()
+    /// expect(a).toHaveReturnedWith()
+    /// expect(a).toHaveLastReturnedWith()
+    /// expect(a).toHaveNthReturnedWith()
+    /// expect(a).toThrow()
+    /// expect(a).rejects
+    /// expect(a)
     /// ```
     NoAliasMethods,
     jest,
