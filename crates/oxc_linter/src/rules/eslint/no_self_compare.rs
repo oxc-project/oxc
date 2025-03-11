@@ -51,7 +51,7 @@ impl Rule for NoSelfCompare {
         if binary_expr
             .left
             .without_parentheses()
-            .content_eq(&binary_expr.right.without_parentheses())
+            .content_eq(binary_expr.right.without_parentheses())
         {
             ctx.diagnostic(no_self_compare_diagnostic(
                 binary_expr.left.span(),
