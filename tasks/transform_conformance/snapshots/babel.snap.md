@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 693/1167
+Passed: 716/1191
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -2748,5 +2748,12 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * cross-platform/within-ts-module-block/input.ts
 x Output mismatch
+
+
+# babel-plugin-proposal-explicit-resource-management (23/24)
+* transform-top-level/hoisting-default-class/input.mjs
+Symbol span mismatch for "C":
+after transform: SymbolId(1): Span { start: 37, end: 38 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
 
