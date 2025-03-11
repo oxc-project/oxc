@@ -1,0 +1,222 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:36]
+ 1 │ doThing().then(function() { return Promise.resolve(4) })
+   ·                                    ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:42]
+ 1 │ doThing().then(null, function() { return Promise.resolve(4) })
+   ·                                          ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:37]
+ 1 │ doThing().catch(function() { return Promise.resolve(4) })
+   ·                                     ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Expected throw instead of Promise.reject
+   ╭─[no_return_wrap.tsx:1:36]
+ 1 │ doThing().then(function() { return Promise.reject(4) })
+   ·                                    ─────────────────
+   ╰────
+  help: Throw the value being passed into Promise.reject instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Expected throw instead of Promise.reject
+   ╭─[no_return_wrap.tsx:1:42]
+ 1 │ doThing().then(null, function() { return Promise.reject(4) })
+   ·                                          ─────────────────
+   ╰────
+  help: Throw the value being passed into Promise.reject instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Expected throw instead of Promise.reject
+   ╭─[no_return_wrap.tsx:1:37]
+ 1 │ doThing().catch(function() { return Promise.reject(4) })
+   ·                                     ─────────────────
+   ╰────
+  help: Throw the value being passed into Promise.reject instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:25]
+ 1 │ doThing().finally(() => Promise.resolve(4))
+   ·                         ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Expected throw instead of Promise.reject
+   ╭─[no_return_wrap.tsx:1:61]
+ 1 │ doThing().then(function () {}).finally(function () { return Promise.reject("err") })
+   ·                                                             ─────────────────────
+   ╰────
+  help: Throw the value being passed into Promise.reject instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:4:29]
+ 3 │                    if (x>1) {
+ 4 │                      return Promise.resolve(4)
+   ·                             ──────────────────
+ 5 │                    } else {
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Expected throw instead of Promise.reject
+   ╭─[no_return_wrap.tsx:1:48]
+ 1 │ doThing().then(function(x) { if (x>1) { return Promise.reject(4) } })
+   ·                                                ─────────────────
+   ╰────
+  help: Throw the value being passed into Promise.reject instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:63]
+ 1 │ doThing().then(null, function() { if (true && false) { return Promise.resolve() } })
+   ·                                                               ─────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:4:26]
+ 3 │                 if (x) {
+ 4 │                   return Promise.resolve(4)
+   ·                          ──────────────────
+ 5 │                 } else {
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:3:16]
+ 2 │                doThing().then(function() {
+ 3 │                  return Promise.resolve(4)
+   ·                         ──────────────────
+ 4 │                })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:3:16]
+ 2 │                doThing().then(function nm() {
+ 3 │                  return Promise.resolve(4)
+   ·                         ──────────────────
+ 4 │                })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:4:18]
+ 3 │                  doThing().then(function() {
+ 4 │                    return Promise.resolve(4)
+   ·                           ──────────────────
+ 5 │                  })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:7:18]
+ 6 │                    })
+ 7 │                    return Promise.resolve(4)
+   ·                           ──────────────────
+ 8 │                  })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:5:20]
+ 4 │                    fn3(function() {
+ 5 │                      return Promise.resolve(4)
+   ·                             ──────────────────
+ 6 │                    })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:4:18]
+ 3 │                  return doThing().then(function() {
+ 4 │                    return Promise.resolve(5);
+   ·                           ──────────────────
+ 5 │                  });
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:3:16]
+ 2 │                doThing().then(function() {
+ 3 │                  return Promise.resolve(5);
+   ·                         ──────────────────
+ 4 │                })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:37]
+ 1 │ doThing().then((function() { return Promise.resolve(4) }).bind(this))
+   ·                                     ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:37]
+ 1 │ doThing().then((function() { return Promise.resolve(4) }).bind(this).bind(this))
+   ·                                     ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:43]
+ 1 │ doThing().then(null, (function() { return Promise.resolve(4) }).bind(this))
+   ·                                           ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:31]
+ 1 │ doThing().then(() => { return Promise.resolve(4) })
+   ·                               ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:3:16]
+ 2 │                return p.then(function(val) {
+ 3 │                  return Promise.resolve(val * 4)
+   ·                         ────────────────────────
+ 4 │                })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:1:22]
+ 1 │ doThing().then(() => Promise.resolve(4))
+   ·                      ──────────────────
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Expected throw instead of Promise.reject
+   ╭─[no_return_wrap.tsx:1:22]
+ 1 │ doThing().then(() => Promise.reject(4))
+   ·                      ─────────────────
+   ╰────
+  help: Throw the value being passed into Promise.reject instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:7:18]
+ 6 │                    })
+ 7 │                    return Promise.resolve(4)
+   ·                           ──────────────────
+ 8 │                  })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
+
+  ⚠ eslint-plugin-promise(no-return-wrap): Avoid wrapping return values in Promise.resolve
+   ╭─[no_return_wrap.tsx:5:20]
+ 4 │                    fn3(function() {
+ 5 │                      return Promise.resolve(4)
+   ·                             ──────────────────
+ 6 │                    })
+   ╰────
+  help: Return the value being passed into Promise.resolve instead
