@@ -5122,31 +5122,31 @@ unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportTypeParameter(
-        ancestor::TSImportTypeWithoutParameter(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeArgument(
+        ancestor::TSImportTypeWithoutArgument(node, PhantomData),
     ));
     walk_ts_type(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_PARAMETER) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *mut TSType,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)
+        as *mut Option<Box<TSImportAttributes>>)
+    {
+        ctx.retag_stack(AncestorType::TSImportTypeOptions);
+        walk_ts_import_attributes(traverser, (&mut **field) as *mut _, ctx);
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
         as *mut Option<TSTypeName>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeQualifier);
         walk_ts_type_name(traverser, field as *mut _, ctx);
     }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
-        as *mut Option<Box<TSImportAttributes>>)
-    {
-        ctx.retag_stack(AncestorType::TSImportTypeAttributes);
-        walk_ts_import_attributes(traverser, (&mut **field) as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::TSImportTypeTypeParameters);
+        ctx.retag_stack(AncestorType::TSImportTypeTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);

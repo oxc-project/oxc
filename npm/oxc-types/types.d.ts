@@ -1281,11 +1281,11 @@ export type TSTypeQueryExprName = TSImportType | TSTypeName;
 
 export interface TSImportType extends Span {
   type: 'TSImportType';
-  isTypeOf: boolean;
-  parameter: TSType;
+  argument: TSType;
+  options: TSImportAttributes | null;
   qualifier: TSTypeName | null;
-  attributes: TSImportAttributes | null;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
+  isTypeOf: boolean;
 }
 
 export interface TSImportAttributes extends Span {

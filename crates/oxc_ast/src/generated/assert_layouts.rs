@@ -1256,11 +1256,11 @@ const _: () = {
     assert!(size_of::<TSImportType>() == 64);
     assert!(align_of::<TSImportType>() == 8);
     assert!(offset_of!(TSImportType, span) == 0);
-    assert!(offset_of!(TSImportType, is_type_of) == 8);
-    assert!(offset_of!(TSImportType, parameter) == 16);
+    assert!(offset_of!(TSImportType, argument) == 8);
+    assert!(offset_of!(TSImportType, options) == 24);
     assert!(offset_of!(TSImportType, qualifier) == 32);
-    assert!(offset_of!(TSImportType, attributes) == 48);
-    assert!(offset_of!(TSImportType, type_parameters) == 56);
+    assert!(offset_of!(TSImportType, type_arguments) == 48);
+    assert!(offset_of!(TSImportType, is_type_of) == 56);
 
     assert!(size_of::<TSImportAttributes>() == 64);
     assert!(align_of::<TSImportAttributes>() == 8);
@@ -2660,11 +2660,11 @@ const _: () = {
     assert!(size_of::<TSImportType>() == 36);
     assert!(align_of::<TSImportType>() == 4);
     assert!(offset_of!(TSImportType, span) == 0);
-    assert!(offset_of!(TSImportType, is_type_of) == 8);
-    assert!(offset_of!(TSImportType, parameter) == 12);
+    assert!(offset_of!(TSImportType, argument) == 8);
+    assert!(offset_of!(TSImportType, options) == 16);
     assert!(offset_of!(TSImportType, qualifier) == 20);
-    assert!(offset_of!(TSImportType, attributes) == 28);
-    assert!(offset_of!(TSImportType, type_parameters) == 32);
+    assert!(offset_of!(TSImportType, type_arguments) == 28);
+    assert!(offset_of!(TSImportType, is_type_of) == 32);
 
     assert!(size_of::<TSImportAttributes>() == 40);
     assert!(align_of::<TSImportAttributes>() == 4);

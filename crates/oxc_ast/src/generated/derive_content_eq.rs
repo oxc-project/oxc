@@ -2297,11 +2297,11 @@ impl ContentEq for TSTypeQueryExprName<'_> {
 
 impl ContentEq for TSImportType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
-            && ContentEq::content_eq(&self.parameter, &other.parameter)
+        ContentEq::content_eq(&self.argument, &other.argument)
+            && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
-            && ContentEq::content_eq(&self.attributes, &other.attributes)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
     }
 }
 

@@ -1278,12 +1278,12 @@ pub enum TSTypeQueryExprName<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSImportType<'a> {
     pub span: Span,
+    pub argument: TSType<'a>,
+    pub options: Option<Box<'a, TSImportAttributes<'a>>>,
+    pub qualifier: Option<TSTypeName<'a>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// `true` for `typeof import("foo")`
     pub is_type_of: bool,
-    pub parameter: TSType<'a>,
-    pub qualifier: Option<TSTypeName<'a>>,
-    pub attributes: Option<Box<'a, TSImportAttributes<'a>>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 #[ast(visit)]

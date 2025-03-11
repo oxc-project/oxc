@@ -10306,20 +10306,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
@@ -10327,11 +10327,11 @@ impl<'a> AstBuilder<'a> {
     {
         TSType::TSImportType(self.alloc_ts_import_type(
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options,
             qualifier,
-            attributes,
-            type_parameters,
+            type_arguments,
+            is_type_of,
         ))
     }
 
@@ -13422,20 +13422,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSTypeQueryExprName<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
@@ -13443,11 +13443,11 @@ impl<'a> AstBuilder<'a> {
     {
         TSTypeQueryExprName::TSImportType(self.alloc_ts_import_type(
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options,
             qualifier,
-            attributes,
-            type_parameters,
+            type_arguments,
+            is_type_of,
         ))
     }
 
@@ -13457,20 +13457,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSImportType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
@@ -13478,11 +13478,11 @@ impl<'a> AstBuilder<'a> {
     {
         TSImportType {
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options: options.into_in(self.allocator),
             qualifier,
-            attributes: attributes.into_in(self.allocator),
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
+            is_type_of,
         }
     }
 
@@ -13492,34 +13492,27 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn alloc_ts_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> Box<'a, TSImportType<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.ts_import_type(
-                span,
-                is_type_of,
-                parameter,
-                qualifier,
-                attributes,
-                type_parameters,
-            ),
+            self.ts_import_type(span, argument, options, qualifier, type_arguments, is_type_of),
             self.allocator,
         )
     }

@@ -3849,11 +3849,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSImportType {
             span: CloneIn::clone_in(&self.span, allocator),
-            is_type_of: CloneIn::clone_in(&self.is_type_of, allocator),
-            parameter: CloneIn::clone_in(&self.parameter, allocator),
+            argument: CloneIn::clone_in(&self.argument, allocator),
+            options: CloneIn::clone_in(&self.options, allocator),
             qualifier: CloneIn::clone_in(&self.qualifier, allocator),
-            attributes: CloneIn::clone_in(&self.attributes, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
+            is_type_of: CloneIn::clone_in(&self.is_type_of, allocator),
         }
     }
 }

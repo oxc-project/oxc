@@ -3548,8 +3548,8 @@ impl Gen for TSImportType<'_> {
             p.print_str("typeof ");
         }
         p.print_str("import(");
-        self.parameter.print(p, ctx);
-        if let Some(attributes) = &self.attributes {
+        self.argument.print(p, ctx);
+        if let Some(attributes) = &self.options {
             p.print_str(", ");
             attributes.print(p, ctx);
         }
@@ -3558,7 +3558,7 @@ impl Gen for TSImportType<'_> {
             p.print_ascii_byte(b'.');
             qualifier.print(p, ctx);
         }
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
     }

@@ -3909,15 +3909,15 @@ pub mod walk {
         let kind = AstKind::TSImportType(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_type(&it.parameter);
+        visitor.visit_ts_type(&it.argument);
+        if let Some(options) = &it.options {
+            visitor.visit_ts_import_attributes(options);
+        }
         if let Some(qualifier) = &it.qualifier {
             visitor.visit_ts_type_name(qualifier);
         }
-        if let Some(attributes) = &it.attributes {
-            visitor.visit_ts_import_attributes(attributes);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }

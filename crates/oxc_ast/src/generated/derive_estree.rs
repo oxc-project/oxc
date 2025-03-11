@@ -3091,11 +3091,11 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("type", &JsonSafeString("TSImportType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("isTypeOf", &self.is_type_of);
-        state.serialize_field("parameter", &self.parameter);
+        state.serialize_field("argument", &self.argument);
+        state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
-        state.serialize_field("attributes", &self.attributes);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
+        state.serialize_field("isTypeOf", &self.is_type_of);
         state.end();
     }
 }

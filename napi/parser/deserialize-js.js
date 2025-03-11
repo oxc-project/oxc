@@ -1771,11 +1771,11 @@ function deserializeTSImportType(pos) {
     type: 'TSImportType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    isTypeOf: deserializeBool(pos + 8),
-    parameter: deserializeTSType(pos + 16),
+    argument: deserializeTSType(pos + 8),
+    options: deserializeOptionBoxTSImportAttributes(pos + 24),
     qualifier: deserializeOptionTSTypeName(pos + 32),
-    attributes: deserializeOptionBoxTSImportAttributes(pos + 48),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 56),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
+    isTypeOf: deserializeBool(pos + 56),
   };
 }
 
@@ -5515,11 +5515,6 @@ function deserializeBoxTSTypeParameter(pos) {
   return deserializeTSTypeParameter(uint32[pos >> 2]);
 }
 
-function deserializeOptionTSTypeName(pos) {
-  if (uint8[pos] === 2) return null;
-  return deserializeTSTypeName(pos);
-}
-
 function deserializeBoxTSImportAttributes(pos) {
   return deserializeTSImportAttributes(uint32[pos >> 2]);
 }
@@ -5527,6 +5522,11 @@ function deserializeBoxTSImportAttributes(pos) {
 function deserializeOptionBoxTSImportAttributes(pos) {
   if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
   return deserializeBoxTSImportAttributes(pos);
+}
+
+function deserializeOptionTSTypeName(pos) {
+  if (uint8[pos] === 2) return null;
+  return deserializeTSTypeName(pos);
 }
 
 function deserializeVecTSImportAttribute(pos) {

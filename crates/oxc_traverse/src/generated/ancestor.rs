@@ -281,10 +281,10 @@ pub(crate) enum AncestorType {
     TSInferTypeTypeParameter = 258,
     TSTypeQueryExprName = 259,
     TSTypeQueryTypeParameters = 260,
-    TSImportTypeParameter = 261,
-    TSImportTypeQualifier = 262,
-    TSImportTypeAttributes = 263,
-    TSImportTypeTypeParameters = 264,
+    TSImportTypeArgument = 261,
+    TSImportTypeOptions = 262,
+    TSImportTypeQualifier = 263,
+    TSImportTypeTypeArguments = 264,
     TSImportAttributesAttributesKeyword = 265,
     TSImportAttributesElements = 266,
     TSImportAttributeName = 267,
@@ -821,14 +821,14 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSTypeQueryExprName as u16,
     TSTypeQueryTypeParameters(TSTypeQueryWithoutTypeParameters<'a, 't>) =
         AncestorType::TSTypeQueryTypeParameters as u16,
-    TSImportTypeParameter(TSImportTypeWithoutParameter<'a, 't>) =
-        AncestorType::TSImportTypeParameter as u16,
+    TSImportTypeArgument(TSImportTypeWithoutArgument<'a, 't>) =
+        AncestorType::TSImportTypeArgument as u16,
+    TSImportTypeOptions(TSImportTypeWithoutOptions<'a, 't>) =
+        AncestorType::TSImportTypeOptions as u16,
     TSImportTypeQualifier(TSImportTypeWithoutQualifier<'a, 't>) =
         AncestorType::TSImportTypeQualifier as u16,
-    TSImportTypeAttributes(TSImportTypeWithoutAttributes<'a, 't>) =
-        AncestorType::TSImportTypeAttributes as u16,
-    TSImportTypeTypeParameters(TSImportTypeWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSImportTypeTypeParameters as u16,
+    TSImportTypeTypeArguments(TSImportTypeWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSImportTypeTypeArguments as u16,
     TSImportAttributesAttributesKeyword(TSImportAttributesWithoutAttributesKeyword<'a, 't>) =
         AncestorType::TSImportAttributesAttributesKeyword as u16,
     TSImportAttributesElements(TSImportAttributesWithoutElements<'a, 't>) =
@@ -1749,10 +1749,10 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_import_type(self) -> bool {
         matches!(
             self,
-            Self::TSImportTypeParameter(_)
+            Self::TSImportTypeArgument(_)
+                | Self::TSImportTypeOptions(_)
                 | Self::TSImportTypeQualifier(_)
-                | Self::TSImportTypeAttributes(_)
-                | Self::TSImportTypeTypeParameters(_)
+                | Self::TSImportTypeTypeArguments(_)
         )
     }
 
@@ -2146,7 +2146,7 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::TSTypeParameterConstraint(_)
                 | Self::TSTypeParameterDefault(_)
                 | Self::TSTypeAliasDeclarationTypeAnnotation(_)
-                | Self::TSImportTypeParameter(_)
+                | Self::TSImportTypeArgument(_)
                 | Self::TSMappedTypeNameType(_)
                 | Self::TSMappedTypeTypeAnnotation(_)
                 | Self::TSTemplateLiteralTypeTypes(_)
@@ -2482,10 +2482,10 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSInferTypeTypeParameter(a) => a.address(),
             Self::TSTypeQueryExprName(a) => a.address(),
             Self::TSTypeQueryTypeParameters(a) => a.address(),
-            Self::TSImportTypeParameter(a) => a.address(),
+            Self::TSImportTypeArgument(a) => a.address(),
+            Self::TSImportTypeOptions(a) => a.address(),
             Self::TSImportTypeQualifier(a) => a.address(),
-            Self::TSImportTypeAttributes(a) => a.address(),
-            Self::TSImportTypeTypeParameters(a) => a.address(),
+            Self::TSImportTypeTypeArguments(a) => a.address(),
             Self::TSImportAttributesAttributesKeyword(a) => a.address(),
             Self::TSImportAttributesElements(a) => a.address(),
             Self::TSImportAttributeName(a) => a.address(),
@@ -14247,29 +14247,32 @@ impl<'a, 't> GetAddress for TSTypeQueryWithoutTypeParameters<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_IMPORT_TYPE_SPAN: usize = offset_of!(TSImportType, span);
-pub(crate) const OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF: usize = offset_of!(TSImportType, is_type_of);
-pub(crate) const OFFSET_TS_IMPORT_TYPE_PARAMETER: usize = offset_of!(TSImportType, parameter);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_ARGUMENT: usize = offset_of!(TSImportType, argument);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_OPTIONS: usize = offset_of!(TSImportType, options);
 pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIER: usize = offset_of!(TSImportType, qualifier);
-pub(crate) const OFFSET_TS_IMPORT_TYPE_ATTRIBUTES: usize = offset_of!(TSImportType, attributes);
-pub(crate) const OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS: usize =
-    offset_of!(TSImportType, type_parameters);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS: usize =
+    offset_of!(TSImportType, type_arguments);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF: usize = offset_of!(TSImportType, is_type_of);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSImportTypeWithoutParameter<'a, 't>(
+pub struct TSImportTypeWithoutArgument<'a, 't>(
     pub(crate) *const TSImportType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSImportTypeWithoutParameter<'a, 't> {
+impl<'a, 't> TSImportTypeWithoutArgument<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn is_type_of(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
+    pub fn options(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
+                as *const Option<Box<'a, TSImportAttributes<'a>>>)
+        }
     }
 
     #[inline]
@@ -14281,23 +14284,69 @@ impl<'a, 't> TSImportTypeWithoutParameter<'a, 't> {
     }
 
     #[inline]
-    pub fn attributes(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
-                as *const Option<Box<'a, TSImportAttributes<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
+    pub fn is_type_of(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
     }
 }
 
-impl<'a, 't> GetAddress for TSImportTypeWithoutParameter<'a, 't> {
+impl<'a, 't> GetAddress for TSImportTypeWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSImportTypeWithoutOptions<'a, 't>(
+    pub(crate) *const TSImportType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSImportTypeWithoutOptions<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn argument(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn qualifier(self) -> &'t Option<TSTypeName<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
+                as *const Option<TSTypeName<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn is_type_of(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeWithoutOptions<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -14318,31 +14367,31 @@ impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
     }
 
     #[inline]
-    pub fn is_type_of(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
-    }
-
-    #[inline]
-    pub fn parameter(self) -> &'t TSType<'a> {
+    pub fn argument(self) -> &'t TSType<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_PARAMETER) as *const TSType<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *const TSType<'a>)
         }
     }
 
     #[inline]
-    pub fn attributes(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
+    pub fn options(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
                 as *const Option<Box<'a, TSImportAttributes<'a>>>)
         }
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
+    }
+
+    #[inline]
+    pub fn is_type_of(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
     }
 }
 
@@ -14355,96 +14404,47 @@ impl<'a, 't> GetAddress for TSImportTypeWithoutQualifier<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSImportTypeWithoutAttributes<'a, 't>(
+pub struct TSImportTypeWithoutTypeArguments<'a, 't>(
     pub(crate) *const TSImportType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSImportTypeWithoutAttributes<'a, 't> {
+impl<'a, 't> TSImportTypeWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn is_type_of(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
-    }
-
-    #[inline]
-    pub fn parameter(self) -> &'t TSType<'a> {
+    pub fn argument(self) -> &'t TSType<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_PARAMETER) as *const TSType<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *const TSType<'a>)
         }
     }
 
     #[inline]
-    pub fn qualifier(self) -> &'t Option<TSTypeName<'a>> {
+    pub fn options(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
-                as *const Option<TSTypeName<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TSImportTypeWithoutAttributes<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSImportTypeWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSImportType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSImportTypeWithoutTypeParameters<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn is_type_of(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
-    }
-
-    #[inline]
-    pub fn parameter(self) -> &'t TSType<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_PARAMETER) as *const TSType<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn qualifier(self) -> &'t Option<TSTypeName<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
-                as *const Option<TSTypeName<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn attributes(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
                 as *const Option<Box<'a, TSImportAttributes<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn qualifier(self) -> &'t Option<TSTypeName<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_QUALIFIER)
+                as *const Option<TSTypeName<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn is_type_of(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
+    }
 }
 
-impl<'a, 't> GetAddress for TSImportTypeWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for TSImportTypeWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
