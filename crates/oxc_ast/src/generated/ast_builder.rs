@@ -10307,30 +10307,29 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
     /// * `qualifier`
-    /// * `attributes`
+    /// * `options`
     /// * `type_parameters`
     #[inline]
-    pub fn ts_type_import_type<T1, T2>(
+    pub fn ts_type_import_type<T1>(
         self,
         span: Span,
         is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        options: Option<ObjectExpression<'a>>,
+        type_parameters: T1,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSImportType(self.alloc_ts_import_type(
             span,
             is_type_of,
-            parameter,
+            argument,
             qualifier,
-            attributes,
+            options,
             type_parameters,
         ))
     }
@@ -13423,30 +13422,29 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
     /// * `qualifier`
-    /// * `attributes`
+    /// * `options`
     /// * `type_parameters`
     #[inline]
-    pub fn ts_type_query_expr_name_import_type<T1, T2>(
+    pub fn ts_type_query_expr_name_import_type<T1>(
         self,
         span: Span,
         is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        options: Option<ObjectExpression<'a>>,
+        type_parameters: T1,
     ) -> TSTypeQueryExprName<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeQueryExprName::TSImportType(self.alloc_ts_import_type(
             span,
             is_type_of,
-            parameter,
+            argument,
             qualifier,
-            attributes,
+            options,
             type_parameters,
         ))
     }
@@ -13458,30 +13456,29 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
     /// * `qualifier`
-    /// * `attributes`
+    /// * `options`
     /// * `type_parameters`
     #[inline]
-    pub fn ts_import_type<T1, T2>(
+    pub fn ts_import_type<T1>(
         self,
         span: Span,
         is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        options: Option<ObjectExpression<'a>>,
+        type_parameters: T1,
     ) -> TSImportType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSImportType {
             span,
             is_type_of,
-            parameter,
+            argument,
             qualifier,
-            attributes: attributes.into_in(self.allocator),
+            options,
             type_parameters: type_parameters.into_in(self.allocator),
         }
     }
@@ -13493,143 +13490,27 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
     /// * `qualifier`
-    /// * `attributes`
+    /// * `options`
     /// * `type_parameters`
     #[inline]
-    pub fn alloc_ts_import_type<T1, T2>(
+    pub fn alloc_ts_import_type<T1>(
         self,
         span: Span,
         is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        options: Option<ObjectExpression<'a>>,
+        type_parameters: T1,
     ) -> Box<'a, TSImportType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.ts_import_type(
-                span,
-                is_type_of,
-                parameter,
-                qualifier,
-                attributes,
-                type_parameters,
-            ),
+            self.ts_import_type(span, is_type_of, argument, qualifier, options, type_parameters),
             self.allocator,
         )
-    }
-
-    /// Build a [`TSImportAttributes`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_import_attributes`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
-    /// * `elements`
-    #[inline]
-    pub fn ts_import_attributes(
-        self,
-        span: Span,
-        attributes_keyword: IdentifierName<'a>,
-        elements: Vec<'a, TSImportAttribute<'a>>,
-    ) -> TSImportAttributes<'a> {
-        TSImportAttributes { span, attributes_keyword, elements }
-    }
-
-    /// Build a [`TSImportAttributes`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_import_attributes`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
-    /// * `elements`
-    #[inline]
-    pub fn alloc_ts_import_attributes(
-        self,
-        span: Span,
-        attributes_keyword: IdentifierName<'a>,
-        elements: Vec<'a, TSImportAttribute<'a>>,
-    ) -> Box<'a, TSImportAttributes<'a>> {
-        Box::new_in(self.ts_import_attributes(span, attributes_keyword, elements), self.allocator)
-    }
-
-    /// Build a [`TSImportAttribute`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_import_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `value`
-    #[inline]
-    pub fn ts_import_attribute(
-        self,
-        span: Span,
-        name: TSImportAttributeName<'a>,
-        value: Expression<'a>,
-    ) -> TSImportAttribute<'a> {
-        TSImportAttribute { span, name, value }
-    }
-
-    /// Build a [`TSImportAttribute`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_import_attribute`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    /// * `value`
-    #[inline]
-    pub fn alloc_ts_import_attribute(
-        self,
-        span: Span,
-        name: TSImportAttributeName<'a>,
-        value: Expression<'a>,
-    ) -> Box<'a, TSImportAttribute<'a>> {
-        Box::new_in(self.ts_import_attribute(span, name, value), self.allocator)
-    }
-
-    /// Build a [`TSImportAttributeName::Identifier`].
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`
-    #[inline]
-    pub fn ts_import_attribute_name_identifier<A>(
-        self,
-        span: Span,
-        name: A,
-    ) -> TSImportAttributeName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        TSImportAttributeName::Identifier(self.identifier_name(span, name))
-    }
-
-    /// Build a [`TSImportAttributeName::StringLiteral`].
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    #[inline]
-    pub fn ts_import_attribute_name_string_literal<A>(
-        self,
-        span: Span,
-        value: A,
-        raw: Option<Atom<'a>>,
-    ) -> TSImportAttributeName<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        TSImportAttributeName::StringLiteral(self.string_literal(span, value, raw))
     }
 
     /// Build a [`TSFunctionType`].

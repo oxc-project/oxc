@@ -22,6 +22,9 @@ target/
 /editors/vscode/out/
 /editors/vscode/*.vsix
 
+# JetBrains
+/.idea/
+
 # Cloned conformance repos
 tasks/coverage/babel/
 tasks/coverage/test262/

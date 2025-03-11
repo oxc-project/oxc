@@ -3850,46 +3850,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
         TSImportType {
             span: CloneIn::clone_in(&self.span, allocator),
             is_type_of: CloneIn::clone_in(&self.is_type_of, allocator),
-            parameter: CloneIn::clone_in(&self.parameter, allocator),
+            argument: CloneIn::clone_in(&self.argument, allocator),
             qualifier: CloneIn::clone_in(&self.qualifier, allocator),
-            attributes: CloneIn::clone_in(&self.attributes, allocator),
+            options: CloneIn::clone_in(&self.options, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for TSImportAttributes<'_> {
-    type Cloned = TSImportAttributes<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        TSImportAttributes {
-            span: CloneIn::clone_in(&self.span, allocator),
-            attributes_keyword: CloneIn::clone_in(&self.attributes_keyword, allocator),
-            elements: CloneIn::clone_in(&self.elements, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for TSImportAttribute<'_> {
-    type Cloned = TSImportAttribute<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        TSImportAttribute {
-            span: CloneIn::clone_in(&self.span, allocator),
-            name: CloneIn::clone_in(&self.name, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for TSImportAttributeName<'_> {
-    type Cloned = TSImportAttributeName<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        match self {
-            Self::Identifier(it) => {
-                TSImportAttributeName::Identifier(CloneIn::clone_in(it, allocator))
-            }
-            Self::StringLiteral(it) => {
-                TSImportAttributeName::StringLiteral(CloneIn::clone_in(it, allocator))
-            }
         }
     }
 }

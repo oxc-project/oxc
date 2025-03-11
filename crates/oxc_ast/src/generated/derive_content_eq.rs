@@ -2298,34 +2298,10 @@ impl ContentEq for TSTypeQueryExprName<'_> {
 impl ContentEq for TSImportType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
-            && ContentEq::content_eq(&self.parameter, &other.parameter)
+            && ContentEq::content_eq(&self.argument, &other.argument)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
-            && ContentEq::content_eq(&self.attributes, &other.attributes)
+            && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
-    }
-}
-
-impl ContentEq for TSImportAttributes<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.attributes_keyword, &other.attributes_keyword)
-            && ContentEq::content_eq(&self.elements, &other.elements)
-    }
-}
-
-impl ContentEq for TSImportAttribute<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.name, &other.name)
-            && ContentEq::content_eq(&self.value, &other.value)
-    }
-}
-
-impl ContentEq for TSImportAttributeName<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
-            _ => false,
-        }
     }
 }
 

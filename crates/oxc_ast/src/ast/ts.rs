@@ -1280,38 +1280,10 @@ pub struct TSImportType<'a> {
     pub span: Span,
     /// `true` for `typeof import("foo")`
     pub is_type_of: bool,
-    pub parameter: TSType<'a>,
+    pub argument: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
-    pub attributes: Option<Box<'a, TSImportAttributes<'a>>>,
+    pub options: Option<ObjectExpression<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-}
-
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-pub struct TSImportAttributes<'a> {
-    pub span: Span,
-    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
-    pub elements: Vec<'a, TSImportAttribute<'a>>,
-}
-
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-// Pluralize as `TSImportAttributeList` to avoid naming clash with `TSImportAttributes`.
-#[plural(TSImportAttributeList)]
-pub struct TSImportAttribute<'a> {
-    pub span: Span,
-    pub name: TSImportAttributeName<'a>,
-    pub value: Expression<'a>,
-}
-
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-pub enum TSImportAttributeName<'a> {
-    Identifier(IdentifierName<'a>) = 0,
-    StringLiteral(StringLiteral<'a>) = 1,
 }
 
 /// TypeScript Function Type

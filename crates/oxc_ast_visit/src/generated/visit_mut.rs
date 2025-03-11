@@ -1081,21 +1081,6 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_import_attributes(&mut self, it: &mut TSImportAttributes<'a>) {
-        walk_ts_import_attributes(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_import_attribute(&mut self, it: &mut TSImportAttribute<'a>) {
-        walk_ts_import_attribute(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_import_attribute_name(&mut self, it: &mut TSImportAttributeName<'a>) {
-        walk_ts_import_attribute_name(self, it);
-    }
-
-    #[inline]
     fn visit_ts_function_type(&mut self, it: &mut TSFunctionType<'a>) {
         walk_ts_function_type(self, it);
     }
@@ -1329,11 +1314,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_ts_index_signature_names(&mut self, it: &mut Vec<'a, TSIndexSignatureName<'a>>) {
         walk_ts_index_signature_names(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_import_attribute_list(&mut self, it: &mut Vec<'a, TSImportAttribute<'a>>) {
-        walk_ts_import_attribute_list(self, it);
     }
 
     #[inline]
@@ -4118,51 +4098,17 @@ pub mod walk_mut {
         let kind = AstType::TSImportType;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_type(&mut it.parameter);
+        visitor.visit_ts_type(&mut it.argument);
         if let Some(qualifier) = &mut it.qualifier {
             visitor.visit_ts_type_name(qualifier);
         }
-        if let Some(attributes) = &mut it.attributes {
-            visitor.visit_ts_import_attributes(attributes);
+        if let Some(options) = &mut it.options {
+            visitor.visit_object_expression(options);
         }
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_instantiation(type_parameters);
         }
         visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_ts_import_attributes<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut TSImportAttributes<'a>,
-    ) {
-        // No `AstType` for this type
-        visitor.visit_span(&mut it.span);
-        visitor.visit_identifier_name(&mut it.attributes_keyword);
-        visitor.visit_ts_import_attribute_list(&mut it.elements);
-    }
-
-    #[inline]
-    pub fn walk_ts_import_attribute<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut TSImportAttribute<'a>,
-    ) {
-        // No `AstType` for this type
-        visitor.visit_span(&mut it.span);
-        visitor.visit_ts_import_attribute_name(&mut it.name);
-        visitor.visit_expression(&mut it.value);
-    }
-
-    #[inline]
-    pub fn walk_ts_import_attribute_name<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut TSImportAttributeName<'a>,
-    ) {
-        // No `AstType` for this type
-        match it {
-            TSImportAttributeName::Identifier(it) => visitor.visit_identifier_name(it),
-            TSImportAttributeName::StringLiteral(it) => visitor.visit_string_literal(it),
-        }
     }
 
     #[inline]
@@ -4649,16 +4595,6 @@ pub mod walk_mut {
     ) {
         for el in it {
             visitor.visit_ts_index_signature_name(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_ts_import_attribute_list<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut Vec<'a, TSImportAttribute<'a>>,
-    ) {
-        for el in it {
-            visitor.visit_ts_import_attribute(el);
         }
     }
 

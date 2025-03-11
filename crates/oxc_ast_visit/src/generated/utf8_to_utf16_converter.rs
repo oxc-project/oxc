@@ -983,18 +983,6 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
-    fn visit_ts_import_attributes(&mut self, it: &mut TSImportAttributes<'a>) {
-        self.convert_offset(&mut it.span.start);
-        walk_mut::walk_ts_import_attributes(self, it);
-        self.convert_offset(&mut it.span.end);
-    }
-
-    fn visit_ts_import_attribute(&mut self, it: &mut TSImportAttribute<'a>) {
-        self.convert_offset(&mut it.span.start);
-        walk_mut::walk_ts_import_attribute(self, it);
-        self.convert_offset(&mut it.span.end);
-    }
-
     fn visit_ts_function_type(&mut self, it: &mut TSFunctionType<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_function_type(self, it);

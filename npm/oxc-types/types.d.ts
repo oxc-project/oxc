@@ -1282,25 +1282,11 @@ export type TSTypeQueryExprName = TSImportType | TSTypeName;
 export interface TSImportType extends Span {
   type: 'TSImportType';
   isTypeOf: boolean;
-  parameter: TSType;
+  argument: TSType;
   qualifier: TSTypeName | null;
-  attributes: TSImportAttributes | null;
+  options: ObjectExpression | null;
   typeParameters: TSTypeParameterInstantiation | null;
 }
-
-export interface TSImportAttributes extends Span {
-  type: 'TSImportAttributes';
-  attributesKeyword: IdentifierName;
-  elements: Array<TSImportAttribute>;
-}
-
-export interface TSImportAttribute extends Span {
-  type: 'TSImportAttribute';
-  name: TSImportAttributeName;
-  value: Expression;
-}
-
-export type TSImportAttributeName = IdentifierName | StringLiteral;
 
 export interface TSFunctionType extends Span {
   type: 'TSFunctionType';

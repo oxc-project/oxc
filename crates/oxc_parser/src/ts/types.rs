@@ -976,55 +976,20 @@ impl<'a> ParserImpl<'a> {
         let is_type_of = self.eat(Kind::Typeof);
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
-        let parameter = self.parse_ts_type()?;
-        let attributes =
-            if self.eat(Kind::Comma) { Some(self.parse_ts_import_attributes()?) } else { None };
+        let argument = self.parse_ts_type()?;
+        let options =
+            if self.eat(Kind::Comma) { Some(self.parse_object_expression()?) } else { None };
         self.expect(Kind::RParen)?;
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
         let type_parameters = self.parse_type_arguments_of_type_reference()?;
         Ok(self.ast.ts_type_import_type(
             self.end_span(span),
             is_type_of,
-            parameter,
+            argument,
             qualifier,
-            attributes,
+            options,
             type_parameters,
         ))
-    }
-
-    fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {
-        let span = self.start_span();
-        self.expect(Kind::LCurly)?;
-        let attributes_keyword = match self.cur_kind() {
-            Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name()?,
-            Kind::With => self.parse_identifier_name()?,
-            _ => {
-                return Err(self.unexpected());
-            }
-        };
-        self.expect(Kind::Colon)?;
-        self.expect(Kind::LCurly)?;
-        let elements = self.parse_delimited_list(
-            Kind::RCurly,
-            Kind::Comma,
-            /* trailing_separator */ true,
-            Self::parse_ts_import_attribute,
-        )?;
-        self.expect(Kind::RCurly)?;
-        self.expect(Kind::RCurly)?;
-        Ok(self.ast.ts_import_attributes(self.end_span(span), attributes_keyword, elements))
-    }
-
-    fn parse_ts_import_attribute(&mut self) -> Result<TSImportAttribute<'a>> {
-        let span = self.start_span();
-        let name = match self.cur_kind() {
-            Kind::Str => TSImportAttributeName::StringLiteral(self.parse_literal_string()?),
-            _ => TSImportAttributeName::Identifier(self.parse_identifier_name()?),
-        };
-
-        self.expect(Kind::Colon)?;
-        let value = self.parse_expr()?;
-        Ok(self.ast.ts_import_attribute(self.end_span(span), name, value))
     }
 
     fn try_parse_constraint_of_infer_type(&mut self) -> Result<Option<TSType<'a>>> {

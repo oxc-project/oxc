@@ -2015,29 +2015,6 @@ impl GetSpanMut for TSImportType<'_> {
     }
 }
 
-impl GetSpanMut for TSImportAttributes<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for TSImportAttribute<'_> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl GetSpanMut for TSImportAttributeName<'_> {
-    fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(it),
-        }
-    }
-}
-
 impl GetSpanMut for TSFunctionType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {

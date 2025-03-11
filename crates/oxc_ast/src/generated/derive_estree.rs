@@ -3092,44 +3092,11 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("isTypeOf", &self.is_type_of);
-        state.serialize_field("parameter", &self.parameter);
+        state.serialize_field("argument", &self.argument);
         state.serialize_field("qualifier", &self.qualifier);
-        state.serialize_field("attributes", &self.attributes);
+        state.serialize_field("options", &self.options);
         state.serialize_field("typeParameters", &self.type_parameters);
         state.end();
-    }
-}
-
-impl ESTree for TSImportAttributes<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportAttributes"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("attributesKeyword", &self.attributes_keyword);
-        state.serialize_field("elements", &self.elements);
-        state.end();
-    }
-}
-
-impl ESTree for TSImportAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportAttribute"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
-        state.serialize_field("value", &self.value);
-        state.end();
-    }
-}
-
-impl ESTree for TSImportAttributeName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-        }
     }
 }
 
