@@ -85,7 +85,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("skip") => struct_def.estree.skip = true,
             AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
-            AttrPart::Tag("no_ts_def") => struct_def.estree.custom_ts_def = Some(String::new()),
+            AttrPart::Tag("no_ts_def") => struct_def.estree.no_ts_def = true,
             AttrPart::List("add_fields", list) => {
                 for list_element in list {
                     let (name, value) = list_element.try_into_string()?;
@@ -114,9 +114,6 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                     .collect::<Result<Vec<_>>>()?;
                 struct_def.estree.field_indices = Some(field_indices);
             }
-            AttrPart::String("custom_ts_def", value) => {
-                struct_def.estree.custom_ts_def = Some(value);
-            }
             AttrPart::String("ts_alias", value) => struct_def.estree.ts_alias = Some(value),
             AttrPart::String("add_ts_def", value) => struct_def.estree.add_ts_def = Some(value),
             AttrPart::String("rename", value) => struct_def.estree.rename = Some(value),
@@ -127,8 +124,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         AttrLocation::Enum(enum_def) => match part {
             AttrPart::Tag("skip") => enum_def.estree.skip = true,
             AttrPart::Tag("no_rename_variants") => enum_def.estree.no_rename_variants = true,
-            AttrPart::Tag("no_ts_def") => enum_def.estree.custom_ts_def = Some(String::new()),
-            AttrPart::String("custom_ts_def", value) => enum_def.estree.custom_ts_def = Some(value),
+            AttrPart::Tag("no_ts_def") => enum_def.estree.no_ts_def = true,
             AttrPart::String("ts_alias", value) => enum_def.estree.ts_alias = Some(value),
             AttrPart::String("add_ts_def", value) => {
                 enum_def.estree.add_ts_def = Some(value);

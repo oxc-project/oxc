@@ -41,20 +41,14 @@ impl Generator for TypescriptGenerator {
 ///
 /// Push type defs to `code`.
 fn generate_ts_type_def(type_def: &TypeDef, code: &mut String, schema: &Schema) {
-    // Use custom TS def if provided via `#[estree(custom_ts_def = "...")]` attribute
-    let custom_ts_def = match type_def {
-        TypeDef::Struct(struct_def) => &struct_def.estree.custom_ts_def,
-        TypeDef::Enum(enum_def) => &enum_def.estree.custom_ts_def,
+    // Skip TS def generation if `#[estree(no_ts_def)]` attribute
+    let no_ts_def = match type_def {
+        TypeDef::Struct(struct_def) => &struct_def.estree.no_ts_def,
+        TypeDef::Enum(enum_def) => &enum_def.estree.no_ts_def,
         _ => unreachable!(),
     };
 
-    if let Some(custom_ts_def) = custom_ts_def {
-        // Empty string means don't output any TS def at all for this type
-        if !custom_ts_def.is_empty() {
-            write_it!(code, "export {custom_ts_def};\n\n");
-        }
-    } else {
-        // No custom definition. Generate one.
+    if !no_ts_def {
         let ts_def = match type_def {
             TypeDef::Struct(struct_def) => generate_ts_type_def_for_struct(struct_def, schema),
             TypeDef::Enum(enum_def) => generate_ts_type_def_for_enum(enum_def, schema),
