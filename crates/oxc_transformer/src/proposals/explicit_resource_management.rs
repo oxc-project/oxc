@@ -37,7 +37,7 @@ use std::mem;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, Box as ArenaBox, GetAddress, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
@@ -391,8 +391,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                                 let xx = BoundIdentifier::from_binding_ident(class_binding)
                                     .create_read_reference(ctx);
 
-                                inner_block
-                                    .push(Self::transform_class_decl(class_decl.unbox(), ctx));
+                                inner_block.push(Self::transform_class_decl(class_decl, ctx));
 
                                 let local = ModuleExportName::IdentifierReference(xx);
                                 let exported = ctx
@@ -449,7 +448,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                         ));
                     }
                     Statement::ClassDeclaration(class_decl) => {
-                        inner_block.push(Self::transform_class_decl(class_decl.unbox(), ctx));
+                        inner_block.push(Self::transform_class_decl(class_decl, ctx));
                     }
                     Statement::VariableDeclaration(ref mut var_declaration) => {
                         if var_declaration.kind == VariableDeclarationKind::Using {
@@ -749,7 +748,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         using_ctx: &BoundIdentifier<'a>,
         parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> CatchClause<'a> {
+    ) -> ArenaBox<'a, CatchClause<'a>> {
         // catch (_) { _usingCtx.e = _; }
         //        ^                       catch_parameter
         //       ^^^^^^^^^^^^^^^^^^^^^^^^ catch_scope_id
@@ -783,7 +782,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         );
 
         // `catch (_) { _usingCtx.e = _; }`
-        ctx.ast.catch_clause_with_scope_id(
+        ctx.ast.alloc_catch_clause_with_scope_id(
             SPAN,
             Some(catch_parameter),
             ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(stmt), block_scope_id),
@@ -797,7 +796,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         parent_scope_id: ScopeId,
         needs_await: bool,
         ctx: &mut TraverseCtx<'a>,
-    ) -> BlockStatement<'a> {
+    ) -> ArenaBox<'a, BlockStatement<'a>> {
         let finally_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
 
         // `_usingCtx.d()`
@@ -816,7 +815,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let stmt = if needs_await { ctx.ast.expression_await(SPAN, expr) } else { expr };
 
-        ctx.ast.block_statement_with_scope_id(
+        ctx.ast.alloc_block_statement_with_scope_id(
             SPAN,
             ctx.ast.vec1(ctx.ast.statement_expression(SPAN, stmt)),
             finally_scope_id,
@@ -824,11 +823,14 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     }
 
     /// `class C {}` -> `var C = class {};`
-    fn transform_class_decl(mut class_decl: Class<'a>, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
+    fn transform_class_decl(
+        mut class_decl: ArenaBox<'a, Class<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
         let id = class_decl.id.take().expect("ClassDeclaration should have an id");
 
         class_decl.r#type = ClassType::ClassExpression;
-        let class_expr = Expression::ClassExpression(ctx.ast.alloc(class_decl));
+        let class_expr = Expression::ClassExpression(class_decl);
 
         *ctx.scoping_mut().symbol_flags_mut(id.symbol_id()) = SymbolFlags::FunctionScopedVariable;
 
