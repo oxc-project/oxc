@@ -530,8 +530,8 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// export default function () {}
     /// export default {}
     /// // to
-    /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return expr } });
-    /// Object.defineProperty(__vite_ssr_exports__, 'default', { enumerable: true, configurable: true, get(){ return {} } });
+    /// __vite_ssr_exports__.default = function () {}
+    /// __vite_ssr_exports__.default = {}
     /// ```
     fn transform_export_default_declaration(
         new_stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -575,7 +575,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             expr @ match_expression!(ExportDefaultDeclarationKind) => expr.into_expression(),
         };
 
-        new_stmts.push(Self::create_export(span, expr, DEFAULT, ctx));
+        new_stmts.push(Self::create_export_default_assignment(span, expr, ctx));
     }
 
     /// Transform import specifiers, and return an imported names object.
@@ -1132,16 +1132,7 @@ Object.defineProperty(__vite_ssr_exports__, 'arbitrary string', {
 
     #[test]
     fn export_default() {
-        test_same(
-            "export default {}",
-            "Object.defineProperty(__vite_ssr_exports__, 'default', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return {};
-  }
-});",
-        );
+        test_same("export default {}", "__vite_ssr_exports__.default = {};");
     }
 
     #[test]
@@ -1657,27 +1648,12 @@ Object.defineProperty(__vite_ssr_exports__, 'fn2', {
             "export default (function getRandom() {
       return Math.random();
     });",
-            "Object.defineProperty(__vite_ssr_exports__, 'default', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return function getRandom() {
-      return Math.random();
-    };
-  }
-});",
+            "__vite_ssr_exports__.default = function getRandom() {
+  return Math.random();
+};",
         );
 
-        test_same(
-            "export default (class A {});",
-            "Object.defineProperty(__vite_ssr_exports__, 'default', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return class A {};
-  }
-});",
-        );
+        test_same("export default (class A {});", "__vite_ssr_exports__.default = class A {};");
     }
 
     // https://github.com/vitejs/vite/issues/8002
@@ -1916,13 +1892,7 @@ console.log(__vite_ssr_import_1__.foo + 2);",
     export * as bar from './bar'
     console.log(bar)",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('./foo', { importedNames: ['foo'] });
-Object.defineProperty(__vite_ssr_exports__, 'default', {
-  enumerable: true,
-  configurable: true,
-  get() {
-    return (0, __vite_ssr_import_0__.foo)();
-  }
-});
+__vite_ssr_exports__.default = (0, __vite_ssr_import_0__.foo)();
 const __vite_ssr_import_1__ = await __vite_ssr_import__('./bar');
 Object.defineProperty(__vite_ssr_exports__, 'bar', {
   enumerable: true,
