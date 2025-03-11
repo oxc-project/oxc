@@ -35,15 +35,16 @@
 
 use std::mem;
 
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
-use rustc_hash::FxHashMap;
 
-use crate::{Helper, context::TransformCtx};
+use crate::{Helper, TransformCtx};
 
 pub struct ExplicitResourceManagement<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
