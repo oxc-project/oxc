@@ -112,8 +112,7 @@ struct ModuleToLint {
 }
 impl ModuleToLint {
     fn from_processed_module(path: Arc<OsStr>, processed_module: ProcessedModule) -> Option<Self> {
-        let content = processed_module.content?;
-        Some(Self {
+        processed_module.content.map(|content| Self {
             path,
             section_module_records: processed_module
                 .section_module_records
@@ -135,7 +134,6 @@ impl Runtime {
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
-
             #[cfg(test)]
             test_source: std::sync::RwLock::new(None),
         }
@@ -279,7 +277,7 @@ impl Runtime {
         let mut module_paths_and_resolved_requests =
             Vec::<(Arc<OsStr>, SmallVec<[Vec<ResolvedModuleRequest>; 1]>)>::new();
 
-        // There are two kinds of threads. Let's call them the graph thread and module threads.
+        // There are two sets of threads: threads for the graph and threads for the modules.
         // - The graph thread is the one thread that calls `resolve_modules`. It's the only thread that updates the module graph, so no need for locks.
         // - Module threads accept paths and produces `ModuleProcessOutput` (the logic is in `self.process_path`). They are isolated to each
         //   other and paralleled in the rayon thread pool.

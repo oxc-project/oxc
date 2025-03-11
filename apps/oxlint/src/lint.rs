@@ -186,7 +186,7 @@ impl Runner for LintRunner {
             // e.g. `/some/file.js` and `/some/other/file.js` would both result in `/some`
             let mut directories = FxHashSet::default();
             for path in &paths {
-                let path = Path::new(path.as_ref());
+                let path = Path::new(path);
                 if let Some(directory) = path.parent() {
                     // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
                     // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
