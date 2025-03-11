@@ -5,9 +5,9 @@
 name = "crates"
 versioned_files = [
   "Cargo.toml",
-  "napi/oxc-parser/package.json",
-  "napi/oxc-transform/package.json",
-  "napi/oxc-minify/package.json",
+  "napi/parser/package.json",
+  "napi/transform/package.json",
+  "napi/minify/package.json",
   "npm/oxc-types/package.json",
   "npm/runtime/package.json",
   "wasm/parser/package.json",
