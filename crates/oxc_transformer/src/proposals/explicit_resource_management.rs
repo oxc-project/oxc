@@ -27,7 +27,7 @@
 //!
 //! ## Implementation
 //!
-//! Implementation based on [@babel/babel-plugin-syntax-explicit-resource-management](https://babeljs.io/docs/babel-plugin-syntax-explicit-resource-management).
+//! Implementation based on [@babel/plugin-proposal-explicit-resource-management](https://babeljs.io/docs/babel-plugin-proposal-explicit-resource-management).
 //!
 //! ## References:
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.9/packages/babel-plugin-proposal-explicit-resource-management>
@@ -59,17 +59,10 @@ impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
-    /// Transforms ready for `enter_block_statement` to do the rest.
+    /// Transform `for (using ... of ...)`, ready for `enter_statement` to do the rest.
     ///
-    /// ```ts
-    /// for await (using x of y) {}
-    /// ```
-    /// into
-    /// ```ts
-    /// for (const _x of y) {
-    ///     await using x = _x;
-    /// }
-    /// ```
+    /// * `for (using x of y) {}` -> `for (const _x of y) { using x = _x; }`
+    /// * `for await (using x of y) {}` -> `for (const _x of y) { await using x = _x; }`
     fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         let for_of_stmt_scope_id = node.scope_id();
         let ForStatementLeft::VariableDeclaration(decl) = &mut node.left else { return };
@@ -80,6 +73,8 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             return;
         }
         let variable_decl_kind = decl.kind;
+
+        // `for (using x of y)` -> `for (const _x of y)`
         decl.kind = VariableDeclarationKind::Const;
 
         let variable_declarator = decl.declarations.first_mut().unwrap();
@@ -91,11 +86,10 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             SymbolFlags::ConstVariable | SymbolFlags::BlockScopedVariable,
         );
 
-        // `for (const temp of y)`
         let binding_pattern =
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
 
-        // `using x = temp`
+        // `using x = _x;`
         let stmt = Statement::from(ctx.ast.declaration_variable(
             SPAN,
             variable_decl_kind,
@@ -110,10 +104,10 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         ));
 
         if let Statement::BlockStatement(body) = &mut node.body {
-            // `for (const temp of y) { console.log(x) }` -> `for (const temp of y) { using x = temp; console.log(x) }`
+            // `for (const _x of y) { x(); }` -> `for (const _x of y) { using x = _x; x(); }`
             body.body.insert(0, stmt);
         } else {
-            // `for (const temp of y) console.log(x)` -> `for (const temp of y) { using x = temp; console.log(x) }`
+            // `for (const _x of y) x();` -> `for (const _x of y) { using x = _x; x(); }`
             let old_body = ctx.ast.move_statement(&mut node.body);
 
             let new_body = ctx.ast.vec_from_array([stmt, old_body]);
@@ -125,7 +119,26 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         };
     }
 
-    /// Transforms a static block, based on the implementation in `transform_statements`
+    /// Transform class static block.
+    ///
+    /// ```js
+    /// class C { static { using x = y(); } }
+    /// ```
+    /// ->
+    /// ```js
+    /// class C {
+    ///   static {
+    ///     try {
+    ///       var _usingCtx = babelHelpers.usingCtx();
+    ///       const x = _usingCtx.u(y());
+    ///     } catch (_) {
+    ///       _usingCtx.e = _;
+    ///     } finally {
+    ///       _usingCtx.d();
+    ///     }
+    ///   }
+    /// }
+    /// ```
     fn enter_static_block(&mut self, node: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = node.scope_id();
         if let Some(replacement) =
@@ -135,7 +148,26 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         }
     }
 
-    /// Transforms a function body, based on the implementation in `transform_statements`
+    /// Transform function body.
+    ///
+    /// ```js
+    /// function f() {
+    ///   using x = y();
+    /// }
+    /// ```
+    /// ->
+    /// ```js
+    /// function f() {
+    ///   try {
+    ///     var _usingCtx = babelHelpers.usingCtx();
+    ///     const x = _usingCtx.u(y());
+    ///   } catch (_) {
+    ///     _usingCtx.e = _;
+    ///   } finally {
+    ///     _usingCtx.d();
+    ///   }
+    /// }
+    /// ```
     fn enter_function_body(&mut self, node: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(replacement) = self.transform_statements(
             &mut node.statements,
@@ -148,7 +180,45 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         }
     }
 
-    /// Transforms a block or switch statement, based on the implementation in `transform_statements`
+    /// Transform a block statement or switch statement.
+    ///
+    /// Block statement:
+    /// ```js
+    /// {
+    ///   using x = y();
+    /// }
+    /// ```
+    /// ->
+    /// ```js
+    /// try {
+    ///   var _usingCtx = babelHelpers.usingCtx();
+    ///   const x = _usingCtx.u(y());
+    /// } catch (_) {
+    ///   _usingCtx.e = _;
+    /// } finally {
+    ///   _usingCtx.d();
+    /// }
+    /// ```
+    ///
+    /// Switch statement:
+    /// ```js
+    /// switch (s) {
+    ///   case 1: using x = y();
+    /// }
+    /// ```
+    /// ->
+    /// ```js
+    /// try {
+    ///   var _usingCtx = babelHelpers.usingCtx();
+    ///   switch (s) {
+    ///     case 1: const x = _usingCtx.u(y());
+    ///   }
+    /// } catch (_) {
+    ///   _usingCtx.e = _;
+    /// } finally {
+    ///   _usingCtx.d();
+    /// }
+    /// ```
     fn enter_statement(&mut self, node: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match node {
             Statement::BlockStatement(block_stmt) => {
@@ -172,7 +242,8 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         }
     }
 
-    /// Moves any top level `using` declarations within a block statement allowing `enter_statement` to transform them.
+    /// Move any top level `using` declarations within a block statement,
+    /// allowing `enter_statement` to transform them.
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.top_level_using.clear();
         if !node.body.iter().any(|stmt| match stmt {
@@ -431,11 +502,10 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 }
 
 impl<'a> ExplicitResourceManagement<'a, '_> {
-    ///
     /// This function returns `None` if the switch statement was not transformed.
     ///
     /// Input:
-    /// ```ts
+    /// ```js
     /// switch (0) {
     ///   case 1:
     ///     using foo = bar;
@@ -445,7 +515,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     /// }
     /// ```
     /// Output:
-    /// ```ts
+    /// ```js
     /// try {
     ///   var _usingCtx = babelHelpers.usingCtx();
     ///   switch (0) {
@@ -567,14 +637,14 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     ///  - `ctx` - the traverse context
     ///
     /// Input:
-    /// ```ts
+    /// ```js
     /// {
     ///     using foo = bar;
     /// }
     /// ```
     ///
     /// Output:
-    /// ```ts
+    /// ```js
     /// try {
     ///   var _usingCtx = babelHelpers.usingCtx();
     ///   const foo = _usingCtx.u(bar);
@@ -625,8 +695,8 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                 Some(binding)
             });
 
-            // `using foo = bar` -> `const foo = _usingCtx.u(bar)`
-            // `await using foo = bar` -> `const foo = _usingCtx.a(bar)`
+            // `using foo = bar;` -> `const foo = _usingCtx.u(bar);`
+            // `await using foo = bar;` -> `const foo = _usingCtx.a(bar);`
             for decl in &mut variable_declaration.declarations {
                 if let Some(old_init) = decl.init.take() {
                     decl.init = Some(
@@ -656,8 +726,8 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let mut stmts = ctx.ast.move_vec(&mut *node);
 
-        let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
         // `var _usingCtx = babelHelpers.usingCtx();`
+        let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
         let helper = ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
@@ -689,17 +759,20 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         Some(ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally)))
     }
 
+    /// `catch (_) { _usingCtx.e = _; }`
     fn create_catch_clause(
         using_ctx: &BoundIdentifier<'a>,
         parent_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> CatchClause<'a> {
-        // catch (e) { console.log(e) }
-        //        ^                     catch_parameter
-        //       ^^^^^^^^^^^^^^^^^^^^^^ catch_scope_id
-        //           ^^^^^^^^^^^^^^^^^^ block_scope_id
+        // catch (_) { _usingCtx.e = _; }
+        //        ^                       catch_parameter
+        //       ^^^^^^^^^^^^^^^^^^^^^^^^ catch_scope_id
+        //           ^^^^^^^^^^^^^^^^^^^^ block_scope_id
         let catch_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::CatchClause);
         let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
+        // We can skip using `generate_uid` here as no code within the `catch` block which can use a
+        // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
             Atom::from("_"),
             block_scope_id,
@@ -708,7 +781,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let catch_parameter = ctx.ast.catch_parameter(SPAN, ident.create_binding_pattern(ctx));
 
-        // `_usingCtx.e = _`
+        // `_usingCtx.e = _;`
         let stmt = ctx.ast.statement_expression(
             SPAN,
             ctx.ast.expression_assignment(
@@ -725,7 +798,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             ),
         );
 
-        // `catch (_) { _usingCtx.e = _ }`
+        // `catch (_) { _usingCtx.e = _; }`
         ctx.ast.catch_clause_with_scope_id(
             SPAN,
             Some(catch_parameter),
@@ -734,6 +807,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         )
     }
 
+    /// `{ _usingCtx.d(); }`
     fn create_finally_block(
         using_ctx: &BoundIdentifier<'a>,
         parent_scope_id: ScopeId,
@@ -767,6 +841,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         )
     }
 
+    /// `class C {}` -> `var C = class {};`
     fn transform_class_decl(mut class_decl: Class<'a>, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         let id = class_decl.id.take().expect("ClassDeclaration should have an id");
 
