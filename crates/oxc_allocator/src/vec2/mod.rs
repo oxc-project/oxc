@@ -851,7 +851,6 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         unsafe {
             let ptr = self.as_ptr();
             let len = self.len();
-            mem::forget(self);
             slice::from_raw_parts(ptr, len)
         }
     }
@@ -876,7 +875,6 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn into_bump_slice_mut(self) -> &'bump mut [T] {
         let ptr = self.as_mut_ptr();
         let len = self.len();
-        mem::forget(self);
 
         unsafe { slice::from_raw_parts_mut(ptr, len) }
     }
@@ -2226,7 +2224,6 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
             } else {
                 begin.add(self.len()).cast_const()
             };
-            mem::forget(self);
             IntoIter { phantom: PhantomData, ptr: begin, end }
         }
     }
@@ -2433,18 +2430,6 @@ impl<'bump, T: 'bump> BorrowMut<[T]> for Vec<'bump, T> {
     }
 }
 
-impl<T> Drop for Vec<'_, T> {
-    fn drop(&mut self) {
-        unsafe {
-            // use drop for [T]
-            // use a raw slice to refer to the elements of the vector as weakest necessary type;
-            // could avoid questions of validity in certain cases
-            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len));
-        }
-        // RawVec handles deallocation
-    }
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // Clone-on-write
 ////////////////////////////////////////////////////////////////////////////////
@@ -2595,13 +2580,6 @@ impl<'bump, T: 'bump> ExactSizeIterator for IntoIter<'bump, T> {}
 
 impl<'bump, T: 'bump> FusedIterator for IntoIter<'bump, T> {}
 
-impl<T> Drop for IntoIter<'_, T> {
-    fn drop(&mut self) {
-        // drop all remaining elements
-        self.for_each(drop);
-    }
-}
-
 /// A draining iterator for `Vec<'bump, T>`.
 ///
 /// This `struct` is created by the [`Vec::drain`] method.
@@ -2702,8 +2680,6 @@ impl<I: Iterator> ExactSizeIterator for Splice<'_, '_, I> {}
 
 impl<I: Iterator> Drop for Splice<'_, '_, I> {
     fn drop(&mut self) {
-        self.drain.by_ref().for_each(drop);
-
         unsafe {
             if self.drain.tail_len == 0 {
                 self.drain.vec.as_mut().extend(self.replace_with.by_ref());
