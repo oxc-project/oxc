@@ -44,7 +44,7 @@
 /// another problem: how to transform identifiers which refer to imports? We must collect some information from imports,
 /// but it is already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifiers,
 /// dynamic imports, and import meta.
-use compact_str::ToCompactString;
+use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashMap;
 use std::iter;
 
@@ -639,7 +639,8 @@ impl<'a> ModuleRunnerTransform<'a> {
 
     /// Generate a unique import binding name like `__vite_ssr_import_{uid}__`.
     fn generate_import_binding_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
-        let uid_str = &self.import_uid.to_compact_string();
+        let mut buffer = ItoaBuffer::new();
+        let uid_str = buffer.format(self.import_uid);
         self.import_uid += 1;
         ctx.ast.atom_from_strs_array(["__vite_ssr_import_", uid_str, "__"])
     }
