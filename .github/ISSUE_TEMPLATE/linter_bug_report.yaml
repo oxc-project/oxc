@@ -1,7 +1,8 @@
 name: Linter bug report
 description: Report a bug in Oxlint
 title: "linter: "
-labels: ["C-bug", "A-linter"]
+labels: ["A-linter"]
+type: Bug
 
 body:
   - type: markdown
