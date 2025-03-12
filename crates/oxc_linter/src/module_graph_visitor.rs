@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, marker::PhantomData, sync::Arc};
+use std::{marker::PhantomData, path::PathBuf, sync::Arc};
 
 use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
@@ -124,7 +124,7 @@ impl<T> Default for ModuleGraphVisitorBuilder<'_, T> {
 
 pub struct ModuleGraphVisitResult<T> {
     pub result: T,
-    pub _traversed: FxHashSet<Box<OsStr>>,
+    pub _traversed: FxHashSet<PathBuf>,
     pub _max_depth: u32,
 }
 
@@ -136,7 +136,7 @@ impl<T> ModuleGraphVisitResult<T> {
 
 #[derive(Debug)]
 struct ModuleGraphVisitor {
-    traversed: FxHashSet<Box<OsStr>>,
+    traversed: FxHashSet<PathBuf>,
     depth: u32,
     max_depth: u32,
 }
@@ -203,7 +203,7 @@ impl ModuleGraphVisitor {
             }
 
             let path = &pair.1.resolved_absolute_path;
-            if !self.traversed.insert(path.clone().into_os_string().into_boxed_os_str()) {
+            if !self.traversed.insert(path.clone()) {
                 continue;
             }
 

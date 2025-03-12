@@ -1,5 +1,5 @@
 #![expect(clippy::cast_possible_truncation)]
-use std::{env, ffi::OsStr, path::Component, sync::Arc};
+use std::{ffi::OsStr, path::Component, sync::Arc};
 
 use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
@@ -119,7 +119,7 @@ impl Rule for NoCycle {
         let module_record = ctx.module_record();
 
         let needle = &module_record.resolved_absolute_path;
-        let cwd = env::current_dir().unwrap();
+        let cwd = std::env::current_dir().unwrap();
 
         let mut stack = Vec::new();
         let ignore_types = self.ignore_types;
@@ -161,7 +161,7 @@ impl Rule for NoCycle {
             })
             .visit_fold(false, module_record, |_, (_, val), _| {
                 let path = &val.resolved_absolute_path;
-                if path.as_os_str() == needle.as_os_str() {
+                if path == needle {
                     VisitFoldWhile::Stop(true)
                 } else {
                     VisitFoldWhile::Next(false)
