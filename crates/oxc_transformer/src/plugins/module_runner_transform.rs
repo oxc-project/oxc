@@ -817,10 +817,13 @@ mod test {
 
     use super::ModuleRunnerTransform;
 
-    fn transform(
-        source_text: &str,
-        is_jsx: bool,
-    ) -> Result<(String, Vec<String>, Vec<String>), Vec<OxcDiagnostic>> {
+    struct TransformReturn {
+        code: String,
+        deps: Vec<String>,
+        dynamic_deps: Vec<String>,
+    }
+
+    fn transform(source_text: &str, is_jsx: bool) -> Result<TransformReturn, Vec<OxcDiagnostic>> {
         let source_type = SourceType::default().with_jsx(is_jsx);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -834,8 +837,8 @@ mod test {
             let mut jsx = Jsx::new(jsx_options, None, AstBuilder::new(&allocator), &ctx);
             scoping = traverse_mut(&mut jsx, &allocator, &mut program, scoping);
         }
-        let mut module_runner_transform = ModuleRunnerTransform::default();
-        traverse_mut(&mut module_runner_transform, &allocator, &mut program, scoping);
+        let (deps, dynamic_deps) =
+            ModuleRunnerTransform::new().transform(&allocator, &mut program, scoping);
 
         if !ret.errors.is_empty() {
             return Err(ret.errors);
@@ -848,7 +851,8 @@ mod test {
             })
             .build(&program)
             .code;
-        Ok((code, module_runner_transform.deps, module_runner_transform.dynamic_deps))
+
+        Ok(TransformReturn { code, deps, dynamic_deps })
     }
 
     fn format_expected_code(source_text: &str) -> String {
@@ -868,7 +872,7 @@ mod test {
 
     fn test_same(source_text: &str, expected: &str) {
         let expected = format_expected_code(expected);
-        let result = transform(source_text, false).unwrap().0;
+        let result = transform(source_text, false).unwrap().code;
         if result != expected {
             let diff = TextDiff::from_lines(&expected, &result);
             print_diff_in_terminal(&diff);
@@ -878,12 +882,25 @@ mod test {
 
     fn test_same_jsx(source_text: &str, expected: &str) {
         let expected = format_expected_code(expected);
-        let result = transform(source_text, true).unwrap().0;
+        let result = transform(source_text, true).unwrap().code;
         if result != expected {
             let diff = TextDiff::from_lines(&expected, &result);
             print_diff_in_terminal(&diff);
             panic!("Expected code does not match the result");
         }
+    }
+
+    fn test_same_and_deps(source_text: &str, expected: &str, deps: &[&str], dynamic_deps: &[&str]) {
+        let expected = format_expected_code(expected);
+        let TransformReturn { code, deps: result_deps, dynamic_deps: result_dynamic_deps } =
+            transform(source_text, false).unwrap();
+        if code != expected {
+            let diff = TextDiff::from_lines(&expected, &code);
+            print_diff_in_terminal(&diff);
+            panic!("Expected code does not match the result");
+        }
+        assert_eq!(result_deps, deps);
+        assert_eq!(result_dynamic_deps, dynamic_deps);
     }
 
     #[test]
@@ -1169,7 +1186,7 @@ __vite_ssr_import_0__.default.resolve('server.js');",
 
     #[test]
     fn dynamic_import() {
-        test_same(
+        test_same_and_deps(
             "export const i = () => import('./foo')",
             "const i = () => __vite_ssr_dynamic_import__('./foo');
 Object.defineProperty(__vite_ssr_exports__, 'i', {
@@ -1179,67 +1196,81 @@ Object.defineProperty(__vite_ssr_exports__, 'i', {
     return i;
   }
 });",
+            &[],
+            &["./foo"],
         );
     }
 
     #[test]
     fn do_not_rewrite_method_definition() {
-        test_same(
+        test_same_and_deps(
             "import { fn } from 'vue';class A { fn() { fn() } }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
-class A {
-  fn() {
-    (0, __vite_ssr_import_0__.fn)();
-  }
-}",
+            class A {
+              fn() {
+                (0, __vite_ssr_import_0__.fn)();
+              }
+            }",
+            &["vue"],
+            &[],
         );
     }
 
     #[test]
     fn do_not_rewrite_when_variable_in_scope() {
-        test_same(
+        test_same_and_deps(
             "import { fn } from 'vue';function A(){ const fn = () => {}; return { fn }; }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
-function A() {
-  const fn = () => {};
-  return { fn };
-}",
+            function A() {
+              const fn = () => {};
+              return { fn };
+            }",
+            &["vue"],
+            &[]
         );
     }
 
+    // <https://github.com/vitejs/vite/issues/5472>
     #[test]
     fn do_not_rewrite_destructuring_object() {
-        test_same(
+        test_same_and_deps(
             "import { fn } from 'vue';function A(){ let {fn, test} = {fn: 'foo', test: 'bar'}; return { fn }; }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
-function A() {
-  let { fn, test } = {
-    fn: 'foo',
-    test: 'bar'
-  };
-  return { fn };
-}",
+            function A() {
+              let { fn, test } = {
+                fn: 'foo',
+                test: 'bar'
+              };
+              return { fn };
+            }",
+            &["vue"],
+            &[]
         );
     }
 
+    // <https://github.com/vitejs/vite/issues/5472>
     #[test]
     fn do_not_rewrite_destructuring_array() {
-        test_same(
+        test_same_and_deps(
             "import { fn } from 'vue';function A(){ let [fn, test] = ['foo', 'bar']; return { fn }; }",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
-function A() {
-  let [fn, test] = ['foo', 'bar'];
-  return { fn };
-}",
+            function A() {
+              let [fn, test] = ['foo', 'bar'];
+              return { fn };
+            }",
+            &["vue"],
+            &[]
         );
     }
 
     #[test]
     fn do_not_rewrite_catch_clause() {
-        test_same(
+        test_same_and_deps(
             "import {error} from './dependency';try {} catch(error) {}",
             "const __vite_ssr_import_0__ = await __vite_ssr_import__('./dependency', { importedNames: ['error'] });
 try {} catch (error) {}",
+            &["./dependency"],
+            &[]
         );
     }
 
@@ -2077,14 +2108,34 @@ const c = () => {
     #[test]
     fn deps() {
         let code = r#"
-import a from "a";
-export { b } from "b";
-export * from "c";
-export * as d from "d";
-import("e")
-"#;
-        let result = transform(code, false).unwrap();
-        assert_eq!(result.1, vec!["a", "b", "c", "d"]);
-        assert_eq!(result.2, vec!["e"]);
+        import a from "a";
+        export { b } from "b";
+        export * from "c";
+        export * as d from "d";
+        import("e")
+        "#;
+        let expected = "
+        const __vite_ssr_import_0__ = await __vite_ssr_import__('a', { importedNames: ['default'] });
+        const __vite_ssr_import_1__ = await __vite_ssr_import__('b', { importedNames: ['b'] });
+        Object.defineProperty(__vite_ssr_exports__, 'b', {
+          enumerable: true,
+          configurable: true,
+          get() {
+                  return __vite_ssr_import_1__.b;
+          }
+        });
+        const __vite_ssr_import_2__ = await __vite_ssr_import__('c');
+        __vite_ssr_exportAll__(__vite_ssr_import_2__);
+        const __vite_ssr_import_3__ = await __vite_ssr_import__('d');
+        Object.defineProperty(__vite_ssr_exports__, 'd', {
+        enumerable: true,
+        configurable: true,
+        get() {
+                return __vite_ssr_import_3__;
+        }
+        });
+        __vite_ssr_dynamic_import__('e');
+        ";
+        test_same_and_deps(code, expected, &["a", "b", "c", "d"], &["e"]);
     }
 }
