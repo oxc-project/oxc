@@ -2072,6 +2072,7 @@ impl GenExpr for SequenceExpression<'_> {
         p.wrap(precedence >= self.precedence(), |p| {
             p.print_expressions(&self.expressions, Precedence::Lowest, ctx.and_forbid_call(false));
         });
+        p.add_source_mapping_end(self.span);
     }
 }
 
