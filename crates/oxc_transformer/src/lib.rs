@@ -202,6 +202,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.x2_es2018.enter_variable_declaration(decl, ctx);
+        self.explicit_resource_management.enter_variable_declaration(decl, ctx);
     }
 
     fn enter_variable_declarator(
@@ -273,6 +274,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
 
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_static_block(block, ctx);
+        self.explicit_resource_management.enter_static_block(block, ctx);
         self.x2_es2022.enter_static_block(block, ctx);
     }
 

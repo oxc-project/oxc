@@ -39,6 +39,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Address, Box as ArenaBox, GetAddress, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, SPAN};
@@ -50,11 +51,19 @@ pub struct ExplicitResourceManagement<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 
     top_level_using: FxHashMap<Address, /* is await-using */ bool>,
+
+    /// keeps track of whether the current static block contains a `using` declaration
+    /// so that we can transform it in `exit_static_block`
+    static_blocks_stack: NonEmptyStack<bool>,
 }
 
 impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, top_level_using: FxHashMap::default() }
+        Self {
+            ctx,
+            top_level_using: FxHashMap::default(),
+            static_blocks_stack: NonEmptyStack::new(false),
+        }
     }
 }
 
@@ -123,6 +132,10 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         };
     }
 
+    fn enter_static_block(&mut self, _node: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.static_blocks_stack.push(false);
+    }
+
     /// Transform class static block.
     ///
     /// ```js
@@ -144,11 +157,25 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     /// }
     /// ```
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
-        let scope_id = block.scope_id();
-        if let Some(replacement) =
-            self.transform_statements(&mut block.body, None, scope_id, scope_id, ctx)
+        if self.static_blocks_stack.pop() {
+            let scope_id = block.scope_id();
+            if let Some(replacement) =
+                self.transform_statements(&mut block.body, None, scope_id, scope_id, ctx)
+            {
+                block.body = ctx.ast.vec1(replacement);
+            }
+        }
+    }
+
+    fn enter_variable_declaration(
+        &mut self,
+        node: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if matches!(node.kind, VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing)
+            && ctx.parent().is_static_block()
         {
-            block.body = ctx.ast.vec1(replacement);
+            *self.static_blocks_stack.last_mut() = true;
         }
     }
 
