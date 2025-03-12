@@ -129,54 +129,50 @@ fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
         return;
     }
     let left = &expr.left;
-    if let Expression::BinaryExpression(binary_expr) = &expr.right.without_parentheses() {
-        let binary_operator = binary_expr.operator;
-        let is_commutative_operator = is_commutative_operator_with_shorthand(binary_operator);
-        let is_non_commutative_operator =
-            is_non_commutative_operator_with_shorthand(binary_operator);
-        if is_commutative_operator || is_non_commutative_operator {
-            let replace_operator = format!("{}=", binary_operator.as_str());
-            if check_is_same_reference(left, &binary_expr.left, ctx) {
-                ctx.diagnostic_with_fix(
-                    operator_assignment_diagnostic(mode, expr.span, &replace_operator),
-                    |fixer| {
-                        if !can_be_fixed(left) {
-                            return fixer.noop();
-                        }
-                        let operator_span = get_operator_span(
-                            Span::new(left.span().end, binary_expr.left.span().start),
-                            "=",
-                            ctx,
-                        );
-                        let binary_operator_span = get_operator_span(
-                            Span::new(binary_expr.left.span().end, binary_expr.right.span().start),
-                            binary_operator.as_str(),
-                            ctx,
-                        );
-                        if ctx.has_comments_between(Span::new(
-                            operator_span.end,
-                            binary_operator_span.start,
-                        )) {
-                            return fixer.noop();
-                        }
-                        // e.g. x = x + y => x += y
-                        // binary_operator = "+" and replace_operator = "+="
-                        // left_text = "x " right_text = " y"
-                        let left_text = Span::new(expr.span.start, operator_span.start)
-                            .source_text(ctx.source_text());
-                        let right_text = Span::new(binary_operator_span.end, binary_expr.span.end)
-                            .source_text(ctx.source_text());
-                        fixer.replace(
-                            expr.span,
-                            format!("{left_text}{replace_operator}{right_text}"),
-                        )
-                    },
-                );
-            } else if check_is_same_reference(left, &binary_expr.right, ctx)
-                && is_commutative_operator
-            {
-                ctx.diagnostic(operator_assignment_diagnostic(mode, expr.span, &replace_operator));
-            }
+    let Expression::BinaryExpression(binary_expr) = &expr.right.without_parentheses() else {
+        return;
+    };
+    let binary_operator = binary_expr.operator;
+    let is_commutative_operator = is_commutative_operator_with_shorthand(binary_operator);
+    let is_non_commutative_operator = is_non_commutative_operator_with_shorthand(binary_operator);
+    if is_commutative_operator || is_non_commutative_operator {
+        let replace_operator = format!("{}=", binary_operator.as_str());
+        if check_is_same_reference(left, &binary_expr.left, ctx) {
+            ctx.diagnostic_with_fix(
+                operator_assignment_diagnostic(mode, expr.span, &replace_operator),
+                |fixer| {
+                    if !can_be_fixed(left) {
+                        return fixer.noop();
+                    }
+                    let operator_span = get_operator_span(
+                        Span::new(left.span().end, binary_expr.left.span().start),
+                        "=",
+                        ctx,
+                    );
+                    let binary_operator_span = get_operator_span(
+                        Span::new(binary_expr.left.span().end, binary_expr.right.span().start),
+                        binary_operator.as_str(),
+                        ctx,
+                    );
+                    if ctx.has_comments_between(Span::new(
+                        operator_span.end,
+                        binary_operator_span.start,
+                    )) {
+                        return fixer.noop();
+                    }
+                    // e.g. x = x + y => x += y
+                    // binary_operator = "+" and replace_operator = "+="
+                    // left_text = "x " right_text = " y"
+                    let left_text = Span::new(expr.span.start, operator_span.start)
+                        .source_text(ctx.source_text());
+                    let right_text = Span::new(binary_operator_span.end, binary_expr.span.end)
+                        .source_text(ctx.source_text());
+                    fixer.replace(expr.span, format!("{left_text}{replace_operator}{right_text}"))
+                },
+            );
+        } else if check_is_same_reference(left, &binary_expr.right, ctx) && is_commutative_operator
+        {
+            ctx.diagnostic(operator_assignment_diagnostic(mode, expr.span, &replace_operator));
         }
     }
 }
@@ -263,31 +259,26 @@ operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str()),
 }
 
 fn can_be_fixed(target: &AssignmentTarget) -> bool {
-    if let Some(simple_assignment_target) = target.as_simple_assignment_target() {
-        if matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(_))
-        {
-            return true;
-        }
-        let Some(expr) = simple_assignment_target.as_member_expression() else {
-            return false;
-        };
-        return match expr {
-            MemberExpression::ComputedMemberExpression(computed_expr) => {
-                matches!(
-                    computed_expr.object,
-                    Expression::Identifier(_) | Expression::ThisExpression(_)
-                ) && computed_expr.expression.is_literal()
-            }
-            MemberExpression::StaticMemberExpression(static_expr) => {
-                matches!(
-                    static_expr.object,
-                    Expression::Identifier(_) | Expression::ThisExpression(_)
-                )
-            }
-            MemberExpression::PrivateFieldExpression(_) => false,
-        };
+    let Some(simple_assignment_target) = target.as_simple_assignment_target() else { return false };
+
+    if matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(_)) {
+        return true;
     }
-    false
+    let Some(expr) = simple_assignment_target.as_member_expression() else {
+        return false;
+    };
+    return match expr {
+        MemberExpression::ComputedMemberExpression(computed_expr) => {
+            matches!(
+                computed_expr.object,
+                Expression::Identifier(_) | Expression::ThisExpression(_)
+            ) && computed_expr.expression.is_literal()
+        }
+        MemberExpression::StaticMemberExpression(static_expr) => {
+            matches!(static_expr.object, Expression::Identifier(_) | Expression::ThisExpression(_))
+        }
+        MemberExpression::PrivateFieldExpression(_) => false,
+    };
 }
 
 #[expect(clippy::cast_possible_truncation)]
@@ -298,29 +289,26 @@ fn get_operator_span(init_span: Span, operator: &str, ctx: &LintContext) -> Span
 }
 
 fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &LintContext) -> bool {
-    if let Some(simple_assignment_target) = left.as_simple_assignment_target() {
-        if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) = simple_assignment_target {
-            return matches!(right, Expression::Identifier(id2) if id2.name == id1.name);
-        }
-
-        if let Some(left_member_expr) = simple_assignment_target.as_member_expression() {
-            if let Some(right_member_expr) = right.without_parentheses().get_member_expr() {
-                // x.y vs x['y']
-                if (matches!(left_member_expr, MemberExpression::ComputedMemberExpression(_))
-                    && !matches!(right_member_expr, MemberExpression::ComputedMemberExpression(_)))
-                    || (!matches!(left_member_expr, MemberExpression::ComputedMemberExpression(_))
-                        && matches!(
-                            right_member_expr,
-                            MemberExpression::ComputedMemberExpression(_)
-                        ))
-                {
-                    return false;
-                }
-                return is_same_member_expression(left_member_expr, right_member_expr, ctx);
-            }
-        }
+    let Some(simple_assignment_target) = left.as_simple_assignment_target() else { return false };
+    if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) = simple_assignment_target {
+        return matches!(right, Expression::Identifier(id2) if id2.name == id1.name);
     }
-    false
+
+    let Some(left_member_expr) = simple_assignment_target.as_member_expression() else {
+        return false;
+    };
+    let Some(right_member_expr) = right.without_parentheses().get_member_expr() else {
+        return false;
+    };
+    // x.y vs x['y']
+    if (matches!(left_member_expr, MemberExpression::ComputedMemberExpression(_))
+        && !matches!(right_member_expr, MemberExpression::ComputedMemberExpression(_)))
+        || (!matches!(left_member_expr, MemberExpression::ComputedMemberExpression(_))
+            && matches!(right_member_expr, MemberExpression::ComputedMemberExpression(_)))
+    {
+        return false;
+    }
+    return is_same_member_expression(left_member_expr, right_member_expr, ctx);
 }
 
 fn is_commutative_operator_with_shorthand(operator: BinaryOperator) -> bool {
