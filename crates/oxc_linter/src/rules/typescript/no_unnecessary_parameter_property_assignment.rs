@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -94,20 +94,11 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
                     continue;
                 }
 
-                // check for assigning to this: this.x = ?
-                let AssignmentTarget::StaticMemberExpression(left) = &assignment_expr.left else {
+                let Some(this_property_name) = get_this_property_name(&assignment_expr.left) else {
                     continue;
                 };
-                if !matches!(&left.object, Expression::ThisExpression(_)) {
-                    continue;
-                }
 
-                // check if both sides of assignment have the same name: this.x = x
-                let Expression::Identifier(right) = assignment_expr.right.get_inner_expression()
-                else {
-                    continue;
-                };
-                if left.property.name != right.name {
+                if this_property_name != ident.name {
                     continue;
                 }
 
@@ -136,6 +127,28 @@ fn find_parent_assignment_expression<'a>(
         }
     }
     None
+}
+
+fn get_this_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
+    match assignment_target {
+        AssignmentTarget::StaticMemberExpression(expr)
+            if matches!(&expr.object, Expression::ThisExpression(_)) =>
+        {
+            // this.property
+            Some(expr.property.name)
+        }
+        AssignmentTarget::ComputedMemberExpression(expr)
+            if matches!(&expr.object, Expression::ThisExpression(_)) =>
+        {
+            // this["property"]
+            if let Expression::StringLiteral(str) = &expr.expression {
+                Some(str.value)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
 }
 
 #[test]
@@ -447,13 +460,13 @@ fn test() {
           }
         }
         ",
-        // "
-        //     class Foo {
-        //       constructor(private foo: string) {
-        //         this['foo'] = foo;
-        //       }
-        //     }
-        // ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this['foo'] = foo;
+          }
+        }
+        ",
         "
         class Foo {
           constructor(private foo: string) {
