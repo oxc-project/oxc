@@ -425,6 +425,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         } else {
             // If the source is Some, then we need to import the module first and then export them.
             let import_binding = source.map(|source| {
+                self.deps.push(source.value.to_string());
                 let binding = self.generate_import_binding(ctx);
                 let pattern = binding.create_binding_pattern(ctx);
                 let imported_names = ctx.ast.vec_from_iter(specifiers.iter().map(|specifier| {
@@ -487,6 +488,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let ExportAllDeclaration { span, source, exported, .. } = export.unbox();
+        self.deps.push(source.value.to_string());
         let binding = self.generate_import_binding(ctx);
         let pattern = binding.create_binding_pattern(ctx);
         let arguments =
@@ -815,7 +817,10 @@ mod test {
 
     use super::ModuleRunnerTransform;
 
-    fn transform(source_text: &str, is_jsx: bool) -> Result<String, Vec<OxcDiagnostic>> {
+    fn transform(
+        source_text: &str,
+        is_jsx: bool,
+    ) -> Result<(String, Vec<String>, Vec<String>), Vec<OxcDiagnostic>> {
         let source_type = SourceType::default().with_jsx(is_jsx);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -843,7 +848,7 @@ mod test {
             })
             .build(&program)
             .code;
-        Ok(code)
+        Ok((code, module_runner_transform.deps, module_runner_transform.dynamic_deps))
     }
 
     fn format_expected_code(source_text: &str) -> String {
@@ -863,7 +868,7 @@ mod test {
 
     fn test_same(source_text: &str, expected: &str) {
         let expected = format_expected_code(expected);
-        let result = transform(source_text, false).unwrap();
+        let result = transform(source_text, false).unwrap().0;
         if result != expected {
             let diff = TextDiff::from_lines(&expected, &result);
             print_diff_in_terminal(&diff);
@@ -873,7 +878,7 @@ mod test {
 
     fn test_same_jsx(source_text: &str, expected: &str) {
         let expected = format_expected_code(expected);
-        let result = transform(source_text, true).unwrap();
+        let result = transform(source_text, true).unwrap().0;
         if result != expected {
             let diff = TextDiff::from_lines(&expected, &result);
             print_diff_in_terminal(&diff);
@@ -2067,5 +2072,19 @@ const c = () => {
   (0, __vite_ssr_import_0__.default)(1, {});
 };",
         );
+    }
+
+    #[test]
+    fn deps() {
+        let code = r#"
+import a from "a";
+export { b } from "b";
+export * from "c";
+export * as d from "d";
+import("e")
+"#;
+        let result = transform(code, false).unwrap();
+        assert_eq!(result.1, vec!["a", "b", "c", "d"]);
+        assert_eq!(result.2, vec!["e"]);
     }
 }
