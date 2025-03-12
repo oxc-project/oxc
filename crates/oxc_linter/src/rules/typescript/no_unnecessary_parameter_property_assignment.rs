@@ -1,9 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentOperator, AssignmentTarget, Expression, MethodDefinitionKind},
+    ast::{
+        AssignmentExpression, AssignmentOperator, AssignmentTarget, Expression,
+        MethodDefinitionKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -68,13 +72,14 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
                 continue;
             };
             for reference in ctx.symbol_references(ident.symbol_id()) {
-                // check if the param is being read which would indicate an assignment
+                // check if the reference is being read which would indicate an assignment
                 if !reference.is_read() {
                     continue;
                 }
 
-                let Some(AstKind::AssignmentExpression(assignment_expr)) =
-                    ctx.nodes().parent_kind(reference.node_id())
+                // is the reference inside an assignment
+                let Some(assignment_expr) =
+                    find_parent_assignment_expression(ctx, reference.node_id())
                 else {
                     continue;
                 };
@@ -90,21 +95,19 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
                 }
 
                 // check for assigning to this: this.x = ?
-                let AssignmentTarget::StaticMemberExpression(static_member_expr) =
-                    &assignment_expr.left
+                let AssignmentTarget::StaticMemberExpression(left) = &assignment_expr.left else {
+                    continue;
+                };
+                if !matches!(&left.object, Expression::ThisExpression(_)) {
+                    continue;
+                }
+
+                // check if both sides of assignment have the same name: this.x = x
+                let Expression::Identifier(right) = assignment_expr.right.get_inner_expression()
                 else {
                     continue;
                 };
-                if !matches!(&static_member_expr.object, Expression::ThisExpression(_)) {
-                    continue;
-                }
-                let assignment_name = static_member_expr.property.name;
-
-                // check both sides of assignment have the same name: this.x = x
-                let Expression::Identifier(assignment_target_ident) = &assignment_expr.right else {
-                    continue;
-                };
-                if assignment_target_ident.name != assignment_name {
+                if left.property.name != right.name {
                     continue;
                 }
 
@@ -114,6 +117,25 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             }
         }
     }
+}
+
+fn find_parent_assignment_expression<'a>(
+    ctx: &LintContext<'a>,
+    node_id: NodeId,
+) -> Option<&'a AssignmentExpression<'a>> {
+    for ancestor_kind in ctx.nodes().ancestor_kinds(node_id).skip(1) {
+        match ancestor_kind {
+            AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSInstantiationExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_) => continue,
+            AstKind::AssignmentExpression(expr) => return Some(expr),
+            _ => break,
+        }
+    }
+    None
 }
 
 #[test]
@@ -375,20 +397,20 @@ fn test() {
           }
         }
         ",
-        // "
-        //     class Foo {
-        //       constructor(public foo?: string) {
-        //         this.foo = foo!;
-        //       }
-        //     }
-        // ",
-        // "
-        //     class Foo {
-        //       constructor(public foo?: string) {
-        //         this.foo = foo as any;
-        //       }
-        //     }
-        // ",
+        "
+        class Foo {
+          constructor(public foo?: string) {
+            this.foo = foo!;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo?: string) {
+            this.foo = foo as any;
+          }
+        }
+        ",
         "
         class Foo {
           constructor(public foo = '') {
