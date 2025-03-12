@@ -214,10 +214,6 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         }
     }
 
-    fn enter_block_statement(&mut self, node: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.explicit_resource_management.enter_block_statement(node, ctx);
-    }
-
     fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_es2020.enter_big_int_literal(node, ctx);
     }
