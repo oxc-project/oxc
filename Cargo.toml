@@ -157,7 +157,7 @@ oxc_resolver = "5"
 oxc_sourcemap = "3"
 
 #
-allocator-api2 = "0.2.21"
+allocator-api2 = { version = "0.2.21", default-features = false, features = ["alloc"] }
 assert-unchecked = "0.1.2"
 base64 = "0.22.1"
 bitflags = "2.8.0"
@@ -218,7 +218,7 @@ self_cell = "1.1.0"
 seq-macro = "0.3.5"
 serde-wasm-bindgen = "0.6.5"
 sha1 = "0.10.6"
-simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
+simdutf8 = { version = "0.1.5", default-features = false, features = ["aarch64_neon"] }
 similar = "2.7.0"
 similar-asserts = "1.6.1"
 smallvec = "1.14.0"

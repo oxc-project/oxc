@@ -46,6 +46,7 @@ jobs:
           cache-key: warm
       - run: cargo ck
       - run: cargo test --all-features
+      - run: cargo test -p oxc_allocator --no-default-features --features serialize
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
@@ -132,7 +133,6 @@ jobs:
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
       - uses: ./.github/actions/pnpm
-
       - run: just build-wasm debug
       - working-directory: npm/oxc-wasm
         run: pnpm run check

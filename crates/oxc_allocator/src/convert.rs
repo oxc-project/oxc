@@ -1,5 +1,7 @@
 #![expect(clippy::inline_always)]
 
+use alloc::string::String;
+
 use crate::{Allocator, Box};
 
 /// This trait works similarly to the standard library [`From`] trait.

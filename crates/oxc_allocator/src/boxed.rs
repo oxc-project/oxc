@@ -2,8 +2,7 @@
 //!
 //! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/ast/src/arena.rs)
 
-use std::{
-    self,
+use core::{
     fmt::{self, Debug, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
@@ -11,7 +10,7 @@ use std::{
     ptr::{self, NonNull},
 };
 
-#[cfg(any(feature = "serialize", test))]
+#[cfg(all(feature = "serialize", test))]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer as SerdeSerializer};
@@ -36,7 +35,7 @@ impl<T: ?Sized> Box<'_, T> {
     /// Const assertion that `T` is not `Drop`.
     /// Must be referenced in all methods which create a `Box`.
     const ASSERT_T_IS_NOT_DROP: () =
-        assert!(!std::mem::needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
+        assert!(!core::mem::needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
 }
 
 impl<T> Box<'_, T> {
@@ -206,10 +205,11 @@ impl<T: Hash> Hash for Box<'_, T> {
 
 #[cfg(test)]
 mod test {
-    use std::hash::{DefaultHasher, Hash, Hasher};
-
     use super::Box;
     use crate::Allocator;
+    use alloc::format;
+    use core::hash::{BuildHasher, Hash};
+    use rustc_hash::FxBuildHasher;
 
     #[test]
     fn box_deref_mut() {
@@ -231,9 +231,8 @@ mod test {
     #[test]
     fn box_hash() {
         fn hash(val: &impl Hash) -> u64 {
-            let mut hasher = DefaultHasher::default();
-            val.hash(&mut hasher);
-            hasher.finish()
+            let hasher = FxBuildHasher::default();
+            hasher.hash_one(val)
         }
 
         let allocator = Allocator::default();

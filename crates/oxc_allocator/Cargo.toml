@@ -19,8 +19,6 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_estree = { workspace = true, optional = true }
-
 allocator-api2 = { workspace = true }
 assert-unchecked = { workspace = true }
 bumpalo = { workspace = true, features = ["allocator-api2", "collections"] }
@@ -33,7 +31,10 @@ serde = { workspace = true, optional = true }
 [dev-dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
+oxc_estree = { workspace = true }
 
 [features]
+default = ["std"]
+std = ["simdutf8/std"]
 from_raw_parts = []
 serialize = ["dep:serde", "oxc_estree/serialize"]

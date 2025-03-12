@@ -262,7 +262,7 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc<T>(&self, val: T) -> &mut T {
-        const { assert!(!std::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
+        const { assert!(!core::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
 
         self.bump.alloc(val)
     }

@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use core::cell::Cell;
 
 use crate::{Allocator, Box, Vec};
 

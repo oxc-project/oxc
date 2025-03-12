@@ -7,7 +7,7 @@
 // All methods which just delegate to `hashbrown::HashMap` methods marked `#[inline(always)]`
 #![expect(clippy::inline_always)]
 
-use std::{
+use core::{
     hash::Hash,
     mem::ManuallyDrop,
     ops::{Deref, DerefMut},
@@ -63,11 +63,11 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// Must be referenced in all methods which create a `HashMap`.
     const ASSERT_K_AND_V_ARE_NOT_DROP: () = {
         assert!(
-            !std::mem::needs_drop::<K>(),
+            !core::mem::needs_drop::<K>(),
             "Cannot create a HashMap<K, V> where K is a Drop type"
         );
         assert!(
-            !std::mem::needs_drop::<V>(),
+            !core::mem::needs_drop::<V>(),
             "Cannot create a HashMap<K, V> where V is a Drop type"
         );
     };

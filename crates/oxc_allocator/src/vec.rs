@@ -5,8 +5,7 @@
 // All methods which just delegate to `allocator_api2::vec::Vec` methods marked `#[inline(always)]`
 #![expect(clippy::inline_always)]
 
-use std::{
-    self,
+use core::{
     fmt::{self, Debug},
     hash::{Hash, Hasher},
     mem::ManuallyDrop,
@@ -17,7 +16,7 @@ use std::{
 
 use allocator_api2::vec::Vec as InnerVec;
 use bumpalo::Bump;
-#[cfg(any(feature = "serialize", test))]
+#[cfg(all(feature = "serialize", test))]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer as SerdeSerializer};
@@ -48,7 +47,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// Const assertion that `T` is not `Drop`.
     /// Must be referenced in all methods which create a `Vec`.
     const ASSERT_T_IS_NOT_DROP: () =
-        assert!(!std::mem::needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        assert!(!core::mem::needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
 
     /// Constructs a new, empty `Vec<T>`.
     ///
@@ -233,7 +232,7 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
 }
 
 impl<'i, T> IntoIterator for &'i Vec<'_, T> {
-    type IntoIter = std::slice::Iter<'i, T>;
+    type IntoIter = core::slice::Iter<'i, T>;
     type Item = &'i T;
 
     #[inline(always)]
@@ -243,7 +242,7 @@ impl<'i, T> IntoIterator for &'i Vec<'_, T> {
 }
 
 impl<'i, T> IntoIterator for &'i mut Vec<'_, T> {
-    type IntoIter = std::slice::IterMut<'i, T>;
+    type IntoIter = core::slice::IterMut<'i, T>;
     type Item = &'i mut T;
 
     #[inline(always)]
@@ -304,6 +303,8 @@ impl<T: Debug> Debug for Vec<'_, T> {
 
 #[cfg(test)]
 mod test {
+    use alloc::format;
+
     use super::Vec;
     use crate::{Allocator, Box};
 

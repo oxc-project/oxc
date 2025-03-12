@@ -1,6 +1,6 @@
 //! Define additional [`Allocator::from_raw_parts`] method, used only by raw transfer.
 
-use std::{
+use core::{
     alloc::Layout,
     cell::Cell,
     ptr::{self, NonNull},

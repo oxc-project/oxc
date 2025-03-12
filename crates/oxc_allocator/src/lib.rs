@@ -11,8 +11,11 @@
 //! * [`HashMap`]
 //!
 //! See [`Allocator`] docs for information on efficient use of [`Allocator`].
-
+#![warn(clippy::alloc_instead_of_core, clippy::std_instead_of_alloc, clippy::std_instead_of_core)]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
+
+extern crate alloc;
 
 mod address;
 mod allocator;

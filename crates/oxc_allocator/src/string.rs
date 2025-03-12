@@ -5,7 +5,7 @@
 // All methods which just delegate to `bumpalo::collections::String` methods marked `#[inline(always)]`
 #![expect(clippy::inline_always)]
 
-use std::{
+use core::{
     fmt::{self, Debug, Display},
     hash::{Hash, Hasher},
     mem::ManuallyDrop,
@@ -336,8 +336,8 @@ macro_rules! impl_eq {
 
 impl_eq! { String<'alloc>, str }
 impl_eq! { String<'alloc>, &'a str }
-impl_eq! { std::borrow::Cow<'a, str>, String<'alloc> }
-impl_eq! { std::string::String, String<'alloc> }
+impl_eq! { alloc::borrow::Cow<'a, str>, String<'alloc> }
+impl_eq! { alloc::string::String, String<'alloc> }
 
 impl Display for String<'_> {
     #[inline]
@@ -381,7 +381,7 @@ mod test {
     #[test]
     fn string_from_array_len_3() {
         let hello = "hello";
-        let world = std::string::String::from("world");
+        let world = alloc::string::String::from("world");
         let allocator = Allocator::default();
         let string = String::from_strs_array_in([hello, &world, "!"], &allocator);
         assert_eq!(string, "helloworld!");

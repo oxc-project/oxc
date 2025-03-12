@@ -60,7 +60,7 @@ schemars = { workspace = true, features = ["indexmap2"] }
 self_cell = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-simdutf8 = { workspace = true }
+simdutf8 = { workspace = true, features = ["std"] }
 smallvec = { workspace = true }
 
 [dev-dependencies]

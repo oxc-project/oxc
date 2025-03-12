@@ -2,7 +2,7 @@
 // All have same safety preconditions of `bumpalo` methods of the same name.
 #![expect(clippy::inline_always, clippy::undocumented_unsafe_blocks)]
 
-use std::{alloc::Layout, ptr::NonNull};
+use core::{alloc::Layout, ptr::NonNull};
 
 use allocator_api2::alloc::{AllocError, Allocator};
 

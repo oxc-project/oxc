@@ -1,5 +1,3 @@
-use std::ptr;
-
 use crate::Box;
 
 /// Memory address of an AST node in arena.
@@ -40,7 +38,7 @@ impl<T> GetAddress for Box<'_, T> {
     /// so this address acts as a unique identifier for the duration of the arena's existence.
     #[inline]
     fn address(&self) -> Address {
-        Address::from_ptr(ptr::addr_of!(**self))
+        Address::from_ptr(&raw const (**self))
     }
 }
 
