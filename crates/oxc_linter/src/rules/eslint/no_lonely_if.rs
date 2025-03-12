@@ -98,16 +98,15 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        if let Some(AstKind::IfStatement(_)) = ctx.nodes().parent_node(node.id()).map(AstNode::kind)
-        {
+        let Some(only_stmt) = b.body.first() else {
+            return;
+        };
+
+        if let Some(AstKind::IfStatement(_)) = ctx.nodes().parent_kind(node.id()) {
             return;
         };
 
         if b.body.len() == 1 {
-            let Some(only_stmt) = b.body.first() else {
-                return;
-            };
-
             if let Statement::BlockStatement(inner_block) = only_stmt {
                 if inner_block.body.len() == 1 {
                     if let Some(Statement::IfStatement(lonely_if)) = inner_block.body.first() {
@@ -138,8 +137,8 @@ fn test() {
         "if (a) {
            if (b) {} else { }
          } else {
-           if (c) {  } 
-           if (d) {  } 
+           if (c) {  }
+           if (d) {  }
           }",
     ];
 
@@ -148,10 +147,154 @@ fn test() {
         "if (foo) {} else { if (bar) baz(); }",
         "if (foo) {} else { if (bar) baz() } qux();",
         "if (foo) {} else { if (bar) baz(); } qux();",
+        "if (a) {
+          foo();
+        } else {
+          /* otherwise, do the other thing */ if (b) {
+            bar();
+          }
+        }",
+        "if (a) {
+          foo();
+        } else {
+          if (b) {
+            bar();
+          } /* this comment will prevent this test case from being autofixed. */
+        }",
+        // No fix; removing the braces would cause a SyntaxError.
+        "
+        if (foo) {
+        } else {
+          if (bar) baz();
+        }
+        qux();",
+        // Not fixed; removing the braces would change the semantics due to ASI.
+        "if (foo) {
+         } else {
+           if (bar) baz();
+         }
+         [1, 2, 3].forEach(foo);",
+        // Not fixed; removing the braces would change the semantics due to ASI.
+        "if (foo) {
+         } else {
+           if (bar) baz++;
+         }
+         foo;",
+        // Not fixed; bar() would be interpreted as a template literal tag
+        "if (a) {
+            foo();
+          } else {
+            if (b) bar();
+          }
+          `template literal`;",
     ];
 
-    /* Pending
+    ///* Pending
     let fix = vec![
+        (
+            "if (a) {
+          foo();
+        } else {
+          if (b) {
+            bar();
+          }
+        }",
+            "if (a) {
+            foo();
+          } else if (b) {
+            bar();
+          }",
+            None,
+        ),
+        (
+            "if (a) {
+         foo();
+       } /* comment */ else {
+         if (b) {
+           bar();
+         }
+       }",
+            "if (a) {
+         foo();
+       } /* comment */ else {
+         if (b) {
+           bar();
+         }
+       }",
+            None,
+        ),
+        (
+            "if (a) {
+         foo();
+       } else {
+         if (/* this comment is ok */ b) {
+           bar();
+         }
+       }",
+            "if (a) {
+         foo();
+       } else if (/* this comment is ok */ b) {
+         bar();
+       }",
+            None,
+        ),
+        (
+            "if (foo) {
+       } else {
+         if (bar) baz();
+       }
+",
+            "if (foo) {
+} else if (bar) baz();",
+            None,
+        ),
+        (
+            "if (foo) {
+       } else {
+         if (bar) baz();
+       }
+       qux();",
+            "if (foo) {
+       } else if (bar) baz();
+       qux();",
+            None,
+        ),
+        (
+            "if (foo) {
+        } else {
+          if (bar) baz++;
+        }
+        foo;",
+            "if (foo) {
+        } else if (bar) baz++;
+        foo;",
+            None,
+        ),
+        (
+            "if (a) {
+          foo();
+        } else {
+          if (b) {
+            bar();
+          } else if (c) {
+            baz();
+          } else {
+            qux();
+          }
+        }
+",
+            "if (a) {
+  foo();
+} else if (b) {
+  bar();
+} else if (c) {
+  baz();
+} else {
+  qux();
+}
+",
+            None,
+        ),
         ("if (a) {;} else { if (b) {;} }", "if (a) {;} else if (b) {;}", None),
         ("if (foo) {} else { if (bar) baz(); }", "if (foo) {} else if (bar) baz();", None),
         (
@@ -160,9 +303,8 @@ fn test() {
             None,
         ),
     ];
-    */
-
+    //*/
     Tester::new(NoLonelyIf::NAME, NoLonelyIf::PLUGIN, pass, fail)
-        //.expect_fix(fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
