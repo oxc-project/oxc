@@ -1263,6 +1263,116 @@ Object.defineProperty(__vite_ssr_exports__, 'i', {
         );
     }
 
+    // <https://github.com/vitejs/vite/issues/5727>
+    #[test]
+    fn rewrite_vars_in_string_interpolation_in_function_args() {
+        test_same_and_deps(
+            "import { fn } from 'vue';function A({foo = `test${fn}`} = {}){ return {}; }",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
+            function A({ foo = `test${__vite_ssr_import_0__.fn}` } = {}) {
+              return {};
+            }",
+            &["vue"],
+            &[]
+        );
+    }
+
+    // <https://github.com/vitejs/vite/issues/6520>
+    #[test]
+    fn rewrite_vars_in_default_value_of_destructure_params() {
+        test_same_and_deps(
+            "import { fn } from 'vue';function A({foo = fn}){ return {}; }",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
+            function A({ foo = __vite_ssr_import_0__.fn }) {
+              return {};
+            }",
+            &["vue"],
+            &[]
+        );
+    }
+
+    #[test]
+    fn do_not_rewrite_when_function_declaration_is_in_scope() {
+        test_same_and_deps(
+          "import { fn } from 'vue';function A(){ function fn() {}; return { fn }; }",
+          "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['fn'] });
+          function A() {
+            function fn() {};
+            return { fn };
+          }",
+          &["vue"],
+          &[]
+       );
+    }
+
+    // <https://github.com/vitejs/vite/issues/16552>
+    #[test]
+    fn do_not_rewrite_when_function_expression_in_scope() {
+        test_same(
+            "import {fn} from './vue';var a = function() { return function fn() { console.log(fn) } }",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./vue', { importedNames: ['fn'] });
+            var a = function() {
+              return function fn() {
+            console.log(fn);
+              };
+            };",
+        );
+    }
+
+    // <https://github.com/vitejs/vite/issues/16452>
+    #[test]
+    fn do_not_rewrite_when_function_expression_in_global_scope() {
+        test_same(
+            "import {fn} from './vue';foo(function fn(a = fn) { console.log(fn) })",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./vue', { importedNames: ['fn'] });
+            foo(function fn(a = fn) {
+              console.log(fn);
+            });",
+        );
+    }
+
+    #[test]
+    fn do_not_rewrite_when_class_declaration_is_in_scope() {
+        test_same_and_deps(
+            "import { cls } from 'vue';function A(){ class cls {} return { cls }; }",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['cls'] });
+            function A() {
+              class cls {}
+              return { cls };
+            }",
+            &["vue"],
+            &[]
+        );
+    }
+
+    #[test]
+    fn do_not_rewrite_when_class_expression_in_scope() {
+        test_same(
+            "import { cls } from './vue';var a = function() { return class cls { constructor() { console.log(cls) } } }",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./vue', { importedNames: ['cls'] });
+            var a = function() {
+              return class cls {
+            constructor() {
+              console.log(cls);
+            }
+              };
+            };",
+        );
+    }
+
+    #[test]
+    fn do_not_rewrite_when_class_expression_in_global_scope() {
+        test_same(
+            "import { cls } from './vue';foo(class cls { constructor() { console.log(cls) } })",
+            "const __vite_ssr_import_0__ = await __vite_ssr_import__('./vue', { importedNames: ['cls'] });
+            foo(class cls {
+              constructor() {
+            console.log(cls);
+              }
+            });",
+        );
+    }
+
     #[test]
     fn do_not_rewrite_catch_clause() {
         test_same_and_deps(
