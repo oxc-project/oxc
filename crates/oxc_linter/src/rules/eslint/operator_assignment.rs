@@ -267,7 +267,7 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
     let Some(expr) = simple_assignment_target.as_member_expression() else {
         return false;
     };
-    return match expr {
+    match expr {
         MemberExpression::ComputedMemberExpression(computed_expr) => {
             matches!(
                 computed_expr.object,
@@ -278,7 +278,7 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
             matches!(static_expr.object, Expression::Identifier(_) | Expression::ThisExpression(_))
         }
         MemberExpression::PrivateFieldExpression(_) => false,
-    };
+    }
 }
 
 #[expect(clippy::cast_possible_truncation)]
@@ -308,7 +308,7 @@ fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &Li
     {
         return false;
     }
-    return is_same_member_expression(left_member_expr, right_member_expr, ctx);
+    is_same_member_expression(left_member_expr, right_member_expr, ctx)
 }
 
 fn is_commutative_operator_with_shorthand(operator: BinaryOperator) -> bool {
