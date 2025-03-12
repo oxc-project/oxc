@@ -491,7 +491,6 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statements(stmts, ctx);
         }
-        self.explicit_resource_management.enter_statements(stmts, ctx);
     }
 
     fn exit_arrow_function_expression(
