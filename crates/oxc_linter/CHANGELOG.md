@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.15] - 2025-03-12
+
+### Features
+
+- 2ddad59 linter: Add unicorn/require-post-message-target-origin rule (#9684) (yefan)
+- 474a57b linter: A new multi-file analysis runtime (#9383) (branchseer)
+
+### Bug Fixes
+
+- 6c0978b linter: No-single-promise-in-promise-methods: do not fix Promise.all when chained (#9697) (camchenry)
+- ab594f1 linter: Turn oxc/no-redundant-constructor-init into typescript/no-unnecessary-parameter-property-assignment (#9618) (Uli)
+- 91c009a linter: Add missing fail cases in `eslint-no-array-constructor` (#9659) (therewillbecode)
+- 2810e5b linter: Add missing fail cases in eslint/no-self-compare (#9693) (therewillbecode)
+
+### Performance
+
+- bcbb468 linter: Use `OsStr` for faster path comparison and hashing (#9685) (Boshen)
+
+### Refactor
+
+- b9ab60b linter: Remove if let nesting from `bad-min-max-function` (#9722) (therewillbecode)
+- 90b0227 linter: Remove if let nesting from `eslint-operator-assignment` (#9721) (therewillbecode)
+- 5ef578e linter: Improve `jest/no-alias-methods` (#9694) (therewillbecode)
+
 ## [0.15.14] - 2025-03-11
 
 - 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
