@@ -8,6 +8,7 @@ export class Config implements ConfigInterface {
   private _trace!: TraceLevel;
   private _configPath!: string;
   private _binPath: string | undefined;
+  private _useNestedConfigs!: boolean;
 
   constructor() {
     this.refresh();
@@ -21,6 +22,7 @@ export class Config implements ConfigInterface {
     this._trace = conf.get<TraceLevel>('trace.server') || 'off';
     this._configPath = conf.get<string>('configPath') || '.oxlintrc.json';
     this._binPath = conf.get<string>('path.server');
+    this._useNestedConfigs = conf.get<boolean>('useNestedConfigs') ?? false;
   }
 
   get runTrigger(): Trigger {
@@ -78,11 +80,23 @@ export class Config implements ConfigInterface {
       .update('path.server', value);
   }
 
+  get useNestedConfigs(): boolean {
+    return this._useNestedConfigs;
+  }
+
+  updateUseNestedConfigs(value: boolean): PromiseLike<void> {
+    this._useNestedConfigs = value;
+    return workspace
+      .getConfiguration(Config._namespace)
+      .update('useNestedConfigs', value);
+  }
+
   public toLanguageServerConfig(): LanguageServerConfig {
     return {
       run: this.runTrigger,
       enable: this.enable,
       configPath: this.configPath,
+      useNestedConfigs: this.useNestedConfigs,
     };
   }
 }
@@ -91,6 +105,7 @@ interface LanguageServerConfig {
   configPath: string;
   enable: boolean;
   run: Trigger;
+  useNestedConfigs: boolean;
 }
 
 export type Trigger = 'onSave' | 'onType';

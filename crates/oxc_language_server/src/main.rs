@@ -5,7 +5,8 @@ use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
-use rustc_hash::FxBuildHasher;
+use oxc_linter::{ConfigStore, ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
+use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
@@ -15,13 +16,11 @@ use tower_lsp::{
         CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
         ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, Url,
-        WorkspaceEdit,
+        DidSaveTextDocumentParams, ExecuteCommandParams, FileChangeType, InitializeParams,
+        InitializeResult, InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit,
+        Url, WorkspaceEdit,
     },
 };
-
-use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 
 use crate::capabilities::{CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, Capabilities};
 use crate::linter::error_with_position::DiagnosticReport;
@@ -33,6 +32,8 @@ mod linter;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
+const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
+
 struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
@@ -40,6 +41,7 @@ struct Backend {
     diagnostics_report_map: ConcurrentHashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
     gitignore_glob: Mutex<Vec<Gitignore>>,
+    nested_configs: RwLock<FxHashMap<PathBuf, ConfigStore>>,
 }
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, PartialOrd, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
@@ -54,11 +56,17 @@ struct Options {
     run: Run,
     enable: bool,
     config_path: String,
+    use_nested_configs: bool,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { enable: true, run: Run::default(), config_path: ".oxlintrc.json".into() }
+        Self {
+            enable: true,
+            run: Run::default(),
+            config_path: OXC_CONFIG_FILE.into(),
+            use_nested_configs: false,
+        }
     }
 }
 
@@ -180,8 +188,38 @@ impl LanguageServer for Backend {
         }
     }
 
-    async fn did_change_watched_files(&self, _params: DidChangeWatchedFilesParams) {
+    async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
         debug!("watched file did change");
+        if self.options.lock().await.use_nested_configs {
+            let mut config_files = FxHashMap::default();
+            let existing_nested_configs = (*self.nested_configs.read().await).clone();
+            for (key, value) in existing_nested_configs {
+                config_files.insert(key.clone(), value.clone());
+            }
+
+            params.changes.iter().for_each(|x| {
+                if x.uri.to_file_path().unwrap().file_name().unwrap() != OXC_CONFIG_FILE {
+                    return;
+                }
+                // spellchecker:off -- "typ" is accurate
+                if x.typ == FileChangeType::CREATED || x.typ == FileChangeType::CHANGED {
+                    // spellchecker:on
+                    let file_path = x.uri.to_file_path().unwrap();
+                    let dir_path = file_path.parent().unwrap();
+                    let oxlintrc = Oxlintrc::from_file(&dir_path.join(OXC_CONFIG_FILE)).unwrap();
+                    let config_store_builder =
+                        ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).unwrap();
+                    let config_store = config_store_builder.build().unwrap();
+                    config_files.insert(dir_path.to_path_buf(), config_store);
+                // spellchecker:off -- "typ" is accurate
+                } else if x.typ == FileChangeType::DELETED {
+                    // spellchecker:on
+                    config_files.remove(&x.uri.to_file_path().unwrap());
+                }
+            });
+            *self.nested_configs.write().await = config_files;
+        }
+
         self.init_linter_config().await;
         self.revalidate_open_files().await;
     }
@@ -492,21 +530,46 @@ impl Backend {
         if config.exists() {
             config_path = Some(config);
         }
+
+        let mut oxlintrc = None;
+        let mut config_store = None;
+        let mut linter = self.server_linter.write().await;
         if let Some(config_path) = config_path {
-            let mut linter = self.server_linter.write().await;
-            let config = Oxlintrc::from_file(&config_path)
-                .expect("should have initialized linter with new options");
-            let config_store = ConfigStoreBuilder::from_oxlintrc(true, config.clone())
-                .expect("failed to build config")
-                .build()
-                .expect("failed to build config");
-            *linter = ServerLinter::new_with_linter(
-                Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix),
+            oxlintrc = Some(
+                Oxlintrc::from_file(&config_path)
+                    .expect("should have initialized linter with new options"),
             );
-            return Some(config);
+            config_store = Some(
+                ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone().unwrap())
+                    .expect("failed to build config")
+                    .build()
+                    .expect("failed to build config"),
+            );
         }
 
-        None
+        if self.options.lock().await.use_nested_configs {
+            let mut config_files: FxHashMap<PathBuf, ConfigStore> = FxHashMap::default();
+            let existing_nested_configs = (*self.nested_configs.read().await).clone();
+            for (key, value) in existing_nested_configs {
+                config_files.insert(key.clone(), value.clone());
+            }
+
+            *linter = ServerLinter::new_with_linter(
+                Linter::new_with_nested_configs(
+                    LintOptions::default(),
+                    config_store.unwrap(),
+                    config_files,
+                )
+                .with_fix(FixKind::SafeFix),
+            );
+        } else {
+            *linter = ServerLinter::new_with_linter(
+                Linter::new(LintOptions::default(), config_store.unwrap())
+                    .with_fix(FixKind::SafeFix),
+            );
+        }
+
+        Some(oxlintrc.clone().unwrap())
     }
 
     async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
@@ -568,6 +631,7 @@ async fn main() {
         diagnostics_report_map,
         options: Mutex::new(Options::default()),
         gitignore_glob: Mutex::new(vec![]),
+        nested_configs: RwLock::new(FxHashMap::default()),
     })
     .finish();
 

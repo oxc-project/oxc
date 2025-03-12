@@ -5,7 +5,7 @@ import { Config } from './Config.js';
 suite('Config', () => {
   setup(async () => {
     const wsConfig = workspace.getConfiguration('oxc');
-    const keys = ['lint.run', 'enable', 'trace.server', 'configPath', 'path.server'];
+    const keys = ['lint.run', 'enable', 'trace.server', 'configPath', 'path.server', 'useNestedConfigs'];
 
     await Promise.all(keys.map(key => wsConfig.update(key, undefined)));
   });
@@ -18,6 +18,7 @@ suite('Config', () => {
     strictEqual(config.trace, 'off');
     strictEqual(config.configPath, '.oxlintrc.json');
     strictEqual(config.binPath, '');
+    strictEqual(config.useNestedConfigs, true);
   });
 
   test('updating values updates the workspace configuration', async () => {
@@ -29,6 +30,7 @@ suite('Config', () => {
       config.updateTrace('messages'),
       config.updateConfigPath('./somewhere'),
       config.updateBinPath('./binary'),
+      config.updateUseNestedConfigs(false),
     ]);
 
     const wsConfig = workspace.getConfiguration('oxc');
@@ -38,5 +40,6 @@ suite('Config', () => {
     strictEqual(wsConfig.get('trace.server'), 'messages');
     strictEqual(wsConfig.get('configPath'), './somewhere');
     strictEqual(wsConfig.get('path.server'), './binary');
+    strictEqual(wsConfig.get('useNestedConfigs'), false);
   });
 });

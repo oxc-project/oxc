@@ -1,8 +1,23 @@
 import { promises as fsPromises } from 'node:fs';
 
-import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
+import {
+  commands,
+  ExtensionContext,
+  RelativePattern,
+  StatusBarAlignment,
+  StatusBarItem,
+  ThemeColor,
+  window,
+  workspace,
+} from 'vscode';
 
-import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
+import {
+  DidChangeWatchedFilesNotification,
+  ExecuteCommandRequest,
+  FileChangeType,
+  MessageType,
+  ShowMessageNotification,
+} from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -12,6 +27,7 @@ import { ConfigService } from './ConfigService';
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
 const commandPrefix = 'oxc';
+const oxlintConfigFileGlob = '**/.oxlintrc.json';
 
 const enum OxcCommands {
   RestartServer = `${commandPrefix}.restartServer`,
@@ -98,6 +114,10 @@ export async function activate(context: ExtensionContext) {
     configService,
   );
 
+  const workspaceConfigPatterns = (workspace.workspaceFolders || []).map((workspaceFolder) =>
+    new RelativePattern(workspaceFolder, configService.config.configPath)
+  );
+
   const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
   async function findBinary(): Promise<string> {
@@ -171,8 +191,10 @@ export async function activate(context: ExtensionContext) {
     synchronize: {
       // Notify the server about file config changes in the workspace
       fileEvents: [
-        workspace.createFileSystemWatcher('**/.oxlint{.json,rc.json}'),
-        workspace.createFileSystemWatcher('**/oxlint{.json,rc.json}'),
+        workspace.createFileSystemWatcher(oxlintConfigFileGlob),
+        ...workspaceConfigPatterns.map((workspaceConfigPattern) => {
+          return workspace.createFileSystemWatcher(workspaceConfigPattern);
+        }),
       ],
     },
     initializationOptions: {
@@ -242,7 +264,17 @@ export async function activate(context: ExtensionContext) {
     myStatusBarItem.backgroundColor = bgColor;
   }
   updateStatsBar(configService.config.enable);
-  client.start();
+  await client.start();
+
+  const initialConfigFiles =
+    (await Promise.all([oxlintConfigFileGlob, ...workspaceConfigPatterns].map(async globPattern => {
+      return workspace.findFiles(globPattern);
+    }))).flat();
+  await client.sendNotification(DidChangeWatchedFilesNotification.type, {
+    changes: initialConfigFiles.map(file => {
+      return { uri: file.toString(), type: FileChangeType.Created };
+    }),
+  });
 }
 
 export function deactivate(): Thenable<void> | undefined {
