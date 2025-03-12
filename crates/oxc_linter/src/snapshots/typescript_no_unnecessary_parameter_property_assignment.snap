@@ -54,3 +54,165 @@ source: crates/oxc_linter/src/tester.rs
  6 │             } else {
    ╰────
   help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(public foo: string) {
+ 4 │             this.foo = foo;
+   ·             ──────────────
+ 5 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(public foo = '') {
+ 4 │             this.foo = foo;
+   ·             ──────────────
+ 5 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(public foo = '') {
+ 4 │             this.foo = foo;
+   ·             ──────────────
+ 5 │             this.foo += 'foo';
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(public foo: string) {
+ 4 │             this.foo ||= foo;
+   ·             ────────────────
+ 5 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(public foo: string) {
+ 4 │             this.foo ??= foo;
+   ·             ────────────────
+ 5 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(public foo: string) {
+ 4 │             this.foo &&= foo;
+   ·             ────────────────
+ 5 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:5:15]
+ 4 │             function bar() {
+ 5 │               this.foo = foo;
+   ·               ──────────────
+ 6 │             }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:7:13]
+ 6 │             }
+ 7 │             this.foo = foo;
+   ·             ──────────────
+ 8 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:5:15]
+ 4 │             this.bar = () => {
+ 5 │               this.foo = foo;
+   ·               ──────────────
+ 6 │             };
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:7:13]
+ 6 │             };
+ 7 │             this.foo = foo;
+   ·             ──────────────
+ 8 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+    ╭─[no_unnecessary_parameter_property_assignment.tsx:9:13]
+  8 │             }
+  9 │             this.foo = foo;
+    ·             ──────────────
+ 10 │           }
+    ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:6:17]
+ 5 │               constructor(private foo: string) {
+ 6 │                 this.foo = foo;
+   ·                 ──────────────
+ 7 │               }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(private foo: string) {
+ 4 │             this.foo = foo;
+   ·             ──────────────
+ 5 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(private foo: string) {
+ 4 │             this.foo = foo;
+   ·             ──────────────
+ 5 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
+ 3 │           constructor(private foo: string) {
+ 4 │             this.foo = foo;
+   ·             ──────────────
+ 5 │           }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:8:15]
+ 7 │             constructor(private foo: string) {
+ 8 │               this.foo = foo;
+   ·               ──────────────
+ 9 │             }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:5:15]
+ 4 │             {
+ 5 │               this.foo = foo;
+   ·               ──────────────
+ 6 │             }
+   ╰────
+  help: Remove the unnecessary assignment
+
+  ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
+   ╭─[no_unnecessary_parameter_property_assignment.tsx:5:15]
+ 4 │             (() => {
+ 5 │               this.foo = foo;
+   ·               ──────────────
+ 6 │             })();
+   ╰────
+  help: Remove the unnecessary assignment

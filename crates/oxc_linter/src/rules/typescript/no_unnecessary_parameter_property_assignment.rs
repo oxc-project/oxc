@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, MethodDefinitionKind},
+    ast::{AssignmentOperator, AssignmentTarget, Expression, MethodDefinitionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -60,7 +60,8 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             return;
         }
         for param in &method.value.params.items {
-            if !param.is_public() {
+            let is_parameter_property = param.accessibility.is_some() || param.readonly;
+            if !is_parameter_property {
                 continue;
             }
             let Some(ident) = param.pattern.get_binding_identifier() else {
@@ -77,6 +78,16 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
                 else {
                     continue;
                 };
+
+                if !matches!(
+                    assignment_expr.operator,
+                    AssignmentOperator::Assign
+                        | AssignmentOperator::LogicalOr
+                        | AssignmentOperator::LogicalAnd
+                        | AssignmentOperator::LogicalNullish
+                ) {
+                    continue;
+                }
 
                 // check for assigning to this: this.x = ?
                 let AssignmentTarget::StaticMemberExpression(static_member_expr) =
@@ -159,6 +170,166 @@ fn test() {
           }
         }
         ",
+        "
+        class Foo {
+          constructor(foo: string) {}
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {}
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = bar;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: any) {
+            this.foo = foo.bar;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = this.bar;
+          }
+        }
+        ",
+        "
+        class Foo {
+          foo: string;
+          constructor(foo: string) {
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          bar: string;
+          constructor(private foo: string) {
+            this.bar = foo;
+          }
+        }
+        ",
+        // "
+        //     class Foo {
+        //       constructor(private foo: string) {
+        //         this.bar = () => {
+        //           this.foo = foo;
+        //         };
+        //       }
+        //     }
+        // ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this[`${foo}`] = foo;
+          }
+        }
+        ",
+        "
+        function Foo(foo) {
+          this.foo = foo;
+        }
+        ",
+        "
+        const foo = 'foo';
+        this.foo = foo;
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo += foo;
+            this.foo -= foo;
+            this.foo *= foo;
+            this.foo /= foo;
+            this.foo %= foo;
+            this.foo **= foo;
+          }
+        }
+        ",
+        // "
+        //     class Foo {
+        //       constructor(public foo: number) {
+        //         this.foo += 1;
+        //         this.foo = foo;
+        //       }
+        //     }
+        // ",
+        // "
+        //     class Foo {
+        //       constructor(
+        //         public foo: number,
+        //         bar: boolean,
+        //       ) {
+        //         if (bar) {
+        //           this.foo += 1;
+        //         } else {
+        //           this.foo = foo;
+        //         }
+        //       }
+        //     }
+        // ",
+        // "
+        //     class Foo {
+        //       constructor(public foo: number) {
+        //         this.foo = foo;
+        //       }
+        //       init = (this.foo += 1);
+        //     }
+        // ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            {
+              const foo = 1;
+              this.foo = foo;
+            }
+          }
+        }
+        ",
+        "
+        declare const name: string;
+        class Foo {
+          constructor(public foo: number) {
+            this[name] = foo;
+          }
+        }
+        ",
+        "
+        declare const name: string;
+        class Foo {
+          constructor(public foo: number) {
+            Foo.foo = foo;
+          }
+        }
+        ",
+        // "
+        //     class Foo {
+        //       constructor(public foo: number) {
+        //         this.foo = foo;
+        //       }
+        //       init = (() => {
+        //         this.foo += 1;
+        //       })();
+        //     }
+        // ",
+        "
+        declare const name: string;
+        class Foo {
+          constructor(public foo: number) {
+            this[name] = foo;
+          }
+          init = (this[name] = 1);
+          init2 = (Foo.foo = 1);
+        }
+        ",
     ];
 
     let fail = vec![
@@ -194,6 +365,152 @@ fn test() {
             } else {
               this.name = name + 'edited';
             }
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: string) {
+            this.foo = foo;
+          }
+        }
+        ",
+        // "
+        //     class Foo {
+        //       constructor(public foo?: string) {
+        //         this.foo = foo!;
+        //       }
+        //     }
+        // ",
+        // "
+        //     class Foo {
+        //       constructor(public foo?: string) {
+        //         this.foo = foo as any;
+        //       }
+        //     }
+        // ",
+        "
+        class Foo {
+          constructor(public foo = '') {
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo = '') {
+            this.foo = foo;
+            this.foo += 'foo';
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: string) {
+            this.foo ||= foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: string) {
+            this.foo ??= foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: string) {
+            this.foo &&= foo;
+          }
+        }
+        ",
+        // "
+        //     class Foo {
+        //       constructor(private foo: string) {
+        //         this['foo'] = foo;
+        //       }
+        //     }
+        // ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            function bar() {
+              this.foo = foo;
+            }
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.bar = () => {
+              this.foo = foo;
+            };
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            class Bar {
+              constructor(private foo: string) {
+                this.foo = foo;
+              }
+            }
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = foo;
+          }
+          bar = () => {
+            this.foo = 'foo';
+          };
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = foo;
+          }
+          init = foo => {
+            this.foo = foo;
+          };
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.foo = foo;
+          }
+          init = class Bar {
+            constructor(private foo: string) {
+              this.foo = foo;
+            }
+          };
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            {
+              this.foo = foo;
+            }
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            (() => {
+              this.foo = foo;
+            })();
           }
         }
         ",
