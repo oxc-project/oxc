@@ -60,28 +60,29 @@ impl Rule for BadMinMaxFunc {
         };
 
         for expr in inner_exprs {
-            if let Some((inner_min_max, ..)) = Self::min_max(expr) {
-                let constant_result = match (&out_min_max, &inner_min_max) {
-                    (MinMax::Max(max), MinMax::Min(min)) => {
-                        if max > min {
-                            Some(max)
-                        } else {
-                            None
-                        }
+            let Some((inner_min_max, ..)) = Self::min_max(expr) else {
+                continue;
+            };
+            let constant_result = match (&out_min_max, &inner_min_max) {
+                (MinMax::Max(max), MinMax::Min(min)) => {
+                    if max > min {
+                        Some(max)
+                    } else {
+                        None
                     }
-                    (MinMax::Min(min), MinMax::Max(max)) => {
-                        if min < max {
-                            Some(min)
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                };
-
-                if let Some(constant) = constant_result {
-                    ctx.diagnostic(bad_min_max_func_diagnostic(*constant, call_expr.span));
                 }
+                (MinMax::Min(min), MinMax::Max(max)) => {
+                    if min < max {
+                        Some(min)
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            };
+
+            if let Some(constant) = constant_result {
+                ctx.diagnostic(bad_min_max_func_diagnostic(*constant, call_expr.span));
             }
         }
     }
@@ -96,39 +97,33 @@ impl BadMinMaxFunc {
     fn min_max<'a>(node: &'a CallExpression<'a>) -> Option<(MinMax, Vec<&'a CallExpression<'a>>)> {
         let CallExpression { callee, arguments, .. } = node;
 
-        if let Some(member_expr) = callee.get_member_expr() {
-            if let Expression::Identifier(ident) = member_expr.object() {
-                if ident.name != "Math" {
-                    return None;
-                }
-
-                let number_args = arguments.iter().filter_map(|arg| {
-                    if let Argument::NumericLiteral(literal) = arg {
-                        Some(literal.value)
-                    } else {
-                        None
-                    }
-                });
-
-                let min_max = match member_expr.static_property_name() {
-                    Some("max") => MinMax::Max(number_args.fold(f64::NEG_INFINITY, f64::max)),
-                    Some("min") => MinMax::Min(number_args.fold(f64::INFINITY, f64::min)),
-                    _ => return None,
-                };
-
-                let mut inner = vec![];
-
-                for expr in arguments.iter().filter_map(|arg| {
-                    if let Argument::CallExpression(expr) = arg { Some(&**expr) } else { None }
-                }) {
-                    inner.push(expr);
-                }
-
-                return Some((min_max, inner));
-            }
+        let member_expr = callee.get_member_expr()?;
+        let Expression::Identifier(ident) = member_expr.object() else {
+            return None;
+        };
+        if ident.name != "Math" {
+            return None;
         }
 
-        None
+        let number_args = arguments.iter().filter_map(|arg| {
+            if let Argument::NumericLiteral(literal) = arg { Some(literal.value) } else { None }
+        });
+
+        let min_max = match member_expr.static_property_name() {
+            Some("max") => MinMax::Max(number_args.fold(f64::NEG_INFINITY, f64::max)),
+            Some("min") => MinMax::Min(number_args.fold(f64::INFINITY, f64::min)),
+            _ => return None,
+        };
+
+        let mut inner = vec![];
+
+        for expr in arguments.iter().filter_map(|arg| {
+            if let Argument::CallExpression(expr) = arg { Some(&**expr) } else { None }
+        }) {
+            inner.push(expr);
+        }
+
+        Some((min_max, inner))
     }
 }
 
