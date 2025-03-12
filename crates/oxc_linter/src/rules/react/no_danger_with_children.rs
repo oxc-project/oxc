@@ -326,7 +326,7 @@ fn find_var_in_scope<'c>(
     node: &AstNode,
     name: &str,
 ) -> Option<&'c AstNode<'c>> {
-    ctx.scopes()
+    ctx.scoping()
         .find_binding(node.scope_id(), name)
         .map(|symbol_id| ctx.semantic().symbol_declaration(symbol_id))
 }

@@ -1912,7 +1912,6 @@ impl GenExpr for SimpleAssignmentTarget<'_> {
             Self::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSTypeAssertion(e) => e.print_expr(p, precedence, ctx),
-            Self::TSInstantiationExpression(e) => e.print_expr(p, precedence, ctx),
         }
     }
 }
@@ -2087,7 +2086,7 @@ impl GenExpr for ImportExpression<'_> {
             && (has_comment_before_right_paren
                 || p.has_comment(self.source.span().start)
                 || self
-                    .arguments
+                    .options
                     .first()
                     .is_some_and(|argument| p.has_comment(argument.span().start)));
 
@@ -2109,7 +2108,7 @@ impl GenExpr for ImportExpression<'_> {
                 p.print_indent();
             }
             self.source.print_expr(p, Precedence::Comma, Context::empty());
-            if !self.arguments.is_empty() {
+            if !self.options.is_empty() {
                 p.print_comma();
                 if has_comment {
                     p.print_soft_newline();
@@ -2117,7 +2116,7 @@ impl GenExpr for ImportExpression<'_> {
                 } else {
                     p.print_soft_space();
                 }
-                p.print_expressions(&self.arguments, Precedence::Comma, Context::empty());
+                p.print_expressions(&self.options, Precedence::Comma, Context::empty());
             }
             if has_comment {
                 // Handle `/* comment */);`
@@ -2432,7 +2431,7 @@ impl Gen for JSXNamespacedName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.namespace.print(p, ctx);
         p.print_colon();
-        self.property.print(p, ctx);
+        self.name.print(p, ctx);
     }
 }
 
@@ -3549,8 +3548,8 @@ impl Gen for TSImportType<'_> {
             p.print_str("typeof ");
         }
         p.print_str("import(");
-        self.parameter.print(p, ctx);
-        if let Some(attributes) = &self.attributes {
+        self.argument.print(p, ctx);
+        if let Some(attributes) = &self.options {
             p.print_str(", ");
             attributes.print(p, ctx);
         }
@@ -3559,7 +3558,7 @@ impl Gen for TSImportType<'_> {
             p.print_ascii_byte(b'.');
             qualifier.print(p, ctx);
         }
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
     }

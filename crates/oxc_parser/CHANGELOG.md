@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.57.0] - 2025-03-11
+
+- 510446a parser: [**BREAKING**] Align JSXNamespacedName with ESTree (#9648) (Arnaud Barré)
+
+### Features
+
+- 638007b parser: Apply `preserveParens` to `TSParenthesizedType` (#9653) (Boshen)
+
+### Bug Fixes
+
+- eae1a41 ast: Align `TSImportType` field names with ts-eslint (#9664) (Boshen)
+- cfdcfdb parser: Fix end span for optional binding pattern without type annotation (#9652) (Boshen)
+- 26da65d parser: Parse asi after class accessor property (#9623) (Boshen)
+- 87462fd parser: Fix end span for `using` declaration (#9622) (Boshen)
+
+## [0.56.4] - 2025-03-07
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+## [0.56.3] - 2025-03-07
+
+### Features
+
+- 6b95d25 parser: Disallow `TSInstantiationExpression` in `SimpleAssignmentTarget` (#9586) (Boshen)
+
 ## [0.55.0] - 2025-03-05
 
 ### Features

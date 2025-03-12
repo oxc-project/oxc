@@ -492,9 +492,6 @@ impl ContentEq for AssignmentTarget<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -517,9 +514,6 @@ impl ContentEq for SimpleAssignmentTarget<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -573,9 +567,6 @@ impl ContentEq for AssignmentTargetMaybeDefault<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -897,9 +888,6 @@ impl ContentEq for ForStatementLeft<'_> {
             (Self::TSSatisfiesExpression(a), Self::TSSatisfiesExpression(b)) => a.content_eq(b),
             (Self::TSNonNullExpression(a), Self::TSNonNullExpression(b)) => a.content_eq(b),
             (Self::TSTypeAssertion(a), Self::TSTypeAssertion(b)) => a.content_eq(b),
-            (Self::TSInstantiationExpression(a), Self::TSInstantiationExpression(b)) => {
-                a.content_eq(b)
-            }
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1272,7 +1260,7 @@ impl ContentEq for AccessorProperty<'_> {
 impl ContentEq for ImportExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.source, &other.source)
-            && ContentEq::content_eq(&self.arguments, &other.arguments)
+            && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.phase, &other.phase)
     }
 }
@@ -1564,7 +1552,7 @@ impl ContentEq for JSXElementName<'_> {
 impl ContentEq for JSXNamespacedName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.namespace, &other.namespace)
-            && ContentEq::content_eq(&self.property, &other.property)
+            && ContentEq::content_eq(&self.name, &other.name)
     }
 }
 
@@ -2309,11 +2297,11 @@ impl ContentEq for TSTypeQueryExprName<'_> {
 
 impl ContentEq for TSImportType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
-            && ContentEq::content_eq(&self.parameter, &other.parameter)
+        ContentEq::content_eq(&self.argument, &other.argument)
+            && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
-            && ContentEq::content_eq(&self.attributes, &other.attributes)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
     }
 }
 

@@ -147,9 +147,9 @@ impl Rule for NoRequireImports {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                if node.scope_id() != ctx.scopes().root_scope_id() {
+                if node.scope_id() != ctx.scoping().root_scope_id() {
                     if let Some(id) = call_expr.callee.get_identifier_reference() {
-                        if !id.is_global_reference_name("require", ctx.symbols()) {
+                        if !id.is_global_reference_name("require", ctx.scoping()) {
                             return;
                         }
                     }
@@ -187,7 +187,7 @@ impl Rule for NoRequireImports {
                     }
                 }
 
-                if ctx.scopes().find_binding(ctx.scopes().root_scope_id(), "require").is_some() {
+                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
                     return;
                 }
 

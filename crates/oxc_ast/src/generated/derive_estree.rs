@@ -599,7 +599,6 @@ impl ESTree for AssignmentTarget<'_> {
             Self::TSSatisfiesExpression(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -617,7 +616,6 @@ impl ESTree for SimpleAssignmentTarget<'_> {
             Self::TSSatisfiesExpression(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -679,7 +677,6 @@ impl ESTree for AssignmentTargetMaybeDefault<'_> {
             Self::TSSatisfiesExpression(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -1082,7 +1079,6 @@ impl ESTree for ForStatementLeft<'_> {
             Self::TSSatisfiesExpression(it) => it.serialize(serializer),
             Self::TSNonNullExpression(it) => it.serialize(serializer),
             Self::TSTypeAssertion(it) => it.serialize(serializer),
-            Self::TSInstantiationExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(it) => it.serialize(serializer),
             Self::StaticMemberExpression(it) => it.serialize(serializer),
             Self::PrivateFieldExpression(it) => it.serialize(serializer),
@@ -1638,7 +1634,7 @@ impl ESTree for ImportExpression<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("source", &self.source);
-        state.serialize_field("options", &crate::serialize::ImportExpressionArguments(self));
+        state.serialize_field("options", &crate::serialize::ImportExpressionOptions(self));
         state.end();
     }
 }
@@ -2065,7 +2061,7 @@ impl ESTree for JSXNamespacedName<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("namespace", &self.namespace);
-        state.serialize_field("property", &self.property);
+        state.serialize_field("name", &self.name);
         state.end();
     }
 }
@@ -3095,11 +3091,11 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("type", &JsonSafeString("TSImportType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("isTypeOf", &self.is_type_of);
-        state.serialize_field("parameter", &self.parameter);
+        state.serialize_field("argument", &self.argument);
+        state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
-        state.serialize_field("attributes", &self.attributes);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
+        state.serialize_field("isTypeOf", &self.is_type_of);
         state.end();
     }
 }

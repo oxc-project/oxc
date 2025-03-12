@@ -430,7 +430,7 @@ fn test_module_like_declarations() {
 
     let test = SemanticTester::ts("declare global { interface Window { x: number; } }");
     let semantic = test.build();
-    let global = semantic.symbols().names().find(|name| *name == "global");
+    let global = semantic.scoping().symbol_names().find(|name| *name == "global");
     assert!(
         global.is_none(),
         "A symbol should not be created for global augmentation declarations."

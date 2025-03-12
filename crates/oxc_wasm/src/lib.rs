@@ -18,7 +18,7 @@ use oxc::{
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
-        ReferenceId, ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolFlags, SymbolTable,
+        ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags,
         dot::{DebugDot, DebugDotContext},
     },
     span::{SourceType, Span},
@@ -242,14 +242,14 @@ impl Oxc {
 
         self.run_prettier(&run_options, source_text, source_type);
 
-        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+        let scoping = semantic.into_scoping();
 
         if !source_type.is_typescript_definition() {
             if run_options.scope.unwrap_or_default() {
-                self.scope_text = Self::get_scope_text(&program, &symbols, &scopes);
+                self.scope_text = Self::get_scope_text(&program, &scoping);
             }
             if run_options.symbol.unwrap_or_default() {
-                self.symbols = self.get_symbols_text(&symbols)?;
+                self.symbols = self.get_symbols_text(&scoping)?;
             }
         }
 
@@ -293,7 +293,7 @@ impl Oxc {
                 })
                 .unwrap_or_default();
             let result = Transformer::new(&allocator, &path, &options)
-                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+                .build_with_scoping(scoping, &mut program);
             if !result.errors.is_empty() {
                 self.save_diagnostics(result.errors.into_iter().collect::<Vec<_>>());
             }
@@ -315,13 +315,13 @@ impl Oxc {
                     CompressOptions::all_false()
                 }),
             };
-            Minifier::new(options).build(&allocator, &mut program).symbol_table
+            Minifier::new(options).build(&allocator, &mut program).scoping
         } else {
             None
         };
 
         let codegen_result = CodeGenerator::new()
-            .with_symbol_table(symbol_table)
+            .with_scoping(symbol_table)
             .with_options(CodegenOptions {
                 minify: minifier_options.whitespace.unwrap_or_default(),
                 source_map_path: codegen_options
@@ -392,18 +392,17 @@ impl Oxc {
         }
     }
 
-    fn get_scope_text(program: &Program<'_>, symbols: &SymbolTable, scopes: &ScopeTree) -> String {
+    fn get_scope_text(program: &Program<'_>, scoping: &Scoping) -> String {
         struct ScopesTextWriter<'s> {
-            symbols: &'s SymbolTable,
-            scopes: &'s ScopeTree,
+            scoping: &'s Scoping,
             scope_text: String,
             indent: usize,
             space: String,
         }
 
         impl<'s> ScopesTextWriter<'s> {
-            fn new(symbols: &'s SymbolTable, scopes: &'s ScopeTree) -> Self {
-                Self { symbols, scopes, scope_text: String::new(), indent: 0, space: String::new() }
+            fn new(scoping: &'s Scoping) -> Self {
+                Self { scoping, scope_text: String::new(), indent: 0, space: String::new() }
             }
 
             fn write_line<S: AsRef<str>>(&mut self, line: S) {
@@ -427,15 +426,15 @@ impl Oxc {
         impl Visit<'_> for ScopesTextWriter<'_> {
             fn enter_scope(&mut self, _: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
                 let scope_id = scope_id.get().unwrap();
-                let flags = self.scopes.get_flags(scope_id);
+                let flags = self.scoping.scope_flags(scope_id);
                 self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
                 self.indent_in();
 
-                let bindings = self.scopes.get_bindings(scope_id);
+                let bindings = self.scoping.get_bindings(scope_id);
                 if !bindings.is_empty() {
                     self.write_line("Bindings: {");
                     for (name, &symbol_id) in bindings {
-                        let symbol_flags = self.symbols.get_flags(symbol_id);
+                        let symbol_flags = self.scoping.symbol_flags(symbol_id);
                         self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
                     }
                     self.write_line("}");
@@ -448,15 +447,12 @@ impl Oxc {
             }
         }
 
-        let mut writer = ScopesTextWriter::new(symbols, scopes);
+        let mut writer = ScopesTextWriter::new(scoping);
         writer.visit_program(program);
         writer.scope_text
     }
 
-    fn get_symbols_text(
-        &self,
-        symbols: &SymbolTable,
-    ) -> Result<JsValue, serde_wasm_bindgen::Error> {
+    fn get_symbols_text(&self, scoping: &Scoping) -> Result<JsValue, serde_wasm_bindgen::Error> {
         #[derive(Serialize)]
         struct Data {
             span: Span,
@@ -467,22 +463,22 @@ impl Oxc {
             references: Vec<Reference>,
         }
 
-        let data = symbols
+        let data = scoping
             .symbol_ids()
             .map(|symbol_id| Data {
-                span: symbols.get_span(symbol_id),
-                name: symbols.get_name(symbol_id).into(),
-                flags: symbols.get_flags(symbol_id),
-                scope_id: symbols.get_scope_id(symbol_id),
-                resolved_references: symbols
+                span: scoping.symbol_span(symbol_id),
+                name: scoping.symbol_name(symbol_id).into(),
+                flags: scoping.symbol_flags(symbol_id),
+                scope_id: scoping.symbol_scope_id(symbol_id),
+                resolved_references: scoping
                     .get_resolved_reference_ids(symbol_id)
                     .iter()
                     .copied()
                     .collect::<Vec<_>>(),
-                references: symbols
+                references: scoping
                     .get_resolved_reference_ids(symbol_id)
                     .iter()
-                    .map(|reference_id| symbols.get_reference(*reference_id).clone())
+                    .map(|reference_id| scoping.get_reference(*reference_id).clone())
                     .collect::<Vec<_>>(),
             })
             .collect::<Vec<_>>();

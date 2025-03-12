@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 138/224
+Passed: 139/226
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -317,6 +317,11 @@ x Output mismatch
 x Output mismatch
 
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
+x Output mismatch
+
+
+# babel-plugin-proposal-explicit-resource-management (1/2)
+* export-class-name/input.js
 x Output mismatch
 
 

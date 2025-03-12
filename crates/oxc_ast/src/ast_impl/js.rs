@@ -28,7 +28,6 @@ impl<'a> Expression<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSTypeAssertion(_)
                 | Self::TSNonNullExpression(_)
-                | Self::TSInstantiationExpression(_)
         )
     }
 
@@ -396,6 +395,12 @@ impl ArrayExpressionElement<'_> {
     /// For example, in `[1, , 3]`, the second element is an elision.
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
+    }
+
+    /// Returns `true` if this array expression element is a [spread](SpreadElement).
+    #[inline]
+    pub fn is_spread(&self) -> bool {
+        matches!(self, Self::SpreadElement(_))
     }
 }
 
@@ -839,7 +844,6 @@ impl<'a> SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => Some(&mut expr.expression),
             Self::TSNonNullExpression(expr) => Some(&mut expr.expression),
             Self::TSTypeAssertion(expr) => Some(&mut expr.expression),
-            Self::TSInstantiationExpression(expr) => Some(&mut expr.expression),
             _ => None,
         }
     }

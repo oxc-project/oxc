@@ -2,6 +2,7 @@ import { Worker } from 'node:worker_threads';
 import { describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
+import type { ExpressionStatement, TSTypeAliasDeclaration } from '../index.js';
 
 describe('parse', () => {
   const code = '/* comment */ foo';
@@ -242,6 +243,25 @@ describe('parse', () => {
         end: 19,
         value: '/usr/bin/env node',
       });
+    });
+  });
+
+  describe('preserveParens', () => {
+    it('should include parens when true', () => {
+      let ret = parseSync('test.js', '(x)');
+      expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe('ParenthesizedExpression');
+
+      ret = parseSync('test.ts', 'type Foo = (x)');
+      expect((ret.program.body[0] as TSTypeAliasDeclaration).typeAnnotation.type).toBe('TSParenthesizedType');
+    });
+
+    it('should omit parens when false', () => {
+      const options = { preserveParens: false };
+      let ret = parseSync('test.js', '(x)', options);
+      expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe('Identifier');
+
+      ret = parseSync('test.ts', 'type Foo = (x)', options);
+      expect((ret.program.body[0] as TSTypeAliasDeclaration).typeAnnotation.type).toBe('TSTypeReference');
     });
   });
 });

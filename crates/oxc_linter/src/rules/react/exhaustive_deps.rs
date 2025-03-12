@@ -204,7 +204,7 @@ impl Rule for ExhaustiveDeps {
         };
 
         let component_scope_id = {
-            match get_enclosing_function(node, ctx.semantic()).map(oxc_semantic::AstNode::kind) {
+            match get_enclosing_function(node, ctx).map(oxc_semantic::AstNode::kind) {
                 Some(AstKind::Function(func)) => func.scope_id(),
                 Some(AstKind::ArrowFunctionExpression(arrow_func)) => arrow_func.scope_id(),
                 // If we hit here, it means that the hook is called at the top level which isn't allowed, so lets bail out.
@@ -383,7 +383,7 @@ impl Rule for ExhaustiveDeps {
         if is_effect {
             for r#ref in refs_inside_cleanups {
                 if let Expression::Identifier(ident) = r#ref.object.get_inner_expression() {
-                    let reference = ctx.semantic().symbols().get_reference(ident.reference_id());
+                    let reference = ctx.scoping().get_reference(ident.reference_id());
                     let has_write_reference = reference.symbol_id().is_some_and(|symbol_id| {
                         ctx.semantic().symbol_references(symbol_id).any(|reference| {
                             ctx.nodes().parent_node(reference.node_id()).is_some_and(|parent| {
@@ -477,11 +477,11 @@ impl Rule for ExhaustiveDeps {
 
         for dependency in &declared_dependencies {
             if let Some(symbol_id) = dependency.symbol_id {
-                let dependency_scope_id = ctx.semantic().symbols().get_scope_id(symbol_id);
+                let dependency_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
                 if !(ctx
                     .semantic()
-                    .scopes()
-                    .ancestors(component_scope_id)
+                    .scoping()
+                    .scope_ancestors(component_scope_id)
                     .skip(1)
                     .contains(&dependency_scope_id)
                     || dependency.chain.len() == 1 && dependency.chain[0] == "current")
@@ -729,7 +729,7 @@ fn analyze_property_chain<'a, 'b>(
             name: ident.name,
             reference_id: ident.reference_id(),
             chain: vec![],
-            symbol_id: semantic.symbols().get_reference(ident.reference_id()).symbol_id(),
+            symbol_id: semantic.scoping().get_reference(ident.reference_id()).symbol_id(),
         })),
         // TODO; is this correct?
         Expression::JSXElement(_) => Ok(None),
@@ -757,7 +757,7 @@ fn concat_members<'a, 'b>(
         name: source.name,
         reference_id: source.reference_id,
         chain: [source.chain, new_chain].concat(),
-        symbol_id: semantic.symbols().get_reference(source.reference_id).symbol_id(),
+        symbol_id: semantic.scoping().get_reference(source.reference_id).symbol_id(),
     }))
 }
 
@@ -768,7 +768,7 @@ fn is_identifier_a_dependency<'a>(
     component_scope_id: ScopeId,
 ) -> bool {
     // if it is a global e.g. `console` or `window`, then it's not a dependency
-    if ctx.semantic().scopes().root_unresolved_references().contains_key(ident_name.as_str()) {
+    if ctx.scoping().root_unresolved_references().contains_key(ident_name.as_str()) {
         return false;
     }
 
@@ -777,7 +777,7 @@ fn is_identifier_a_dependency<'a>(
     };
 
     let semantic = ctx.semantic();
-    let scopes = semantic.scopes();
+    let scopes = semantic.scoping();
 
     // if the variable was declared in the root scope, then it's not a dependency
     if declaration.scope_id() == scopes.root_scope_id() {
@@ -794,7 +794,11 @@ fn is_identifier_a_dependency<'a>(
     //   return <div />;
     // }
     // ```
-    if scopes.ancestors(component_scope_id).skip(1).any(|parent| parent == declaration.scope_id()) {
+    if scopes
+        .scope_ancestors(component_scope_id)
+        .skip(1)
+        .any(|parent| parent == declaration.scope_id())
+    {
         return false;
     }
 
@@ -807,7 +811,7 @@ fn is_identifier_a_dependency<'a>(
     //   }, []);
     //  return <div />;
     // }
-    if scopes.iter_all_child_ids(component_scope_id).any(|id| id == declaration.scope_id()) {
+    if scopes.iter_all_scope_child_ids(component_scope_id).any(|id| id == declaration.scope_id()) {
         return false;
     }
 
@@ -900,7 +904,7 @@ fn is_stable_value<'a, 'b>(
                 && !ctx
                     .semantic()
                     .symbol_references(
-                        ctx.symbols().get_reference(ident_reference_id).symbol_id().unwrap(),
+                        ctx.scoping().get_reference(ident_reference_id).symbol_id().unwrap(),
                     )
                     .any(|reference| {
                         matches!(
@@ -1054,7 +1058,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                             chain: [source.chain.clone(), new_chain].concat(),
                             symbol_id: self
                                 .semantic
-                                .symbols()
+                                .scoping()
                                 .get_reference(source.reference_id)
                                 .symbol_id(),
                         });
@@ -1084,7 +1088,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             reference_id: ident.reference_id(),
             span: ident.span,
             chain: vec![],
-            symbol_id: self.semantic.symbols().get_reference(ident.reference_id()).symbol_id(),
+            symbol_id: self.semantic.scoping().get_reference(ident.reference_id()).symbol_id(),
         });
 
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {

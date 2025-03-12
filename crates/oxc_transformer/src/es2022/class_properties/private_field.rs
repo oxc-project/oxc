@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString};
+use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
@@ -130,13 +130,13 @@ impl<'a> ClassProperties<'a, '_> {
                         // `_prop.call(object)`
                         create_call_call(prop_ident, object, span, ctx)
                     } else {
-                        ctx.symbols_mut()
+                        ctx.scoping_mut()
                             .delete_resolved_reference(class_symbol_id, object_reference_id);
                         // `_prop`
                         prop_ident
                     }
                 } else {
-                    ctx.symbols_mut()
+                    ctx.scoping_mut()
                         .delete_resolved_reference(class_symbol_id, object_reference_id);
                     // `_prop._`
                     Self::create_underscore_member_expression(prop_ident, span, ctx)
@@ -212,7 +212,7 @@ impl<'a> ClassProperties<'a, '_> {
             if let Some(class_symbol_id) = class_symbol_id {
                 if let Expression::Identifier(ident) = object {
                     let reference_id = ident.reference_id();
-                    if let Some(symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id() {
+                    if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
                         if symbol_id == class_symbol_id {
                             return Some((class_symbol_id, reference_id));
                         }
@@ -618,7 +618,7 @@ impl<'a> ClassProperties<'a, '_> {
             );
 
             // Delete reference for `object` as `object.#prop` has been removed
-            ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
+            ctx.scoping_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
 
             if operator == AssignmentOperator::Assign {
                 // `Class.#prop = value` -> `_prop._ = value`
@@ -992,7 +992,7 @@ impl<'a> ClassProperties<'a, '_> {
             let (get_expr, object, class_ident) = if let Some(object_reference) = object_reference {
                 // Delete reference for `object` as `object.#prop` is being removed
                 let (class_symbol_id, object_reference_id) = object_reference;
-                ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
+                ctx.scoping_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
 
                 // `_prop._`
                 let get_expr = Self::create_underscore_member_expression(prop_ident, SPAN, ctx);
@@ -2133,7 +2133,6 @@ impl<'a> ClassProperties<'a, '_> {
     /// * Setter: `_prop.call(_assertClassBrand(Class, object), value)`
     /// * Prop: `_privateFieldSet(_prop, object, value)`
     /// * Prop binding is `None`: `_writeOnlyError("#method")`
-    #[expect(clippy::too_many_arguments)]
     fn create_private_setter(
         &self,
         private_name: &str,
@@ -2176,10 +2175,8 @@ impl<'a> ClassProperties<'a, '_> {
         private_name: &str,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut message = ArenaString::with_capacity_in(private_name.len() + 1, ctx.ast.allocator);
-        message.push('#');
-        message.push_str(private_name);
-        let message = ctx.ast.expression_string_literal(SPAN, message.into_bump_str(), None);
+        let message = ctx.ast.atom_from_strs_array(["#", private_name]);
+        let message = ctx.ast.expression_string_literal(SPAN, message, None);
         self.ctx.helper_call_expr(helper, SPAN, ctx.ast.vec1(Argument::from(message)), ctx)
     }
 

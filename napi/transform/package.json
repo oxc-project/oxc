@@ -1,25 +1,64 @@
 {
-  "name": "@oxc-transform/binding",
-  "private": true,
+  "name": "oxc-transform",
+  "version": "0.57.0",
+  "main": "index.js",
+  "browser": "browser.js",
   "scripts": {
     "build-dev": "napi --no-dts-cache build --platform",
-    "build": "napi --no-dts-cache build --platform --release",
+    "build": "pnpm run build-dev --release",
     "test": "vitest --typecheck run ./test && tsc"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "description": "Oxc Transformer Node API",
+  "keywords": [
+    "oxc",
+    "transform"
+  ],
+  "author": "Boshen and oxc contributors",
+  "license": "MIT",
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc.git",
+    "directory": "napi/transform"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": [
+    "index.d.ts",
+    "index.js",
+    "browser.js"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
   },
   "napi": {
     "binaryName": "transform",
+    "packageName": "@oxc-transform/binding",
     "targets": [
       "x86_64-pc-windows-msvc",
       "aarch64-pc-windows-msvc",
       "x86_64-unknown-linux-gnu",
-      "aarch64-unknown-linux-gnu",
       "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-gnu",
       "aarch64-unknown-linux-musl",
+      "armv7-unknown-linux-gnueabihf",
       "x86_64-apple-darwin",
-      "aarch64-apple-darwin"
-    ]
-  },
-  "devDependencies": {
-    "vitest": "catalog:"
+      "aarch64-apple-darwin",
+      "wasm32-wasip1-threads"
+    ],
+    "wasm": {
+      "browser": {
+        "fs": true
+      }
+    }
   }
 }

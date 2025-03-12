@@ -13,7 +13,7 @@ fn mangle(source_text: &str, top_level: bool) -> String {
     let program = ret.program;
     let symbol_table =
         Mangler::new().with_options(MangleOptions { debug: false, top_level }).build(&program);
-    CodeGenerator::new().with_symbol_table(Some(symbol_table)).build(&program).code
+    CodeGenerator::new().with_scoping(Some(symbol_table)).build(&program).code
 }
 
 #[test]

@@ -6,7 +6,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
+use oxc_semantic::{NodeId, Reference, Scoping};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -23,8 +23,7 @@ use crate::{BoundIdentifier, scopes_collector::ChildScopeCollector};
 /// `current_scope_id` is the ID of current scope during traversal.
 /// `walk_*` functions update this field when entering/exiting a scope.
 pub struct TraverseScoping {
-    scopes: ScopeTree,
-    symbols: SymbolTable,
+    scoping: Scoping,
     uid_names: Option<FxHashSet<CompactStr>>,
     current_scope_id: ScopeId,
     current_hoist_scope_id: ScopeId,
@@ -54,44 +53,32 @@ impl TraverseScoping {
     /// Get current scope flags
     #[inline]
     pub fn current_scope_flags(&self) -> ScopeFlags {
-        self.scopes.get_flags(self.current_scope_id)
+        self.scoping.scope_flags(self.current_scope_id)
     }
 
     /// Get scopes tree
     #[inline]
-    pub fn scopes(&self) -> &ScopeTree {
-        &self.scopes
+    pub fn scoping(&self) -> &Scoping {
+        &self.scoping
     }
 
     /// Get mutable scopes tree
     #[inline]
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
-        &mut self.scopes
-    }
-
-    /// Get symbols table
-    #[inline]
-    pub fn symbols(&self) -> &SymbolTable {
-        &self.symbols
-    }
-
-    /// Get mutable symbols table
-    #[inline]
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        &mut self.symbols
+    pub fn scoping_mut(&mut self) -> &mut Scoping {
+        &mut self.scoping
     }
 
     /// Get iterator over scopes, starting with current scope and working up
     pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
-        self.scopes.ancestors(self.current_scope_id)
+        self.scoping.scope_ancestors(self.current_scope_id)
     }
 
     /// Create new scope as child of provided scope.
     ///
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
-        let flags = self.scopes.get_new_scope_flags(flags, parent_id);
-        self.scopes.add_scope(Some(parent_id), NodeId::DUMMY, flags)
+        let flags = self.scoping.get_new_scope_flags(flags, parent_id);
+        self.scoping.add_scope(Some(parent_id), NodeId::DUMMY, flags)
     }
 
     /// Create new scope as child of current scope.
@@ -133,8 +120,8 @@ impl TraverseScoping {
 
     fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
         // Remove these scopes from parent's children
-        if self.scopes.has_child_ids() {
-            self.scopes.remove_child_scopes(self.current_scope_id, child_scope_ids);
+        if self.scoping.has_scope_child_ids() {
+            self.scoping.remove_child_scopes(self.current_scope_id, child_scope_ids);
         }
 
         // Create new scope as child of parent
@@ -142,7 +129,7 @@ impl TraverseScoping {
 
         // Set scopes as children of new scope instead
         for &child_id in child_scope_ids {
-            self.scopes.set_parent_id(child_id, Some(new_scope_id));
+            self.scoping.set_scope_parent_id(child_id, Some(new_scope_id));
         }
 
         new_scope_id
@@ -165,16 +152,16 @@ impl TraverseScoping {
 
         let child_ids = collector.scope_ids;
         if !child_ids.is_empty() {
-            let parent_id = self.scopes.get_parent_id(scope_id);
+            let parent_id = self.scoping.scope_parent_id(scope_id);
             for child_id in child_ids {
-                self.scopes.set_parent_id(child_id, parent_id);
+                self.scoping.set_scope_parent_id(child_id, parent_id);
             }
         }
 
-        self.scopes.delete_scope(scope_id);
+        self.scoping.delete_scope(scope_id);
     }
 
-    /// Add binding to [`ScopeTree`] and [`SymbolTable`].
+    /// Add binding to `ScopeTree` and `SymbolTable`.
     #[inline]
     pub(crate) fn add_binding(
         &mut self,
@@ -182,8 +169,8 @@ impl TraverseScoping {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = self.symbols.create_symbol(SPAN, name, flags, scope_id, NodeId::DUMMY);
-        self.scopes.add_binding(scope_id, name, symbol_id);
+        let symbol_id = self.scoping.create_symbol(SPAN, name, flags, scope_id, NodeId::DUMMY);
+        self.scoping.add_binding(scope_id, name, symbol_id);
 
         symbol_id
     }
@@ -308,16 +295,16 @@ impl TraverseScoping {
         flags: ReferenceFlags,
     ) -> ReferenceId {
         let reference = Reference::new_with_symbol_id(NodeId::DUMMY, symbol_id, flags);
-        let reference_id = self.symbols.create_reference(reference);
-        self.symbols.add_resolved_reference(symbol_id, reference_id);
+        let reference_id = self.scoping.create_reference(reference);
+        self.scoping.add_resolved_reference(symbol_id, reference_id);
         reference_id
     }
 
     /// Create an unbound reference
     pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
         let reference = Reference::new(NodeId::DUMMY, flags);
-        let reference_id = self.symbols.create_reference(reference);
-        self.scopes.add_root_unresolved_reference(name, reference_id);
+        let reference_id = self.scoping.create_reference(reference);
+        self.scoping.add_root_unresolved_reference(name, reference_id);
         reference_id
     }
 
@@ -344,7 +331,7 @@ impl TraverseScoping {
         name: &str,
         flags: ReferenceFlags,
     ) -> ReferenceId {
-        let symbol_id = self.scopes.find_binding(self.current_scope_id, name);
+        let symbol_id = self.scoping.find_binding(self.current_scope_id, name);
         self.create_reference(name, symbol_id, flags)
     }
 
@@ -352,11 +339,11 @@ impl TraverseScoping {
     ///
     /// Provided `name` must match `reference_id`.
     pub fn delete_reference(&mut self, reference_id: ReferenceId, name: &str) {
-        let symbol_id = self.symbols.get_reference(reference_id).symbol_id();
+        let symbol_id = self.scoping.get_reference(reference_id).symbol_id();
         if let Some(symbol_id) = symbol_id {
-            self.symbols.delete_resolved_reference(symbol_id, reference_id);
+            self.scoping.delete_resolved_reference(symbol_id, reference_id);
         } else {
-            self.scopes.delete_root_unresolved_reference(name, reference_id);
+            self.scoping.delete_root_unresolved_reference(name, reference_id);
         }
     }
 
@@ -375,19 +362,19 @@ impl TraverseScoping {
     #[expect(clippy::needless_pass_by_value)]
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
         // Rename symbol
-        let old_name = self.symbols.set_name(symbol_id, new_name.as_str());
+        // FIXME: remove `to_string`
+        let old_name = self.scoping.set_symbol_name(symbol_id, new_name.as_str()).to_string();
         // Rename binding
-        self.scopes.rename_binding(scope_id, symbol_id, old_name, new_name.as_str());
+        self.scoping.rename_binding(scope_id, symbol_id, &old_name, new_name.as_str());
     }
 }
 
 // Methods used internally within crate
 impl TraverseScoping {
     /// Create new `TraverseScoping`
-    pub(super) fn new(scopes: ScopeTree, symbols: SymbolTable) -> Self {
+    pub(super) fn new(scoping: Scoping) -> Self {
         Self {
-            scopes,
-            symbols,
+            scoping,
             uid_names: None,
             // Dummy values. Both immediately overwritten in `walk_program`.
             current_scope_id: ScopeId::new(0),
@@ -396,9 +383,9 @@ impl TraverseScoping {
         }
     }
 
-    /// Consume [`TraverseScoping`] and return [`SymbolTable`] and [`ScopeTree`].
-    pub(super) fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
-        (self.symbols, self.scopes)
+    /// Consume [`TraverseScoping`] and return [`Scoping`].
+    pub(super) fn into_scoping(self) -> Scoping {
+        self.scoping
     }
 
     /// Set current scope ID
@@ -427,18 +414,18 @@ impl TraverseScoping {
     /// Once this set is created, generating a UID is a relatively quick operation, rather than
     /// iterating over all symbols and unresolved references every time generate a UID.
     fn get_uid_names(&self) -> FxHashSet<CompactStr> {
-        self.scopes
+        self.scoping
             .root_unresolved_references()
             .keys()
             .copied()
-            .chain(self.symbols.names())
+            .chain(self.scoping.symbol_names())
             .filter(|name| name.as_bytes().first() == Some(&b'_'))
             .map(CompactStr::from)
             .collect()
     }
 
     pub fn delete_typescript_bindings(&mut self) {
-        self.scopes.delete_typescript_bindings(&self.symbols);
+        self.scoping.delete_typescript_bindings();
     }
 }
 

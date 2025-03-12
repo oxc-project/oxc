@@ -1,6 +1,8 @@
 use std::{
     env,
+    ffi::OsStr,
     path::{Path, PathBuf},
+    sync::Arc,
     sync::mpsc,
 };
 
@@ -11,8 +13,11 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    AllowWarnDeny, ConfigStoreBuilder, Fixer, LintPlugins, LintService, LintServiceOptions, Linter,
-    Oxlintrc, RuleEnum, RuleWithSeverity, fixer::FixKind, options::LintOptions, rules::RULES,
+    AllowWarnDeny, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions, Linter,
+    Oxlintrc, RuleEnum, RuleWithSeverity,
+    fixer::{FixKind, Fixer},
+    options::LintOptions,
+    rules::RULES,
 };
 
 #[derive(Eq, PartialEq)]
@@ -469,10 +474,10 @@ impl Tester {
         };
 
         let cwd = self.current_working_directory.clone();
-        let paths = vec![path_to_lint.into_boxed_path()];
+        let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
         let options =
             LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
-        let lint_service = LintService::from_linter(linter, options);
+        let mut lint_service = LintService::from_linter(linter, options);
         let (sender, _receiver) = mpsc::channel();
         let result = lint_service.run_source(&allocator, source_text, false, &sender);
 
@@ -509,6 +514,8 @@ impl Tester {
         RULES
             .iter()
             .find(|rule| rule.plugin_name() == self.plugin_name && rule.name() == self.rule_name)
-            .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name))
+            .unwrap_or_else(|| {
+                panic!("Rule in plugin {} not found: {}", &self.plugin_name, &self.rule_name)
+            })
     }
 }

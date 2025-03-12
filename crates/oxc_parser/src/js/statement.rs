@@ -123,9 +123,9 @@ impl<'a> ParserImpl<'a> {
             Kind::Await
                 if self.peek_kind() == Kind::Using && self.nth_kind(2).is_binding_identifier() =>
             {
-                self.parse_using()
+                self.parse_using_statement()
             }
-            Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using(),
+            Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using_statement(),
             Kind::Async if self.peek_at(Kind::Function) && !self.peek_token().is_on_new_line => {
                 self.parse_function_declaration(stmt_ctx)
             }

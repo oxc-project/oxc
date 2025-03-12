@@ -5,7 +5,7 @@ use oxc_ecmascript::constant_evaluation::{
     ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
 };
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
-use oxc_semantic::{IsGlobalReference, SymbolTable};
+use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_traverse::TraverseCtx;
 
 #[derive(Clone, Copy)]
@@ -21,7 +21,7 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
 
 impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
-        Some(ident.is_global_reference(self.0.symbols()))
+        Some(ident.is_global_reference(self.0.scoping()))
     }
 }
 
@@ -36,12 +36,12 @@ pub fn is_exact_int64(num: f64) -> bool {
 }
 
 impl<'a> Ctx<'a, '_> {
-    fn symbols(&self) -> &SymbolTable {
-        self.0.symbols()
+    fn scoping(&self) -> &Scoping {
+        self.0.scoping()
     }
 
     pub fn is_global_reference(self, ident: &IdentifierReference<'a>) -> bool {
-        ident.is_global_reference(self.0.symbols())
+        ident.is_global_reference(self.0.scoping())
     }
 
     pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
@@ -90,7 +90,7 @@ impl<'a> Ctx<'a, '_> {
 
     #[inline]
     pub fn is_identifier_undefined(self, ident: &IdentifierReference) -> bool {
-        if ident.name == "undefined" && ident.is_global_reference(self.symbols()) {
+        if ident.name == "undefined" && ident.is_global_reference(self.scoping()) {
             return true;
         }
         false

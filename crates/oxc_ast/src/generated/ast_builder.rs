@@ -3,11 +3,7 @@
 
 //! AST node factories
 
-#![expect(
-    clippy::default_trait_access,
-    clippy::too_many_arguments,
-    clippy::fn_params_excessive_bools
-)]
+#![expect(clippy::default_trait_access)]
 
 use std::cell::Cell;
 
@@ -850,17 +846,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn expression_import(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Expression<'a> {
-        Expression::ImportExpression(self.alloc_import_expression(span, source, arguments, phase))
+        Expression::ImportExpression(self.alloc_import_expression(span, source, options, phase))
     }
 
     /// Build an [`Expression::LogicalExpression`].
@@ -2801,31 +2797,6 @@ impl<'a> AstBuilder<'a> {
             span,
             expression,
             type_annotation,
-        ))
-    }
-
-    /// Build a [`SimpleAssignmentTarget::TSInstantiationExpression`].
-    ///
-    /// This node contains a [`TSInstantiationExpression`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `expression`
-    /// * `type_parameters`
-    #[inline]
-    pub fn simple_assignment_target_ts_instantiation_expression<T1>(
-        self,
-        span: Span,
-        expression: Expression<'a>,
-        type_parameters: T1,
-    ) -> SimpleAssignmentTarget<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
-    {
-        SimpleAssignmentTarget::TSInstantiationExpression(self.alloc_ts_instantiation_expression(
-            span,
-            expression,
-            type_parameters,
         ))
     }
 
@@ -7490,17 +7461,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn import_expression(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> ImportExpression<'a> {
-        ImportExpression { span, source, arguments, phase }
+        ImportExpression { span, source, options, phase }
     }
 
     /// Build an [`ImportExpression`], and store it in the memory arena.
@@ -7510,17 +7481,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn alloc_import_expression(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Box<'a, ImportExpression<'a>> {
-        Box::new_in(self.import_expression(span, source, arguments, phase), self.allocator)
+        Box::new_in(self.import_expression(span, source, options, phase), self.allocator)
     }
 
     /// Build an [`ImportDeclaration`].
@@ -8962,15 +8933,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_element_name_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXElementName<'a> {
-        JSXElementName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
+        JSXElementName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, name))
     }
 
     /// Build a [`JSXElementName::MemberExpression`].
@@ -9009,15 +8980,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXNamespacedName<'a> {
-        JSXNamespacedName { span, namespace, property }
+        JSXNamespacedName { span, namespace, name }
     }
 
     /// Build a [`JSXNamespacedName`], and store it in the memory arena.
@@ -9027,15 +8998,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn alloc_jsx_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> Box<'a, JSXNamespacedName<'a>> {
-        Box::new_in(self.jsx_namespaced_name(span, namespace, property), self.allocator)
+        Box::new_in(self.jsx_namespaced_name(span, namespace, name), self.allocator)
     }
 
     /// Build a [`JSXMemberExpression`].
@@ -9337,15 +9308,15 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `namespace`: Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
-    /// * `property`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
+    /// * `name`: Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     #[inline]
     pub fn jsx_attribute_name_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        name: JSXIdentifier<'a>,
     ) -> JSXAttributeName<'a> {
-        JSXAttributeName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, property))
+        JSXAttributeName::NamespacedName(self.alloc_jsx_namespaced_name(span, namespace, name))
     }
 
     /// Build a [`JSXAttributeValue::StringLiteral`].
@@ -10335,20 +10306,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
@@ -10356,11 +10327,11 @@ impl<'a> AstBuilder<'a> {
     {
         TSType::TSImportType(self.alloc_ts_import_type(
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options,
             qualifier,
-            attributes,
-            type_parameters,
+            type_arguments,
+            is_type_of,
         ))
     }
 
@@ -13451,20 +13422,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSTypeQueryExprName<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
@@ -13472,11 +13443,11 @@ impl<'a> AstBuilder<'a> {
     {
         TSTypeQueryExprName::TSImportType(self.alloc_ts_import_type(
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options,
             qualifier,
-            attributes,
-            type_parameters,
+            type_arguments,
+            is_type_of,
         ))
     }
 
@@ -13486,20 +13457,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> TSImportType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
@@ -13507,11 +13478,11 @@ impl<'a> AstBuilder<'a> {
     {
         TSImportType {
             span,
-            is_type_of,
-            parameter,
+            argument,
+            options: options.into_in(self.allocator),
             qualifier,
-            attributes: attributes.into_in(self.allocator),
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
+            is_type_of,
         }
     }
 
@@ -13521,34 +13492,27 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `is_type_of`: `true` for `typeof import("foo")`
-    /// * `parameter`
+    /// * `argument`
+    /// * `options`
     /// * `qualifier`
-    /// * `attributes`
-    /// * `type_parameters`
+    /// * `type_arguments`
+    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn alloc_ts_import_type<T1, T2>(
         self,
         span: Span,
-        is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
+        options: T1,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: T1,
-        type_parameters: T2,
+        type_arguments: T2,
+        is_type_of: bool,
     ) -> Box<'a, TSImportType<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.ts_import_type(
-                span,
-                is_type_of,
-                parameter,
-                qualifier,
-                attributes,
-                type_parameters,
-            ),
+            self.ts_import_type(span, argument, options, qualifier, type_arguments, is_type_of),
             self.allocator,
         )
     }

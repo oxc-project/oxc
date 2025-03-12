@@ -499,7 +499,6 @@ impl<'a> ConstantEvaluation<'a> for ComputedMemberExpression<'a> {
     }
 }
 
-#[expect(clippy::similar_names)]
 fn is_less_than<'a>(
     ctx: &impl ConstantEvaluationCtx<'a>,
     x: &Expression<'a>,

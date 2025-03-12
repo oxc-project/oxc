@@ -878,9 +878,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTarget<'_> {
             Self::TSTypeAssertion(it) => {
                 AssignmentTarget::TSTypeAssertion(CloneIn::clone_in(it, allocator))
             }
-            Self::TSInstantiationExpression(it) => {
-                AssignmentTarget::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
-            }
             Self::ComputedMemberExpression(it) => {
                 AssignmentTarget::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
@@ -918,9 +915,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for SimpleAssignmentTarget<'_> {
             }
             Self::TSTypeAssertion(it) => {
                 SimpleAssignmentTarget::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                SimpleAssignmentTarget::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 SimpleAssignmentTarget::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
@@ -1007,11 +1001,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetMaybeDefault<'_> {
             }
             Self::TSTypeAssertion(it) => {
                 AssignmentTargetMaybeDefault::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                AssignmentTargetMaybeDefault::TSInstantiationExpression(CloneIn::clone_in(
-                    it, allocator,
-                ))
             }
             Self::ComputedMemberExpression(it) => {
                 AssignmentTargetMaybeDefault::ComputedMemberExpression(CloneIn::clone_in(
@@ -1579,9 +1568,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementLeft<'_> {
             }
             Self::TSTypeAssertion(it) => {
                 ForStatementLeft::TSTypeAssertion(CloneIn::clone_in(it, allocator))
-            }
-            Self::TSInstantiationExpression(it) => {
-                ForStatementLeft::TSInstantiationExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 ForStatementLeft::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
@@ -2156,7 +2142,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ImportExpression<'_> {
         ImportExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             source: CloneIn::clone_in(&self.source, allocator),
-            arguments: CloneIn::clone_in(&self.arguments, allocator),
+            options: CloneIn::clone_in(&self.options, allocator),
             phase: CloneIn::clone_in(&self.phase, allocator),
         }
     }
@@ -2684,7 +2670,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXNamespacedName<'_> {
         JSXNamespacedName {
             span: CloneIn::clone_in(&self.span, allocator),
             namespace: CloneIn::clone_in(&self.namespace, allocator),
-            property: CloneIn::clone_in(&self.property, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
         }
     }
 }
@@ -3863,11 +3849,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSImportType {
             span: CloneIn::clone_in(&self.span, allocator),
-            is_type_of: CloneIn::clone_in(&self.is_type_of, allocator),
-            parameter: CloneIn::clone_in(&self.parameter, allocator),
+            argument: CloneIn::clone_in(&self.argument, allocator),
+            options: CloneIn::clone_in(&self.options, allocator),
             qualifier: CloneIn::clone_in(&self.qualifier, allocator),
-            attributes: CloneIn::clone_in(&self.attributes, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
+            is_type_of: CloneIn::clone_in(&self.is_type_of, allocator),
         }
     }
 }

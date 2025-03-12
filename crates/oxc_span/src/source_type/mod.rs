@@ -545,7 +545,6 @@ mod tests {
     }
 
     #[test]
-    #[expect(clippy::similar_names)]
     fn test_d_ts_from_path() {
         let dts = SourceType::from_path("foo.d.ts").unwrap();
         let dmts = SourceType::from_path("foo.d.mts").unwrap();

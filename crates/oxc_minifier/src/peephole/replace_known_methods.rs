@@ -5,8 +5,9 @@ use oxc_allocator::IntoIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
-    StringSubstring, ToInt32,
+    StringSubstring, ToBigInt, ToInt32, ToIntegerIndex,
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
+    side_effects::MayHaveSideEffects,
 };
 use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
@@ -771,13 +772,47 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_known_property_access(&mut self, node: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        let (name, object, span) = match &node {
+        let (name, object, span) = match node {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 (member.property.name.as_str(), &member.object, member.span)
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
                     Expression::StringLiteral(s) => (s.value.as_str(), &member.object, member.span),
+                    Expression::NumericLiteral(n) => {
+                        if let Some(integer_index) = n.value.to_integer_index() {
+                            let span = member.span;
+                            if let Some(replacement) = Self::try_fold_integer_index_access(
+                                &mut member.object,
+                                integer_index,
+                                span,
+                                ctx,
+                            ) {
+                                self.mark_current_function_as_changed();
+                                *node = replacement;
+                            }
+                        }
+                        return;
+                    }
+                    Expression::BigIntLiteral(b) => {
+                        if !b.is_negative() {
+                            if let Some(integer_index) =
+                                b.to_big_int(&ctx).and_then(ToIntegerIndex::to_integer_index)
+                            {
+                                let span = member.span;
+                                if let Some(replacement) = Self::try_fold_integer_index_access(
+                                    &mut member.object,
+                                    integer_index,
+                                    span,
+                                    ctx,
+                                ) {
+                                    self.mark_current_function_as_changed();
+                                    *node = replacement;
+                                }
+                            }
+                        }
+                        return;
+                    }
                     _ => return,
                 }
             }
@@ -883,6 +918,50 @@ impl<'a> PeepholeOptimizations {
             ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
             None,
         ))
+    }
+
+    /// Compress `"abc"[0]` to `"a"` and `[0,1,2][1]` to `1`
+    fn try_fold_integer_index_access(
+        object: &mut Expression<'a>,
+        property: u32,
+        span: Span,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if object.may_have_side_effects(&ctx) {
+            return None;
+        }
+
+        match object {
+            Expression::StringLiteral(s) => {
+                if let StringCharAtResult::Value(c) =
+                    s.value.as_str().char_at(Some(property.into()))
+                {
+                    s.span = span;
+                    s.value = ctx.ast.atom(&c.to_string());
+                    s.raw = None;
+                    Some(ctx.ast.move_expression(object))
+                } else {
+                    None
+                }
+            }
+            Expression::ArrayExpression(array_expr) => {
+                let length_until_spread =
+                    array_expr.elements.iter().take_while(|el| !el.is_spread()).count();
+                if (property as usize) < length_until_spread {
+                    match &array_expr.elements[property as usize] {
+                        ArrayExpressionElement::SpreadElement(_) => unreachable!(),
+                        ArrayExpressionElement::Elision(_) => Some(ctx.ast.void_0(span)),
+                        match_expression!(ArrayExpressionElement) => {
+                            let element = array_expr.elements.swap_remove(property as usize);
+                            Some(element.into_expression())
+                        }
+                    }
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
     }
 }
 
@@ -1880,5 +1959,34 @@ mod test {
         test_es2015("v = Number.MAX_SAFE_INTEGER", "v = 9007199254740991");
         test_es2015("v = Number.MIN_SAFE_INTEGER", "v = -9007199254740991");
         test_es2015("v = Number.EPSILON", "v = Number.EPSILON");
+    }
+
+    #[test]
+    fn test_fold_integer_index_access() {
+        test_same("v = ''[0]");
+        test_same("v = 'a'[-1]");
+        test_same("v = 'a'[0.3]");
+        test("v = 'a'[0]", "v = 'a'");
+        test_same("v = 'a'[1]");
+        test("v = 'あ'[0]", "v = 'あ'");
+        test_same("v = 'あ'[1]");
+        test_same("v = '😀'[0]"); // surrogate pairs cannot be represented by rust string
+        test_same("v = '😀'[1]"); // surrogate pairs cannot be represented by rust string
+        test_same("v = '😀'[2]");
+        test_same("v = (foo(), 'a')[1]"); // can be fold into `v = (foo(), 'a')`
+
+        test_same("v = [][0]");
+        test_same("v = [1][-1]");
+        test_same("v = [1][0.3]");
+        test("v = [1][0]", "v = 1");
+        test_same("v = [1][1]");
+        test("v = [,][0]", "v = void 0");
+        // test("v = [...'a'][0]", "v = 'a'");
+        // test_same("v = [...'a'][1]");
+        // test("v = [...'😀'][0]", "v = '😀'");
+        // test_same("v = [...'😀'][1]");
+        test_same("v = [...a, 1][1]");
+        test_same("v = [1, ...a][0]");
+        test("v = [1, ...[1,2]][0]", "v = 1");
     }
 }

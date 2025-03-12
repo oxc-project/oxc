@@ -639,8 +639,35 @@ fn test_property_access() {
     test("[].length", false);
     test("[]['length']", false);
     test("[][`length`]", false);
+    test("(foo() + '').length", true);
 
     test("a[0]", true);
+    test("''[-1]", true); // String.prototype[-1] may be overridden
+    test("''[0.3]", true); // String.prototype[0.3] may be overridden
+    test("''[0]", true); // String.prototype[0] may be overridden
+    test("'a'[0]", false);
+    test("'a'[0n]", false);
+    test("'a'[1]", true); // String.prototype[1] may be overridden
+    test("'あ'[0]", false);
+    test("'あ'[1]", true); // the length of "あ" is 1
+    test("'😀'[0]", false);
+    test("'😀'[1]", false);
+    test("'😀'[2]", true); // the length of "😀" is 2
+
+    test("[][-1]", true); // Array.prototype[-1] may be overridden
+    test("[][0.3]", true); // Array.prototype[0.3] may be overridden
+    test("[][0]", true); // Array.prototype[0] may be overridden
+    test("[1][0]", false);
+    test("[1][0n]", false);
+    test("[1][1]", true); // Array.prototype[1] may be overridden
+    test("[,][0]", false);
+    test("[...[], 1][0]", false);
+    test("[...[1]][0]", false);
+    test("[...'a'][0]", false);
+    test("[...'a'][1]", true);
+    test("[...'😀'][0]", false);
+    test("[...'😀'][1]", true);
+    test("[...a, 1][0]", true); // "...a" may have a sideeffect
 }
 
 #[test]

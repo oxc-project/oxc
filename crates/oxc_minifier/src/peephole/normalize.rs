@@ -110,20 +110,20 @@ impl<'a> Normalize {
     /// Drop `drop_debugger` statement.
     ///
     /// Enabled by `compress.drop_debugger`
-    fn drop_debugger(&mut self, stmt: &Statement<'a>) -> bool {
+    fn drop_debugger(&self, stmt: &Statement<'a>) -> bool {
         matches!(stmt, Statement::DebuggerStatement(_)) && self.compress_options.drop_debugger
     }
 
     fn compress_console(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        &self,
+        expr: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         debug_assert!(self.compress_options.drop_console);
         Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
     }
 
-    fn drop_console(&mut self, stmt: &Statement<'a>) -> bool {
+    fn drop_console(&self, stmt: &Statement<'a>) -> bool {
         self.compress_options.drop_console
             && matches!(stmt, Statement::ExpressionStatement(expr) if Self::is_console(&expr.expression))
     }
@@ -156,13 +156,13 @@ impl<'a> Normalize {
         *stmt = Statement::ForStatement(for_stmt);
     }
 
-    fn convert_const_to_let(decl: &mut VariableDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn convert_const_to_let(decl: &mut VariableDeclaration<'a>, ctx: &TraverseCtx<'a>) {
         // checking whether the current scope is the root scope instead of
         // checking whether any variables are exposed to outside (e.g. `export` in ESM)
-        if decl.kind.is_const() && ctx.current_scope_id() != ctx.scopes().root_scope_id() {
+        if decl.kind.is_const() && ctx.current_scope_id() != ctx.scoping().root_scope_id() {
             let all_declarations_are_only_read =
                 decl.declarations.iter().flat_map(|d| d.id.get_binding_identifiers()).all(|id| {
-                    ctx.symbols()
+                    ctx.scoping()
                         .get_resolved_references(id.symbol_id())
                         .all(|reference| reference.flags().is_read_only())
                 });
@@ -179,10 +179,10 @@ impl<'a> Normalize {
     /// So subsequent passes don't need to look up whether these variables are shadowed or not.
     fn try_compress_identifier(
         ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match ident.name.as_str() {
-            "undefined" if ident.is_global_reference(ctx.symbols()) => {
+            "undefined" if ident.is_global_reference(ctx.scoping()) => {
                 // `delete undefined` returns `false`
                 // `delete void 0` returns `true`
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
@@ -190,7 +190,7 @@ impl<'a> Normalize {
                 }
                 Some(ctx.ast.void_0(ident.span))
             }
-            "Infinity" if ident.is_global_reference(ctx.symbols()) => {
+            "Infinity" if ident.is_global_reference(ctx.scoping()) => {
                 // `delete Infinity` returns `false`
                 // `delete 1/0` returns `true`
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
@@ -203,7 +203,7 @@ impl<'a> Normalize {
                     NumberBase::Decimal,
                 ))
             }
-            "NaN" if ident.is_global_reference(ctx.symbols()) => {
+            "NaN" if ident.is_global_reference(ctx.scoping()) => {
                 // `delete NaN` returns `false`
                 // `delete 0/0` returns `true`
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
@@ -234,7 +234,7 @@ impl<'a> Normalize {
         false
     }
 
-    fn convert_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn convert_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
         let Expression::Identifier(ident) = &e.argument else { return };
         if Ctx(ctx).is_global_reference(ident) {
@@ -243,13 +243,13 @@ impl<'a> Normalize {
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
     }
 
-    fn set_no_side_effects(pure: &mut bool, callee: &Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn set_no_side_effects(pure: &mut bool, callee: &Expression<'a>, ctx: &TraverseCtx<'a>) {
         if !*pure {
             if let Some(ident) = callee.get_identifier_reference() {
                 if let Some(symbol_id) =
-                    ctx.symbols().get_reference(ident.reference_id()).symbol_id()
+                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
                 {
-                    if ctx.symbols().no_side_effects().contains(&symbol_id) {
+                    if ctx.scoping().no_side_effects().contains(&symbol_id) {
                         *pure = true;
                     }
                 }

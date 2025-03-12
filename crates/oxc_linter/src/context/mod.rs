@@ -119,7 +119,7 @@ impl<'a> LintContext<'a> {
     pub fn cfg(&self) -> &ControlFlowGraph {
         // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
         // assert the existence of control flow so it should always be `Some`.
-        unsafe { self.semantic().cfg().unwrap_unchecked() }
+        unsafe { self.parent.semantic.cfg().unwrap_unchecked() }
     }
 
     /// List of all disable directives in the file being linted.
@@ -131,7 +131,7 @@ impl<'a> LintContext<'a> {
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
-        span.source_text(self.semantic().source_text())
+        span.source_text(self.parent.semantic.source_text())
     }
 
     /// Path to the file currently being linted.
@@ -155,13 +155,13 @@ impl<'a> LintContext<'a> {
     /// Checks if the provided identifier is a reference to a global variable.
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         let name = ident.name.as_str();
-        self.scopes().root_unresolved_references().contains_key(name)
+        self.scoping().root_unresolved_references().contains_key(name)
             && !self.globals().get(name).is_some_and(|value| *value == GlobalValue::Off)
     }
 
     /// Checks if the provided identifier is a reference to a global variable.
     pub fn get_global_variable_value(&self, name: &str) -> Option<GlobalValue> {
-        if !self.scopes().root_unresolved_references().contains_key(name) {
+        if !self.scoping().root_unresolved_references().contains_key(name) {
             return None;
         }
 

@@ -33,12 +33,11 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_using(&mut self) -> Result<Statement<'a>> {
-        let using_decl = self.parse_using_declaration(StatementContext::StatementList)?;
-
+    pub(crate) fn parse_using_statement(&mut self) -> Result<Statement<'a>> {
+        let mut decl = self.parse_using_declaration(StatementContext::StatementList)?;
         self.asi()?;
-
-        Ok(Statement::VariableDeclaration(self.alloc(using_decl)))
+        decl.span = self.end_span(decl.span);
+        Ok(Statement::VariableDeclaration(self.alloc(decl)))
     }
 
     pub(crate) fn parse_variable_declaration(
@@ -105,7 +104,7 @@ impl<'a> ParserImpl<'a> {
             let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
             let type_annotation = self.parse_ts_type_annotation()?;
             if let Some(type_annotation) = &type_annotation {
-                Self::extend_binding_pattern_span_end(type_annotation.span, &mut binding_kind);
+                Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {

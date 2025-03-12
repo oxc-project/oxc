@@ -89,7 +89,7 @@ impl Rule for PreferObjectSpread {
             return;
         };
 
-        let unresolved_references = ctx.scopes().root_unresolved_references();
+        let unresolved_references = ctx.scoping().root_unresolved_references();
 
         match callee.object().get_inner_expression() {
             Expression::Identifier(ident) => {

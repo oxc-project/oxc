@@ -70,7 +70,7 @@ use std::{borrow::Cow, cell::RefCell};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{
     NONE,
     ast::{Argument, CallExpression, Expression},
@@ -167,6 +167,7 @@ pub enum Helper {
     Decorate,
     DecorateParam,
     DecorateMetadata,
+    UsingCtx,
 }
 
 impl Helper {
@@ -199,6 +200,7 @@ impl Helper {
             Self::Decorate => "decorate",
             Self::DecorateParam => "decorateParam",
             Self::DecorateMetadata => "decorateMetadata",
+            Self::UsingCtx => "usingCtx",
         }
     }
 
@@ -313,19 +315,13 @@ impl<'a> HelperLoaderStore<'a> {
 
     // Construct string directly in arena without an intermediate temp allocation
     fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Atom<'a> {
-        let helper_name = helper.name();
-        let len = self.module_name.len() + "/helpers/".len() + helper_name.len();
-        let mut source = ArenaString::with_capacity_in(len, ctx.ast.allocator);
-        source.push_str(&self.module_name);
-        source.push_str("/helpers/");
-        source.push_str(helper_name);
-        Atom::from(source)
+        ctx.ast.atom_from_strs_array([&self.module_name, "/helpers/", helper.name()])
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         static HELPER_VAR: &str = "babelHelpers";
 
-        let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
+        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), HELPER_VAR);
         let object =
             ctx.create_ident_expr(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));

@@ -3,7 +3,7 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2303/2322 (99.18%)
 Positive Passed: 2282/2322 (98.28%)
-Negative Passed: 1546/1673 (92.41%)
+Negative Passed: 1548/1673 (92.53%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -40,8 +40,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no_plugin-non-BMP-identifier/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-2/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/invalid-TSTypeParameterInstantiation/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/invalid-TSTypeParameterInstantiation-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/satisfies-const-error/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -11553,6 +11551,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ (a = b) += 1;
    ·  ─────
    ╰────
+
+  × The left-hand side of an assignment expression must be a variable or a property access.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assign/invalid-TSTypeParameterInstantiation/input.ts:15:5]
+ 14 │ 
+ 15 │     cls.myFunc<ConcreteClass> = (instance) => {
+    ·     ─────────────────────────
+ 16 │         console.log(instance.myField);
+    ╰────
+
+  × The left-hand side of an assignment expression must be a variable or a property access.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assign/invalid-TSTypeParameterInstantiation-babel-7/input.ts:15:5]
+ 14 │ 
+ 15 │     cls.myFunc<ConcreteClass> = (instance) => {
+    ·     ─────────────────────────
+ 16 │         console.log(instance.myField);
+    ╰────
 
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assign/parenthesized-object-assign/input.ts:1:1]

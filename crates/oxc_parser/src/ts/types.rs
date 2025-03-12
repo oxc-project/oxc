@@ -936,7 +936,11 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `(`
         let ty = self.parse_ts_type()?;
         self.expect(Kind::RParen)?;
-        Ok(self.ast.ts_type_parenthesized_type(self.end_span(span), ty))
+        Ok(if self.options.preserve_parens {
+            self.ast.ts_type_parenthesized_type(self.end_span(span), ty)
+        } else {
+            ty
+        })
     }
 
     fn parse_literal_type_node(&mut self, negative: bool) -> Result<TSType<'a>> {
@@ -976,19 +980,19 @@ impl<'a> ParserImpl<'a> {
         let is_type_of = self.eat(Kind::Typeof);
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
-        let parameter = self.parse_ts_type()?;
-        let attributes =
+        let argument = self.parse_ts_type()?;
+        let options =
             if self.eat(Kind::Comma) { Some(self.parse_ts_import_attributes()?) } else { None };
         self.expect(Kind::RParen)?;
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
-        let type_parameters = self.parse_type_arguments_of_type_reference()?;
+        let type_arguments = self.parse_type_arguments_of_type_reference()?;
         Ok(self.ast.ts_type_import_type(
             self.end_span(span),
-            is_type_of,
-            parameter,
+            argument,
+            options,
             qualifier,
-            attributes,
-            type_parameters,
+            type_arguments,
+            is_type_of,
         ))
     }
 

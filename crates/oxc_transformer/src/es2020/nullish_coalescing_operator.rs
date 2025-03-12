@@ -86,11 +86,11 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
                 );
             }
             Expression::Identifier(ident) => {
-                let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
+                let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // Check binding is not mutated.
                     // TODO(improve-on-babel): Remove this check. Whether binding is mutated or not is not relevant.
-                    if ctx.symbols().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
+                    if ctx.scoping().get_resolved_references(symbol_id).all(|r| !r.is_write()) {
                         let binding = BoundIdentifier::new(ident.name, symbol_id);
                         let ident_span = ident.span;
                         return Self::create_conditional_expression(

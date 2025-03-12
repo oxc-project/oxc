@@ -296,7 +296,7 @@ impl Rule for NoMagicNumbers {
             return;
         }
 
-        let nodes = ctx.semantic().nodes();
+        let nodes = ctx.nodes();
         let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
 
         if self.is_skipable(&config, nodes) {

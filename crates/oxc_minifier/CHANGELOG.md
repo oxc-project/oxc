@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.57.0] - 2025-03-11
+
+- ef6e0cc semantic: [**BREAKING**] Combine `SymbolTable` and `ScopeTree` into `Scoping` (#9615) (Boshen)
+
+- 7331656 semantic: [**BREAKING**] Rename `SymbolTable` and `ScopeTree` methods (#9613) (Boshen)
+
+- 23738bf semantic: [**BREAKING**] Introduce `Scoping` (#9611) (Boshen)
+
+### Features
+
+- b6deff8 ecmascript: Support integer index access for array and string in `may_have_side_effects` (#9603) (sapphi-red)
+- 047fb01 minifier: Place `void 0` on right hand side if possible (#9606) (sapphi-red)
+- 36f8703 minifier: Compress `[] + string` to `string` (#9602) (sapphi-red)
+- 554c4ce minifier: Compress constant integer index access (#9604) (sapphi-red)
+- e3c2015 minifier: Allow compressing computed __proto__ more precisely (#9595) (sapphi-red)
+- 6a57198 minifier: Allow compressing computed constructor/prototype keys precisely (#9594) (sapphi-red)
+
+### Bug Fixes
+
+- 96eef8b ecmascript: `(foo() + "").length` may have a side effect (#9605) (sapphi-red)
+- 24d9261 minifier: Remove names from functions / classes in normal pass to make the minifier idempotent (#9608) (sapphi-red)
+
+### Refactor
+
+
+## [0.56.2] - 2025-03-07
+
+### Refactor
+
+- 2cbfacb minifier: Remove `clippy::needless_pass_by_ref_mut` (Boshen)
+
+## [0.56.1] - 2025-03-07
+
+### Testing
+
+- 6fd11ce minifier: Test var decl in catch clause edge case (#9577) (翠 / green)
+
 ## [0.56.0] - 2025-03-06
 
 ### Features

@@ -238,7 +238,6 @@ export type SimpleAssignmentTarget =
   | TSSatisfiesExpression
   | TSNonNullExpression
   | TSTypeAssertion
-  | TSInstantiationExpression
   | MemberExpression;
 
 export type AssignmentTargetPattern = ArrayAssignmentTarget | ObjectAssignmentTarget;
@@ -849,7 +848,7 @@ export type JSXElementName = JSXIdentifier | JSXNamespacedName | JSXMemberExpres
 export interface JSXNamespacedName extends Span {
   type: 'JSXNamespacedName';
   namespace: JSXIdentifier;
-  property: JSXIdentifier;
+  name: JSXIdentifier;
 }
 
 export interface JSXMemberExpression extends Span {
@@ -1282,11 +1281,11 @@ export type TSTypeQueryExprName = TSImportType | TSTypeName;
 
 export interface TSImportType extends Span {
   type: 'TSImportType';
-  isTypeOf: boolean;
-  parameter: TSType;
+  argument: TSType;
+  options: TSImportAttributes | null;
   qualifier: TSTypeName | null;
-  attributes: TSImportAttributes | null;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
+  isTypeOf: boolean;
 }
 
 export interface TSImportAttributes extends Span {
@@ -1626,3 +1625,207 @@ export interface NamedReference extends Span {
   type: 'NamedReference';
   name: string;
 }
+
+export type Node =
+  | Program
+  | IdentifierName
+  | IdentifierReference
+  | BindingIdentifier
+  | LabelIdentifier
+  | ThisExpression
+  | ArrayExpression
+  | ObjectExpression
+  | ObjectProperty
+  | TemplateLiteral
+  | TaggedTemplateExpression
+  | TemplateElement
+  | ComputedMemberExpression
+  | StaticMemberExpression
+  | PrivateFieldExpression
+  | CallExpression
+  | NewExpression
+  | MetaProperty
+  | SpreadElement
+  | UpdateExpression
+  | UnaryExpression
+  | BinaryExpression
+  | PrivateInExpression
+  | LogicalExpression
+  | ConditionalExpression
+  | AssignmentExpression
+  | ArrayAssignmentTarget
+  | ObjectAssignmentTarget
+  | AssignmentTargetRest
+  | AssignmentTargetWithDefault
+  | AssignmentTargetPropertyIdentifier
+  | AssignmentTargetPropertyProperty
+  | SequenceExpression
+  | Super
+  | AwaitExpression
+  | ChainExpression
+  | ParenthesizedExpression
+  | Directive
+  | Hashbang
+  | BlockStatement
+  | VariableDeclaration
+  | VariableDeclarator
+  | EmptyStatement
+  | ExpressionStatement
+  | IfStatement
+  | DoWhileStatement
+  | WhileStatement
+  | ForStatement
+  | ForInStatement
+  | ForOfStatement
+  | ContinueStatement
+  | BreakStatement
+  | ReturnStatement
+  | WithStatement
+  | SwitchStatement
+  | SwitchCase
+  | LabeledStatement
+  | ThrowStatement
+  | TryStatement
+  | CatchClause
+  | DebuggerStatement
+  | AssignmentPattern
+  | ObjectPattern
+  | BindingProperty
+  | ArrayPattern
+  | BindingRestElement
+  | Function
+  | FunctionBody
+  | ArrowFunctionExpression
+  | YieldExpression
+  | Class
+  | ClassBody
+  | MethodDefinition
+  | PropertyDefinition
+  | PrivateIdentifier
+  | StaticBlock
+  | AccessorProperty
+  | ImportExpression
+  | ImportDeclaration
+  | ImportSpecifier
+  | ImportDefaultSpecifier
+  | ImportNamespaceSpecifier
+  | ImportAttribute
+  | ExportNamedDeclaration
+  | ExportDefaultDeclaration
+  | ExportAllDeclaration
+  | ExportSpecifier
+  | V8IntrinsicExpression
+  | BooleanLiteral
+  | NullLiteral
+  | NumericLiteral
+  | StringLiteral
+  | BigIntLiteral
+  | RegExpLiteral
+  | JSXElement
+  | JSXOpeningElement
+  | JSXClosingElement
+  | JSXFragment
+  | JSXOpeningFragment
+  | JSXClosingFragment
+  | JSXNamespacedName
+  | JSXMemberExpression
+  | JSXExpressionContainer
+  | JSXEmptyExpression
+  | JSXAttribute
+  | JSXSpreadAttribute
+  | JSXIdentifier
+  | JSXSpreadChild
+  | JSXText
+  | TSThisParameter
+  | TSEnumDeclaration
+  | TSEnumMember
+  | TSTypeAnnotation
+  | TSLiteralType
+  | TSConditionalType
+  | TSUnionType
+  | TSIntersectionType
+  | TSParenthesizedType
+  | TSTypeOperator
+  | TSArrayType
+  | TSIndexedAccessType
+  | TSTupleType
+  | TSNamedTupleMember
+  | TSOptionalType
+  | TSRestType
+  | TSAnyKeyword
+  | TSStringKeyword
+  | TSBooleanKeyword
+  | TSNumberKeyword
+  | TSNeverKeyword
+  | TSIntrinsicKeyword
+  | TSUnknownKeyword
+  | TSNullKeyword
+  | TSUndefinedKeyword
+  | TSVoidKeyword
+  | TSSymbolKeyword
+  | TSThisType
+  | TSObjectKeyword
+  | TSBigIntKeyword
+  | TSTypeReference
+  | TSQualifiedName
+  | TSTypeParameterInstantiation
+  | TSTypeParameter
+  | TSTypeParameterDeclaration
+  | TSTypeAliasDeclaration
+  | TSClassImplements
+  | TSInterfaceDeclaration
+  | TSInterfaceBody
+  | TSPropertySignature
+  | TSIndexSignature
+  | TSCallSignatureDeclaration
+  | TSMethodSignature
+  | TSConstructSignatureDeclaration
+  | TSIndexSignatureName
+  | TSInterfaceHeritage
+  | TSTypePredicate
+  | TSModuleDeclaration
+  | TSModuleBlock
+  | TSTypeLiteral
+  | TSInferType
+  | TSTypeQuery
+  | TSImportType
+  | TSImportAttributes
+  | TSImportAttribute
+  | TSFunctionType
+  | TSConstructorType
+  | TSMappedType
+  | TSTemplateLiteralType
+  | TSAsExpression
+  | TSSatisfiesExpression
+  | TSTypeAssertion
+  | TSImportEqualsDeclaration
+  | TSExternalModuleReference
+  | TSNonNullExpression
+  | Decorator
+  | TSExportAssignment
+  | TSNamespaceExportDeclaration
+  | TSInstantiationExpression
+  | JSDocNullableType
+  | JSDocNonNullableType
+  | JSDocUnknownType
+  | Pattern
+  | Disjunction
+  | Alternative
+  | BoundaryAssertion
+  | LookAroundAssertion
+  | Quantifier
+  | Character
+  | CharacterClassEscape
+  | UnicodePropertyEscape
+  | Dot
+  | CharacterClass
+  | CharacterClassRange
+  | ClassStringDisjunction
+  | ClassString
+  | CapturingGroup
+  | IgnoreGroup
+  | Modifiers
+  | Modifier
+  | IndexedReference
+  | NamedReference
+  | FormalParameterRest;

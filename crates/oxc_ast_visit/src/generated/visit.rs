@@ -1806,9 +1806,6 @@ pub mod walk {
                 visitor.visit_ts_non_null_expression(it)
             }
             SimpleAssignmentTarget::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            SimpleAssignmentTarget::TSInstantiationExpression(it) => {
-                visitor.visit_ts_instantiation_expression(it)
-            }
             match_member_expression!(SimpleAssignmentTarget) => {
                 visitor.visit_member_expression(it.to_member_expression())
             }
@@ -2695,7 +2692,7 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.source);
-        visitor.visit_expressions(&it.arguments);
+        visitor.visit_expressions(&it.options);
         visitor.leave_node(kind);
     }
 
@@ -3025,7 +3022,7 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_identifier(&it.namespace);
-        visitor.visit_jsx_identifier(&it.property);
+        visitor.visit_jsx_identifier(&it.name);
         visitor.leave_node(kind);
     }
 
@@ -3912,15 +3909,15 @@ pub mod walk {
         let kind = AstKind::TSImportType(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_type(&it.parameter);
+        visitor.visit_ts_type(&it.argument);
+        if let Some(options) = &it.options {
+            visitor.visit_ts_import_attributes(options);
+        }
         if let Some(qualifier) = &it.qualifier {
             visitor.visit_ts_type_name(qualifier);
         }
-        if let Some(attributes) = &it.attributes {
-            visitor.visit_ts_import_attributes(attributes);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }

@@ -41,7 +41,6 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::String as ArenaString;
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
@@ -157,7 +156,7 @@ impl ClassStaticBlock {
 
         // Re-use the static block's scope for the arrow function.
         // Always strict mode since we're in a class.
-        *ctx.scopes_mut().get_flags_mut(scope_id) =
+        *ctx.scoping_mut().scope_flags_mut(scope_id) =
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode;
         wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
     }
@@ -251,11 +250,7 @@ impl<'a> Keys<'a> {
             i += 1;
         }
 
-        let mut key = ArenaString::with_capacity_in(num_str.len() + 1, ctx.ast.allocator);
-        key.push('_');
-        key.push_str(num_str);
-        let key = Atom::from(key);
-
+        let key = ctx.ast.atom_from_strs_array(["_", num_str]);
         self.numbered.push(&key.as_str()[1..]);
 
         key
@@ -265,7 +260,7 @@ impl<'a> Keys<'a> {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_semantic::{ScopeTree, SymbolTable};
+    use oxc_semantic::Scoping;
     use oxc_traverse::ReusableTraverseCtx;
 
     use super::Keys;
@@ -273,9 +268,8 @@ mod test {
     macro_rules! setup {
         ($ctx:ident) => {
             let allocator = Allocator::default();
-            let scopes = ScopeTree::default();
-            let symbols = SymbolTable::default();
-            let ctx = ReusableTraverseCtx::new(scopes, symbols, &allocator);
+            let scoping = Scoping::default();
+            let ctx = ReusableTraverseCtx::new(scoping, &allocator);
             // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
             let mut ctx = unsafe { ctx.unwrap() };
             let $ctx = &mut ctx;

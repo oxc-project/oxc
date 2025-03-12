@@ -7,7 +7,9 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    pub mod exports_last;
     pub mod no_absolute_path;
+    pub mod no_anonymous_default_export;
     pub mod no_mutable_exports;
     // pub mod no_deprecated;
     // pub mod no_unused_modules;
@@ -206,6 +208,7 @@ mod typescript {
     pub mod no_non_null_assertion;
     pub mod no_require_imports;
     pub mod no_this_alias;
+    pub mod no_unnecessary_parameter_property_assignment;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
     pub mod no_unsafe_function_type;
@@ -282,6 +285,7 @@ mod react {
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
+    pub mod jsx_filename_extension;
     pub mod jsx_key;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
@@ -410,6 +414,7 @@ mod unicorn {
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
+    pub mod require_post_message_target_origin;
     pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
@@ -468,7 +473,6 @@ mod oxc {
     pub mod no_const_enum;
     pub mod no_map_spread;
     pub mod no_optional_chaining;
-    pub mod no_redundant_constructor_init;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
@@ -528,6 +532,7 @@ mod promise {
     pub mod no_new_statics;
     pub mod no_promise_in_callback;
     pub mod no_return_in_finally;
+    pub mod no_return_wrap;
     pub mod param_names;
     pub mod prefer_await_to_callbacks;
     pub mod prefer_await_to_then;
@@ -698,7 +703,9 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_warning_comments,
     import::default,
     import::export,
+    import::exports_last,
     import::first,
+    import::no_anonymous_default_export,
     import::no_absolute_path,
     import::no_mutable_exports,
     import::no_named_default,
@@ -855,13 +862,13 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_const_enum,
     oxc::no_map_spread,
     oxc::no_optional_chaining,
-    oxc::no_redundant_constructor_init,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_return_wrap,
     promise::no_nesting,
     promise::no_promise_in_callback,
     promise::no_callback_in_promise,
@@ -877,6 +884,7 @@ oxc_macros::declare_all_lint_rules! {
     react::checked_requires_onchange_or_readonly,
     react::exhaustive_deps,
     react::iframe_missing_sandbox,
+    react::jsx_filename_extension,
     react::jsx_boolean_value,
     react::jsx_curly_brace_presence,
     react::jsx_key,
@@ -938,6 +946,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_assertion,
     typescript::no_require_imports,
     typescript::no_this_alias,
+    typescript::no_unnecessary_parameter_property_assignment,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
     typescript::no_unsafe_function_type,
@@ -1040,6 +1049,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
+    unicorn::require_post_message_target_origin,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,

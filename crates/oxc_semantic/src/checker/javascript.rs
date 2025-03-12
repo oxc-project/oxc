@@ -80,7 +80,7 @@ pub fn check_identifier<'a>(name: &str, span: Span, node: &AstNode<'a>, ctx: &Se
             return ctx.error(reserved_keyword(name, span));
         }
         // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-        if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
+        if ctx.scoping.scope_flags(node.scope_id()).is_class_static_block() {
             return ctx.error(class_static_block_await(span));
         }
     }
@@ -301,7 +301,7 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
         return;
     }
 
-    if matches!(ctx.nodes.kind(ctx.scope.get_node_id(ctx.current_scope_id)),
+    if matches!(ctx.nodes.kind(ctx.scoping.get_node_id(ctx.current_scope_id)),
         AstKind::Function(Function { params, .. })
         | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { params, .. })
         if !params.is_simple_parameter_list())
@@ -382,8 +382,8 @@ pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &Se
         "new" => {
             if prop.property.name == "target" {
                 let mut in_function_scope = false;
-                for scope_id in ctx.scope.ancestors(node.scope_id()) {
-                    let flags = ctx.scope.get_flags(scope_id);
+                for scope_id in ctx.scoping.scope_ancestors(node.scope_id()) {
+                    let flags = ctx.scoping.scope_flags(scope_id);
                     // In arrow functions, new.target is inherited from the surrounding scope.
                     if flags.contains(ScopeFlags::Arrow) {
                         continue;
@@ -765,11 +765,11 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
     };
 
     let Some(class_id) = ctx.class_table_builder.current_class_id else {
-        for scope_id in ctx.scope.ancestors(ctx.current_scope_id) {
-            let flags = ctx.scope.get_flags(scope_id);
+        for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
+            let flags = ctx.scoping.scope_flags(scope_id);
             if flags.is_function()
                 && matches!(
-                    ctx.nodes.parent_kind(ctx.scope.get_node_id(scope_id)),
+                    ctx.nodes.parent_kind(ctx.scoping.get_node_id(scope_id)),
                     Some(AstKind::ObjectProperty(_))
                 )
             {
@@ -794,8 +794,8 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
     let AstKind::Class(class) = ctx.nodes.kind(class_node_id) else { unreachable!() };
     let class_scope_id = class.scope_id();
 
-    for scope_id in ctx.scope.ancestors(ctx.current_scope_id) {
-        let flags = ctx.scope.get_flags(scope_id);
+    for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
+        let flags = ctx.scoping.scope_flags(scope_id);
 
         if flags.intersects(ScopeFlags::Constructor) {
             // ClassTail : ClassHeritageopt { ClassBody }
@@ -837,7 +837,7 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
         if flags.is_function() && !flags.is_arrow() {
             // * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
             // Check this function if is a class method, if it isn't, then it a plain function
-            let function_node_id = ctx.scope.get_node_id(scope_id);
+            let function_node_id = ctx.scoping.get_node_id(scope_id);
             let is_class_method = matches!(
                 ctx.nodes.parent_kind(function_node_id),
                 Some(AstKind::MethodDefinition(_))
@@ -1051,7 +1051,7 @@ pub fn check_await_expression<'a>(
         ctx.error(await_or_yield_in_parameter("await", expr.span));
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
+    if ctx.scoping.scope_flags(node.scope_id()).is_class_static_block() {
         let start = expr.span.start;
         ctx.error(class_static_block_await(Span::new(start, start + 5)));
     }

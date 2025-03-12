@@ -22,6 +22,16 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 impl<'a> PeepholeOptimizations {
     pub fn substitute_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: Ctx<'a, '_>) {
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
+        if !prop.method {
+            if let PropertyKey::StringLiteral(str) = &prop.key {
+                // "{ __proto__ }" sets prototype, while "{ ['__proto__'] }" does not
+                if str.value == "__proto__" {
+                    return;
+                }
+            }
+        }
+
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -78,6 +88,12 @@ impl<'a> PeepholeOptimizations {
         prop: &mut MethodDefinition<'a>,
         ctx: Ctx<'a, '_>,
     ) {
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -86,6 +102,12 @@ impl<'a> PeepholeOptimizations {
         prop: &mut PropertyDefinition<'a>,
         ctx: Ctx<'a, '_>,
     ) {
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -94,6 +116,12 @@ impl<'a> PeepholeOptimizations {
         prop: &mut AccessorProperty<'a>,
         ctx: Ctx<'a, '_>,
     ) {
+        let property_key_parent: ClassPropertyKeyParent = prop.into();
+        if let PropertyKey::StringLiteral(str) = &prop.key {
+            if property_key_parent.should_keep_as_computed_property(&str.value) {
+                return;
+            }
+        }
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
@@ -129,6 +157,8 @@ impl<'a> PeepholeOptimizations {
             Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
             Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
             Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
+            Expression::FunctionExpression(e) => self.try_remove_name_from_functions(e, ctx),
+            Expression::ClassExpression(e) => self.try_remove_name_from_classes(e, ctx),
             _ => {}
         }
 
@@ -159,7 +189,7 @@ impl<'a> PeepholeOptimizations {
 
     fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
         if e.operator.is_equality()
-            && (e.left.is_literal() || e.left.is_no_substitution_template())
+            && (e.left.is_literal() || e.left.is_no_substitution_template() || e.left.is_void_0())
             && !e.right.is_literal()
         {
             std::mem::swap(&mut e.left, &mut e.right);
@@ -847,11 +877,6 @@ impl<'a> PeepholeOptimizations {
         };
         let PropertyKey::StringLiteral(s) = key else { return };
         let value = s.value.as_str();
-        // Uncaught SyntaxError: Classes may not have a field named 'constructor'
-        // Uncaught SyntaxError: Class constructor may not be a private method
-        if matches!(value, "__proto__" | "prototype" | "constructor" | "#constructor") {
-            return;
-        }
         if is_identifier_name(value) {
             *computed = false;
             *key = PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(s.span, s.value));
@@ -933,6 +958,30 @@ impl<'a> PeepholeOptimizations {
         }
         self.mark_current_function_as_changed();
     }
+
+    /// Remove name from function expressions if it is not used.
+    ///
+    /// e.g. `var a = function f() {}` -> `var a = function () {}`
+    ///
+    /// This compression is not safe if the code relies on `Function::name`.
+    fn try_remove_name_from_functions(&mut self, func: &mut Function<'a>, ctx: Ctx<'a, '_>) {
+        if func.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
+            func.id = None;
+            self.mark_current_function_as_changed();
+        }
+    }
+
+    /// Remove name from class expressions if it is not used.
+    ///
+    /// e.g. `var a = class C {}` -> `var a = class {}`
+    ///
+    /// This compression is not safe if the code relies on `Function::name`.
+    fn try_remove_name_from_classes(&mut self, class: &mut Class<'a>, ctx: Ctx<'a, '_>) {
+        if class.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
+            class.id = None;
+            self.mark_current_function_as_changed();
+        }
+    }
 }
 
 impl<'a> LatePeepholeOptimizations {
@@ -940,7 +989,6 @@ impl<'a> LatePeepholeOptimizations {
         if let Expression::NewExpression(e) = expr {
             Self::try_compress_typed_array_constructor(e, ctx);
         }
-        Self::remove_name_from_expressions(expr, ctx);
 
         if let Some(folded_expr) = match expr {
             Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
@@ -1053,36 +1101,12 @@ impl<'a> LatePeepholeOptimizations {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
-                        || !ctx.symbols().symbol_is_used(ident.symbol_id())
+                        || !ctx.scoping().symbol_is_used(ident.symbol_id())
                     {
                         catch.param = None;
                     }
                 };
             }
-        }
-    }
-
-    /// Remove name from function / class expressions if it is not used.
-    ///
-    /// - `var a = function f() {}` -> `var a = function () {}`
-    /// - `var a = class C {}` -> `var a = class {}`
-    ///
-    /// This compression is not safe if the code relies on `Function::name`.
-    fn remove_name_from_expressions(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
-        match expr {
-            Expression::FunctionExpression(func) => {
-                if func.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
-                {
-                    func.id = None;
-                }
-            }
-            Expression::ClassExpression(class) => {
-                if class.id.as_ref().is_some_and(|id| !ctx.symbols().symbol_is_used(id.symbol_id()))
-                {
-                    class.id = None;
-                }
-            }
-            _ => {}
         }
     }
 
@@ -1104,6 +1128,68 @@ impl<'a> LatePeepholeOptimizations {
                 | "BigInt64Array"
                 | "BigUint64Array"
         )
+    }
+}
+
+struct ClassPropertyKeyParent {
+    pub ty: ClassPropertyKeyParentType,
+    /// Whether the property is static.
+    pub r#static: bool,
+}
+
+impl ClassPropertyKeyParent {
+    /// Whether the key should be kept as a computed property to avoid early errors.
+    ///
+    /// <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
+    /// <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>
+    /// <https://arai-a.github.io/ecma262-compare/?pr=2417&id=sec-class-definitions-static-semantics-early-errors>
+    fn should_keep_as_computed_property(&self, key: &str) -> bool {
+        match key {
+            "prototype" => self.r#static,
+            "constructor" => match self.ty {
+                // Uncaught SyntaxError: Class constructor may not be an accessor
+                ClassPropertyKeyParentType::MethodDefinition => !self.r#static,
+                // Uncaught SyntaxError: Classes may not have a field named 'constructor'
+                // Uncaught SyntaxError: Class constructor may not be a private method
+                ClassPropertyKeyParentType::AccessorProperty
+                | ClassPropertyKeyParentType::PropertyDefinition => true,
+            },
+            "#constructor" => true,
+            _ => false,
+        }
+    }
+}
+
+enum ClassPropertyKeyParentType {
+    PropertyDefinition,
+    AccessorProperty,
+    MethodDefinition,
+}
+
+impl From<&PropertyDefinition<'_>> for ClassPropertyKeyParent {
+    fn from(prop: &PropertyDefinition<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::PropertyDefinition, r#static: prop.r#static }
+    }
+}
+
+impl From<&AccessorProperty<'_>> for ClassPropertyKeyParent {
+    fn from(accessor: &AccessorProperty<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::AccessorProperty, r#static: accessor.r#static }
+    }
+}
+
+impl From<&MethodDefinition<'_>> for ClassPropertyKeyParent {
+    fn from(method: &MethodDefinition<'_>) -> Self {
+        Self { ty: ClassPropertyKeyParentType::MethodDefinition, r#static: method.r#static }
+    }
+}
+
+impl<T> From<&mut T> for ClassPropertyKeyParent
+where
+    ClassPropertyKeyParent: for<'a> std::convert::From<&'a T>,
+{
+    fn from(prop: &mut T) -> Self {
+        (&*prop).into()
     }
 }
 
@@ -1554,6 +1640,25 @@ mod test {
     }
 
     #[test]
+    fn test_swap_binary_expressions() {
+        test_same("v = a === 0");
+        test("v = 0 === a", "v = a === 0");
+        test_same("v = a === '0'");
+        test("v = '0' === a", "v = a === '0'");
+        test("v = a === `0`", "v = a === '0'");
+        test("v = `0` === a", "v = a === '0'");
+        test_same("v = a === void 0");
+        test("v = void 0 === a", "v = a === void 0");
+
+        test_same("v = a !== 0");
+        test("v = 0 !== a", "v = a !== 0");
+        test_same("v = a == 0");
+        test("v = 0 == a", "v = a == 0");
+        test_same("v = a != 0");
+        test("v = 0 != a", "v = a != 0");
+    }
+
+    #[test]
     fn test_remove_unary_plus() {
         test("v = 1 - +foo", "v = 1 - foo");
         test("v = +foo - 1", "v = foo - 1");
@@ -1607,10 +1712,47 @@ mod test {
         );
 
         test("class C { ['-1']() {} }", "class C { '-1'() {} }");
-        test_same("class C { ['prototype']() {} }");
-        test_same("class C { ['__proto__']() {} }");
-        test_same("class C { ['constructor']() {} }");
-        test_same("class C { ['#constructor']() {} }");
+
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
+        test_same("v = ({ ['__proto__']: 0 })"); // { __proto__: 0 } will have `isProtoSetter = true`
+        test("v = ({ ['__proto__']() {} })", "v = ({ __proto__() {} })");
+        test("({ ['__proto__']: _ } = {})", "({ __proto__: _ } = {})");
+        test("class C { ['__proto__'] = 0 }", "class C { __proto__ = 0 }");
+        test("class C { ['__proto__']() {} }", "class C { __proto__() {} }");
+        test("class C { accessor ['__proto__'] = 0 }", "class C { accessor __proto__ = 0 }");
+        test("class C { static ['__proto__'] = 0 }", "class C { static __proto__ = 0 }");
+        test(
+            "class C { static accessor ['__proto__'] = 0 }",
+            "class C { static accessor __proto__ = 0 }",
+        );
+        test("class C { static static ['__proto__']() {} }", "class C { static __proto__() {} }");
+
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-static-semantics-classelementkind>
+        // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions-static-semantics-early-errors>
+        // <https://arai-a.github.io/ecma262-compare/?pr=2417&id=sec-class-definitions-static-semantics-early-errors>
+        test_same("class C { static ['prototype']() {} }"); // class C { static prototype() {} } is an early error
+        test_same("class C { static ['prototype'] = 0 }"); // class C { prototype = 0 } is an early error
+        test_same("class C { static accessor ['prototype'] = 0 }"); // class C { accessor prototype = 0 } is an early error
+        test("class C { ['prototype']() {} }", "class C { prototype() {} }");
+        test("class C { ['prototype'] = 0 }", "class C { prototype = 0 }");
+        test("class C { accessor ['prototype'] = 0 }", "class C { accessor prototype = 0 }");
+        test_same("class C { ['constructor'] = 0 }"); // class C { constructor = 0 } is an early error
+        test_same("class C { accessor ['constructor'] = 0 }"); // class C { accessor constructor = 0 } is an early error
+        test_same("class C { static ['constructor'] = 0 }"); // class C { static constructor = 0 } is an early error
+        test_same("class C { static accessor ['constructor'] = 0 }"); // class C { static accessor constructor = 0 } is an early error
+        test_same("class C { ['constructor']() {} }"); // computed `constructor` is not treated as a constructor
+        test_same("class C { *['constructor']() {} }"); // class C { *constructor() {} } is an early error
+        test_same("class C { async ['constructor']() {} }"); // class C { async constructor() {} } is an early error
+        test_same("class C { async *['constructor']() {} }"); // class C { async *constructor() {} } is an early error
+        test_same("class C { get ['constructor']() {} }"); // class C { get constructor() {} } is an early error
+        test_same("class C { set ['constructor'](v) {} }"); // class C { set constructor(v) {} } is an early error
+        test("class C { static ['constructor']() {} }", "class C { static constructor() {} }");
+        test_same("class C { ['#constructor'] = 0 }"); // class C { #constructor = 0 } is an early error
+        test_same("class C { accessor ['#constructor'] = 0 }"); // class C { accessor #constructor = 0 } is an early error
+        test_same("class C { ['#constructor']() {} }"); // class C { #constructor() {} } is an early error
+        test_same("class C { static ['#constructor'] = 0 }"); // class C { static #constructor = 0 } is an early error
+        test_same("class C { static accessor ['#constructor'] = 0 }"); // class C { static accessor #constructor = 0 } is an early error
+        test_same("class C { static ['#constructor']() {} }"); // class C { static #constructor() {} } is an early error
     }
 
     #[test]
@@ -1694,6 +1836,9 @@ mod test {
         test_same("try { foo } catch(e) { bar(e) }");
         test_same("try { foo } catch([e]) {}");
         test_same("try { foo } catch({e}) {}");
+        test_same("try { foo } catch(e) { var e = 2; bar(e) }");
+        test("try { foo } catch(e) { var e = 2 }", "try { foo } catch { var e = 2 }");
+        test_same("try { foo } catch(e) { var e = 2 } bar(e)");
 
         let target = ESTarget::ES2018;
         let code = "try { foo } catch(e) {}";

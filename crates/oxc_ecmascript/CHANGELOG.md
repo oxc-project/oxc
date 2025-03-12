@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.57.0] - 2025-03-11
+
+### Features
+
+- b6deff8 ecmascript: Support integer index access for array and string in `may_have_side_effects` (#9603) (sapphi-red)
+
+### Bug Fixes
+
+- 96eef8b ecmascript: `(foo() + "").length` may have a side effect (#9605) (sapphi-red)
+
+## [0.56.4] - 2025-03-07
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
 ## [0.54.0] - 2025-03-04
 
 ### Features

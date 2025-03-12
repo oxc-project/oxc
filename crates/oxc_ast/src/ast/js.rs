@@ -782,7 +782,6 @@ pub enum SimpleAssignmentTarget<'a> {
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 5,
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
 }
@@ -801,7 +800,6 @@ macro_rules! match_assignment_target {
             | $ty::TSSatisfiesExpression(_)
             | $ty::TSNonNullExpression(_)
             | $ty::TSTypeAssertion(_)
-            | $ty::TSInstantiationExpression(_)
             | $ty::ArrayAssignmentTarget(_)
             | $ty::ObjectAssignmentTarget(_)
     };
@@ -821,7 +819,6 @@ macro_rules! match_simple_assignment_target {
             | $ty::TSSatisfiesExpression(_)
             | $ty::TSNonNullExpression(_)
             | $ty::TSTypeAssertion(_)
-            | $ty::TSInstantiationExpression(_)
     };
 }
 pub use match_simple_assignment_target;
@@ -2316,8 +2313,8 @@ pub struct AccessorProperty<'a> {
 pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
-    #[estree(rename = "options", via = ImportExpressionArguments)]
-    pub arguments: Vec<'a, Expression<'a>>,
+    #[estree(via = ImportExpressionOptions)]
+    pub options: Vec<'a, Expression<'a>>,
     #[estree(skip)]
     pub phase: Option<ImportPhase>,
 }

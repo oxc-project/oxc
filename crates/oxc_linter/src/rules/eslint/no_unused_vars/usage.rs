@@ -692,7 +692,7 @@ impl<'a> Symbol<'_, 'a> {
             return false;
         }
 
-        for scope_id in self.scopes().ancestors(call_scope_id) {
+        for scope_id in self.scoping().scope_ancestors(call_scope_id) {
             if scope_id == container_id {
                 return true;
             } else if scope_id == decl_scope_id {
@@ -746,7 +746,7 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::AssignmentTarget(target) if needs_variable_identifier => {
                     return match target {
                         AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            self.symbols().get_reference(id.reference_id()).symbol_id()
+                            self.scoping().get_reference(id.reference_id()).symbol_id()
                         }
                         _ => None,
                     };

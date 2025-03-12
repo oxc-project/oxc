@@ -133,22 +133,22 @@ impl Rule for NoAccumulatingSpread {
             return;
         };
 
-        let symbols = ctx.semantic().symbols();
+        let symbols = ctx.scoping();
 
         // get the AST node + symbol id of the declaration of the identifier
         let reference = symbols.get_reference(ident.reference_id());
         let Some(referenced_symbol_id) = reference.symbol_id() else {
             return;
         };
-        let declaration_id = symbols.get_declaration(referenced_symbol_id);
-        let Some(declaration) = ctx.semantic().nodes().parent_node(declaration_id) else {
+        let declaration_id = symbols.symbol_declaration(referenced_symbol_id);
+        let Some(declaration) = ctx.nodes().parent_node(declaration_id) else {
             return;
         };
 
         check_reduce_usage(declaration, referenced_symbol_id, spread.span, ctx);
         check_loop_usage(
             declaration,
-            ctx.semantic().nodes().get_node(declaration_id),
+            ctx.nodes().get_node(declaration_id),
             referenced_symbol_id,
             node.id(),
             spread.span,

@@ -70,56 +70,56 @@ fn js_parser_test() {
         "function f() { x() } var f; function f() { y() }",
         "function f() { x();}var f;function f() { y();}",
     );
-    // test("class Foo { ['constructor'] = 0 }", "class Foo { ['constructor'] = 0;}");
-    // test("class Foo { ['constructor']() {} }", "class Foo { ['constructor']() { }}");
-    // test("class Foo { *['constructor']() {} }", "class Foo { *['constructor']() { }}");
-    // test("class Foo { get ['constructor']() {} }", "class Foo { get ['constructor']() { }}");
-    // test("class Foo { set ['constructor'](x) {} }", "class Foo { set ['constructor'](x) { }}");
-    // test("class Foo { async ['constructor']() {} }", "class Foo { async ['constructor']() { }}");
-    // test("class Foo { static ['constructor'] = 0 }", "class Foo { static ['constructor'] = 0;}");
-    // test("class Foo { static ['constructor']() {} }", "class Foo { static constructor() { }}");
-    // test("class Foo { static *['constructor']() {} }", "class Foo { static *constructor() { }}");
-    // test(
-    // "class Foo { static get ['constructor']() {} }",
-    // "class Foo { static get constructor() { }}",
-    // );
-    // test(
-    // "class Foo { static set ['constructor'](x) {} }",
-    // "class Foo { static set constructor(x) { }}",
-    // );
-    // test(
-    // "class Foo { static async ['constructor']() {} }",
-    // "class Foo { static async constructor() { }}",
-    // );
-    // test("class Foo { ['prototype'] = 0 }", "class Foo { prototype = 0;}");
-    // test("class Foo { ['prototype']() {} }", "class Foo { prototype() { }}");
-    // test("class Foo { *['prototype']() {} }", "class Foo { *prototype() { }}");
-    // test("class Foo { get ['prototype']() {} }", "class Foo { get prototype() { }}");
-    // test("class Foo { set ['prototype'](x) {} }", "class Foo { set prototype(x) { }}");
-    // test("class Foo { async ['prototype']() {} }", "class Foo { async prototype() { }}");
-    // test("class Foo { static ['prototype'] = 0 }", "class Foo { static ['prototype'] = 0;}");
-    // test("class Foo { static ['prototype']() {} }", "class Foo { static ['prototype']() { }}");
-    // test("class Foo { static *['prototype']() {} }", "class Foo { static *['prototype']() { }}");
-    // test(
-    // "class Foo { static get ['prototype']() {} }",
-    // "class Foo { static get ['prototype']() { }}",
-    // );
-    // test(
-    // "class Foo { static set ['prototype'](x) {} }",
-    // "class Foo { static set ['prototype'](x) { }}",
-    // );
-    // test(
-    // "class Foo { static async ['prototype']() {} }",
-    // "class Foo { static async ['prototype']() { }}",
-    // );
-    // test(
-    // "class Foo { constructor() {} ['constructor']() {} }",
-    // "class Foo { constructor() { } ['constructor']() { }}",
-    // );
-    // test(
-    // "class Foo { static constructor() {} static ['constructor']() {} }",
-    // "class Foo { static constructor() { } static constructor() { }}",
-    // );
+    test("class Foo { ['constructor'] = 0 }", "class Foo { ['constructor'] = 0;}");
+    test("class Foo { ['constructor']() {} }", "class Foo { ['constructor']() { }}");
+    test("class Foo { *['constructor']() {} }", "class Foo { *['constructor']() { }}");
+    test("class Foo { get ['constructor']() {} }", "class Foo { get ['constructor']() { }}");
+    test("class Foo { set ['constructor'](x) {} }", "class Foo { set ['constructor'](x) { }}");
+    test("class Foo { async ['constructor']() {} }", "class Foo { async ['constructor']() { }}");
+    test("class Foo { static ['constructor'] = 0 }", "class Foo { static ['constructor'] = 0;}");
+    test("class Foo { static ['constructor']() {} }", "class Foo { static constructor() { }}");
+    test("class Foo { static *['constructor']() {} }", "class Foo { static *constructor() { }}");
+    test(
+        "class Foo { static get ['constructor']() {} }",
+        "class Foo { static get constructor() { }}",
+    );
+    test(
+        "class Foo { static set ['constructor'](x) {} }",
+        "class Foo { static set constructor(x) { }}",
+    );
+    test(
+        "class Foo { static async ['constructor']() {} }",
+        "class Foo { static async constructor() { }}",
+    );
+    test("class Foo { ['prototype'] = 0 }", "class Foo { prototype = 0;}");
+    test("class Foo { ['prototype']() {} }", "class Foo { prototype() { }}");
+    test("class Foo { *['prototype']() {} }", "class Foo { *prototype() { }}");
+    test("class Foo { get ['prototype']() {} }", "class Foo { get prototype() { }}");
+    test("class Foo { set ['prototype'](x) {} }", "class Foo { set prototype(x) { }}");
+    test("class Foo { async ['prototype']() {} }", "class Foo { async prototype() { }}");
+    test("class Foo { static ['prototype'] = 0 }", "class Foo { static ['prototype'] = 0;}");
+    test("class Foo { static ['prototype']() {} }", "class Foo { static ['prototype']() { }}");
+    test("class Foo { static *['prototype']() {} }", "class Foo { static *['prototype']() { }}");
+    test(
+        "class Foo { static get ['prototype']() {} }",
+        "class Foo { static get ['prototype']() { }}",
+    );
+    test(
+        "class Foo { static set ['prototype'](x) {} }",
+        "class Foo { static set ['prototype'](x) { }}",
+    );
+    test(
+        "class Foo { static async ['prototype']() {} }",
+        "class Foo { static async ['prototype']() { }}",
+    );
+    test(
+        "class Foo { constructor() {} ['constructor']() {} }",
+        "class Foo { constructor() { } ['constructor']() { }}",
+    );
+    test(
+        "class Foo { static constructor() {} static ['constructor']() {} }",
+        "class Foo { static constructor() { } static constructor() { }}",
+    );
     test("class x { '0' = y }", "class x { 0 = y;}");
     test("class x { '123' = y }", "class x { 123 = y;}");
     test("class x { ['-123'] = y }", "class x { '-123' = y;}");
@@ -315,8 +315,8 @@ fn js_parser_test() {
     test("a = typeof b + ''", "a = typeof b;");
     test("a = [] + `${b}`", "a = `${b}`;");
     test("a = `${b}` + []", "a = `${b}`;");
-    // test("a = [] + typeof b", "a = typeof b;");
-    // test("a = typeof b + []", "a = typeof b;");
+    test("a = [] + typeof b", "a = typeof b;");
+    test("a = typeof b + []", "a = typeof b;");
     test("a = [b] + `${b}`", "a = [b] + `${b}`;");
     test("a = `${b}` + [b]", "a = `${b}` + [b];");
     test("a = {} + `${b}`", "a = `[object Object]${b}`;");
@@ -359,9 +359,9 @@ fn js_parser_test() {
     test("a = 'ȧḃċ'.length", "a = 3;");
     test("a = '👯‍♂️'.length", "a = 5;");
     test("a = 'abc'[-1]", "a = 'abc'[-1];");
-    // test("a = 'abc'[-0]", "a = 'a';");
-    // test("a = 'abc'[0]", "a = 'a';");
-    // test("a = 'abc'[2]", "a = 'c';");
+    test("a = 'abc'[-0]", "a = 'a';");
+    test("a = 'abc'[0]", "a = 'a';");
+    test("a = 'abc'[2]", "a = 'c';");
     test("a = 'abc'[3]", "a = 'abc'[3];");
     test("a = 'abc'[NaN]", "a = 'abc'[NaN];");
     test("a = 'abc'[-1e100]", "a = 'abc'[-1e100];");
@@ -1388,8 +1388,8 @@ fn test_flatten_values() {
     test("return a || (b && c)", "return a || b && c;");
     test("return a === void 0", "return a === void 0;");
     test("return a !== void 0", "return a !== void 0;");
-    // test("return void 0 === a", "return a === void 0;");
-    // test("return void 0 !== a", "return a !== void 0;");
+    test("return void 0 === a", "return a === void 0;");
+    test("return void 0 !== a", "return a !== void 0;");
     test("return a == void 0", "return a == null;");
     test("return a != void 0", "return a != null;");
     test("return void 0 == a", "return a == null;");
@@ -2332,7 +2332,10 @@ fn test_remove_dead_expr_other() {
         "try { throw 1 } catch (x) { var x = 2; y(x) }",
         "try { throw 1;} catch (x) { var x = 2; y(x);}",
     );
-    // test("try { throw 1 } catch (x) { var x = 2 }", "try { throw 1;} catch (x) { var x = 2;}");
+    test(
+        "try { throw 1 } catch (x) { var x = 2 }; y(x)",
+        "try { throw 1;} catch (x) { var x = 2;} y(x);",
+    );
     // test("try { throw 1 } catch (x) { eval('x') }", "try { throw 1;} catch (x) { eval('x');}");
     // test(
     //     "if (y) try { throw 1 } catch (x) {} else eval('x')",

@@ -800,7 +800,7 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
         return Err(format!("failed to find '{mod_def}' in {rules_path}").into());
     };
     let mod_end = &rules[mod_start..]
-        .find("}\n")
+        .find('}')
         .ok_or(format!("failed to find end of '{mod_def}' module in {rules_path}"))?;
     let mod_rules = &rules[mod_start..(*mod_end + mod_start)];
 

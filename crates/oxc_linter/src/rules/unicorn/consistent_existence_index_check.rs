@@ -86,12 +86,12 @@ impl Rule for ConsistentExistenceIndexCheck {
             return;
         };
 
-        let Some(symbol_id) = ctx.symbols().get_reference(identifier.reference_id()).symbol_id()
+        let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
         else {
             return;
         };
 
-        let declaration_node_id = ctx.symbols().get_declaration(symbol_id);
+        let declaration_node_id = ctx.scoping().symbol_declaration(symbol_id);
         let node = ctx.nodes().get_node(declaration_node_id);
 
         if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
@@ -132,7 +132,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                     let mut operator_replacement_text = operator_source.to_string();
 
                     for (index, text) in operator_matches {
-                        let comments = ctx.semantic().comments_range(operator_start..operator_end);
+                        let comments = ctx.comments_range(operator_start..operator_end);
 
                         let start = operator_start + u32::try_from(index).unwrap_or(0);
                         let length = u32::try_from(text.len()).unwrap_or(0);

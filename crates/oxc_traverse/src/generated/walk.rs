@@ -956,7 +956,6 @@ unsafe fn walk_assignment_target<'a, Tr: Traverse<'a>>(
         | AssignmentTarget::TSSatisfiesExpression(_)
         | AssignmentTarget::TSNonNullExpression(_)
         | AssignmentTarget::TSTypeAssertion(_)
-        | AssignmentTarget::TSInstantiationExpression(_)
         | AssignmentTarget::ComputedMemberExpression(_)
         | AssignmentTarget::StaticMemberExpression(_)
         | AssignmentTarget::PrivateFieldExpression(_) => {
@@ -991,9 +990,6 @@ unsafe fn walk_simple_assignment_target<'a, Tr: Traverse<'a>>(
         }
         SimpleAssignmentTarget::TSTypeAssertion(node) => {
             walk_ts_type_assertion(traverser, (&mut **node) as *mut _, ctx)
-        }
-        SimpleAssignmentTarget::TSInstantiationExpression(node) => {
-            walk_ts_instantiation_expression(traverser, (&mut **node) as *mut _, ctx)
         }
         SimpleAssignmentTarget::ComputedMemberExpression(_)
         | SimpleAssignmentTarget::StaticMemberExpression(_)
@@ -1106,7 +1102,6 @@ unsafe fn walk_assignment_target_maybe_default<'a, Tr: Traverse<'a>>(
         | AssignmentTargetMaybeDefault::TSSatisfiesExpression(_)
         | AssignmentTargetMaybeDefault::TSNonNullExpression(_)
         | AssignmentTargetMaybeDefault::TSTypeAssertion(_)
-        | AssignmentTargetMaybeDefault::TSInstantiationExpression(_)
         | AssignmentTargetMaybeDefault::ArrayAssignmentTarget(_)
         | AssignmentTargetMaybeDefault::ObjectAssignmentTarget(_)
         | AssignmentTargetMaybeDefault::ComputedMemberExpression(_)
@@ -1787,7 +1782,6 @@ unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
         | ForStatementLeft::TSSatisfiesExpression(_)
         | ForStatementLeft::TSNonNullExpression(_)
         | ForStatementLeft::TSTypeAssertion(_)
-        | ForStatementLeft::TSInstantiationExpression(_)
         | ForStatementLeft::ArrayAssignmentTarget(_)
         | ForStatementLeft::ObjectAssignmentTarget(_)
         | ForStatementLeft::ComputedMemberExpression(_)
@@ -2764,8 +2758,8 @@ unsafe fn walk_import_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_SOURCE) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::ImportExpressionArguments);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_ARGUMENTS)
+    ctx.retag_stack(AncestorType::ImportExpressionOptions);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_OPTIONS)
         as *mut Vec<Expression>)
     {
         walk_expression(traverser, item as *mut _, ctx);
@@ -3356,10 +3350,10 @@ unsafe fn walk_jsx_namespaced_name<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_NAMESPACE) as *mut JSXIdentifier,
         ctx,
     );
-    ctx.retag_stack(AncestorType::JSXNamespacedNameProperty);
+    ctx.retag_stack(AncestorType::JSXNamespacedNameName);
     walk_jsx_identifier(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_PROPERTY) as *mut JSXIdentifier,
+        (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_NAME) as *mut JSXIdentifier,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5128,31 +5122,31 @@ unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportTypeParameter(
-        ancestor::TSImportTypeWithoutParameter(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeArgument(
+        ancestor::TSImportTypeWithoutArgument(node, PhantomData),
     ));
     walk_ts_type(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_PARAMETER) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *mut TSType,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)
+        as *mut Option<Box<TSImportAttributes>>)
+    {
+        ctx.retag_stack(AncestorType::TSImportTypeOptions);
+        walk_ts_import_attributes(traverser, (&mut **field) as *mut _, ctx);
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
         as *mut Option<TSTypeName>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeQualifier);
         walk_ts_type_name(traverser, field as *mut _, ctx);
     }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
-        as *mut Option<Box<TSImportAttributes>>)
-    {
-        ctx.retag_stack(AncestorType::TSImportTypeAttributes);
-        walk_ts_import_attributes(traverser, (&mut **field) as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS)
+        .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
-        ctx.retag_stack(AncestorType::TSImportTypeTypeParameters);
+        ctx.retag_stack(AncestorType::TSImportTypeTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);

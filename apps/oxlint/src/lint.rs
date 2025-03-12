@@ -186,6 +186,7 @@ impl Runner for LintRunner {
             // e.g. `/some/file.js` and `/some/other/file.js` would both result in `/some`
             let mut directories = FxHashSet::default();
             for path in &paths {
+                let path = Path::new(path);
                 if let Some(directory) = path.parent() {
                     // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
                     // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
@@ -355,14 +356,15 @@ impl Runner for LintRunner {
             }
         }
 
-        let lint_service = LintService::new(linter, options);
+        let mut lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+
+        let number_of_rules = lint_service.linter().number_of_rules();
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
             let tx_error = diagnostic_service.sender().clone();
-            let lint_service = lint_service.clone();
             move || {
                 lint_service.run(&tx_error);
             }
@@ -372,7 +374,7 @@ impl Runner for LintRunner {
 
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
-            number_of_rules: lint_service.linter().number_of_rules(),
+            number_of_rules,
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
         }) {

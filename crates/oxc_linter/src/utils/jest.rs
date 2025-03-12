@@ -177,7 +177,7 @@ pub fn iter_possible_jest_call_node<'a, 'c>(
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.flat_map(move |(reference_id, original)| {
-        let mut id = semantic.symbols().get_reference(reference_id).node_id();
+        let mut id = semantic.scoping().get_reference(reference_id).node_id();
         std::iter::from_fn(move || {
             loop {
                 let parent = semantic.nodes().parent_node(id);
@@ -206,19 +206,19 @@ fn collect_ids_referenced_to_import<'a, 'c>(
     semantic: &'c Semantic<'a>,
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
-        .symbols()
+        .scoping()
         .resolved_references()
         .enumerate()
         .filter_map(|(symbol_id, reference_ids)| {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if semantic.symbols().get_flags(symbol_id).is_import() {
-                let id = semantic.symbols().get_declaration(symbol_id);
+            if semantic.scoping().symbol_flags(symbol_id).is_import() {
+                let id = semantic.scoping().symbol_declaration(symbol_id);
                 let Some(AstKind::ImportDeclaration(import_decl)) =
                     semantic.nodes().parent_kind(id)
                 else {
                     return None;
                 };
-                let name = semantic.symbols().get_name(symbol_id);
+                let name = semantic.scoping().symbol_name(symbol_id);
 
                 if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
                     let original = find_original_name(import_decl, name);
@@ -252,7 +252,7 @@ fn collect_ids_referenced_to_global<'c>(
     semantic: &'c Semantic,
 ) -> impl Iterator<Item = ReferenceId> + 'c + use<'c> {
     semantic
-        .scopes()
+        .scoping()
         .root_unresolved_references()
         .iter()
         .filter(|(name, _)| JEST_METHOD_NAMES.contains(name))

@@ -19,7 +19,7 @@ use oxc_ast::ast::{
     Statement, StringLiteral,
 };
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
-use oxc_semantic::SymbolTable;
+use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::{
     identifier::{LS, PS, is_identifier_part, is_identifier_part_ascii},
@@ -79,7 +79,7 @@ pub struct Codegen<'a> {
     /// Original source code of the AST
     source_text: &'a str,
 
-    symbol_table: Option<SymbolTable>,
+    scoping: Option<Scoping>,
 
     /// Output Code
     code: CodeBuffer,
@@ -149,7 +149,7 @@ impl<'a> Codegen<'a> {
         Self {
             options,
             source_text: "",
-            symbol_table: None,
+            scoping: None,
             code: CodeBuffer::default(),
             needs_semicolon: false,
             need_space_before_dot: 0,
@@ -184,8 +184,8 @@ impl<'a> Codegen<'a> {
     ///
     /// Can be used for easy renaming of variables (based on semantic analysis).
     #[must_use]
-    pub fn with_symbol_table(mut self, symbol_table: Option<SymbolTable>) -> Self {
-        self.symbol_table = symbol_table;
+    pub fn with_scoping(mut self, scoping: Option<Scoping>) -> Self {
+        self.scoping = scoping;
         self
     }
 
@@ -503,9 +503,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
-        if let Some(symbol_table) = &self.symbol_table {
+        if let Some(scoping) = &self.scoping {
             if let Some(reference_id) = reference.reference_id.get() {
-                if let Some(name) = symbol_table.get_reference_name(reference_id) {
+                if let Some(name) = scoping.get_reference_name(reference_id) {
                     // SAFETY: Hack the lifetime to be part of the allocator.
                     return unsafe { std::mem::transmute_copy(&name) };
                 }
@@ -515,9 +515,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
-        if let Some(symbol_table) = &self.symbol_table {
+        if let Some(scoping) = &self.scoping {
             if let Some(symbol_id) = ident.symbol_id.get() {
-                let name = symbol_table.get_name(symbol_id);
+                let name = scoping.symbol_name(symbol_id);
                 // SAFETY: Hack the lifetime to be part of the allocator.
                 return unsafe { std::mem::transmute_copy(&name) };
             }

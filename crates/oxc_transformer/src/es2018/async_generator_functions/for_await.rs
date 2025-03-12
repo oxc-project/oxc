@@ -137,7 +137,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 if block.body.is_empty() {
                     // If the block is empty, we don’t need to add it to the body;
                     // instead, we need to remove the useless scope.
-                    ctx.scopes_mut().delete_scope(block.scope_id());
+                    ctx.scoping_mut().delete_scope(block.scope_id());
                 } else {
                     statements.push(ctx.ast.move_statement(stmt_body));
                 }
@@ -323,7 +323,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                     // Handle the for-of statement move to the body of new for-statement
                     let for_statement_body_scope_id = for_of_scope_id;
                     {
-                        ctx.scopes_mut().change_parent_id(
+                        ctx.scoping_mut().change_scope_parent_id(
                             for_statement_body_scope_id,
                             Some(for_statement_scope_id),
                         );

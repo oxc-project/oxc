@@ -894,13 +894,13 @@ function deserializeAccessorProperty(pos) {
 }
 
 function deserializeImportExpression(pos) {
-  const args = deserializeVecExpression(pos + 24);
+  const options = deserializeVecExpression(pos + 24);
   return {
     type: 'ImportExpression',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     source: deserializeExpression(pos + 8),
-    options: args.length === 0 ? null : args[0],
+    options: options.length === 0 ? null : options[0],
   };
 }
 
@@ -1180,7 +1180,7 @@ function deserializeJSXNamespacedName(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     namespace: deserializeJSXIdentifier(pos + 8),
-    property: deserializeJSXIdentifier(pos + 32),
+    name: deserializeJSXIdentifier(pos + 32),
   };
 }
 
@@ -1771,11 +1771,11 @@ function deserializeTSImportType(pos) {
     type: 'TSImportType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    isTypeOf: deserializeBool(pos + 8),
-    parameter: deserializeTSType(pos + 16),
+    argument: deserializeTSType(pos + 8),
+    options: deserializeOptionBoxTSImportAttributes(pos + 24),
     qualifier: deserializeOptionTSTypeName(pos + 32),
-    attributes: deserializeOptionBoxTSImportAttributes(pos + 48),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 56),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
+    isTypeOf: deserializeBool(pos + 56),
   };
 }
 
@@ -2711,8 +2711,6 @@ function deserializeAssignmentTarget(pos) {
       return deserializeBoxTSNonNullExpression(pos + 8);
     case 4:
       return deserializeBoxTSTypeAssertion(pos + 8);
-    case 5:
-      return deserializeBoxTSInstantiationExpression(pos + 8);
     case 8:
       return deserializeBoxArrayAssignmentTarget(pos + 8);
     case 9:
@@ -2740,8 +2738,6 @@ function deserializeSimpleAssignmentTarget(pos) {
       return deserializeBoxTSNonNullExpression(pos + 8);
     case 4:
       return deserializeBoxTSTypeAssertion(pos + 8);
-    case 5:
-      return deserializeBoxTSInstantiationExpression(pos + 8);
     case 48:
       return deserializeBoxComputedMemberExpression(pos + 8);
     case 49:
@@ -2776,8 +2772,6 @@ function deserializeAssignmentTargetMaybeDefault(pos) {
       return deserializeBoxTSNonNullExpression(pos + 8);
     case 4:
       return deserializeBoxTSTypeAssertion(pos + 8);
-    case 5:
-      return deserializeBoxTSInstantiationExpression(pos + 8);
     case 8:
       return deserializeBoxArrayAssignmentTarget(pos + 8);
     case 9:
@@ -3041,8 +3035,6 @@ function deserializeForStatementLeft(pos) {
       return deserializeBoxTSNonNullExpression(pos + 8);
     case 4:
       return deserializeBoxTSTypeAssertion(pos + 8);
-    case 5:
-      return deserializeBoxTSInstantiationExpression(pos + 8);
     case 8:
       return deserializeBoxArrayAssignmentTarget(pos + 8);
     case 9:
@@ -5523,11 +5515,6 @@ function deserializeBoxTSTypeParameter(pos) {
   return deserializeTSTypeParameter(uint32[pos >> 2]);
 }
 
-function deserializeOptionTSTypeName(pos) {
-  if (uint8[pos] === 2) return null;
-  return deserializeTSTypeName(pos);
-}
-
 function deserializeBoxTSImportAttributes(pos) {
   return deserializeTSImportAttributes(uint32[pos >> 2]);
 }
@@ -5535,6 +5522,11 @@ function deserializeBoxTSImportAttributes(pos) {
 function deserializeOptionBoxTSImportAttributes(pos) {
   if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
   return deserializeBoxTSImportAttributes(pos);
+}
+
+function deserializeOptionTSTypeName(pos) {
+  if (uint8[pos] === 2) return null;
+  return deserializeTSTypeName(pos);
 }
 
 function deserializeVecTSImportAttribute(pos) {

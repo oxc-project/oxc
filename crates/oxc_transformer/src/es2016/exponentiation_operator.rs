@@ -150,7 +150,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         let mut temp_var_inits = ctx.ast.vec();
 
         // Make sure side-effects of evaluating `left` only happen once
-        let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id());
+        let reference = ctx.scoping.scoping_mut().get_reference_mut(ident.reference_id());
 
         // `left **= right` is being transformed to `left = Math.pow(left, right)`,
         // so `left` in `left =` is no longer being read from
@@ -479,7 +479,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         match obj {
             Expression::Super(super_) => return ctx.ast.expression_super(super_.span),
             Expression::Identifier(ident) => {
-                let symbol_id = ctx.symbols().get_reference(ident.reference_id()).symbol_id();
+                let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
                 if let Some(symbol_id) = symbol_id {
                     // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
                     // No need for a temp var.
@@ -533,7 +533,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         right: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let math_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Math");
+        let math_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Math");
         let object =
             ctx.create_ident_expr(SPAN, Atom::from("Math"), math_symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, "pow");

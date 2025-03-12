@@ -163,11 +163,11 @@ impl Rule for Namespace {
                 return;
             }
 
-            let Some(symbol_id) = ctx.scopes().get_root_binding(entry.local_name.name()) else {
+            let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name()) else {
                 return;
             };
 
-            ctx.symbols().get_resolved_references(symbol_id).for_each(|reference| {
+            ctx.scoping().get_resolved_references(symbol_id).for_each(|reference| {
                 if let Some(node) = ctx.nodes().parent_node(reference.node_id()) {
                     let name = entry.local_name.name();
 

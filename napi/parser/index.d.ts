@@ -151,11 +151,11 @@ export interface ParserOptions {
    */
   astType?: 'js' | 'ts'
   /**
-   * Emit `ParenthesizedExpression` in AST.
+   * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *
    * If this option is true, parenthesized expressions are represented by
-   * (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
-   * containing the expression inside parentheses.
+   * (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` nodes that
+   * have a single `expression` property containing the expression inside parentheses.
    *
    * @default true
    */

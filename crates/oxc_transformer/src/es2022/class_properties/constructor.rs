@@ -198,7 +198,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Only include `constructor_scope_id` in return value if constructor's scope has some bindings.
         // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
         // because no bindings to clash with.
-        let constructor_scope_id = if ctx.scopes().get_bindings(constructor_scope_id).is_empty() {
+        let constructor_scope_id = if ctx.scoping().get_bindings(constructor_scope_id).is_empty() {
             None
         } else {
             Some(constructor_scope_id)
@@ -375,7 +375,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Add `"use strict"` directive if outer scope is not strict mode
         // TODO: This should be parent scope if insert `_super` function as expression before class expression.
         let outer_scope_id = ctx.current_block_scope_id();
-        let directives = if ctx.scopes().get_flags(outer_scope_id).is_strict_mode() {
+        let directives = if ctx.scoping().scope_flags(outer_scope_id).is_strict_mode() {
             ctx.ast.vec()
         } else {
             ctx.ast.vec1(ctx.ast.use_strict_directive())
@@ -503,7 +503,7 @@ impl<'a, 'ctx> ConstructorParamsSuperReplacer<'a, 'ctx> {
 
         // Create scope for `_super` function
         let outer_scope_id = self.ctx.current_block_scope_id();
-        let super_func_scope_id = self.ctx.scopes_mut().add_scope(
+        let super_func_scope_id = self.ctx.scoping_mut().add_scope(
             Some(outer_scope_id),
             NodeId::DUMMY,
             ScopeFlags::Function | ScopeFlags::StrictMode,
@@ -693,7 +693,7 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
             break;
         }
 
-        let super_func_scope_id = self.ctx.scopes_mut().add_scope(
+        let super_func_scope_id = self.ctx.scoping_mut().add_scope(
             Some(self.constructor_scope_id),
             NodeId::DUMMY,
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode,
@@ -807,7 +807,7 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
 
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
         let reference_id = ident.reference_id();
-        if let Some(symbol_id) = self.ctx.symbols().get_reference(reference_id).symbol_id() {
+        if let Some(symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id() {
             if let Some(new_name) = self.clashing_symbols.get(&symbol_id) {
                 ident.name = *new_name;
             }

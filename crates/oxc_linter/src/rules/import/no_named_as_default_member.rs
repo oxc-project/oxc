@@ -71,7 +71,7 @@ fn get_symbol_id_from_ident(
     ctx: &LintContext<'_>,
     ident: &IdentifierReference,
 ) -> Option<SymbolId> {
-    ctx.symbols().get_reference(ident.reference_id()).symbol_id()
+    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
 }
 
 impl Rule for NoNamedAsDefaultMember {
@@ -94,7 +94,7 @@ impl Rule for NoNamedAsDefaultMember {
                 continue;
             }
 
-            let Some(symbol_id) = ctx.scopes().get_root_binding(import_entry.local_name.name())
+            let Some(symbol_id) = ctx.scoping().get_root_binding(import_entry.local_name.name())
             else {
                 return;
             };
@@ -142,7 +142,7 @@ impl Rule for NoNamedAsDefaultMember {
             };
         };
 
-        for item in ctx.semantic().nodes() {
+        for item in ctx.nodes() {
             match item.kind() {
                 AstKind::MemberExpression(member_expr) => process_member_expr(member_expr),
                 AstKind::VariableDeclarator(decl) => {

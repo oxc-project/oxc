@@ -59,7 +59,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_static_member_expr(
-        e: &mut StaticMemberExpression<'a>,
+        e: &StaticMemberExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
@@ -71,7 +71,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_computed_member_expr(
-        e: &mut ComputedMemberExpression<'a>,
+        e: &ComputedMemberExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
@@ -93,7 +93,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_optional_chain(
-        chain_expr: &mut ChainExpression<'a>,
+        chain_expr: &ChainExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let member_expr = chain_expr.expression.as_member_expression()?;
@@ -467,15 +467,23 @@ impl<'a> PeepholeOptimizations {
         }
 
         // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
-        if left_expr.is_specific_string_literal("") && right_expr.value_type(&ctx).is_string() {
+        if Self::evaluates_to_empty_string(left_expr) && right_expr.value_type(&ctx).is_string() {
             return Some(ctx.ast.move_expression(right_expr));
-        } else if right_expr.is_specific_string_literal("")
+        } else if Self::evaluates_to_empty_string(right_expr)
             && left_expr.value_type(&ctx).is_string()
         {
             return Some(ctx.ast.move_expression(left_expr));
         }
 
         None
+    }
+
+    fn evaluates_to_empty_string(e: &Expression<'a>) -> bool {
+        match e {
+            Expression::StringLiteral(s) => s.value.is_empty(),
+            Expression::ArrayExpression(a) => a.elements.is_empty(),
+            _ => false,
+        }
     }
 
     fn try_fold_left_child_op(
@@ -557,7 +565,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_fold_binary_typeof_comparison(
-        bin_expr: &mut BinaryExpression<'a>,
+        bin_expr: &BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
@@ -1839,6 +1847,10 @@ mod test {
         fold_same("typeof foo + '123'");
         fold("typeof foo + ''", "typeof foo");
         fold("'' + typeof foo", "typeof foo");
+        fold("typeof foo + ``", "typeof foo");
+        fold("`` + typeof foo", "typeof foo");
+        fold("typeof foo + []", "typeof foo");
+        fold("[] + typeof foo", "typeof foo");
         fold("(foo ? 'a' : 'b') + ''", "foo ? 'a' : 'b'");
         fold_same("typeof foo - ''");
     }

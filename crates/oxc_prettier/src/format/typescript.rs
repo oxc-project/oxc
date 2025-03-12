@@ -244,7 +244,7 @@ impl<'a> Format<'a> for TSImportType<'a> {
         }
 
         parts.push(text!("import("));
-        parts.push(self.parameter.format(p));
+        parts.push(self.argument.format(p));
         // ToDo: attributes
         parts.push(text!(")"));
 
@@ -253,7 +253,7 @@ impl<'a> Format<'a> for TSImportType<'a> {
             parts.push(qualifier.format(p));
         }
 
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             parts.push(type_parameters.format(p));
         }
 

@@ -237,8 +237,8 @@ pub fn print_import_source_and_arguments<'a>(
     let mut indent_parts = Vec::new_in(p.allocator);
     indent_parts.push(softline!());
     indent_parts.push(expr.source.format(p));
-    if !expr.arguments.is_empty() {
-        for arg in &expr.arguments {
+    if !expr.options.is_empty() {
+        for arg in &expr.options {
             indent_parts.push(text!(","));
             indent_parts.push(line!());
             indent_parts.push(arg.format(p));
@@ -301,7 +301,7 @@ fn is_hopefully_short_call_argument(mut node: &Expression) -> bool {
         return !match node {
             Expression::CallExpression(call) => call.arguments.len() > 1,
             Expression::NewExpression(call) => call.arguments.len() > 1,
-            Expression::ImportExpression(call) => call.arguments.len() > 0,
+            Expression::ImportExpression(call) => call.options.len() > 0,
             _ => false,
         };
     }
@@ -350,7 +350,7 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
 
     if node.is_call_expression() {
         if let Expression::ImportExpression(expr) = node {
-            return expr.arguments.len() <= depth && expr.arguments.iter().all(is_child_simple);
+            return expr.options.len() <= depth && expr.options.iter().all(is_child_simple);
         } else if let Expression::CallExpression(expr) = node {
             if is_simple_call_argument(&expr.callee, depth) {
                 return expr.arguments.len() <= depth

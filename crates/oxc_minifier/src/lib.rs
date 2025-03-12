@@ -1,6 +1,6 @@
 //! ECMAScript Minifier
 
-#![allow(clippy::needless_pass_by_ref_mut, clippy::literal_string_with_formatting_args)]
+#![allow(clippy::literal_string_with_formatting_args)]
 
 mod compressor;
 mod ctx;
@@ -14,7 +14,7 @@ mod tester;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
-use oxc_semantic::{SemanticBuilder, Stats, SymbolTable};
+use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 
 pub use oxc_mangler::MangleOptions;
 
@@ -33,7 +33,7 @@ impl Default for MinifierOptions {
 }
 
 pub struct MinifierReturn {
-    pub symbol_table: Option<SymbolTable>,
+    pub scoping: Option<Scoping>,
 }
 
 pub struct Minifier {
@@ -49,14 +49,13 @@ impl Minifier {
         let stats = if let Some(compress) = self.options.compress {
             let semantic = SemanticBuilder::new().build(program).semantic;
             let stats = semantic.stats();
-            let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-            Compressor::new(allocator, compress)
-                .build_with_symbols_and_scopes(symbols, scopes, program);
+            let scoping = semantic.into_scoping();
+            Compressor::new(allocator, compress).build_with_scoping(scoping, program);
             stats
         } else {
             Stats::default()
         };
-        let symbol_table = self.options.mangle.map(|options| {
+        let scoping = self.options.mangle.map(|options| {
             let semantic = SemanticBuilder::new()
                 .with_stats(stats)
                 .with_scope_tree_child_ids(true)
@@ -64,6 +63,6 @@ impl Minifier {
                 .semantic;
             Mangler::default().with_options(options).build_with_semantic(semantic, program)
         });
-        MinifierReturn { symbol_table }
+        MinifierReturn { scoping }
     }
 }

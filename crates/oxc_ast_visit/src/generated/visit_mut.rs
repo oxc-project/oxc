@@ -1837,9 +1837,6 @@ pub mod walk_mut {
                 visitor.visit_ts_non_null_expression(it)
             }
             SimpleAssignmentTarget::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            SimpleAssignmentTarget::TSInstantiationExpression(it) => {
-                visitor.visit_ts_instantiation_expression(it)
-            }
             match_member_expression!(SimpleAssignmentTarget) => {
                 visitor.visit_member_expression(it.to_member_expression_mut())
             }
@@ -2796,7 +2793,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.source);
-        visitor.visit_expressions(&mut it.arguments);
+        visitor.visit_expressions(&mut it.options);
         visitor.leave_node(kind);
     }
 
@@ -3159,7 +3156,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_identifier(&mut it.namespace);
-        visitor.visit_jsx_identifier(&mut it.property);
+        visitor.visit_jsx_identifier(&mut it.name);
         visitor.leave_node(kind);
     }
 
@@ -4121,15 +4118,15 @@ pub mod walk_mut {
         let kind = AstType::TSImportType;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_type(&mut it.parameter);
+        visitor.visit_ts_type(&mut it.argument);
+        if let Some(options) = &mut it.options {
+            visitor.visit_ts_import_attributes(options);
+        }
         if let Some(qualifier) = &mut it.qualifier {
             visitor.visit_ts_type_name(qualifier);
         }
-        if let Some(attributes) = &mut it.attributes {
-            visitor.visit_ts_import_attributes(attributes);
-        }
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }

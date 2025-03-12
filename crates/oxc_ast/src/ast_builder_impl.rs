@@ -2,7 +2,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{Allocator, Box, FromIn, IntoIn, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, IntoIn, String, Vec};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
@@ -78,6 +78,13 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn atom(self, value: &str) -> Atom<'a> {
         Atom::from_in(value, self.allocator)
+    }
+
+    /// Allocate an [`Atom`] from an array of string slices.
+    #[inline]
+    pub fn atom_from_strs_array<const N: usize>(self, array: [&str; N]) -> Atom<'a> {
+        let string = String::from_strs_array_in(array, self.allocator);
+        Atom::from(string)
     }
 
     /// Convert a [`Cow<'a, str>`] to an [`Atom<'a>`].
@@ -280,7 +287,6 @@ impl<'a> AstBuilder<'a> {
     }
 
     /// Build a [`Function`] with `scope_id`.
-    #[expect(clippy::too_many_arguments)]
     #[inline]
     pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
         self,

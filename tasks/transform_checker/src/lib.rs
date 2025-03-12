@@ -98,7 +98,7 @@ use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
+use oxc_semantic::{Scoping, SemanticBuilder};
 use oxc_span::CompactStr;
 use oxc_syntax::{
     reference::ReferenceId,
@@ -110,8 +110,7 @@ type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 /// Check `ScopeTree` and `SymbolTable` are correct after transform
 pub fn check_semantic_after_transform(
-    symbols_after_transform: &SymbolTable,
-    scopes_after_transform: &ScopeTree,
+    scoping_after_transform: &Scoping,
     program: &Program,
 ) -> Option<Vec<OxcDiagnostic>> {
     let mut errors = Errors::default();
@@ -122,8 +121,6 @@ pub fn check_semantic_after_transform(
     }
 
     // Collect `ScopeId`s, `SymbolId`s and `ReferenceId`s from AST after transformer
-    let scoping_after_transform =
-        Scoping { symbols: symbols_after_transform, scopes: scopes_after_transform };
     let (
         scope_ids_after_transform,
         symbol_ids_after_transform,
@@ -137,12 +134,11 @@ pub fn check_semantic_after_transform(
     // so the cloned AST will be "clean" of all semantic data, as if it had come fresh from the parser.
     let allocator = Allocator::default();
     let program = program.clone_in(&allocator);
-    let (symbols_rebuilt, scopes_rebuilt) = SemanticBuilder::new()
-        .with_scope_tree_child_ids(scopes_after_transform.has_child_ids())
+    let scoping_rebuilt = SemanticBuilder::new()
+        .with_scope_tree_child_ids(scoping_after_transform.has_scope_child_ids())
         .build(&program)
         .semantic
-        .into_symbol_table_and_scope_tree();
-    let scoping_rebuilt = Scoping { symbols: &symbols_rebuilt, scopes: &scopes_rebuilt };
+        .into_scoping();
 
     let (scope_ids_rebuilt, symbol_ids_rebuilt, reference_ids_rebuilt, _) =
         SemanticIdsCollector::new(&mut errors).collect(&program);
@@ -178,19 +174,14 @@ pub fn check_semantic_ids(program: &Program) -> Option<Vec<OxcDiagnostic>> {
 }
 
 struct PostTransformChecker<'a, 's> {
-    scoping_after_transform: Scoping<'s>,
-    scoping_rebuilt: Scoping<'s>,
+    scoping_after_transform: &'s Scoping,
+    scoping_rebuilt: Scoping,
     // Mappings from after transform ID to rebuilt ID
     scope_ids_map: IdMapping<ScopeId>,
     symbol_ids_map: IdMapping<SymbolId>,
     reference_ids_map: IdMapping<ReferenceId>,
     reference_names: Vec<Atom<'a>>,
     errors: Errors,
-}
-
-struct Scoping<'s> {
-    symbols: &'s SymbolTable,
-    scopes: &'s ScopeTree,
 }
 
 /// Mapping from "after transform" ID to "rebuilt" ID
@@ -334,7 +325,6 @@ impl PostTransformChecker<'_, '_> {
             // Check bindings are the same
             fn get_sorted_binding_names(scoping: &Scoping, scope_id: ScopeId) -> Vec<CompactStr> {
                 let mut binding_names = scoping
-                    .scopes
                     .get_bindings(scope_id)
                     .keys()
                     .map(|k| CompactStr::new(k))
@@ -348,7 +338,7 @@ impl PostTransformChecker<'_, '_> {
                 self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
             } else {
                 let mut symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
-                    scoping.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
+                    scoping.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
                 });
                 if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
                     symbol_ids.after_transform.sort_unstable();
@@ -358,15 +348,13 @@ impl PostTransformChecker<'_, '_> {
             }
 
             // Check flags match
-            let flags =
-                self.get_pair(scope_ids, |scoping, scope_id| scoping.scopes.get_flags(scope_id));
+            let flags = self.get_pair(scope_ids, Scoping::scope_flags);
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Scope flags mismatch", scope_ids, flags);
             }
 
             // Check parents match
-            let parent_ids = self
-                .get_pair(scope_ids, |scoping, scope_id| scoping.scopes.get_parent_id(scope_id));
+            let parent_ids = self.get_pair(scope_ids, Scoping::scope_parent_id);
             let is_match = match parent_ids.into_parts() {
                 (Some(parent_id_after_transform), Some(parent_id_rebuilt)) => {
                     let parent_ids = Pair::new(parent_id_after_transform, parent_id_rebuilt);
@@ -380,9 +368,9 @@ impl PostTransformChecker<'_, '_> {
             }
 
             // Check children match
-            if self.scoping_after_transform.scopes.has_child_ids() {
+            if self.scoping_after_transform.has_scope_child_ids() {
                 let child_ids = self.get_pair(scope_ids, |scoping, scope_id| {
-                    scoping.scopes.get_child_ids(scope_id).to_vec()
+                    scoping.get_scope_child_ids(scope_id).to_vec()
                 });
                 if self.remap_scope_ids_sets(&child_ids).is_mismatch() {
                     self.errors.push_mismatch("Scope children mismatch", scope_ids, child_ids);
@@ -397,7 +385,7 @@ impl PostTransformChecker<'_, '_> {
         for symbol_ids in self.symbol_ids_map.pairs() {
             // Check names match
             let names = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping.symbols.get_name(symbol_id).to_string()
+                scoping.symbol_name(symbol_id).to_string()
             });
             if names.is_mismatch() {
                 self.errors.push_mismatch("Symbol name mismatch", symbol_ids, &names);
@@ -406,22 +394,19 @@ impl PostTransformChecker<'_, '_> {
             let mismatch_title = |field| format!("Symbol {field} mismatch for {symbol_name:?}");
 
             // Check flags match
-            let flags = self
-                .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.get_flags(symbol_id));
+            let flags = self.get_pair(symbol_ids, Scoping::symbol_flags);
             if flags.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("flags"), symbol_ids, flags);
             }
 
             // Check spans match
-            let spans =
-                self.get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.get_span(symbol_id));
+            let spans = self.get_pair(symbol_ids, Scoping::symbol_span);
             if spans.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("span"), symbol_ids, spans);
             }
 
             // Check scope IDs match
-            let scope_ids = self
-                .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.get_scope_id(symbol_id));
+            let scope_ids = self.get_pair(symbol_ids, Scoping::symbol_scope_id);
             if self.remap_scope_ids(scope_ids).is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("scope ID"), symbol_ids, scope_ids);
             }
@@ -430,12 +415,7 @@ impl PostTransformChecker<'_, '_> {
 
             // Check resolved references match
             let reference_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping
-                    .symbols
-                    .get_resolved_reference_ids(symbol_id)
-                    .iter()
-                    .copied()
-                    .collect::<Vec<_>>()
+                scoping.get_resolved_reference_ids(symbol_id).iter().copied().collect::<Vec<_>>()
             });
             if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
                 self.errors.push_mismatch(
@@ -447,7 +427,7 @@ impl PostTransformChecker<'_, '_> {
 
             // Check redeclarations match
             let redeclaration_spans = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                let mut spans = scoping.symbols.get_redeclarations(symbol_id).to_vec();
+                let mut spans = scoping.symbol_redeclarations(symbol_id).to_vec();
                 spans.sort_unstable();
                 spans
             });
@@ -465,7 +445,7 @@ impl PostTransformChecker<'_, '_> {
         for (reference_ids, name) in self.reference_ids_map.pairs().zip(&self.reference_names) {
             // Check symbol IDs match
             let symbol_ids = self.get_pair(reference_ids, |scoping, reference_id| {
-                scoping.symbols.get_reference(reference_id).symbol_id()
+                scoping.get_reference(reference_id).symbol_id()
             });
             let symbol_ids_remapped = Pair::new(
                 symbol_ids.after_transform.map(|symbol_id| self.symbol_ids_map.get(symbol_id)),
@@ -473,9 +453,9 @@ impl PostTransformChecker<'_, '_> {
             );
             if symbol_ids_remapped.is_mismatch() {
                 let mismatch_strs = self.get_pair(reference_ids, |scoping, reference_id| {
-                    match scoping.symbols.get_reference(reference_id).symbol_id() {
+                    match scoping.get_reference(reference_id).symbol_id() {
                         Some(symbol_id) => {
-                            let symbol_name = scoping.symbols.get_name(symbol_id);
+                            let symbol_name = scoping.symbol_name(symbol_id);
                             format!("{symbol_id:?} {symbol_name:?}")
                         }
                         None => "<None>".to_string(),
@@ -489,7 +469,7 @@ impl PostTransformChecker<'_, '_> {
 
             // Check flags match
             let flags = self.get_pair(reference_ids, |scoping, reference_id| {
-                scoping.symbols.get_reference(reference_id).flags()
+                scoping.get_reference(reference_id).flags()
             });
             if flags.is_mismatch() {
                 self.errors.push_mismatch(
@@ -504,7 +484,6 @@ impl PostTransformChecker<'_, '_> {
     fn check_unresolved_references(&mut self) {
         let unresolved_names = self.get_static_pair(|scoping| {
             let mut names = scoping
-                .scopes
                 .root_unresolved_references()
                 .keys()
                 .map(ToString::to_string)
@@ -517,10 +496,10 @@ impl PostTransformChecker<'_, '_> {
         }
 
         for (name, reference_ids_after_transform) in
-            self.scoping_after_transform.scopes.root_unresolved_references()
+            self.scoping_after_transform.root_unresolved_references()
         {
             if let Some(reference_ids_rebuilt) =
-                self.scoping_rebuilt.scopes.root_unresolved_references().get(name)
+                self.scoping_rebuilt.root_unresolved_references().get(name)
             {
                 let reference_ids_after_transform =
                     reference_ids_after_transform.iter().copied().collect::<Vec<_>>();
@@ -540,14 +519,14 @@ impl PostTransformChecker<'_, '_> {
     /// Get same data from `after_transform` and `rebuilt` from a pair of IDs
     fn get_pair<R, I: Copy, F: Fn(&Scoping, I) -> R>(&self, ids: Pair<I>, getter: F) -> Pair<R> {
         Pair::new(
-            getter(&self.scoping_after_transform, ids.after_transform),
+            getter(self.scoping_after_transform, ids.after_transform),
             getter(&self.scoping_rebuilt, ids.rebuilt),
         )
     }
 
     /// Get same data from `after_transform` and `rebuilt`
     fn get_static_pair<R, F: Fn(&Scoping) -> R>(&self, getter: F) -> Pair<R> {
-        Pair::new(getter(&self.scoping_after_transform), getter(&self.scoping_rebuilt))
+        Pair::new(getter(self.scoping_after_transform), getter(&self.scoping_rebuilt))
     }
 
     /// Map `after_transform` scope ID to `rebuilt` scope ID

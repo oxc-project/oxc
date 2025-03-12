@@ -414,23 +414,22 @@ impl ESTree for AssignmentTargetPropertyIdentifierValue<'_> {
     }
 }
 
-/// Serializer for `arguments` field of `ImportExpression`
-/// (which is renamed to `options` in ESTree AST).
+/// Serializer for `options` field of `ImportExpression`.
 ///
-/// Serialize only the first expression in `arguments`, or `null` if `arguments` is empty.
+/// Serialize only the first expression in `options`, or `null` if `options` is empty.
 #[ast_meta]
 #[estree(
     ts_type = "Expression | null",
     raw_deser = "
-        const args = DESER[Vec<Expression>](POS_OFFSET.arguments);
-        args.length === 0 ? null : args[0]
+        const options = DESER[Vec<Expression>](POS_OFFSET.options);
+        options.length === 0 ? null : options[0]
     "
 )]
-pub struct ImportExpressionArguments<'a>(pub &'a ImportExpression<'a>);
+pub struct ImportExpressionOptions<'a>(pub &'a ImportExpression<'a>);
 
-impl ESTree for ImportExpressionArguments<'_> {
+impl ESTree for ImportExpressionOptions<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(expression) = self.0.arguments.first() {
+        if let Some(expression) = self.0.options.first() {
             expression.serialize(serializer);
         } else {
             ().serialize(serializer);

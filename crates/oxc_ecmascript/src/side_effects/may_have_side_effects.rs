@@ -1,8 +1,8 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    constant_evaluation::DetermineValueType, is_global_reference::IsGlobalReference,
-    to_numeric::ToNumeric, to_primitive::ToPrimitive,
+    ToBigInt, ToIntegerIndex, constant_evaluation::DetermineValueType,
+    is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
 };
 
 /// Returns true if subtree changes application state.
@@ -448,6 +448,27 @@ impl MayHaveSideEffects for ComputedMemberExpression<'_> {
                     is_global_reference,
                 )
             }
+            Expression::NumericLiteral(n) => !n.value.to_integer_index().is_some_and(|n| {
+                !integer_index_property_access_may_have_side_effects(
+                    &self.object,
+                    n,
+                    is_global_reference,
+                )
+            }),
+            Expression::BigIntLiteral(b) => {
+                if b.is_negative() {
+                    return true;
+                }
+                !b.to_big_int(is_global_reference)
+                    .and_then(ToIntegerIndex::to_integer_index)
+                    .is_some_and(|b| {
+                        !integer_index_property_access_may_have_side_effects(
+                            &self.object,
+                            b,
+                            is_global_reference,
+                        )
+                    })
+            }
             _ => true,
         }
     }
@@ -458,6 +479,10 @@ fn property_access_may_have_side_effects(
     property: &str,
     is_global_reference: &impl IsGlobalReference,
 ) -> bool {
+    if object.may_have_side_effects(is_global_reference) {
+        return true;
+    }
+
     match property {
         "length" => {
             !(matches!(object, Expression::ArrayExpression(_))
@@ -465,6 +490,35 @@ fn property_access_may_have_side_effects(
         }
         _ => true,
     }
+}
+
+fn integer_index_property_access_may_have_side_effects(
+    object: &Expression,
+    property: u32,
+    is_global_reference: &impl IsGlobalReference,
+) -> bool {
+    if object.may_have_side_effects(is_global_reference) {
+        return true;
+    }
+    match object {
+        Expression::StringLiteral(s) => property as usize >= s.value.encode_utf16().count(),
+        Expression::ArrayExpression(arr) => property as usize >= get_array_minimum_length(arr),
+        _ => true,
+    }
+}
+
+fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
+    arr.elements
+        .iter()
+        .map(|e| match e {
+            ArrayExpressionElement::SpreadElement(spread) => match &spread.argument {
+                Expression::ArrayExpression(arr) => get_array_minimum_length(arr),
+                Expression::StringLiteral(str) => str.value.chars().count(),
+                _ => 0,
+            },
+            _ => 1,
+        })
+        .sum()
 }
 
 impl MayHaveSideEffects for CallExpression<'_> {

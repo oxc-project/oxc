@@ -307,7 +307,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let current_scope_id = ctx.current_scope_id();
-        if !ctx.scopes().get_flags(current_scope_id).is_function() {
+        if !ctx.scoping().scope_flags(current_scope_id).is_function() {
             return;
         }
 
@@ -337,9 +337,9 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
 
             if let Some(binding_name) = binding_name {
                 self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
-                    ctx.scopes()
+                    ctx.scoping()
                         .find_binding(
-                            ctx.scopes().get_parent_id(ctx.current_scope_id()).unwrap(),
+                            ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
                             binding_name.as_str(),
                         )
                         .map(|symbol_id| {
@@ -794,7 +794,7 @@ impl<'a> ReactRefresh<'a, '_> {
             // See if this identifier is used in JSX. Then it's a component.
             // TODO: Here we should check if the variable is used in JSX. But now we only check if it has value references.
             // https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199
-            if !ctx.symbols().get_resolved_references(symbol_id).any(Reference::is_value) {
+            if !ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_value) {
                 return None;
             }
         }

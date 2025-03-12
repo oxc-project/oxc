@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@napi-rs/cli':
-      specifier: 3.0.0-alpha.72
-      version: 3.0.0-alpha.72
+      specifier: 3.0.0-alpha.73
+      version: 3.0.0-alpha.73
     typescript:
       specifier: 5.8.2
       version: 5.8.2
@@ -22,7 +22,7 @@ importers:
     devDependencies:
       '@napi-rs/cli':
         specifier: 'catalog:'
-        version: 3.0.0-alpha.72(@emnapi/runtime@1.3.1)(@types/node@22.13.8)(emnapi@1.3.1)
+        version: 3.0.0-alpha.73(@emnapi/runtime@1.3.1)(@types/node@22.13.8)(emnapi@1.3.1)
       emnapi:
         specifier: 1.3.1
         version: 1.3.1
@@ -98,16 +98,6 @@ importers:
         specifier: 'catalog:'
         version: 3.0.7(@types/node@22.13.8)(terser@5.39.0)
 
-  npm/oxc-minify: {}
-
-  npm/oxc-parser:
-    dependencies:
-      '@oxc-project/types':
-        specifier: workspace:^
-        version: link:../oxc-types
-
-  npm/oxc-transform: {}
-
   npm/oxc-types: {}
 
   npm/oxc-wasm:
@@ -126,6 +116,8 @@ importers:
 
   npm/runtime: {}
 
+  npm/wasm-web: {}
+
   tasks/compat_data:
     devDependencies:
       degit:
@@ -134,12 +126,6 @@ importers:
 
   tasks/e2e:
     devDependencies:
-      '@oxc-minify/binding':
-        specifier: workspace:^
-        version: link:../../napi/minify
-      '@oxc-transform/binding':
-        specifier: workspace:^
-        version: link:../../napi/transform
       antd:
         specifier: ^5.23.1
         version: 5.24.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -149,6 +135,12 @@ importers:
       memfs:
         specifier: ^4.17.0
         version: 4.17.0
+      oxc-minify:
+        specifier: workspace:^
+        version: link:../../napi/minify
+      oxc-transform:
+        specifier: workspace:^
+        version: link:../../napi/transform
       react:
         specifier: ^19.0.0
         version: 19.0.0
@@ -172,6 +164,9 @@ importers:
         specifier: ^7.25.9
         version: 7.25.9(@babel/core@7.26.9)
       '@babel/plugin-proposal-decorators':
+        specifier: ^7.25.9
+        version: 7.25.9(@babel/core@7.26.9)
+      '@babel/plugin-proposal-explicit-resource-management':
         specifier: ^7.25.9
         version: 7.25.9(@babel/core@7.26.9)
       '@babel/plugin-transform-arrow-functions':
@@ -399,6 +394,12 @@ packages:
 
   '@babel/plugin-proposal-decorators@7.25.9':
     resolution: {integrity: sha512-smkNLL/O1ezy9Nhy4CNosc4Va+1wo5w4gzSZeLe6y6dM4mmHfYOCPolXQPHQxonZCF+ZyebxN9vqOolkYrSn5g==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+
+  '@babel/plugin-proposal-explicit-resource-management@7.25.9':
+    resolution: {integrity: sha512-EbtfSvb6s4lZwef1nH52nw4DTUAvHY6bl1mbLgEHUkR6L8j4WY70mM/InB8Ozgdlok/7etbiSW+Wc88ZebZAKQ==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -836,8 +837,8 @@ packages:
     peerDependencies:
       tslib: '2'
 
-  '@napi-rs/cli@3.0.0-alpha.72':
-    resolution: {integrity: sha512-sELH8rrBMdNsPXai5fjRP44fDnJiCNqXxBvojAuUquWlG2BE7lRajaHWfpqtUaQHqwKJdYGsR55wCk/v3apSOA==}
+  '@napi-rs/cli@3.0.0-alpha.73':
+    resolution: {integrity: sha512-HeZP2KnKynIoi42ooAf/0tx7nASx1Mo58BKSALv4f5j0C2L12Z687iAuzJWiwzgJ8puTzKzE7pCnB/byflIaAA==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
@@ -3673,6 +3674,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@babel/plugin-proposal-explicit-resource-management@7.25.9(@babel/core@7.26.9)':
+    dependencies:
+      '@babel/core': 7.26.9
+      '@babel/helper-plugin-utils': 7.26.5
+
   '@babel/plugin-syntax-decorators@7.25.9(@babel/core@7.26.9)':
     dependencies:
       '@babel/core': 7.26.9
@@ -4065,7 +4071,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@napi-rs/cli@3.0.0-alpha.72(@emnapi/runtime@1.3.1)(@types/node@22.13.8)(emnapi@1.3.1)':
+  '@napi-rs/cli@3.0.0-alpha.73(@emnapi/runtime@1.3.1)(@types/node@22.13.8)(emnapi@1.3.1)':
     dependencies:
       '@inquirer/prompts': 7.3.2(@types/node@22.13.8)
       '@napi-rs/cross-toolchain': 0.0.19

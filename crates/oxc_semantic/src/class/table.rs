@@ -1,24 +1,25 @@
 use rustc_hash::FxHashMap;
+use std::borrow::Cow;
 
 use oxc_index::IndexVec;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     class::{ClassId, ElementId, ElementKind},
     node::NodeId,
 };
 
 #[derive(Debug)]
-pub struct Element {
-    pub name: CompactStr,
+pub struct Element<'a> {
+    pub name: Cow<'a, str>,
     pub span: Span,
     pub is_private: bool,
     pub r#static: bool,
     pub kind: ElementKind,
 }
 
-impl Element {
+impl<'a> Element<'a> {
     pub fn new(
-        name: CompactStr,
+        name: Cow<'a, str>,
         span: Span,
         r#static: bool,
         is_private: bool,
@@ -29,15 +30,15 @@ impl Element {
 }
 
 #[derive(Debug)]
-pub struct PrivateIdentifierReference {
+pub struct PrivateIdentifierReference<'a> {
     pub id: NodeId,
-    pub name: CompactStr,
+    pub name: Atom<'a>,
     pub span: Span,
     pub element_ids: Vec<ElementId>,
 }
 
-impl PrivateIdentifierReference {
-    pub fn new(id: NodeId, name: CompactStr, span: Span, element_ids: Vec<ElementId>) -> Self {
+impl<'a> PrivateIdentifierReference<'a> {
+    pub fn new(id: NodeId, name: Atom<'a>, span: Span, element_ids: Vec<ElementId>) -> Self {
         Self { id, name, span, element_ids }
     }
 }
@@ -46,14 +47,14 @@ impl PrivateIdentifierReference {
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
-pub struct ClassTable {
+pub struct ClassTable<'a> {
     pub parent_ids: FxHashMap<ClassId, ClassId>,
     pub declarations: IndexVec<ClassId, NodeId>,
-    pub elements: IndexVec<ClassId, IndexVec<ElementId, Element>>,
-    pub private_identifier_references: IndexVec<ClassId, Vec<PrivateIdentifierReference>>,
+    pub elements: IndexVec<ClassId, IndexVec<ElementId, Element<'a>>>,
+    pub private_identifier_references: IndexVec<ClassId, Vec<PrivateIdentifierReference<'a>>>,
 }
 
-impl ClassTable {
+impl<'a> ClassTable<'a> {
     pub fn ancestors(&self, class_id: ClassId) -> impl Iterator<Item = ClassId> + '_ {
         std::iter::successors(Some(class_id), |class_id| self.parent_ids.get(class_id).copied())
     }
@@ -112,14 +113,14 @@ impl ClassTable {
         class_id
     }
 
-    pub fn add_element(&mut self, class_id: ClassId, element: Element) {
+    pub fn add_element(&mut self, class_id: ClassId, element: Element<'a>) {
         self.elements[class_id].push(element);
     }
 
     pub fn add_private_identifier_reference(
         &mut self,
         class_id: ClassId,
-        private_identifier_reference: PrivateIdentifierReference,
+        private_identifier_reference: PrivateIdentifierReference<'a>,
     ) {
         self.private_identifier_references[class_id].push(private_identifier_reference);
     }

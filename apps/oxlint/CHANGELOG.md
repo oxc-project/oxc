@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.14] - 2025-03-11
+
+### Features
+
+- 41f32ea linter: Allow adding more overrides via `extends` configs (#9475) (camchenry)
+- fb7cf10 linter: Allowing `plugins` to be extended with `extends` (#9473) (camchenry)
+- fc74849 linter: Inherit `rules` via the extended config files (#9308) (camchenry)
+
+### Bug Fixes
+
+- 4ca62ab linter: Output right file line and column for `.vue`, `.astro` and `.svelte` files (#9484) (Sysix)
+- 3105159 linter: Do not output number of rules with nested configs (#9476) (camchenry)
+- 5ecda01 linter: Support nested extending (#9472) (camchenry)
+
+### Refactor
+
+- 62bffed rust: Allow a few annoying clippy rules (#9588) (Boshen)
+
+### Testing
+
+- 934a387 linter: Remove test dependency on oxlint (#9513) (camchenry)
+
 ## [0.15.13] - 2025-03-04
 
 ### Features

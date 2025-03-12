@@ -10,7 +10,7 @@ use std::path::Path;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::Scoping;
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
 
@@ -31,6 +31,7 @@ mod es2020;
 mod es2021;
 mod es2022;
 mod jsx;
+mod proposals;
 mod regexp;
 mod typescript;
 
@@ -49,6 +50,7 @@ use es2020::ES2020;
 use es2021::ES2021;
 use es2022::ES2022;
 use jsx::Jsx;
+use proposals::explicit_resource_management::ExplicitResourceManagement;
 use regexp::RegExp;
 use rustc_hash::FxHashMap;
 use typescript::TypeScript;
@@ -70,8 +72,7 @@ pub use crate::{
 #[non_exhaustive]
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,
-    pub symbols: SymbolTable,
-    pub scopes: ScopeTree,
+    pub scoping: Scoping,
     /// Helpers used by this transform.
     #[deprecated = "Internal usage only"]
     pub helpers_used: FxHashMap<Helper, String>,
@@ -101,10 +102,9 @@ impl<'a> Transformer<'a> {
         }
     }
 
-    pub fn build_with_symbols_and_scopes(
+    pub fn build_with_scoping(
         mut self,
-        symbols: SymbolTable,
-        scopes: ScopeTree,
+        scoping: Scoping,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
@@ -122,6 +122,7 @@ impl<'a> Transformer<'a> {
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
             decorator: Decorator::new(self.decorator, &self.ctx),
+            explicit_resource_management: ExplicitResourceManagement::new(&self.ctx),
             x0_typescript: program
                 .source_type
                 .is_typescript()
@@ -138,10 +139,10 @@ impl<'a> Transformer<'a> {
             x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
         };
 
-        let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
+        let scoping = traverse_mut(&mut transformer, allocator, program, scoping);
         let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
         #[expect(deprecated)]
-        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes, helpers_used }
+        TransformerReturn { errors: self.ctx.take_errors(), scoping, helpers_used }
     }
 }
 
@@ -149,6 +150,7 @@ struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
     decorator: Decorator<'a, 'ctx>,
+    explicit_resource_management: ExplicitResourceManagement<'a, 'ctx>,
     x1_jsx: Jsx<'a, 'ctx>,
     x2_es2022: ES2022<'a, 'ctx>,
     x2_es2021: ES2021<'a, 'ctx>,
@@ -169,6 +171,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.enter_program(program, ctx);
         }
         self.x1_jsx.enter_program(program, ctx);
+        self.explicit_resource_management.enter_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -271,6 +274,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_static_block(block, ctx);
         self.x2_es2022.enter_static_block(block, ctx);
+        self.explicit_resource_management.enter_static_block(block, ctx);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -374,6 +378,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
 
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_function_body(body, ctx);
+        self.explicit_resource_management.enter_function_body(body, ctx);
     }
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -557,6 +562,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.enter_statement(stmt, ctx);
         }
         self.x2_es2018.enter_statement(stmt, ctx);
+        self.explicit_resource_management.enter_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -597,6 +603,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_for_of_statement(stmt, ctx);
         }
+        self.explicit_resource_management.enter_for_of_statement(stmt, ctx);
         self.x2_es2018.enter_for_of_statement(stmt, ctx);
     }
 

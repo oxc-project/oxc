@@ -34,7 +34,7 @@ declare_oxc_lint!(
 
 impl Rule for BanTslintComment {
     fn run_once(&self, ctx: &LintContext) {
-        let comments = ctx.semantic().comments();
+        let comments = ctx.comments();
         for comment in comments {
             let raw = ctx.source_range(comment.content_span());
             if is_tslint_comment_directive(raw) {

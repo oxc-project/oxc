@@ -61,6 +61,18 @@ fn integration() {
         console.log(c, d);
         ",
     );
+
+    test(
+        "v = KEY === 'delete' ? function () {
+          return 1;
+        } : KEY === 'has' ? function has () {
+          return 1;
+        } : function set () {
+          return 2;
+        };
+        ",
+        "v = KEY === 'delete' || KEY === 'has' ? function () { return 1 } : function () { return 2 }",
+    );
 }
 
 #[test]

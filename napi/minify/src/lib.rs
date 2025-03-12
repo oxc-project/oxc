@@ -39,7 +39,7 @@ pub fn minify(
 
     let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 
-    let symbol_table = Minifier::new(minifier_options).build(&allocator, &mut program).symbol_table;
+    let scoping = Minifier::new(minifier_options).build(&allocator, &mut program).scoping;
 
     let mut codegen_options = match &options.codegen {
         Some(Either::A(false)) => CodegenOptions { minify: false, ..CodegenOptions::default() },
@@ -53,10 +53,7 @@ pub fn minify(
         codegen_options.source_map_path = Some(PathBuf::from(filename));
     }
 
-    let ret = Codegen::new()
-        .with_options(codegen_options)
-        .with_symbol_table(symbol_table)
-        .build(&program);
+    let ret = Codegen::new().with_options(codegen_options).with_scoping(scoping).build(&program);
 
     Ok(MinifyResult { code: ret.code, map: ret.map.map(oxc_sourcemap::napi::SourceMap::from) })
 }

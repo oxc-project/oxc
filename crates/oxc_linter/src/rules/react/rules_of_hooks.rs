@@ -129,8 +129,7 @@ impl Rule for RulesOfHooks {
         let hook_name =
             call.callee_name().expect("We identify hooks using their names so it should be named.");
 
-        let semantic = ctx.semantic();
-        let nodes = semantic.nodes();
+        let nodes = ctx.nodes();
 
         let is_use = is_react_function_call(call, "use");
 
