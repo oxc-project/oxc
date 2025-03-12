@@ -41524,24 +41524,24 @@ rebuilt        : ScopeId(9): []
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "N", "_af", "_ag", "_asyncToGenerator", "_awaitAsyncGenerator", "_defineProperty", "_usingCtx2", "_usingCtx20", "_usingCtx23", "_usingCtx24", "_usingCtx25", "_usingCtx26", "_usingCtx27", "_usingCtx28", "_usingCtx29", "_usingCtx6", "_wrapAsyncGenerator", "a", "af", "ag", "d1", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "d32", "f", "g"]
-rebuilt        : ScopeId(0): ["C1", "C2", "C3", "N", "_af", "_ag", "_asyncToGenerator", "_awaitAsyncGenerator", "_defineProperty", "_usingCtx2", "_usingCtx20", "_usingCtx21", "_usingCtx22", "_usingCtx23", "_usingCtx24", "_usingCtx25", "_usingCtx26", "_usingCtx27", "_usingCtx28", "_usingCtx29", "_usingCtx6", "_wrapAsyncGenerator", "a", "af", "ag", "d1", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "d32", "f", "g"]
+after transform: ScopeId(0): ["C1", "C2", "C3", "N", "_af", "_ag", "_asyncToGenerator", "_awaitAsyncGenerator", "_defineProperty", "_usingCtx19", "_usingCtx2", "_usingCtx22", "_usingCtx23", "_usingCtx24", "_usingCtx25", "_usingCtx26", "_usingCtx27", "_usingCtx28", "_usingCtx29", "_wrapAsyncGenerator", "a", "af", "ag", "d1", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "d32", "f", "g"]
+rebuilt        : ScopeId(0): ["C1", "C2", "C3", "N", "_af", "_ag", "_asyncToGenerator", "_awaitAsyncGenerator", "_defineProperty", "_usingCtx19", "_usingCtx2", "_usingCtx20", "_usingCtx21", "_usingCtx22", "_usingCtx23", "_usingCtx24", "_usingCtx25", "_usingCtx26", "_usingCtx27", "_usingCtx28", "_usingCtx29", "_wrapAsyncGenerator", "a", "af", "ag", "d1", "d19", "d20", "d21", "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31", "d32", "f", "g"]
 Bindings mismatch:
-after transform: ScopeId(70): ["_usingCtx21", "_usingCtx22"]
+after transform: ScopeId(70): ["_usingCtx20", "_usingCtx21"]
 rebuilt        : ScopeId(29): []
 Symbol span mismatch for "N":
 after transform: SymbolId(26): Span { start: 1385, end: 1386 }
 rebuilt        : SymbolId(66): Span { start: 0, end: 0 }
+Symbol scope ID mismatch for "_usingCtx20":
+after transform: SymbolId(88): ScopeId(70)
+rebuilt        : SymbolId(74): ScopeId(0)
 Symbol scope ID mismatch for "_usingCtx21":
 after transform: SymbolId(90): ScopeId(70)
-rebuilt        : SymbolId(74): ScopeId(0)
-Symbol scope ID mismatch for "_usingCtx22":
-after transform: SymbolId(92): ScopeId(70)
 rebuilt        : SymbolId(78): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsDeclarationEmit.2.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8)]
+after transform: ScopeId(0): [ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 Symbol reference IDs mismatch for "r1":
 after transform: SymbolId(0): [ReferenceId(1)]
