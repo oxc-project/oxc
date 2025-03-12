@@ -815,8 +815,8 @@ pub fn module_runner_transform(
     ModuleRunnerTransformResult {
         code,
         map: map.map(Into::into),
-        deps,
-        dynamic_deps,
+        deps: deps.into_iter().collect::<Vec<String>>(),
+        dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
         errors: parser_ret.errors.into_iter().map(OxcError::from).collect(),
     }
 }

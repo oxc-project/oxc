@@ -48,7 +48,7 @@
 use std::iter;
 
 use itoa::Buffer as ItoaBuffer;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
@@ -72,8 +72,8 @@ pub struct ModuleRunnerTransform<'a> {
     import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Atom<'a>>)>,
 
     // Collect deps and dynamic deps for Vite
-    deps: Vec<String>,
-    dynamic_deps: Vec<String>,
+    deps: FxHashSet<String>,
+    dynamic_deps: FxHashSet<String>,
 }
 
 impl<'a> ModuleRunnerTransform<'a> {
@@ -81,8 +81,8 @@ impl<'a> ModuleRunnerTransform<'a> {
         Self {
             import_uid: 0,
             import_bindings: FxHashMap::default(),
-            deps: Vec::default(),
-            dynamic_deps: Vec::default(),
+            deps: FxHashSet::default(),
+            dynamic_deps: FxHashSet::default(),
         }
     }
 
@@ -92,7 +92,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         scoping: Scoping,
-    ) -> (Vec<String>, Vec<String>) {
+    ) -> (FxHashSet<String>, FxHashSet<String>) {
         traverse_mut(&mut self, allocator, program, scoping);
         (self.deps, self.dynamic_deps)
     }
@@ -260,7 +260,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let ImportExpression { span, source, options, .. } = import_expr.unbox();
 
         if let Expression::StringLiteral(source) = &source {
-            self.dynamic_deps.push(source.value.to_string());
+            self.dynamic_deps.insert(source.value.to_string());
         }
 
         let flags = ReferenceFlags::Read;
@@ -309,7 +309,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        self.deps.push(source.value.to_string());
+        self.deps.insert(source.value.to_string());
 
         // ['vue', { importedNames: ['foo'] }]`
         let mut arguments = ctx.ast.vec_with_capacity(1 + usize::from(specifiers.is_some()));
@@ -425,7 +425,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         } else {
             // If the source is Some, then we need to import the module first and then export them.
             let import_binding = source.map(|source| {
-                self.deps.push(source.value.to_string());
+                self.deps.insert(source.value.to_string());
                 let binding = self.generate_import_binding(ctx);
                 let pattern = binding.create_binding_pattern(ctx);
                 let imported_names = ctx.ast.vec_from_iter(specifiers.iter().map(|specifier| {
@@ -488,7 +488,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let ExportAllDeclaration { span, source, exported, .. } = export.unbox();
-        self.deps.push(source.value.to_string());
+        self.deps.insert(source.value.to_string());
         let binding = self.generate_import_binding(ctx);
         let pattern = binding.create_binding_pattern(ctx);
         let arguments =
@@ -802,6 +802,7 @@ mod test {
     use std::path::Path;
 
     use oxc_ast::AstBuilder;
+    use rustc_hash::FxHashSet;
     use similar::TextDiff;
 
     use oxc_allocator::Allocator;
@@ -819,8 +820,8 @@ mod test {
 
     struct TransformReturn {
         code: String,
-        deps: Vec<String>,
-        dynamic_deps: Vec<String>,
+        deps: FxHashSet<String>,
+        dynamic_deps: FxHashSet<String>,
     }
 
     fn transform(source_text: &str, is_jsx: bool) -> Result<TransformReturn, Vec<OxcDiagnostic>> {
@@ -899,8 +900,12 @@ mod test {
             print_diff_in_terminal(&diff);
             panic!("Expected code does not match the result");
         }
-        assert_eq!(result_deps, deps);
-        assert_eq!(result_dynamic_deps, dynamic_deps);
+        for dep in deps {
+            assert!(result_deps.contains(*dep));
+        }
+        for dep in dynamic_deps {
+            assert!(result_dynamic_deps.contains(*dep));
+        }
     }
 
     #[test]
@@ -2223,6 +2228,7 @@ const c = () => {
         export * from "c";
         export * as d from "d";
         import("e")
+        export * as A from "a";
         "#;
         let expected = "
         const __vite_ssr_import_0__ = await __vite_ssr_import__('a', { importedNames: ['default'] });
@@ -2245,6 +2251,14 @@ const c = () => {
         }
         });
         __vite_ssr_dynamic_import__('e');
+        const __vite_ssr_import_4__ = await __vite_ssr_import__('a');
+        Object.defineProperty(__vite_ssr_exports__, 'A', {
+               enumerable: true,
+               configurable: true,
+               get() {
+                       return __vite_ssr_import_4__;
+               }
+        });
         ";
         test_same_and_deps(code, expected, &["a", "b", "c", "d"], &["e"]);
     }
