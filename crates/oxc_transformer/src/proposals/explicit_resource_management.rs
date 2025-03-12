@@ -43,7 +43,7 @@ use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, SPAN};
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::{Helper, TransformCtx};
 
@@ -55,6 +55,10 @@ pub struct ExplicitResourceManagement<'a, 'ctx> {
     /// keeps track of whether the current static block contains a `using` declaration
     /// so that we can transform it in `exit_static_block`
     static_blocks_stack: NonEmptyStack<bool>,
+
+    /// keeps track of whether the current switch statement contains a `using` declaration
+    /// so that we can transform it in `exit_statement`
+    switch_stmt_stack: NonEmptyStack<bool>,
 }
 
 impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
@@ -63,6 +67,7 @@ impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
             ctx,
             top_level_using: FxHashMap::default(),
             static_blocks_stack: NonEmptyStack::new(false),
+            switch_stmt_stack: NonEmptyStack::new(false),
         }
     }
 }
@@ -173,9 +178,16 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if matches!(node.kind, VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing)
-            && ctx.parent().is_static_block()
         {
-            *self.static_blocks_stack.last_mut() = true;
+            match ctx.parent() {
+                Ancestor::StaticBlockBody(_) => {
+                    *self.static_blocks_stack.last_mut() = true;
+                }
+                Ancestor::SwitchCaseConsequent(_) => {
+                    *self.switch_stmt_stack.last_mut() = true;
+                }
+                _ => {}
+            }
         }
     }
 
@@ -222,9 +234,20 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
+            // TODO: move this to exit_statement
             Statement::BlockStatement(_) => self.transform_block_statement(stmt, ctx),
-            Statement::SwitchStatement(_) => self.transform_switch_statement(stmt, ctx),
+            Statement::SwitchStatement(_) => {
+                self.switch_stmt_stack.push(false);
+            }
             _ => {}
+        }
+    }
+
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Statement::SwitchStatement(_) = stmt {
+            if self.switch_stmt_stack.pop() {
+                self.transform_switch_statement(stmt, ctx);
+            }
         }
     }
 
