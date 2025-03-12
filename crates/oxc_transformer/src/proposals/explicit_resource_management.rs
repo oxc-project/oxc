@@ -50,6 +50,8 @@ use crate::{Helper, TransformCtx};
 pub struct ExplicitResourceManagement<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
 
+    async_to_generator: bool,
+
     top_level_using: FxHashMap<Address, /* is await-using */ bool>,
 
     /// keeps track of whether the current static block contains a `using` declaration
@@ -59,15 +61,21 @@ pub struct ExplicitResourceManagement<'a, 'ctx> {
     /// keeps track of whether the current switch statement contains a `using` declaration
     /// so that we can transform it in `exit_statement`
     switch_stmt_stack: NonEmptyStack<bool>,
+
+    /// keeps track of whether the current block statement contains a `using` declaration
+    /// so that we can transform it in `exit_statement`
+    block_stmt_stack: NonEmptyStack<bool>,
 }
 
 impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformCtx<'a>, async_to_generator: bool) -> Self {
         Self {
             ctx,
+            async_to_generator,
             top_level_using: FxHashMap::default(),
             static_blocks_stack: NonEmptyStack::new(false),
             switch_stmt_stack: NonEmptyStack::new(false),
+            block_stmt_stack: NonEmptyStack::new(false),
         }
     }
 }
@@ -178,6 +186,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if matches!(node.kind, VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing)
+            || self.top_level_using.contains_key(&Address::from_ptr(node))
         {
             match ctx.parent() {
                 Ancestor::StaticBlockBody(_) => {
@@ -185,6 +194,9 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                 }
                 Ancestor::SwitchCaseConsequent(_) => {
                     *self.switch_stmt_stack.last_mut() = true;
+                }
+                Ancestor::BlockStatementBody(_) => {
+                    *self.block_stmt_stack.last_mut() = true;
                 }
                 _ => {}
             }
@@ -232,10 +244,11 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     // or `SwitchStatement`s. We want the common path for "nothing to do here" not to incur the cost of
     // a function call.
     #[inline]
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            // TODO: move this to exit_statement
-            Statement::BlockStatement(_) => self.transform_block_statement(stmt, ctx),
+            Statement::BlockStatement(_) => {
+                self.block_stmt_stack.push(false);
+            }
             Statement::SwitchStatement(_) => {
                 self.switch_stmt_stack.push(false);
             }
@@ -243,11 +256,20 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
         }
     }
 
+    #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::SwitchStatement(_) = stmt {
-            if self.switch_stmt_stack.pop() {
-                self.transform_switch_statement(stmt, ctx);
+        match stmt {
+            Statement::BlockStatement(_) => {
+                if self.block_stmt_stack.pop() {
+                    self.transform_block_statement(stmt, ctx);
+                }
             }
+            Statement::SwitchStatement(_) => {
+                if self.switch_stmt_stack.pop() {
+                    self.transform_switch_statement(stmt, ctx);
+                }
+            }
+            _ => {}
         }
     }
 
@@ -653,7 +675,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         };
 
         let catch = Self::create_catch_clause(&using_ctx, ctx.current_scope_id(), ctx);
-        let finally = Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
+        let finally = self.create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
         *stmt = ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally));
     }
 
@@ -775,7 +797,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         }
 
         let catch = Self::create_catch_clause(&using_ctx, parent_scope_id, ctx);
-        let finally = Self::create_finally_block(&using_ctx, parent_scope_id, needs_await, ctx);
+        let finally = self.create_finally_block(&using_ctx, parent_scope_id, needs_await, ctx);
 
         Some(ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally)))
     }
@@ -829,6 +851,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
     /// `{ _usingCtx.d(); }`
     fn create_finally_block(
+        &self,
         using_ctx: &BoundIdentifier<'a>,
         parent_scope_id: ScopeId,
         needs_await: bool,
@@ -850,7 +873,15 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             false,
         );
 
-        let stmt = if needs_await { ctx.ast.expression_await(SPAN, expr) } else { expr };
+        let stmt = if needs_await {
+            if self.async_to_generator {
+                ctx.ast.expression_yield(SPAN, false, Some(expr))
+            } else {
+                ctx.ast.expression_await(SPAN, expr)
+            }
+        } else {
+            expr
+        };
 
         ctx.ast.alloc_block_statement_with_scope_id(
             SPAN,

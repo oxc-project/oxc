@@ -122,7 +122,10 @@ impl<'a> Transformer<'a> {
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
             decorator: Decorator::new(self.decorator, &self.ctx),
-            explicit_resource_management: ExplicitResourceManagement::new(&self.ctx),
+            explicit_resource_management: ExplicitResourceManagement::new(
+                &self.ctx,
+                self.env.es2017.async_to_generator,
+            ),
             x0_typescript: program
                 .source_type
                 .is_typescript()
