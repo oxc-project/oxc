@@ -547,7 +547,6 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
             typescript.exit_statement(stmt, ctx);
         }
         self.decorator.enter_statement(stmt, ctx);
-        self.explicit_resource_management.enter_statement(stmt, ctx);
         self.x2_es2018.exit_statement(stmt, ctx);
         self.x2_es2017.exit_statement(stmt, ctx);
     }
