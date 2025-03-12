@@ -206,6 +206,7 @@ mod typescript {
     pub mod no_non_null_assertion;
     pub mod no_require_imports;
     pub mod no_this_alias;
+    pub mod no_unnecessary_parameter_property_assignment;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
     pub mod no_unsafe_function_type;
@@ -470,7 +471,6 @@ mod oxc {
     pub mod no_const_enum;
     pub mod no_map_spread;
     pub mod no_optional_chaining;
-    pub mod no_redundant_constructor_init;
     pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
@@ -858,7 +858,6 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_const_enum,
     oxc::no_map_spread,
     oxc::no_optional_chaining,
-    oxc::no_redundant_constructor_init,
     oxc::no_rest_spread_properties,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
@@ -943,6 +942,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_assertion,
     typescript::no_require_imports,
     typescript::no_this_alias,
+    typescript::no_unnecessary_parameter_property_assignment,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
     typescript::no_unsafe_function_type,
