@@ -274,11 +274,11 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_static_block(block, ctx);
         self.x2_es2022.enter_static_block(block, ctx);
-        self.explicit_resource_management.enter_static_block(block, ctx);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.exit_static_block(block, ctx);
+        self.explicit_resource_management.exit_static_block(block, ctx);
         self.x2_es2022.exit_static_block(block, ctx);
     }
 

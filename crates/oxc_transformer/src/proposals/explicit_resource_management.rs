@@ -143,7 +143,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
     ///   }
     /// }
     /// ```
-    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = block.scope_id();
         if let Some(replacement) =
             self.transform_statements(&mut block.body, None, scope_id, scope_id, ctx)
