@@ -1260,7 +1260,7 @@ impl ContentEq for AccessorProperty<'_> {
 impl ContentEq for ImportExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.source, &other.source)
-            && ContentEq::content_eq(&self.arguments, &other.arguments)
+            && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.phase, &other.phase)
     }
 }

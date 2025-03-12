@@ -663,7 +663,7 @@ const _: () = {
     assert!(align_of::<ImportExpression>() == 8);
     assert!(offset_of!(ImportExpression, span) == 0);
     assert!(offset_of!(ImportExpression, source) == 8);
-    assert!(offset_of!(ImportExpression, arguments) == 24);
+    assert!(offset_of!(ImportExpression, options) == 24);
     assert!(offset_of!(ImportExpression, phase) == 56);
 
     assert!(size_of::<ImportDeclaration>() == 104);
@@ -2067,7 +2067,7 @@ const _: () = {
     assert!(align_of::<ImportExpression>() == 4);
     assert!(offset_of!(ImportExpression, span) == 0);
     assert!(offset_of!(ImportExpression, source) == 8);
-    assert!(offset_of!(ImportExpression, arguments) == 16);
+    assert!(offset_of!(ImportExpression, options) == 16);
     assert!(offset_of!(ImportExpression, phase) == 32);
 
     assert!(size_of::<ImportDeclaration>() == 60);

@@ -2793,7 +2793,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.source);
-        visitor.visit_expressions(&mut it.arguments);
+        visitor.visit_expressions(&mut it.options);
         visitor.leave_node(kind);
     }
 

@@ -166,7 +166,7 @@ pub(crate) enum AncestorType {
     AccessorPropertyValue = 143,
     AccessorPropertyTypeAnnotation = 144,
     ImportExpressionSource = 145,
-    ImportExpressionArguments = 146,
+    ImportExpressionOptions = 146,
     ImportDeclarationSpecifiers = 147,
     ImportDeclarationSource = 148,
     ImportDeclarationWithClause = 149,
@@ -595,8 +595,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::AccessorPropertyTypeAnnotation as u16,
     ImportExpressionSource(ImportExpressionWithoutSource<'a, 't>) =
         AncestorType::ImportExpressionSource as u16,
-    ImportExpressionArguments(ImportExpressionWithoutArguments<'a, 't>) =
-        AncestorType::ImportExpressionArguments as u16,
+    ImportExpressionOptions(ImportExpressionWithoutOptions<'a, 't>) =
+        AncestorType::ImportExpressionOptions as u16,
     ImportDeclarationSpecifiers(ImportDeclarationWithoutSpecifiers<'a, 't>) =
         AncestorType::ImportDeclarationSpecifiers as u16,
     ImportDeclarationSource(ImportDeclarationWithoutSource<'a, 't>) =
@@ -1357,7 +1357,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_import_expression(self) -> bool {
-        matches!(self, Self::ImportExpressionSource(_) | Self::ImportExpressionArguments(_))
+        matches!(self, Self::ImportExpressionSource(_) | Self::ImportExpressionOptions(_))
     }
 
     #[inline]
@@ -1972,7 +1972,7 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::PropertyDefinitionValue(_)
                 | Self::AccessorPropertyValue(_)
                 | Self::ImportExpressionSource(_)
-                | Self::ImportExpressionArguments(_)
+                | Self::ImportExpressionOptions(_)
                 | Self::JSXSpreadAttributeArgument(_)
                 | Self::JSXSpreadChildExpression(_)
                 | Self::TSEnumMemberInitializer(_)
@@ -2367,7 +2367,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::AccessorPropertyValue(a) => a.address(),
             Self::AccessorPropertyTypeAnnotation(a) => a.address(),
             Self::ImportExpressionSource(a) => a.address(),
-            Self::ImportExpressionArguments(a) => a.address(),
+            Self::ImportExpressionOptions(a) => a.address(),
             Self::ImportDeclarationSpecifiers(a) => a.address(),
             Self::ImportDeclarationSource(a) => a.address(),
             Self::ImportDeclarationWithClause(a) => a.address(),
@@ -9379,8 +9379,7 @@ impl<'a, 't> GetAddress for AccessorPropertyWithoutTypeAnnotation<'a, 't> {
 
 pub(crate) const OFFSET_IMPORT_EXPRESSION_SPAN: usize = offset_of!(ImportExpression, span);
 pub(crate) const OFFSET_IMPORT_EXPRESSION_SOURCE: usize = offset_of!(ImportExpression, source);
-pub(crate) const OFFSET_IMPORT_EXPRESSION_ARGUMENTS: usize =
-    offset_of!(ImportExpression, arguments);
+pub(crate) const OFFSET_IMPORT_EXPRESSION_OPTIONS: usize = offset_of!(ImportExpression, options);
 pub(crate) const OFFSET_IMPORT_EXPRESSION_PHASE: usize = offset_of!(ImportExpression, phase);
 
 #[repr(transparent)]
@@ -9397,9 +9396,9 @@ impl<'a, 't> ImportExpressionWithoutSource<'a, 't> {
     }
 
     #[inline]
-    pub fn arguments(self) -> &'t Vec<'a, Expression<'a>> {
+    pub fn options(self) -> &'t Vec<'a, Expression<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_ARGUMENTS)
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_OPTIONS)
                 as *const Vec<'a, Expression<'a>>)
         }
     }
@@ -9422,12 +9421,12 @@ impl<'a, 't> GetAddress for ImportExpressionWithoutSource<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct ImportExpressionWithoutArguments<'a, 't>(
+pub struct ImportExpressionWithoutOptions<'a, 't>(
     pub(crate) *const ImportExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> ImportExpressionWithoutArguments<'a, 't> {
+impl<'a, 't> ImportExpressionWithoutOptions<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_SPAN) as *const Span) }
@@ -9449,7 +9448,7 @@ impl<'a, 't> ImportExpressionWithoutArguments<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for ImportExpressionWithoutArguments<'a, 't> {
+impl<'a, 't> GetAddress for ImportExpressionWithoutOptions<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

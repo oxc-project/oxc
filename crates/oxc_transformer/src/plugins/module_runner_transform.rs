@@ -257,7 +257,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             unreachable!();
         };
 
-        let ImportExpression { span, source, arguments, .. } = import_expr.unbox();
+        let ImportExpression { span, source, options, .. } = import_expr.unbox();
 
         if let Expression::StringLiteral(source) = &source {
             self.dynamic_deps.push(source.value.to_string());
@@ -265,7 +265,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         let flags = ReferenceFlags::Read;
         let callee = ctx.create_unbound_ident_expr(SPAN, SSR_DYNAMIC_IMPORT_KEY, flags);
-        let arguments = arguments.into_iter().map(Argument::from);
+        let arguments = options.into_iter().map(Argument::from);
         let arguments = ctx.ast.vec_from_iter(iter::once(Argument::from(source)).chain(arguments));
         *expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
     }

@@ -2692,7 +2692,7 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.source);
-        visitor.visit_expressions(&it.arguments);
+        visitor.visit_expressions(&it.options);
         visitor.leave_node(kind);
     }
 

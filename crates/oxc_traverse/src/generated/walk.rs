@@ -2758,8 +2758,8 @@ unsafe fn walk_import_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_SOURCE) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::ImportExpressionArguments);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_ARGUMENTS)
+    ctx.retag_stack(AncestorType::ImportExpressionOptions);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_OPTIONS)
         as *mut Vec<Expression>)
     {
         walk_expression(traverser, item as *mut _, ctx);

@@ -2313,8 +2313,8 @@ pub struct AccessorProperty<'a> {
 pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
-    #[estree(rename = "options", via = ImportExpressionArguments)]
-    pub arguments: Vec<'a, Expression<'a>>,
+    #[estree(via = ImportExpressionOptions)]
+    pub options: Vec<'a, Expression<'a>>,
     #[estree(skip)]
     pub phase: Option<ImportPhase>,
 }

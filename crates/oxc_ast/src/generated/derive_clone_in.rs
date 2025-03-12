@@ -2142,7 +2142,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ImportExpression<'_> {
         ImportExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             source: CloneIn::clone_in(&self.source, allocator),
-            arguments: CloneIn::clone_in(&self.arguments, allocator),
+            options: CloneIn::clone_in(&self.options, allocator),
             phase: CloneIn::clone_in(&self.phase, allocator),
         }
     }

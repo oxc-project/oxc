@@ -846,17 +846,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn expression_import(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Expression<'a> {
-        Expression::ImportExpression(self.alloc_import_expression(span, source, arguments, phase))
+        Expression::ImportExpression(self.alloc_import_expression(span, source, options, phase))
     }
 
     /// Build an [`Expression::LogicalExpression`].
@@ -7461,17 +7461,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn import_expression(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> ImportExpression<'a> {
-        ImportExpression { span, source, arguments, phase }
+        ImportExpression { span, source, options, phase }
     }
 
     /// Build an [`ImportExpression`], and store it in the memory arena.
@@ -7481,17 +7481,17 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source`
-    /// * `arguments`
+    /// * `options`
     /// * `phase`
     #[inline]
     pub fn alloc_import_expression(
         self,
         span: Span,
         source: Expression<'a>,
-        arguments: Vec<'a, Expression<'a>>,
+        options: Vec<'a, Expression<'a>>,
         phase: Option<ImportPhase>,
     ) -> Box<'a, ImportExpression<'a>> {
-        Box::new_in(self.import_expression(span, source, arguments, phase), self.allocator)
+        Box::new_in(self.import_expression(span, source, options, phase), self.allocator)
     }
 
     /// Build an [`ImportDeclaration`].

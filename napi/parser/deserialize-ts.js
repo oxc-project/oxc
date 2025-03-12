@@ -941,13 +941,13 @@ function deserializeAccessorProperty(pos) {
 }
 
 function deserializeImportExpression(pos) {
-  const args = deserializeVecExpression(pos + 24);
+  const options = deserializeVecExpression(pos + 24);
   return {
     type: 'ImportExpression',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     source: deserializeExpression(pos + 8),
-    options: args.length === 0 ? null : args[0],
+    options: options.length === 0 ? null : options[0],
   };
 }
 

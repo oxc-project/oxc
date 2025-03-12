@@ -2086,7 +2086,7 @@ impl GenExpr for ImportExpression<'_> {
             && (has_comment_before_right_paren
                 || p.has_comment(self.source.span().start)
                 || self
-                    .arguments
+                    .options
                     .first()
                     .is_some_and(|argument| p.has_comment(argument.span().start)));
 
@@ -2108,7 +2108,7 @@ impl GenExpr for ImportExpression<'_> {
                 p.print_indent();
             }
             self.source.print_expr(p, Precedence::Comma, Context::empty());
-            if !self.arguments.is_empty() {
+            if !self.options.is_empty() {
                 p.print_comma();
                 if has_comment {
                     p.print_soft_newline();
@@ -2116,7 +2116,7 @@ impl GenExpr for ImportExpression<'_> {
                 } else {
                     p.print_soft_space();
                 }
-                p.print_expressions(&self.arguments, Precedence::Comma, Context::empty());
+                p.print_expressions(&self.options, Precedence::Comma, Context::empty());
             }
             if has_comment {
                 // Handle `/* comment */);`
