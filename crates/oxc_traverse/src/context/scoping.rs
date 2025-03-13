@@ -4,6 +4,7 @@ use compact_str::CompactString;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
@@ -115,6 +116,16 @@ impl TraverseScoping {
     ) -> ScopeId {
         let mut collector = ChildScopeCollector::new();
         collector.visit_expression(expr);
+        self.insert_scope_below(&collector.scope_ids, flags)
+    }
+
+    pub fn insert_scope_below_statements(
+        &mut self,
+        expr: &ArenaVec<Statement>,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let mut collector = ChildScopeCollector::new();
+        collector.visit_statements(expr);
         self.insert_scope_below(&collector.scope_ids, flags)
     }
 
