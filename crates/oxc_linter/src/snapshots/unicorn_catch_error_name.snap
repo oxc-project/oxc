@@ -56,6 +56,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─
    ╰────
 
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
+   ╭─[catch_error_name.tsx:1:16]
+ 1 │ try { } catch (err) { console.error(err) }
+   ·                ───
+   ╰────
+
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
    ╭─[catch_error_name.tsx:1:15]
  1 │ promise.catch(notMatching => { })
