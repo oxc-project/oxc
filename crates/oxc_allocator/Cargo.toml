@@ -31,6 +31,7 @@ simdutf8 = { workspace = true }
 serde = { workspace = true, optional = true }
 
 [dev-dependencies]
+oxc_estree = { workspace = true, features = ["serialize"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
