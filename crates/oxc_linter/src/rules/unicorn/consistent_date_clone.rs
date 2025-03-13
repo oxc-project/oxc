@@ -46,32 +46,33 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentDateClone {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::NewExpression(expr) = &node.kind() {
-            if !(expr.callee.is_specific_id("Date")
-                && expr.arguments.len() == 1
-                && expr.type_parameters.is_none())
-            {
-                return;
-            }
-            if let Argument::CallExpression(expr) = &expr.arguments[0] {
-                if let Expression::StaticMemberExpression(callee) = &expr.callee {
-                    if callee.property.name.as_str() == "getTime"
-                        && expr.arguments.len() == 0
-                        && !expr.optional
-                        && !callee.optional
-                    {
-                        ctx.diagnostic_with_fix(
-                            consistent_date_clone_diagnostic(expr.span),
-                            |fixer| {
-                                fixer.delete_range(Span::new(
-                                    callee.object.span().end,
-                                    expr.span.end,
-                                ))
-                            },
-                        );
-                    }
-                }
-            }
+        let AstKind::NewExpression(expr) = &node.kind() else {
+            return;
+        };
+
+        if !(expr.callee.is_specific_id("Date")
+            && expr.arguments.len() == 1
+            && expr.type_parameters.is_none())
+        {
+            return;
+        }
+
+        let Argument::CallExpression(expr) = &expr.arguments[0] else {
+            return;
+        };
+
+        let Expression::StaticMemberExpression(callee) = &expr.callee else {
+            return;
+        };
+
+        if callee.property.name.as_str() == "getTime"
+            && expr.arguments.len() == 0
+            && !expr.optional
+            && !callee.optional
+        {
+            ctx.diagnostic_with_fix(consistent_date_clone_diagnostic(expr.span), |fixer| {
+                fixer.delete_range(Span::new(callee.object.span().end, expr.span.end))
+            });
         }
     }
 }
