@@ -1827,7 +1827,7 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
     /// ```
     ///
     /// [`extend_from_slice`]: #method.extend_from_slice
-    /// [`extend_from_slices`]: #method.extend_from_slices
+    /// [`extend_from_slices_copy`]: #method.extend_from_slices_copy
     pub fn extend_from_slice_copy(&mut self, other: &[T]) {
         // Reserve space in the Vec for the values to be added
         self.reserve(other.len());
