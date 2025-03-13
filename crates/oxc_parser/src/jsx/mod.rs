@@ -425,7 +425,7 @@ impl<'a> ParserImpl<'a> {
         let raw = Atom::from(unsafe {
             self.source_text.get_unchecked(span.start as usize..span.end as usize)
         });
-        self.ast.alloc_jsx_text(self.end_span(span), value, Some(raw))
+        self.ast.alloc_jsx_text(span, value, Some(raw))
     }
 
     fn jsx_element_name_eq(lhs: &JSXElementName<'a>, rhs: &JSXElementName<'a>) -> bool {
