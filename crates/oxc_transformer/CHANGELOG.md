@@ -4,6 +4,44 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.58.0] - 2025-03-13
+
+### Features
+
+- a10ead8 transformer: Transform explicit resource management (#9310) (camc314)
+- 3429898 transformer/module_runner_transform: Remove duplicate `deps` and `dynamicDeps` (#9709) (Dunqing)
+
+### Bug Fixes
+
+- 475b48f ast: Change `ImportExpression::attributes` to `options` (#9665) (Boshen)
+- f9580d8 transformer/module_runner: Handle re-export as deps (#9696) (hi-ogawa)
+
+### Performance
+
+- 31d626b transformer/module_runner: Use `itoa` to convert `u32` to string (#9686) (overlookmotel)
+- d303ba9 transformer/using: Inline `enter_statement` (#9680) (overlookmotel)
+- 15dd0d4 transformer/using: Avoid large types on stack (#9676) (overlookmotel)
+
+### Documentation
+
+- 3ccb2fa transformer/module_runner: Reformat module doc comment (#9687) (overlookmotel)
+
+### Refactor
+
+- 0903e7e transformer/using: Remove unused call to `enter_block_statement` (#9698) (overlookmotel)
+- f437a95 transformer/using: Remove unused call to `enter_statement` (#9692) (camc314)
+- b2fbd99 transformer/using: Remove unused call to `enter_statements` (#9691) (camc314)
+- 664c6f8 transformer/using: Rename vars (#9677) (overlookmotel)
+- 076d872 transformer/using: Remove `.into()` (#9675) (overlookmotel)
+- 3180c65 transformer/using: Shorten `AstBuilder` calls (#9674) (overlookmotel)
+- 06bd816 transformer/using: Add more comments and amend some (#9673) (overlookmotel)
+- ce810ae transformer/using: Re-order imports (#9672) (overlookmotel)
+
+### Testing
+
+- 7f1a050 transformer/module_runner_transform: Add more tests that copy from Vite (#9708) (Dunqing)
+- 325a1a4 transformer/module_runner_transform: Add tests for `deps` and `dynamicDeps` (#9707) (Dunqing)
+
 ## [0.57.0] - 2025-03-11
 
 - 3c6f140 semantic: [**BREAKING**] Make `Scoping` methods consistent (#9628) (Boshen)
