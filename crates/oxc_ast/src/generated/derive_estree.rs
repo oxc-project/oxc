@@ -3102,7 +3102,12 @@ impl ESTree for TSImportType<'_> {
 
 impl ESTree for TSImportAttributes<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::TSImportAttributesConverter(self).serialize(serializer)
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSImportAttributes"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("properties", &crate::serialize::TSImportAttributesProperties(self));
+        state.end();
     }
 }
 

@@ -1837,30 +1837,30 @@ function deserializeTSImportAttributes(pos) {
   const end = deserializeU32(pos + 4);
   const attributesKeyword = deserializeIdentifierName(pos + 8);
   const properties = deserializeVecTSImportAttribute(pos + 32);
-  const result = {
-    type: 'ObjectExpression',
-    start,
-    end,
-    properties: [
-      {
-        type: 'Property',
+  const result = [
+    {
+      type: 'Property',
+      start,
+      end,
+      method: false,
+      shorthand: false,
+      computed: false,
+      key: attributesKeyword,
+      value: {
+        type: 'ObjectExpression',
         start,
         end,
-        method: false,
-        shorthand: false,
-        computed: false,
-        key: attributesKeyword,
-        value: {
-          type: 'ObjectExpression',
-          start,
-          end,
-          properties,
-        },
-        kind: 'init',
+        properties,
       },
-    ],
+      kind: 'init',
+    },
+  ];
+  return {
+    type: 'TSImportAttributes',
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+    properties: result,
   };
-  return result;
 }
 
 function deserializeTSImportAttribute(pos) {

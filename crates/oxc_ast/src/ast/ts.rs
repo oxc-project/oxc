@@ -1289,10 +1289,12 @@ pub struct TSImportType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(via = TSImportAttributesConverter)]
+#[estree(ts_alias = "ObjectExpression")]
 pub struct TSImportAttributes<'a> {
     pub span: Span,
+    #[estree(skip)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    #[estree(rename = "properties", via = TSImportAttributesProperties)]
     pub elements: Vec<'a, TSImportAttribute<'a>>,
 }
 
