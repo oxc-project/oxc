@@ -7,11 +7,18 @@ import {
   StatusBarAlignment,
   StatusBarItem,
   ThemeColor,
+  Uri,
   window,
   workspace,
 } from 'vscode';
 
-import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
+import {
+  DidChangeWatchedFilesNotification,
+  ExecuteCommandRequest,
+  FileChangeType,
+  MessageType,
+  ShowMessageNotification,
+} from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -231,7 +238,10 @@ export async function activate(context: ExtensionContext) {
     if (event.affectsConfiguration('oxc.configPath')) {
       client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
       client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
-      client.restart();
+      client.restart().then(async () => {
+        const configFiles = await findOxlintrcConfigFiles();
+        await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
+      });
     }
   };
 
@@ -255,7 +265,10 @@ export async function activate(context: ExtensionContext) {
     myStatusBarItem.backgroundColor = bgColor;
   }
   updateStatsBar(configService.config.enable);
-  client.start();
+  await client.start();
+
+  const configFiles = await findOxlintrcConfigFiles();
+  await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -276,4 +289,16 @@ function createFileEventWatchers(configRelativePath: string) {
       return workspace.createFileSystemWatcher(pattern);
     }),
   ];
+}
+
+async function findOxlintrcConfigFiles() {
+  return workspace.findFiles(`**/${oxlintConfigFileName}`);
+}
+
+async function sendDidChangeWatchedFilesNotificationWith(languageClient: LanguageClient, files: Uri[]) {
+  await languageClient.sendNotification(DidChangeWatchedFilesNotification.type, {
+    changes: files.map(file => {
+      return { uri: file.toString(), type: FileChangeType.Created };
+    }),
+  });
 }
