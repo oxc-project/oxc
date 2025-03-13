@@ -90,6 +90,24 @@
 //! [`IndexMut`]: https://doc.rust-lang.org/std/ops/trait.IndexMut.html
 //! [`vec!`]: ../../macro.vec.html
 
+#![expect(
+    clippy::semicolon_if_nothing_returned,
+    clippy::needless_pass_by_ref_mut,
+    clippy::needless_for_each,
+    clippy::needless_lifetimes,
+    clippy::cloned_instead_of_copied,
+    clippy::checked_conversions,
+    clippy::legacy_numeric_constants,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap,
+    clippy::swap_ptr_to_ref,
+    clippy::ref_as_ptr,
+    clippy::ptr_as_ptr,
+    clippy::ptr_cast_constness,
+    unsafe_op_in_unsafe_fn,
+    clippy::undocumented_unsafe_blocks
+)]
+
 use super::raw_vec::RawVec;
 use crate::Bump;
 use crate::collections::CollectionAllocErr;

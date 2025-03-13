@@ -10,6 +10,16 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![allow(
+    unused_mut,
+    unused_unsafe,
+    clippy::allow_attributes,
+    clippy::uninlined_format_args,
+    clippy::enum_glob_use,
+    clippy::equatable_if_let,
+    clippy::needless_pass_by_value,
+    clippy::inline_always
+)]
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 
