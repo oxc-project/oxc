@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentOperator, AssignmentTarget, Expression,
+        AssignmentExpression, AssignmentOperator, AssignmentTarget, Expression, FormalParameter,
         MethodDefinitionKind,
     },
 };
@@ -64,8 +64,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             return;
         }
         for param in &method.value.params.items {
-            let is_parameter_property = param.accessibility.is_some() || param.readonly;
-            if !is_parameter_property {
+            if !is_parameter_property(param) {
                 continue;
             }
             let Some(ident) = param.pattern.get_binding_identifier() else {
@@ -84,13 +83,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
                     continue;
                 };
 
-                if !matches!(
-                    assignment_expr.operator,
-                    AssignmentOperator::Assign
-                        | AssignmentOperator::LogicalOr
-                        | AssignmentOperator::LogicalAnd
-                        | AssignmentOperator::LogicalNullish
-                ) {
+                if !is_unnecessary_assignment_operator(assignment_expr.operator) {
                     continue;
                 }
 
@@ -110,6 +103,14 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
     }
 }
 
+/// TypeScript offers special syntax for turning a constructor parameter into a class property with the same name and value.
+/// These are called parameter properties and are created by prefixing a constructor argument with one of the visibility modifiers public, private, protected, or readonly
+///
+/// https://www.typescriptlang.org/docs/handbook/2/classes.html#parameter-properties
+fn is_parameter_property(param: &FormalParameter) -> bool {
+    param.accessibility.is_some() || param.readonly
+}
+
 fn find_parent_assignment_expression<'a>(
     ctx: &LintContext<'a>,
     node_id: NodeId,
@@ -127,6 +128,16 @@ fn find_parent_assignment_expression<'a>(
         }
     }
     None
+}
+
+fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
+    matches!(
+        operator,
+        AssignmentOperator::Assign
+            | AssignmentOperator::LogicalOr
+            | AssignmentOperator::LogicalAnd
+            | AssignmentOperator::LogicalNullish
+    )
 }
 
 fn get_this_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
