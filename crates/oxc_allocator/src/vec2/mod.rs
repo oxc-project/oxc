@@ -108,9 +108,7 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-use super::raw_vec::RawVec;
-use crate::Bump;
-use crate::collections::CollectionAllocErr;
+use bumpalo::{Bump, collections::CollectionAllocErr};
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
 use core::fmt;
@@ -127,6 +125,9 @@ use core::slice;
 
 // #[cfg(feature = "std")]
 // use std::io;
+
+mod raw_vec;
+use raw_vec::RawVec;
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)
