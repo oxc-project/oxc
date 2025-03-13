@@ -16,6 +16,7 @@ use std::{path::PathBuf, process::Command};
 
 use oxc_tasks_common::project_root;
 use runtime::Test262RuntimeCase;
+use tools::estree::{AcornJsxCase, AcornJsxSuite};
 
 use crate::{
     babel::{BabelCase, BabelSuite},
@@ -114,6 +115,7 @@ impl AppArgs {
     }
 
     pub fn run_estree(&self) {
+        AcornJsxSuite::<AcornJsxCase>::new().run("estree_acorn_jsx", self);
         Test262Suite::<EstreeTest262Case>::new().run("estree_test262", self);
     }
 

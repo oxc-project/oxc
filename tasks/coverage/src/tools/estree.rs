@@ -10,8 +10,9 @@ use oxc::{
 };
 
 use crate::{
-    suite::{Case, TestResult},
+    suite::{Case, Suite, TestResult},
     test262::Test262Case,
+    workspace_root,
 };
 
 pub struct EstreeTest262Case {
@@ -184,5 +185,124 @@ impl EstreeTest262Case {
                 .missing_newline_hint(false)
         )
         .unwrap();
+    }
+}
+
+pub struct AcornJsxSuite<T: Case> {
+    path: PathBuf,
+    test_cases: Vec<T>,
+}
+
+impl<T: Case> AcornJsxSuite<T> {
+    pub fn new() -> Self {
+        Self {
+            path: Path::new("acorn-test262/test-acorn-jsx/pass").to_path_buf(),
+            test_cases: vec![],
+        }
+    }
+}
+
+impl<T: Case> Suite<T> for AcornJsxSuite<T> {
+    fn get_test_root(&self) -> &Path {
+        &self.path
+    }
+
+    fn skip_test_path(&self, path: &Path) -> bool {
+        let path = path.to_string_lossy();
+        !path.ends_with(".jsx")
+    }
+
+    fn save_test_cases(&mut self, cases: Vec<T>) {
+        self.test_cases = cases;
+    }
+
+    fn get_test_cases(&self) -> &Vec<T> {
+        &self.test_cases
+    }
+
+    fn get_test_cases_mut(&mut self) -> &mut Vec<T> {
+        &mut self.test_cases
+    }
+}
+
+pub struct AcornJsxCase {
+    path: PathBuf,
+    code: String,
+    result: TestResult,
+}
+
+impl Case for AcornJsxCase {
+    fn new(path: PathBuf, code: String) -> Self {
+        Self { path, code, result: TestResult::ToBeRun }
+    }
+
+    fn code(&self) -> &str {
+        &self.code
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
+    }
+
+    fn test_result(&self) -> &TestResult {
+        &self.result
+    }
+
+    fn skip_test_case(&self) -> bool {
+        false
+    }
+
+    fn run(&mut self) {
+        let source_text = &self.code;
+        let source_type = SourceType::default().with_module(true).with_jsx(true);
+        let allocator = Allocator::new();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let mut program = ret.program;
+
+        if ret.panicked || !ret.errors.is_empty() {
+            let error =
+                ret.errors.first().map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
+            self.result = TestResult::ParseError(error, ret.panicked);
+            return;
+        }
+
+        // Convert spans to UTF16
+        Utf8ToUtf16::new(source_text).convert_program(&mut program);
+
+        let acorn_json_path = workspace_root().join(self.path.with_extension("json"));
+        let acorn_json = match fs::read_to_string(&acorn_json_path) {
+            Ok(acorn_json) => acorn_json,
+            Err(e) => {
+                self.result = TestResult::GenericError("Error reading Acorn JSON", e.to_string());
+                return;
+            }
+        };
+
+        let oxc_json = program.to_pretty_estree_js_json();
+
+        if oxc_json == acorn_json {
+            self.result = TestResult::Passed;
+            return;
+        }
+
+        // Mismatch found.
+        // Write diff to `acorn-test262-diff` directory, unless running on CI.
+        let is_ci = std::option_env!("CI") == Some("true");
+        if !is_ci {
+            let diff_path = Path::new("./tasks/coverage/acorn-test262-diff/acorn-jsx")
+                .join(self.path.file_name().unwrap())
+                .with_extension("diff");
+            std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
+            write!(
+                std::fs::File::create(diff_path).unwrap(),
+                "{}",
+                similar::TextDiff::from_lines(&acorn_json, &oxc_json)
+                    .unified_diff()
+                    .missing_newline_hint(false)
+            )
+            .unwrap();
+        }
+
+        self.result = TestResult::Mismatch("Mismatch", oxc_json, acorn_json);
     }
 }
