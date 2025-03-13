@@ -1163,6 +1163,8 @@ function deserializeJSXOpeningFragment(pos) {
     type: 'JSXOpeningFragment',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
+    attributes: [],
+    selfClosing: false,
   };
 }
 

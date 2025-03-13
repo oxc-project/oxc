@@ -2024,6 +2024,8 @@ impl ESTree for JSXOpeningFragment {
         state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_field("attributes", &crate::serialize::JSXOpeningFragmentAttributes(self));
+        state.serialize_field("selfClosing", &crate::serialize::False(self));
         state.end();
     }
 }
