@@ -98,6 +98,10 @@ impl Rule for NoLonelyIf {
             return;
         };
 
+        if b.body.len() != 1 {
+            return;
+        };
+
         let Some(only_stmt) = b.body.first() else {
             return;
         };
@@ -106,24 +110,14 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        if b.body.len() != 1 {
-            return;
-        };
-
         if let Statement::BlockStatement(inner_block) = only_stmt {
             if inner_block.body.len() == 1 {
                 if let Some(Statement::IfStatement(lonely_if)) = inner_block.body.first() {
-                    ctx.diagnostic(no_lonely_if_diagnostic(Span::new(
-                        lonely_if.span.start,
-                        lonely_if.span.start + 2,
-                    )));
+                    ctx.diagnostic(no_lonely_if_diagnostic(Span::sized(lonely_if.span.start, 2)));
                 };
             }
         } else if let Statement::IfStatement(lonely_if) = only_stmt {
-            ctx.diagnostic(no_lonely_if_diagnostic(Span::new(
-                lonely_if.span.start,
-                lonely_if.span.start + 2,
-            )));
+            ctx.diagnostic(no_lonely_if_diagnostic(Span::sized(lonely_if.span.start, 2)));
         };
     }
 }
