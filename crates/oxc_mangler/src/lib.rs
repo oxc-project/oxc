@@ -16,8 +16,11 @@ pub(crate) mod base54;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
-    /// Also mangle exported variables.
+    /// Pass true to mangle names declared in the top level scope.
+    ///
+    /// Default: `false`
     pub top_level: bool,
+
     /// Use more readable mangled names
     /// (e.g. `slot_0`, `slot_1`, `slot_2`, ...) for debugging.
     ///

@@ -1,4 +1,4 @@
-#![expect(clippy::needless_pass_by_value)]
+#![expect(clippy::needless_pass_by_value, clippy::missing_errors_doc)]
 
 mod options;
 
@@ -16,10 +16,6 @@ use oxc_span::SourceType;
 use crate::options::{MinifyOptions, MinifyResult};
 
 /// Minify synchronously.
-///
-/// # Errors
-///
-/// * Fails to parse the options.
 #[napi]
 pub fn minify(
     filename: String,
@@ -35,7 +31,7 @@ pub fn minify(
 
     let allocator = Allocator::default();
 
-    let source_type = SourceType::from_path(&filename).unwrap_or_default().with_typescript(true);
+    let source_type = SourceType::from_path(&filename).unwrap_or_default();
 
     let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 

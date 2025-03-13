@@ -6,16 +6,23 @@ export interface CodegenOptions {
    *
    * @default true
    */
-  whitespace?: boolean
+  removeWhitespace?: boolean
 }
 
 export interface CompressOptions {
   /**
-   * Enables optional catch or nullish-coalescing operator if targeted higher.
+   * Set desired EcmaScript standard version for output.
    *
-   * @default 'es2015'
+   * Set `esnext` to enable all target highering.
+   *
+   * e.g.
+   *
+   * * catch optional binding when >= es2019
+   * * `??` operator >= es2020
+   *
+   * @default 'esnext'
    */
-  target?: string
+  target?: 'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'
   /**
    * Pass true to discard calls to `console.*`.
    *
@@ -31,19 +38,17 @@ export interface CompressOptions {
 }
 
 export interface MangleOptions {
-  /** Pass true to mangle names declared in the top level scope. */
+  /**
+   * Pass `true` to mangle names declared in the top level scope.
+   *
+   * @default false
+   */
   toplevel?: boolean
   /** Debug mangled names. */
   debug?: boolean
 }
 
-/**
- * Minify synchronously.
- *
- * # Errors
- *
- * * Fails to parse the options.
- */
+/** Minify synchronously. */
 export declare function minify(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): MinifyResult
 
 export interface MinifyOptions {

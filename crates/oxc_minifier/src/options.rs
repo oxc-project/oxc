@@ -2,11 +2,14 @@ use oxc_syntax::es_target::ESTarget;
 
 #[derive(Debug, Clone, Copy)]
 pub struct CompressOptions {
-    /// Enable features that are targeted above.
+    /// Set desired EcmaScript standard version for output.
     ///
     /// e.g.
     ///
     /// * catch optional binding when >= es2019
+    /// * `??` operator >=  es2020
+    ///
+    /// Default `ESTarget::ESNext`
     pub target: ESTarget,
 
     /// Remove `debugger;` statements.
