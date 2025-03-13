@@ -32,16 +32,70 @@ impl Default for NoSelfAssign {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow assignments where both sides are exactly the same
+    /// Disallow assignments where both sides are exactly the same.
     ///
     /// ### Why is this bad?
     ///
-    /// Self assignments have no effect, so probably those are an error due to incomplete refactoring. Those indicate that what you should do is still remaining.
+    /// Self assignments have no effect, so probably those are an error due to incomplete
+    /// refactoring. Those indicate that what you should do is still remaining.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// foo = foo;
-    /// [bar, baz] = [bar, qiz];
+    ///
+    /// [a, b] = [a, b];
+    /// [a, ...b] = [x, ...b];
+    ///
+    /// ({a, b} = {a, x});
+    ///
+    /// foo &&= foo;
+    /// foo ||= foo;
+    /// foo ??= foo;
+    /// ```
+    ///
+    /// ```javascript
+    /// obj.a = obj.a;
+    /// obj.a.b = obj.a.b;
+    /// obj["a"] = obj["a"];
+    /// obj[a] = obj[a];
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// foo = bar;
+    /// [a, b] = [b, a];
+    ///
+    /// // This pattern is warned by the `no-use-before-define` rule.
+    /// let foo = foo;
+    ///
+    /// // The default values have an effect.
+    /// [foo = 1] = [foo];
+    ///
+    /// // This ignores if there is a function call.
+    /// obj.a().b = obj.a().b;
+    /// a().b = a().b;
+    ///
+    /// // `&=` and `|=` have an effect on non-integers.
+    /// foo &= foo;
+    /// foo |= foo;
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### props
+    ///
+    /// `{ type: boolean, default: true }`
+    ///
+    /// The `props` option when set to `false`, disables the checking of properties.
+    ///
+    /// With `props` set to `false` the following are examples of correct code:
+    /// ```javascript
+    /// obj.a = obj.a;
+    /// obj.a.b = obj.a.b;
+    /// obj["a"] = obj["a"];
+    /// obj[a] = obj[a];
     /// ```
     NoSelfAssign,
     eslint,
@@ -303,6 +357,7 @@ fn test() {
         ("[a, ...b] = [0, ...b, 1]", None),
         ("[a, b] = {a, b}", None),
         ("({a} = a)", None),
+        ("[foo = 1] = [foo];", None),
         ("({a = 1} = {a})", None),
         ("({a: b} = {a})", None),
         ("({a} = {a: b})", None),
@@ -323,11 +378,18 @@ fn test() {
         ("a.b.c = a.b.c", Some(serde_json::json!([{ "props": false }]))),
         ("a[b] = a[b]", Some(serde_json::json!([{ "props": false }]))),
         ("a['b'] = a['b']", Some(serde_json::json!([{ "props": false }]))),
+        (r#"obj[a] = obj["a"];"#, None),
         ("a[\n    'b'\n] = a[\n    'b'\n]", Some(serde_json::json!([{ "props": false }]))),
         ("this.x = this.y", Some(serde_json::json!([{ "props": true }]))),
         ("this.x = this.x", Some(serde_json::json!([{ "props": false }]))),
         ("class C { #field; foo() { this['#field'] = this.#field; } }", None),
         ("class C { #field; foo() { this.#field = this['#field']; } }", None),
+        (r#"obj["a" + "b"] = obj["a" + "b"];"#, None),
+        ("obj[a + b] = obj[a + b];", None),
+        // `&=` and `|=` have an effect on non-integers.
+        ("foo |= foo;", None),
+        ("foo &= foo;", None),
+        ("let foo = foo;", None),
     ];
 
     let fail = vec![
