@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Box, Vec as ArenaVec};
+use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
@@ -122,11 +122,11 @@ pub struct TraverseCtx<'a> {
 impl<'a> TraverseCtx<'a> {
     /// Allocate a node in the arena.
     ///
-    /// Returns a [`Box<T>`].
+    /// Returns a [`Box<'a, T>`](ArenaBox).
     ///
     /// Shortcut for `ctx.ast.alloc`.
     #[inline]
-    pub fn alloc<T>(&self, node: T) -> Box<'a, T> {
+    pub fn alloc<T>(&self, node: T) -> ArenaBox<'a, T> {
         self.ast.alloc(node)
     }
 
