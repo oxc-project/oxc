@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.58.0] - 2025-03-13
+
+### Refactor
+
+- a61a50b isolated_declarations: Do not store temp values in arena (#9733) (overlookmotel)
+
 ## [0.56.0] - 2025-03-06
 
 - 48a0394 ast: [**BREAKING**] Add `scope_id` to `TSFunctionType` (#9559) (camc314)

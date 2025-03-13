@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.58.0] - 2025-03-13
+
+- f2b0cc1 allocator: [**BREAKING**] Remove `Vec::into_boxed_slice` method (#9735) (Dunqing)
+
+### Features
+
+- 65d9662 allocator: Add `Vec2::retain_mut` method (#9655) (Dunqing)
+- 3943563 allocator: Connect `Vec2` module and make it compile (#9647) (Dunqing)
+- 3d4400c allocator: Add `Vec2` (#9646) (Dunqing)
+
+### Performance
+
+- 89b6e4c allocator: Remove overflow checks from `String::from_strs_array_in` (#9650) (overlookmotel)
+
+### Documentation
+
+- daf7a1e allocator/vec: Fix link in doc comment for `Vec2` (#9729) (overlookmotel)
+
+### Refactor
+
+- 5c5e010 allocator/vec: Disable lint warnings in `vec2` files (#9730) (overlookmotel)
+- 6c86961 allocator/vec: Comment out feature-gated methods (#9728) (overlookmotel)
+
+### Testing
+
+- ed6fcf2 allocator: Fix tests (#9727) (overlookmotel)
+
 ## [0.57.0] - 2025-03-11
 
 ### Documentation
