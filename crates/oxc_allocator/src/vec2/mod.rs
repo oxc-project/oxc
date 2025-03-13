@@ -106,8 +106,9 @@ use core::ops::{Index, IndexMut, RangeBounds};
 use core::ptr;
 use core::ptr::NonNull;
 use core::slice;
-#[cfg(feature = "std")]
-use std::io;
+
+// #[cfg(feature = "std")]
+// use std::io;
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)
@@ -1664,6 +1665,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     }
 }
 
+/*
 #[cfg(feature = "boxed")]
 impl<'bump, T> Vec<'bump, T> {
     /// Converts the vector into [`Box<[T]>`][owned slice].
@@ -1695,6 +1697,7 @@ impl<'bump, T> Vec<'bump, T> {
         }
     }
 }
+*/
 
 impl<'bump, T: 'bump + Clone> Vec<'bump, T> {
     /// Resizes the `Vec` in-place so that `len` is equal to `new_len`.
@@ -2287,12 +2290,14 @@ impl<'bump, T: 'bump> AsMut<[T]> for Vec<'bump, T> {
     }
 }
 
+/*
 #[cfg(feature = "boxed")]
 impl<'bump, T: 'bump> From<Vec<'bump, T>> for crate::boxed::Box<'bump, [T]> {
     fn from(v: Vec<'bump, T>) -> crate::boxed::Box<'bump, [T]> {
         v.into_boxed_slice()
     }
 }
+*/
 
 impl<'bump, T: 'bump> Borrow<[T]> for Vec<'bump, T> {
     #[inline]
@@ -2713,6 +2718,7 @@ where
     }
 }
 
+/*
 #[cfg(feature = "std")]
 impl<'bump> io::Write for Vec<'bump, u8> {
     #[inline]
@@ -2732,7 +2738,9 @@ impl<'bump> io::Write for Vec<'bump, u8> {
         Ok(())
     }
 }
+*/
 
+/*
 #[cfg(feature = "serde")]
 mod serialize {
     use super::*;
@@ -2755,3 +2763,4 @@ mod serialize {
         }
     }
 }
+*/

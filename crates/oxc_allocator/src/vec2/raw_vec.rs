@@ -154,6 +154,7 @@ impl<'a, T> RawVec<'a, T> {
         }
     }
 
+    /*
     /// Doubles the size of the type's backing allocation. This is common enough
     /// to want to do that it's easiest to just have a dedicated method. Slightly
     /// more efficient logic can be provided for this than the general case.
@@ -250,7 +251,9 @@ impl<'a, T> RawVec<'a, T> {
             self.cap = new_cap;
         }
     }
+    */
 
+    /*
     /// Attempts to double the size of the type's backing allocation in place. This is common
     /// enough to want to do that it's easiest to just have a dedicated method. Slightly
     /// more efficient logic can be provided for this than the general case.
@@ -297,6 +300,7 @@ impl<'a, T> RawVec<'a, T> {
             }
         }
     }
+    */
 
     /// The same as `reserve_exact`, but returns on errors instead of panicking or aborting.
     pub fn try_reserve_exact(
@@ -413,6 +417,7 @@ impl<'a, T> RawVec<'a, T> {
         self.infallible_reserve_internal(used_cap, needed_extra_cap, Amortized)
     }
 
+    /*
     /// Attempts to ensure that the buffer contains at least enough space to hold
     /// `used_cap + needed_extra_cap` elements. If it doesn't already have
     /// enough capacity, will reallocate in place enough space plus comfortable slack
@@ -468,6 +473,7 @@ impl<'a, T> RawVec<'a, T> {
             }
         }
     }
+    */
 
     /// Shrinks the allocation down to the specified amount. If the given amount
     /// is 0, actually completely deallocates.
@@ -529,6 +535,7 @@ impl<'a, T> RawVec<'a, T> {
     }
 }
 
+/*
 #[cfg(feature = "boxed")]
 impl<'a, T> RawVec<'a, T> {
     /// Converts the entire buffer into `Box<[T]>`.
@@ -551,6 +558,7 @@ impl<'a, T> RawVec<'a, T> {
         output
     }
 }
+*/
 
 enum Fallibility {
     Fallible,
