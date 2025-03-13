@@ -39,7 +39,7 @@ declare_oxc_lint!(
     NoEmptyNamedBlocks,
     import,
     suspicious,
-    pending
+    fix
 );
 
 impl Rule for NoEmptyNamedBlocks {
@@ -47,6 +47,14 @@ impl Rule for NoEmptyNamedBlocks {
         let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
         };
+        let specifiers = import_decl.specifiers.as_ref();
+        if specifiers.is_some_and(|f| f.is_empty()) {
+            // for "import {} from 'mod'"
+            ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
+                fixer.delete_range(import_decl.span)
+            });
+        }
+
         let source_token_str = Span::new(import_decl.span.start, import_decl.source.span.end)
             .source_text(ctx.source_text());
         // find is there anything between '{' and '}'
@@ -85,6 +93,9 @@ fn test() {
         "import type{}from 'mod'",
     ];
 
+    let fix = vec![("import {  } from 'mod'", "", None)];
+
     Tester::new(NoEmptyNamedBlocks::NAME, NoEmptyNamedBlocks::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

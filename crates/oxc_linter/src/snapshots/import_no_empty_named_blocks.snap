@@ -6,6 +6,13 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import {} from 'mod'
    · ────────────────────
    ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named import block.
+   ╭─[no_empty_named_blocks.tsx:1:1]
+ 1 │ import {} from 'mod'
+   · ────────────────────
+   ╰────
 
   ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named import block.
    ╭─[no_empty_named_blocks.tsx:1:1]
@@ -18,6 +25,20 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import{}from'mod'
    · ─────────────────
    ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named import block.
+   ╭─[no_empty_named_blocks.tsx:1:1]
+ 1 │ import{}from'mod'
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named import block.
+   ╭─[no_empty_named_blocks.tsx:1:1]
+ 1 │ import type {}from'mod'
+   · ───────────────────────
+   ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named import block.
    ╭─[no_empty_named_blocks.tsx:1:1]
@@ -30,6 +51,20 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import type {} from 'mod'
    · ─────────────────────────
    ╰────
+  help: Delete this code.
+
+  ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named import block.
+   ╭─[no_empty_named_blocks.tsx:1:1]
+ 1 │ import type {} from 'mod'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named import block.
+   ╭─[no_empty_named_blocks.tsx:1:1]
+ 1 │ import type{}from 'mod'
+   · ───────────────────────
+   ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-import(no-empty-named-blocks): Unexpected empty named import block.
    ╭─[no_empty_named_blocks.tsx:1:1]
