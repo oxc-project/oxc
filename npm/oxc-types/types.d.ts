@@ -817,9 +817,9 @@ export interface JSXElement extends Span {
 
 export interface JSXOpeningElement extends Span {
   type: 'JSXOpeningElement';
-  selfClosing: boolean;
-  name: JSXElementName;
   attributes: Array<JSXAttributeItem>;
+  name: JSXElementName;
+  selfClosing: boolean;
   typeParameters: TSTypeParameterInstantiation | null;
 }
 

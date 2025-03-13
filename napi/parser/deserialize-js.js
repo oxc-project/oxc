@@ -1132,9 +1132,9 @@ function deserializeJSXOpeningElement(pos) {
     type: 'JSXOpeningElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    selfClosing: deserializeBool(pos + 8),
-    name: deserializeJSXElementName(pos + 16),
     attributes: deserializeVecJSXAttributeItem(pos + 32),
+    name: deserializeJSXElementName(pos + 16),
+    selfClosing: deserializeBool(pos + 8),
   };
 }
 

@@ -2,43 +2,9 @@ commit: b6d96c07
 
 estree_acorn_jsx Summary:
 AST Parsed     : 39/39 (100.00%)
-Positive Passed: 0/39 (0.00%)
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/003.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/004.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/005.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/007.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/008.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/009.jsx
+Positive Passed: 34/39 (87.18%)
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/010.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/011.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/012.jsx
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/013.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/014.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/015.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/016.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/017.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/018.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/019.jsx
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/020.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/021.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/022.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/023.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/024.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/025.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/026.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/027.jsx
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/028.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/029.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/030.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/031.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/032.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/033.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/034.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/035.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/041.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/042.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/043.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/044.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/045.jsx
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/046.jsx
-Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/047.jsx

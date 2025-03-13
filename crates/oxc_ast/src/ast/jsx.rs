@@ -62,6 +62,7 @@ pub struct JSXElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, attributes, name, self_closing, type_parameters))]
 pub struct JSXOpeningElement<'a> {
     /// Node location in source code
     pub span: Span,
