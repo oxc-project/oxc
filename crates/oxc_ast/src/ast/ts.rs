@@ -1302,6 +1302,7 @@ pub struct TSImportAttributes<'a> {
 // Pluralize as `TSImportAttributeList` to avoid naming clash with `TSImportAttributes`.
 #[plural(TSImportAttributeList)]
 #[estree(
+    no_ts_def,
     rename = "Property",
     add_fields(method = False, shorthand = True, computed = False, kind = Init),
     field_order(span, method, shorthand, computed, name, value, kind),
@@ -1316,6 +1317,7 @@ pub struct TSImportAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(no_ts_def)]
 pub enum TSImportAttributeName<'a> {
     Identifier(IdentifierName<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,

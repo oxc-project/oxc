@@ -1288,18 +1288,6 @@ export interface TSImportType extends Span {
   isTypeOf: boolean;
 }
 
-export interface TSImportAttribute extends Span {
-  type: 'Property';
-  method: false;
-  shorthand: true;
-  computed: false;
-  key: TSImportAttributeName;
-  value: Expression;
-  kind: 'init';
-}
-
-export type TSImportAttributeName = IdentifierName | StringLiteral;
-
 export interface TSFunctionType extends Span {
   type: 'TSFunctionType';
   typeParameters: TSTypeParameterDeclaration | null;
@@ -1787,7 +1775,6 @@ export type Node =
   | TSInferType
   | TSTypeQuery
   | TSImportType
-  | TSImportAttribute
   | TSFunctionType
   | TSConstructorType
   | TSMappedType
