@@ -418,8 +418,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             },
         );
 
-        let block_scope_id =
-            ctx.scoping.insert_scope_below_statements(&inner_block, ScopeFlags::empty());
+        let block_scope_id = ctx.insert_scope_below_statements(&inner_block, ScopeFlags::empty());
         program_body.push(ctx.ast.statement_block_with_scope_id(SPAN, inner_block, block_scope_id));
 
         std::mem::swap(&mut program.body, &mut program_body);
