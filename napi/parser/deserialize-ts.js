@@ -1307,6 +1307,7 @@ function deserializeJSXText(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     value: deserializeStr(pos + 8),
+    raw: deserializeOptionStr(pos + 24),
   };
 }
 

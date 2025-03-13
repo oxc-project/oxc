@@ -419,7 +419,13 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let value = Atom::from(self.cur_string());
         self.bump_any();
-        self.ast.alloc_jsx_text(self.end_span(span), value)
+        let span = self.end_span(span);
+        // SAFETY:
+        // range comes from the lexer, which are ensured to meeting the criteria of `get_unchecked`.
+        let raw = Atom::from(unsafe {
+            self.source_text.get_unchecked(span.start as usize..span.end as usize)
+        });
+        self.ast.alloc_jsx_text(span, value, Some(raw))
     }
 
     fn jsx_element_name_eq(lhs: &JSXElementName<'a>, rhs: &JSXElementName<'a>) -> bool {

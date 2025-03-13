@@ -902,6 +902,7 @@ export interface JSXSpreadChild extends Span {
 export interface JSXText extends Span {
   type: 'JSXText';
   value: string;
+  raw: string | null;
 }
 
 export interface TSThisParameter extends Span {

@@ -2950,6 +2950,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXText<'_> {
         JSXText {
             span: CloneIn::clone_in(&self.span, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
         }
     }
 }

@@ -482,4 +482,10 @@ pub struct JSXText<'a> {
     pub span: Span,
     /// The text content.
     pub value: Atom<'a>,
+
+    /// The raw string as it appears in source code.
+    ///
+    /// `None` when this ast node is not constructed from the parser.
+    #[content_eq(skip)]
+    pub raw: Option<Atom<'a>>,
 }
