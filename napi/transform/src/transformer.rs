@@ -20,8 +20,8 @@ use oxc::{
     span::SourceType,
     transformer::{
         EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
-        InjectImport, JsxRuntime, ModuleRunnerTransform, ReplaceGlobalDefinesConfig,
-        RewriteExtensionsMode,
+        InjectImport, JsxRuntime, ModuleRunnerTransform, ProposalOptions,
+        ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
     },
 };
 use oxc_napi::OxcError;
@@ -174,6 +174,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 None => oxc::transformer::JsxOptions::enable(),
             },
             env,
+            proposals: ProposalOptions { explicit_resource_management: false },
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
