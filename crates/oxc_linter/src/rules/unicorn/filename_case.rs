@@ -1,47 +1,11 @@
 use convert_case::{Boundary, Case, Converter};
+use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
-
-fn join_strings_disjunction(strings: &[String]) -> String {
-    let mut list = String::new();
-    for (i, s) in strings.iter().enumerate() {
-        if i == 0 {
-            list.push_str(s);
-        } else if i == strings.len() - 1 {
-            list.push_str(&format!(", or {s}"));
-        } else {
-            list.push_str(&format!(", {s}"));
-        }
-    }
-    list
-}
-
-fn filename_case_diagnostic(filename: &str, valid_cases: &[(&str, Case)]) -> OxcDiagnostic {
-    let case_names = valid_cases.iter().map(|(name, _)| format!("{name} case")).collect::<Vec<_>>();
-    let message = format!("Filename should be in {}", join_strings_disjunction(&case_names));
-
-    let trimmed_filename = filename.trim_matches('_');
-    let converted_filenames = valid_cases
-        .iter()
-        .map(|(_, case)| {
-            let converter =
-                Converter::new().remove_boundaries(&[Boundary::LOWER_DIGIT, Boundary::DIGIT_LOWER]);
-            // get the leading characters that were trimmed, if any, else empty string
-            let leading = filename.chars().take_while(|c| c == &'_').collect::<String>();
-            let trailing = filename.chars().rev().take_while(|c| c == &'_').collect::<String>();
-            format!("'{leading}{}{trailing}'", converter.to_case(*case).convert(trimmed_filename))
-        })
-        .collect::<Vec<_>>();
-
-    let help_message =
-        format!("Rename the file to {}", join_strings_disjunction(&converted_filenames));
-
-    OxcDiagnostic::warn(message).with_label(Span::default()).with_help(help_message)
-}
 
 #[derive(Debug, Clone)]
 pub struct FilenameCase {
@@ -68,7 +32,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Inconsistent file naming conventions can make it harder to locate files or to create new ones.
+    /// Inconsistent file naming conventions make it harder to locate files, navigate projects, and enforce
+    /// consistency across a codebase. Standardizing naming conventions improves readability, reduces cognitive
+    /// overhead, and aligns with best practices in large-scale development.
     ///
     /// ### Cases
     ///
@@ -97,6 +63,41 @@ declare_oxc_lint!(
     /// - `SomeFileName.js`
     /// - `SomeFileName.Test.js`
     /// - `SomeFileName.TestUtils.js`
+    ///
+    /// ### Options
+    ///
+    /// Use `kebabCase` as the default option.
+    ///
+    /// #### case
+    ///
+    /// `{ type: 'kebabCase' | 'camelCase' | 'snakeCase' | 'pascalCase' }`
+    ///
+    /// You can set the case option like this:
+    /// ```json
+    /// "unicorn/filename-case": [
+    ///   "error",
+    ///   {
+    ///     "case": "kebabCase"
+    ///   }
+    /// ]
+    /// ```
+    ///
+    /// #### cases
+    ///
+    /// `{ type: { [key in 'kebabCase' | 'camelCase' | 'snakeCase' | 'pascalCase']?: boolean } }`
+    ///
+    /// You can set the case option like this:
+    /// ```json
+    /// "unicorn/filename-case": [
+    ///   "error",
+    ///   {
+    ///     "cases": {
+    ///       "camelCase": true,
+    ///       "pascalCase": true
+    ///     }
+    ///   }
+    /// ]
+    /// ```
     FilenameCase,
     unicorn,
     style
@@ -150,28 +151,58 @@ impl Rule for FilenameCase {
         let filename = filename.trim_matches('_');
 
         let cases = [
-            (self.camel_case, Case::Camel, "camel"),
-            (self.kebab_case, Case::Kebab, "kebab"),
-            (self.snake_case, Case::Snake, "snake"),
-            (self.pascal_case, Case::Pascal, "pascal"),
+            (self.camel_case, Case::Camel, "camel case"),
+            (self.kebab_case, Case::Kebab, "kebab case"),
+            (self.snake_case, Case::Snake, "snake case"),
+            (self.pascal_case, Case::Pascal, "pascal case"),
         ];
-        let mut enabled_cases = cases.iter().filter(|(enabled, _, _)| *enabled);
 
-        if !enabled_cases.any(|(_, case, _)| {
-            let converter =
-                Converter::new().remove_boundaries(&[Boundary::LOWER_DIGIT, Boundary::DIGIT_LOWER]);
-            converter.to_case(*case).convert(filename) == filename
-        }) {
-            let valid_cases = cases
-                .iter()
-                .filter_map(
-                    |(enabled, case, name)| if *enabled { Some((*name, *case)) } else { None },
-                )
-                .collect::<Vec<_>>();
-            let filename = file_path.file_name().unwrap().to_string_lossy();
-            ctx.diagnostic(filename_case_diagnostic(&filename, &valid_cases));
+        let mut valid = Vec::new();
+        for (enabled, case, name) in cases {
+            if enabled {
+                let converter = Converter::new()
+                    .remove_boundaries(&[Boundary::LOWER_DIGIT, Boundary::DIGIT_LOWER]);
+                let converter = converter.to_case(case);
+
+                if converter.convert(filename) == filename {
+                    return;
+                }
+
+                valid.push((converter, name));
+            }
         }
+
+        let filename = file_path.file_name().unwrap().to_string_lossy();
+        ctx.diagnostic(filename_case_diagnostic(&filename, valid));
     }
+}
+
+fn filename_case_diagnostic(filename: &str, valid_cases: Vec<(Converter, &str)>) -> OxcDiagnostic {
+    let trimmed_filename = filename.trim_matches('_');
+    let valid_cases_len = valid_cases.len();
+
+    let mut message = String::from("Filename should be in ");
+    let mut help_message = String::from("Rename the file to ");
+
+    for (i, (converter, name)) in valid_cases.into_iter().enumerate() {
+        let filename = format!(
+            "'{}'",
+            filename.cow_replace(trimmed_filename, &converter.convert(trimmed_filename))
+        );
+
+        let (name, filename) = if i == 0 {
+            (name, filename.as_ref())
+        } else if i == valid_cases_len - 1 {
+            (&*format!(", or {name}"), &*format!(", or {filename}"))
+        } else {
+            (&*format!(", {name}"), &*format!(", {filename}"))
+        };
+
+        message.push_str(name);
+        help_message.push_str(filename);
+    }
+
+    OxcDiagnostic::warn(message).with_label(Span::default()).with_help(help_message)
 }
 
 #[test]
@@ -277,6 +308,7 @@ fn test() {
         test_cases("src/foo/FooBar.js", ["kebabCase", "pascalCase"]),
         test_cases("src/foo/___foo_bar.js", ["snakeCase", "pascalCase"]),
     ];
+
     let fail = vec![
         test_case("src/foo/foo_bar.js", ""),
         // todo: linter does not support uppercase JS files
