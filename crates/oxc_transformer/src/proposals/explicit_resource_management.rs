@@ -700,16 +700,9 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         );
         stmts.insert(0, Statement::from(helper));
 
-        let scope_id_children_to_move = scope_id.unwrap_or(parent_scope_id);
-
         let scope_id = scope_id
             .unwrap_or_else(|| ctx.create_child_scope(parent_scope_id, ScopeFlags::empty()));
         let block = ctx.ast.block_statement_with_scope_id(SPAN, stmts, scope_id);
-
-        let child_ids = ctx.scoping_mut().get_scope_child_ids(scope_id_children_to_move).to_vec();
-        for id in child_ids.iter().filter(|id| *id != &scope_id) {
-            ctx.scoping_mut().change_scope_parent_id(*id, Some(scope_id));
-        }
 
         let catch = Self::create_catch_clause(&using_ctx, parent_scope_id, ctx);
         let finally = Self::create_finally_block(&using_ctx, parent_scope_id, needs_await, ctx);
