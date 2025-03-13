@@ -11,7 +11,6 @@ use std::{
     hash::{Hash, Hasher},
     mem::ManuallyDrop,
     ops,
-    ptr::NonNull,
     slice::SliceIndex,
 };
 
@@ -167,40 +166,6 @@ impl<'alloc, T> Vec<'alloc, T> {
         let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
         Self(ManuallyDrop::new(vec))
     }
-
-    /// Converts the vector into [`Box<[T]>`][owned slice].
-    ///
-    /// Any excess capacity the vector has will not be included in the slice.
-    /// The excess memory will be leaked in the arena (i.e. not reused by another allocation).
-    ///
-    /// # Examples
-    /// ```
-    /// use oxc_allocator::{Allocator, Vec};
-    ///
-    /// let allocator = Allocator::default();
-    /// let mut v = Vec::with_capacity_in(10, &allocator);
-    /// v.extend([1, 2, 3]);
-    /// let b = v.into_boxed_slice();
-    ///
-    /// assert_eq!(&*b, &[1, 2, 3]);
-    /// assert_eq!(b.len(), 3);
-    /// ```
-    ///
-    /// [owned slice]: Box
-    #[inline]
-    pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
-        let inner = ManuallyDrop::into_inner(self.0);
-        let slice = inner.leak();
-        let ptr = NonNull::from(slice);
-        // SAFETY: `ptr` points to a valid slice `[T]`.
-        // `allocator_api2::vec::Vec::leak` consumes the inner `Vec` without dropping it.
-        // Lifetime of returned `Box<'alloc, [T]>` is same as lifetime of consumed `Vec<'alloc, T>`,
-        // so data in the `Box` must be valid for its lifetime.
-        // `Vec` uniquely owned the data, and we have consumed the `Vec`, so the new `Box` has
-        // unique ownership of the data (no aliasing).
-        // `ptr` was created from a `&mut [T]`.
-        unsafe { Box::from_non_null(ptr) }
-    }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
@@ -305,7 +270,7 @@ impl<T: Debug> Debug for Vec<'_, T> {
 #[cfg(test)]
 mod test {
     use super::Vec;
-    use crate::{Allocator, Box};
+    use crate::Allocator;
 
     #[test]
     fn vec_with_capacity() {
@@ -351,20 +316,5 @@ mod test {
         fn _assert_vec_variant_lifetime<'a: 'b, 'b, T>(program: Vec<'a, T>) -> Vec<'b, T> {
             program
         }
-    }
-
-    #[test]
-    fn vec_to_boxed_slice() {
-        let allocator = Allocator::default();
-        let mut v = Vec::with_capacity_in(10, &allocator);
-        v.extend([1, 2, 3]);
-
-        let b = v.into_boxed_slice();
-        // Check return value is an `oxc_allocator::Box`, not an `allocator_api2::boxed::Box`
-        let b: Box<[u8]> = b;
-
-        assert_eq!(&*b, &[1, 2, 3]);
-        // Check length of slice is equal to what `v.len()` was, not `v.capacity()`
-        assert_eq!(b.len(), 3);
     }
 }
