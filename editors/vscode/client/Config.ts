@@ -1,5 +1,7 @@
 import { workspace } from 'vscode';
 
+export const oxlintConfigFileName = '.oxlintrc.json';
+
 export class Config implements ConfigInterface {
   private static readonly _namespace = 'oxc';
 
@@ -19,7 +21,7 @@ export class Config implements ConfigInterface {
     this._runTrigger = conf.get<Trigger>('lint.run') || 'onType';
     this._enable = conf.get<boolean>('enable') ?? true;
     this._trace = conf.get<TraceLevel>('trace.server') || 'off';
-    this._configPath = conf.get<string>('configPath') || '.oxlintrc.json';
+    this._configPath = conf.get<string>('configPath') || oxlintConfigFileName;
     this._binPath = conf.get<string>('path.server');
   }
 

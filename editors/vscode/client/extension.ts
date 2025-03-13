@@ -1,12 +1,22 @@
 import { promises as fsPromises } from 'node:fs';
 
-import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
+import {
+  commands,
+  ExtensionContext,
+  RelativePattern,
+  StatusBarAlignment,
+  StatusBarItem,
+  ThemeColor,
+  window,
+  workspace,
+} from 'vscode';
 
 import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
+import { oxlintConfigFileName } from './Config';
 import { ConfigService } from './ConfigService';
 
 const languageClientName = 'oxc';
@@ -170,10 +180,7 @@ export async function activate(context: ExtensionContext) {
     })),
     synchronize: {
       // Notify the server about file config changes in the workspace
-      fileEvents: [
-        workspace.createFileSystemWatcher('**/.oxlint{.json,rc.json}'),
-        workspace.createFileSystemWatcher('**/oxlint{.json,rc.json}'),
-      ],
+      fileEvents: createFileEventWatchers(configService.config.configPath),
     },
     initializationOptions: {
       settings: configService.config.toLanguageServerConfig(),
@@ -216,10 +223,16 @@ export async function activate(context: ExtensionContext) {
     });
   });
 
-  configService.onConfigChange = function onConfigChange() {
+  configService.onConfigChange = function onConfigChange(event) {
     let settings = this.config.toLanguageServerConfig();
     updateStatsBar(settings.enable);
     client.sendNotification('workspace/didChangeConfiguration', { settings });
+
+    if (event.affectsConfiguration('oxc.configPath')) {
+      client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
+      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
+      client.restart();
+    }
   };
 
   function updateStatsBar(enable: boolean) {
@@ -250,4 +263,17 @@ export function deactivate(): Thenable<void> | undefined {
     return undefined;
   }
   return client.stop();
+}
+
+function createFileEventWatchers(configRelativePath: string) {
+  const workspaceConfigPatterns = (workspace.workspaceFolders || []).map((workspaceFolder) =>
+    new RelativePattern(workspaceFolder, configRelativePath)
+  );
+
+  return [
+    workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`),
+    ...workspaceConfigPatterns.map((pattern) => {
+      return workspace.createFileSystemWatcher(pattern);
+    }),
+  ];
 }
