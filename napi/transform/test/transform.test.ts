@@ -72,7 +72,7 @@ describe('transform', () => {
     const code = 'using foo = 1;';
     const ret = transform('test.js', code);
     expect(ret.code).not.contains('using');
-  })
+  });
 });
 
 describe('target', () => {
