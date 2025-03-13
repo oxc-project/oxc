@@ -119,13 +119,20 @@ impl TraverseScoping {
         self.insert_scope_below(&collector.scope_ids, flags)
     }
 
+    /// Insert a scope into scope tree below a `Vec` of statements.
+    ///
+    /// Statements must be in current scope.
+    /// New scope is created as child of current scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn insert_scope_below_statements(
         &mut self,
-        expr: &ArenaVec<Statement>,
+        stmts: &ArenaVec<Statement>,
         flags: ScopeFlags,
     ) -> ScopeId {
         let mut collector = ChildScopeCollector::new();
-        collector.visit_statements(expr);
+        collector.visit_statements(stmts);
         self.insert_scope_below(&collector.scope_ids, flags)
     }
 
