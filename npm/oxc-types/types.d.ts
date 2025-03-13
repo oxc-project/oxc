@@ -1787,7 +1787,6 @@ export type Node =
   | TSInferType
   | TSTypeQuery
   | TSImportType
-  | TSImportAttributes
   | TSImportAttribute
   | TSFunctionType
   | TSConstructorType
