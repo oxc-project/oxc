@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 139/226
+Passed: 138/226
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -320,9 +320,20 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (1/2)
+# babel-plugin-proposal-explicit-resource-management (0/2)
 * export-class-name/input.js
 x Output mismatch
+
+* for-of-no-block/input.js
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
+Scope children mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(3): [ScopeId(4)]
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(1))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
 
 
 # legacy-decorators (2/66)
