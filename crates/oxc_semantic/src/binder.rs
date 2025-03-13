@@ -20,16 +20,16 @@ pub trait Binder<'a> {
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let (includes, excludes) = match self.kind {
-            VariableDeclarationKind::Const => (
+            VariableDeclarationKind::Const
+            | VariableDeclarationKind::Using
+            | VariableDeclarationKind::AwaitUsing => (
                 SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
                 SymbolFlags::BlockScopedVariableExcludes,
             ),
             VariableDeclarationKind::Let => {
                 (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
             }
-            VariableDeclarationKind::Var
-            | VariableDeclarationKind::Using
-            | VariableDeclarationKind::AwaitUsing => {
+            VariableDeclarationKind::Var => {
                 (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
             }
         };
