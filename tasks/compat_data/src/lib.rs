@@ -11,7 +11,6 @@ use oxc_transformer::EngineTargets;
 struct Item {
     name: String,
     es: String,
-    // babel: String,
     targets: EngineTargets,
 }
 
@@ -28,8 +27,6 @@ pub fn generate() {
     let items = serde_json::from_str::<Vec<Item>>(&content).unwrap();
 
     let es_features = items.iter().map(Item::es_name).collect::<Vec<_>>();
-
-    // let es_targets = items.iter().map(|item| quote::format_ident!("{}", item.es));
 
     let features = items.iter().map(|item| {
         let key = item.es_name();
@@ -51,8 +48,7 @@ pub fn generate() {
     });
 
     let code = quote! {
-        #![expect(clippy::enum_glob_use, clippy::match_same_arms)]
-
+        #![allow(clippy::enum_glob_use, clippy::match_same_arms)]
         use std::sync::OnceLock;
 
         use browserslist::Version;
@@ -64,16 +60,6 @@ pub fn generate() {
         pub enum ESFeature {
             #(#es_features,)*
         }
-
-        // use ESTarget::*;
-
-        // impl ESFeature {
-            // pub fn es_target(&self) -> ESTarget {
-                // match self {
-                    // #(#es_features => #es_targets,)*
-                // }
-            // }
-        // }
 
         pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
             use ESFeature::*;
