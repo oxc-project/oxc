@@ -43,26 +43,43 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyNamedBlocks {
+    #[expect(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
         };
-        let specifiers = import_decl.specifiers.as_ref();
-        if specifiers.is_some_and(|f| f.is_empty()) {
+        // if "import 'foo'"
+        let Some(specifiers) = import_decl.specifiers.as_ref() else {
+            return;
+        };
+        if specifiers.is_empty() {
             // for "import {} from 'mod'"
             ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
                 fixer.delete_range(import_decl.span)
             });
         }
 
-        let source_token_str = Span::new(import_decl.span.start, import_decl.source.span.end)
+        let source_token_str = Span::new(import_decl.span.start, import_decl.source.span.start - 1)
             .source_text(ctx.source_text());
         // find is there anything between '{' and '}'
         if let Some(start) = source_token_str.find('{') {
             if let Some(end) = source_token_str[start..].find('}') {
                 let between_braces = &source_token_str[start + 1..start + end];
                 if between_braces.trim().is_empty() {
-                    ctx.diagnostic(no_empty_named_blocks_diagnostic(import_decl.span));
+                    ctx.diagnostic_with_fix(
+                        no_empty_named_blocks_diagnostic(import_decl.span),
+                        |fixer| {
+                            // "import a, {} from 'mod" => "import a from 'mod'"
+                            // we just remove the space between ',' and '}'
+                            if let Some(comma_idx) = source_token_str[..start].rfind(',') {
+                                let remove_start = comma_idx as u32;
+                                let remove_end = (start + end + 1) as u32;
+                                fixer.delete_range(Span::new(remove_start, remove_end))
+                            } else {
+                                fixer.noop()
+                            }
+                        },
+                    );
                 }
             }
         }
@@ -93,7 +110,19 @@ fn test() {
         "import type{}from 'mod'",
     ];
 
-    let fix = vec![("import {  } from 'mod'", "", None)];
+    let fix = vec![
+        ("import Default, {} from 'mod'", "import Default from 'mod'", None),
+        ("import {  } from 'mod'", "", None),
+        ("import a, {} from 'mod'", "import a from 'mod'", None),
+        ("import a, {         } from 'mod'", "import a from 'mod'", None),
+        ("import a,            {         } from 'mod'", "import a from 'mod'", None),
+        ("import a,      {    }       from 'mod'", "import a       from 'mod'", None),
+        ("import a,      {    }       from'mod'", "import a       from'mod'", None),
+        ("import type a,      {    }       from'mod'", "import type a       from'mod'", None),
+        ("import a,{} from 'mod'", "import a from 'mod'", None),
+        ("import type a,{} from 'foo'", "import type a from 'foo'", None),
+        ("import type {} from 'foo'", "", None),
+    ];
 
     Tester::new(NoEmptyNamedBlocks::NAME, NoEmptyNamedBlocks::PLUGIN, pass, fail)
         .expect_fix(fix)
