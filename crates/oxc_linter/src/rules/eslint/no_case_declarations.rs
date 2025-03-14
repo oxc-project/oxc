@@ -105,6 +105,7 @@ fn test() {
         ("switch (a) { default: function f() {} break; }", None),
         ("switch (a) { case 1: class C {} break; }", None),
         ("switch (a) { default: class C {} break; }", None),
+        ("switch (a) { default: using x = {}; break; }", None),
         ("switch (a) { default: await using x = {}; break; }", None),
     ];
 
