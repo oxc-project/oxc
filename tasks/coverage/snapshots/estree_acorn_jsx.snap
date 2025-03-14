@@ -3,6 +3,16 @@ commit: b6d96c07
 estree_acorn_jsx Summary:
 AST Parsed     : 39/39 (100.00%)
 Positive Passed: 35/39 (89.74%)
+Negative Passed: 0/9 (0.00%)
+Expect to Parse: tasks/coverage/acorn-test262/test-acorn-jsx/fail/000.jsx
+Unterminated regular expressionExpect to Parse: tasks/coverage/acorn-test262/test-acorn-jsx/fail/001.jsx
+Unexpected tokenExpect to Parse: tasks/coverage/acorn-test262/test-acorn-jsx/fail/002.jsx
+Unexpected tokenExpect to Parse: tasks/coverage/acorn-test262/test-acorn-jsx/fail/006.jsx
+Unexpected tokenMismatch: tasks/coverage/acorn-test262/test-acorn-jsx/fail/036.jsx
+Expect to Parse: tasks/coverage/acorn-test262/test-acorn-jsx/fail/037.jsx
+Unexpected tokenExpect to Parse: tasks/coverage/acorn-test262/test-acorn-jsx/fail/038.jsx
+Unexpected tokenMismatch: tasks/coverage/acorn-test262/test-acorn-jsx/fail/039.jsx
+Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/fail/040.jsx
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/010.jsx
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/013.jsx
 Mismatch: tasks/coverage/acorn-test262/test-acorn-jsx/pass/020.jsx

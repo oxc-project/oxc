@@ -196,7 +196,7 @@ pub struct AcornJsxSuite<T: Case> {
 impl<T: Case> AcornJsxSuite<T> {
     pub fn new() -> Self {
         Self {
-            path: Path::new("acorn-test262/test-acorn-jsx/pass").to_path_buf(),
+            path: Path::new("acorn-test262/test-acorn-jsx").to_path_buf(),
             test_cases: vec![],
         }
     }
@@ -250,6 +250,10 @@ impl Case for AcornJsxCase {
 
     fn skip_test_case(&self) -> bool {
         false
+    }
+
+    fn should_fail(&self) -> bool {
+        self.path.parent().unwrap().file_name().unwrap() == "fail"
     }
 
     fn run(&mut self) {
