@@ -133,21 +133,9 @@ impl<'a> ParserImpl<'a> {
     /// extends `LeftHandSideExpression`[?Yield, ?Await]
     fn parse_extends_clause(&mut self) -> Result<Extends<'a>> {
         self.bump_any(); // bump `extends`
+
         let mut extends = self.ast.vec();
-
-        let span = self.start_span();
-        let mut first_extends = self.parse_lhs_expression_or_higher()?;
-        let first_type_argument;
-        if let Expression::TSInstantiationExpression(expr) = first_extends {
-            let expr = expr.unbox();
-            first_extends = expr.expression;
-            first_type_argument = Some(expr.type_parameters);
-        } else {
-            first_type_argument = self.try_parse_type_arguments()?;
-        }
-        extends.push((first_extends, first_type_argument, self.end_span(span)));
-
-        while self.eat(Kind::Comma) {
+        loop {
             let span = self.start_span();
             let mut extend = self.parse_lhs_expression_or_higher()?;
             let type_argument;
@@ -160,6 +148,10 @@ impl<'a> ParserImpl<'a> {
             }
 
             extends.push((extend, type_argument, self.end_span(span)));
+
+            if !self.eat(Kind::Comma) {
+                break;
+            }
         }
 
         Ok(extends)
