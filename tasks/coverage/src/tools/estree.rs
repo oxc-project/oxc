@@ -195,10 +195,7 @@ pub struct AcornJsxSuite<T: Case> {
 
 impl<T: Case> AcornJsxSuite<T> {
     pub fn new() -> Self {
-        Self {
-            path: Path::new("acorn-test262/test-acorn-jsx").to_path_buf(),
-            test_cases: vec![],
-        }
+        Self { path: Path::new("acorn-test262/test-acorn-jsx").to_path_buf(), test_cases: vec![] }
     }
 }
 
@@ -263,7 +260,13 @@ impl Case for AcornJsxCase {
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let mut program = ret.program;
 
-        if ret.panicked || !ret.errors.is_empty() {
+        let is_parse_error = ret.panicked || !ret.errors.is_empty();
+        if self.should_fail() {
+            self.result =
+                if is_parse_error { TestResult::Passed } else { TestResult::IncorrectlyPassed };
+            return;
+        }
+        if is_parse_error {
             let error =
                 ret.errors.first().map_or_else(|| "Panicked".to_string(), OxcDiagnostic::to_string);
             self.result = TestResult::ParseError(error, ret.panicked);
