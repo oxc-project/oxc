@@ -9,7 +9,6 @@ use std::{
     self,
     fmt::{self, Debug},
     hash::{Hash, Hasher},
-    mem::ManuallyDrop,
     ops,
     slice::SliceIndex,
 };
@@ -35,7 +34,7 @@ use crate::{Allocator, Box};
 /// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
 /// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
 #[derive(PartialEq, Eq)]
-pub struct Vec<'alloc, T>(pub(crate) ManuallyDrop<InnerVec<'alloc, T>>);
+pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
 unsafe impl<T> Send for Vec<'_, T> {}
@@ -65,7 +64,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(ManuallyDrop::new(InnerVec::new_in(allocator.bump())))
+        Self(InnerVec::new_in(allocator.bump()))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -118,7 +117,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump())))
+        Self(InnerVec::with_capacity_in(capacity, allocator.bump()))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -132,7 +131,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump()));
+        let mut vec = InnerVec::with_capacity_in(capacity, allocator.bump());
         vec.extend(iter);
         Self(vec)
     }
@@ -163,7 +162,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
         let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
-        Self(ManuallyDrop::new(vec))
+        Self(vec)
     }
 }
 
@@ -189,10 +188,7 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
 
     #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
-        let inner = ManuallyDrop::into_inner(self.0);
-        // TODO: `allocator_api2::vec::Vec::IntoIter` is `Drop`.
-        // Wrap it in `ManuallyDrop` to prevent that.
-        inner.into_iter()
+        self.0.into_iter()
     }
 }
 
@@ -261,8 +257,7 @@ impl<T: Hash> Hash for Vec<'_, T> {
 
 impl<T: Debug> Debug for Vec<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let inner = &*self.0;
-        f.debug_tuple("Vec").field(inner).finish()
+        f.debug_tuple("Vec").field(&self.0).finish()
     }
 }
 
