@@ -34,7 +34,7 @@ console.log(result.program);
 
 ### Browser
 
-Try Vite example app on Stackblitz https://stackblitz.com/edit/vitejs-vite-ydyvyjav?file=src%2Fmain.js
+[Try Vite example on Stackblitz](https://stackblitz.com/edit/vitejs-vite-ydyvyjav?file=src%2Fmain.js)
 
 ```js
 import initWasm, { parseSync } from '@oxc-parser/wasm';
