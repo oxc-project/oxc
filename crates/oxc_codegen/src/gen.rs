@@ -2576,8 +2576,9 @@ impl Gen for JSXText<'_> {
 
 impl Gen for JSXSpreadChild<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.print_str("...");
+        p.print_str("{...");
         p.print_expression(&self.expression);
+        p.print_ascii_byte(b'}');
     }
 }
 
@@ -2586,7 +2587,7 @@ impl Gen for JSXChild<'_> {
         match self {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
-            Self::Spread(spread) => p.print_expression(&spread.expression),
+            Self::Spread(spread) => spread.print(p, ctx),
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
             Self::Text(text) => text.print(p, ctx),
         }

@@ -292,7 +292,7 @@ fn test() {
             "
 			      namespace Foo {
 			        'use strict';
-			
+
 			        export class Foo {}
 			        export class Bar {}
 			      }
@@ -303,7 +303,7 @@ fn test() {
             "
 			      function foo() {
 			        'use strict';
-			
+
 			        return null;
 			      }
 			    ",
@@ -383,7 +383,7 @@ fn test() {
         ("<></>", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
         ("class C { static { 'use strict'; } }", None),                  // { "ecmaVersion": 2022 },
         (
-            "class C { static { 
+            "class C { static {
 			'foo'
 			'bar'
 			 } }",
@@ -479,7 +479,7 @@ fn test() {
 			namespace Foo {
 			  export class Foo {}
 			  export class Bar {}
-			
+
 			  'use strict';
 			}
 			      ",
@@ -489,7 +489,7 @@ fn test() {
             "
 			function foo() {
 			  const foo = true;
-			
+
 			  'use strict';
 			}
 			      ",
@@ -519,13 +519,13 @@ fn test() {
 			      ",
             None,
         ),
-        (
-            "
-			declare const foo: number | undefined;
-			<any>foo;
-			      ",
-            None,
-        ),
+        // (
+        // "
+        // declare const foo: number | undefined;
+        // <any>foo;
+        // ",
+        // None,
+        // ),
         (
             "
 			declare const foo: number | undefined;

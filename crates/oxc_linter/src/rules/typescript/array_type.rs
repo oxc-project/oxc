@@ -1011,10 +1011,10 @@ fn test() {
             "let x: Array<undefined> = [undefined] as undefined[];",
             Some(serde_json::json!([{"default":"array-simple"}])),
         ),
-        (
-            "let y: string[] = <Array<string>>['2'];",
-            Some(serde_json::json!([{"default":"array-simple"}])),
-        ),
+        // (
+        // "let y: string[] = <Array<string>>['2'];",
+        // Some(serde_json::json!([{"default":"array-simple"}])),
+        // ),
         ("let z: Array = [3, '4'];", Some(serde_json::json!([{"default":"array-simple"}]))),
         (
             "let ya = [[1, '2']] as [number, string][];",
@@ -1062,7 +1062,7 @@ fn test() {
             "let x: Array<undefined> = [undefined] as undefined[];",
             Some(serde_json::json!([{"default":"array"}])),
         ),
-        ("let y: string[] = <Array<string>>['2'];", Some(serde_json::json!([{"default":"array"}]))),
+        // ("let y: string[] = <Array<string>>['2'];", Some(serde_json::json!([{"default":"array"}]))),
         ("let z: Array = [3, '4'];", Some(serde_json::json!([{"default":"array"}]))),
         ("type Arr<T> = Array<T>;", Some(serde_json::json!([{"default":"array"}]))),
         // ("
@@ -1706,5 +1706,8 @@ fn test() {
         ),
     ];
 
-    Tester::new(ArrayType::NAME, ArrayType::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ArrayType::NAME, ArrayType::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

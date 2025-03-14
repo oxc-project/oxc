@@ -236,10 +236,10 @@ after transform: ["T", "foo"]
 rebuilt        : ["foo"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
-semantic error: Expected `<` but found `EOF`
+semantic error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
-semantic error: Expected `<` but found `EOF`
+semantic error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 semantic error: Unresolved references mismatch:
@@ -272,7 +272,7 @@ after transform: ["T"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
-semantic error: Expected `<` but found `EOF`
+semantic error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/arrow-function/input.ts
 semantic error: Unresolved references mismatch:
