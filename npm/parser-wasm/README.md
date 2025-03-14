@@ -34,10 +34,12 @@ console.log(result.program);
 
 ### Browser
 
-```js
-import { initSync, parseSync } from '@oxc-parser/wasm';
+Try Vite example app on Stackblitz https://stackblitz.com/edit/vitejs-vite-ydyvyjav?file=src%2Fmain.js
 
-initSync();
+```js
+import initWasm, { parseSync } from '@oxc-parser/wasm';
+
+await initWasm();
 
 const code = 'let foo';
 const result = parseSync(code, { sourceFilename: 'test.ts' });
@@ -51,10 +53,3 @@ The AST returned conforms to the [ESTree](https://github.com/estree/estree) spec
 For TypeScript code, the AST is broadly aligned with
 [typescript-eslint](https://typescript-eslint.io/packages/parser/)'s format, though there may be some
 differences.
-
-### Vite
-
-`wasm-pack build --target web` is used for the wasm build.
-
-You may need something like https://github.com/nshen/vite-plugin-wasm-pack to get it working with vite,
-otherwise vite will load the wasm file as a HTML file causing a `CompileError: WebAssembly.instantiate(): expected magic word` error.
