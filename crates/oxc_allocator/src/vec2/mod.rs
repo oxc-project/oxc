@@ -870,7 +870,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         unsafe {
             let ptr = self.as_ptr();
             let len = self.len();
-            mem::forget(self);
+            // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
             slice::from_raw_parts(ptr, len)
         }
     }
@@ -895,7 +895,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn into_bump_slice_mut(mut self) -> &'bump mut [T] {
         let ptr = self.as_mut_ptr();
         let len = self.len();
-        mem::forget(self);
+        // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
 
         unsafe { slice::from_raw_parts_mut(ptr, len) }
     }
@@ -2244,7 +2244,7 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
             } else {
                 begin.add(self.len()) as *const T
             };
-            mem::forget(self);
+            // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
             IntoIter { phantom: PhantomData, ptr: begin, end }
         }
     }
@@ -2450,18 +2450,6 @@ impl<'bump, T: 'bump> BorrowMut<[T]> for Vec<'bump, T> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [T] {
         &mut self[..]
-    }
-}
-
-impl<'bump, T> Drop for Vec<'bump, T> {
-    fn drop(&mut self) {
-        unsafe {
-            // use drop for [T]
-            // use a raw slice to refer to the elements of the vector as weakest necessary type;
-            // could avoid questions of validity in certain cases
-            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len))
-        }
-        // RawVec handles deallocation
     }
 }
 

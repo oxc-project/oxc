@@ -702,15 +702,6 @@ impl<'a, T> RawVec<'a, T> {
     }
 }
 
-impl<'a, T> Drop for RawVec<'a, T> {
-    /// Frees the memory owned by the RawVec *without* trying to Drop its contents.
-    fn drop(&mut self) {
-        unsafe {
-            self.dealloc_buffer();
-        }
-    }
-}
-
 // We need to guarantee the following:
 // * We don't ever allocate `> isize::MAX` byte-size objects
 // * We don't overflow `usize::MAX` and actually allocate too little
