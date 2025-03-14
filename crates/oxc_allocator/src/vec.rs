@@ -14,8 +14,7 @@ use std::{
     slice::SliceIndex,
 };
 
-use allocator_api2::vec::Vec as InnerVec;
-use bumpalo::Bump;
+use crate::vec2::Vec as InnerVec;
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(any(feature = "serialize", test))]
@@ -36,7 +35,7 @@ use crate::{Allocator, Box};
 /// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
 /// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
 #[derive(PartialEq, Eq)]
-pub struct Vec<'alloc, T>(pub(crate) ManuallyDrop<InnerVec<T, &'alloc Bump>>);
+pub struct Vec<'alloc, T>(pub(crate) ManuallyDrop<InnerVec<'alloc, T>>);
 
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
 unsafe impl<T> Send for Vec<'_, T> {}
@@ -169,7 +168,7 @@ impl<'alloc, T> Vec<'alloc, T> {
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
-    type Target = InnerVec<T, &'alloc Bump>;
+    type Target = InnerVec<'alloc, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -179,13 +178,13 @@ impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
     #[inline]
-    fn deref_mut(&mut self) -> &mut InnerVec<T, &'alloc Bump> {
+    fn deref_mut(&mut self) -> &mut InnerVec<'alloc, T> {
         &mut self.0
     }
 }
 
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
-    type IntoIter = <InnerVec<T, &'alloc Bump> as IntoIterator>::IntoIter;
+    type IntoIter = <InnerVec<'alloc, T> as IntoIterator>::IntoIter;
     type Item = T;
 
     #[inline(always)]
