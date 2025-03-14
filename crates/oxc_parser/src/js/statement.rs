@@ -31,8 +31,8 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         is_top_level: bool,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
-        let mut directives = self.ast.vec();
-        let mut statements = self.ast.vec();
+        let mut directives = self.ast.vec_with_capacity(1);
+        let mut statements = self.ast.vec_with_capacity(16);
 
         let mut expecting_directives = true;
         while !self.has_fatal_error() {
