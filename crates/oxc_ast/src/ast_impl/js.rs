@@ -28,6 +28,7 @@ impl<'a> Expression<'a> {
                 | Self::TSSatisfiesExpression(_)
                 | Self::TSTypeAssertion(_)
                 | Self::TSNonNullExpression(_)
+                | Self::TSInstantiationExpression(_)
         )
     }
 

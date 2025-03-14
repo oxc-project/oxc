@@ -202,36 +202,9 @@ impl CatchErrorName {
                 return;
             }
 
-            if binding_ident.name.starts_with('_') {
-                let mut iter =
-                    ctx.semantic().symbol_references(binding_ident.symbol_id()).peekable();
-
-                if iter.peek().is_some() {
-                    ctx.diagnostic_with_fix(
-                        catch_error_name_diagnostic(
-                            binding_ident.name.as_str(),
-                            &self.name,
-                            binding_ident.span,
-                        ),
-                        |fixer| {
-                            let fixer = fixer.for_multifix();
-                            let mut declaration_fix = fixer.new_fix_with_capacity(2);
-
-                            declaration_fix
-                                .push(fixer.replace(binding_ident.span, self.name.clone()));
-
-                            for reference in iter {
-                                let node = ctx.nodes().get_node(reference.node_id()).kind();
-                                let Some(id) = node.as_identifier_reference() else { continue };
-
-                                declaration_fix.push(fixer.replace(id.span, self.name.clone()));
-                            }
-
-                            declaration_fix
-                        },
-                    );
-                }
-
+            let symbol_id = binding_ident.symbol_id();
+            let mut iter = ctx.semantic().symbol_references(symbol_id).peekable();
+            if binding_ident.name.starts_with('_') && iter.peek().is_none() {
                 return;
             }
 
@@ -241,7 +214,27 @@ impl CatchErrorName {
                     &self.name,
                     binding_ident.span,
                 ),
-                |fixer| fixer.replace(binding_ident.span, self.name.clone()),
+                |fixer| {
+                    let basic_fix = fixer.replace(binding_ident.span, self.name.clone());
+                    if iter.peek().is_none() {
+                        return basic_fix;
+                    }
+
+                    let fixer = fixer.for_multifix();
+                    let capacity = ctx.scoping().get_resolved_reference_ids(symbol_id).len() + 1;
+
+                    let mut declaration_fix = fixer.new_fix_with_capacity(capacity);
+
+                    declaration_fix.push(basic_fix);
+                    for reference in iter {
+                        let node = ctx.nodes().get_node(reference.node_id()).kind();
+                        let Some(id) = node.as_identifier_reference() else { continue };
+
+                        declaration_fix.push(fixer.replace(id.span, self.name.clone()));
+                    }
+
+                    declaration_fix
+                },
             );
         }
     }
@@ -306,6 +299,7 @@ fn test() {
         ("try { } catch (notMatching) { }", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
         ("try { } catch (notMatching) { }", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
         ("try { } catch (_) { console.log(_) }", None),
+        ("try { } catch (err) { console.error(err) }", None),
         ("promise.catch(notMatching => { })", Some(serde_json::json!([{"ignore": ["unicorn"]}]))),
         ("promise.catch((foo) => { })", None),
         ("promise.catch(function (foo) { })", None),
@@ -354,6 +348,11 @@ fn test() {
         (
             "try { } catch (_) { console.log(_) }",
             "try { } catch (error) { console.log(error) }",
+            None,
+        ),
+        (
+            "try { } catch (err) { console.error(err) }",
+            "try { } catch (error) { console.error(error) }",
             None,
         ),
         (

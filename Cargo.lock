@@ -312,7 +312,7 @@ dependencies = [
  "encode_unicode",
  "libc",
  "once_cell",
- "unicode-width 0.2.0",
+ "unicode-width",
  "windows-sys 0.59.0",
 ]
 
@@ -1524,7 +1524,7 @@ checksum = "fb37767f6569cd834a413442455e0f066d0d522de8630436e2a1761d9726ba56"
 
 [[package]]
 name = "oxc"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1562,23 +1562,23 @@ dependencies = [
 
 [[package]]
 name = "oxc-miette"
-version = "1.0.2"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e03e63fd113c068b82d07c9c614b0b146c08a3ac0a4dface3ea1d1a9d14d549e"
+checksum = "288e20c3f5128c433165c23bcac0169fce6520c5decc2ae7cc5cce5898d861d5"
 dependencies = [
  "cfg-if",
  "owo-colors",
  "oxc-miette-derive",
  "textwrap",
- "thiserror 1.0.69",
- "unicode-width 0.2.0",
+ "thiserror 2.0.11",
+ "unicode-width",
 ]
 
 [[package]]
 name = "oxc-miette-derive"
-version = "1.0.2"
+version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e21f680e8c5f1900297d394627d495351b9e37761f7bbf90116bd5eeb6e80967"
+checksum = "4c0c893f53900e3fe01eca3d6d3b54085573c3e48fe25af9d57dd94ef600dcd3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1587,7 +1587,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "allocator-api2",
  "assert-unchecked",
@@ -1602,7 +1602,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "bitflags 2.8.0",
  "cow-utils",
@@ -1617,7 +1617,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1649,7 +1649,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_visit"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1682,7 +1682,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "bitflags 2.8.0",
  "itertools",
@@ -1695,7 +1695,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "base64",
  "bitflags 2.8.0",
@@ -1758,7 +1758,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_data_structures"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "assert-unchecked",
  "ropey",
@@ -1766,7 +1766,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -1774,7 +1774,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ecmascript"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -1786,7 +1786,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_estree"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "itoa",
  "oxc_data_structures",
@@ -1804,7 +1804,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "bitflags 2.8.0",
  "insta",
@@ -1822,7 +1822,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_language_server"
-version = "0.15.14"
+version = "0.15.15"
 dependencies = [
  "cow-utils",
  "env_logger",
@@ -1847,7 +1847,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.15.14"
+version = "0.15.15"
 dependencies = [
  "bitflags 2.8.0",
  "convert_case",
@@ -1907,7 +1907,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "fixedbitset",
  "itertools",
@@ -1922,7 +1922,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "cow-utils",
  "insta",
@@ -1979,7 +1979,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_napi"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "napi",
  "napi-build",
@@ -1989,7 +1989,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.8.0",
@@ -2012,7 +2012,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser_napi"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "napi",
  "napi-build",
@@ -2070,7 +2070,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
@@ -2103,7 +2103,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "assert-unchecked",
  "insta",
@@ -2145,7 +2145,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -2158,7 +2158,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.8.0",
@@ -2218,7 +2218,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "napi",
  "napi-build",
@@ -2231,7 +2231,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "base64",
  "compact_str",
@@ -2265,7 +2265,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.57.0"
+version = "0.58.1"
 dependencies = [
  "compact_str",
  "itoa",
@@ -2297,7 +2297,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.15.14"
+version = "0.15.15"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -3108,13 +3108,13 @@ dependencies = [
 
 [[package]]
 name = "textwrap"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23d434d3f8967a09480fb04132ebe0a3e088c173e6d0ee7897abbdf4eab0f8b9"
+checksum = "c13547615a44dc9c452a8a534638acdf07120d4b6847c8178705da06306a3057"
 dependencies = [
  "smawk",
  "unicode-linebreak",
- "unicode-width 0.1.14",
+ "unicode-width",
 ]
 
 [[package]]
@@ -3434,12 +3434,6 @@ name = "unicode-segmentation"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6ccf251212114b54433ec949fd6a7841275f9ada20dddd2f29e9ceea4501493"
-
-[[package]]
-name = "unicode-width"
-version = "0.1.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
 
 [[package]]
 name = "unicode-width"

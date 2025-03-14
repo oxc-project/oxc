@@ -90,9 +90,25 @@
 //! [`IndexMut`]: https://doc.rust-lang.org/std/ops/trait.IndexMut.html
 //! [`vec!`]: ../../macro.vec.html
 
-use super::raw_vec::RawVec;
-use crate::Bump;
-use crate::collections::CollectionAllocErr;
+#![expect(
+    clippy::semicolon_if_nothing_returned,
+    clippy::needless_pass_by_ref_mut,
+    clippy::needless_for_each,
+    clippy::needless_lifetimes,
+    clippy::cloned_instead_of_copied,
+    clippy::checked_conversions,
+    clippy::legacy_numeric_constants,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap,
+    clippy::swap_ptr_to_ref,
+    clippy::ref_as_ptr,
+    clippy::ptr_as_ptr,
+    clippy::ptr_cast_constness,
+    unsafe_op_in_unsafe_fn,
+    clippy::undocumented_unsafe_blocks
+)]
+
+use bumpalo::{Bump, collections::CollectionAllocErr};
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
 use core::fmt;
@@ -106,8 +122,12 @@ use core::ops::{Index, IndexMut, RangeBounds};
 use core::ptr;
 use core::ptr::NonNull;
 use core::slice;
-#[cfg(feature = "std")]
-use std::io;
+
+// #[cfg(feature = "std")]
+// use std::io;
+
+mod raw_vec;
+use raw_vec::RawVec;
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)
@@ -850,7 +870,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         unsafe {
             let ptr = self.as_ptr();
             let len = self.len();
-            mem::forget(self);
+            // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
             slice::from_raw_parts(ptr, len)
         }
     }
@@ -875,7 +895,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     pub fn into_bump_slice_mut(mut self) -> &'bump mut [T] {
         let ptr = self.as_mut_ptr();
         let len = self.len();
-        mem::forget(self);
+        // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
 
         unsafe { slice::from_raw_parts_mut(ptr, len) }
     }
@@ -1299,6 +1319,127 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         self.drain_filter(|x| !f(x));
     }
 
+    /// Retains only the elements specified by the predicate, passing a mutable reference to it.
+    ///
+    /// In other words, remove all elements `e` such that `f(&mut e)` returns `false`.
+    /// This method operates in place, visiting each element exactly once in the
+    /// original order, and preserves the order of the retained elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut vec = vec![1, 2, 3, 4];
+    /// vec.retain_mut(|x| if *x <= 3 {
+    ///     *x += 1;
+    ///     true
+    /// } else {
+    ///     false
+    /// });
+    /// assert_eq!(vec, [2, 3, 4]);
+    /// ```
+    // The implementation is based on the [`std::vec::Vec::retain_mut`].
+    //
+    // Allowing the following clippy rules just to make the code same as the original implementation.
+    #[expect(clippy::items_after_statements, clippy::redundant_else)]
+    pub fn retain_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut T) -> bool,
+    {
+        let original_len = self.len();
+
+        if original_len == 0 {
+            // Empty case: explicit return allows better optimization, vs letting compiler infer it
+            return;
+        }
+
+        // Avoid double drop if the drop guard is not executed,
+        // since we may make some holes during the process.
+        unsafe { self.set_len(0) };
+
+        // Vec: [Kept, Kept, Hole, Hole, Hole, Hole, Unchecked, Unchecked]
+        //      |<-              processed len   ->| ^- next to check
+        //                  |<-  deleted cnt     ->|
+        //      |<-              original_len                          ->|
+        // Kept: Elements which predicate returns true on.
+        // Hole: Moved or dropped element slot.
+        // Unchecked: Unchecked valid elements.
+        //
+        // This drop guard will be invoked when predicate or `drop` of element panicked.
+        // It shifts unchecked elements to cover holes and `set_len` to the correct length.
+        // In cases when predicate and `drop` never panick, it will be optimized out.
+        struct BackshiftOnDrop<'bump, 'a, T> {
+            v: &'a mut Vec<'bump, T>,
+            processed_len: usize,
+            deleted_cnt: usize,
+            original_len: usize,
+        }
+
+        impl<T> Drop for BackshiftOnDrop<'_, '_, T> {
+            fn drop(&mut self) {
+                if self.deleted_cnt > 0 {
+                    // SAFETY: Trailing unchecked items must be valid since we never touch them.
+                    unsafe {
+                        ptr::copy(
+                            self.v.as_ptr().add(self.processed_len),
+                            self.v.as_mut_ptr().add(self.processed_len - self.deleted_cnt),
+                            self.original_len - self.processed_len,
+                        );
+                    }
+                }
+                // SAFETY: After filling holes, all items are in contiguous memory.
+                unsafe {
+                    self.v.set_len(self.original_len - self.deleted_cnt);
+                }
+            }
+        }
+
+        let mut g = BackshiftOnDrop { v: self, processed_len: 0, deleted_cnt: 0, original_len };
+
+        fn process_loop<F, T, const DELETED: bool>(
+            original_len: usize,
+            f: &mut F,
+            g: &mut BackshiftOnDrop<'_, '_, T>,
+        ) where
+            F: FnMut(&mut T) -> bool,
+        {
+            while g.processed_len != original_len {
+                // SAFETY: Unchecked element must be valid.
+                let cur = unsafe { &mut *g.v.as_mut_ptr().add(g.processed_len) };
+                if !f(cur) {
+                    // Advance early to avoid double drop if `drop_in_place` panicked.
+                    g.processed_len += 1;
+                    g.deleted_cnt += 1;
+                    // SAFETY: We never touch this element again after dropped.
+                    unsafe { ptr::drop_in_place(cur) };
+                    // We already advanced the counter.
+                    if DELETED {
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                if DELETED {
+                    // SAFETY: `deleted_cnt` > 0, so the hole slot must not overlap with current element.
+                    // We use copy for move, and never touch this element again.
+                    unsafe {
+                        let hole_slot = g.v.as_mut_ptr().add(g.processed_len - g.deleted_cnt);
+                        ptr::copy_nonoverlapping(cur, hole_slot, 1);
+                    }
+                }
+                g.processed_len += 1;
+            }
+        }
+
+        // Stage 1: Nothing was deleted.
+        process_loop::<F, T, false>(original_len, &mut f, &mut g);
+
+        // Stage 2: Some elements were deleted.
+        process_loop::<F, T, true>(original_len, &mut f, &mut g);
+
+        // All item are processed. This can be optimized to `set_len` by LLVM.
+        drop(g);
+    }
+
     /// Creates an iterator that removes the elements in the vector
     /// for which the predicate returns `true` and yields the removed items.
     ///
@@ -1664,6 +1805,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     }
 }
 
+/*
 #[cfg(feature = "boxed")]
 impl<'bump, T> Vec<'bump, T> {
     /// Converts the vector into [`Box<[T]>`][owned slice].
@@ -1695,6 +1837,7 @@ impl<'bump, T> Vec<'bump, T> {
         }
     }
 }
+*/
 
 impl<'bump, T: 'bump + Clone> Vec<'bump, T> {
     /// Resizes the `Vec` in-place so that `len` is equal to `new_len`.
@@ -1824,7 +1967,7 @@ impl<'bump, T: 'bump + Copy> Vec<'bump, T> {
     /// ```
     ///
     /// [`extend_from_slice`]: #method.extend_from_slice
-    /// [`extend_from_slices`]: #method.extend_from_slices
+    /// [`extend_from_slices_copy`]: #method.extend_from_slices_copy
     pub fn extend_from_slice_copy(&mut self, other: &[T]) {
         // Reserve space in the Vec for the values to be added
         self.reserve(other.len());
@@ -2101,7 +2244,7 @@ impl<'bump, T: 'bump> IntoIterator for Vec<'bump, T> {
             } else {
                 begin.add(self.len()) as *const T
             };
-            mem::forget(self);
+            // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
             IntoIter { phantom: PhantomData, ptr: begin, end }
         }
     }
@@ -2287,12 +2430,14 @@ impl<'bump, T: 'bump> AsMut<[T]> for Vec<'bump, T> {
     }
 }
 
+/*
 #[cfg(feature = "boxed")]
 impl<'bump, T: 'bump> From<Vec<'bump, T>> for crate::boxed::Box<'bump, [T]> {
     fn from(v: Vec<'bump, T>) -> crate::boxed::Box<'bump, [T]> {
         v.into_boxed_slice()
     }
 }
+*/
 
 impl<'bump, T: 'bump> Borrow<[T]> for Vec<'bump, T> {
     #[inline]
@@ -2305,18 +2450,6 @@ impl<'bump, T: 'bump> BorrowMut<[T]> for Vec<'bump, T> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [T] {
         &mut self[..]
-    }
-}
-
-impl<'bump, T> Drop for Vec<'bump, T> {
-    fn drop(&mut self) {
-        unsafe {
-            // use drop for [T]
-            // use a raw slice to refer to the elements of the vector as weakest necessary type;
-            // could avoid questions of validity in certain cases
-            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.len))
-        }
-        // RawVec handles deallocation
     }
 }
 
@@ -2713,6 +2846,7 @@ where
     }
 }
 
+/*
 #[cfg(feature = "std")]
 impl<'bump> io::Write for Vec<'bump, u8> {
     #[inline]
@@ -2732,7 +2866,9 @@ impl<'bump> io::Write for Vec<'bump, u8> {
         Ok(())
     }
 }
+*/
 
+/*
 #[cfg(feature = "serde")]
 mod serialize {
     use super::*;
@@ -2755,3 +2891,4 @@ mod serialize {
         }
     }
 }
+*/

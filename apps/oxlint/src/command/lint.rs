@@ -42,9 +42,9 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 
-    /// Enables automatic loading of nested configuration files (experimental feature)
+    /// Disables the automatic loading of nested configuration files.
     #[bpaf(switch, hide_usage)]
-    pub experimental_nested_config: bool,
+    pub disable_nested_config: bool,
 
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
@@ -519,10 +519,10 @@ mod lint_options {
     }
 
     #[test]
-    fn experimental_nested_config() {
-        let options = get_lint_options("--experimental-nested-config");
-        assert!(options.experimental_nested_config);
+    fn disable_nested_config() {
+        let options = get_lint_options("--disable-nested-config");
+        assert!(options.disable_nested_config);
         let options = get_lint_options(".");
-        assert!(!options.experimental_nested_config);
+        assert!(!options.disable_nested_config);
     }
 }

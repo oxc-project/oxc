@@ -1132,9 +1132,9 @@ function deserializeJSXOpeningElement(pos) {
     type: 'JSXOpeningElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    selfClosing: deserializeBool(pos + 8),
-    name: deserializeJSXElementName(pos + 16),
     attributes: deserializeVecJSXAttributeItem(pos + 32),
+    name: deserializeJSXElementName(pos + 16),
+    selfClosing: deserializeBool(pos + 8),
   };
 }
 
@@ -1163,6 +1163,8 @@ function deserializeJSXOpeningFragment(pos) {
     type: 'JSXOpeningFragment',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
+    attributes: [],
+    selfClosing: false,
   };
 }
 
@@ -1254,6 +1256,7 @@ function deserializeJSXText(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     value: deserializeStr(pos + 8),
+    raw: deserializeOptionStr(pos + 24),
   };
 }
 

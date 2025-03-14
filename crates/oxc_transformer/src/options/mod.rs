@@ -14,6 +14,7 @@ use crate::{
     es2021::ES2021Options,
     es2022::ES2022Options,
     jsx::JsxOptions,
+    proposals::ProposalOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
 };
@@ -65,6 +66,9 @@ pub struct TransformOptions {
     /// ECMAScript Env Options
     pub env: EnvOptions,
 
+    /// Proposals
+    pub proposals: ProposalOptions,
+
     pub helper_loader: HelperLoaderOptions,
 }
 
@@ -85,6 +89,7 @@ impl TransformOptions {
                 ..JsxOptions::default()
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
+            proposals: ProposalOptions::default(),
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -270,6 +275,9 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 es2020,
                 es2021,
                 es2022,
+            },
+            proposals: ProposalOptions {
+                explicit_resource_management: options.plugins.explicit_resource_management,
             },
             helper_loader,
         })

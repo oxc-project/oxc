@@ -4,11 +4,14 @@
 
 ### ESTree
 
-The returned JavaScript AST follows the [ESTree](https://github.com/estree/estree) specification.
+When parsing `.js` or `.jsx` files, the AST returned is fully conformant with the
+[ESTree standard](https://github.com/estree/estree).
 
 It is fully aligned with Acorn's AST, and any deviation would be considered a bug.
 
 The returned TypeScript AST will conform to [@typescript-eslint/typescript-estree](https://www.npmjs.com/package/@typescript-eslint/typescript-estree) in the near future.
+
+If you need all ASTs in the same with-TS-properties format, use the `astType: 'ts'` option.
 
 ### AST Types
 
@@ -40,17 +43,6 @@ Does not produce any errors when `showSemanticErrors` is `false`, which is the d
 Fast mode is best suited for parser plugins, where other parts of your build pipeline has already checked for errors.
 
 Please note that turning off fast mode ​incurs​ a small performance overhead.
-
-### ESTree compatibility
-
-When parsing JS or JSX files, the AST returned is fully conformant with the
-[ESTree standard](https://github.com/estree/estree).
-
-When parsing TS or TSX files, the AST has additional properties related to TypeScript syntax.
-These extra properties are broadly (but not entirely) in line with
-[TypeScript ESLint](https://typescript-eslint.io/packages/parser/)'s AST.
-
-If you need all ASTs in the same with-TS-properties format, use the `astType: 'ts'` option.
 
 ### Returns ESM information.
 

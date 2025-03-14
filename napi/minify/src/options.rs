@@ -8,9 +8,19 @@ use oxc_syntax::es_target::ESTarget;
 
 #[napi(object)]
 pub struct CompressOptions {
-    /// Enables optional catch or nullish-coalescing operator if targeted higher.
+    /// Set desired EcmaScript standard version for output.
     ///
-    /// @default 'es2015'
+    /// Set `esnext` to enable all target highering.
+    ///
+    /// e.g.
+    ///
+    /// * catch optional binding when >= es2019
+    /// * `??` operator >= es2020
+    ///
+    /// @default 'esnext'
+    #[napi(
+        ts_type = "'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'"
+    )]
     pub target: Option<String>,
 
     /// Pass true to discard calls to `console.*`.
@@ -33,15 +43,16 @@ impl Default for CompressOptions {
 impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
     type Error = String;
     fn try_from(o: &CompressOptions) -> Result<Self, Self::Error> {
+        let default = oxc_minifier::CompressOptions::default();
         Ok(oxc_minifier::CompressOptions {
             target: o
                 .target
                 .as_ref()
                 .map(|s| ESTarget::from_str(s))
                 .transpose()?
-                .unwrap_or(ESTarget::ES2015),
-            drop_debugger: o.drop_debugger.unwrap_or(false),
-            drop_console: o.drop_console.unwrap_or(true),
+                .unwrap_or(default.target),
+            drop_console: o.drop_console.unwrap_or(default.drop_console),
+            drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
         })
     }
 }
@@ -49,7 +60,9 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
 #[napi(object)]
 #[derive(Default)]
 pub struct MangleOptions {
-    /// Pass true to mangle names declared in the top level scope.
+    /// Pass `true` to mangle names declared in the top level scope.
+    ///
+    /// @default false
     pub toplevel: Option<bool>,
 
     /// Debug mangled names.
@@ -58,7 +71,11 @@ pub struct MangleOptions {
 
 impl From<&MangleOptions> for oxc_minifier::MangleOptions {
     fn from(o: &MangleOptions) -> Self {
-        Self { top_level: o.toplevel.unwrap_or(false), debug: o.debug.unwrap_or(false) }
+        let default = oxc_minifier::MangleOptions::default();
+        Self {
+            top_level: o.toplevel.unwrap_or(default.top_level),
+            debug: o.debug.unwrap_or(default.debug),
+        }
     }
 }
 
@@ -67,20 +84,21 @@ pub struct CodegenOptions {
     /// Remove whitespace.
     ///
     /// @default true
-    pub whitespace: Option<bool>,
+    pub remove_whitespace: Option<bool>,
 }
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { whitespace: Some(true) }
+        Self { remove_whitespace: Some(true) }
     }
 }
 
 impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
     fn from(o: &CodegenOptions) -> Self {
+        let default = oxc_codegen::CodegenOptions::default();
         oxc_codegen::CodegenOptions {
-            minify: o.whitespace.unwrap_or(true),
-            ..oxc_codegen::CodegenOptions::default()
+            minify: o.remove_whitespace.unwrap_or(default.minify),
+            ..default
         }
     }
 }

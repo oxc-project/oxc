@@ -106,6 +106,7 @@ mod eslint {
     pub mod no_label_var;
     pub mod no_labels;
     pub mod no_lone_blocks;
+    pub mod no_lonely_if;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_assign;
@@ -579,6 +580,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_lonely_if,
     eslint::no_useless_call,
     eslint::no_unneeded_ternary,
     eslint::no_extra_label,

@@ -148,10 +148,10 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
-        let mut stmts =
-            self.ast.vec_from_iter(stmts.iter().filter(|stmt| {
-                stmt.is_declaration() && !self.has_internal_annotation(stmt.span())
-            }));
+        let mut stmts = stmts
+            .iter()
+            .filter(|stmt| stmt.is_declaration() && !self.has_internal_annotation(stmt.span()))
+            .collect::<Vec<_>>();
 
         Self::remove_function_overloads_implementation(&mut stmts);
 
@@ -170,10 +170,13 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
-        let mut stmts = self.ast.vec_from_iter(stmts.iter().filter(|stmt| {
-            (stmt.is_declaration() || stmt.is_module_declaration())
-                && !self.has_internal_annotation(stmt.span())
-        }));
+        let mut stmts = stmts
+            .iter()
+            .filter(|stmt| {
+                (stmt.is_declaration() || stmt.is_module_declaration())
+                    && !self.has_internal_annotation(stmt.span())
+            })
+            .collect::<Vec<_>>();
         Self::remove_function_overloads_implementation(&mut stmts);
 
         // https://github.com/microsoft/TypeScript/pull/58912
@@ -364,7 +367,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 + usize::from(extra_export_var_statement.is_some())
                 + usize::from(need_empty_export_marker),
         );
-        stmts.iter().for_each(|stmt| {
+        for stmt in stmts {
             if transformed_spans.contains(&stmt.span()) {
                 let new_stmt = transformed_stmts
                     .remove(&stmt.span())
@@ -378,7 +381,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                 }
                 new_stmts.push(new_stmt);
-                return;
+                continue;
             }
             match stmt {
                 Statement::ImportDeclaration(decl) => {
@@ -409,7 +412,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 _ => {}
             }
-        });
+        }
 
         if need_empty_export_marker {
             let specifiers = self.ast.vec();
@@ -427,7 +430,7 @@ impl<'a> IsolatedDeclarations<'a> {
         new_stmts
     }
 
-    fn remove_function_overloads_implementation(stmts: &mut ArenaVec<'a, &Statement<'a>>) {
+    fn remove_function_overloads_implementation(stmts: &mut Vec<&Statement<'a>>) {
         let mut last_function_name: Option<Atom<'a>> = None;
         let mut is_export_default_function_overloads = false;
 

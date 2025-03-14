@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Box};
+use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
@@ -122,11 +122,11 @@ pub struct TraverseCtx<'a> {
 impl<'a> TraverseCtx<'a> {
     /// Allocate a node in the arena.
     ///
-    /// Returns a [`Box<T>`].
+    /// Returns a [`Box<'a, T>`](ArenaBox).
     ///
     /// Shortcut for `ctx.ast.alloc`.
     #[inline]
-    pub fn alloc<T>(&self, node: T) -> Box<'a, T> {
+    pub fn alloc<T>(&self, node: T) -> ArenaBox<'a, T> {
         self.ast.alloc(node)
     }
 
@@ -277,6 +277,23 @@ impl<'a> TraverseCtx<'a> {
         flags: ScopeFlags,
     ) -> ScopeId {
         self.scoping.insert_scope_below_expression(expr, flags)
+    }
+
+    /// Insert a scope into scope tree below a `Vec` of statements.
+    ///
+    /// Statements must be in current scope.
+    /// New scope is created as child of current scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.insert_scope_below_statements`.
+    pub fn insert_scope_below_statements(
+        &mut self,
+        stmts: &ArenaVec<Statement>,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        self.scoping.insert_scope_below_statements(stmts, flags)
     }
 
     /// Remove scope for an expression from the scope chain.

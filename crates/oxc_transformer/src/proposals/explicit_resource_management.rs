@@ -217,8 +217,6 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
         let program_body = ctx.ast.move_vec(&mut program.body);
 
-        let mut scopes_to_skip_move: Vec<ScopeId> = Vec::new();
-
         let (mut program_body, inner_block): (
             ArenaVec<'a, Statement<'a>>,
             ArenaVec<'a, Statement<'a>>,
@@ -227,11 +225,9 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             |(mut program_body, mut inner_block), mut stmt| {
                 let address = stmt.address();
                 match stmt {
-                    Statement::FunctionDeclaration(ref fun) => {
-                        scopes_to_skip_move.push(fun.scope_id());
-                        program_body.push(stmt);
-                    }
-                    Statement::ImportDeclaration(_) | Statement::ExportAllDeclaration(_) => {
+                    Statement::FunctionDeclaration(_)
+                    | Statement::ImportDeclaration(_)
+                    | Statement::ExportAllDeclaration(_) => {
                         program_body.push(stmt);
                     }
                     Statement::ExportDefaultDeclaration(ref mut export_default_decl) => {
@@ -246,8 +242,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
 
                                 (BoundIdentifier::from_binding_ident(&id), id.span)
                             }
-                            ExportDefaultDeclarationKind::FunctionDeclaration(fun) => {
-                                scopes_to_skip_move.push(fun.scope_id());
+                            ExportDefaultDeclarationKind::FunctionDeclaration(_) => {
                                 program_body.push(stmt);
                                 return (program_body, inner_block);
                             }
@@ -325,17 +320,6 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                                 | Declaration::TSModuleDeclaration(_)
                                 | Declaration::TSImportEqualsDeclaration(_)
                         ) {
-                            if let Some(stmt_scope) = match decl {
-                                Declaration::FunctionDeclaration(fun) => Some(fun.scope_id()),
-                                Declaration::TSTypeAliasDeclaration(decl) => Some(decl.scope_id()),
-                                Declaration::TSInterfaceDeclaration(decl) => Some(decl.scope_id()),
-                                Declaration::TSEnumDeclaration(decl) => Some(decl.scope_id()),
-                                Declaration::TSModuleDeclaration(decl) => Some(decl.scope_id()),
-                                Declaration::TSImportEqualsDeclaration(_) => None,
-                                _ => unreachable!(),
-                            } {
-                                scopes_to_skip_move.push(stmt_scope);
-                            }
                             program_body.push(stmt);
 
                             return (program_body, inner_block);
@@ -434,17 +418,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             },
         );
 
-        let current_scope_id = ctx.current_scope_id();
-        let block_scope_id = ctx.create_child_scope(current_scope_id, ScopeFlags::empty());
-
-        let child_ids = ctx.scoping_mut().get_scope_child_ids(current_scope_id).to_vec();
-        for id in child_ids
-            .iter()
-            .filter(|id| !scopes_to_skip_move.contains(id) && *id != &block_scope_id)
-        {
-            ctx.scoping_mut().change_scope_parent_id(*id, Some(block_scope_id));
-        }
-
+        let block_scope_id = ctx.insert_scope_below_statements(&inner_block, ScopeFlags::empty());
         program_body.push(ctx.ast.statement_block_with_scope_id(SPAN, inner_block, block_scope_id));
 
         std::mem::swap(&mut program.body, &mut program_body);

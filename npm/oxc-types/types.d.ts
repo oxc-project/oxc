@@ -817,9 +817,9 @@ export interface JSXElement extends Span {
 
 export interface JSXOpeningElement extends Span {
   type: 'JSXOpeningElement';
-  selfClosing: boolean;
-  name: JSXElementName;
   attributes: Array<JSXAttributeItem>;
+  name: JSXElementName;
+  selfClosing: boolean;
   typeParameters: TSTypeParameterInstantiation | null;
 }
 
@@ -837,6 +837,8 @@ export interface JSXFragment extends Span {
 
 export interface JSXOpeningFragment extends Span {
   type: 'JSXOpeningFragment';
+  attributes: Array<JSXAttributeItem>;
+  selfClosing: false;
 }
 
 export interface JSXClosingFragment extends Span {
@@ -902,6 +904,7 @@ export interface JSXSpreadChild extends Span {
 export interface JSXText extends Span {
   type: 'JSXText';
   value: string;
+  raw: string | null;
 }
 
 export interface TSThisParameter extends Span {

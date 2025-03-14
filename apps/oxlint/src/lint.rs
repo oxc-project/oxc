@@ -56,11 +56,11 @@ impl Runner for LintRunner {
             fix_options,
             enable_plugins,
             misc_options,
-            experimental_nested_config,
+            disable_nested_config,
             ..
         } = self.options;
 
-        let use_nested_config = experimental_nested_config &&
+        let use_nested_config = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none();
@@ -334,8 +334,9 @@ impl Runner for LintRunner {
             }
         };
 
-        let linter = if experimental_nested_config {
+        let linter = if use_nested_config {
             Linter::new_with_nested_configs(LintOptions::default(), lint_config, nested_configs)
+                .with_fix(fix_options.fix_kind())
         } else {
             Linter::new(LintOptions::default(), lint_config).with_fix(fix_options.fix_kind())
         };
@@ -984,15 +985,18 @@ mod test {
 
     #[test]
     fn test_nested_config() {
-        let args = &["--experimental-nested-config"];
+        let args = &[];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
+
+        let args = &["--disable-nested-config"];
+        Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
     }
 
     #[test]
     fn test_nested_config_explicit_config_precedence() {
         // `--config` takes absolute precedence over nested configs, and will be used for
         // linting all files rather than the nested configuration files.
-        let args = &["--experimental-nested-config", "--config", "oxlint-no-console.json"];
+        let args = &["--config", "oxlint-no-console.json"];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
     }
 
@@ -1000,7 +1004,7 @@ mod test {
     fn test_nested_config_filter_precedence() {
         // CLI arguments take precedence over nested configs, but apply over top of the nested
         // config files, rather than replacing them.
-        let args = &["--experimental-nested-config", "-A", "no-console"];
+        let args = &["-A", "no-console"];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
     }
 
@@ -1008,13 +1012,7 @@ mod test {
     fn test_nested_config_explicit_config_and_filter_precedence() {
         // Combining `--config` and CLI filters should make the passed config file be
         // used for all files, but still override any rules specified in the config file.
-        let args = &[
-            "--experimental-nested-config",
-            "-A",
-            "no-console",
-            "--config",
-            "oxlint-no-console.json",
-        ];
+        let args = &["-A", "no-console", "--config", "oxlint-no-console.json"];
         Tester::new().with_cwd("fixtures/nested_config".into()).test_and_snapshot(args);
     }
 
@@ -1035,11 +1033,11 @@ mod test {
     #[test]
     fn test_extends_overrides() {
         // Check that using a config with overrides works as expected
-        let args = &["--experimental-nested-config", "overrides"];
+        let args = &["overrides"];
         Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
 
         // Check that using a config which extends a config with overrides works as expected
-        let args = &["--experimental-nested-config", "overrides_same_directory"];
+        let args = &["overrides_same_directory"];
         Tester::new().with_cwd("fixtures/extends_config".into()).test_and_snapshot(args);
     }
 }

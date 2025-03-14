@@ -1986,9 +1986,9 @@ impl ESTree for JSXOpeningElement<'_> {
         state.serialize_field("type", &JsonSafeString("JSXOpeningElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("selfClosing", &self.self_closing);
-        state.serialize_field("name", &self.name);
         state.serialize_field("attributes", &self.attributes);
+        state.serialize_field("name", &self.name);
+        state.serialize_field("selfClosing", &self.self_closing);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.end();
     }
@@ -2024,6 +2024,8 @@ impl ESTree for JSXOpeningFragment {
         state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_field("attributes", &crate::serialize::JSXOpeningFragmentAttributes(self));
+        state.serialize_field("selfClosing", &crate::serialize::False(self));
         state.end();
     }
 }
@@ -2257,6 +2259,7 @@ impl ESTree for JSXText<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
+        state.serialize_field("raw", &self.raw);
         state.end();
     }
 }

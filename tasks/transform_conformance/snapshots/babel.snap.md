@@ -2605,7 +2605,9 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 * type-arguments/expr/input.ts
-x Output mismatch
+Unresolved references mismatch:
+after transform: ["T", "f"]
+rebuilt        : ["f"]
 
 * type-arguments/new/input.ts
 Unresolved references mismatch:

@@ -548,6 +548,16 @@ impl ESTree for JSXElementThisExpression<'_> {
     }
 }
 
+#[ast_meta]
+#[estree(ts_type = "Array<JSXAttributeItem>", raw_deser = "[]")]
+pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpeningFragment);
+
+impl ESTree for JSXOpeningFragmentAttributes<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        [(); 0].serialize(serializer);
+    }
+}
+
 // --------------------
 // Comments
 // --------------------

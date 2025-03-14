@@ -62,6 +62,7 @@ pub struct JSXElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, attributes, name, self_closing, type_parameters))]
 pub struct JSXOpeningElement<'a> {
     /// Node location in source code
     pub span: Span,
@@ -129,6 +130,7 @@ pub struct JSXFragment<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(attributes = JSXOpeningFragmentAttributes, selfClosing = False))]
 pub struct JSXOpeningFragment {
     /// Node location in source code
     pub span: Span,
@@ -482,4 +484,10 @@ pub struct JSXText<'a> {
     pub span: Span,
     /// The text content.
     pub value: Atom<'a>,
+
+    /// The raw string as it appears in source code.
+    ///
+    /// `None` when this ast node is not constructed from the parser.
+    #[content_eq(skip)]
+    pub raw: Option<Atom<'a>>,
 }

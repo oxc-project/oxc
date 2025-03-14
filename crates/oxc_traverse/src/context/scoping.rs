@@ -4,6 +4,7 @@ use compact_str::CompactString;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
@@ -115,6 +116,23 @@ impl TraverseScoping {
     ) -> ScopeId {
         let mut collector = ChildScopeCollector::new();
         collector.visit_expression(expr);
+        self.insert_scope_below(&collector.scope_ids, flags)
+    }
+
+    /// Insert a scope into scope tree below a `Vec` of statements.
+    ///
+    /// Statements must be in current scope.
+    /// New scope is created as child of current scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    pub fn insert_scope_below_statements(
+        &mut self,
+        stmts: &ArenaVec<Statement>,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let mut collector = ChildScopeCollector::new();
+        collector.visit_statements(stmts);
         self.insert_scope_below(&collector.scope_ids, flags)
     }
 

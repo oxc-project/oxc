@@ -108,12 +108,21 @@ impl<'alloc> String<'alloc> {
     #[inline(always)]
     pub unsafe fn from_utf8_unchecked(bytes: Vec<'alloc, u8>) -> String<'alloc> {
         // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
-        // and our inner `Vec` type is `allocator_api2::vec::Vec`.
+        // and our inner `Vec` type is our own `crate::vec2::Vec`.
+
+        // Wrap `bytes` in `ManuallyDrop` to prevent its memory getting freed when `bytes`
+        // goes out of scope at end of this function.
+        // This shouldn't actually be required as `Vec` is already non-`Drop`,
+        // but `ManuallyDrop` has no runtime cost, so it doesn't hurt to make sure.
+        let mut bytes = ManuallyDrop::new(bytes);
+
+        let ptr = bytes.as_mut_ptr();
+        let len = bytes.len();
+        let capacity = bytes.capacity();
+        let bump = bytes.bump();
         // SAFETY: Conversion is safe because both types store data in arena in same way.
         // Lifetime of returned `String` is same as lifetime of original `Vec<u8>`.
         unsafe {
-            let inner = ManuallyDrop::into_inner(bytes.0);
-            let (ptr, len, capacity, bump) = inner.into_raw_parts_with_alloc();
             Self(ManuallyDrop::new(BumpaloString::from_raw_parts_in(ptr, len, capacity, bump)))
         }
     }

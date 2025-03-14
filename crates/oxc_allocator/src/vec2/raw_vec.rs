@@ -10,18 +10,29 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![allow(
+    unused_mut,
+    unused_unsafe,
+    clippy::allow_attributes,
+    clippy::uninlined_format_args,
+    clippy::enum_glob_use,
+    clippy::equatable_if_let,
+    clippy::needless_pass_by_value,
+    clippy::inline_always
+)]
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 
-use crate::Bump;
+use allocator_api2::alloc::{AllocError, Allocator};
+use bumpalo::Bump;
 
+pub use core::alloc::Layout;
 use core::cmp;
 use core::mem;
 use core::ptr::{self, NonNull};
 
-use crate::alloc::{Alloc, Layout, UnstableLayoutMethods, handle_alloc_error};
-use crate::collections::CollectionAllocErr;
-use crate::collections::CollectionAllocErr::*;
+use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow};
+
 // use boxed::Box;
 
 /// A low-level utility for more ergonomically allocating, reallocating, and deallocating
@@ -93,8 +104,7 @@ impl<'a, T> RawVec<'a, T> {
             } else {
                 let align = mem::align_of::<T>();
                 let layout = Layout::from_size_align(alloc_size, align).unwrap();
-                let result =
-                    if zeroed { a.alloc_zeroed(layout) } else { Alloc::alloc(&mut a, layout) };
+                let result = if zeroed { a.allocate_zeroed(layout) } else { a.allocate(layout) };
                 match result {
                     Ok(ptr) => ptr.cast(),
                     Err(_) => handle_alloc_error(layout),
@@ -154,6 +164,7 @@ impl<'a, T> RawVec<'a, T> {
         }
     }
 
+    /*
     /// Doubles the size of the type's backing allocation. This is common enough
     /// to want to do that it's easiest to just have a dedicated method. Slightly
     /// more efficient logic can be provided for this than the general case.
@@ -250,7 +261,9 @@ impl<'a, T> RawVec<'a, T> {
             self.cap = new_cap;
         }
     }
+    */
 
+    /*
     /// Attempts to double the size of the type's backing allocation in place. This is common
     /// enough to want to do that it's easiest to just have a dedicated method. Slightly
     /// more efficient logic can be provided for this than the general case.
@@ -297,6 +310,7 @@ impl<'a, T> RawVec<'a, T> {
             }
         }
     }
+    */
 
     /// The same as `reserve_exact`, but returns on errors instead of panicking or aborting.
     pub fn try_reserve_exact(
@@ -413,6 +427,7 @@ impl<'a, T> RawVec<'a, T> {
         self.infallible_reserve_internal(used_cap, needed_extra_cap, Amortized)
     }
 
+    /*
     /// Attempts to ensure that the buffer contains at least enough space to hold
     /// `used_cap + needed_extra_cap` elements. If it doesn't already have
     /// enough capacity, will reallocate in place enough space plus comfortable slack
@@ -468,6 +483,7 @@ impl<'a, T> RawVec<'a, T> {
             }
         }
     }
+    */
 
     /// Shrinks the allocation down to the specified amount. If the given amount
     /// is 0, actually completely deallocates.
@@ -517,7 +533,7 @@ impl<'a, T> RawVec<'a, T> {
                 let new_size = elem_size * amount;
                 let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
-                match self.a.realloc(self.ptr.cast(), old_layout, new_size) {
+                match realloc(self.a, self.ptr.cast(), old_layout, new_size) {
                     Ok(p) => self.ptr = p.cast(),
                     Err(_) => {
                         handle_alloc_error(Layout::from_size_align_unchecked(new_size, align))
@@ -529,6 +545,7 @@ impl<'a, T> RawVec<'a, T> {
     }
 }
 
+/*
 #[cfg(feature = "boxed")]
 impl<'a, T> RawVec<'a, T> {
     /// Converts the entire buffer into `Box<[T]>`.
@@ -551,6 +568,7 @@ impl<'a, T> RawVec<'a, T> {
         output
     }
 }
+*/
 
 enum Fallibility {
     Fallible,
@@ -638,8 +656,6 @@ impl<'a, T> RawVec<'a, T> {
         strategy: ReserveStrategy,
     ) -> Result<(), CollectionAllocErr> {
         unsafe {
-            use crate::AllocErr;
-
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than usize::MAX" in that case.
             // If we make it past the first branch then we are guaranteed to
@@ -657,16 +673,16 @@ impl<'a, T> RawVec<'a, T> {
             let res = match self.current_layout() {
                 Some(layout) => {
                     debug_assert!(new_layout.align() == layout.align());
-                    self.a.realloc(self.ptr.cast(), layout, new_layout.size())
+                    realloc(self.a, self.ptr.cast(), layout, new_layout.size())
                 }
-                None => Alloc::alloc(&mut self.a, new_layout),
+                None => self.a.allocate(new_layout),
             };
 
-            if let (Err(AllocErr), Infallible) = (&res, fallibility) {
+            if let (Err(AllocError), Infallible) = (&res, fallibility) {
                 handle_alloc_error(new_layout);
             }
 
-            self.ptr = res?.cast();
+            self.ptr = res.map_err(|_| AllocErr)?.cast();
             self.cap = new_cap;
 
             Ok(())
@@ -680,17 +696,8 @@ impl<'a, T> RawVec<'a, T> {
         let elem_size = mem::size_of::<T>();
         if elem_size != 0 {
             if let Some(layout) = self.current_layout() {
-                self.a.dealloc(self.ptr.cast(), layout);
+                self.a.deallocate(self.ptr.cast(), layout);
             }
-        }
-    }
-}
-
-impl<'a, T> Drop for RawVec<'a, T> {
-    /// Frees the memory owned by the RawVec *without* trying to Drop its contents.
-    fn drop(&mut self) {
-        unsafe {
-            self.dealloc_buffer();
         }
     }
 }
@@ -718,6 +725,93 @@ fn alloc_guard(alloc_size: usize) -> Result<(), CollectionAllocErr> {
 // only one location which panics rather than a bunch throughout the module.
 fn capacity_overflow() -> ! {
     panic!("capacity overflow")
+}
+
+// Copied from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/alloc.rs#L29-L31
+fn handle_alloc_error(layout: Layout) -> ! {
+    panic!("encountered allocation error: {:?}", layout)
+}
+
+// Copied from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/lib.rs#L482-L486
+/// Wrapper around `Layout::from_size_align` that adds debug assertions.
+#[inline]
+fn layout_from_size_align(size: usize, align: usize) -> Result<Layout, AllocError> {
+    Layout::from_size_align(size, align).map_err(|_| AllocError)
+}
+
+// Code copied from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/lib.rs#L1917-L1936
+// Doc comment from https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/alloc.rs#L322-L402
+//
+/// Returns a pointer suitable for holding data described by
+/// a new layout with `layout`’s alignment and a size given
+/// by `new_size`. To
+/// accomplish this, this may extend or shrink the allocation
+/// referenced by `ptr` to fit the new layout.
+///
+/// If this returns `Ok`, then ownership of the memory block
+/// referenced by `ptr` has been transferred to this
+/// allocator. The memory may or may not have been freed, and
+/// should be considered unusable (unless of course it was
+/// transferred back to the caller again via the return value of
+/// this method).
+///
+/// If this method returns `Err`, then ownership of the memory
+/// block has not been transferred to this allocator, and the
+/// contents of the memory block are unaltered.
+///
+/// # Safety
+///
+/// This function is unsafe because undefined behavior can result
+/// if the caller does not ensure all of the following:
+///
+/// * `ptr` must be currently allocated via this allocator,
+///
+/// * `layout` must *fit* the `ptr` (see above). (The `new_size`
+///   argument need not fit it.)
+///
+/// * `new_size` must be greater than zero.
+///
+/// * `new_size`, when rounded up to the nearest multiple of `layout.align()`,
+///   must not overflow (i.e. the rounded value must be less than `usize::MAX`).
+///
+/// (Extension subtraits might provide more specific bounds on
+/// behavior, e.g. guarantee a sentinel address or a null pointer
+/// in response to a zero-size allocation request.)
+///
+/// # Errors
+///
+/// Returns `Err` only if the new layout
+/// does not meet the allocator's size
+/// and alignment constraints of the allocator, or if reallocation
+/// otherwise fails.
+///
+/// Implementations are encouraged to return `Err` on memory
+/// exhaustion rather than panicking or aborting, but this is not
+/// a strict requirement. (Specifically: it is *legal* to
+/// implement this trait atop an underlying native allocation
+/// library that aborts on memory exhaustion.)
+///
+/// Clients wishing to abort computation in response to a
+/// reallocation error are encouraged to call the [`handle_alloc_error`] function,
+/// rather than directly invoking `panic!` or similar.
+unsafe fn realloc(
+    bump: &Bump,
+    ptr: NonNull<u8>,
+    layout: Layout,
+    new_size: usize,
+) -> Result<NonNull<[u8]>, AllocError> {
+    let old_size = layout.size();
+
+    if old_size == 0 {
+        return bump.allocate(layout);
+    }
+
+    let new_layout = layout_from_size_align(new_size, layout.align())?;
+    if new_size <= old_size {
+        bump.shrink(ptr, layout, new_layout)
+    } else {
+        bump.grow(ptr, layout, new_layout)
+    }
 }
 
 #[cfg(test)]

@@ -69,9 +69,10 @@ pub struct BabelPlugins {
     // ES2022
     pub class_static_block: bool,
     pub class_properties: Option<ClassPropertiesOptions>,
-
     // Decorator
     pub legacy_decorator: Option<DecoratorOptions>,
+    // Proposals
+    pub explicit_resource_management: bool,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -159,6 +160,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                     p.legacy_decorator =
                         entry.value::<DecoratorOptions>().map_err(|err| p.errors.push(err)).ok();
                 }
+                "proposal-explicit-resource-management" => p.explicit_resource_management = true,
                 s => p.unsupported.push(s.to_string()),
             }
         }

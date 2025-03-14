@@ -102,28 +102,6 @@ impl<T> Box<'_, T> {
 }
 
 impl<T: ?Sized> Box<'_, T> {
-    /// Create a [`Box`] from a raw pointer to a value.
-    ///
-    /// The [`Box`] takes ownership of the data pointed to by `ptr`.
-    ///
-    /// # SAFETY
-    /// Data pointed to by `ptr` must live as long as `'alloc`.
-    /// This requirement is met if the pointer was obtained from other data in the arena.
-    ///
-    /// Data pointed to by `ptr` must *only* be used for this `Box`. i.e. it must be unique,
-    /// with no other aliases. You must not, for example, create 2 `Box`es from the same pointer.
-    ///
-    /// `ptr` must have been created from a `*mut T` or `&mut T` (not a `*const T` / `&T`).
-    //
-    // `#[inline(always)]` because this is a no-op
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
-
-        Self(ptr, PhantomData)
-    }
-
     /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
     //
     // `#[inline(always)]` because this is a no-op

@@ -20,7 +20,7 @@
   },
   "main": "./node/oxc_parser_wasm.js",
   "browser": "./web/oxc_parser_wasm.js",
-  "types": "./node/oxc_parser_wasm.d.ts",
+  "types": "./web/oxc_parser_wasm.d.ts",
   "files": [
     "node",
     "web"

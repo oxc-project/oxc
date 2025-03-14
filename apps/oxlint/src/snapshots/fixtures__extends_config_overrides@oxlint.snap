@@ -6,25 +6,31 @@ arguments: overrides
 working directory: fixtures/extends_config
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'x' is declared but never used. Unused variables should start with a '_'.
-   ,-[overrides/test.ts:1:7]
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-explicit-any.html\typescript-eslint(no-explicit-any)]8;;\: Unexpected any. Specify a different type.
+   ,-[overrides/test.ts:1:10]
  1 | const x: any = 3;
-   :       |
-   :       `-- 'x' is declared here
+   :          ^^^
    `----
-  help: Consider removing this declaration.
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'component' is declared but never used.
-   ,-[overrides/test.tsx:1:10]
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-explicit-any.html\typescript-eslint(no-explicit-any)]8;;\: Unexpected any. Specify a different type.
+   ,-[overrides/test.tsx:1:23]
  1 | function component(): any {
-   :          ^^^^|^^^^
-   :              `-- 'component' is declared here
+   :                       ^^^
  2 |   return <a>click here</a>;
    `----
-  help: Consider removing this declaration.
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
 
-Found 2 warnings and 0 errors.
-Finished in <variable>ms on 2 files with 100 rules using 1 threads.
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jsx_a11y/anchor-ambiguous-text.html\eslint-plugin-jsx-a11y(anchor-ambiguous-text)]8;;\: Unexpected ambagious anchor link text.
+   ,-[overrides/test.tsx:2:10]
+ 1 | function component(): any {
+ 2 |   return <a>click here</a>;
+   :          ^^^^^^^^^^^^^^^^^
+ 3 | }
+   `----
+
+Found 0 warnings and 3 errors.
+Finished in <variable>ms on 2 files using 1 threads.
 ----------
-CLI result: LintSucceeded
+CLI result: LintFoundErrors
 ----------

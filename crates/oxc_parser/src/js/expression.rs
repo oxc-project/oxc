@@ -398,7 +398,7 @@ impl<'a> ParserImpl<'a> {
         let raw = Atom::from(unsafe {
             self.source_text.get_unchecked(span.start as usize..span.end as usize)
         });
-        Ok(self.ast.string_literal(self.end_span(span), value, Some(raw)))
+        Ok(self.ast.string_literal(span, value, Some(raw)))
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
