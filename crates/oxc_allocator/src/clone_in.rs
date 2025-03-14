@@ -55,9 +55,12 @@ where
     }
 }
 
-impl<'new_alloc, T, C: 'new_alloc> CloneIn<'new_alloc> for Vec<'_, T>
+impl<'new_alloc, T, C> CloneIn<'new_alloc> for Vec<'_, T>
 where
     T: CloneIn<'new_alloc, Cloned = C>,
+    // TODO: This lifetime bound possibly shouldn't be required.
+    // https://github.com/oxc-project/oxc/pull/9656#issuecomment-2719762898
+    C: 'new_alloc,
 {
     type Cloned = Vec<'new_alloc, C>;
 
