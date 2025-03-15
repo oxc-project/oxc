@@ -1,13 +1,12 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentExpression, AssignmentOperator, AssignmentTarget, Expression, FormalParameter,
-        MethodDefinitionKind,
+        AssignmentOperator, AssignmentTarget, Expression, FormalParameter, MethodDefinitionKind,
     },
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
 use oxc_span::{Atom, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -63,71 +62,84 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
         if method.kind != MethodDefinitionKind::Constructor {
             return;
         }
-        for param in &method.value.params.items {
-            if !is_parameter_property(param) {
-                continue;
-            }
-            let Some(ident) = param.pattern.get_binding_identifier() else {
+
+        let parameter_properties: Vec<_> = method
+            .value
+            .params
+            .items
+            .iter()
+            .filter(|param| {
+                // TypeScript offers special syntax for turning a constructor parameter into a class property with the same name and value.
+                // These are called parameter properties and are created by prefixing a constructor argument with one of the visibility modifiers public, private, protected, or readonly
+                // https://www.typescriptlang.org/docs/handbook/2/classes.html#parameter-properties
+                param.accessibility.is_some() || param.readonly
+            })
+            .collect();
+
+        if parameter_properties.is_empty() {
+            return;
+        }
+
+        let mut visitor = AssignmentVisitor { ctx, parameter_properties };
+        visitor.visit_method_definition(method);
+    }
+}
+
+struct AssignmentVisitor<'a, 'b> {
+    ctx: &'b LintContext<'a>,
+    parameter_properties: Vec<&'b FormalParameter<'a>>,
+}
+
+impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+    fn visit_assignment_expression(
+        &mut self,
+        assignment_expr: &oxc_ast::ast::AssignmentExpression<'a>,
+    ) {
+        if !is_unnecessary_assignment_operator(assignment_expr.operator) {
+            return;
+        }
+        // operator could be unnecessary
+
+        let Some(this_property_name) = get_this_property_name(&assignment_expr.left) else {
+            return;
+        };
+        // assigning to a property of this
+
+        let Expression::Identifier(right_identifier) = assignment_expr.right.get_inner_expression()
+        else {
+            return;
+        };
+        // the right side of the assignment is an identifier
+
+        if this_property_name != right_identifier.name {
+            return;
+        }
+        // the property of this matches the identifier name on the right
+
+        for param in &self.parameter_properties {
+            let Some(binding_identifier) = param.pattern.get_binding_identifier() else {
                 continue;
             };
-            for reference in ctx.symbol_references(ident.symbol_id()) {
-                // check if the reference is being read which would indicate an assignment
-                if !reference.is_read() {
-                    continue;
-                }
-
-                // is the reference inside an assignment
-                let Some(assignment_expr) =
-                    find_parent_assignment_expression(ctx, reference.node_id())
-                else {
-                    continue;
-                };
-
-                if !is_unnecessary_assignment_operator(assignment_expr.operator) {
-                    continue;
-                }
-
-                let Some(this_property_name) = get_this_property_name(&assignment_expr.left) else {
-                    continue;
-                };
-
-                if this_property_name != ident.name {
-                    continue;
-                }
-
-                ctx.diagnostic(no_unnecessary_parameter_property_assignment_diagnostic(
-                    assignment_expr.span,
-                ));
+            if binding_identifier.name != this_property_name {
+                continue;
             }
+            // name of property parameter matches the name of the assigned property
+
+            let right_reference = self.ctx.scoping().get_reference(right_identifier.reference_id());
+            if !self
+                .ctx
+                .symbol_references(binding_identifier.symbol_id())
+                .any(|reference| reference.node_id() == right_reference.node_id())
+            {
+                continue;
+            }
+            // property parameter is same symbol as identifier on the right of assignment
+
+            self.ctx.diagnostic(no_unnecessary_parameter_property_assignment_diagnostic(
+                assignment_expr.span,
+            ));
         }
     }
-}
-
-/// TypeScript offers special syntax for turning a constructor parameter into a class property with the same name and value.
-/// These are called parameter properties and are created by prefixing a constructor argument with one of the visibility modifiers public, private, protected, or readonly
-///
-/// https://www.typescriptlang.org/docs/handbook/2/classes.html#parameter-properties
-fn is_parameter_property(param: &FormalParameter) -> bool {
-    param.accessibility.is_some() || param.readonly
-}
-
-fn find_parent_assignment_expression<'a>(
-    ctx: &LintContext<'a>,
-    node_id: NodeId,
-) -> Option<&'a AssignmentExpression<'a>> {
-    for ancestor_kind in ctx.nodes().ancestor_kinds(node_id).skip(1) {
-        match ancestor_kind {
-            AstKind::ParenthesizedExpression(_)
-            | AstKind::TSAsExpression(_)
-            | AstKind::TSSatisfiesExpression(_)
-            | AstKind::TSInstantiationExpression(_)
-            | AstKind::TSNonNullExpression(_)
-            | AstKind::TSTypeAssertion(_) => continue,
-            AstKind::AssignmentExpression(expr) => return Some(expr),
-            _ => break,
-        }
-    }
-    None
 }
 
 fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
@@ -263,15 +275,15 @@ fn test() {
           }
         }
         ",
-        // "
-        //     class Foo {
-        //       constructor(private foo: string) {
-        //         this.bar = () => {
-        //           this.foo = foo;
-        //         };
-        //       }
-        //     }
-        // ",
+        "
+        class Foo {
+          constructor(private foo: string) {
+            this.bar = () => {
+              this.foo = foo;
+            };
+          }
+        }
+        ",
         "
         class Foo {
           constructor(private foo: string) {
