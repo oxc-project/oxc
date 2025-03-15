@@ -19,7 +19,7 @@ impl Clone for ResolvedLinterState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Config {
     /// The basic linter state for this configuration.
     base: ResolvedLinterState,
@@ -29,7 +29,7 @@ struct Config {
 }
 
 /// Resolves a lint configuration for a given file, by applying overrides based on the file's path.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ConfigStore {
     base: Config,
 }
