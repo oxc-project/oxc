@@ -47,8 +47,8 @@ declare_oxc_lint!(
     /// ```js
     /// typeof foo === "strnig"
     /// typeof foo == "undefimed"
-    /// typeof bar != "nunber"
-    /// typeof bar !== "fucntion"
+    /// typeof bar != "nunber"     // spellchecker:disable-line
+    /// typeof bar !== "fucntion"     // spellchecker:disable-line
     /// ```
     ///
     /// Examples of **correct** code for this rule:
