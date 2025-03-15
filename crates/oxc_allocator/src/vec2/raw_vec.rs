@@ -446,22 +446,13 @@ impl<'a, T> RawVec<'a, T> {
     /// ```
     #[inline]
     pub fn reserve(&mut self, used_cap: usize, need_extra_cap: usize) {
-        // Callers expect this function to be very cheap when there is already sufficient capacity.
-        // Therefore, we move all the resizing and error-handling logic from grow_amortized and
-        // handle_reserve behind a call, while making sure that this function is likely to be
-        // inlined as just a comparison and a call if the comparison fails.
-        #[cold]
-        fn do_reserve_and_handle<'a, T>(slf: &mut RawVec<'a, T>, len: usize, additional: usize) {
-            if let Err(err) = slf.reserve_amortized_internal(len, additional) {
+        if self.needs_to_grow(used_cap, need_extra_cap) {
+            if let Err(err) = self.reserve_amortized_internal(used_cap, need_extra_cap) {
                 match err {
                     CapacityOverflow => capacity_overflow(),
                     AllocErr => unreachable!(),
                 }
             }
-        }
-
-        if self.needs_to_grow(used_cap, need_extra_cap) {
-            do_reserve_and_handle(self, used_cap, need_extra_cap);
         }
     }
 
@@ -665,7 +656,6 @@ impl<'a, T> RawVec<'a, T> {
 
     // not marked inline(never) since we want optimizers to be able to observe the specifics of this
     // function, see tests/codegen/vec-reserve-extend.rs.
-    #[cold]
     fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<[u8]>, CollectionAllocErr> {
         alloc_guard(new_layout.size())?;
 
