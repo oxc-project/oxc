@@ -10,6 +10,7 @@ export class Config implements ConfigInterface {
   private _trace!: TraceLevel;
   private _configPath!: string;
   private _binPath: string | undefined;
+  private _flags!: Record<string, string>;
 
   constructor() {
     this.refresh();
@@ -17,12 +18,15 @@ export class Config implements ConfigInterface {
 
   public refresh(): void {
     const conf = workspace.getConfiguration(Config._namespace);
+    const flags = conf.get<Record<string, string>>('flags') ?? {};
+    const useNestedConfigs = !('disable_nested_config' in flags);
 
     this._runTrigger = conf.get<Trigger>('lint.run') || 'onType';
     this._enable = conf.get<boolean>('enable') ?? true;
     this._trace = conf.get<TraceLevel>('trace.server') || 'off';
-    this._configPath = conf.get<string>('configPath') || oxlintConfigFileName;
+    this._configPath = conf.get<string>('configPath') || (useNestedConfigs ? '' : oxlintConfigFileName);
     this._binPath = conf.get<string>('path.server');
+    this._flags = flags;
   }
 
   get runTrigger(): Trigger {
@@ -80,11 +84,23 @@ export class Config implements ConfigInterface {
       .update('path.server', value);
   }
 
+  get flags(): Record<string, string> {
+    return this._flags;
+  }
+
+  updateFlags(value: Record<string, string>): PromiseLike<void> {
+    this._flags = value;
+    return workspace
+      .getConfiguration(Config._namespace)
+      .update('flags', value);
+  }
+
   public toLanguageServerConfig(): LanguageServerConfig {
     return {
       run: this.runTrigger,
       enable: this.enable,
       configPath: this.configPath,
+      flags: this.flags,
     };
   }
 }
@@ -93,6 +109,7 @@ interface LanguageServerConfig {
   configPath: string;
   enable: boolean;
   run: Trigger;
+  flags: Record<string, string>;
 }
 
 export type Trigger = 'onSave' | 'onType';

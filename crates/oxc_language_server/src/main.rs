@@ -5,7 +5,8 @@ use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
-use rustc_hash::FxBuildHasher;
+use oxc_linter::{ConfigStore, ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
+use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
@@ -15,13 +16,11 @@ use tower_lsp::{
         CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
         ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, Url,
-        WorkspaceEdit,
+        DidSaveTextDocumentParams, ExecuteCommandParams, FileChangeType, InitializeParams,
+        InitializeResult, InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit,
+        Url, WorkspaceEdit,
     },
 };
-
-use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 
 use crate::capabilities::{CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, Capabilities};
 use crate::linter::error_with_position::DiagnosticReport;
@@ -33,6 +32,8 @@ mod linter;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
+const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
+
 struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
@@ -40,6 +41,7 @@ struct Backend {
     diagnostics_report_map: ConcurrentHashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
     gitignore_glob: Mutex<Vec<Gitignore>>,
+    nested_configs: ConcurrentHashMap<PathBuf, ConfigStore>,
 }
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, PartialOrd, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
@@ -54,11 +56,17 @@ struct Options {
     run: Run,
     enable: bool,
     config_path: String,
+    flags: FxHashMap<String, String>,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { enable: true, run: Run::default(), config_path: ".oxlintrc.json".into() }
+        Self {
+            enable: true,
+            run: Run::default(),
+            config_path: OXC_CONFIG_FILE.into(),
+            flags: FxHashMap::default(),
+        }
     }
 }
 
@@ -76,6 +84,10 @@ impl Options {
 
     fn get_config_path(&self) -> Option<PathBuf> {
         if self.config_path.is_empty() { None } else { Some(PathBuf::from(&self.config_path)) }
+    }
+
+    fn disable_nested_configs(&self) -> bool {
+        self.flags.contains_key("disable_nested_config")
     }
 }
 
@@ -166,6 +178,10 @@ impl LanguageServer for Backend {
             self.publish_all_diagnostics(&cleared_diagnostics).await;
         }
 
+        if changed_options.disable_nested_configs() {
+            self.nested_configs.pin().clear();
+        }
+
         *self.options.lock().await = changed_options.clone();
 
         // revalidate the config and all open files, when lint level is not disabled and the config path is changed
@@ -180,8 +196,48 @@ impl LanguageServer for Backend {
         }
     }
 
-    async fn did_change_watched_files(&self, _params: DidChangeWatchedFilesParams) {
+    async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
         debug!("watched file did change");
+        if !self.options.lock().await.disable_nested_configs() {
+            let nested_configs = self.nested_configs.pin();
+
+            params.changes.iter().for_each(|x| {
+                let Ok(file_path) = x.uri.to_file_path() else {
+                    info!("Unable to convert {:?} to a file path", x.uri);
+                    return;
+                };
+                let Some(file_name) = file_path.file_name() else {
+                    info!("Unable to retrieve file name from {:?}", file_path);
+                    return;
+                };
+
+                if file_name != OXC_CONFIG_FILE {
+                    return;
+                }
+
+                let Some(dir_path) = file_path.parent() else {
+                    info!("Unable to retrieve parent from {:?}", file_path);
+                    return;
+                };
+
+                // spellchecker:off -- "typ" is accurate
+                if x.typ == FileChangeType::CREATED || x.typ == FileChangeType::CHANGED {
+                    // spellchecker:on
+                    let oxlintrc =
+                        Oxlintrc::from_file(&file_path).expect("Failed to parse config file");
+                    let config_store_builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc)
+                        .expect("Failed to create config store builder");
+                    let config_store =
+                        config_store_builder.build().expect("Failed to build config store");
+                    nested_configs.insert(dir_path.to_path_buf(), config_store);
+                // spellchecker:off -- "typ" is accurate
+                } else if x.typ == FileChangeType::DELETED {
+                    // spellchecker:on
+                    nested_configs.remove(&dir_path.to_path_buf());
+                }
+            });
+        }
+
         self.init_linter_config().await;
         self.revalidate_open_files().await;
     }
@@ -487,26 +543,39 @@ impl Backend {
         let Ok(root_path) = uri.to_file_path() else {
             return None;
         };
-        let mut config_path = None;
-        let config = root_path.join(self.options.lock().await.get_config_path().unwrap());
-        if config.exists() {
-            config_path = Some(config);
-        }
-        if let Some(config_path) = config_path {
-            let mut linter = self.server_linter.write().await;
-            let config = Oxlintrc::from_file(&config_path)
-                .expect("should have initialized linter with new options");
-            let config_store = ConfigStoreBuilder::from_oxlintrc(true, config.clone())
-                .expect("failed to build config")
-                .build()
-                .expect("failed to build config");
-            *linter = ServerLinter::new_with_linter(
-                Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix),
-            );
-            return Some(config);
-        }
+        let relative_config_path = self.options.lock().await.get_config_path();
+        let oxlintrc = if relative_config_path.is_some() {
+            let config = root_path.join(relative_config_path.unwrap());
+            config.try_exists().expect("Invalid config file path");
+            Oxlintrc::from_file(&config).expect("Failed to initialize oxlintrc config")
+        } else {
+            Oxlintrc::default()
+        };
 
-        None
+        let config_store = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone())
+            .expect("failed to build config")
+            .build()
+            .expect("failed to build config");
+
+        let linter = if self.options.lock().await.disable_nested_configs() {
+            Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix)
+        } else {
+            let nested_configs = self.nested_configs.pin();
+            let nested_configs_copy: FxHashMap<PathBuf, ConfigStore> = nested_configs
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect::<FxHashMap<_, _>>();
+
+            Linter::new_with_nested_configs(
+                LintOptions::default(),
+                config_store,
+                nested_configs_copy,
+            )
+        };
+
+        *self.server_linter.write().await = ServerLinter::new_with_linter(linter);
+
+        Some(oxlintrc.clone())
     }
 
     async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
@@ -568,6 +637,7 @@ async fn main() {
         diagnostics_report_map,
         options: Mutex::new(Options::default()),
         gitignore_glob: Mutex::new(vec![]),
+        nested_configs: ConcurrentHashMap::default(),
     })
     .finish();
 
