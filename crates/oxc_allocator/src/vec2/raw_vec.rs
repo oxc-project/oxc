@@ -30,7 +30,6 @@ pub use core::alloc::Layout;
 use core::cmp;
 use core::mem;
 use core::ptr::{self, NonNull};
-use std::hint;
 
 use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow};
 
@@ -323,10 +322,6 @@ impl<'a, T> RawVec<'a, T> {
             self.reserve_exact_internal(used_cap, needed_extra_cap)?
         }
 
-        unsafe {
-            // Inform the optimizer that the reservation has succeeded or wasn't needed
-            hint::assert_unchecked(!self.needs_to_grow(used_cap, needed_extra_cap));
-        }
         Ok(())
     }
 
@@ -382,10 +377,6 @@ impl<'a, T> RawVec<'a, T> {
             self.reserve_amortized_internal(used_cap, needed_extra_cap)?;
         }
 
-        unsafe {
-            // Inform the optimizer that the reservation has succeeded or wasn't needed
-            hint::assert_unchecked(!self.needs_to_grow(used_cap, needed_extra_cap));
-        }
         Ok(())
     }
 
