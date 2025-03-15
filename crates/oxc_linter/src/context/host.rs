@@ -1,7 +1,8 @@
-use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
+use std::{borrow::Cow, cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
+use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 
 use crate::{
     FrameworkFlags, RuleWithSeverity,
@@ -158,9 +159,66 @@ impl<'a> ContextHost<'a> {
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 
+    // Append a list of diagnostics. Only used in report_unused_directives.
+    fn append_diagnostics(&self, diagnostics: Vec<Message<'a>>) {
+        self.diagnostics.borrow_mut().extend(diagnostics);
+    }
+
+    /// report unused enable/disable directives, add these as Messages to diagnostics
+    pub fn report_unused_directives(&self, rule_severity: Severity) {
+        let unused_enable_comments = self.disable_directives.unused_enable_comments();
+        let unused_disable_comments = self.disable_directives.collect_unused_disable_comments();
+        let mut unused_directive_diagnostics: Vec<(Cow<str>, Span)> =
+            Vec::with_capacity(unused_enable_comments.len() + unused_disable_comments.len());
+
+        // report unused disable
+        // relate to lint result, check after linter run finish
+        let unused_disable_comments = self.disable_directives.collect_unused_disable_comments();
+        let message_for_disable = "Unused eslint-disable directive (no problems were reported).";
+        for (rule_name, disable_comment_span) in unused_disable_comments {
+            unused_directive_diagnostics.push((
+                rule_name.map_or(Cow::Borrowed(message_for_disable), |name| {
+                    Cow::Owned(format!(
+                        "Unused eslint-disable directive (no problems were reported from {name})."
+                    ))
+                }),
+                disable_comment_span,
+            ));
+        }
+
+        // report unused enable
+        // not relate to lint result, check during comment directives' construction
+        let message_for_enable =
+            "Unused eslint-enable directive (no matching eslint-disable directives were found).";
+        for (rule_name, enable_comment_span) in self.disable_directives.unused_enable_comments() {
+            unused_directive_diagnostics.push((
+                rule_name.map_or(Cow::Borrowed(message_for_enable), |name| {
+                    Cow::Owned(format!(
+                        "Unused eslint-enable directive (no matching eslint-disable directives were found for {name})."
+                    ))
+                }),
+                *enable_comment_span,
+            ));
+        }
+
+        self.append_diagnostics(
+            unused_directive_diagnostics
+                .into_iter()
+                .map(|(message, span)| {
+                    Message::new(
+                        OxcDiagnostic::error(message).with_label(span).with_severity(rule_severity),
+                        // TODO: fixer
+                        // if all rules in the same directive are unused, fixer should remove the entire comment
+                        None,
+                    )
+                })
+                .collect(),
+        );
+    }
+
     /// Take ownership of all diagnostics collected during linting.
     pub fn take_diagnostics(&self) -> Vec<Message<'a>> {
-        // NOTE: diagnostics are only ever borrowed here and in push_diagnostic.
+        // NOTE: diagnostics are only ever borrowed here and in push_diagnostic, append_diagnostics.
         // The latter drops the reference as soon as the function returns, so
         // this should never panic.
         let mut messages = self.diagnostics.borrow_mut();
