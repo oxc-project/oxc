@@ -115,6 +115,10 @@ jobs:
       - run: node napi/parser/scripts/fix-wasm-dts.mjs
       - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
       - run: git diff --exit-code # Must commit everything
+      - run: pnpm -C napi/parser build-wasi
+      - run: pnpm -C napi/parser build-npm-dir
+      - run: pnpm -C napi/parser exec playwright install chromium
+      - run: pnpm -C napi/parser test-browser
 
   test-wasm32-unknown-unknown:
     name: Check wasm32-unknown-unknown
