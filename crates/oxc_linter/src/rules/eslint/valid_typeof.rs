@@ -81,12 +81,10 @@ declare_oxc_lint!(
     ///
     /// With `requireStringLiterals` set to `true` the following are examples of correct code:
     /// ```js
-    /// typeof foo === undefined
-    /// typeof bar == Object
-    /// typeof baz === "strnig"
-    /// typeof qux === "some invalid type"
-    /// typeof baz === anotherVariable
-    /// typeof foo == 5
+    /// typeof foo === "undefined"
+    /// typeof bar == "object"
+    /// typeof baz === "string"
+    /// typeof bar === typeof qux
     /// ```
     ValidTypeof,
     eslint,
