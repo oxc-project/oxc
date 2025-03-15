@@ -1289,9 +1289,12 @@ pub struct TSImportType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(ts_alias = "ObjectExpression")]
 pub struct TSImportAttributes<'a> {
     pub span: Span,
+    #[estree(skip)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    #[estree(rename = "properties", via = TSImportAttributesProperties)]
     pub elements: Vec<'a, TSImportAttribute<'a>>,
 }
 
@@ -1300,8 +1303,15 @@ pub struct TSImportAttributes<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 // Pluralize as `TSImportAttributeList` to avoid naming clash with `TSImportAttributes`.
 #[plural(TSImportAttributeList)]
+#[estree(
+    no_ts_def,
+    rename = "Property",
+    add_fields(method = False, shorthand = True, computed = False, kind = Init),
+    field_order(span, method, shorthand, computed, name, value, kind),
+)]
 pub struct TSImportAttribute<'a> {
     pub span: Span,
+    #[estree(rename = "key")]
     pub name: TSImportAttributeName<'a>,
     pub value: Expression<'a>,
 }
@@ -1309,6 +1319,7 @@ pub struct TSImportAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(no_ts_def)]
 pub enum TSImportAttributeName<'a> {
     Identifier(IdentifierName<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
