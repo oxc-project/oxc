@@ -54,22 +54,26 @@ declare_oxc_lint!(
 
 impl Rule for NoUnnecessaryTypeConstraint {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TSTypeParameterDeclaration(decl) = node.kind() {
-            for param in &decl.params {
-                if let Some(ty) = &param.constraint {
-                    let (value, ty_span) = match ty {
-                        TSType::TSAnyKeyword(t) => ("any", t.span),
-                        TSType::TSUnknownKeyword(t) => ("unknown", t.span),
-                        _ => continue,
-                    };
-                    ctx.diagnostic(no_unnecessary_type_constraint_diagnostic(
-                        param.name.name.as_str(),
-                        value,
-                        param.name.span,
-                        ty_span,
-                    ));
-                }
-            }
+        let AstKind::TSTypeParameterDeclaration(decl) = node.kind() else {
+            return;
+        };
+
+        for param in &decl.params {
+            let Some(ty) = &param.constraint else {
+                continue;
+            };
+
+            let (value, ty_span) = match ty {
+                TSType::TSAnyKeyword(t) => ("any", t.span),
+                TSType::TSUnknownKeyword(t) => ("unknown", t.span),
+                _ => continue,
+            };
+            ctx.diagnostic(no_unnecessary_type_constraint_diagnostic(
+                param.name.name.as_str(),
+                value,
+                param.name.span,
+                ty_span,
+            ));
         }
     }
 
