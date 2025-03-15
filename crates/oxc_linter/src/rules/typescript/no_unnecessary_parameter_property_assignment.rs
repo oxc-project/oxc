@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentOperator, AssignmentTarget, Expression, FormalParameter, MethodDefinitionKind,
+        AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
+        FormalParameter, MethodDefinitionKind, PropertyDefinition, Statement,
     },
 };
 use oxc_ast_visit::Visit;
@@ -81,10 +82,34 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             return;
         }
 
+        let Some(parent_node) = ctx.semantic().nodes().parent_node(node.id()) else {
+            return;
+        };
+        let AstKind::ClassBody(class_body) = parent_node.kind() else {
+            return;
+        };
+
+        let mut assigned_before_constructor = FxHashSet::default();
+        for statement in &class_body.body {
+            let ClassElement::PropertyDefinition(property_definition) = statement else {
+                continue;
+            };
+            let Some(assignment) = get_assignment_inside_property_definition(property_definition)
+            else {
+                continue;
+            };
+            let Some(this_property_name) = get_this_property_name(&assignment.left) else {
+                continue;
+            };
+
+            assigned_before_constructor.insert(this_property_name);
+        }
+
         let mut visitor = AssignmentVisitor {
             ctx,
             parameter_properties,
             assigned_before_unnecessary: FxHashSet::default(),
+            assigned_before_constructor,
         };
         visitor.visit_method_definition(method);
     }
@@ -94,6 +119,7 @@ struct AssignmentVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
     parameter_properties: Vec<&'b FormalParameter<'a>>,
     assigned_before_unnecessary: FxHashSet<Atom<'a>>,
+    assigned_before_constructor: FxHashSet<Atom<'a>>,
 }
 
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
@@ -143,14 +169,54 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
             // property parameter is same symbol as identifier on the right of assignment
 
             if self.assigned_before_unnecessary.contains(&this_property_name) {
-                continue;
+                continue; // there already was an assignment inside the constructor
             }
-            // the same property wasn't assigned before this unnecessary assignment
+
+            if self.assigned_before_constructor.contains(&this_property_name) {
+                continue; // there already was an assignment outside the constructor
+            }
 
             self.ctx.diagnostic(no_unnecessary_parameter_property_assignment_diagnostic(
                 assignment_expr.span,
             ));
         }
+    }
+}
+
+fn get_assignment_inside_property_definition<'a>(
+    property_definition: &'a PropertyDefinition,
+) -> Option<&'a AssignmentExpression<'a>> {
+    let Some(expression) = &property_definition.value else {
+        return None;
+    };
+
+    let expression = match expression.without_parentheses() {
+        Expression::CallExpression(call) => {
+            // Immediately Invoked Function Expression (IIFE)
+
+            let function_body = match call.callee.without_parentheses() {
+                Expression::ArrowFunctionExpression(expr) => Some(&expr.body),
+                Expression::FunctionExpression(expr) => expr.body.as_ref(),
+                _ => None,
+            };
+
+            function_body.and_then(|function_body| function_body.statements.iter().next()).and_then(
+                |first_statement| {
+                    if let Statement::ExpressionStatement(expr) = first_statement {
+                        Some(&expr.expression)
+                    } else {
+                        None
+                    }
+                },
+            )
+        }
+        expr => Some(expr),
+    };
+
+    if let Some(Expression::AssignmentExpression(assignment)) = expression {
+        Some(assignment)
+    } else {
+        None
     }
 }
 
@@ -346,14 +412,14 @@ fn test() {
           }
         }
         ",
-        // "
-        //     class Foo {
-        //       constructor(public foo: number) {
-        //         this.foo = foo;
-        //       }
-        //       init = (this.foo += 1);
-        //     }
-        // ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo = foo;
+          }
+          init = (this.foo += 1);
+        }
+        ",
         "
         class Foo {
           constructor(public foo: number) {
@@ -380,16 +446,26 @@ fn test() {
           }
         }
         ",
-        // "
-        //     class Foo {
-        //       constructor(public foo: number) {
-        //         this.foo = foo;
-        //       }
-        //       init = (() => {
-        //         this.foo += 1;
-        //       })();
-        //     }
-        // ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo = foo;
+          }
+          init = (() => {
+            this.foo += 1;
+          })();
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo = foo;
+          }
+          init = (function() {
+            this.foo += 1;
+          })();
+        }
+        ",
         "
         declare const name: string;
         class Foo {
