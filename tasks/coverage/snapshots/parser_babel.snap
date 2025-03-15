@@ -3,7 +3,7 @@ commit: 578ac4df
 parser_babel Summary:
 AST Parsed     : 2303/2322 (99.18%)
 Positive Passed: 2282/2322 (98.28%)
-Negative Passed: 1548/1673 (92.53%)
+Negative Passed: 1549/1673 (92.59%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -99,7 +99,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-modifier-static/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifer-declare-01/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-01/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function-babel-7/input.ts
@@ -294,21 +293,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js:2:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js:1:10]
  1 │ <div>() => {}
+   ·          ▲
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js:2:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js:1:10]
  1 │ <div>() => {}
+   ·          ▲
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts:3:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts:2:15]
+ 1 │ // Same as `generic`. Verify that JSX doesn't change things.
  2 │ <T>(a: T): T => a;
+   ·               ▲
    ╰────
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 
@@ -11392,14 +11395,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ─
    ╰────
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:2:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:10]
  1 │ <div>() => {}
+   ·          ▲
    ╰────
 
-  × Expected `<` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:2:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:10]
  1 │ <div>() => {}
+   ·          ▲
    ╰────
 
   × Unexpected token
@@ -11533,11 +11538,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·              ─
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx/input.ts:4:3]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx/input.ts:2:15]
+ 1 │ // Generics without trailing comma are disallowed in JSX
+ 2 │ <T>(a: T): T => a;
+   ·               ▲
  3 │ 
- 4 │ <T,>(a: T): T => a;
-   ·   ─
    ╰────
 
   × Keywords cannot contain escape characters
@@ -12805,6 +12811,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   );
    ╰────
 
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts:1:8]
+ 1 │ <T>() => {}</T>;
+   ·        ▲
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-alias/declare-new-line/input.ts:1:8]
  1 │ declare type
@@ -13024,57 +13036,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1273): 'public' modifier cannot be used on a type parameter.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:98:10]
- 97 │ 
- 98 │ type T20<public T> = T;  // Error
-    ·          ──────
- 99 │ type T21<in out in T> = T;  // Error
-    ╰────
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:2:11]
+ 1 │ // valid JSX
+ 2 │ <in T>() => {}</in>;
+   ·           ▲
+ 3 │ 
+   ╰────
 
-  × TS(1030): in' modifier already seen.
-     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:99:17]
-  98 │ type T20<public T> = T;  // Error
-  99 │ type T21<in out in T> = T;  // Error
-     ·                 ──
- 100 │ type T22<in out out T> = T;  // Error
-     ╰────
-  help: Remove the duplicate modifier.
-
-  × TS(1030): out' modifier already seen.
-     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:100:17]
-  99 │ type T21<in out in T> = T;  // Error
- 100 │ type T22<in out out T> = T;  // Error
-     ·                 ───
- 101 │ type T23<out in T> = T;  // Error
-     ╰────
-  help: Remove the duplicate modifier.
-
-  × TS(1273): 'public' modifier cannot be used on a type parameter.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:98:10]
- 97 │ 
- 98 │ type T20<public T> = T;  // Error
-    ·          ──────
- 99 │ type T21<in out in T> = T;  // Error
-    ╰────
-
-  × TS(1030): in' modifier already seen.
-     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:99:17]
-  98 │ type T20<public T> = T;  // Error
-  99 │ type T21<in out in T> = T;  // Error
-     ·                 ──
- 100 │ type T22<in out out T> = T;  // Error
-     ╰────
-  help: Remove the duplicate modifier.
-
-  × TS(1030): out' modifier already seen.
-     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:100:17]
-  99 │ type T21<in out in T> = T;  // Error
- 100 │ type T22<in out out T> = T;  // Error
-     ·                 ───
- 101 │ type T23<out in T> = T;  // Error
-     ╰────
-  help: Remove the duplicate modifier.
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:2:11]
+ 1 │ // valid JSX
+ 2 │ <in T>() => {}</in>;
+   ·           ▲
+ 3 │ 
+   ╰────
 
   × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:2:1]
