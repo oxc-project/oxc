@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// ```
     NoUnnecessaryParameterPropertyAssignment,
     typescript,
-    nursery, // TODO: import tests from typescript-eslint, fix them and change back to correctness
+    correctness,
     pending,
 );
 
@@ -98,7 +98,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             else {
                 continue;
             };
-            let Some(this_property_name) = get_this_property_name(&assignment.left) else {
+            let Some(this_property_name) = get_property_name(&assignment.left) else {
                 continue;
             };
 
@@ -127,7 +127,7 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
         &mut self,
         assignment_expr: &oxc_ast::ast::AssignmentExpression<'a>,
     ) {
-        let Some(this_property_name) = get_this_property_name(&assignment_expr.left) else {
+        let Some(this_property_name) = get_property_name(&assignment_expr.left) else {
             return;
         };
         // assigning to a property of this
@@ -230,7 +230,7 @@ fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
     )
 }
 
-fn get_this_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
+fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
     match assignment_target {
         AssignmentTarget::StaticMemberExpression(expr)
             if matches!(&expr.object, Expression::ThisExpression(_)) =>
