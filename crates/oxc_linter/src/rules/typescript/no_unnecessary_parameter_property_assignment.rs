@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, MethodDefinitionKind, PropertyDefinition, Statement,
+        FormalParameter, MethodDefinitionKind, Statement,
     },
 };
 use oxc_ast_visit::Visit;
@@ -94,15 +94,15 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             let ClassElement::PropertyDefinition(property_definition) = statement else {
                 continue;
             };
-            let Some(assignment) = get_assignment_inside_property_definition(property_definition)
-            else {
+            let Some(expression) = &property_definition.value else {
                 continue;
             };
-            let Some(this_property_name) = get_property_name(&assignment.left) else {
-                continue;
-            };
-
-            assigned_before_constructor.insert(this_property_name);
+            let assignments = get_assignments_inside_expression(expression);
+            for assignment in assignments {
+                if let Some(this_property_name) = get_property_name(&assignment.left) {
+                    assigned_before_constructor.insert(this_property_name);
+                };
+            }
         }
 
         let mut visitor = AssignmentVisitor {
@@ -183,14 +183,12 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
     }
 }
 
-fn get_assignment_inside_property_definition<'a>(
-    property_definition: &'a PropertyDefinition,
-) -> Option<&'a AssignmentExpression<'a>> {
-    let Some(expression) = &property_definition.value else {
-        return None;
-    };
+fn get_assignments_inside_expression<'a>(
+    expression: &'a Expression,
+) -> Vec<&'a AssignmentExpression<'a>> {
+    let mut assignments: Vec<&AssignmentExpression> = Vec::new();
 
-    let expression = match expression.without_parentheses() {
+    match expression.without_parentheses() {
         Expression::CallExpression(call) => {
             // Immediately Invoked Function Expression (IIFE)
 
@@ -200,24 +198,23 @@ fn get_assignment_inside_property_definition<'a>(
                 _ => None,
             };
 
-            function_body.and_then(|function_body| function_body.statements.iter().next()).and_then(
-                |first_statement| {
-                    if let Statement::ExpressionStatement(expr) = first_statement {
-                        Some(&expr.expression)
-                    } else {
-                        None
+            if let Some(function_body) = function_body {
+                for statement in &function_body.statements {
+                    if let Statement::ExpressionStatement(expr) = statement {
+                        if let Expression::AssignmentExpression(assignment) = &expr.expression {
+                            assignments.push(assignment);
+                        }
                     }
-                },
-            )
+                }
+            }
         }
-        expr => Some(expr),
+        Expression::AssignmentExpression(assignment) => {
+            assignments.push(assignment);
+        }
+        _ => (),
     };
 
-    if let Some(Expression::AssignmentExpression(assignment)) = expression {
-        Some(assignment)
-    } else {
-        None
-    }
+    assignments
 }
 
 fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
@@ -457,16 +454,6 @@ fn test() {
         }
         ",
         "
-        class Foo {
-          constructor(public foo: number) {
-            this.foo = foo;
-          }
-          init = (function() {
-            this.foo += 1;
-          })();
-        }
-        ",
-        "
         declare const name: string;
         class Foo {
           constructor(public foo: number) {
@@ -474,6 +461,17 @@ fn test() {
           }
           init = (this[name] = 1);
           init2 = (Foo.foo = 1);
+        }
+        ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo = foo;
+          }
+          init = (function() {
+            console.log('hi');
+            this.foo += 1;
+          })();
         }
         ",
     ];
