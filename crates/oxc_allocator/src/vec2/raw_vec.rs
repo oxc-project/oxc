@@ -352,10 +352,7 @@ impl<'a, T> RawVec<'a, T> {
     /// Aborts on OOM
     pub fn reserve_exact(&mut self, used_cap: usize, needed_extra_cap: usize) {
         if let Err(err) = self.try_reserve_exact(used_cap, needed_extra_cap) {
-            match err {
-                CapacityOverflow => capacity_overflow(),
-                AllocErr => unreachable!(),
-            }
+            handle_collection_alloc_error(err)
         }
     }
 
@@ -446,13 +443,8 @@ impl<'a, T> RawVec<'a, T> {
     /// ```
     #[inline]
     pub fn reserve(&mut self, used_cap: usize, need_extra_cap: usize) {
-        if self.needs_to_grow(used_cap, need_extra_cap) {
-            if let Err(err) = self.reserve_amortized_internal(used_cap, need_extra_cap) {
-                match err {
-                    CapacityOverflow => capacity_overflow(),
-                    AllocErr => unreachable!(),
-                }
-            }
+        if let Err(err) = self.try_reserve(used_cap, need_extra_cap) {
+            handle_collection_alloc_error(err)
         }
     }
 
@@ -792,6 +784,17 @@ unsafe fn realloc(
         bump.shrink(ptr, layout, new_layout)
     } else {
         bump.grow(ptr, layout, new_layout)
+    }
+}
+
+/// Causing collection alloc error is rarely the case, so marked as `#[cold]` and `#[inline(never)]`
+/// to make the caller function as small as possible, so it can be inlined.
+#[inline(never)]
+#[cold]
+fn handle_collection_alloc_error(error: CollectionAllocErr) -> ! {
+    match error {
+        CapacityOverflow => capacity_overflow(),
+        AllocErr => unreachable!(),
     }
 }
 
