@@ -8,6 +8,7 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -80,7 +81,11 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             return;
         }
 
-        let mut visitor = AssignmentVisitor { ctx, parameter_properties };
+        let mut visitor = AssignmentVisitor {
+            ctx,
+            parameter_properties,
+            assigned_before_unnecessary: FxHashSet::default(),
+        };
         visitor.visit_method_definition(method);
     }
 }
@@ -88,6 +93,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
 struct AssignmentVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
     parameter_properties: Vec<&'b FormalParameter<'a>>,
+    assigned_before_unnecessary: FxHashSet<Atom<'a>>,
 }
 
 impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
@@ -95,15 +101,16 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
         &mut self,
         assignment_expr: &oxc_ast::ast::AssignmentExpression<'a>,
     ) {
-        if !is_unnecessary_assignment_operator(assignment_expr.operator) {
-            return;
-        }
-        // operator could be unnecessary
-
         let Some(this_property_name) = get_this_property_name(&assignment_expr.left) else {
             return;
         };
         // assigning to a property of this
+
+        if !is_unnecessary_assignment_operator(assignment_expr.operator) {
+            self.assigned_before_unnecessary.insert(this_property_name);
+            return;
+        }
+        // operator could be unnecessary
 
         let Expression::Identifier(right_identifier) = assignment_expr.right.get_inner_expression()
         else {
@@ -134,6 +141,11 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
                 continue;
             }
             // property parameter is same symbol as identifier on the right of assignment
+
+            if self.assigned_before_unnecessary.contains(&this_property_name) {
+                continue;
+            }
+            // the same property wasn't assigned before this unnecessary assignment
 
             self.ctx.diagnostic(no_unnecessary_parameter_property_assignment_diagnostic(
                 assignment_expr.span,
@@ -312,28 +324,28 @@ fn test() {
           }
         }
         ",
-        // "
-        //     class Foo {
-        //       constructor(public foo: number) {
-        //         this.foo += 1;
-        //         this.foo = foo;
-        //       }
-        //     }
-        // ",
-        // "
-        //     class Foo {
-        //       constructor(
-        //         public foo: number,
-        //         bar: boolean,
-        //       ) {
-        //         if (bar) {
-        //           this.foo += 1;
-        //         } else {
-        //           this.foo = foo;
-        //         }
-        //       }
-        //     }
-        // ",
+        "
+        class Foo {
+          constructor(public foo: number) {
+            this.foo += 1;
+            this.foo = foo;
+          }
+        }
+        ",
+        "
+        class Foo {
+          constructor(
+            public foo: number,
+            bar: boolean,
+          ) {
+            if (bar) {
+              this.foo += 1;
+            } else {
+              this.foo = foo;
+            }
+          }
+        }
+        ",
         // "
         //     class Foo {
         //       constructor(public foo: number) {
