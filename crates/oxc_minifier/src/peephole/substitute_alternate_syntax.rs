@@ -594,7 +594,13 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) {
         // Destructuring Pattern has error throwing side effect.
-        if decl.kind.is_const() || decl.id.kind.is_destructuring_pattern() {
+        if matches!(
+            decl.kind,
+            VariableDeclarationKind::Const
+                | VariableDeclarationKind::Using
+                | VariableDeclarationKind::AwaitUsing
+        ) || decl.id.kind.is_destructuring_pattern()
+        {
             return;
         }
         if !decl.kind.is_var()
