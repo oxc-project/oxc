@@ -51,7 +51,6 @@ declare_oxc_lint!(
     /// let foo = 'bar' as const;
     /// let foo: 'bar' = 'bar' as const;
     /// let bar = 'bar' as string;
-    /// let foo = <string>'bar';
     /// let foo = { bar: 'baz' };
     /// ```
     PreferAsConst,
