@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.0] - 2025-03-16
+
+### Features
+
+- 8dd6809 linter: Add `eslint/no-lonely-if` (#9660) (therewillbecode)
+- c22276e oxc_linter: Sort rules by plugin and rule name when outputting resolved config as a JSON string (#9799) (Nicholas Rayburn)
+
+### Bug Fixes
+
+- 22f18ac linter: Improve `jsx-a11y/anchor-ambiguous-text` diagnostic message (#9789) (1zumii)
+- 6c11740 linter: False positive in `unicorn/catch-error-name` (#9763) (shulaoda)
+
+### Documentation
+
+- ea6b6d9 linter: Improve docs for `eslint-valid-typeof` (#9797) (therewillbecode)
+- 2c48fba linter: Fix typo in `oxc/bad-min-max-func` (#9791) (Flo)
+- 210b876 linter: Improve `eslint-no-async-promise-executor` (#9778) (therewillbecode)
+- f8628bc linter: Improve `eslint-no-class-assign` (#9779) (therewillbecode)
+- faca7a8 linter: Improve `eslint-no-self-assign` (#9768) (therewillbecode)
+
+### Refactor
+
+- 227d203 linter: Improve `typescript-no-unnecessary-type-constraint` (#9798) (therewillbecode)
+- 05fe2cd linter: Use `is_lexical` when checking for lexical decl (#9781) (camc314)
+- fcdd810 linter: Remove if let nesting from `unicorn-no-date-clone` (#9767) (therewillbecode)
+- 5a9e1b9 linter: Improve `typescript-no-misused-new` (#9766) (therewillbecode)
+- 9df5565 linter: Improve `unicorn/filename-case` (#9762) (shulaoda)
+- b0b1f18 linter: Remove if let nesting from `nextjs-no-async-client-component` (#9764) (therewillbecode)
+
 ## [0.15.15] - 2025-03-12
 
 ### Features
