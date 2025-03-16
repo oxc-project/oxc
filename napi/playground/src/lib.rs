@@ -25,6 +25,7 @@ use oxc::{
 use oxc_index::Idx;
 use oxc_linter::{ConfigStoreBuilder, LintOptions, Linter, ModuleRecord};
 use oxc_prettier::{Prettier, PrettierOptions};
+use serde::Serialize;
 
 use crate::options::{OxcOptions, OxcRunOptions};
 
@@ -33,11 +34,10 @@ mod options;
 #[derive(Default)]
 #[napi]
 pub struct Oxc {
-    // pub ast: (),
     pub ast_json: String,
     pub ir: String,
     pub control_flow_graph: String,
-    // pub symbols: JsValue,
+    pub symbols_json: String,
     pub scope_text: String,
     pub codegen_text: String,
     pub codegen_sourcemap_text: Option<String>,
@@ -48,8 +48,6 @@ pub struct Oxc {
     diagnostics: RefCell<Vec<oxc::diagnostics::OxcDiagnostic>>,
 }
 
-// #[derive(Clone, Tsify, Serialize)]
-// #[tsify(into_wasm_abi)]
 #[derive(Clone)]
 #[napi(object)]
 pub struct Comment {
@@ -59,8 +57,6 @@ pub struct Comment {
     pub end: u32,
 }
 
-// #[derive(Clone, Copy, Tsify, Serialize)]
-// #[tsify(into_wasm_abi)]
 #[derive(Clone)]
 #[napi]
 pub enum CommentType {
@@ -198,7 +194,7 @@ impl Oxc {
                 self.scope_text = Self::get_scope_text(&program, &scoping);
             }
             if run_options.symbol.unwrap_or_default() {
-                // self.symbols = self.get_symbols_text(&scoping)?;
+                self.symbols_json = self.get_symbols_text(&scoping)?;
             }
         }
 
@@ -401,39 +397,39 @@ impl Oxc {
         writer.scope_text
     }
 
-    // fn get_symbols_text(&self, scoping: &Scoping) -> Result<JsValue, serde_wasm_bindgen::Error> {
-    //     #[derive(Serialize)]
-    //     struct Data {
-    //         span: Span,
-    //         name: String,
-    //         flags: SymbolFlags,
-    //         scope_id: ScopeId,
-    //         resolved_references: Vec<ReferenceId>,
-    //         references: Vec<Reference>,
-    //     }
+    fn get_symbols_text(&self, scoping: &Scoping) -> napi::Result<String> {
+        #[derive(Serialize)]
+        struct Data {
+            span: Span,
+            name: String,
+            flags: SymbolFlags,
+            scope_id: ScopeId,
+            resolved_references: Vec<ReferenceId>,
+            references: Vec<Reference>,
+        }
 
-    //     let data = scoping
-    //         .symbol_ids()
-    //         .map(|symbol_id| Data {
-    //             span: scoping.symbol_span(symbol_id),
-    //             name: scoping.symbol_name(symbol_id).into(),
-    //             flags: scoping.symbol_flags(symbol_id),
-    //             scope_id: scoping.symbol_scope_id(symbol_id),
-    //             resolved_references: scoping
-    //                 .get_resolved_reference_ids(symbol_id)
-    //                 .iter()
-    //                 .copied()
-    //                 .collect::<Vec<_>>(),
-    //             references: scoping
-    //                 .get_resolved_reference_ids(symbol_id)
-    //                 .iter()
-    //                 .map(|reference_id| scoping.get_reference(*reference_id).clone())
-    //                 .collect::<Vec<_>>(),
-    //         })
-    //         .collect::<Vec<_>>();
+        let data = scoping
+            .symbol_ids()
+            .map(|symbol_id| Data {
+                span: scoping.symbol_span(symbol_id),
+                name: scoping.symbol_name(symbol_id).into(),
+                flags: scoping.symbol_flags(symbol_id),
+                scope_id: scoping.symbol_scope_id(symbol_id),
+                resolved_references: scoping
+                    .get_resolved_reference_ids(symbol_id)
+                    .iter()
+                    .copied()
+                    .collect::<Vec<_>>(),
+                references: scoping
+                    .get_resolved_reference_ids(symbol_id)
+                    .iter()
+                    .map(|reference_id| scoping.get_reference(*reference_id).clone())
+                    .collect::<Vec<_>>(),
+            })
+            .collect::<Vec<_>>();
 
-    //     data.serialize(&self.serializer)
-    // }
+        serde_json::to_string_pretty(&data).map_err(|e| napi::Error::from_reason(e.to_string()))
+    }
 
     fn save_diagnostics(&self, diagnostics: Vec<oxc::diagnostics::OxcDiagnostic>) {
         self.diagnostics.borrow_mut().extend(diagnostics);

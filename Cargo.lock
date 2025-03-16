@@ -2052,6 +2052,8 @@ dependencies = [
  "oxc_index",
  "oxc_linter",
  "oxc_prettier",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

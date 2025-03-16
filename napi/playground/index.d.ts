@@ -4,6 +4,7 @@ export declare class Oxc {
   astJson: string
   ir: string
   controlFlowGraph: string
+  symbolsJson: string
   scopeText: string
   codegenText: string
   codegenSourcemapText?: string
