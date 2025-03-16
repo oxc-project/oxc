@@ -14,6 +14,10 @@ export declare class Oxc {
   constructor()
   getDiagnostics(): Array<OxcDiagnostic>
   getComments(): Array<Comment>
+  /**
+   * # Errors
+   * Serde serialization error
+   */
   run(sourceText: string, options: OxcOptions): void
 }
 

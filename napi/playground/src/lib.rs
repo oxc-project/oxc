@@ -89,7 +89,9 @@ impl Oxc {
                 Some(labels) => labels
                     .iter()
                     .map(|label| OxcDiagnostic {
+                        #[expect(clippy::cast_possible_truncation)]
                         start: label.offset() as u32,
+                        #[expect(clippy::cast_possible_truncation)]
                         end: (label.offset() + label.len()) as u32,
                         severity: format!("{:?}", error.severity),
                         message: format!("{error}"),
@@ -110,7 +112,11 @@ impl Oxc {
         self.comments.clone()
     }
 
+    /// # Errors
+    /// Serde serialization error
     #[napi]
+    #[allow(clippy::allow_attributes)]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn run(&mut self, source_text: String, options: OxcOptions) -> napi::Result<()> {
         self.diagnostics = RefCell::default();
 
@@ -194,7 +200,7 @@ impl Oxc {
                 self.scope_text = Self::get_scope_text(&program, &scoping);
             }
             if run_options.symbol.unwrap_or_default() {
-                self.symbols_json = self.get_symbols_text(&scoping)?;
+                self.symbols_json = Self::get_symbols_text(&scoping)?;
             }
         }
 
@@ -397,7 +403,7 @@ impl Oxc {
         writer.scope_text
     }
 
-    fn get_symbols_text(&self, scoping: &Scoping) -> napi::Result<String> {
+    fn get_symbols_text(scoping: &Scoping) -> napi::Result<String> {
         #[derive(Serialize)]
         struct Data {
             span: Span,
