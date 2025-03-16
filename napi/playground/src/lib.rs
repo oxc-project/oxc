@@ -73,8 +73,6 @@ pub enum CommentType {
 pub struct OxcDiagnostic {
     pub start: u32,
     pub end: u32,
-    // pub start: usize,
-    // pub end: usize,
     pub severity: String,
     pub message: String,
 }
@@ -183,15 +181,15 @@ impl Oxc {
             ))
         });
         if run_options.syntax.unwrap_or_default() {
-            // self.save_diagnostics(
-            //     errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>(),
-            // );
+            self.save_diagnostics(
+                errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>(),
+            );
         }
 
-        // let module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
-        // self.run_linter(&run_options, &path, &program, &module_record);
+        let module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
+        self.run_linter(&run_options, &path, &program, &module_record);
 
-        // self.run_prettier(&run_options, source_text, source_type);
+        self.run_prettier(&run_options, &source_text, source_type);
 
         let scoping = semantic.into_scoping();
 
@@ -223,7 +221,7 @@ impl Oxc {
                     self.codegen_sourcemap_text =
                         codegen_result.map.map(|map| map.to_json_string());
                 } else {
-                    // self.save_diagnostics(ret.errors.into_iter().collect::<Vec<_>>());
+                    self.save_diagnostics(ret.errors.into_iter().collect::<Vec<_>>());
                     self.codegen_text = String::new();
                     self.codegen_sourcemap_text = None;
                 }
@@ -236,9 +234,9 @@ impl Oxc {
                 .and_then(|target| {
                     TransformOptions::from_target(target)
                         .map_err(|err| {
-                            // self.save_diagnostics(vec![oxc::diagnostics::OxcDiagnostic::error(
-                            //     err,
-                            // )]);
+                            self.save_diagnostics(vec![oxc::diagnostics::OxcDiagnostic::error(
+                                err,
+                            )]);
                         })
                         .ok()
                 })
@@ -246,7 +244,7 @@ impl Oxc {
             let result = Transformer::new(&allocator, &path, &options)
                 .build_with_scoping(scoping, &mut program);
             if !result.errors.is_empty() {
-                // self.save_diagnostics(result.errors.into_iter().collect::<Vec<_>>());
+                self.save_diagnostics(result.errors.into_iter().collect::<Vec<_>>());
             }
         }
 
@@ -290,58 +288,58 @@ impl Oxc {
         Ok(())
     }
 
-    //     fn run_linter(
-    //         &self,
-    //         run_options: &OxcRunOptions,
-    //         path: &Path,
-    //         program: &Program,
-    //         module_record: &Arc<ModuleRecord>,
-    //     ) {
-    //         // Only lint if there are no syntax errors
-    //         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
-    //             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
-    //             let semantic = Rc::new(semantic_ret.semantic);
-    //             let lint_config =
-    //                 ConfigStoreBuilder::default().build().expect("Failed to build config store");
-    //             let linter_ret = Linter::new(LintOptions::default(), lint_config).run(
-    //                 path,
-    //                 Rc::clone(&semantic),
-    //                 Arc::clone(module_record),
-    //             );
-    //             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
-    //             self.save_diagnostics(diagnostics);
-    //         }
-    //     }
+    fn run_linter(
+        &self,
+        run_options: &OxcRunOptions,
+        path: &Path,
+        program: &Program,
+        module_record: &Arc<ModuleRecord>,
+    ) {
+        // Only lint if there are no syntax errors
+        if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
+            let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
+            let semantic = Rc::new(semantic_ret.semantic);
+            let lint_config =
+                ConfigStoreBuilder::default().build().expect("Failed to build config store");
+            let linter_ret = Linter::new(LintOptions::default(), lint_config).run(
+                path,
+                Rc::clone(&semantic),
+                Arc::clone(module_record),
+            );
+            let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
+            self.save_diagnostics(diagnostics);
+        }
+    }
 
-    //     fn run_prettier(
-    //         &mut self,
-    //         run_options: &OxcRunOptions,
-    //         source_text: &str,
-    //         source_type: SourceType,
-    //     ) {
-    //         let allocator = Allocator::default();
-    //         if run_options.prettier_format.unwrap_or_default()
-    //             || run_options.prettier_ir.unwrap_or_default()
-    //         {
-    //             let ret = Parser::new(&allocator, source_text, source_type)
-    //                 .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
-    //                 .parse();
+    fn run_prettier(
+        &mut self,
+        run_options: &OxcRunOptions,
+        source_text: &str,
+        source_type: SourceType,
+    ) {
+        let allocator = Allocator::default();
+        if run_options.prettier_format.unwrap_or_default()
+            || run_options.prettier_ir.unwrap_or_default()
+        {
+            let ret = Parser::new(&allocator, source_text, source_type)
+                .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+                .parse();
 
-    //             let mut prettier = Prettier::new(&allocator, PrettierOptions::default());
+            let mut prettier = Prettier::new(&allocator, PrettierOptions::default());
 
-    //             if run_options.prettier_format.unwrap_or_default() {
-    //                 self.prettier_formatted_text = prettier.build(&ret.program);
-    //             }
+            if run_options.prettier_format.unwrap_or_default() {
+                self.prettier_formatted_text = prettier.build(&ret.program);
+            }
 
-    //             if run_options.prettier_ir.unwrap_or_default() {
-    //                 let prettier_doc = prettier.doc(&ret.program).to_string();
-    //                 self.prettier_ir_text = {
-    //                     let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
-    //                     Prettier::new(&allocator, PrettierOptions::default()).build(&ret.program)
-    //                 };
-    //             }
-    //         }
-    //     }
+            if run_options.prettier_ir.unwrap_or_default() {
+                let prettier_doc = prettier.doc(&ret.program).to_string();
+                self.prettier_ir_text = {
+                    let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
+                    Prettier::new(&allocator, PrettierOptions::default()).build(&ret.program)
+                };
+            }
+        }
+    }
 
     fn get_scope_text(program: &Program<'_>, scoping: &Scoping) -> String {
         struct ScopesTextWriter<'s> {
