@@ -528,6 +528,17 @@ fn test() {
               useHook();
             }
         ",
+
+
+        // Valid because hooks can be used in condition expressions beginning with a ternary condition
+        "
+            function ComponentWithConditionalHook() {
+               if (useHook() ? good() : bad()) {
+                    check();
+               }
+            }
+        ",
+
         // Valid because hooks can be used in condition expressions
         "
             function Component() {
