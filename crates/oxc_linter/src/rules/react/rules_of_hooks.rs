@@ -280,6 +280,32 @@ fn has_conditional_path_accept_throw(
         // TODO: We are simplifying here, There is a real need for a trait like `MayThrow` that
         // would provide a method `may_throw`, since not everything may throw and break the control flow.
         return true;
+        // let paths = algo::all_simple_paths::<Vec<_>, _>(graph, from_graph_id, to_graph_id, 0, None);
+        // if paths
+        //     .flatten()
+        //     .flat_map(|id| cfg.basic_block(id).instructions())
+        //     .filter_map(|it| match it {
+        //         Instruction { kind: InstructionKind::Statement, node_id: Some(node_id) } => {
+        //             let r = Some(nodes.get_node(*node_id));
+        //             dbg!(&r);
+        //             r
+        //         }
+        //         _ => None,
+        //     })
+        //     .filter(|it| it.id() != to.id())
+        //     .any(|it| {
+        //         // TODO: it.may_throw()
+        //         matches!(
+        //             it.kind(),
+        //             AstKind::ExpressionStatement(ExpressionStatement {
+        //                 expression: Expression::CallExpression(_),
+        //                 ..
+        //             })
+        //         )
+        //     })
+        // {
+        //     // return true;
+        // }
     }
     // All nodes should be able to reach the hook node, Otherwise we have a conditional/branching flow.
     algo::dijkstra(graph, from_graph_id, Some(to_graph_id), |e| match e.weight() {
@@ -827,6 +853,8 @@ fn test() {
               if (c) {} else {}
               if (c) {} else {}
               if (c) {} else {}
+              if (c) {} else {}
+              if (c) {} else {}
 
               // 10 hooks
               useHook();
@@ -864,6 +892,8 @@ fn test() {
 
               return (
                 <React.Fragment>
+                  {FILLER ? FILLER : FILLER}
+                  {FILLER ? FILLER : FILLER}
                   {FILLER ? FILLER : FILLER}
                   {FILLER ? FILLER : FILLER}
                   {FILLER ? FILLER : FILLER}
