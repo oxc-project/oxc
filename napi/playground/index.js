@@ -372,3 +372,4 @@ if (!nativeBinding) {
 
 module.exports.Oxc = nativeBinding.Oxc
 module.exports.CommentType = nativeBinding.CommentType
+module.exports.Severity = nativeBinding.Severity

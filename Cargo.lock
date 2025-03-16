@@ -2051,6 +2051,7 @@ dependencies = [
  "oxc",
  "oxc_index",
  "oxc_linter",
+ "oxc_napi",
  "oxc_prettier",
  "serde",
  "serde_json",

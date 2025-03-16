@@ -26,6 +26,7 @@ doctest = false
 oxc = { workspace = true, features = ["ast_visit", "codegen", "minifier", "semantic", "serialize", "transformer", "isolated_declarations", "wasm"] }
 oxc_index = { workspace = true }
 oxc_linter = { workspace = true }
+oxc_napi = { workspace = true }
 oxc_prettier = { workspace = true }
 
 napi = { workspace = true, features = ["async"] }

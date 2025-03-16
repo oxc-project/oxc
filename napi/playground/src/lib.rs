@@ -24,6 +24,7 @@ use oxc::{
 };
 use oxc_index::Idx;
 use oxc_linter::{ConfigStoreBuilder, LintOptions, Linter, ModuleRecord};
+use oxc_napi::OxcError;
 use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
 
@@ -78,6 +79,11 @@ impl Oxc {
     #[napi(constructor)]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    #[napi]
+    pub fn get_diagnostics2(&self) -> Vec<OxcError> {
+        self.diagnostics.borrow().clone().into_iter().map(OxcError::from).collect()
     }
 
     #[napi]
