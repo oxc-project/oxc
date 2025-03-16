@@ -128,23 +128,24 @@ fn can_safely_unnest(
 ) -> bool {
     if let Some(cb_span) = cb_call_expr.arguments.first().map(GetSpan::span) {
         for new_expr in &closest.arguments {
-            if let Some(arg_expr) = new_expr.as_expression() {
-                match arg_expr {
-                    Expression::ArrowFunctionExpression(arrow_expr) => {
-                        let scope = arrow_expr.scope_id();
-                        if uses_closest_cb_vars(scope, cb_span, ctx) {
-                            return false; // Not safe to unnest.
-                        }
-                    }
-                    Expression::FunctionExpression(func_expr) => {
-                        let scope = func_expr.scope_id();
-                        if uses_closest_cb_vars(scope, cb_span, ctx) {
-                            return false; // Not safe to unnest.
-                        }
-                    }
-                    _ => {}
-                }
+            let Some(arg_expr) = new_expr.as_expression() else {
+                continue;
             };
+            match arg_expr {
+                Expression::ArrowFunctionExpression(arrow_expr) => {
+                    let scope = arrow_expr.scope_id();
+                    if uses_closest_cb_vars(scope, cb_span, ctx) {
+                        return false; // Not safe to unnest.
+                    }
+                }
+                Expression::FunctionExpression(func_expr) => {
+                    let scope = func_expr.scope_id();
+                    if uses_closest_cb_vars(scope, cb_span, ctx) {
+                        return false; // Not safe to unnest.
+                    }
+                }
+                _ => {}
+            }
         }
     };
 
