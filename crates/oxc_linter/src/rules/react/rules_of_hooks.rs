@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Function, Expression},
+    ast::{ArrowFunctionExpression, Expression, Function},
 };
 use oxc_cfg::{
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -10,8 +10,8 @@ use oxc_cfg::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
-use oxc_syntax::operator::AssignmentOperator;
 use oxc_span::Span;
+use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
     AstNode,
@@ -360,7 +360,7 @@ fn is_hook_in_condition_expression(nodes: &AstNodes<'_>, node: &AstNode<'_>) -> 
                 };
                 // Check if the hook call is within the test expression of the if statement
                 is_span_within(node_span, test_span)
-            },
+            }
             // Check if the hook is used in a logical expression (&&, ||)
             AstKind::LogicalExpression(logical_expr) => {
                 // We need to check if the hook is in the left side (condition part)
@@ -378,7 +378,7 @@ fn is_hook_in_condition_expression(nodes: &AstNodes<'_>, node: &AstNode<'_>) -> 
                 } else {
                     false
                 }
-            },
+            }
             // Check if the hook is used in a conditional expression (ternary)
             AstKind::ConditionalExpression(cond_expr) => {
                 // Get the span of the test expression
@@ -392,12 +392,12 @@ fn is_hook_in_condition_expression(nodes: &AstNodes<'_>, node: &AstNode<'_>) -> 
                 };
                 // Check if the hook call is within the test part of the conditional expression
                 is_span_within(node_span, test_span)
-            },
+            }
             // Check if the hook is used in a unary expression (like !)
             AstKind::UnaryExpression(unary_expr) => {
                 // Check if the hook call is within the unary expression
                 is_span_within(node_span, unary_expr.span)
-            },
+            }
             // For other cases, check if the parent is part of a condition
             _ => is_hook_in_condition_expression(nodes, parent),
         }
