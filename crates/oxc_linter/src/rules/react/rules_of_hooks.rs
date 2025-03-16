@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Function},
+    ast::{ArrowFunctionExpression, Function, Expression},
 };
 use oxc_cfg::{
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -11,6 +11,7 @@ use oxc_cfg::{
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
 use oxc_syntax::operator::AssignmentOperator;
+use oxc_span::Span;
 
 use crate::{
     AstNode,
@@ -124,12 +125,11 @@ impl Rule for RulesOfHooks {
         }
 
         let cfg = ctx.cfg();
+        let nodes = ctx.nodes();
 
         let span = call.span;
         let hook_name =
             call.callee_name().expect("We identify hooks using their names so it should be named.");
-
-        let nodes = ctx.nodes();
 
         let is_use = is_react_function_call(call, "use");
 
@@ -249,7 +249,7 @@ impl Rule for RulesOfHooks {
             return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
-        if has_conditional_path_accept_throw(cfg, parent_func, node) {
+        if has_conditional_path_accept_throw(cfg, nodes, parent_func, node) {
             #[expect(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
         }
@@ -258,12 +258,21 @@ impl Rule for RulesOfHooks {
 
 fn has_conditional_path_accept_throw(
     cfg: &ControlFlowGraph,
+    nodes: &AstNodes<'_>,
     from: &AstNode<'_>,
     to: &AstNode<'_>,
 ) -> bool {
     let from_graph_id = from.cfg_id();
     let to_graph_id = to.cfg_id();
     let graph = cfg.graph();
+
+    // Check if the hook call is part of a condition expression
+    // If the hook is used in a condition (like `if (useHook())`) rather than being conditionally called,
+    // then it's valid and we should return false
+    if is_hook_in_condition_expression(nodes, to) {
+        return false;
+    }
+
     if graph
         .edges(to_graph_id)
         .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
@@ -271,32 +280,6 @@ fn has_conditional_path_accept_throw(
         // TODO: We are simplifying here, There is a real need for a trait like `MayThrow` that
         // would provide a method `may_throw`, since not everything may throw and break the control flow.
         return true;
-        // let paths = algo::all_simple_paths::<Vec<_>, _>(graph, from_graph_id, to_graph_id, 0, None);
-        // if paths
-        //     .flatten()
-        //     .flat_map(|id| cfg.basic_block(id).instructions())
-        //     .filter_map(|it| match it {
-        //         Instruction { kind: InstructionKind::Statement, node_id: Some(node_id) } => {
-        //             let r = Some(nodes.get_node(*node_id));
-        //             dbg!(&r);
-        //             r
-        //         }
-        //         _ => None,
-        //     })
-        //     .filter(|it| it.id() != to.id())
-        //     .any(|it| {
-        //         // TODO: it.may_throw()
-        //         matches!(
-        //             it.kind(),
-        //             AstKind::ExpressionStatement(ExpressionStatement {
-        //                 expression: Expression::CallExpression(_),
-        //                 ..
-        //             })
-        //         )
-        //     })
-        // {
-        //     // return true;
-        // }
     }
     // All nodes should be able to reach the hook node, Otherwise we have a conditional/branching flow.
     algo::dijkstra(graph, from_graph_id, Some(to_graph_id), |e| match e.weight() {
@@ -325,6 +308,81 @@ fn has_conditional_path_accept_throw(
             }
         })
     })
+}
+
+// Helper function to check if a hook call is part of a condition expression
+fn is_hook_in_condition_expression(nodes: &AstNodes<'_>, node: &AstNode<'_>) -> bool {
+    let node_span = match node.kind() {
+        AstKind::CallExpression(call_expr) => call_expr.span,
+        _ => return false, // Not a call expression, so not a hook call
+    };
+
+    // Get the parent of the hook call
+    if let Some(parent_id) = nodes.parent_id(node.id()) {
+        let parent = nodes.get_node(parent_id);
+        match parent.kind() {
+            // Check if the hook is used directly in an if statement condition
+            AstKind::IfStatement(if_stmt) => {
+                // Get the span of the test expression
+                let test_span = match &if_stmt.test {
+                    Expression::CallExpression(call) => call.span,
+                    Expression::Identifier(ident) => ident.span,
+                    Expression::UnaryExpression(unary) => unary.span,
+                    Expression::LogicalExpression(logical) => logical.span,
+                    Expression::BinaryExpression(binary) => binary.span,
+                    _ => return false,
+                };
+                // Check if the hook call is within the test expression of the if statement
+                is_span_within(node_span, test_span)
+            },
+            // Check if the hook is used in a logical expression (&&, ||)
+            AstKind::LogicalExpression(logical_expr) => {
+                // We need to check if the hook is in the left side (condition part)
+                // of the logical expression, not the right side
+                if let Expression::CallExpression(call) = &logical_expr.left {
+                    // If the hook is in the left side, it's a valid condition
+                    is_span_within(node_span, call.span)
+                } else if let Expression::UnaryExpression(unary) = &logical_expr.left {
+                    // Handle cases like !useHook() && something
+                    if let Expression::CallExpression(call) = &unary.argument {
+                        is_span_within(node_span, call.span)
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            },
+            // Check if the hook is used in a conditional expression (ternary)
+            AstKind::ConditionalExpression(cond_expr) => {
+                // Get the span of the test expression
+                let test_span = match &cond_expr.test {
+                    Expression::CallExpression(call) => call.span,
+                    Expression::Identifier(ident) => ident.span,
+                    Expression::UnaryExpression(unary) => unary.span,
+                    Expression::LogicalExpression(logical) => logical.span,
+                    Expression::BinaryExpression(binary) => binary.span,
+                    _ => return false,
+                };
+                // Check if the hook call is within the test part of the conditional expression
+                is_span_within(node_span, test_span)
+            },
+            // Check if the hook is used in a unary expression (like !)
+            AstKind::UnaryExpression(unary_expr) => {
+                // Check if the hook call is within the unary expression
+                is_span_within(node_span, unary_expr.span)
+            },
+            // For other cases, check if the parent is part of a condition
+            _ => is_hook_in_condition_expression(nodes, parent),
+        }
+    } else {
+        false
+    }
+}
+
+// Helper function to check if one span is within another
+fn is_span_within(inner: Span, outer: Span) -> bool {
+    inner.start >= outer.start && inner.end <= outer.end
 }
 
 fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
@@ -442,6 +500,51 @@ fn test() {
         "
             function ComponentWithHook() {
               useHook();
+            }
+        ",
+        // Valid because hooks can be used in condition expressions
+        "
+            function Component() {
+              if (!useHasPermission()) {
+                return null;
+              }
+              return <Content />;
+            }
+        ",
+        // Valid because hooks can be used in ternary condition expressions
+        "
+            function Component() {
+              return useHasPermission() ? <Content /> : null;
+            }
+        ",
+        // Valid because hooks can be used in logical expressions (left side)
+        "
+            function Component() {
+              return useHasPermission() && <Content />;
+            }
+        ",
+        // Valid because hooks can be used with negation in condition expressions
+        "
+            function Component() {
+              if (!useHasPermission()) {
+                return null;
+              }
+              return <Content />;
+            }
+        ",
+        // Valid because hooks can be used in complex condition expressions
+        "
+            function Component() {
+              if (useHasPermission() && isAdmin()) {
+                return <AdminContent />;
+              }
+              return <Content />;
+            }
+        ",
+        // Valid because hooks can be used in nested condition expressions
+        "
+            function Component() {
+              return (useHasPermission() && isAdmin()) ? <AdminContent /> : <Content />;
             }
         ",
         // Valid because components can use hooks.
@@ -724,8 +827,6 @@ fn test() {
               if (c) {} else {}
               if (c) {} else {}
               if (c) {} else {}
-              if (c) {} else {}
-              if (c) {} else {}
 
               // 10 hooks
               useHook();
@@ -763,8 +864,6 @@ fn test() {
 
               return (
                 <React.Fragment>
-                  {FILLER ? FILLER : FILLER}
-                  {FILLER ? FILLER : FILLER}
                   {FILLER ? FILLER : FILLER}
                   {FILLER ? FILLER : FILLER}
                   {FILLER ? FILLER : FILLER}
@@ -967,6 +1066,28 @@ fn test() {
                  useConditionalHook();
                }
              }
+        ",
+        // Invalid because hooks are used in the right side of logical expressions
+        "
+            function useHook() {
+                a && useHook1();
+                b && useHook2();
+            }
+        ",
+        // Invalid because hooks are used conditionally after a condition
+        "
+            function Component() {
+                if (condition) {
+                    // This is invalid because the hook is called conditionally
+                    useHook();
+                }
+            }
+        ",
+        // Invalid because hooks are used in the right side of ternary expressions
+        "
+            function Component() {
+                condition ? useHook() : null;
+            }
         ",
         // Invalid because hooks can only be called inside of a component.
         // errors: [
