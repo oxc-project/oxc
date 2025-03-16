@@ -2042,6 +2042,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_playground_napi"
+version = "0.58.1"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxc",
+ "oxc_ast_macros",
+ "oxc_estree",
+ "oxc_napi",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_prettier"
 version = "0.0.0"
 dependencies = [

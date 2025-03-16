@@ -92,6 +92,8 @@ importers:
         specifier: 'catalog:'
         version: 3.0.8(@types/node@22.13.10)(terser@5.39.0)
 
+  napi/playground: {}
+
   napi/transform:
     devDependencies:
       vitest:

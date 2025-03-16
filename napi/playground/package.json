@@ -1,0 +1,27 @@
+{
+  "name": "oxc-playground",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "napi build --no-dts-cache --platform --release --target wasm32-wasip1-threads"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "collaborators": [
+    "Boshen <boshenc@gmail.com>",
+    "Oxc contributors"
+  ],
+  "napi": {
+    "binaryName": "playground",
+    "packageName": "@oxc-playground/binding",
+    "targets": [
+      "wasm32-wasip1-threads"
+    ],
+    "wasm": {
+      "browser": {
+        "fs": false
+      }
+    }
+  }
+}
