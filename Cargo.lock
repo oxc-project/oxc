@@ -257,6 +257,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmake"
+version = "0.1.54"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7caa3f9de89ddbe2c607f4101924c5abec803763ae9534e4f4d7d8f84aa81f0"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "codspeed"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1249,12 +1258,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8355be11b20d696c8f18f6cc018c4e372165b1fa8126cef092399c9951984ffa"
 
 [[package]]
-name = "libmimalloc-sys"
-version = "0.1.39"
+name = "libmimalloc-sys2"
+version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23aa6811d3bd4deb8a84dde645f943476d13b248d818edcf8ce0b2f37f036b44"
+checksum = "f104fa362f5881c5d5f346112b0d5f1b71942f8852c86cf64564ddc4d4333ffa"
 dependencies = [
- "cc",
+ "cmake",
  "libc",
 ]
 
@@ -1327,12 +1336,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
-name = "mimalloc"
-version = "0.1.43"
+name = "mimalloc-safe"
+version = "0.1.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68914350ae34959d83f732418d51e2427a794055d0b9529f48259ac07af65633"
+checksum = "e345544894689290c7393b5b6a19733694f5b0b287f210d7ee2ca5648e058437"
 dependencies = [
- "libmimalloc-sys",
+ "libmimalloc-sys2",
 ]
 
 [[package]]
@@ -1946,6 +1955,7 @@ dependencies = [
 name = "oxc_minify_napi"
 version = "0.30.3"
 dependencies = [
+ "mimalloc-safe",
  "napi",
  "napi-build",
  "napi-derive",
@@ -2304,7 +2314,7 @@ dependencies = [
  "ignore",
  "insta",
  "jemallocator",
- "mimalloc",
+ "mimalloc-safe",
  "oxc-miette",
  "oxc_diagnostics",
  "oxc_linter",

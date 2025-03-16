@@ -197,7 +197,7 @@ log = "0.4.25"
 markdown = "1.0.0-alpha.22"
 memchr = "2.7.4"
 miette = { package = "oxc-miette", version = "2.1.2", features = ["fancy-no-syscall"] }
-mimalloc = "0.1.43"
+mimalloc-safe = "0.1.49"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
