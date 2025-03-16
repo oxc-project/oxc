@@ -2049,10 +2049,9 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
- "oxc_ast_macros",
- "oxc_estree",
- "oxc_napi",
- "rustc-hash",
+ "oxc_index",
+ "oxc_linter",
+ "oxc_prettier",
 ]
 
 [[package]]

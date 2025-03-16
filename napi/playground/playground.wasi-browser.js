@@ -25,7 +25,7 @@ const {
   instance: __napiInstance,
   module: __wasiModule,
   napiModule: __napiModule,
-} = __emnapiInstantiateNapiModuleSync(__wasmFile, {
+} = await (await import("@napi-rs/wasm-runtime")).instantiateNapiModule(__wasmFile, {
   context: __emnapiContext,
   asyncWorkPoolSize: 4,
   wasi: __wasi,
@@ -53,5 +53,5 @@ const {
     }
   },
 })
-export const parseSync = __napiModule.exports.parseSync
-export const Severity = __napiModule.exports.Severity
+export const Oxc = __napiModule.exports.Oxc
+export const CommentType = __napiModule.exports.CommentType

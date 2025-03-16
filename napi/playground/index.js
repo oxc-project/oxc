@@ -370,5 +370,5 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-module.exports.parseSync = nativeBinding.parseSync
-module.exports.Severity = nativeBinding.Severity
+module.exports.Oxc = nativeBinding.Oxc
+module.exports.CommentType = nativeBinding.CommentType

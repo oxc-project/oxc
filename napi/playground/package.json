@@ -3,11 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
-  "scripts": {
-    "build": "napi build --no-dts-cache --platform --release --target wasm32-wasip1-threads"
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "browser": "./playground.wasi-browser.js",
+      "default": "./index.js"
+    },
+    "./*": "./*"
   },
-  "dependencies": {},
-  "devDependencies": {},
+  "scripts": {
+    "build": "napi build --no-dts-cache --platform --release --target wasm32-wasip1-threads && node patch.mjs"
+  },
+  "devDependencies": {
+    "@napi-rs/wasm-runtime": "^0.2.7"
+  },
   "collaborators": [
     "Boshen <boshenc@gmail.com>",
     "Oxc contributors"

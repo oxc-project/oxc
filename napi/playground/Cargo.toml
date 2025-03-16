@@ -22,12 +22,11 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["ast_visit", "semantic", "serialize"] }
-oxc_ast_macros = { workspace = true }
-oxc_estree = { workspace = true }
-oxc_napi = { workspace = true }
-
-rustc-hash = { workspace = true }
+# oxc = { workspace = true, features = ["ast_visit", "semantic", "serialize"] }
+oxc = { workspace = true, features = ["ast_visit", "codegen", "minifier", "semantic", "serialize", "transformer", "isolated_declarations", "wasm"] }
+oxc_index = { workspace = true }
+oxc_linter = { workspace = true }
+oxc_prettier = { workspace = true }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
