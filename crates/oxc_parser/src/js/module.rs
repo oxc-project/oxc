@@ -363,13 +363,18 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
 
         let declaration = self.parse_declaration(decl_span, &modifiers)?;
+        let export_kind = if declaration.is_type() {
+            ImportOrExportKind::Type
+        } else {
+            ImportOrExportKind::Value
+        };
         self.ctx = reserved_ctx;
         Ok(self.ast.alloc_export_named_declaration(
             self.end_span(span),
             Some(declaration),
             self.ast.vec(),
             None,
-            ImportOrExportKind::Value,
+            export_kind,
             NONE,
         ))
     }
