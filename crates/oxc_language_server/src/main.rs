@@ -8,7 +8,7 @@ use log::{debug, error, info};
 use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
-use tower_lsp::{
+use tower_lsp_server::{
     Client, LanguageServer, LspService, Server,
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
@@ -16,10 +16,10 @@ use tower_lsp::{
         ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
         DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, Url,
-        WorkspaceEdit,
+        InitializedParams, NumberOrString, Position, Range, ServerInfo, TextEdit, WorkspaceEdit,
     },
 };
+use url::Url;
 
 use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 
@@ -86,7 +86,6 @@ enum SyntheticRunLevel {
     OnType,
 }
 
-#[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         self.init(params.root_uri)?;

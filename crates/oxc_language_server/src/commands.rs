@@ -1,11 +1,10 @@
 use log::error;
 use serde::Deserialize;
-use tower_lsp::{
+use tower_lsp_server::{
     jsonrpc::{self, Error},
-    lsp_types::{
-        ApplyWorkspaceEditParams, TextEdit, Url, WorkspaceEdit, request::ApplyWorkspaceEdit,
-    },
+    lsp_types::{ApplyWorkspaceEditParams, TextEdit, WorkspaceEdit, request::ApplyWorkspaceEdit},
 };
+use url::Url;
 
 use crate::{Backend, capabilities::Capabilities};
 

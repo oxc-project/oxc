@@ -7,7 +7,7 @@ use std::{
 
 use log::debug;
 use rustc_hash::FxHashSet;
-use tower_lsp::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Range};
+use tower_lsp_server::lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Range};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource};

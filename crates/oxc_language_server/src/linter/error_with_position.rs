@@ -1,8 +1,9 @@
 use std::{path::PathBuf, str::FromStr};
 
-use tower_lsp::lsp_types::{
-    self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Url,
+use tower_lsp_server::lsp_types::{
+    self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, ,
 };
+use url::Url;
 
 use cow_utils::CowUtils;
 use oxc_diagnostics::{Error, Severity};

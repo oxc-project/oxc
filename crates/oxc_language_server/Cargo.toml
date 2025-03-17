@@ -41,4 +41,5 @@ rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tower-lsp = { workspace = true, features = ["proposed"] }
+tower-lsp-server = { workspace = true, features = ["proposed"] }
+url = "2.5.4"

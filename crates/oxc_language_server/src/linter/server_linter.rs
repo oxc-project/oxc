@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use tower_lsp::lsp_types::Url;
+use url::Url;
 
 use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter};
 
