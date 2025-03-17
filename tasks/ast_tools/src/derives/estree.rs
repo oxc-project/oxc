@@ -1,9 +1,11 @@
 //! Derive for `ESTree` impls, which serialize AST to ESTree format in JSON.
 
-use std::borrow::Cow;
+use std::{borrow::Cow, fs};
 
+use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::quote;
+use rustc_hash::FxHashMap;
 
 use crate::{
     Result,
@@ -233,6 +235,21 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
     // Instead, reuse this `Vec` over and over.
     let mut field_indices_temp = vec![];
 
+    // Mapping from type name to field names, in ESTree order
+    // (both type name and field names are their names in ESTree AST, not Rust AST).
+    // Some ESTree types have multiple Rust types that map to them e.g. `Literal`, `Identifier`.
+    // In that case, include the field names of all variants.
+    // e.g. Field names for `Literal` include both `regex` and `bigint`.
+    let mut field_orders = FxHashMap::<String, Vec<String>>::default();
+    let mut record_fields = |struct_name, field_names: &[String]| {
+        let target_field_names = field_orders.entry(struct_name).or_default();
+        for field_name in field_names {
+            if !target_field_names.contains(field_name) {
+                target_field_names.push(field_name.clone());
+            }
+        }
+    };
+
     for type_id in schema.types.indices() {
         let Some(struct_def) = schema.types[type_id].as_struct() else { continue };
         if !struct_def.generates_derive(estree_derive_id) {
@@ -307,7 +324,83 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
 
             unskipped_field_indices.clear();
         }
+
+        // Record field names
+        let struct_def = schema.struct_def(type_id);
+        if struct_def.file(schema).krate() == "oxc_ast"
+            && !matches!(struct_def.name(), "RegExpFlags" | "Comment")
+        {
+            let mut type_field_index = None;
+            let fields_names = struct_def
+                .estree
+                .field_indices
+                .iter()
+                .filter_map(|&field_index| {
+                    let field_index = field_index as usize;
+                    if field_index < struct_def.fields.len() {
+                        // Original field
+                        let field = &struct_def.fields[field_index];
+                        if field.name() == "span" {
+                            return None;
+                        }
+
+                        let field_name =
+                            field.estree.rename.clone().unwrap_or_else(|| field.camel_name());
+                        if field_name.as_str() == "type" {
+                            type_field_index = Some(field_index);
+                            return None;
+                        }
+
+                        Some(field_name)
+                    } else {
+                        // Added field (`#[estree(add_fields(...))]`)
+                        Some(
+                            struct_def.estree.add_fields[field_index - struct_def.fields.len()]
+                                .0
+                                .clone(),
+                        )
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            // If struct has an explicit `type` field, it will be a fieldless enum.
+            // e.g. `FunctionType` for `Function`.
+            // Record the field order for all variants of that enum
+            // e.g. `FunctionDeclaration`, `FunctionExpression`, `TSDeclareFunction`, `TSEmptyBodyFunctionExpression`
+            if let Some(type_field_index) = type_field_index {
+                let type_field = &struct_def.fields[type_field_index];
+                let type_enum = type_field.type_def(schema).as_enum().unwrap();
+                for variant in &type_enum.variants {
+                    assert!(variant.is_fieldless());
+                    let variant_name =
+                        variant.estree.rename.clone().unwrap_or_else(|| variant.name.clone());
+                    record_fields(variant_name, &fields_names);
+                }
+            } else {
+                let struct_name = struct_def
+                    .estree
+                    .rename
+                    .clone()
+                    .unwrap_or_else(|| struct_def.name().to_string());
+                record_fields(struct_name, &fields_names);
+            }
+        }
     }
+
+    // Print field orders to stdout as JSON
+    let mut field_orders = field_orders.into_iter().collect::<Vec<_>>();
+    field_orders.sort_unstable_by(|(name1, _), (name2, _)| name1.cmp(name2));
+    let field_orders_str = field_orders
+        .into_iter()
+        .map(|(name, field_names)| {
+            format!(
+                r#"  ["{name}", [{}]]"#,
+                field_names.iter().map(|name| format!(r#""{name}""#)).join(", ")
+            )
+        })
+        .join(",\n");
+    let field_orders_str = format!("[\n{field_orders_str}\n]\n");
+    fs::write("estree_field_orders.json", field_orders_str.as_bytes()).unwrap();
 }
 
 /// Generate implementation of `ESTree` for a struct or enum.
