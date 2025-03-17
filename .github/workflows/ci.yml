@@ -111,36 +111,11 @@ jobs:
       - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/parser/Cargo.toml
       - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/transform/Cargo.toml
       - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/minify/Cargo.toml
+      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/playground/Cargo.toml
       # Fix `index.d.ts`
       - run: node napi/parser/scripts/fix-wasm-dts.mjs
       - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
       - run: git diff --exit-code # Must commit everything
-
-  test-wasm32-unknown-unknown:
-    name: Check wasm32-unknown-unknown
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-        with:
-          cache-key: wasm
-          save-cache: ${{ github.ref_name == 'main' }}
-          tools: wasm-pack,just
-      - name: Check
-        run: |
-          rustup target add wasm32-unknown-unknown
-          cargo check -p oxc_wasm --target wasm32-unknown-unknown
-      - uses: ./.github/actions/pnpm
-
-      - run: just build-wasm debug
-      - working-directory: npm/oxc-wasm
-        run: pnpm run check
-
-      - working-directory: wasm/parser
-        run: pnpm run build
-      - working-directory: npm/parser-wasm
-        run: pnpm run check
 
   typos:
     name: Spell Check
@@ -319,6 +294,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
         run: |
+          rustup target add wasm32-wasip1-threads
           pnpm run build
           pnpm run test
           pnpm --filter e2e run test

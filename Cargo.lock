@@ -2042,6 +2042,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_playground_napi"
+version = "0.0.1"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxc",
+ "oxc_index",
+ "oxc_linter",
+ "oxc_napi",
+ "oxc_prettier",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "oxc_prettier"
 version = "0.0.0"
 dependencies = [
