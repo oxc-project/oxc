@@ -2043,7 +2043,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_playground_napi"
-version = "0.58.1"
+version = "0.0.1"
 dependencies = [
  "napi",
  "napi-build",

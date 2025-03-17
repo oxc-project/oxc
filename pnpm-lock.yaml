@@ -93,7 +93,7 @@ importers:
         version: 3.0.8(@types/node@22.13.10)(terser@5.39.0)
 
   napi/playground:
-    devDependencies:
+    dependencies:
       '@napi-rs/wasm-runtime':
         specifier: ^0.2.7
         version: 0.2.7
