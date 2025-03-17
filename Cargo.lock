@@ -1567,9 +1567,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-miette"
-version = "2.1.2"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "288e20c3f5128c433165c23bcac0169fce6520c5decc2ae7cc5cce5898d861d5"
+checksum = "112f8458565c773a1f6555c14d6cd0255f56c85dd372932029e4baeb15308bbe"
 dependencies = [
  "cfg-if",
  "owo-colors",
