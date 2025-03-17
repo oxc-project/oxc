@@ -156,9 +156,9 @@ export interface PrivateFieldExpression extends Span {
 export interface CallExpression extends Span {
   type: 'CallExpression';
   callee: Expression;
-  typeParameters: TSTypeParameterInstantiation | null;
   arguments: Array<Argument>;
   optional: boolean;
+  typeParameters: TSTypeParameterInstantiation | null;
 }
 
 export interface NewExpression extends Span {
@@ -731,8 +731,8 @@ export interface ExportNamedDeclaration extends Span {
   declaration: Declaration | null;
   specifiers: Array<ExportSpecifier>;
   source: StringLiteral | null;
-  exportKind: ImportOrExportKind;
   attributes: Array<ImportAttribute>;
+  exportKind: ImportOrExportKind;
 }
 
 export interface ExportDefaultDeclaration extends Span {

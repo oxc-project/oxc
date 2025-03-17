@@ -207,9 +207,9 @@ function deserializeCallExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     callee: deserializeExpression(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
     arguments: deserializeVecArgument(pos + 32),
     optional: deserializeBool(pos + 64),
+    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -1024,8 +1024,8 @@ function deserializeExportNamedDeclaration(pos) {
     declaration: deserializeOptionDeclaration(pos + 8),
     specifiers: deserializeVecExportSpecifier(pos + 24),
     source: deserializeOptionStringLiteral(pos + 56),
-    exportKind: deserializeImportOrExportKind(pos + 96),
     attributes: withClause === null ? [] : withClause.withEntries,
+    exportKind: deserializeImportOrExportKind(pos + 96),
   };
 }
 

@@ -60,9 +60,12 @@ struct ProcessedModule {
 
     /// Source code and semantic of the module.
     ///
-    /// This value is required for linter to run on the module. If import plugin is enabled,
-    /// dependencies are also processed as `ProcessedModule` to construct the module graph, but
-    /// not for linting. For these modules, `content` is set to `None`.
+    /// This value is required for linter to run on the module.  There are two cases where `content` is `None`:
+    /// - Import plugin is enabled and the module is a dependency, which is processed only to construct the module graph, not for linting.
+    /// - Couldn't get the source text of the module to lint, e.g. the file doesn't exist or the source isn't valid utf-8.
+    ///
+    /// Note that `content` is `Some` even if parsing is unsuccessful as long as the source to lint is valid utf-8.
+    /// It is designed this way to cover the case where some but not all the sections fail to parse.
     content: Option<ModuleContent>,
 }
 
@@ -209,9 +212,11 @@ impl Runtime {
         if self.resolver.is_none() {
             self.paths.par_iter().for_each(|path| {
                 let output = self.process_path(Arc::clone(path), check_syntax_errors, tx_error);
-                let entry =
+                let Some(entry) =
                     ModuleToLint::from_processed_module(output.path, output.processed_module)
-                        .unwrap();
+                else {
+                    return;
+                };
                 on_module_to_lint(self, entry);
             });
             return;

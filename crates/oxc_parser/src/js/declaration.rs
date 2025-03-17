@@ -161,7 +161,11 @@ impl<'a> ParserImpl<'a> {
         loop {
             let declaration = self.parse_variable_declarator(
                 VariableDeclarationParent::Statement,
-                VariableDeclarationKind::Var,
+                if is_await {
+                    VariableDeclarationKind::AwaitUsing
+                } else {
+                    VariableDeclarationKind::Using
+                },
             )?;
 
             match declaration.id.kind {

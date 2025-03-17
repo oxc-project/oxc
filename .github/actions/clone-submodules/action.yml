@@ -38,4 +38,4 @@ runs:
         show-progress: false
         repository: oxc-project/acorn-test262
         path: tasks/coverage/acorn-test262
-        ref: ad6f20525e19e8fb66c35f3513ed0fa7ac06fbd8 # Latest main at 14/3/25
+        ref: eb5e9976435fafd45e2859a4b668a77ec75ce625 # Latest main at 17/3/25

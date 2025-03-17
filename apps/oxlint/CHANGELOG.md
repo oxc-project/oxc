@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.0] - 2025-03-16
+
+- 225e266 linter: [**BREAKING**] Enable `--experimental-nested-config` by default and add `--disable-nested-config` option (#9760) (camchenry)
+
+### Features
+
+
+### Bug Fixes
+
+- 22f18ac linter: Improve `jsx-a11y/anchor-ambiguous-text` diagnostic message (#9789) (1zumii)
+
 ## [0.15.15] - 2025-03-12
 
 ### Features

@@ -1044,6 +1044,11 @@ impl<'a> Declaration<'a> {
             Declaration::TSImportEqualsDeclaration(_) => false,
         }
     }
+
+    /// Returns `true` if this declaration is a TypeScript type or interface declaration.
+    pub fn is_type(&self) -> bool {
+        matches!(self, Self::TSTypeAliasDeclaration(_) | Self::TSInterfaceDeclaration(_))
+    }
 }
 
 impl VariableDeclaration<'_> {

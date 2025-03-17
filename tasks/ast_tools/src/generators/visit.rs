@@ -45,7 +45,7 @@ impl Generator for VisitGenerator {
 
     /// Create names for `visit_*` methods and `walk_*` functions for all `Vec`s
     /// whose inner type has a visitor.
-    fn prepare(&self, schema: &mut Schema) {
+    fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         for type_id in schema.types.indices() {
             let Some(vec_def) = schema.types[type_id].as_vec() else { continue };
 

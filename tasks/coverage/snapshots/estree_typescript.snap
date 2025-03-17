@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10628/10725 (99.10%)
-Positive Passed: 32/10725 (0.30%)
+Positive Passed: 55/10725 (0.51%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
@@ -492,9 +492,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/bom-utf8.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/booleanAssignment.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/booleanFilterAnyArray.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/booleanLiteralsContextuallyTypedFromUnion.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/breakInIterationOrSwitchStatement1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/breakInIterationOrSwitchStatement2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/breakInIterationOrSwitchStatement3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/breakInIterationOrSwitchStatement4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/breakNotInIterationOrSwitchStatement2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/breakTarget1.ts
@@ -1232,14 +1229,10 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypingOrOpe
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypingOrOperator2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypingOrOperator3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypingRestParameters.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueInIterationStatement1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueInIterationStatement2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueInIterationStatement3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueInIterationStatement4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueInLoopsWithCapturedBlockScopedBindings1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueLabel.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueNotInIterationStatement2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueNotInIterationStatement3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueNotInIterationStatement4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueStatementInternalComments.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/continueTarget1.ts
@@ -1745,7 +1738,9 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/defaultValueInConstruct
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/defaultValueInFunctionOverload1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/defaultValueInFunctionTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
+tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
+serde_json::from_str(oxc_json) error: number out of range at line 25 column 25
+
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/deferredLookupTypeResolution2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/deferredTypeReferenceWithinArrayWithinTuple.ts
@@ -2020,6 +2015,7 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyArgumentsListComme
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyArrayDestructuringExpressionVisitedByTransformer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyDeclarationEmitIsModule.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyEnum.ts
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyExpr.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyGenericParamList.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyIndexer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyModuleName.ts
@@ -2503,9 +2499,15 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolutio
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/externalModuleWithoutCompilerFlag1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/extractInferenceImprovement.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
+tasks/coverage/typescript/tests/cases/compiler/fakeInfinity1.ts
+serde_json::from_str(oxc_json) error: number out of range at line 29 column 27
+
+tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
+serde_json::from_str(oxc_json) error: number out of range at line 35 column 29
+
+tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
+serde_json::from_str(oxc_json) error: number out of range at line 35 column 29
+
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fallFromLastCase1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fallFromLastCase2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/fallbackToBindingPatternForTypeInference.ts
@@ -3721,8 +3723,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxPropsAsIdentifierNam
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxSpreadFirstUnionNoErrors.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxViaImport.2.tsx
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxViaImport.tsx
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/keepImportsInDts1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/keepImportsInDts2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/keepImportsInDts3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/keepImportsInDts4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult.ts
@@ -4293,7 +4293,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedGenericConditiona
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedGenericSpreadInference.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedGenerics.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedHomomorphicMappedTypesWithArrayConstraint1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedIfStatement.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedIndexer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedInfinitelyExpandedRecursiveTypes.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/nestedLoopTypeGuards.ts
@@ -4324,7 +4323,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/newNonReferenceType.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/newOnInstanceSymbol.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noAsConstNameLookup.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noBundledEmitFromNodeModules.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/noCatchBlock.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noCheckDoesNotReportError.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noCheckNoEmit.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/noCheckRequiresEmitDeclarationOnly.ts
@@ -4759,8 +4757,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathMappingWithoutBaseU
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathsValidation1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathsValidation2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathsValidation3.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathsValidation4.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/pathsValidation5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/performanceComparisonOfStructurallyIdenticalInterfacesWithGenericSignatures.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/pickOfLargeObjectUnionWorks.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/pinnedComments1.ts
@@ -5275,7 +5271,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMap-InterfacePrec
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMap-LineBreaks.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMap-SemiColon1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMap-SingleSpace1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMap-SkippedNode.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMap-StringLiteralWithNewLine.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapForFunctionInInternalModuleWithCommentPrecedingStatement01.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapForFunctionWithCommentPrecedingStatement01.ts
@@ -7329,10 +7324,18 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/em
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments19_ES6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionsAsIs.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionsAsIsES6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteral.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteralES6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/octalIntegerLiteral.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/octalIntegerLiteralES6.ts
+tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteral.ts
+serde_json::from_str(oxc_json) error: number out of range at line 117 column 27
+
+tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteralES6.ts
+serde_json::from_str(oxc_json) error: number out of range at line 117 column 27
+
+tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/octalIntegerLiteral.ts
+serde_json::from_str(oxc_json) error: number out of range at line 87 column 27
+
+tasks/coverage/typescript/tests/cases/conformance/es6/binaryAndOctalIntegerLiteral/octalIntegerLiteralES6.ts
+serde_json::from_str(oxc_json) error: number out of range at line 87 column 27
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/classWithSemicolonClassElementES61.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/classWithSemicolonClassElementES62.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationOverloadInES6.ts
@@ -8026,8 +8029,12 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedE
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings06.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings08.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings09.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings10.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings11.ts
+tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings10.ts
+serde_json::from_str(estree_json) error: unexpected end of hex escape at line 30 column 29
+
+tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings11.ts
+serde_json::from_str(estree_json) error: lone leading surrogate in hex escape at line 30 column 28
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings13.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings15.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings16.ts
@@ -8041,8 +8048,12 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedE
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates06.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates08.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates09.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates10.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates11.ts
+tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates10.ts
+serde_json::from_str(estree_json) error: unexpected end of hex escape at line 37 column 36
+
+tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates11.ts
+serde_json::from_str(estree_json) error: lone leading surrogate in hex escape at line 37 column 35
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates13.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates15.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates16.ts
@@ -8763,7 +8774,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewr
 tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/nonTSExtensions.ts
 Unexpected estree file content error: 1 != 2
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/packageJsonImportsErrors.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAmbientModule.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts
@@ -10105,9 +10115,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 Unexpected flag a in regular expression literal
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakInIterationOrSwitchStatement1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakInIterationOrSwitchStatement2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakInIterationOrSwitchStatement3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakInIterationOrSwitchStatement4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakNotInIterationOrSwitchStatement2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakTarget1.ts
@@ -10116,13 +10123,9 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/S
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakTarget4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakTarget5.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakTarget6.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueInIterationStatement1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueInIterationStatement2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueInIterationStatement3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueInIterationStatement4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueLabel.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement2.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget2.ts
@@ -10158,7 +10161,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/S
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserExpressionStatement1.d.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement1.d.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement8.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement1.d.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForStatement5.ts
@@ -10477,7 +10479,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.2_A1.5_T2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.3_A1.1_T2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.6_A4.2_T1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerStringLiteralWithContainingNullCharacter1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannertest1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithAnnotationAndInitializer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithAnnotationAndInvalidInitializer.ts

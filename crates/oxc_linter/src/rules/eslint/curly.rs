@@ -1,8 +1,5 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{
-    AstKind,
-    ast::{Statement, VariableDeclarationKind},
-};
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -386,9 +383,7 @@ pub fn are_braces_necessary(node: &Statement, ctx: &LintContext) -> bool {
 
 fn is_lexical_declaration(node: &Statement) -> bool {
     match node {
-        Statement::VariableDeclaration(decl) => {
-            matches!(decl.kind, VariableDeclarationKind::Const | VariableDeclarationKind::Let)
-        }
+        Statement::VariableDeclaration(decl) => decl.kind.is_lexical(),
         Statement::FunctionDeclaration(_) | Statement::ClassDeclaration(_) => true,
         _ => false,
     }
