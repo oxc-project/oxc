@@ -178,7 +178,6 @@ jobs:
               - '!npm/**'
               - '!wasm/**'
               - '!crates/oxc_linter/**'
-              - '!crates/oxc_wasm/**'
               - '!crates/oxc_language_server/**'
               - '!tasks/**'
               - 'tasks/conformance/**'

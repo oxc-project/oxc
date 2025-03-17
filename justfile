@@ -150,9 +150,9 @@ update-transformer-fixtures:
 test-estree *args='':
   cargo run -p oxc_coverage --profile coverage -- estree {{args}}
 
-# Install wasm-pack
+# Install wasm32-wasip1-threads for playground
 install-wasm:
-  cargo binstall wasm-pack
+  rustup target add wasm32-wasip1-threads
 
 watch-playground:
   just watch 'pnpm --filter oxc-playground dev'
