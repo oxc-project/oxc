@@ -152,8 +152,8 @@ function deserializeTemplateElement(pos) {
     type: 'TemplateElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    value: deserializeTemplateElementValue(pos + 16),
-    tail: deserializeBool(pos + 8),
+    value: deserializeTemplateElementValue(pos + 8),
+    tail: deserializeBool(pos + 40),
   };
 }
 

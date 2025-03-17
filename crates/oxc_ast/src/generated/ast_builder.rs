@@ -1863,16 +1863,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `tail`
     /// * `value`
+    /// * `tail`
     #[inline]
     pub fn template_element(
         self,
         span: Span,
-        tail: bool,
         value: TemplateElementValue<'a>,
+        tail: bool,
     ) -> TemplateElement<'a> {
-        TemplateElement { span, tail, value }
+        TemplateElement { span, value, tail }
     }
 
     /// Build a [`TemplateElement`], and store it in the memory arena.
@@ -1881,16 +1881,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `tail`
     /// * `value`
+    /// * `tail`
     #[inline]
     pub fn alloc_template_element(
         self,
         span: Span,
-        tail: bool,
         value: TemplateElementValue<'a>,
+        tail: bool,
     ) -> Box<'a, TemplateElement<'a>> {
-        Box::new_in(self.template_element(span, tail, value), self.allocator)
+        Box::new_in(self.template_element(span, value, tail), self.allocator)
     }
 
     /// Build a [`MemberExpression::ComputedMemberExpression`].

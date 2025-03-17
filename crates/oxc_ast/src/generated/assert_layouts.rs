@@ -103,8 +103,8 @@ const _: () = {
     assert!(size_of::<TemplateElement>() == 48);
     assert!(align_of::<TemplateElement>() == 8);
     assert!(offset_of!(TemplateElement, span) == 0);
-    assert!(offset_of!(TemplateElement, tail) == 8);
-    assert!(offset_of!(TemplateElement, value) == 16);
+    assert!(offset_of!(TemplateElement, value) == 8);
+    assert!(offset_of!(TemplateElement, tail) == 40);
 
     assert!(size_of::<TemplateElementValue>() == 32);
     assert!(align_of::<TemplateElementValue>() == 8);
@@ -1508,8 +1508,8 @@ const _: () = {
     assert!(size_of::<TemplateElement>() == 28);
     assert!(align_of::<TemplateElement>() == 4);
     assert!(offset_of!(TemplateElement, span) == 0);
-    assert!(offset_of!(TemplateElement, tail) == 8);
-    assert!(offset_of!(TemplateElement, value) == 12);
+    assert!(offset_of!(TemplateElement, value) == 8);
+    assert!(offset_of!(TemplateElement, tail) == 24);
 
     assert!(size_of::<TemplateElementValue>() == 16);
     assert!(align_of::<TemplateElementValue>() == 4);
