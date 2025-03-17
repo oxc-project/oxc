@@ -76,25 +76,27 @@ impl Lexer<'_> {
                 Kind::LCurly
             }
             Some(_) => {
-                let start = self.source.position();
                 let next_byte = byte_search! {
                     lexer: self,
                     table: JSX_CHILD_END_TABLE,
-                    start: start,
                     handle_eof: {
                         return Kind::Undetermined;
                     },
                 };
-                if matches!(next_byte, b'}' | b'>') {
-                    let start = self.offset();
-                    self.error(diagnostics::unexpected_jsx_end(
-                        Span::new(start, start),
-                        next_byte as char,
-                        if next_byte == b'}' { "rbrace" } else { "gt" },
-                    ));
-                    return Kind::Undetermined;
+
+                if matches!(next_byte, b'<' | b'{') {
+                    Kind::JSXText
+                } else {
+                    cold_branch(|| {
+                        let start = self.offset();
+                        self.error(diagnostics::unexpected_jsx_end(
+                            Span::new(start, start),
+                            next_byte as char,
+                            if next_byte == b'}' { "rbrace" } else { "gt" },
+                        ));
+                        Kind::Undetermined
+                    })
                 }
-                Kind::JSXText
             }
             None => Kind::Eof,
         }
