@@ -253,7 +253,10 @@ pub struct IdentifierReference<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier")]
+#[estree(
+    rename = "Identifier",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull)
+)]
 pub struct BindingIdentifier<'a> {
     pub span: Span,
     /// The identifier name being bound.

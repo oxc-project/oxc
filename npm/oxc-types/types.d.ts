@@ -70,6 +70,9 @@ export interface IdentifierReference extends Span {
 export interface BindingIdentifier extends Span {
   type: 'Identifier';
   name: string;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface LabelIdentifier extends Span {
