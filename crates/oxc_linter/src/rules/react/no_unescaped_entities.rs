@@ -76,13 +76,11 @@ impl Rule for NoUnescapedEntities {
 }
 
 // NOTE: If we add substantially more characters, we should consider using a hash set instead.
-pub const CHARS: [char; 4] = ['>', '"', '\'', '}'];
+pub const CHARS: [char; 2] = ['"', '\''];
 
 pub const DEFAULTS: Map<char, &'static [&'static str]> = phf_map! {
-    '>' => &["&gt;"],
     '"' => &["&quot;", "&ldquo;", "&#34;", "&rdquo;"],
     '\'' => &["&apos;", "&lsquo;", "&#39;", "&rsquo;"],
-    '}' => &["&#125;"],
 };
 
 #[test]

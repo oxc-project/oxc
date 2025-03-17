@@ -91,6 +91,12 @@ pub fn unexpected_end(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn unexpected_jsx_end(span: Span, a: char, b: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Unexpected token. Did you mean `{{'{a}'}}` or `&{b};`?"))
+        .with_label(span)
+}
+
+#[cold]
 pub fn unterminated_reg_exp(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unterminated regular expression").with_label(span)
 }

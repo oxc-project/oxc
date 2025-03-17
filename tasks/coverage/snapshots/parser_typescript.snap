@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1285/5754 (22.33%)
+Negative Passed: 1287/5754 (22.37%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -3498,7 +3498,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/inlin
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryLocalTypeGlobalFallback.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryWithFragmentIsError.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxEsprimaFbTestSuite.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxParsingError2.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxParsingError3.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxSpreadOverwritesAttributeStrict.tsx
@@ -3538,7 +3537,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxEl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution8.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution9.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxEmit3.tsx
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericArrowFunctionParsing.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxIntrinsicAttributeErrors.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxLibraryManagedAttributes.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxNamespacedTagName2.tsx
@@ -7857,10 +7855,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Expected `<` but found `EOF`
-    ╭─[typescript/tests/cases/compiler/errorSpanForUnclosedJsxTag.tsx:11:23]
+  × Unexpected token
+    ╭─[typescript/tests/cases/compiler/errorSpanForUnclosedJsxTag.tsx:11:18]
  10 │ 
  11 │ let y = <   Baz >Hello
+    ·                  ─────
     ╰────
 
   × 'with' statements are not allowed
@@ -10883,16 +10882,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·    ─
    ╰────
 
-  × Expected `<` but found `EOF`
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:24]
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts:2:21]
  1 │ const x = "oops";
  2 │ const y = + <number> x;
+   ·                     ───
    ╰────
 
-  × Expected `<` but found `EOF`
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:18]
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx2.ts:2:15]
  1 │ const x = "oops";
  2 │ const y = + <> x;
+   ·               ───
    ╰────
 
   × Unexpected token
@@ -20481,6 +20482,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  8 │ </div>
    ╰────
 
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+    ╭─[typescript/tests/cases/conformance/jsx/jsxEsprimaFbTestSuite.tsx:40:41]
+ 39 │ 
+ 40 │ <LeftRight left=<a /> right=<b>monkeys /> gorillas</b> />;
+    ·                                         ▲
+ 41 │ 
+    ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.tsx:3:2]
  2 │ 
@@ -20565,6 +20574,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·        ╰── `>` expected
  10 │ 
     ╰────
+
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[typescript/tests/cases/conformance/jsx/tsxGenericArrowFunctionParsing.tsx:8:17]
+ 7 │ // This is an element
+ 8 │ var x1 = <T>() => {}</T>;
+   ·                 ▲
+ 9 │ x1.isElement;
+   ╰────
 
   × Expected `,` but found `;`
     ╭─[typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents1.tsx:41:16]
