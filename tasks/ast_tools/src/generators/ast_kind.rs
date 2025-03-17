@@ -96,7 +96,7 @@ define_generator!(AstKindGenerator);
 
 impl Generator for AstKindGenerator {
     /// Set `has_kind` for structs and enums which are visited, and not on blacklist.
-    fn prepare(&self, schema: &mut Schema) {
+    fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         // Set `has_kind` to `true` for all visited types
         for type_def in &mut schema.types {
             match type_def {

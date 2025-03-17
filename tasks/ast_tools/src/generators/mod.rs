@@ -99,7 +99,7 @@ pub trait Generator: Runner {
     ///
     /// Runs before any `generate` or `derive` method runs.
     #[expect(unused_variables)]
-    fn prepare(&self, schema: &mut Schema) {}
+    fn prepare(&self, schema: &mut Schema, codegen: &Codegen) {}
 
     /// Generate single output.
     #[expect(unused_variables, clippy::unimplemented)]
