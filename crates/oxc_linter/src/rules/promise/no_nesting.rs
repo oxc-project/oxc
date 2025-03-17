@@ -126,31 +126,36 @@ fn can_safely_unnest(
     closest: &CallExpression,
     ctx: &LintContext,
 ) -> bool {
-    let mut safe_to_unnest: bool = true;
-
-    if let Some(cb_span) = cb_call_expr.arguments.first().map(GetSpan::span) {
-        closest.arguments.iter().for_each(|new_expr| {
-            if let Some(arg_expr) = new_expr.as_expression() {
-                match arg_expr {
-                    Expression::ArrowFunctionExpression(arrow_expr) => {
-                        let scope = arrow_expr.scope_id();
-                        if uses_closest_cb_vars(scope, cb_span, ctx) {
-                            safe_to_unnest = false;
-                        }
-                    }
-                    Expression::FunctionExpression(func_expr) => {
-                        let scope = func_expr.scope_id();
-                        if uses_closest_cb_vars(scope, cb_span, ctx) {
-                            safe_to_unnest = false;
-                        }
-                    }
-                    _ => {}
-                }
-            };
-        });
+    let Some(cb_span) = cb_call_expr.arguments.first().map(GetSpan::span) else {
+        return true;
     };
 
-    safe_to_unnest
+    // Loop through the args of closest parent callback which contains this child callback.
+    for new_expr in &closest.arguments {
+        let Some(arg_expr) = new_expr.as_expression() else {
+            continue;
+        };
+        // Check if our nested child callback references one of these args and return early if so.
+        match arg_expr {
+            Expression::ArrowFunctionExpression(arrow_expr) => {
+                let scope = arrow_expr.scope_id();
+                if uses_closest_cb_vars(scope, cb_span, ctx) {
+                    return false; // Not safe to unnest.
+                }
+            }
+            Expression::FunctionExpression(func_expr) => {
+                let scope = func_expr.scope_id();
+                if uses_closest_cb_vars(scope, cb_span, ctx) {
+                    return false; // Not safe to unnest.
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Didn't return false early, so it is safe to unnest the child callback as the child doesn't reference
+    // variables bound in the closest parent callback.
+    true
 }
 
 /// Check for references in cb_span to variables defined in the closest parent cb scope
