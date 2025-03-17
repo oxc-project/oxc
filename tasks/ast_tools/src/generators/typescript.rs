@@ -125,33 +125,9 @@ fn generate_ts_type_def_for_struct(
 
     let mut output_as_type = false;
 
-    if let Some(field_indices) = &struct_def.estree.field_indices {
-        // Specified field order - output in this order
-        for &field_index in field_indices {
-            let field_index = field_index as usize;
-            if let Some(field) = struct_def.fields.get(field_index) {
-                generate_ts_type_def_for_struct_field(
-                    struct_def,
-                    field,
-                    &mut fields_str,
-                    &mut extends,
-                    &mut output_as_type,
-                    schema,
-                );
-            } else {
-                let (field_name, converter_name) =
-                    &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
-                generate_ts_type_def_for_added_struct_field(
-                    field_name,
-                    converter_name,
-                    &mut fields_str,
-                    schema,
-                );
-            }
-        }
-    } else {
-        // No specified field order - output in original order
-        for field in &struct_def.fields {
+    for &field_index in &struct_def.estree.field_indices {
+        let field_index = field_index as usize;
+        if let Some(field) = struct_def.fields.get(field_index) {
             generate_ts_type_def_for_struct_field(
                 struct_def,
                 field,
@@ -160,9 +136,9 @@ fn generate_ts_type_def_for_struct(
                 &mut output_as_type,
                 schema,
             );
-        }
-
-        for (field_name, converter_name) in &struct_def.estree.add_fields {
+        } else {
+            let (field_name, converter_name) =
+                &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
             generate_ts_type_def_for_added_struct_field(
                 field_name,
                 converter_name,

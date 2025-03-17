@@ -406,9 +406,9 @@ impl ESTree for CallExpression<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("callee", &self.callee);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.serialize_field("arguments", &self.arguments);
         state.serialize_field("optional", &self.optional);
+        state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.end();
     }
 }
@@ -1749,11 +1749,11 @@ impl ESTree for ExportNamedDeclaration<'_> {
         state.serialize_field("declaration", &self.declaration);
         state.serialize_field("specifiers", &self.specifiers);
         state.serialize_field("source", &self.source);
-        state.serialize_ts_field("exportKind", &self.export_kind);
         state.serialize_field(
             "attributes",
             &crate::serialize::ExportNamedDeclarationWithClause(self),
         );
+        state.serialize_ts_field("exportKind", &self.export_kind);
         state.end();
     }
 }

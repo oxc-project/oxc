@@ -236,30 +236,13 @@ impl<'s> StructDeserializerGenerator<'s> {
     }
 
     fn generate_struct_fields(&mut self, struct_def: &StructDef, struct_offset: u32) {
-        if let Some(field_indices) = &struct_def.estree.field_indices {
-            // Specified field order - serialize in this order
-            for &field_index in field_indices {
-                let field_index = field_index as usize;
-                if let Some(field) = struct_def.fields.get(field_index) {
-                    self.generate_struct_field_owned(field, struct_def, struct_offset);
-                } else {
-                    let (field_name, converter_name) =
-                        &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
-                    self.generate_struct_field_added(
-                        struct_def,
-                        field_name,
-                        converter_name,
-                        struct_offset,
-                    );
-                }
-            }
-        } else {
-            // No specified field order - serialize in original order
-            for field in &struct_def.fields {
+        for &field_index in &struct_def.estree.field_indices {
+            let field_index = field_index as usize;
+            if let Some(field) = struct_def.fields.get(field_index) {
                 self.generate_struct_field_owned(field, struct_def, struct_offset);
-            }
-
-            for (field_name, converter_name) in &struct_def.estree.add_fields {
+            } else {
+                let (field_name, converter_name) =
+                    &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
                 self.generate_struct_field_added(
                     struct_def,
                     field_name,
