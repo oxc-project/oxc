@@ -100,18 +100,21 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
 
                 // Convert field names to indexes.
                 // Added fields (`#[estree(add_fields(...))]`) get indexes after the real fields.
-                let field_indices = list
-                    .into_iter()
-                    .map(|list_element| {
-                        let field_name = list_element.try_into_tag()?;
-                        let field_name = field_name.trim_start_matches("r#");
-                        all_field_names
-                            .clone()
-                            .position(|this_field_name| this_field_name == field_name)
-                            .map(|index| u8::try_from(index).map_err(|_| ()))
-                            .ok_or(())?
-                    })
-                    .collect::<Result<Vec<_>>>()?;
+                // Error if same field name included more than once.
+                let mut field_indices = vec![];
+                for list_element in list {
+                    let field_name = list_element.try_into_tag()?;
+                    let field_name = field_name.trim_start_matches("r#");
+                    let field_index = all_field_names
+                        .clone()
+                        .position(|this_field_name| this_field_name == field_name)
+                        .ok_or(())?;
+                    let field_index = u8::try_from(field_index).map_err(|_| ())?;
+                    if field_indices.contains(&field_index) {
+                        return Err(());
+                    }
+                    field_indices.push(field_index);
+                }
                 struct_def.estree.field_indices = Some(field_indices);
             }
             AttrPart::String("ts_alias", value) => struct_def.estree.ts_alias = Some(value),
