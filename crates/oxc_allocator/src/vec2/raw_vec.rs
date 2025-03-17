@@ -318,7 +318,11 @@ impl<'a, T> RawVec<'a, T> {
         used_cap: usize,
         needed_extra_cap: usize,
     ) -> Result<(), CollectionAllocErr> {
-        self.fallible_reserve_internal(used_cap, needed_extra_cap, Exact)
+        if self.needs_to_grow(used_cap, needed_extra_cap) {
+            self.reserve_exact_internal(used_cap, needed_extra_cap)?
+        }
+
+        Ok(())
     }
 
     /// Ensures that the buffer contains at least enough space to hold
@@ -342,7 +346,9 @@ impl<'a, T> RawVec<'a, T> {
     ///
     /// Aborts on OOM
     pub fn reserve_exact(&mut self, used_cap: usize, needed_extra_cap: usize) {
-        self.infallible_reserve_internal(used_cap, needed_extra_cap, Exact)
+        if let Err(err) = self.try_reserve_exact(used_cap, needed_extra_cap) {
+            handle_error(err)
+        }
     }
 
     /// Calculates the buffer's new size given that it'll hold `used_cap +
@@ -367,7 +373,11 @@ impl<'a, T> RawVec<'a, T> {
         used_cap: usize,
         needed_extra_cap: usize,
     ) -> Result<(), CollectionAllocErr> {
-        self.fallible_reserve_internal(used_cap, needed_extra_cap, Amortized)
+        if self.needs_to_grow(used_cap, needed_extra_cap) {
+            self.reserve_amortized_internal(used_cap, needed_extra_cap)?;
+        }
+
+        Ok(())
     }
 
     /// Ensures that the buffer contains at least enough space to hold
@@ -422,9 +432,11 @@ impl<'a, T> RawVec<'a, T> {
     /// #   vector.push_all(&[1, 3, 5, 7, 9]);
     /// # }
     /// ```
-    #[inline(always)]
-    pub fn reserve(&mut self, used_cap: usize, needed_extra_cap: usize) {
-        self.infallible_reserve_internal(used_cap, needed_extra_cap, Amortized)
+    #[inline]
+    pub fn reserve(&mut self, used_cap: usize, need_extra_cap: usize) {
+        if let Err(err) = self.try_reserve(used_cap, need_extra_cap) {
+            handle_error(err)
+        }
     }
 
     /*
@@ -570,90 +582,18 @@ impl<'a, T> RawVec<'a, T> {
 }
 */
 
-enum Fallibility {
-    Fallible,
-    Infallible,
-}
-
-use self::Fallibility::*;
-
-enum ReserveStrategy {
-    Exact,
-    Amortized,
-}
-
-use self::ReserveStrategy::*;
-
 impl<'a, T> RawVec<'a, T> {
-    #[inline(always)]
-    fn fallible_reserve_internal(
-        &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
-        strategy: ReserveStrategy,
-    ) -> Result<(), CollectionAllocErr> {
-        // This portion of the method should always be inlined.
-        if self.cap().wrapping_sub(used_cap) >= needed_extra_cap {
-            return Ok(());
-        }
-        // This portion of the method should never be inlined, and will only be called when
-        // the check above has confirmed that it is necessary.
-        self.reserve_internal_or_error(used_cap, needed_extra_cap, Fallible, strategy)
-    }
-
-    #[inline(always)]
-    fn infallible_reserve_internal(
-        &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
-        strategy: ReserveStrategy,
-    ) {
-        // This portion of the method should always be inlined.
-        if self.cap().wrapping_sub(used_cap) >= needed_extra_cap {
-            return;
-        }
-        // This portion of the method should never be inlined, and will only be called when
-        // the check above has confirmed that it is necessary.
-        self.reserve_internal_or_panic(used_cap, needed_extra_cap, strategy)
-    }
-
-    #[inline(never)]
-    fn reserve_internal_or_panic(
-        &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
-        strategy: ReserveStrategy,
-    ) {
-        // Delegates the call to `reserve_internal_or_error` and panics in the event of an error.
-        // This allows the method to have a return type of `()`, simplifying the assembly at the
-        // call site.
-        match self.reserve_internal(used_cap, needed_extra_cap, Infallible, strategy) {
-            Err(CapacityOverflow) => capacity_overflow(),
-            Err(AllocErr) => unreachable!(),
-            Ok(()) => { /* yay */ }
-        }
-    }
-
-    #[inline(never)]
-    fn reserve_internal_or_error(
-        &mut self,
-        used_cap: usize,
-        needed_extra_cap: usize,
-        fallibility: Fallibility,
-        strategy: ReserveStrategy,
-    ) -> Result<(), CollectionAllocErr> {
-        // Delegates the call to `reserve_internal`, which can be inlined.
-        self.reserve_internal(used_cap, needed_extra_cap, fallibility, strategy)
+    #[inline]
+    fn needs_to_grow(&self, used_cap: usize, needed_extra_cap: usize) -> bool {
+        needed_extra_cap > self.cap().wrapping_sub(used_cap)
     }
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    fn reserve_internal(
+    fn reserve_exact_internal(
         &mut self,
         used_cap: usize,
         needed_extra_cap: usize,
-        fallibility: Fallibility,
-        strategy: ReserveStrategy,
     ) -> Result<(), CollectionAllocErr> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
@@ -661,32 +601,55 @@ impl<'a, T> RawVec<'a, T> {
             // If we make it past the first branch then we are guaranteed to
             // panic.
 
-            // Nothing we can really do about these checks :(
-            let new_cap = match strategy {
-                Exact => used_cap.checked_add(needed_extra_cap).ok_or(CapacityOverflow)?,
-                Amortized => self.amortized_new_size(used_cap, needed_extra_cap)?,
-            };
+            let new_cap = used_cap.checked_add(needed_extra_cap).ok_or(CapacityOverflow)?;
             let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
 
-            alloc_guard(new_layout.size())?;
+            self.ptr = self.finish_grow(new_layout)?.cast();
 
-            let res = match self.current_layout() {
-                Some(layout) => {
-                    debug_assert!(new_layout.align() == layout.align());
-                    realloc(self.a, self.ptr.cast(), layout, new_layout.size())
-                }
-                None => self.a.allocate(new_layout),
-            };
-
-            if let (Err(AllocError), Infallible) = (&res, fallibility) {
-                handle_alloc_error(new_layout);
-            }
-
-            self.ptr = res.map_err(|_| AllocErr)?.cast();
             self.cap = new_cap;
 
             Ok(())
         }
+    }
+
+    /// Helper method to reserve additional space, reallocating the backing memory.
+    /// The caller is responsible for confirming that there is not already enough space available.
+    fn reserve_amortized_internal(
+        &mut self,
+        used_cap: usize,
+        needed_extra_cap: usize,
+    ) -> Result<(), CollectionAllocErr> {
+        unsafe {
+            // NOTE: we don't early branch on ZSTs here because we want this
+            // to actually catch "asking for more than usize::MAX" in that case.
+            // If we make it past the first branch then we are guaranteed to
+            // panic.
+
+            let new_cap = self.amortized_new_size(used_cap, needed_extra_cap)?;
+            let new_layout = Layout::array::<T>(new_cap).map_err(|_| CapacityOverflow)?;
+
+            self.ptr = self.finish_grow(new_layout)?.cast();
+
+            self.cap = new_cap;
+
+            Ok(())
+        }
+    }
+
+    // Given a new layout, completes the grow operation.
+    #[inline]
+    fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<[u8]>, CollectionAllocErr> {
+        alloc_guard(new_layout.size())?;
+
+        let res = match self.current_layout() {
+            Some(layout) => unsafe {
+                debug_assert!(new_layout.align() == layout.align());
+                realloc(self.a, self.ptr.cast(), layout, new_layout.size())
+            },
+            None => self.a.allocate(new_layout),
+        };
+
+        res.map_err(|_| AllocErr)
     }
 }
 
@@ -811,6 +774,20 @@ unsafe fn realloc(
         bump.shrink(ptr, layout, new_layout)
     } else {
         bump.grow(ptr, layout, new_layout)
+    }
+}
+
+/// Handle collection allocation errors
+///
+// Causing a collection alloc error is rare case, so marked as `#[cold]` and `#[inline(never)]`
+// to make the call site function as small as possible, so it can be inlined.
+#[inline(never)]
+#[cold]
+fn handle_error(error: CollectionAllocErr) -> ! {
+    match error {
+        CapacityOverflow => capacity_overflow(),
+        // TODO: call `handle_alloc_error` instead of `panic!` once the AllocErr stored a Layout,
+        AllocErr => panic!("encountered allocation error"),
     }
 }
 
