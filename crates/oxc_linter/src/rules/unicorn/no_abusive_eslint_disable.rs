@@ -18,11 +18,12 @@ pub struct NoAbusiveEslintDisable;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows `eslint-disable` comments that do not specify any rules to disable.
+    /// Disallows `oxlint-disable` or `eslint-disable` comments without specifying rules.
     ///
     /// ### Why is this bad?
     ///
-    /// When only one rule should be disabled but the `eslint-disable` comment does not specify any rules, other useful errors will also be silently ignored.
+    /// A general `oxlint-disable` or `eslint-disable` comment suppresses all lint errors, not just the intended one,
+    /// potentially hiding useful warnings and making debugging harder.
     ///
     /// ### Examples
     ///
