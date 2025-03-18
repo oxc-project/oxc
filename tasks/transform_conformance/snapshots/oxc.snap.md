@@ -325,24 +325,15 @@ x Output mismatch
 x Output mismatch
 
 * for-of-no-block/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): ["_x"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
-Bindings mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(3): ["x"]
 Scope children mismatch:
 after transform: ScopeId(4): []
 rebuilt        : ScopeId(3): [ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(3)
 
 * function-with-scopes-in-params/input.js
 Bindings mismatch:

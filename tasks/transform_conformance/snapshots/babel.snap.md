@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 710/1191
+Passed: 713/1191
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -2752,40 +2752,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (17/24)
-* source-maps/for-of/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): ["_x"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["x"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/for-await-head/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): ["_x"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["x"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/for-head/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_x", "x"]
-rebuilt        : ScopeId(1): ["_x"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["x"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(2): ScopeId(2)
-
+# babel-plugin-proposal-explicit-resource-management (20/24)
 * transform-sync/function-body/input.js
 Bindings mismatch:
 after transform: ScopeId(1): ["_usingCtx", "x"]
