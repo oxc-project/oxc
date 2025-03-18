@@ -95,11 +95,15 @@ jobs:
         if: ${{ contains(matrix.target, 'musl') }}
         working-directory: napi/${{ inputs.name }}
         run: pnpm build -x --target ${{ matrix.target }}
+        env:
+          CC: clang
 
       - name: Build with napi cross
         if: ${{ contains(matrix.target, 'gnu') }}
         working-directory: napi/${{ inputs.name }}
         run: pnpm build --use-napi-cross --target ${{ matrix.target }}
+        env:
+          CC: clang
 
       - name: Build
         if: ${{ !contains(matrix.target, 'gnu') && !contains(matrix.target, 'musl') }}
@@ -172,12 +176,12 @@ jobs:
           done
           pnpm publish ${package_path}/ ${PUBLISH_FLAGS} --dry-run
 
-      - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          # Publish sub-packages and adds `optionalDependencies` to `package_path`.
-          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
-          pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+      # - name: Publish
+        # env:
+          # NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # run: |
+          # echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          # # Publish sub-packages and adds `optionalDependencies` to `package_path`.
+          # pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          # pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
