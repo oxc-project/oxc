@@ -2,6 +2,10 @@
 
 ## Features
 
+### Supports WASM
+
+See https://stackblitz.com/edit/oxc-parser for usage example.
+
 ### ESTree
 
 When parsing `.js` or `.jsx` files, the AST returned is fully conformant with the
