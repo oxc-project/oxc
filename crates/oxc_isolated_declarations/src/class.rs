@@ -14,8 +14,7 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    #[expect(clippy::unused_self)]
-    pub(crate) fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
+    pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
         match key {
             PropertyKey::StringLiteral(_)
             | PropertyKey::NumericLiteral(_)
@@ -55,7 +54,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub(crate) fn report_property_key(&self, key: &PropertyKey<'a>) -> bool {
-        if !self.is_literal_key(key) && !Self::is_global_symbol(key) {
+        if !Self::is_literal_key(key) && !Self::is_global_symbol(key) {
             self.error(computed_property_name(key.span()));
             true
         } else {
@@ -63,9 +62,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    #[expect(clippy::unused_self)]
     pub(crate) fn transform_accessibility(
-        &self,
         accessibility: Option<TSAccessibility>,
     ) -> Option<TSAccessibility> {
         if accessibility.is_none() || accessibility.is_some_and(|a| a == TSAccessibility::Public) {
@@ -126,7 +123,7 @@ impl<'a> IsolatedDeclarations<'a> {
             property.definite,
             property.readonly,
             type_annotations,
-            self.transform_accessibility(property.accessibility),
+            Self::transform_accessibility(property.accessibility),
         )
     }
 
@@ -163,7 +160,7 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.r#static,
             definition.r#override,
             definition.optional,
-            self.transform_accessibility(definition.accessibility),
+            Self::transform_accessibility(definition.accessibility),
         )
     }
 
@@ -218,7 +215,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             param.readonly,
             type_annotation,
-            self.transform_accessibility(param.accessibility),
+            Self::transform_accessibility(param.accessibility),
         ))
     }
 
@@ -239,7 +236,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     method.key.clone_in(self.ast.allocator),
                     method.r#static,
                     method.r#override,
-                    self.transform_accessibility(method.accessibility),
+                    Self::transform_accessibility(method.accessibility),
                 )
             }
             MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
@@ -305,7 +302,7 @@ impl<'a> IsolatedDeclarations<'a> {
             if let ClassElement::MethodDefinition(method) = element {
                 if (method.key.is_private_identifier()
                     || method.accessibility.is_some_and(TSAccessibility::is_private))
-                    || (method.computed && !self.is_literal_key(&method.key))
+                    || (method.computed && !Self::is_literal_key(&method.key))
                 {
                     continue;
                 }
