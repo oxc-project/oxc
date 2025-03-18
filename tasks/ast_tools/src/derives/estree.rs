@@ -46,7 +46,7 @@ impl Derive for DeriveESTree {
                     StructMaybeDerived | EnumMaybeDerived | StructField | EnumVariant | Meta
                 ),
             ),
-            ("ts", attr_positions!(StructField | EnumVariant)),
+            ("ts", attr_positions!(StructField | EnumVariant | Meta)),
         ]
     }
 
@@ -208,7 +208,7 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
         return Err(());
     }
 
-    // Location can only be `StructField` or `EnumVariant`
+    // Location can only be `StructField`, `EnumVariant`, or `Meta`
     match location {
         AttrLocation::StructField(struct_def, field_index) => {
             struct_def.fields[field_index].estree.is_ts = true;
@@ -216,6 +216,7 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
         AttrLocation::EnumVariant(enum_def, variant_index) => {
             enum_def.variants[variant_index].estree.is_ts = true;
         }
+        AttrLocation::Meta(meta) => meta.estree.is_ts = true,
         _ => unreachable!(),
     }
 
@@ -237,9 +238,11 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
         if struct_def.estree.field_indices.is_empty() {
             // No field order specified with `#[estree(field_order(...))]`.
             // Set default order:
-            // 1. Fields without `#[ts]` attr, in definition order.
-            // 2. Fields with `#[ts]` attr, in definition order.
-            // 3. Added fields `#[estree(add_fields(...)]`, in definition order.
+            // 1. Fields without `#[ts]` attr.
+            // 2. Fields with `#[ts]` attr.
+            // 3. Added fields `#[estree(add_fields(...)]`.
+            // 4. Added fields `#[estree(add_fields(...)]`, where converter meta type has `#[ts]` attr.
+            // Within the above groups, ordered in definition order.
             let mut field_indices = vec![];
             let ts_field_indices = &mut field_indices_temp;
             for (field_index, field) in struct_def.fields.iter().enumerate() {
@@ -252,13 +255,19 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
                     }
                 }
             }
-            field_indices.append(ts_field_indices);
 
             let fields_len = struct_def.fields.len();
-            for (index, _) in struct_def.estree.add_fields.iter().enumerate() {
+            for (index, (_, converter_name)) in struct_def.estree.add_fields.iter().enumerate() {
                 let field_index = u8::try_from(fields_len + index).unwrap();
-                field_indices.push(field_index);
+                let converter = schema.meta_by_name(converter_name);
+                if converter.estree.is_ts {
+                    ts_field_indices.push(field_index);
+                } else {
+                    field_indices.push(field_index);
+                }
             }
+
+            field_indices.append(ts_field_indices);
 
             let struct_def = schema.struct_def_mut(type_id);
             struct_def.estree.field_indices = field_indices;
@@ -481,8 +490,13 @@ impl<'s> StructSerializerGenerator<'s> {
     ) {
         let converter = self.schema.meta_by_name(converter_name);
         let converter_path = converter.import_path_from_crate(self.krate, self.schema);
+        let serialize_method_ident = create_safe_ident(if converter.estree.is_ts {
+            "serialize_ts_field"
+        } else {
+            "serialize_field"
+        });
         self.stmts.extend(quote! {
-            state.serialize_field(#field_name, &#converter_path(#self_path));
+            state.#serialize_method_ident(#field_name, &#converter_path(#self_path));
         });
     }
 }

@@ -74,4 +74,6 @@ pub struct ESTreeMeta {
     pub ts_type: Option<String>,
     // JS code for raw transfer deserializer
     pub raw_deser: Option<String>,
+    /// `true` if meta type is for a struct field which is present only in TS AST
+    pub is_ts: bool,
 }
