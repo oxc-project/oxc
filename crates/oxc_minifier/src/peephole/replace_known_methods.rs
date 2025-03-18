@@ -738,12 +738,12 @@ impl<'a> PeepholeOptimizations {
                     let cooked = s.clone().into_in(ctx.ast.allocator);
                     ctx.ast.template_element(
                         SPAN,
-                        false,
                         TemplateElementValue {
                             raw: Self::escape_string_for_template_literal(&s)
                                 .into_in(ctx.ast.allocator),
                             cooked: Some(cooked),
                         },
+                        false,
                     )
                 }));
                 if let Some(last_quasi) = quasis.last_mut() {

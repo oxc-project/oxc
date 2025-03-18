@@ -446,11 +446,10 @@ pub struct TaggedTemplateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, value, tail))]
 pub struct TemplateElement<'a> {
     pub span: Span,
-    pub tail: bool,
     pub value: TemplateElementValue<'a>,
+    pub tail: bool,
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)

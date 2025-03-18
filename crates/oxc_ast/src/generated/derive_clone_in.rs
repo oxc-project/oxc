@@ -552,8 +552,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TemplateElement {
             span: CloneIn::clone_in(&self.span, allocator),
-            tail: CloneIn::clone_in(&self.tail, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
+            tail: CloneIn::clone_in(&self.tail, allocator),
         }
     }
 }

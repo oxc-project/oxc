@@ -546,8 +546,8 @@ impl<'a> ParserImpl<'a> {
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
         self.ast.template_element(
             span,
-            tail,
             TemplateElementValue { raw, cooked: cooked.map(Atom::from) },
+            tail,
         )
     }
 
