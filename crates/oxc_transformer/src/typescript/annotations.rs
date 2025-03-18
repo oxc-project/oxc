@@ -198,7 +198,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
     }
 
     fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        expr.type_parameters = None;
+        expr.type_arguments = None;
     }
 
     fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -218,7 +218,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
         class.type_parameters = None;
-        class.super_type_parameters = None;
+        class.super_type_arguments = None;
         class.implements = None;
         class.r#abstract = false;
     }
@@ -315,7 +315,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         elem: &mut JSXOpeningElement<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        elem.type_parameters = None;
+        elem.type_arguments = None;
     }
 
     fn enter_method_definition(
@@ -377,7 +377,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        expr.type_parameters = None;
+        expr.type_arguments = None;
     }
 
     fn enter_property_definition(
@@ -538,7 +538,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         expr: &mut TaggedTemplateExpression<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        expr.type_parameters = None;
+        expr.type_arguments = None;
     }
 
     fn enter_jsx_element(&mut self, _elem: &mut JSXElement<'a>, _ctx: &mut TraverseCtx<'a>) {

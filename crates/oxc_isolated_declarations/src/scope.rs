@@ -118,7 +118,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
             self.add_reference(ident.name, KindFlags::Value);
             // `typeof Type<Parameters>`
             //              ^^^^^^^^^^^
-            if let Some(type_parameters) = &ty.type_parameters {
+            if let Some(type_parameters) = &ty.type_arguments {
                 self.visit_ts_type_parameter_instantiation(type_parameters);
             }
         } else {

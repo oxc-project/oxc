@@ -32,7 +32,7 @@ pub(crate) enum AncestorType {
     TemplateLiteralExpressions = 9,
     TaggedTemplateExpressionTag = 10,
     TaggedTemplateExpressionQuasi = 11,
-    TaggedTemplateExpressionTypeParameters = 12,
+    TaggedTemplateExpressionTypeArguments = 12,
     ComputedMemberExpressionObject = 13,
     ComputedMemberExpressionExpression = 14,
     StaticMemberExpressionObject = 15,
@@ -40,11 +40,11 @@ pub(crate) enum AncestorType {
     PrivateFieldExpressionObject = 17,
     PrivateFieldExpressionField = 18,
     CallExpressionCallee = 19,
-    CallExpressionTypeParameters = 20,
+    CallExpressionTypeArguments = 20,
     CallExpressionArguments = 21,
     NewExpressionCallee = 22,
     NewExpressionArguments = 23,
-    NewExpressionTypeParameters = 24,
+    NewExpressionTypeArguments = 24,
     MetaPropertyMeta = 25,
     MetaPropertyProperty = 26,
     SpreadElementArgument = 27,
@@ -149,7 +149,7 @@ pub(crate) enum AncestorType {
     ClassId = 126,
     ClassTypeParameters = 127,
     ClassSuperClass = 128,
-    ClassSuperTypeParameters = 129,
+    ClassSuperTypeArguments = 129,
     ClassImplements = 130,
     ClassBody = 131,
     ClassBodyBody = 132,
@@ -196,7 +196,7 @@ pub(crate) enum AncestorType {
     JSXElementChildren = 173,
     JSXOpeningElementName = 174,
     JSXOpeningElementAttributes = 175,
-    JSXOpeningElementTypeParameters = 176,
+    JSXOpeningElementTypeArguments = 176,
     JSXClosingElementName = 177,
     JSXFragmentOpeningFragment = 178,
     JSXFragmentClosingFragment = 179,
@@ -234,7 +234,7 @@ pub(crate) enum AncestorType {
     TSOptionalTypeTypeAnnotation = 211,
     TSRestTypeTypeAnnotation = 212,
     TSTypeReferenceTypeName = 213,
-    TSTypeReferenceTypeParameters = 214,
+    TSTypeReferenceTypeArguments = 214,
     TSQualifiedNameLeft = 215,
     TSQualifiedNameRight = 216,
     TSTypeParameterInstantiationParams = 217,
@@ -246,7 +246,7 @@ pub(crate) enum AncestorType {
     TSTypeAliasDeclarationTypeParameters = 223,
     TSTypeAliasDeclarationTypeAnnotation = 224,
     TSClassImplementsExpression = 225,
-    TSClassImplementsTypeParameters = 226,
+    TSClassImplementsTypeArguments = 226,
     TSInterfaceDeclarationId = 227,
     TSInterfaceDeclarationExtends = 228,
     TSInterfaceDeclarationTypeParameters = 229,
@@ -270,7 +270,7 @@ pub(crate) enum AncestorType {
     TSConstructSignatureDeclarationReturnType = 247,
     TSIndexSignatureNameTypeAnnotation = 248,
     TSInterfaceHeritageExpression = 249,
-    TSInterfaceHeritageTypeParameters = 250,
+    TSInterfaceHeritageTypeArguments = 250,
     TSTypePredicateParameterName = 251,
     TSTypePredicateTypeAnnotation = 252,
     TSModuleDeclarationId = 253,
@@ -280,7 +280,7 @@ pub(crate) enum AncestorType {
     TSTypeLiteralMembers = 257,
     TSInferTypeTypeParameter = 258,
     TSTypeQueryExprName = 259,
-    TSTypeQueryTypeParameters = 260,
+    TSTypeQueryTypeArguments = 260,
     TSImportTypeArgument = 261,
     TSImportTypeOptions = 262,
     TSImportTypeQualifier = 263,
@@ -360,8 +360,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TaggedTemplateExpressionTag as u16,
     TaggedTemplateExpressionQuasi(TaggedTemplateExpressionWithoutQuasi<'a, 't>) =
         AncestorType::TaggedTemplateExpressionQuasi as u16,
-    TaggedTemplateExpressionTypeParameters(TaggedTemplateExpressionWithoutTypeParameters<'a, 't>) =
-        AncestorType::TaggedTemplateExpressionTypeParameters as u16,
+    TaggedTemplateExpressionTypeArguments(TaggedTemplateExpressionWithoutTypeArguments<'a, 't>) =
+        AncestorType::TaggedTemplateExpressionTypeArguments as u16,
     ComputedMemberExpressionObject(ComputedMemberExpressionWithoutObject<'a, 't>) =
         AncestorType::ComputedMemberExpressionObject as u16,
     ComputedMemberExpressionExpression(ComputedMemberExpressionWithoutExpression<'a, 't>) =
@@ -376,16 +376,16 @@ pub enum Ancestor<'a, 't> {
         AncestorType::PrivateFieldExpressionField as u16,
     CallExpressionCallee(CallExpressionWithoutCallee<'a, 't>) =
         AncestorType::CallExpressionCallee as u16,
-    CallExpressionTypeParameters(CallExpressionWithoutTypeParameters<'a, 't>) =
-        AncestorType::CallExpressionTypeParameters as u16,
+    CallExpressionTypeArguments(CallExpressionWithoutTypeArguments<'a, 't>) =
+        AncestorType::CallExpressionTypeArguments as u16,
     CallExpressionArguments(CallExpressionWithoutArguments<'a, 't>) =
         AncestorType::CallExpressionArguments as u16,
     NewExpressionCallee(NewExpressionWithoutCallee<'a, 't>) =
         AncestorType::NewExpressionCallee as u16,
     NewExpressionArguments(NewExpressionWithoutArguments<'a, 't>) =
         AncestorType::NewExpressionArguments as u16,
-    NewExpressionTypeParameters(NewExpressionWithoutTypeParameters<'a, 't>) =
-        AncestorType::NewExpressionTypeParameters as u16,
+    NewExpressionTypeArguments(NewExpressionWithoutTypeArguments<'a, 't>) =
+        AncestorType::NewExpressionTypeArguments as u16,
     MetaPropertyMeta(MetaPropertyWithoutMeta<'a, 't>) = AncestorType::MetaPropertyMeta as u16,
     MetaPropertyProperty(MetaPropertyWithoutProperty<'a, 't>) =
         AncestorType::MetaPropertyProperty as u16,
@@ -565,8 +565,8 @@ pub enum Ancestor<'a, 't> {
     ClassTypeParameters(ClassWithoutTypeParameters<'a, 't>) =
         AncestorType::ClassTypeParameters as u16,
     ClassSuperClass(ClassWithoutSuperClass<'a, 't>) = AncestorType::ClassSuperClass as u16,
-    ClassSuperTypeParameters(ClassWithoutSuperTypeParameters<'a, 't>) =
-        AncestorType::ClassSuperTypeParameters as u16,
+    ClassSuperTypeArguments(ClassWithoutSuperTypeArguments<'a, 't>) =
+        AncestorType::ClassSuperTypeArguments as u16,
     ClassImplements(ClassWithoutImplements<'a, 't>) = AncestorType::ClassImplements as u16,
     ClassBody(ClassWithoutBody<'a, 't>) = AncestorType::ClassBody as u16,
     ClassBodyBody(ClassBodyWithoutBody<'a, 't>) = AncestorType::ClassBodyBody as u16,
@@ -653,8 +653,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::JSXOpeningElementName as u16,
     JSXOpeningElementAttributes(JSXOpeningElementWithoutAttributes<'a, 't>) =
         AncestorType::JSXOpeningElementAttributes as u16,
-    JSXOpeningElementTypeParameters(JSXOpeningElementWithoutTypeParameters<'a, 't>) =
-        AncestorType::JSXOpeningElementTypeParameters as u16,
+    JSXOpeningElementTypeArguments(JSXOpeningElementWithoutTypeArguments<'a, 't>) =
+        AncestorType::JSXOpeningElementTypeArguments as u16,
     JSXClosingElementName(JSXClosingElementWithoutName<'a, 't>) =
         AncestorType::JSXClosingElementName as u16,
     JSXFragmentOpeningFragment(JSXFragmentWithoutOpeningFragment<'a, 't>) =
@@ -725,8 +725,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSRestTypeTypeAnnotation as u16,
     TSTypeReferenceTypeName(TSTypeReferenceWithoutTypeName<'a, 't>) =
         AncestorType::TSTypeReferenceTypeName as u16,
-    TSTypeReferenceTypeParameters(TSTypeReferenceWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSTypeReferenceTypeParameters as u16,
+    TSTypeReferenceTypeArguments(TSTypeReferenceWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSTypeReferenceTypeArguments as u16,
     TSQualifiedNameLeft(TSQualifiedNameWithoutLeft<'a, 't>) =
         AncestorType::TSQualifiedNameLeft as u16,
     TSQualifiedNameRight(TSQualifiedNameWithoutRight<'a, 't>) =
@@ -749,8 +749,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSTypeAliasDeclarationTypeAnnotation as u16,
     TSClassImplementsExpression(TSClassImplementsWithoutExpression<'a, 't>) =
         AncestorType::TSClassImplementsExpression as u16,
-    TSClassImplementsTypeParameters(TSClassImplementsWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSClassImplementsTypeParameters as u16,
+    TSClassImplementsTypeArguments(TSClassImplementsWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSClassImplementsTypeArguments as u16,
     TSInterfaceDeclarationId(TSInterfaceDeclarationWithoutId<'a, 't>) =
         AncestorType::TSInterfaceDeclarationId as u16,
     TSInterfaceDeclarationExtends(TSInterfaceDeclarationWithoutExtends<'a, 't>) =
@@ -800,8 +800,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSIndexSignatureNameTypeAnnotation as u16,
     TSInterfaceHeritageExpression(TSInterfaceHeritageWithoutExpression<'a, 't>) =
         AncestorType::TSInterfaceHeritageExpression as u16,
-    TSInterfaceHeritageTypeParameters(TSInterfaceHeritageWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSInterfaceHeritageTypeParameters as u16,
+    TSInterfaceHeritageTypeArguments(TSInterfaceHeritageWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSInterfaceHeritageTypeArguments as u16,
     TSTypePredicateParameterName(TSTypePredicateWithoutParameterName<'a, 't>) =
         AncestorType::TSTypePredicateParameterName as u16,
     TSTypePredicateTypeAnnotation(TSTypePredicateWithoutTypeAnnotation<'a, 't>) =
@@ -819,8 +819,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSInferTypeTypeParameter as u16,
     TSTypeQueryExprName(TSTypeQueryWithoutExprName<'a, 't>) =
         AncestorType::TSTypeQueryExprName as u16,
-    TSTypeQueryTypeParameters(TSTypeQueryWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSTypeQueryTypeParameters as u16,
+    TSTypeQueryTypeArguments(TSTypeQueryWithoutTypeArguments<'a, 't>) =
+        AncestorType::TSTypeQueryTypeArguments as u16,
     TSImportTypeArgument(TSImportTypeWithoutArgument<'a, 't>) =
         AncestorType::TSImportTypeArgument as u16,
     TSImportTypeOptions(TSImportTypeWithoutOptions<'a, 't>) =
@@ -930,7 +930,7 @@ impl<'a, 't> Ancestor<'a, 't> {
             self,
             Self::TaggedTemplateExpressionTag(_)
                 | Self::TaggedTemplateExpressionQuasi(_)
-                | Self::TaggedTemplateExpressionTypeParameters(_)
+                | Self::TaggedTemplateExpressionTypeArguments(_)
         )
     }
 
@@ -960,7 +960,7 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::CallExpressionCallee(_)
-                | Self::CallExpressionTypeParameters(_)
+                | Self::CallExpressionTypeArguments(_)
                 | Self::CallExpressionArguments(_)
         )
     }
@@ -971,7 +971,7 @@ impl<'a, 't> Ancestor<'a, 't> {
             self,
             Self::NewExpressionCallee(_)
                 | Self::NewExpressionArguments(_)
-                | Self::NewExpressionTypeParameters(_)
+                | Self::NewExpressionTypeArguments(_)
         )
     }
 
@@ -1307,7 +1307,7 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::ClassId(_)
                 | Self::ClassTypeParameters(_)
                 | Self::ClassSuperClass(_)
-                | Self::ClassSuperTypeParameters(_)
+                | Self::ClassSuperTypeArguments(_)
                 | Self::ClassImplements(_)
                 | Self::ClassBody(_)
         )
@@ -1451,7 +1451,7 @@ impl<'a, 't> Ancestor<'a, 't> {
             self,
             Self::JSXOpeningElementName(_)
                 | Self::JSXOpeningElementAttributes(_)
-                | Self::JSXOpeningElementTypeParameters(_)
+                | Self::JSXOpeningElementTypeArguments(_)
         )
     }
 
@@ -1591,7 +1591,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_type_reference(self) -> bool {
-        matches!(self, Self::TSTypeReferenceTypeName(_) | Self::TSTypeReferenceTypeParameters(_))
+        matches!(self, Self::TSTypeReferenceTypeName(_) | Self::TSTypeReferenceTypeArguments(_))
     }
 
     #[inline]
@@ -1633,7 +1633,7 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_class_implements(self) -> bool {
         matches!(
             self,
-            Self::TSClassImplementsExpression(_) | Self::TSClassImplementsTypeParameters(_)
+            Self::TSClassImplementsExpression(_) | Self::TSClassImplementsTypeArguments(_)
         )
     }
 
@@ -1708,7 +1708,7 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_interface_heritage(self) -> bool {
         matches!(
             self,
-            Self::TSInterfaceHeritageExpression(_) | Self::TSInterfaceHeritageTypeParameters(_)
+            Self::TSInterfaceHeritageExpression(_) | Self::TSInterfaceHeritageTypeArguments(_)
         )
     }
 
@@ -1742,7 +1742,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_type_query(self) -> bool {
-        matches!(self, Self::TSTypeQueryExprName(_) | Self::TSTypeQueryTypeParameters(_))
+        matches!(self, Self::TSTypeQueryExprName(_) | Self::TSTypeQueryTypeArguments(_))
     }
 
     #[inline]
@@ -2233,7 +2233,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TemplateLiteralExpressions(a) => a.address(),
             Self::TaggedTemplateExpressionTag(a) => a.address(),
             Self::TaggedTemplateExpressionQuasi(a) => a.address(),
-            Self::TaggedTemplateExpressionTypeParameters(a) => a.address(),
+            Self::TaggedTemplateExpressionTypeArguments(a) => a.address(),
             Self::ComputedMemberExpressionObject(a) => a.address(),
             Self::ComputedMemberExpressionExpression(a) => a.address(),
             Self::StaticMemberExpressionObject(a) => a.address(),
@@ -2241,11 +2241,11 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::PrivateFieldExpressionObject(a) => a.address(),
             Self::PrivateFieldExpressionField(a) => a.address(),
             Self::CallExpressionCallee(a) => a.address(),
-            Self::CallExpressionTypeParameters(a) => a.address(),
+            Self::CallExpressionTypeArguments(a) => a.address(),
             Self::CallExpressionArguments(a) => a.address(),
             Self::NewExpressionCallee(a) => a.address(),
             Self::NewExpressionArguments(a) => a.address(),
-            Self::NewExpressionTypeParameters(a) => a.address(),
+            Self::NewExpressionTypeArguments(a) => a.address(),
             Self::MetaPropertyMeta(a) => a.address(),
             Self::MetaPropertyProperty(a) => a.address(),
             Self::SpreadElementArgument(a) => a.address(),
@@ -2350,7 +2350,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::ClassId(a) => a.address(),
             Self::ClassTypeParameters(a) => a.address(),
             Self::ClassSuperClass(a) => a.address(),
-            Self::ClassSuperTypeParameters(a) => a.address(),
+            Self::ClassSuperTypeArguments(a) => a.address(),
             Self::ClassImplements(a) => a.address(),
             Self::ClassBody(a) => a.address(),
             Self::ClassBodyBody(a) => a.address(),
@@ -2397,7 +2397,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::JSXElementChildren(a) => a.address(),
             Self::JSXOpeningElementName(a) => a.address(),
             Self::JSXOpeningElementAttributes(a) => a.address(),
-            Self::JSXOpeningElementTypeParameters(a) => a.address(),
+            Self::JSXOpeningElementTypeArguments(a) => a.address(),
             Self::JSXClosingElementName(a) => a.address(),
             Self::JSXFragmentOpeningFragment(a) => a.address(),
             Self::JSXFragmentClosingFragment(a) => a.address(),
@@ -2435,7 +2435,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSOptionalTypeTypeAnnotation(a) => a.address(),
             Self::TSRestTypeTypeAnnotation(a) => a.address(),
             Self::TSTypeReferenceTypeName(a) => a.address(),
-            Self::TSTypeReferenceTypeParameters(a) => a.address(),
+            Self::TSTypeReferenceTypeArguments(a) => a.address(),
             Self::TSQualifiedNameLeft(a) => a.address(),
             Self::TSQualifiedNameRight(a) => a.address(),
             Self::TSTypeParameterInstantiationParams(a) => a.address(),
@@ -2447,7 +2447,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSTypeAliasDeclarationTypeParameters(a) => a.address(),
             Self::TSTypeAliasDeclarationTypeAnnotation(a) => a.address(),
             Self::TSClassImplementsExpression(a) => a.address(),
-            Self::TSClassImplementsTypeParameters(a) => a.address(),
+            Self::TSClassImplementsTypeArguments(a) => a.address(),
             Self::TSInterfaceDeclarationId(a) => a.address(),
             Self::TSInterfaceDeclarationExtends(a) => a.address(),
             Self::TSInterfaceDeclarationTypeParameters(a) => a.address(),
@@ -2471,7 +2471,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSConstructSignatureDeclarationReturnType(a) => a.address(),
             Self::TSIndexSignatureNameTypeAnnotation(a) => a.address(),
             Self::TSInterfaceHeritageExpression(a) => a.address(),
-            Self::TSInterfaceHeritageTypeParameters(a) => a.address(),
+            Self::TSInterfaceHeritageTypeArguments(a) => a.address(),
             Self::TSTypePredicateParameterName(a) => a.address(),
             Self::TSTypePredicateTypeAnnotation(a) => a.address(),
             Self::TSModuleDeclarationId(a) => a.address(),
@@ -2481,7 +2481,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSTypeLiteralMembers(a) => a.address(),
             Self::TSInferTypeTypeParameter(a) => a.address(),
             Self::TSTypeQueryExprName(a) => a.address(),
-            Self::TSTypeQueryTypeParameters(a) => a.address(),
+            Self::TSTypeQueryTypeArguments(a) => a.address(),
             Self::TSImportTypeArgument(a) => a.address(),
             Self::TSImportTypeOptions(a) => a.address(),
             Self::TSImportTypeQualifier(a) => a.address(),
@@ -2947,8 +2947,8 @@ pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG: usize =
     offset_of!(TaggedTemplateExpression, tag);
 pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI: usize =
     offset_of!(TaggedTemplateExpression, quasi);
-pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_PARAMETERS: usize =
-    offset_of!(TaggedTemplateExpression, type_parameters);
+pub(crate) const OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS: usize =
+    offset_of!(TaggedTemplateExpression, type_arguments);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -2974,9 +2974,9 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTag<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -3013,9 +3013,9 @@ impl<'a, 't> TaggedTemplateExpressionWithoutQuasi<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -3030,12 +3030,12 @@ impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutQuasi<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TaggedTemplateExpressionWithoutTypeParameters<'a, 't>(
+pub struct TaggedTemplateExpressionWithoutTypeArguments<'a, 't>(
     pub(crate) *const TaggedTemplateExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TaggedTemplateExpressionWithoutTypeParameters<'a, 't> {
+impl<'a, 't> TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe {
@@ -3060,7 +3060,7 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -3324,8 +3324,8 @@ impl<'a, 't> GetAddress for PrivateFieldExpressionWithoutField<'a, 't> {
 
 pub(crate) const OFFSET_CALL_EXPRESSION_SPAN: usize = offset_of!(CallExpression, span);
 pub(crate) const OFFSET_CALL_EXPRESSION_CALLEE: usize = offset_of!(CallExpression, callee);
-pub(crate) const OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS: usize =
-    offset_of!(CallExpression, type_parameters);
+pub(crate) const OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS: usize =
+    offset_of!(CallExpression, type_arguments);
 pub(crate) const OFFSET_CALL_EXPRESSION_ARGUMENTS: usize = offset_of!(CallExpression, arguments);
 pub(crate) const OFFSET_CALL_EXPRESSION_OPTIONAL: usize = offset_of!(CallExpression, optional);
 pub(crate) const OFFSET_CALL_EXPRESSION_PURE: usize = offset_of!(CallExpression, pure);
@@ -3344,9 +3344,9 @@ impl<'a, 't> CallExpressionWithoutCallee<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -3379,12 +3379,12 @@ impl<'a, 't> GetAddress for CallExpressionWithoutCallee<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct CallExpressionWithoutTypeParameters<'a, 't>(
+pub struct CallExpressionWithoutTypeArguments<'a, 't>(
     pub(crate) *const CallExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> CallExpressionWithoutTypeParameters<'a, 't> {
+impl<'a, 't> CallExpressionWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
@@ -3416,7 +3416,7 @@ impl<'a, 't> CallExpressionWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for CallExpressionWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for CallExpressionWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -3444,9 +3444,9 @@ impl<'a, 't> CallExpressionWithoutArguments<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -3472,8 +3472,8 @@ impl<'a, 't> GetAddress for CallExpressionWithoutArguments<'a, 't> {
 pub(crate) const OFFSET_NEW_EXPRESSION_SPAN: usize = offset_of!(NewExpression, span);
 pub(crate) const OFFSET_NEW_EXPRESSION_CALLEE: usize = offset_of!(NewExpression, callee);
 pub(crate) const OFFSET_NEW_EXPRESSION_ARGUMENTS: usize = offset_of!(NewExpression, arguments);
-pub(crate) const OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS: usize =
-    offset_of!(NewExpression, type_parameters);
+pub(crate) const OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS: usize =
+    offset_of!(NewExpression, type_arguments);
 pub(crate) const OFFSET_NEW_EXPRESSION_PURE: usize = offset_of!(NewExpression, pure);
 
 #[repr(transparent)]
@@ -3498,9 +3498,9 @@ impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -3539,9 +3539,9 @@ impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -3561,12 +3561,12 @@ impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct NewExpressionWithoutTypeParameters<'a, 't>(
+pub struct NewExpressionWithoutTypeArguments<'a, 't>(
     pub(crate) *const NewExpression<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> NewExpressionWithoutTypeParameters<'a, 't> {
+impl<'a, 't> NewExpressionWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_SPAN) as *const Span) }
@@ -3593,7 +3593,7 @@ impl<'a, 't> NewExpressionWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for NewExpressionWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for NewExpressionWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -7740,8 +7740,7 @@ pub(crate) const OFFSET_CLASS_DECORATORS: usize = offset_of!(Class, decorators);
 pub(crate) const OFFSET_CLASS_ID: usize = offset_of!(Class, id);
 pub(crate) const OFFSET_CLASS_TYPE_PARAMETERS: usize = offset_of!(Class, type_parameters);
 pub(crate) const OFFSET_CLASS_SUPER_CLASS: usize = offset_of!(Class, super_class);
-pub(crate) const OFFSET_CLASS_SUPER_TYPE_PARAMETERS: usize =
-    offset_of!(Class, super_type_parameters);
+pub(crate) const OFFSET_CLASS_SUPER_TYPE_ARGUMENTS: usize = offset_of!(Class, super_type_arguments);
 pub(crate) const OFFSET_CLASS_IMPLEMENTS: usize = offset_of!(Class, implements);
 pub(crate) const OFFSET_CLASS_BODY: usize = offset_of!(Class, body);
 pub(crate) const OFFSET_CLASS_ABSTRACT: usize = offset_of!(Class, r#abstract);
@@ -7789,9 +7788,9 @@ impl<'a, 't> ClassWithoutDecorators<'a, 't> {
     }
 
     #[inline]
-    pub fn super_type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -7872,9 +7871,9 @@ impl<'a, 't> ClassWithoutId<'a, 't> {
     }
 
     #[inline]
-    pub fn super_type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -7957,9 +7956,9 @@ impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn super_type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -8043,9 +8042,9 @@ impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
     }
 
     #[inline]
-    pub fn super_type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -8090,12 +8089,12 @@ impl<'a, 't> GetAddress for ClassWithoutSuperClass<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct ClassWithoutSuperTypeParameters<'a, 't>(
+pub struct ClassWithoutSuperTypeArguments<'a, 't>(
     pub(crate) *const Class<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> ClassWithoutSuperTypeParameters<'a, 't> {
+impl<'a, 't> ClassWithoutSuperTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
@@ -8166,7 +8165,7 @@ impl<'a, 't> ClassWithoutSuperTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for ClassWithoutSuperTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for ClassWithoutSuperTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -8221,9 +8220,9 @@ impl<'a, 't> ClassWithoutImplements<'a, 't> {
     }
 
     #[inline]
-    pub fn super_type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -8303,9 +8302,9 @@ impl<'a, 't> ClassWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn super_type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn super_type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -10600,8 +10599,8 @@ pub(crate) const OFFSET_JSX_OPENING_ELEMENT_SELF_CLOSING: usize =
 pub(crate) const OFFSET_JSX_OPENING_ELEMENT_NAME: usize = offset_of!(JSXOpeningElement, name);
 pub(crate) const OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES: usize =
     offset_of!(JSXOpeningElement, attributes);
-pub(crate) const OFFSET_JSX_OPENING_ELEMENT_TYPE_PARAMETERS: usize =
-    offset_of!(JSXOpeningElement, type_parameters);
+pub(crate) const OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS: usize =
+    offset_of!(JSXOpeningElement, type_arguments);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10632,9 +10631,9 @@ impl<'a, 't> JSXOpeningElementWithoutName<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -10676,9 +10675,9 @@ impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -10693,12 +10692,12 @@ impl<'a, 't> GetAddress for JSXOpeningElementWithoutAttributes<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct JSXOpeningElementWithoutTypeParameters<'a, 't>(
+pub struct JSXOpeningElementWithoutTypeArguments<'a, 't>(
     pub(crate) *const JSXOpeningElement<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> JSXOpeningElementWithoutTypeParameters<'a, 't> {
+impl<'a, 't> JSXOpeningElementWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_SPAN) as *const Span) }
@@ -10728,7 +10727,7 @@ impl<'a, 't> JSXOpeningElementWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for JSXOpeningElementWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for JSXOpeningElementWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -11956,8 +11955,8 @@ impl<'a, 't> GetAddress for TSRestTypeWithoutTypeAnnotation<'a, 't> {
 
 pub(crate) const OFFSET_TS_TYPE_REFERENCE_SPAN: usize = offset_of!(TSTypeReference, span);
 pub(crate) const OFFSET_TS_TYPE_REFERENCE_TYPE_NAME: usize = offset_of!(TSTypeReference, type_name);
-pub(crate) const OFFSET_TS_TYPE_REFERENCE_TYPE_PARAMETERS: usize =
-    offset_of!(TSTypeReference, type_parameters);
+pub(crate) const OFFSET_TS_TYPE_REFERENCE_TYPE_ARGUMENTS: usize =
+    offset_of!(TSTypeReference, type_arguments);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11973,9 +11972,9 @@ impl<'a, 't> TSTypeReferenceWithoutTypeName<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -11990,12 +11989,12 @@ impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeName<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSTypeReferenceWithoutTypeParameters<'a, 't>(
+pub struct TSTypeReferenceWithoutTypeArguments<'a, 't>(
     pub(crate) *const TSTypeReference<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSTypeReferenceWithoutTypeParameters<'a, 't> {
+impl<'a, 't> TSTypeReferenceWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_SPAN) as *const Span) }
@@ -12010,7 +12009,7 @@ impl<'a, 't> TSTypeReferenceWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -12478,8 +12477,8 @@ impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> 
 pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_SPAN: usize = offset_of!(TSClassImplements, span);
 pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION: usize =
     offset_of!(TSClassImplements, expression);
-pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_TYPE_PARAMETERS: usize =
-    offset_of!(TSClassImplements, type_parameters);
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_TYPE_ARGUMENTS: usize =
+    offset_of!(TSClassImplements, type_arguments);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -12495,9 +12494,9 @@ impl<'a, 't> TSClassImplementsWithoutExpression<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -12512,12 +12511,12 @@ impl<'a, 't> GetAddress for TSClassImplementsWithoutExpression<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSClassImplementsWithoutTypeParameters<'a, 't>(
+pub struct TSClassImplementsWithoutTypeArguments<'a, 't>(
     pub(crate) *const TSClassImplements<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSClassImplementsWithoutTypeParameters<'a, 't> {
+impl<'a, 't> TSClassImplementsWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_SPAN) as *const Span) }
@@ -12532,7 +12531,7 @@ impl<'a, 't> TSClassImplementsWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TSClassImplementsWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for TSClassImplementsWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -13822,8 +13821,8 @@ impl<'a, 't> GetAddress for TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
 pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_SPAN: usize = offset_of!(TSInterfaceHeritage, span);
 pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION: usize =
     offset_of!(TSInterfaceHeritage, expression);
-pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_TYPE_PARAMETERS: usize =
-    offset_of!(TSInterfaceHeritage, type_parameters);
+pub(crate) const OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS: usize =
+    offset_of!(TSInterfaceHeritage, type_arguments);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -13839,9 +13838,9 @@ impl<'a, 't> TSInterfaceHeritageWithoutExpression<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -13856,12 +13855,12 @@ impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutExpression<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSInterfaceHeritageWithoutTypeParameters<'a, 't>(
+pub struct TSInterfaceHeritageWithoutTypeArguments<'a, 't>(
     pub(crate) *const TSInterfaceHeritage<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSInterfaceHeritageWithoutTypeParameters<'a, 't> {
+impl<'a, 't> TSInterfaceHeritageWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_SPAN) as *const Span) }
@@ -13876,7 +13875,7 @@ impl<'a, 't> TSInterfaceHeritageWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)
@@ -14184,8 +14183,8 @@ impl<'a, 't> GetAddress for TSInferTypeWithoutTypeParameter<'a, 't> {
 
 pub(crate) const OFFSET_TS_TYPE_QUERY_SPAN: usize = offset_of!(TSTypeQuery, span);
 pub(crate) const OFFSET_TS_TYPE_QUERY_EXPR_NAME: usize = offset_of!(TSTypeQuery, expr_name);
-pub(crate) const OFFSET_TS_TYPE_QUERY_TYPE_PARAMETERS: usize =
-    offset_of!(TSTypeQuery, type_parameters);
+pub(crate) const OFFSET_TS_TYPE_QUERY_TYPE_ARGUMENTS: usize =
+    offset_of!(TSTypeQuery, type_arguments);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -14201,9 +14200,9 @@ impl<'a, 't> TSTypeQueryWithoutExprName<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_TYPE_ARGUMENTS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -14218,12 +14217,12 @@ impl<'a, 't> GetAddress for TSTypeQueryWithoutExprName<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSTypeQueryWithoutTypeParameters<'a, 't>(
+pub struct TSTypeQueryWithoutTypeArguments<'a, 't>(
     pub(crate) *const TSTypeQuery<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSTypeQueryWithoutTypeParameters<'a, 't> {
+impl<'a, 't> TSTypeQueryWithoutTypeArguments<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_SPAN) as *const Span) }
@@ -14238,7 +14237,7 @@ impl<'a, 't> TSTypeQueryWithoutTypeParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TSTypeQueryWithoutTypeParameters<'a, 't> {
+impl<'a, 't> GetAddress for TSTypeQueryWithoutTypeArguments<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

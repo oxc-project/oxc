@@ -1576,8 +1576,8 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.tag);
         visitor.visit_template_literal(&it.quasi);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -1645,8 +1645,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.callee);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.visit_arguments(&it.arguments);
         visitor.leave_node(kind);
@@ -1659,8 +1659,8 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.callee);
         visitor.visit_arguments(&it.arguments);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -2563,8 +2563,8 @@ pub mod walk {
         if let Some(super_class) = &it.super_class {
             visitor.visit_expression(super_class);
         }
-        if let Some(super_type_parameters) = &it.super_type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(super_type_parameters);
+        if let Some(super_type_arguments) = &it.super_type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
         if let Some(implements) = &it.implements {
             visitor.visit_ts_class_implementses(implements);
@@ -2964,8 +2964,8 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_jsx_element_name(&it.name);
         visitor.visit_jsx_attribute_items(&it.attributes);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -3529,8 +3529,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_name(&it.type_name);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -3619,8 +3619,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_name(&it.expression);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -3770,8 +3770,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.expression);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -3884,8 +3884,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_query_expr_name(&it.expr_name);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }

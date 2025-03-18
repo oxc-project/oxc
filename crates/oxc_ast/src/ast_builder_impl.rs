@@ -378,7 +378,7 @@ impl<'a> AstBuilder<'a> {
             extends.into_iter().map(|(expression, type_parameters, span)| TSInterfaceHeritage {
                 span,
                 expression,
-                type_parameters,
+                type_arguments: type_parameters,
             }),
             self.allocator,
         )

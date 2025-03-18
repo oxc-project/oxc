@@ -321,7 +321,7 @@ impl ESTree for TaggedTemplateExpression<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("tag", &self.tag);
         state.serialize_field("quasi", &self.quasi);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -408,7 +408,7 @@ impl ESTree for CallExpression<'_> {
         state.serialize_field("callee", &self.callee);
         state.serialize_field("arguments", &self.arguments);
         state.serialize_field("optional", &self.optional);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -421,7 +421,7 @@ impl ESTree for NewExpression<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("callee", &self.callee);
         state.serialize_field("arguments", &self.arguments);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -1449,7 +1449,7 @@ impl ESTree for Class<'_> {
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("decorators", &self.decorators);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
-        state.serialize_ts_field("superTypeParameters", &self.super_type_parameters);
+        state.serialize_ts_field("superTypeArguments", &self.super_type_arguments);
         state.serialize_ts_field("implements", &self.implements);
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
@@ -1989,7 +1989,7 @@ impl ESTree for JSXOpeningElement<'_> {
         state.serialize_field("attributes", &self.attributes);
         state.serialize_field("name", &self.name);
         state.serialize_field("selfClosing", &self.self_closing);
-        state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2720,7 +2720,7 @@ impl ESTree for TSTypeReference<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeName", &self.type_name);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2815,7 +2815,7 @@ impl ESTree for TSClassImplements<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2961,7 +2961,7 @@ impl ESTree for TSInterfaceHeritage<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -3073,7 +3073,7 @@ impl ESTree for TSTypeQuery<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("exprName", &self.expr_name);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }

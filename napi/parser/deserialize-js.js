@@ -1533,7 +1533,7 @@ function deserializeTSTypeReference(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeName: deserializeTSTypeName(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -1597,7 +1597,7 @@ function deserializeTSClassImplements(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     expression: deserializeTSTypeName(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -1703,7 +1703,7 @@ function deserializeTSInterfaceHeritage(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     expression: deserializeExpression(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -1765,7 +1765,7 @@ function deserializeTSTypeQuery(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     exprName: deserializeTSTypeQueryExprName(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 

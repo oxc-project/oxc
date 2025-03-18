@@ -250,7 +250,7 @@ fn check_and_report_error_reference(
         {
             check_and_report_error_array(default_config, readonly_config, ts_type_reference, ctx);
         } else if ident_ref_type_name.name.as_str() == "Promise" {
-            if let Some(type_params) = &ts_type_reference.type_parameters {
+            if let Some(type_params) = &ts_type_reference.type_arguments {
                 if type_params.params.len() == 1 {
                     if let Some(type_param) = type_params.params.first() {
                         if let TSType::TSArrayType(array_type) = &type_param {
@@ -314,7 +314,7 @@ fn check_and_report_error_array(
     }
     let readonly_prefix: &'static str = if is_readonly_array_type { "readonly " } else { "" };
     let class_name = if is_readonly_array_type { "ReadonlyArray" } else { "Array" };
-    let type_params = &ts_type_reference.type_parameters;
+    let type_params = &ts_type_reference.type_arguments;
 
     if type_params.is_none() || type_params.as_ref().unwrap().params.len() == 0 {
         let diagnostic = match config {
@@ -400,16 +400,16 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         TSType::TSTypeReference(node) => {
             let type_name = TSTypeName::get_identifier_reference(&node.type_name);
             if type_name.name.as_str() == "Array" {
-                if node.type_parameters.is_none() {
+                if node.type_arguments.is_none() {
                     return true;
                 }
-                if node.type_parameters.as_ref().unwrap().params.len() == 1 {
+                if node.type_arguments.as_ref().unwrap().params.len() == 1 {
                     return is_simple_type(
-                        node.type_parameters.as_ref().unwrap().params.first().unwrap(),
+                        node.type_arguments.as_ref().unwrap().params.first().unwrap(),
                     );
                 }
             } else {
-                if node.type_parameters.is_some() {
+                if node.type_arguments.is_some() {
                     return false;
                 }
                 if let TSTypeName::IdentifierReference(_) = &node.type_name {

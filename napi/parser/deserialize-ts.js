@@ -144,7 +144,7 @@ function deserializeTaggedTemplateExpression(pos) {
     end: deserializeU32(pos + 4),
     tag: deserializeExpression(pos + 8),
     quasi: deserializeTemplateLiteral(pos + 24),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 96),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 96),
   };
 }
 
@@ -209,7 +209,7 @@ function deserializeCallExpression(pos) {
     callee: deserializeExpression(pos + 8),
     arguments: deserializeVecArgument(pos + 32),
     optional: deserializeBool(pos + 64),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -220,7 +220,7 @@ function deserializeNewExpression(pos) {
     end: deserializeU32(pos + 4),
     callee: deserializeExpression(pos + 8),
     arguments: deserializeVecArgument(pos + 24),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 56),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 56),
   };
 }
 
@@ -853,7 +853,7 @@ function deserializeClass(pos) {
     body: deserializeBoxClassBody(pos + 144),
     decorators: deserializeVecDecorator(pos + 16),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 80),
-    superTypeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 104),
+    superTypeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 104),
     implements: deserializeOptionVecTSClassImplements(pos + 112),
     abstract: deserializeBool(pos + 152),
     declare: deserializeBool(pos + 153),
@@ -1187,7 +1187,7 @@ function deserializeJSXOpeningElement(pos) {
     attributes: deserializeVecJSXAttributeItem(pos + 32),
     name: deserializeJSXElementName(pos + 16),
     selfClosing: deserializeBool(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 64),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 64),
   };
 }
 
@@ -1586,7 +1586,7 @@ function deserializeTSTypeReference(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeName: deserializeTSTypeName(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -1650,7 +1650,7 @@ function deserializeTSClassImplements(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     expression: deserializeTSTypeName(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -1756,7 +1756,7 @@ function deserializeTSInterfaceHeritage(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     expression: deserializeExpression(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -1818,7 +1818,7 @@ function deserializeTSTypeQuery(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     exprName: deserializeTSTypeQueryExprName(pos + 8),
-    typeParameters: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 

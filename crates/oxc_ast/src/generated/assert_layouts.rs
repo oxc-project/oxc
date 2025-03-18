@@ -98,7 +98,7 @@ const _: () = {
     assert!(offset_of!(TaggedTemplateExpression, span) == 0);
     assert!(offset_of!(TaggedTemplateExpression, tag) == 8);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 24);
-    assert!(offset_of!(TaggedTemplateExpression, type_parameters) == 96);
+    assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 96);
 
     assert!(size_of::<TemplateElement>() == 48);
     assert!(align_of::<TemplateElement>() == 8);
@@ -139,7 +139,7 @@ const _: () = {
     assert!(align_of::<CallExpression>() == 8);
     assert!(offset_of!(CallExpression, span) == 0);
     assert!(offset_of!(CallExpression, callee) == 8);
-    assert!(offset_of!(CallExpression, type_parameters) == 24);
+    assert!(offset_of!(CallExpression, type_arguments) == 24);
     assert!(offset_of!(CallExpression, arguments) == 32);
     assert!(offset_of!(CallExpression, optional) == 64);
     assert!(offset_of!(CallExpression, pure) == 65);
@@ -149,7 +149,7 @@ const _: () = {
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
     assert!(offset_of!(NewExpression, arguments) == 24);
-    assert!(offset_of!(NewExpression, type_parameters) == 56);
+    assert!(offset_of!(NewExpression, type_arguments) == 56);
     assert!(offset_of!(NewExpression, pure) == 64);
 
     assert!(size_of::<MetaProperty>() == 56);
@@ -571,7 +571,7 @@ const _: () = {
     assert!(offset_of!(Class, id) == 48);
     assert!(offset_of!(Class, type_parameters) == 80);
     assert!(offset_of!(Class, super_class) == 88);
-    assert!(offset_of!(Class, super_type_parameters) == 104);
+    assert!(offset_of!(Class, super_type_arguments) == 104);
     assert!(offset_of!(Class, implements) == 112);
     assert!(offset_of!(Class, body) == 144);
     assert!(offset_of!(Class, r#abstract) == 152);
@@ -813,7 +813,7 @@ const _: () = {
     assert!(offset_of!(JSXOpeningElement, self_closing) == 8);
     assert!(offset_of!(JSXOpeningElement, name) == 16);
     assert!(offset_of!(JSXOpeningElement, attributes) == 32);
-    assert!(offset_of!(JSXOpeningElement, type_parameters) == 64);
+    assert!(offset_of!(JSXOpeningElement, type_arguments) == 64);
 
     assert!(size_of::<JSXClosingElement>() == 24);
     assert!(align_of::<JSXClosingElement>() == 8);
@@ -1073,7 +1073,7 @@ const _: () = {
     assert!(align_of::<TSTypeReference>() == 8);
     assert!(offset_of!(TSTypeReference, span) == 0);
     assert!(offset_of!(TSTypeReference, type_name) == 8);
-    assert!(offset_of!(TSTypeReference, type_parameters) == 24);
+    assert!(offset_of!(TSTypeReference, type_arguments) == 24);
 
     assert!(size_of::<TSTypeName>() == 16);
     assert!(align_of::<TSTypeName>() == 8);
@@ -1120,7 +1120,7 @@ const _: () = {
     assert!(align_of::<TSClassImplements>() == 8);
     assert!(offset_of!(TSClassImplements, span) == 0);
     assert!(offset_of!(TSClassImplements, expression) == 8);
-    assert!(offset_of!(TSClassImplements, type_parameters) == 24);
+    assert!(offset_of!(TSClassImplements, type_arguments) == 24);
 
     assert!(size_of::<TSInterfaceDeclaration>() == 96);
     assert!(align_of::<TSInterfaceDeclaration>() == 8);
@@ -1199,7 +1199,7 @@ const _: () = {
     assert!(align_of::<TSInterfaceHeritage>() == 8);
     assert!(offset_of!(TSInterfaceHeritage, span) == 0);
     assert!(offset_of!(TSInterfaceHeritage, expression) == 8);
-    assert!(offset_of!(TSInterfaceHeritage, type_parameters) == 24);
+    assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 24);
 
     assert!(size_of::<TSTypePredicate>() == 40);
     assert!(align_of::<TSTypePredicate>() == 8);
@@ -1249,7 +1249,7 @@ const _: () = {
     assert!(align_of::<TSTypeQuery>() == 8);
     assert!(offset_of!(TSTypeQuery, span) == 0);
     assert!(offset_of!(TSTypeQuery, expr_name) == 8);
-    assert!(offset_of!(TSTypeQuery, type_parameters) == 24);
+    assert!(offset_of!(TSTypeQuery, type_arguments) == 24);
 
     assert!(size_of::<TSTypeQueryExprName>() == 16);
     assert!(align_of::<TSTypeQueryExprName>() == 8);
@@ -1503,7 +1503,7 @@ const _: () = {
     assert!(offset_of!(TaggedTemplateExpression, span) == 0);
     assert!(offset_of!(TaggedTemplateExpression, tag) == 8);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 16);
-    assert!(offset_of!(TaggedTemplateExpression, type_parameters) == 56);
+    assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 56);
 
     assert!(size_of::<TemplateElement>() == 28);
     assert!(align_of::<TemplateElement>() == 4);
@@ -1544,7 +1544,7 @@ const _: () = {
     assert!(align_of::<CallExpression>() == 4);
     assert!(offset_of!(CallExpression, span) == 0);
     assert!(offset_of!(CallExpression, callee) == 8);
-    assert!(offset_of!(CallExpression, type_parameters) == 16);
+    assert!(offset_of!(CallExpression, type_arguments) == 16);
     assert!(offset_of!(CallExpression, arguments) == 20);
     assert!(offset_of!(CallExpression, optional) == 36);
     assert!(offset_of!(CallExpression, pure) == 37);
@@ -1554,7 +1554,7 @@ const _: () = {
     assert!(offset_of!(NewExpression, span) == 0);
     assert!(offset_of!(NewExpression, callee) == 8);
     assert!(offset_of!(NewExpression, arguments) == 16);
-    assert!(offset_of!(NewExpression, type_parameters) == 32);
+    assert!(offset_of!(NewExpression, type_arguments) == 32);
     assert!(offset_of!(NewExpression, pure) == 36);
 
     assert!(size_of::<MetaProperty>() == 40);
@@ -1976,7 +1976,7 @@ const _: () = {
     assert!(offset_of!(Class, id) == 28);
     assert!(offset_of!(Class, type_parameters) == 48);
     assert!(offset_of!(Class, super_class) == 52);
-    assert!(offset_of!(Class, super_type_parameters) == 60);
+    assert!(offset_of!(Class, super_type_arguments) == 60);
     assert!(offset_of!(Class, implements) == 64);
     assert!(offset_of!(Class, body) == 80);
     assert!(offset_of!(Class, r#abstract) == 84);
@@ -2218,7 +2218,7 @@ const _: () = {
     assert!(offset_of!(JSXOpeningElement, self_closing) == 8);
     assert!(offset_of!(JSXOpeningElement, name) == 12);
     assert!(offset_of!(JSXOpeningElement, attributes) == 20);
-    assert!(offset_of!(JSXOpeningElement, type_parameters) == 36);
+    assert!(offset_of!(JSXOpeningElement, type_arguments) == 36);
 
     assert!(size_of::<JSXClosingElement>() == 16);
     assert!(align_of::<JSXClosingElement>() == 4);
@@ -2478,7 +2478,7 @@ const _: () = {
     assert!(align_of::<TSTypeReference>() == 4);
     assert!(offset_of!(TSTypeReference, span) == 0);
     assert!(offset_of!(TSTypeReference, type_name) == 8);
-    assert!(offset_of!(TSTypeReference, type_parameters) == 16);
+    assert!(offset_of!(TSTypeReference, type_arguments) == 16);
 
     assert!(size_of::<TSTypeName>() == 8);
     assert!(align_of::<TSTypeName>() == 4);
@@ -2525,7 +2525,7 @@ const _: () = {
     assert!(align_of::<TSClassImplements>() == 4);
     assert!(offset_of!(TSClassImplements, span) == 0);
     assert!(offset_of!(TSClassImplements, expression) == 8);
-    assert!(offset_of!(TSClassImplements, type_parameters) == 16);
+    assert!(offset_of!(TSClassImplements, type_arguments) == 16);
 
     assert!(size_of::<TSInterfaceDeclaration>() == 60);
     assert!(align_of::<TSInterfaceDeclaration>() == 4);
@@ -2604,7 +2604,7 @@ const _: () = {
     assert!(align_of::<TSInterfaceHeritage>() == 4);
     assert!(offset_of!(TSInterfaceHeritage, span) == 0);
     assert!(offset_of!(TSInterfaceHeritage, expression) == 8);
-    assert!(offset_of!(TSInterfaceHeritage, type_parameters) == 16);
+    assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 16);
 
     assert!(size_of::<TSTypePredicate>() == 28);
     assert!(align_of::<TSTypePredicate>() == 4);
@@ -2654,7 +2654,7 @@ const _: () = {
     assert!(align_of::<TSTypeQuery>() == 4);
     assert!(offset_of!(TSTypeQuery, span) == 0);
     assert!(offset_of!(TSTypeQuery, expr_name) == 8);
-    assert!(offset_of!(TSTypeQuery, type_parameters) == 16);
+    assert!(offset_of!(TSTypeQuery, type_arguments) == 16);
 
     assert!(size_of::<TSTypeQueryExprName>() == 8);
     assert!(align_of::<TSTypeQueryExprName>() == 4);

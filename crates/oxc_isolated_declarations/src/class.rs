@@ -558,7 +558,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.id.clone_in(self.ast.allocator),
             decl.type_parameters.clone_in(self.ast.allocator),
             decl.super_class.clone_in(self.ast.allocator),
-            decl.super_type_parameters.clone_in(self.ast.allocator),
+            decl.super_type_arguments.clone_in(self.ast.allocator),
             decl.implements.clone_in(self.ast.allocator),
             body,
             decl.r#abstract,

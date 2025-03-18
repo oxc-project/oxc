@@ -283,7 +283,7 @@ impl ContentEq for TaggedTemplateExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.tag, &other.tag)
             && ContentEq::content_eq(&self.quasi, &other.quasi)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -341,7 +341,7 @@ impl ContentEq for PrivateFieldExpression<'_> {
 impl ContentEq for CallExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.callee, &other.callee)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
             && ContentEq::content_eq(&self.arguments, &other.arguments)
             && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.pure, &other.pure)
@@ -352,7 +352,7 @@ impl ContentEq for NewExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.callee, &other.callee)
             && ContentEq::content_eq(&self.arguments, &other.arguments)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
             && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
@@ -1123,7 +1123,7 @@ impl ContentEq for Class<'_> {
             && ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.super_class, &other.super_class)
-            && ContentEq::content_eq(&self.super_type_parameters, &other.super_type_parameters)
+            && ContentEq::content_eq(&self.super_type_arguments, &other.super_type_arguments)
             && ContentEq::content_eq(&self.implements, &other.implements)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
@@ -1506,7 +1506,7 @@ impl ContentEq for JSXOpeningElement<'_> {
         ContentEq::content_eq(&self.self_closing, &other.self_closing)
             && ContentEq::content_eq(&self.name, &other.name)
             && ContentEq::content_eq(&self.attributes, &other.attributes)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2036,7 +2036,7 @@ impl ContentEq for TSBigIntKeyword {
 impl ContentEq for TSTypeReference<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.type_name, &other.type_name)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2098,7 +2098,7 @@ impl ContentEq for TSAccessibility {
 impl ContentEq for TSClassImplements<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2201,7 +2201,7 @@ impl ContentEq for TSIndexSignatureName<'_> {
 impl ContentEq for TSInterfaceHeritage<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2280,7 +2280,7 @@ impl ContentEq for TSInferType<'_> {
 impl ContentEq for TSTypeQuery<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expr_name, &other.expr_name)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 

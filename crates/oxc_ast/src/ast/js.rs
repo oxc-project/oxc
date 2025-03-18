@@ -437,7 +437,7 @@ pub struct TaggedTemplateExpression<'a> {
     pub tag: Expression<'a>,
     pub quasi: TemplateLiteral<'a>,
     #[ts]
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// `Hello, ` in `` `Hello, ${name}` ``
@@ -567,7 +567,7 @@ pub struct PrivateFieldExpression<'a> {
 /// //               ^ optional
 ///
 /// const z = foo<number, string>(1, 2)
-/// //            ^^^^^^^^^^^^^^ type_parameters
+/// //            ^^^^^^^^^^^^^^ type_arguments
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -576,7 +576,7 @@ pub struct CallExpression<'a> {
     pub span: Span,
     pub callee: Expression<'a>,
     #[ts]
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
     /// `true` if the call expression is marked with a `/* @__PURE__ */` comment
@@ -595,7 +595,7 @@ pub struct CallExpression<'a> {
 /// //              ↓↓↓         ↓↓↓↓
 /// const foo = new Foo<number>(1, 2)
 /// //                 ↑↑↑↑↑↑↑↑
-/// //                 type_parameters
+/// //                 type_arguments
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -605,7 +605,7 @@ pub struct NewExpression<'a> {
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
     #[ts]
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[builder(default)]
     #[estree(skip)]
@@ -1211,6 +1211,7 @@ pub struct EmptyStatement {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+// #[estree(add_fields(directive = Null),)]
 pub struct ExpressionStatement<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
@@ -1850,7 +1851,7 @@ pub struct YieldExpression<'a> {
 #[rustfmt::skip]
 #[estree(field_order(
     r#type, span, id, super_class, body,
-    decorators, type_parameters, super_type_parameters, implements, r#abstract, declare,
+    decorators, type_parameters, super_type_arguments, implements, r#abstract, declare,
 ))]
 pub struct Class<'a> {
     pub span: Span,
@@ -1888,7 +1889,7 @@ pub struct Class<'a> {
     /// //                       ^
     /// ```
     #[ts]
-    pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub super_type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     /// Interface implementation clause for TypeScript classes.
     ///
     /// ## Example

@@ -1586,8 +1586,8 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.tag);
         visitor.visit_template_literal(&mut it.quasi);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -1661,8 +1661,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.callee);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.visit_arguments(&mut it.arguments);
         visitor.leave_node(kind);
@@ -1675,8 +1675,8 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.callee);
         visitor.visit_arguments(&mut it.arguments);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -2649,8 +2649,8 @@ pub mod walk_mut {
         if let Some(super_class) = &mut it.super_class {
             visitor.visit_expression(super_class);
         }
-        if let Some(super_type_parameters) = &mut it.super_type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(super_type_parameters);
+        if let Some(super_type_arguments) = &mut it.super_type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
         if let Some(implements) = &mut it.implements {
             visitor.visit_ts_class_implementses(implements);
@@ -3083,8 +3083,8 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_element_name(&mut it.name);
         visitor.visit_jsx_attribute_items(&mut it.attributes);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -3717,8 +3717,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_name(&mut it.type_name);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -3816,8 +3816,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_name(&mut it.expression);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -3976,8 +3976,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.expression);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }
@@ -4093,8 +4093,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_query_expr_name(&mut it.expr_name);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        if let Some(type_arguments) = &mut it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
         visitor.leave_node(kind);
     }

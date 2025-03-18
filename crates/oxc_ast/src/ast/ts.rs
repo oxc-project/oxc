@@ -718,7 +718,7 @@ pub struct TSBigIntKeyword {
 pub struct TSTypeReference<'a> {
     pub span: Span,
     pub type_name: TSTypeName<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// TypeName:
@@ -850,7 +850,7 @@ pub enum TSAccessibility {
 /// ```ts
 /// //                   ___ expression
 /// class Foo implements Bar, Baz<number, string> {}
-/// //            type_parameters ^^^^^^^^^^^^^^
+/// //            type_arguments ^^^^^^^^^^^^^^
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -858,7 +858,7 @@ pub enum TSAccessibility {
 pub struct TSClassImplements<'a> {
     pub span: Span,
     pub expression: TSTypeName<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// TypeScriptInterface Declaration
@@ -1042,7 +1042,7 @@ pub struct TSIndexSignatureName<'a> {
 pub struct TSInterfaceHeritage<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// TypeScript Type Predicate
@@ -1254,7 +1254,7 @@ pub struct TSInferType<'a> {
 pub struct TSTypeQuery<'a> {
     pub span: Span,
     pub expr_name: TSTypeQueryExprName<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 inherit_variants! {

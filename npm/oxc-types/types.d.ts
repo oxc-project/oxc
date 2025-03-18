@@ -113,7 +113,7 @@ export interface TaggedTemplateExpression extends Span {
   type: 'TaggedTemplateExpression';
   tag: Expression;
   quasi: TemplateLiteral;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
 }
 
 export interface TemplateElement extends Span {
@@ -158,14 +158,14 @@ export interface CallExpression extends Span {
   callee: Expression;
   arguments: Array<Argument>;
   optional: boolean;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
 }
 
 export interface NewExpression extends Span {
   type: 'NewExpression';
   callee: Expression;
   arguments: Array<Argument>;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
 }
 
 export interface MetaProperty extends Span {
@@ -601,7 +601,7 @@ export interface Class extends Span {
   body: ClassBody;
   decorators: Array<Decorator>;
   typeParameters: TSTypeParameterDeclaration | null;
-  superTypeParameters: TSTypeParameterInstantiation | null;
+  superTypeArguments: TSTypeParameterInstantiation | null;
   implements: Array<TSClassImplements> | null;
   abstract: boolean;
   declare: boolean;
@@ -820,7 +820,7 @@ export interface JSXOpeningElement extends Span {
   attributes: Array<JSXAttributeItem>;
   name: JSXElementName;
   selfClosing: boolean;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
 }
 
 export interface JSXClosingElement extends Span {
@@ -1110,7 +1110,7 @@ export interface TSBigIntKeyword extends Span {
 export interface TSTypeReference extends Span {
   type: 'TSTypeReference';
   typeName: TSTypeName;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
 }
 
 export type TSTypeName = IdentifierReference | TSQualifiedName;
@@ -1154,7 +1154,7 @@ export type TSAccessibility = 'private' | 'protected' | 'public';
 export interface TSClassImplements extends Span {
   type: 'TSClassImplements';
   expression: TSTypeName;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
 }
 
 export interface TSInterfaceDeclaration extends Span {
@@ -1233,7 +1233,7 @@ export interface TSIndexSignatureName extends Span {
 export interface TSInterfaceHeritage extends Span {
   type: 'TSInterfaceHeritage';
   expression: Expression;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
 }
 
 export interface TSTypePredicate extends Span {
@@ -1277,7 +1277,7 @@ export interface TSInferType extends Span {
 export interface TSTypeQuery extends Span {
   type: 'TSTypeQuery';
   exprName: TSTypeQueryExprName;
-  typeParameters: TSTypeParameterInstantiation | null;
+  typeArguments: TSTypeParameterInstantiation | null;
 }
 
 export type TSTypeQueryExprName = TSImportType | TSTypeName;

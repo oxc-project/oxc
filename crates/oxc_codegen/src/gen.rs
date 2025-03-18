@@ -1451,7 +1451,7 @@ impl GenExpr for CallExpression<'_> {
             if self.optional {
                 p.print_str("?.");
             }
-            if let Some(type_parameters) = &self.type_parameters {
+            if let Some(type_parameters) = &self.type_arguments {
                 type_parameters.print(p, ctx);
             }
             p.print_ascii_byte(b'(');
@@ -2156,7 +2156,7 @@ impl Gen for TaggedTemplateExpression<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         self.tag.print_expr(p, Precedence::Postfix, Context::empty());
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
         self.quasi.print(p, ctx);
@@ -2337,7 +2337,7 @@ impl Gen for Class<'_> {
             if let Some(super_class) = self.super_class.as_ref() {
                 p.print_str(" extends ");
                 super_class.print_expr(p, Precedence::Postfix, Context::empty());
-                if let Some(super_type_parameters) = &self.super_type_parameters {
+                if let Some(super_type_parameters) = &self.super_type_arguments {
                     super_type_parameters.print(p, ctx);
                 }
             }
@@ -2983,7 +2983,7 @@ impl Gen for Decorator<'_> {
 impl Gen for TSClassImplements<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.expression.print(p, ctx);
-        if let Some(type_parameters) = self.type_parameters.as_ref() {
+        if let Some(type_parameters) = self.type_arguments.as_ref() {
             type_parameters.print(p, ctx);
         }
     }
@@ -3259,7 +3259,7 @@ impl Gen for TSTypePredicate<'_> {
 impl Gen for TSTypeReference<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.type_name.print(p, ctx);
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
     }
@@ -3530,7 +3530,7 @@ impl Gen for TSTypeQuery<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("typeof ");
         self.expr_name.print(p, ctx);
-        if let Some(type_params) = &self.type_parameters {
+        if let Some(type_params) = &self.type_arguments {
             type_params.print(p, ctx);
         }
     }
@@ -3771,7 +3771,7 @@ impl Gen for TSInterfaceDeclaration<'_> {
 impl Gen for TSInterfaceHeritage<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.expression.print_expr(p, Precedence::Call, ctx);
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
     }

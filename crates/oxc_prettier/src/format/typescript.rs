@@ -473,7 +473,7 @@ impl<'a> Format<'a> for TSTypeQuery<'a> {
             }
         }
 
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             parts.push(type_parameters.format(p));
         }
 
@@ -485,7 +485,7 @@ impl<'a> Format<'a> for TSTypeReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
         parts.push(self.type_name.format(p));
-        if let Some(params) = &self.type_parameters {
+        if let Some(params) = &self.type_arguments {
             parts.push(params.format(p));
         }
         array!(p, parts)
@@ -568,7 +568,7 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
                         }
 
                         extends_parts.push(extend.expression.format(p));
-                        if let Some(type_parameters) = &extend.type_parameters {
+                        if let Some(type_parameters) = &extend.type_arguments {
                             extends_parts.push(type_parameters.format(p));
                         }
                     }
@@ -897,7 +897,7 @@ impl<'a> Format<'a> for TSClassImplements<'a> {
 
         parts.push(self.expression.format(p));
 
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_arguments {
             parts.push(type_parameters.format(p));
         }
 

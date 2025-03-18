@@ -542,7 +542,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TaggedTemplateExpression<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             tag: CloneIn::clone_in(&self.tag, allocator),
             quasi: CloneIn::clone_in(&self.quasi, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -627,7 +627,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for CallExpression<'_> {
         CallExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             callee: CloneIn::clone_in(&self.callee, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
             pure: CloneIn::clone_in(&self.pure, allocator),
@@ -642,7 +642,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for NewExpression<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             callee: CloneIn::clone_in(&self.callee, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
             pure: CloneIn::clone_in(&self.pure, allocator),
         }
     }
@@ -1935,7 +1935,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
             id: CloneIn::clone_in(&self.id, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             super_class: CloneIn::clone_in(&self.super_class, allocator),
-            super_type_parameters: CloneIn::clone_in(&self.super_type_parameters, allocator),
+            super_type_arguments: CloneIn::clone_in(&self.super_type_arguments, allocator),
             implements: CloneIn::clone_in(&self.implements, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
             r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
@@ -2602,7 +2602,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXOpeningElement<'_> {
             self_closing: CloneIn::clone_in(&self.self_closing, allocator),
             name: CloneIn::clone_in(&self.name, allocator),
             attributes: CloneIn::clone_in(&self.attributes, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3458,7 +3458,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeReference<'_> {
         TSTypeReference {
             span: CloneIn::clone_in(&self.span, allocator),
             type_name: CloneIn::clone_in(&self.type_name, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3552,7 +3552,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSClassImplements<'_> {
         TSClassImplements {
             span: CloneIn::clone_in(&self.span, allocator),
             expression: CloneIn::clone_in(&self.expression, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3704,7 +3704,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInterfaceHeritage<'_> {
         TSInterfaceHeritage {
             span: CloneIn::clone_in(&self.span, allocator),
             expression: CloneIn::clone_in(&self.expression, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }
@@ -3823,7 +3823,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeQuery<'_> {
         TSTypeQuery {
             span: CloneIn::clone_in(&self.span, allocator),
             expr_name: CloneIn::clone_in(&self.expr_name, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            type_arguments: CloneIn::clone_in(&self.type_arguments, allocator),
         }
     }
 }

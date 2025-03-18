@@ -340,7 +340,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(p: &Prettier<'a>, expr: &Express
             return false;
         }
 
-        if let Some(type_parameters) = &call_expression.type_parameters {
+        if let Some(type_parameters) = &call_expression.type_arguments {
             return is_complex_type_arguments(type_parameters);
         }
     }
