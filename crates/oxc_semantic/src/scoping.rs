@@ -276,8 +276,7 @@ impl Scoping {
             });
         } else {
             self.cell.with_dependent_mut(|allocator, cell| {
-                let mut v = ArenaVec::new_in(allocator);
-                v.push(span);
+                let v = ArenaVec::from_array_in([span], allocator);
                 let redeclaration_id = cell.redeclaration_spans.len();
                 cell.redeclaration_spans.push(v);
                 self.symbol_redeclarations[symbol_id] =
