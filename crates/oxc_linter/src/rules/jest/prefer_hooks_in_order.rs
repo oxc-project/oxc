@@ -148,42 +148,44 @@ impl Rule for PreferHooksInOrder {
         let mut previous_hook_orders: FxHashMap<ScopeId, (u8, Span)> = FxHashMap::default();
 
         for node in ctx.nodes() {
-            if let AstKind::CallExpression(call_expr) = node.kind() {
-                let possible_jest_node = &PossibleJestNode { node, original: None };
-                let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
-                    parse_jest_fn_call(call_expr, possible_jest_node, ctx)
-                else {
-                    previous_hook_orders.remove(&node.scope_id());
-                    continue;
-                };
-
-                if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Hook)) {
-                    previous_hook_orders.remove(&node.scope_id());
-                    continue;
-                }
-
-                let previous_hook_order = previous_hook_orders.get(&node.scope_id());
-
-                let hook_name = jest_fn_call.name.as_ref();
-                let Some(hook_order) = get_hook_order(hook_name) else {
-                    continue;
-                };
-
-                if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order {
-                    if hook_order < *previous_hook_order {
-                        let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
-                            continue;
-                        };
-
-                        ctx.diagnostic(reorder_hooks(
-                            (hook_name, call_expr.span),
-                            (previous_hook_name, *previous_hook_span),
-                        ));
-                        continue;
-                    }
-                }
-                previous_hook_orders.insert(node.scope_id(), (hook_order, call_expr.span));
+            let AstKind::CallExpression(call_expr) = node.kind() else {
+                continue;
             };
+
+            let possible_jest_node = &PossibleJestNode { node, original: None };
+            let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
+                parse_jest_fn_call(call_expr, possible_jest_node, ctx)
+            else {
+                previous_hook_orders.remove(&node.scope_id());
+                continue;
+            };
+
+            if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Hook)) {
+                previous_hook_orders.remove(&node.scope_id());
+                continue;
+            }
+
+            let previous_hook_order = previous_hook_orders.get(&node.scope_id());
+
+            let hook_name = jest_fn_call.name.as_ref();
+            let Some(hook_order) = get_hook_order(hook_name) else {
+                continue;
+            };
+
+            if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order {
+                if hook_order < *previous_hook_order {
+                    let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
+                        continue;
+                    };
+
+                    ctx.diagnostic(reorder_hooks(
+                        (hook_name, call_expr.span),
+                        (previous_hook_name, *previous_hook_span),
+                    ));
+                    continue;
+                }
+            }
+            previous_hook_orders.insert(node.scope_id(), (hook_order, call_expr.span));
         }
     }
 }
