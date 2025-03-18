@@ -51,8 +51,6 @@ impl InternalAnnotations {
     ///
     /// This method leaves the cursor positioned on 1st comment.
     pub fn build(&mut self, program: &Program) {
-        // We can rely on `program.comments` being sorted in ascending order,
-        // and therefore can use a `Vec` rather than a hash map
         // `u32::MAX` cannot be the start of any node, because source text is limited to `u32::MAX` bytes
         let mut last_span_start = u32::MAX;
         for comment in &program.comments {
