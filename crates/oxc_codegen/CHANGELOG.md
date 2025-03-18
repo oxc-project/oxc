@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.59.0] - 2025-03-18
+
+- ce6808a parser: [**BREAKING**] Rename `type_parameters` to `type_arguments` where needed  (#9815) (hi-ogawa)
+
+### Bug Fixes
+
+- a113f7e parser: Error when `}` and `>` appear in `JSXText` (#9777) (Boshen)
+- 8abb4f6 parser: Correctly set `export_kind` for `ExportNamedDeclaration` (#9827) (camc314)
+
 ## [0.58.0] - 2025-03-13
 
 ### Bug Fixes

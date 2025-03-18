@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.59.0] - 2025-03-18
+
+### Features
+
+- 65643bc allocator: Remove drop operations from Vec2 (#9679) (Dunqing)
+- 5cc614a allocator: Replace allocator_ap2's Vec with Vec2 (#9656) (Dunqing)
+- caa477c allocator/vec: Remove `ManuallyDrop` wrapper (#9742) (Dunqing)
+
+### Performance
+
+- 17a9320 allocator/vec2: Optimize reserving memory (#9792) (Dunqing)
+
+### Refactor
+
+- d13817e allocator: Improve safety of `String::from_utf8_unchecked` (#9772) (overlookmotel)
+- a1a8b93 allocator/vec: Add comment about lifetime bound on `CloneIn` for `Vec` (#9771) (overlookmotel)
+
 ## [0.58.0] - 2025-03-13
 
 - f2b0cc1 allocator: [**BREAKING**] Remove `Vec::into_boxed_slice` method (#9735) (Dunqing)

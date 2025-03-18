@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.59.0] - 2025-03-18
+
+- 3d17860 ast: [**BREAKING**] Reorder fields of `TemplateElement` (#9821) (overlookmotel)
+
+### Bug Fixes
+
+- f707d1f parser: Set kind of var_declarator correctly for using decl (#9753) (camc314)
+
+### Refactor
+
+
 ## [0.58.0] - 2025-03-13
 
 ### Documentation
