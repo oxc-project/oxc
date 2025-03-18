@@ -53,20 +53,15 @@ impl InternalAnnotations {
     pub fn build(&mut self, program: &Program) {
         // `u32::MAX` cannot be the start of any node, because source text is limited to `u32::MAX` bytes
         let mut last_span_start = u32::MAX;
-        self.span_starts = program
-            .comments
-            .iter()
-            .filter_map(|comment| {
-                let has_internal =
-                    comment.content_span().source_text(program.source_text).contains("@internal");
-                if has_internal && last_span_start != comment.attached_to {
-                    last_span_start = comment.attached_to;
-                    Some(comment.attached_to)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        for comment in &program.comments {
+            let has_internal =
+                comment.content_span().source_text(program.source_text).contains("@internal");
+            debug_assert!(comment.attached_to >= last_span_start || last_span_start == u32::MAX);
+            if has_internal && last_span_start != comment.attached_to {
+                self.span_starts.push(comment.attached_to);
+                last_span_start = comment.attached_to;
+            }
+        }
 
         if !self.span_starts.is_empty() {
             self.next_start = Cell::new(self.span_starts[0]);
