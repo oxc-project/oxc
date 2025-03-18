@@ -60,25 +60,25 @@ declare_oxc_lint!(
     ///     // ...
     ///   });
     ///   describe('when the database has specific values', () => {
-    ///       const specificValue = '...';
-    ///       beforeEach(() => {
-    ///         seedMyDatabase(specificValue);
-    ///       });
-    ///       it('accepts that input', () => {
-    ///         // ...
-    ///       });
-    ///       it('throws an error', () => {
-    ///         // ...
-    ///       });
-    ///       afterEach(() => {
-    ///         clearLogger();
-    ///       });
-    ///       beforeEach(() => {
-    ///         mockLogger();
-    ///       });
-    ///       it('logs a message', () => {
-    ///          // ...
-    ///       });
+    ///     const specificValue = '...';
+    ///     beforeEach(() => {
+    ///       seedMyDatabase(specificValue);
+    ///     });
+    ///     it('accepts that input', () => {
+    ///       // ...
+    ///     });
+    ///     it('throws an error', () => {
+    ///       // ...
+    ///     });
+    ///     afterEach(() => {
+    ///       clearLogger();
+    ///     });
+    ///     beforeEach(() => {
+    ///       mockLogger();
+    ///     });
+    ///     it('logs a message', () => {
+    ///        // ...
+    ///     });
     ///   });
     ///   afterAll(() => {
     ///     removeMyDatabase();
@@ -102,25 +102,25 @@ declare_oxc_lint!(
     ///     // ...
     ///   });
     ///   describe('when the database has specific values', () => {
-    ///       const specificValue = '...';
-    ///       beforeEach(() => {
-    ///         seedMyDatabase(specificValue);
-    ///       });
-    ///       it('accepts that input', () => {
-    ///         // ...
-    ///       });
-    ///       it('throws an error', () => {
-    ///         // ...
-    ///       });
-    ///       beforeEach(() => {
-    ///         mockLogger();
-    ///       });
-    ///       afterEach(() => {
-    ///         clearLogger();
-    ///       });
-    ///       it('logs a message', () => {
-    ///         // ...
-    ///       });
+    ///     const specificValue = '...';
+    ///     beforeEach(() => {
+    ///       seedMyDatabase(specificValue);
+    ///     });
+    ///     it('accepts that input', () => {
+    ///       // ...
+    ///     });
+    ///     it('throws an error', () => {
+    ///       // ...
+    ///     });
+    ///     beforeEach(() => {
+    ///       mockLogger();
+    ///     });
+    ///     afterEach(() => {
+    ///       clearLogger();
+    ///     });
+    ///     it('logs a message', () => {
+    ///       // ...
+    ///     });
     ///   });
     ///   afterAll(() => {
     ///     removeMyDatabase();
