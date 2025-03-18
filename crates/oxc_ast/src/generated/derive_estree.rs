@@ -1450,7 +1450,7 @@ impl ESTree for Class<'_> {
         state.serialize_ts_field("decorators", &self.decorators);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.serialize_ts_field("superTypeArguments", &self.super_type_arguments);
-        state.serialize_ts_field("implements", &self.implements);
+        state.serialize_ts_field("implements", &crate::serialize::ClassImplements(self));
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
         state.end();

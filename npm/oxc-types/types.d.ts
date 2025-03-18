@@ -602,7 +602,7 @@ export interface Class extends Span {
   decorators: Array<Decorator>;
   typeParameters: TSTypeParameterDeclaration | null;
   superTypeArguments: TSTypeParameterInstantiation | null;
-  implements: Array<TSClassImplements> | null;
+  implements: Array<TSClassImplements>;
   abstract: boolean;
   declare: boolean;
 }

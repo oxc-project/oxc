@@ -505,6 +505,26 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
     }
 }
 
+#[ast_meta]
+#[estree(
+    ts_type = "Array<TSClassImplements>",
+    raw_deser = "
+        const classImplements = DESER[Option<Vec<TSClassImplements>>](POS_OFFSET.implements);
+        classImplements === null ? [] : classImplements
+    "
+)]
+pub struct ClassImplements<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassImplements<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        if let Some(implements) = &self.0.implements {
+            implements.serialize(serializer);
+        } else {
+            [(); 0].serialize(serializer);
+        }
+    }
+}
+
 // --------------------
 // JSX
 // --------------------

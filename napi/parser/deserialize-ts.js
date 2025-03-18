@@ -844,6 +844,7 @@ function deserializeYieldExpression(pos) {
 }
 
 function deserializeClass(pos) {
+  const classImplements = deserializeOptionVecTSClassImplements(pos + 112);
   return {
     type: deserializeClassType(pos + 8),
     start: deserializeU32(pos),
@@ -854,7 +855,7 @@ function deserializeClass(pos) {
     decorators: deserializeVecDecorator(pos + 16),
     typeParameters: deserializeOptionBoxTSTypeParameterDeclaration(pos + 80),
     superTypeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 104),
-    implements: deserializeOptionVecTSClassImplements(pos + 112),
+    implements: classImplements === null ? [] : classImplements,
     abstract: deserializeBool(pos + 152),
     declare: deserializeBool(pos + 153),
   };
