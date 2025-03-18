@@ -286,10 +286,9 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Restore dprint plugin cache
-        id: cache-restore
         uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
         with:
-          key: dprint-autofix-ci-${{ runner.os }}-${{ hashFiles('dprint.json') }}
+          key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
 
       - name: Check AST Changes
@@ -298,11 +297,3 @@ jobs:
           cargo run -p oxc_ast_tools
           git diff --exit-code ||
           (echo 'AST changes caused the "generated" code to get outdated. Have you forgotten to run the `just ast` command and/or commit generated codes?' && exit 1)
-
-      - name: Save dprint plugin cache
-        if: ${{ github.ref_name == 'main' }}
-        id: cache-save
-        uses: actions/cache/save@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
-        with:
-          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-          path: ~/.cache/dprint
