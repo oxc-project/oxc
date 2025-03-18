@@ -30,7 +30,7 @@ mod generated {
     mod derive_estree;
 }
 
-/// Dummy type to communicate the content of `nonmax::NonMaxU32` to `oxc_ast_tools`.
+/// Dummy type to communicate the content of `oxc_data_structures::nonmax::NonMaxU32` to `oxc_ast_tools`.
 #[ast(foreign = NonMaxU32)]
 #[expect(dead_code)]
 struct NonMaxU32Alias(NonZeroU32);

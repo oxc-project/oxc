@@ -510,7 +510,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
             use crate::*;
         },
         "oxc_syntax" => quote! {
-            use nonmax::NonMaxU32;
+            use oxc_data_structures::nonmax::NonMaxU32;
 
             ///@@line_break
             use crate::{module_record::*, number::*, operator::*, reference::*, scope::*, symbol::*};

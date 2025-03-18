@@ -1,17 +1,18 @@
-mod block;
-mod builder;
-pub mod dot;
-pub mod visit;
-
 use std::fmt;
 
 use itertools::Itertools;
-use nonmax::NonMaxU32;
-use oxc_index::{Idx, IndexVec};
 use petgraph::{
     Direction,
     visit::{Control, DfsEvent, EdgeRef},
 };
+
+use oxc_data_structures::nonmax::NonMaxU32;
+use oxc_index::{Idx, IndexVec};
+
+mod block;
+mod builder;
+pub mod dot;
+pub mod visit;
 
 pub mod graph {
     pub use petgraph::*;

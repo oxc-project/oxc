@@ -1374,12 +1374,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nonmax"
-version = "0.5.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "610a5acd306ec67f907abe5567859a3c693fb9886eb1f012ab8f2a47bef3db51"
-
-[[package]]
 name = "nu-ansi-term"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1638,7 +1632,7 @@ version = "0.60.0"
 dependencies = [
  "bitflags 2.9.0",
  "itertools",
- "nonmax",
+ "oxc_data_structures",
  "oxc_index",
  "oxc_syntax",
  "petgraph",
@@ -1653,7 +1647,6 @@ dependencies = [
  "bitflags 2.9.0",
  "cow-utils",
  "insta",
- "nonmax",
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
@@ -1815,12 +1808,12 @@ dependencies = [
  "lazy_static",
  "markdown",
  "memchr",
- "nonmax",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_cfg",
  "oxc_codegen",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
  "oxc_index",
@@ -2122,7 +2115,6 @@ version = "0.60.0"
 dependencies = [
  "bitflags 2.9.0",
  "cow-utils",
- "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_data_structures",

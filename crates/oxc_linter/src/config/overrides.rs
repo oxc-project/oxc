@@ -4,10 +4,10 @@ use std::{
     path::Path,
 };
 
-use nonmax::NonMaxU32;
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
+use oxc_data_structures::nonmax::NonMaxU32;
 use oxc_index::{Idx, IndexVec};
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};

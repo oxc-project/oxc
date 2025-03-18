@@ -21,11 +21,11 @@ test = false
 doctest = false
 
 [dependencies]
+oxc_data_structures = { workspace = true, features = ["nonmax"] }
 oxc_index = { workspace = true }
 oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 itertools = { workspace = true }
-nonmax = { workspace = true }
 petgraph = { workspace = true }
 rustc-hash = { workspace = true }
