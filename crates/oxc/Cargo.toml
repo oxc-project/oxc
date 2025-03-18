@@ -73,7 +73,5 @@ serialize = [
   "oxc_syntax/serialize",
 ]
 
-wasm = ["oxc_transformer/wasm"]
-
 [package.metadata.docs.rs]
 all-features = true

@@ -36,7 +36,6 @@ unicode-id-start = { workspace = true }
 
 ryu-js = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
-wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default = []
@@ -44,7 +43,6 @@ to_js_string = ["dep:ryu-js"]
 serialize = [
   "bitflags/serde",
   "dep:serde",
-  "dep:wasm-bindgen",
   "oxc_index/serde",
   "oxc_estree/serialize",
 ]

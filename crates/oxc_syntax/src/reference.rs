@@ -39,19 +39,6 @@ impl Serialize for ReferenceId {
     }
 }
 
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type ReferenceId = number;
-export type ReferenceFlags = {
-    None: 0,
-    Read: 0b1,
-    Write: 0b10,
-    Type: 0b100,
-    Value: 0b11
-}
-"#;
-
 bitflags! {
     /// Describes how a symbol is being referenced in the AST.
     ///

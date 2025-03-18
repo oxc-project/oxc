@@ -212,7 +212,6 @@ jobs:
               - '!editors/**'
               - '!napi/**'
               - '!npm/**'
-              - '!wasm/**'
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
               - '!tasks/**'

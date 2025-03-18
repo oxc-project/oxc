@@ -3,7 +3,7 @@ module.exports.wrap = function wrap(result) {
   return {
     get program() {
       if (!program) {
-        // Note: This code is repeated in `wasm/parser/update-bindings.mjs` and `crates/oxc-wasm/update-bindings.mjs`.
+        // Note: This code is repeated in `crates/oxc-wasm/update-bindings.mjs` and `napi/parser/wrap.cjs`.
         // Any changes should be applied in those 2 scripts too.
         program = JSON.parse(result.program, function(key, value) {
           // Set `value` field of `Literal`s for `BigInt`s and `RegExp`s.

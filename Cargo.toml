@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["apps/*", "crates/*", "napi/*", "tasks/*", "wasm/*"]
+members = ["apps/*", "crates/*", "napi/*", "tasks/*"]
 exclude = ["tasks/lint_rules", "tasks/e2e"]
 
 [workspace.package]
@@ -214,7 +214,6 @@ saphyr = "0.0.3"
 schemars = "0.8.21"
 self_cell = "1.1.0"
 seq-macro = "0.3.5"
-serde-wasm-bindgen = "0.6.5"
 sha1 = "0.10.6"
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
 similar = "2.7.0"
@@ -224,10 +223,8 @@ tempfile = "3.16.0"
 tokio = "1.43.0"
 tower-lsp = "0.20.0"
 tracing-subscriber = "0.3.19"
-tsify = "0.4.5"
 ureq = { version = "3.0.5", default-features = false }
 walkdir = "2.5.0"
-wasm-bindgen = "0.2.100"
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease"]

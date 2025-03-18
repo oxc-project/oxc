@@ -10,7 +10,6 @@ versioned_files = [
   "napi/minify/package.json",
   "npm/oxc-types/package.json",
   "npm/runtime/package.json",
-  "wasm/parser/package.json",
 ]
 
 [[releases]]

@@ -117,12 +117,6 @@ importers:
 
   npm/oxlint: {}
 
-  npm/parser-wasm:
-    dependencies:
-      '@oxc-project/types':
-        specifier: workspace:^
-        version: link:../oxc-types
-
   npm/runtime: {}
 
   tasks/compat_data:
@@ -212,12 +206,6 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
-
-  wasm/parser:
-    dependencies:
-      '@oxc-project/types':
-        specifier: workspace:^
-        version: link:../../npm/oxc-types
 
 packages:
 
