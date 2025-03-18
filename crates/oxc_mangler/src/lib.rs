@@ -21,11 +21,43 @@ pub struct MangleOptions {
     /// Default: `false`
     pub top_level: bool,
 
+    /// Keep function / class names
+    pub keep_names: MangleOptionsKeepNames,
+
     /// Use more readable mangled names
     /// (e.g. `slot_0`, `slot_1`, `slot_2`, ...) for debugging.
     ///
     /// Uses base54 if false.
     pub debug: bool,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct MangleOptionsKeepNames {
+    /// Keep function names so that `Function.prototype.name` is preserved.
+    ///
+    /// Default `false`
+    pub function: bool,
+
+    /// Keep class names so that `Class.prototype.name` is preserved.
+    ///
+    /// Default `false`
+    pub class: bool,
+}
+
+impl MangleOptionsKeepNames {
+    pub fn all_false() -> Self {
+        Self { function: false, class: false }
+    }
+
+    pub fn all_true() -> Self {
+        Self { function: true, class: true }
+    }
+}
+
+impl From<bool> for MangleOptionsKeepNames {
+    fn from(keep_names: bool) -> Self {
+        if keep_names { Self::all_true() } else { Self::all_false() }
+    }
 }
 
 type Slot = usize;
@@ -206,6 +238,8 @@ impl Mangler {
         } else {
             Default::default()
         };
+        let (keep_name_names, keep_name_symbols) =
+            Mangler::collect_keep_name_symbols(self.options.keep_names, &scoping);
 
         let allocator = Allocator::default();
 
@@ -225,6 +259,16 @@ impl Mangler {
                 continue;
             }
 
+            // Sort `bindings` in declaration order.
+            tmp_bindings.clear();
+            tmp_bindings.extend(
+                bindings.values().copied().filter(|binding| !keep_name_symbols.contains(binding)),
+            );
+            tmp_bindings.sort_unstable();
+            if tmp_bindings.is_empty() {
+                continue;
+            }
+
             let mut slot = slot_liveness.len();
 
             reusable_slots.clear();
@@ -235,11 +279,11 @@ impl Mangler {
                     .enumerate()
                     .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
                     .map(|(slot, _)| slot)
-                    .take(bindings.len()),
+                    .take(tmp_bindings.len()),
             );
 
             // The number of new slots that needs to be allocated.
-            let remaining_count = bindings.len() - reusable_slots.len();
+            let remaining_count = tmp_bindings.len() - reusable_slots.len();
             reusable_slots.extend(slot..slot + remaining_count);
 
             slot += remaining_count;
@@ -248,10 +292,6 @@ impl Mangler {
                     .resize_with(slot, || FixedBitSet::with_capacity(scoping.scopes_len()));
             }
 
-            // Sort `bindings` in declaration order.
-            tmp_bindings.clear();
-            tmp_bindings.extend(bindings.values().copied());
-            tmp_bindings.sort_unstable();
             for (&symbol_id, assigned_slot) in
                 tmp_bindings.iter().zip(reusable_slots.iter().copied())
             {
@@ -282,6 +322,7 @@ impl Mangler {
         let frequencies = self.tally_slot_frequencies(
             &scoping,
             &exported_symbols,
+            &keep_name_symbols,
             total_number_of_slots,
             &slots,
             &allocator,
@@ -304,6 +345,8 @@ impl Mangler {
                     && !root_unresolved_references.contains_key(n)
                     && !(root_bindings.contains_key(n)
                         && (!self.options.top_level || exported_names.contains(n)))
+                    // TODO: only skip the names that are kept in the current scope
+                    && !keep_name_names.contains(n)
                 {
                     break name;
                 }
@@ -368,6 +411,7 @@ impl Mangler {
         &'a self,
         scoping: &Scoping,
         exported_symbols: &FxHashSet<SymbolId>,
+        keep_name_symbols: &FxHashSet<SymbolId>,
         total_number_of_slots: usize,
         slots: &[Slot],
         allocator: &'a Allocator,
@@ -386,6 +430,9 @@ impl Mangler {
                 continue;
             }
             if is_special_name(scoping.symbol_name(symbol_id)) {
+                continue;
+            }
+            if keep_name_symbols.contains(&symbol_id) {
                 continue;
             }
             let index = slot;
@@ -420,6 +467,21 @@ impl Mangler {
             })
             .map(|id| (id.name, id.symbol_id()))
             .collect()
+    }
+
+    fn collect_keep_name_symbols(
+        keep_names: MangleOptionsKeepNames,
+        scoping: &Scoping,
+    ) -> (FxHashSet<&str>, FxHashSet<SymbolId>) {
+        let ids: FxHashSet<SymbolId> = keep_names
+            .function
+            .then(|| scoping.function_name_symbols())
+            .into_iter()
+            .flatten()
+            .chain(keep_names.class.then(|| scoping.class_name_symbols()).into_iter().flatten())
+            .copied()
+            .collect();
+        (ids.iter().map(|id| scoping.symbol_name(*id)).collect(), ids)
     }
 }
 

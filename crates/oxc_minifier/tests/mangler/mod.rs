@@ -6,20 +6,21 @@ use oxc_mangler::{MangleOptions, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-fn mangle(source_text: &str, top_level: bool) -> String {
+fn mangle(source_text: &str, top_level: bool, keep_names: bool) -> String {
     let allocator = Allocator::default();
     let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
-    let symbol_table =
-        Mangler::new().with_options(MangleOptions { debug: false, top_level }).build(&program);
+    let symbol_table = Mangler::new()
+        .with_options(MangleOptions { keep_names: keep_names.into(), debug: false, top_level })
+        .build(&program);
     CodeGenerator::new().with_scoping(Some(symbol_table)).build(&program).code
 }
 
 #[test]
 fn direct_eval() {
     let source_text = "function foo() { let NO_MANGLE; eval('') }";
-    let mangled = mangle(source_text, false);
+    let mangled = mangle(source_text, false, false);
     assert_eq!(mangled, "function foo() {\n\tlet NO_MANGLE;\n\teval(\"\");\n}\n");
 }
 
@@ -61,14 +62,25 @@ fn mangler() {
         "export const foo = 1; foo",
         "const foo = 1; foo; export { foo }",
     ];
+    let keep_name_cases = [
+        "function _() { function foo() { var x } }",
+        "function _() { var foo = function() { var x } }",
+        "function _() { var foo = () => { var x } }",
+        "function _() { class Foo { foo() { var x } } }",
+        "function _() { var Foo = class { foo() { var x } } }",
+    ];
 
     let mut snapshot = String::new();
     cases.into_iter().fold(&mut snapshot, |w, case| {
-        write!(w, "{case}\n{}\n", mangle(case, false)).unwrap();
+        write!(w, "{case}\n{}\n", mangle(case, false, false)).unwrap();
         w
     });
     top_level_cases.into_iter().fold(&mut snapshot, |w, case| {
-        write!(w, "{case}\n{}\n", mangle(case, true)).unwrap();
+        write!(w, "{case}\n{}\n", mangle(case, true, false)).unwrap();
+        w
+    });
+    keep_name_cases.into_iter().fold(&mut snapshot, |w, case| {
+        write!(w, "{case}\n{}\n", mangle(case, false, true)).unwrap();
         w
     });
 
