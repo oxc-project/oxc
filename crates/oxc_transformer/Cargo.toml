@@ -25,7 +25,7 @@ oxc-browserslist = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
-oxc_data_structures = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["rope", "stack"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_parser = { workspace = true }

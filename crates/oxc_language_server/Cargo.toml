@@ -23,7 +23,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_data_structures = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_parser = { workspace = true }

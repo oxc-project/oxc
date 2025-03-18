@@ -26,7 +26,7 @@ doctest = true
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
-oxc_data_structures = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["stack"] }
 oxc_ecmascript = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }

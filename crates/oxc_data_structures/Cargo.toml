@@ -21,5 +21,13 @@ test = true
 doctest = false
 
 [dependencies]
-assert-unchecked = { workspace = true }
-ropey = { workspace = true }
+assert-unchecked = { workspace = true, optional = true }
+ropey = { workspace = true, optional = true }
+
+[features]
+default = []
+all = ["code_buffer", "inline_string", "rope", "stack"]
+code_buffer = ["dep:assert-unchecked"]
+inline_string = []
+rope = ["dep:ropey"]
+stack = ["dep:assert-unchecked"]
