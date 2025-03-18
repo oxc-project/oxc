@@ -343,18 +343,12 @@ pub fn is_method_call<'a>(
         }
     }
 
-    let callee_without_parentheses = call_expr.callee.without_parentheses();
-    let member_expr = match callee_without_parentheses {
-        match_member_expression!(Expression) => callee_without_parentheses.to_member_expression(),
-        Expression::ChainExpression(chain) => match chain.expression.member_expression() {
-            Some(e) => e,
-            None => return false,
-        },
-        _ => return false,
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
     };
 
     if let Some(objects) = objects {
-        let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
+        let Expression::Identifier(ident) = member_expr.object().get_inner_expression() else {
             return false;
         };
         if !objects.contains(&ident.name.as_str()) {
