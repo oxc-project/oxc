@@ -220,7 +220,7 @@ similar = "2.7.0"
 similar-asserts = "1.6.1"
 smallvec = "1.14.0"
 tempfile = "3.16.0"
-tokio = "1.43.0"
+tokio = { version = "1.43.0", default-features = false }
 tower-lsp = "0.20.0"
 tracing-subscriber = "0.3.19"
 ureq = { version = "3.0.5", default-features = false }
