@@ -1074,9 +1074,9 @@ impl VariableDeclarationKind {
         matches!(self, Self::Const)
     }
 
-    /// Returns `true` if declared using `let` or `const` (such as `let x` or `const x`)
+    /// Returns `true` if declared using `let`, `const` or `using` (such as `let x` or `const x`)
     pub fn is_lexical(&self) -> bool {
-        matches!(self, Self::Const | Self::Let)
+        matches!(self, Self::Const | Self::Let | Self::Using | Self::AwaitUsing)
     }
 
     /// Returns `true` if declared using `await using` (such as `await using x`)
@@ -1113,6 +1113,8 @@ impl ForStatementInit<'_> {
 
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
+    ///   UsingDeclaration[?In, ?Yield, ?Await]
+    ///   [+Await] AwaitUsingDeclaration[?In, ?Yield]
     pub fn is_lexical_declaration(&self) -> bool {
         matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_lexical())
     }
@@ -1121,6 +1123,8 @@ impl ForStatementInit<'_> {
 impl ForStatementLeft<'_> {
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
+    ///   UsingDeclaration[?In, ?Yield, ?Await]
+    ///   [+Await] AwaitUsingDeclaration[?In, ?Yield]
     pub fn is_lexical_declaration(&self) -> bool {
         matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_lexical())
     }

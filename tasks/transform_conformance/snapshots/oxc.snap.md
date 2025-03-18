@@ -325,17 +325,29 @@ x Output mismatch
 x Output mismatch
 
 * for-of-no-block/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "x"]
+rebuilt        : ScopeId(1): ["_x"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(3): ["x"]
 Scope children mismatch:
 after transform: ScopeId(4): []
 rebuilt        : ScopeId(3): [ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(3)
 
 * function-with-scopes-in-params/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
+rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(5), ScopeId(6), ScopeId(8)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8)]
@@ -345,9 +357,18 @@ rebuilt        : ScopeId(2): Some(ScopeId(1))
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(5))
 rebuilt        : ScopeId(3): Some(ScopeId(1))
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(4): ["x", "y"]
 Scope children mismatch:
 after transform: ScopeId(5): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(4): [ScopeId(5)]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "y":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(4)
 
 
 # legacy-decorators (2/66)

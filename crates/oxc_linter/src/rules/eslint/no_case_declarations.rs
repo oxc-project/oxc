@@ -65,9 +65,12 @@ impl Rule for NoCaseDeclarations {
                     Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
                         let start = var.span.start;
                         let end = match var.kind {
-                            VariableDeclarationKind::Const => 5,
+                            VariableDeclarationKind::Const | VariableDeclarationKind::Using => 5,
                             VariableDeclarationKind::Let => 3,
-                            _ => unreachable!(),
+                            VariableDeclarationKind::AwaitUsing => {
+                                var.declarations[0].span.start - start
+                            }
+                            VariableDeclarationKind::Var => unreachable!(),
                         };
                         let end = start + end;
                         ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
@@ -102,6 +105,8 @@ fn test() {
         ("switch (a) { default: function f() {} break; }", None),
         ("switch (a) { case 1: class C {} break; }", None),
         ("switch (a) { default: class C {} break; }", None),
+        ("switch (a) { default: using x = {}; break; }", None),
+        ("switch (a) { default: await using x = {}; break; }", None),
     ];
 
     Tester::new(NoCaseDeclarations::NAME, NoCaseDeclarations::PLUGIN, pass, fail)
