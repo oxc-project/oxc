@@ -1,16 +1,19 @@
 use std::{
-    cell::{Cell, RefCell},
+    cell::Cell,
     path::{Path, PathBuf},
     rc::Rc,
     sync::Arc,
 };
 
 use napi_derive::napi;
+use serde::Serialize;
+
 use oxc::{
     allocator::Allocator,
-    ast::{Comment as OxcComment, CommentKind, ast::Program},
-    ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16},
+    ast::ast::Program,
+    ast_visit::Visit,
     codegen::{CodeGenerator, CodegenOptions},
+    diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
@@ -24,9 +27,8 @@ use oxc::{
 };
 use oxc_index::Idx;
 use oxc_linter::{ConfigStoreBuilder, LintOptions, Linter, ModuleRecord};
-use oxc_napi::OxcError;
+use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
 use oxc_prettier::{Prettier, PrettierOptions};
-use serde::Serialize;
 
 use crate::options::{OxcOptions, OxcRunOptions};
 
@@ -46,32 +48,7 @@ pub struct Oxc {
     pub prettier_formatted_text: String,
     pub prettier_ir_text: String,
     comments: Vec<Comment>,
-    diagnostics: RefCell<Vec<oxc::diagnostics::OxcDiagnostic>>,
-}
-
-#[derive(Clone)]
-#[napi(object)]
-pub struct Comment {
-    pub r#type: CommentType,
-    pub value: String,
-    pub start: u32,
-    pub end: u32,
-}
-
-#[derive(Clone)]
-#[napi]
-pub enum CommentType {
-    Line,
-    Block,
-}
-
-#[derive(Default, Clone)]
-#[napi(object)]
-pub struct OxcDiagnostic {
-    pub start: u32,
-    pub end: u32,
-    pub severity: String,
-    pub message: String,
+    diagnostics: Vec<OxcDiagnostic>,
 }
 
 #[napi]
@@ -82,35 +59,8 @@ impl Oxc {
     }
 
     #[napi]
-    pub fn get_diagnostics2(&self) -> Vec<OxcError> {
-        self.diagnostics.borrow().clone().into_iter().map(OxcError::from).collect()
-    }
-
-    #[napi]
-    pub fn get_diagnostics(&self) -> Vec<OxcDiagnostic> {
-        self.diagnostics
-            .borrow()
-            .iter()
-            .flat_map(|error| match &error.labels {
-                Some(labels) => labels
-                    .iter()
-                    .map(|label| OxcDiagnostic {
-                        #[expect(clippy::cast_possible_truncation)]
-                        start: label.offset() as u32,
-                        #[expect(clippy::cast_possible_truncation)]
-                        end: (label.offset() + label.len()) as u32,
-                        severity: format!("{:?}", error.severity),
-                        message: format!("{error}"),
-                    })
-                    .collect::<Vec<_>>(),
-                None => vec![OxcDiagnostic {
-                    start: 0,
-                    end: 0,
-                    severity: format!("{:?}", error.severity),
-                    message: format!("{error}"),
-                }],
-            })
-            .collect::<Vec<_>>()
+    pub fn get_diagnostics(&self) -> Vec<OxcError> {
+        self.diagnostics.iter().cloned().map(OxcError::from).collect()
     }
 
     #[napi]
@@ -121,10 +71,9 @@ impl Oxc {
     /// # Errors
     /// Serde serialization error
     #[napi]
-    #[allow(clippy::allow_attributes)]
-    #[allow(clippy::needless_pass_by_value)]
+    #[allow(clippy::allow_attributes, clippy::needless_pass_by_value)]
     pub fn run(&mut self, source_text: String, options: OxcOptions) -> napi::Result<()> {
-        self.diagnostics = RefCell::default();
+        self.diagnostics = vec![];
 
         let OxcOptions {
             run: run_options,
@@ -168,7 +117,7 @@ impl Oxc {
                 .allow_v8_intrinsics
                 .unwrap_or(default_parser_options.allow_v8_intrinsics),
         };
-        let ParserReturn { mut program, errors, module_record, .. } =
+        let ParserReturn { mut program, errors, mut module_record, .. } =
             Parser::new(&allocator, &source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
@@ -189,13 +138,11 @@ impl Oxc {
             ))
         });
         if run_options.syntax.unwrap_or_default() {
-            self.save_diagnostics(
-                errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>(),
-            );
+            self.diagnostics.extend(errors.into_iter().chain(semantic_ret.errors));
         }
 
-        let module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
-        self.run_linter(&run_options, &path, &program, &module_record);
+        let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
+        self.run_linter(&run_options, &path, &program, &linter_module_record);
 
         self.run_prettier(&run_options, &source_text, source_type);
 
@@ -229,7 +176,7 @@ impl Oxc {
                     self.codegen_sourcemap_text =
                         codegen_result.map.map(|map| map.to_json_string());
                 } else {
-                    self.save_diagnostics(ret.errors.into_iter().collect::<Vec<_>>());
+                    self.diagnostics.extend(ret.errors);
                     self.codegen_text = String::new();
                     self.codegen_sourcemap_text = None;
                 }
@@ -242,9 +189,7 @@ impl Oxc {
                 .and_then(|target| {
                     TransformOptions::from_target(target)
                         .map_err(|err| {
-                            self.save_diagnostics(vec![oxc::diagnostics::OxcDiagnostic::error(
-                                err,
-                            )]);
+                            self.diagnostics.push(OxcDiagnostic::error(err));
                         })
                         .ok()
                 })
@@ -252,7 +197,7 @@ impl Oxc {
             let result = Transformer::new(&allocator, &path, &options)
                 .build_with_scoping(scoping, &mut program);
             if !result.errors.is_empty() {
-                self.save_diagnostics(result.errors.into_iter().collect::<Vec<_>>());
+                self.diagnostics.extend(result.errors);
             }
         }
 
@@ -291,20 +236,24 @@ impl Oxc {
         self.codegen_text = codegen_result.code;
         self.codegen_sourcemap_text = codegen_result.map.map(|map| map.to_json_string());
         self.ir = format!("{:#?}", program.body);
-        self.convert_ast(&mut program);
+        let mut errors = vec![];
+        let comments =
+            convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
+        self.ast_json = program.to_pretty_estree_ts_json();
+        self.comments = comments;
 
         Ok(())
     }
 
     fn run_linter(
-        &self,
+        &mut self,
         run_options: &OxcRunOptions,
         path: &Path,
         program: &Program,
         module_record: &Arc<ModuleRecord>,
     ) {
         // Only lint if there are no syntax errors
-        if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
+        if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
             let lint_config =
@@ -314,8 +263,7 @@ impl Oxc {
                 Rc::clone(&semantic),
                 Arc::clone(module_record),
             );
-            let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
-            self.save_diagnostics(diagnostics);
+            self.diagnostics.extend(linter_ret.into_iter().map(|e| e.error));
         }
     }
 
@@ -441,45 +389,5 @@ impl Oxc {
             .collect::<Vec<_>>();
 
         serde_json::to_string_pretty(&data).map_err(|e| napi::Error::from_reason(e.to_string()))
-    }
-
-    fn save_diagnostics(&self, diagnostics: Vec<oxc::diagnostics::OxcDiagnostic>) {
-        self.diagnostics.borrow_mut().extend(diagnostics);
-    }
-
-    fn convert_ast(&mut self, program: &mut Program) {
-        let span_converter = Utf8ToUtf16::new(program.source_text);
-        span_converter.convert_program(program);
-        self.ast_json = program.to_pretty_estree_ts_json();
-
-        self.comments = Self::map_comments(program.source_text, &program.comments, &span_converter);
-    }
-
-    fn map_comments(
-        source_text: &str,
-        comments: &[OxcComment],
-        span_converter: &Utf8ToUtf16,
-    ) -> Vec<Comment> {
-        let mut offset_converter = span_converter.converter();
-
-        comments
-            .iter()
-            .map(|comment| {
-                let value = comment.content_span().source_text(source_text).to_string();
-                let mut span = comment.span;
-                if let Some(converter) = &mut offset_converter {
-                    converter.convert_span(&mut span);
-                }
-                Comment {
-                    r#type: match comment.kind {
-                        CommentKind::Line => CommentType::Line,
-                        CommentKind::Block => CommentType::Block,
-                    },
-                    value,
-                    start: span.start,
-                    end: span.end,
-                }
-            })
-            .collect()
     }
 }

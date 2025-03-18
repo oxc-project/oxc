@@ -12,8 +12,7 @@ export declare class Oxc {
   prettierFormattedText: string
   prettierIrText: string
   constructor()
-  getDiagnostics2(): Array<OxcError>
-  getDiagnostics(): Array<OxcDiagnostic>
+  getDiagnostics(): Array<OxcError>
   getComments(): Array<Comment>
   /**
    * # Errors
@@ -23,15 +22,10 @@ export declare class Oxc {
 }
 
 export interface Comment {
-  type: CommentType
+  type: 'Line' | 'Block'
   value: string
   start: number
   end: number
-}
-
-export declare const enum CommentType {
-  Line = 0,
-  Block = 1
 }
 
 export interface ErrorLabel {
@@ -58,13 +52,6 @@ export interface OxcCompressOptions {
 
 export interface OxcControlFlowOptions {
   verbose?: boolean
-}
-
-export interface OxcDiagnostic {
-  start: number
-  end: number
-  severity: string
-  message: string
 }
 
 export interface OxcError {

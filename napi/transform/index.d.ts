@@ -12,6 +12,13 @@ export interface ArrowFunctionsOptions {
   spec?: boolean
 }
 
+export interface Comment {
+  type: 'Line' | 'Block'
+  value: string
+  start: number
+  end: number
+}
+
 export interface CompilerAssumptions {
   ignoreFunctionLength?: boolean
   noDocumentAll?: boolean

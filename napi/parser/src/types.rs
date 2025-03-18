@@ -2,7 +2,7 @@ use std::mem;
 
 use napi_derive::napi;
 
-use oxc_napi::OxcError;
+use oxc_napi::{Comment, OxcError};
 
 #[napi(object)]
 #[derive(Default)]
@@ -68,15 +68,6 @@ impl ParseResult {
     pub fn errors(&mut self) -> Vec<OxcError> {
         mem::take(&mut self.errors)
     }
-}
-
-#[napi(object)]
-pub struct Comment {
-    #[napi(ts_type = "'Line' | 'Block'")]
-    pub r#type: String,
-    pub value: String,
-    pub start: u32,
-    pub end: u32,
 }
 
 #[napi(object)]

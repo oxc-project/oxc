@@ -54,5 +54,4 @@ const {
   },
 })
 export const Oxc = __napiModule.exports.Oxc
-export const CommentType = __napiModule.exports.CommentType
 export const Severity = __napiModule.exports.Severity

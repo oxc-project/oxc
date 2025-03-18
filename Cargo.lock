@@ -1943,7 +1943,10 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "oxc_ast",
+ "oxc_ast_visit",
  "oxc_diagnostics",
+ "oxc_syntax",
 ]
 
 [[package]]
