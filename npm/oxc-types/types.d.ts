@@ -368,7 +368,7 @@ export interface VariableDeclaration extends Span {
   declare: boolean;
 }
 
-export type VariableDeclarationKind = 'var' | 'const' | 'let' | 'using' | 'await using';
+export type VariableDeclarationKind = 'var' | 'let' | 'const' | 'using' | 'await using';
 
 export interface VariableDeclarator extends Span {
   type: 'VariableDeclarator';

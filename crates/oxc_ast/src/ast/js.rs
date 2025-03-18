@@ -1170,8 +1170,8 @@ pub struct VariableDeclaration<'a> {
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 pub enum VariableDeclarationKind {
     Var = 0,
-    Const = 1,
-    Let = 2,
+    Let = 1,
+    Const = 2,
     Using = 3,
     #[estree(rename = "await using")]
     AwaitUsing = 4,

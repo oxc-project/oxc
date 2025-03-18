@@ -2919,9 +2919,9 @@ function deserializeVariableDeclarationKind(pos) {
     case 0:
       return 'var';
     case 1:
-      return 'const';
-    case 2:
       return 'let';
+    case 2:
+      return 'const';
     case 3:
       return 'using';
     case 4:

@@ -913,8 +913,8 @@ impl ESTree for VariableDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Var => JsonSafeString("var").serialize(serializer),
-            Self::Const => JsonSafeString("const").serialize(serializer),
             Self::Let => JsonSafeString("let").serialize(serializer),
+            Self::Const => JsonSafeString("const").serialize(serializer),
             Self::Using => JsonSafeString("using").serialize(serializer),
             Self::AwaitUsing => JsonSafeString("await using").serialize(serializer),
         }

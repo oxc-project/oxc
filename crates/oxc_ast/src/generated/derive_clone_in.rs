@@ -1314,8 +1314,8 @@ impl<'alloc> CloneIn<'alloc> for VariableDeclarationKind {
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
             Self::Var => VariableDeclarationKind::Var,
-            Self::Const => VariableDeclarationKind::Const,
             Self::Let => VariableDeclarationKind::Let,
+            Self::Const => VariableDeclarationKind::Const,
             Self::Using => VariableDeclarationKind::Using,
             Self::AwaitUsing => VariableDeclarationKind::AwaitUsing,
         }
