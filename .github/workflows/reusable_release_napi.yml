@@ -77,7 +77,7 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
           - os: ubuntu-latest
-            target: wasm32-wasip1-threads # For `threads` stackblitz
+            target: wasm32-wasip1-threads
 
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
@@ -95,11 +95,15 @@ jobs:
         if: ${{ contains(matrix.target, 'musl') }}
         working-directory: napi/${{ inputs.name }}
         run: pnpm build -x --target ${{ matrix.target }}
+        env:
+          CC: clang # for mimalloc
 
       - name: Build with napi cross
         if: ${{ contains(matrix.target, 'gnu') }}
         working-directory: napi/${{ inputs.name }}
         run: pnpm build --use-napi-cross --target ${{ matrix.target }}
+        env:
+          CC: clang # for mimalloc
 
       - name: Build
         if: ${{ !contains(matrix.target, 'gnu') && !contains(matrix.target, 'musl') }}
