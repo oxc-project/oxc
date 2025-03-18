@@ -39,4 +39,4 @@ export function wrap(result) {
       return errors;
     },
   };
-};
+}
