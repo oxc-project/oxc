@@ -1,5 +1,9 @@
 #![expect(clippy::needless_pass_by_value, clippy::missing_errors_doc)]
 
+#[cfg(all(not(target_arch = "arm"), not(target_family = "wasm")))]
+#[global_allocator]
+static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+
 mod options;
 
 use std::path::PathBuf;
@@ -14,10 +18,6 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::options::{MinifyOptions, MinifyResult};
-
-#[cfg(all(not(target_arch = "arm"), not(target_family = "wasm")))]
-#[global_allocator]
-static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 /// Minify synchronously.
 #[napi]

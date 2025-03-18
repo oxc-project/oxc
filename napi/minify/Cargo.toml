@@ -39,8 +39,5 @@ mimalloc-safe = { workspace = true, features = ["skip_collect_on_exit"] }
 [target.'cfg(any(all(target_os = "linux", not(target_arch = "arm")), target_os = "freebsd"))'.dependencies]
 mimalloc-safe = { workspace = true, features = ["skip_collect_on_exit", "local_dynamic_tls"] }
 
-[package.metadata.cargo-shear]
-ignored = ["napi"]
-
 [build-dependencies]
 napi-build = { workspace = true }

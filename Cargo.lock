@@ -2010,6 +2010,7 @@ dependencies = [
 name = "oxc_parser_napi"
 version = "0.59.0"
 dependencies = [
+ "mimalloc-safe",
  "napi",
  "napi-build",
  "napi-derive",
@@ -2232,6 +2233,7 @@ dependencies = [
 name = "oxc_transform_napi"
 version = "0.59.0"
 dependencies = [
+ "mimalloc-safe",
  "napi",
  "napi-build",
  "napi-derive",
