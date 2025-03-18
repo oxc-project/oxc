@@ -579,6 +579,25 @@ impl ESTree for JSXOpeningFragmentAttributes<'_> {
 }
 
 // --------------------
+// TS
+// --------------------
+
+/// Serializer for `directive` field of `ExpressionStatement`.
+/// This field is always `null`, and only appears in the TS AST, not JS ESTree.
+#[ast_meta]
+#[estree(ts_type = "string | null", raw_deser = "null")]
+#[ts]
+pub struct ExpressionStatementDirective<'a, 'b>(
+    #[expect(dead_code)] pub &'b ExpressionStatement<'a>,
+);
+
+impl ESTree for ExpressionStatementDirective<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        ().serialize(serializer);
+    }
+}
+
+// --------------------
 // Comments
 // --------------------
 

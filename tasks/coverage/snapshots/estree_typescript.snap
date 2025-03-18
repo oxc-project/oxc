@@ -2,7 +2,7 @@ commit: 15392346
 
 estree_typescript Summary:
 AST Parsed     : 10628/10725 (99.10%)
-Positive Passed: 55/10725 (0.51%)
+Positive Passed: 73/10725 (0.68%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
@@ -246,7 +246,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/arrayconcat.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionErrorSpan.ts
 Line terminator not permitted before arrow
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionInConstructorArgument1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionInExpressionStatement1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionInExpressionStatement2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionParsingDoesNotConfuseParenthesizedObjectForArrowHead.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/arrowFunctionParsingGenericInObject.ts
@@ -876,7 +875,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnClassMethod1.t
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnDecoratedClassDeclaration.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnElidedModule1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnExportEnumDeclaration.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnExpressionStatement1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnIfStatement1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnImportStatement1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentOnImportStatement2.ts
@@ -2015,7 +2013,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyArgumentsListComme
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyArrayDestructuringExpressionVisitedByTransformer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyDeclarationEmitIsModule.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyEnum.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyExpr.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyGenericParamList.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyIndexer.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/emptyModuleName.ts
@@ -4491,7 +4488,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/nounusedTypeParameterCo
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/null.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/nullKeyword.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/nullableFunctionError.ts
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/numberAsInLHS.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/numberAssignableToEnumInsideUnion.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/numberOnLeftSideOfInExpression.ts
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/numberToString.ts
@@ -9938,8 +9934,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/G
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericsInTypeContexts1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericsInTypeContexts2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericsInVariableDeclaration1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity10.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity11.ts
 Cannot assign to this expression
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity15.ts
@@ -9948,8 +9942,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 Cannot assign to this expression
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity20.ts
 Cannot assign to this expression
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity5.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity6.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserObjectCreation1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration2.ts
@@ -10103,7 +10095,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/R
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parserNotHexLiteral1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression4.ts
@@ -10144,7 +10135,6 @@ A 'return' statement can only be used within a function body.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement4.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDoStatement1.d.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserDoStatement2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement1.d.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement10.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement11.ts
@@ -10187,7 +10177,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/S
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode14.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode15-negative.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode15.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode16.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode3-negative.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode3.ts
@@ -10276,7 +10265,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/p
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserUnicode3.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserUnicodeWhitespaceCharacter1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserUsingConstructorAsIdentifier.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserVoidExpression1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parservoidInQualifiedName0.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parservoidInQualifiedName2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName10.ts
@@ -10464,18 +10452,12 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromProper
 tasks/coverage/typescript/tests/cases/conformance/salsa/varRequireFromTypescript.ts
 Unexpected estree file content error: 1 != 2
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript3/scannerES3NumericLiteral1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript3/scannerES3NumericLiteral5.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript3/scannerES3NumericLiteral7.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scanner10.1.1-8gs.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerAdditiveExpression1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerClass2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerEnum1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerImportDeclaration1.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNonAsciiHorizontalWhitespace.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral1.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral5.ts
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral7.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.2_A1.5_T2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.3_A1.1_T2.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerS7.6_A4.2_T1.ts

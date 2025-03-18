@@ -510,6 +510,7 @@ function deserializeExpressionStatement(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     expression: deserializeExpression(pos + 8),
+    directive: null,
   };
 }
 

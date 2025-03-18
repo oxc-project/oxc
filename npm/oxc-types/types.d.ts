@@ -384,6 +384,7 @@ export interface EmptyStatement extends Span {
 export interface ExpressionStatement extends Span {
   type: 'ExpressionStatement';
   expression: Expression;
+  directive: string | null;
 }
 
 export interface IfStatement extends Span {

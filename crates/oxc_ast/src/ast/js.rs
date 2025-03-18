@@ -1210,7 +1210,7 @@ pub struct EmptyStatement {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-// #[estree(add_fields(directive = Null),)]
+#[estree(add_fields(directive = ExpressionStatementDirective))] // Only in TS AST
 pub struct ExpressionStatement<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
