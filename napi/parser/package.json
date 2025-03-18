@@ -73,7 +73,7 @@
     ],
     "wasm": {
       "browser": {
-        "fs": true
+        "fs": false
       }
     },
     "dtsHeaderFile": "header.js"
