@@ -9,12 +9,17 @@ on:
       - main
     paths:
       - "dprint.json"
+      - ".github/workflows/dprint.yml"
 
 jobs:
   cache:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: taiki-e/install-action@2c41309d51ede152b6f2ee6bf3b71e6dc9a8b7df # v2.49.27
+        with:
+          tool: dprint
 
       - name: Save dprint plugin cache
         uses: actions/cache/save@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
