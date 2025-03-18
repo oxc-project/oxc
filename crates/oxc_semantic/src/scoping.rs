@@ -44,6 +44,11 @@ pub struct Scoping {
 
     pub(crate) references: IndexVec<ReferenceId, Reference>,
 
+    /// Symbols that are used as the name property of a function.
+    function_names: FxHashSet<SymbolId>,
+    /// Symbols that are used as the name property of a class.
+    class_names: FxHashSet<SymbolId>,
+
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
@@ -77,6 +82,8 @@ impl Default for Scoping {
             symbol_declarations: IndexVec::new(),
             symbol_redeclarations: IndexVec::new(),
             references: IndexVec::new(),
+            function_names: FxHashSet::default(),
+            class_names: FxHashSet::default(),
             no_side_effects: FxHashSet::default(),
             scope_parent_ids: IndexVec::new(),
             scope_build_child_ids: false,
@@ -783,5 +790,38 @@ impl Scoping {
                 });
             }
         });
+    }
+
+    pub fn function_name_symbols(&self) -> &FxHashSet<SymbolId> {
+        &self.function_names
+    }
+
+    pub fn class_name_symbols(&self) -> &FxHashSet<SymbolId> {
+        &self.class_names
+    }
+
+    pub(crate) fn set_name_symbols(
+        &mut self,
+        function_symbols: FxHashSet<SymbolId>,
+        function_references: FxHashSet<ReferenceId>,
+        class_symbols: FxHashSet<SymbolId>,
+        class_references: FxHashSet<ReferenceId>,
+    ) {
+        self.function_names = function_symbols
+            .into_iter()
+            .chain(
+                function_references
+                    .into_iter()
+                    .filter_map(|ref_id| self.references[ref_id].symbol_id()),
+            )
+            .collect();
+        self.class_names = class_symbols
+            .into_iter()
+            .chain(
+                class_references
+                    .into_iter()
+                    .filter_map(|ref_id| self.references[ref_id].symbol_id()),
+            )
+            .collect();
     }
 }

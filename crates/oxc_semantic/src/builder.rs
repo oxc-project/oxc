@@ -6,7 +6,7 @@ use std::{
 };
 
 use oxc_data_structures::stack::Stack;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
@@ -84,6 +84,14 @@ pub struct SemanticBuilder<'a> {
     // builders
     pub(crate) nodes: AstNodes<'a>,
     pub(crate) scoping: Scoping,
+    /// Symbols that are used as the name property of a function.
+    pub(crate) function_name_symbols: FxHashSet<SymbolId>,
+    /// Symbols that are used as the name property of a class.
+    pub(crate) class_name_symbols: FxHashSet<SymbolId>,
+    /// References that are used as the name property of a function.
+    pub(crate) function_name_references: FxHashSet<ReferenceId>,
+    /// References that are used as the name property of a class.
+    pub(crate) class_name_references: FxHashSet<ReferenceId>,
 
     pub(crate) unresolved_references: UnresolvedReferencesStack<'a>,
 
@@ -135,6 +143,10 @@ impl<'a> SemanticBuilder<'a> {
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
             scoping,
+            function_name_symbols: FxHashSet::default(),
+            function_name_references: FxHashSet::default(),
+            class_name_symbols: FxHashSet::default(),
+            class_name_references: FxHashSet::default(),
             unresolved_references: UnresolvedReferencesStack::new(),
             unused_labels: UnusedLabels::default(),
             build_jsdoc: false,
@@ -278,6 +290,12 @@ impl<'a> SemanticBuilder<'a> {
         }
         self.scoping.set_root_unresolved_references(
             self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
+        );
+        self.scoping.set_name_symbols(
+            self.function_name_symbols,
+            self.function_name_references,
+            self.class_name_symbols,
+            self.class_name_references,
         );
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
@@ -885,6 +903,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
         });
         /* cfg */
+
+        expr.bind(self);
 
         self.leave_node(kind);
     }
@@ -1950,6 +1970,9 @@ impl<'a> SemanticBuilder<'a> {
                 decl.bind(self);
                 self.make_all_namespaces_valuelike();
             }
+            AstKind::AssignmentPattern(assign_pattern) => {
+                assign_pattern.bind(self);
+            }
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 if func.is_declaration() {
@@ -2085,6 +2108,18 @@ impl<'a> SemanticBuilder<'a> {
 
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                assign_target.bind(self);
+            }
+            AstKind::ObjectAssignmentTarget(assignment_target) => {
+                for target in &assignment_target.properties {
+                    if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id_target) =
+                        target
+                    {
+                        id_target.bind(self);
+                    }
+                }
+            }
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
