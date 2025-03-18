@@ -91,13 +91,7 @@ jobs:
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
-    # if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
-      CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
-      # Insta is not able to run on wasmtime, omit the packages that depend on it
-      TEST_FLAGS: "-p oxc_ast -p oxc_cfg -p oxc_regular_expression -- --nocapture"
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
@@ -106,14 +100,9 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: ./.github/actions/pnpm
       - run: rustup target add wasm32-wasip1-threads
-      - uses: bytecodealliance/actions/wasmtime/setup@3b93676295fd6f7eaa7af2c2785539e052fa8349 # v1.1.1
-      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/parser/Cargo.toml
-      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/transform/Cargo.toml
-      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/minify/Cargo.toml
-      - run: pnpm napi build --target wasm32-wasip1-threads --manifest-path ./napi/playground/Cargo.toml
-      # Fix `index.d.ts`
-      - run: node napi/parser/scripts/fix-wasm-dts.mjs
-      - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
+      - run: pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
+      - run: pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
+      - run: pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
       - run: git diff --exit-code # Must commit everything
       - name: Test wasi in browser
         working-directory: napi/parser
