@@ -28,7 +28,7 @@ pub struct PreferHooksInOrder;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Ensures that hooks have the same order that they are called in.
+    /// Ensures that hooks are in the order that they are called in.
     ///
     /// ### Why is this bad?
     ///
