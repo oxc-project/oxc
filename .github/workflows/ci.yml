@@ -94,23 +94,63 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: ./.github/actions/pnpm
-      - run: rustup target add wasm32-wasip1-threads
-      - run: pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
-      - run: pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
-      - run: pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
-      - run: git diff --exit-code # Must commit everything
+        if: steps.filter.outputs.src == 'true'
+      - name: Build
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/parser
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/transform
+          pnpm napi build --target wasm32-wasip1-threads --cwd ./napi/minify
+          git diff --exit-code # Must commit everything
       - name: Test wasi in browser
+        if: steps.filter.outputs.src == 'true'
         working-directory: napi/parser
         run: |
+          rm -rf *.wasm
           pnpm exec playwright install chromium
           pnpm run build-wasi
           pnpm run build-npm-dir
           pnpm run test-browser
+
+  test-napi:
+    name: Test NAPI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true'
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi
+      - uses: ./.github/actions/pnpm
+        if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.src == 'true'
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm run build
+          pnpm run test
+          pnpm --filter e2e run test
+          git diff --exit-code # Must commit everything
 
   typos:
     name: Spell Check
@@ -266,30 +306,3 @@ jobs:
         with:
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
           path: ~/.cache/dprint
-
-  napi:
-    name: Test NAPI
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
-        id: filter
-        with:
-          filters: |
-            src:
-              - '!crates/oxc_linter/**'
-      - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true'
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-        if: steps.filter.outputs.src == 'true'
-        with:
-          cache-key: napi
-      - uses: ./.github/actions/pnpm
-        if: steps.filter.outputs.src == 'true'
-      - if: steps.filter.outputs.src == 'true'
-        run: |
-          rustup target add wasm32-wasip1-threads
-          pnpm run build
-          pnpm run test
-          pnpm --filter e2e run test
-          git diff --exit-code # Must commit everything
