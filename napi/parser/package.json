@@ -2,7 +2,7 @@
   "name": "oxc-parser",
   "version": "0.58.1",
   "main": "index.js",
-  "browser": "browser.js",
+  "browser": "wasm.mjs",
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
     "build": "pnpm run build-dev --release",
@@ -32,7 +32,9 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "browser.js",
+    "wrap.cjs",
+    "wrap.mjs",
+    "wasm.mjs",
     "bindings.js",
     "deserialize-js.js",
     "deserialize-ts.js"
