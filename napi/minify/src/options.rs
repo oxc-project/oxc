@@ -23,6 +23,9 @@ pub struct CompressOptions {
     )]
     pub target: Option<String>,
 
+    /// Keep function / class names.
+    pub keep_names: Option<CompressOptionsKeepNames>,
+
     /// Pass true to discard calls to `console.*`.
     ///
     /// @default false
@@ -36,7 +39,7 @@ pub struct CompressOptions {
 
 impl Default for CompressOptions {
     fn default() -> Self {
-        Self { target: None, drop_console: None, drop_debugger: Some(true) }
+        Self { target: None, keep_names: None, drop_console: None, drop_debugger: Some(true) }
     }
 }
 
@@ -51,9 +54,33 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
                 .map(|s| ESTarget::from_str(s))
                 .transpose()?
                 .unwrap_or(default.target),
+            keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             drop_console: o.drop_console.unwrap_or(default.drop_console),
             drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
         })
+    }
+}
+
+#[napi(object)]
+pub struct CompressOptionsKeepNames {
+    /// Keep function names so that `Function.prototype.name` is preserved.
+    ///
+    /// This does not guarantee that the `undefined` name is preserved.
+    ///
+    /// @default false
+    pub function: bool,
+
+    /// Keep class names so that `Class.prototype.name` is preserved.
+    ///
+    /// This does not guarantee that the `undefined` name is preserved.
+    ///
+    /// @default false
+    pub class: bool,
+}
+
+impl From<&CompressOptionsKeepNames> for oxc_minifier::CompressOptionsKeepNames {
+    fn from(o: &CompressOptionsKeepNames) -> Self {
+        oxc_minifier::CompressOptionsKeepNames { function: o.function, class: o.class }
     }
 }
 

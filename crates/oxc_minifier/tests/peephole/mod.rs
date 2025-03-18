@@ -4,7 +4,7 @@ mod esbuild;
 use oxc_minifier::CompressOptions;
 
 fn test(source_text: &str, expected: &str) {
-    let options = CompressOptions::safest();
+    let options = CompressOptions { drop_debugger: false, ..CompressOptions::default() };
     crate::test(source_text, expected, options);
 }
 

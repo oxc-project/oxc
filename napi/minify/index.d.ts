@@ -23,6 +23,8 @@ export interface CompressOptions {
    * @default 'esnext'
    */
   target?: 'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'
+  /** Keep function / class names. */
+  keepNames?: CompressOptionsKeepNames
   /**
    * Pass true to discard calls to `console.*`.
    *
@@ -35,6 +37,25 @@ export interface CompressOptions {
    * @default true
    */
   dropDebugger?: boolean
+}
+
+export interface CompressOptionsKeepNames {
+  /**
+   * Keep function names so that `Function.prototype.name` is preserved.
+   *
+   * This does not guarantee that the `undefined` name is preserved.
+   *
+   * @default false
+   */
+  function: boolean
+  /**
+   * Keep class names so that `Class.prototype.name` is preserved.
+   *
+   * This does not guarantee that the `undefined` name is preserved.
+   *
+   * @default false
+   */
+  class: boolean
 }
 
 export interface MangleOptions {

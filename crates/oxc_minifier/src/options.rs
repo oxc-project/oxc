@@ -12,6 +12,9 @@ pub struct CompressOptions {
     /// Default `ESTarget::ESNext`
     pub target: ESTarget,
 
+    /// Keep function / class names.
+    pub keep_names: CompressOptionsKeepNames,
+
     /// Remove `debugger;` statements.
     ///
     /// Default `true`
@@ -32,10 +35,55 @@ impl Default for CompressOptions {
 
 impl CompressOptions {
     pub fn smallest() -> Self {
-        Self { target: ESTarget::ESNext, drop_debugger: true, drop_console: true }
+        Self {
+            target: ESTarget::ESNext,
+            keep_names: CompressOptionsKeepNames::all_false(),
+            drop_debugger: true,
+            drop_console: true,
+        }
     }
 
     pub fn safest() -> Self {
-        Self { target: ESTarget::ESNext, drop_debugger: false, drop_console: false }
+        Self {
+            target: ESTarget::ESNext,
+            keep_names: CompressOptionsKeepNames::all_true(),
+            drop_debugger: false,
+            drop_console: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct CompressOptionsKeepNames {
+    /// Keep function names so that `Function.prototype.name` is preserved.
+    ///
+    /// This does not guarantee that the `undefined` name is preserved.
+    ///
+    /// Default `false`
+    pub function: bool,
+
+    /// Keep class names so that `Class.prototype.name` is preserved.
+    ///
+    /// This does not guarantee that the `undefined` name is preserved.
+    ///
+    /// Default `false`
+    pub class: bool,
+}
+
+impl CompressOptionsKeepNames {
+    pub fn all_false() -> Self {
+        Self { function: false, class: false }
+    }
+
+    pub fn all_true() -> Self {
+        Self { function: true, class: true }
+    }
+
+    pub fn function_only() -> Self {
+        Self { function: true, class: false }
+    }
+
+    pub fn class_only() -> Self {
+        Self { function: false, class: true }
     }
 }

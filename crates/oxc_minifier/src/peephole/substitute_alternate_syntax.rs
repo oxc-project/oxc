@@ -971,6 +971,10 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This compression is not safe if the code relies on `Function::name`.
     fn try_remove_name_from_functions(&mut self, func: &mut Function<'a>, ctx: Ctx<'a, '_>) {
+        if self.keep_names.function {
+            return;
+        }
+
         if func.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
             func.id = None;
             self.mark_current_function_as_changed();
@@ -981,8 +985,12 @@ impl<'a> PeepholeOptimizations {
     ///
     /// e.g. `var a = class C {}` -> `var a = class {}`
     ///
-    /// This compression is not safe if the code relies on `Function::name`.
+    /// This compression is not safe if the code relies on `Class::name`.
     fn try_remove_name_from_classes(&mut self, class: &mut Class<'a>, ctx: Ctx<'a, '_>) {
+        if self.keep_names.class {
+            return;
+        }
+
         if class.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
             class.id = None;
             self.mark_current_function_as_changed();
@@ -1206,8 +1214,15 @@ mod test {
 
     use crate::{
         CompressOptions,
+        options::CompressOptionsKeepNames,
         tester::{run, test, test_same},
     };
+
+    fn test_same_keep_names(keep_names: CompressOptionsKeepNames, code: &str) {
+        let result = run(code, Some(CompressOptions { keep_names, ..CompressOptions::smallest() }));
+        let expected = run(code, None);
+        assert_eq!(result, expected, "\nfor source\n{code}\ngot\n{result}");
+    }
 
     #[test]
     fn test_fold_return_result() {
@@ -1858,8 +1873,10 @@ mod test {
     fn test_remove_name_from_expressions() {
         test("var a = function f() {}", "var a = function () {}");
         test_same("var a = function f() { return f; }");
+        test_same_keep_names(CompressOptionsKeepNames::function_only(), "var a = function f() {}");
         test("var a = class C {}", "var a = class {}");
         test_same("var a = class C { foo() { return C } }");
+        test_same_keep_names(CompressOptionsKeepNames::class_only(), "var a = class C {}");
     }
 
     #[test]

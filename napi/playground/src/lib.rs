@@ -266,10 +266,10 @@ impl Oxc {
                     CompressOptions {
                         drop_console: compress_options.drop_console,
                         drop_debugger: compress_options.drop_debugger,
-                        ..CompressOptions::safest()
+                        ..CompressOptions::default()
                     }
                 } else {
-                    CompressOptions::safest()
+                    CompressOptions::default()
                 }),
             };
             Minifier::new(options).build(&allocator, &mut program).scoping
