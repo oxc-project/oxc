@@ -104,6 +104,12 @@
           "type": "string",
           "scope": "window",
           "description": "Path to Oxc language server binary."
+        },
+        "oxc.flags": {
+          "type": "object",
+          "scope": "window",
+          "default": {},
+          "description": "Oxc options that would normally be passed when executing on the command line."
         }
       }
     },

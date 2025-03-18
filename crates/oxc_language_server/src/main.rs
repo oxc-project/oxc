@@ -543,15 +543,15 @@ impl Backend {
         let Ok(root_path) = uri.to_file_path() else {
             return None;
         };
-        let mut config_path = None;
-        let config = root_path.join(self.options.lock().await.get_config_path().unwrap());
-        if config.exists() {
-            config_path = Some(config);
-        }
+        let relative_config_path = self.options.lock().await.get_config_path();
+        let oxlintrc = if relative_config_path.is_some() {
+            let config = root_path.join(relative_config_path.unwrap());
+            config.try_exists().expect("Invalid config file path");
+            Oxlintrc::from_file(&config).expect("Failed to initialize oxlintrc config")
+        } else {
+            Oxlintrc::default()
+        };
 
-        let config_path = config_path?;
-        let oxlintrc = Oxlintrc::from_file(&config_path)
-            .expect("should have initialized linter with new options");
         let config_store = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc.clone())
             .expect("failed to build config")
             .build()
