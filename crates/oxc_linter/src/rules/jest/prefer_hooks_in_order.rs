@@ -28,6 +28,10 @@ pub struct PreferHooksInOrder;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Ensures that hooks have the same order that they are called in.
+    ///
+    /// ### Why is this bad?
+    ///
     /// While hooks can be setup in any order, they're always called by `jest` in this
     /// specific order:
     /// 1. `beforeAll`
@@ -38,95 +42,91 @@ declare_oxc_lint!(
     /// This rule aims to make that more obvious by enforcing grouped hooks be setup in
     /// that order within tests.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// describe('foo', () => {
-    ///     beforeEach(() => {
-    ///         seedMyDatabase();
-    ///     });
-    ///     beforeAll(() => {
-    ///         createMyDatabase();
-    ///     });
-    ///     it('accepts this input', () => {
+    ///   beforeEach(() => {
+    ///     seedMyDatabase();
+    ///   });
+    ///   beforeAll(() => {
+    ///     createMyDatabase();
+    ///   });
+    ///   it('accepts this input', () => {
+    ///     // ...
+    ///   });
+    ///   it('returns that value', () => {
+    ///     // ...
+    ///   });
+    ///   describe('when the database has specific values', () => {
+    ///       const specificValue = '...';
+    ///       beforeEach(() => {
+    ///         seedMyDatabase(specificValue);
+    ///       });
+    ///       it('accepts that input', () => {
     ///         // ...
-    ///     });
-    ///     it('returns that value', () => {
+    ///       });
+    ///       it('throws an error', () => {
     ///         // ...
-    ///     });
-    ///     describe('when the database has specific values', () => {
-    ///         const specificValue = '...';
-    ///         beforeEach(() => {
-    ///             seedMyDatabase(specificValue);
-    ///         });
-    ///
-    ///         it('accepts that input', () => {
-    ///             // ...
-    ///         });
-    ///         it('throws an error', () => {
-    ///             // ...
-    ///         });
-    ///         afterEach(() => {
-    ///             clearLogger();
-    ///         });
-    ///         beforeEach(() => {
-    ///             mockLogger();
-    ///         });
-    ///         it('logs a message', () => {
-    ///             // ...
-    ///         });
-    ///     });
-    ///     afterAll(() => {
-    ///         removeMyDatabase();
-    ///     });
+    ///       });
+    ///       afterEach(() => {
+    ///         clearLogger();
+    ///       });
+    ///       beforeEach(() => {
+    ///         mockLogger();
+    ///       });
+    ///       it('logs a message', () => {
+    ///          // ...
+    ///       });
+    ///   });
+    ///   afterAll(() => {
+    ///     removeMyDatabase();
+    ///   });
     /// });
     /// ```
     ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// // valid
     /// describe('foo', () => {
-    ///     beforeAll(() => {
-    ///         createMyDatabase();
-    ///     });
-    ///
-    ///     beforeEach(() => {
-    ///         seedMyDatabase();
-    ///     });
-    ///
-    ///     it('accepts this input', () => {
+    ///   beforeAll(() => {
+    ///     createMyDatabase();
+    ///   });
+    ///   beforeEach(() => {
+    ///     seedMyDatabase();
+    ///   });
+    ///   it('accepts this input', () => {
+    ///     // ...
+    ///   });
+    ///   it('returns that value', () => {
+    ///     // ...
+    ///   });
+    ///   describe('when the database has specific values', () => {
+    ///       const specificValue = '...';
+    ///       beforeEach(() => {
+    ///         seedMyDatabase(specificValue);
+    ///       });
+    ///       it('accepts that input', () => {
     ///         // ...
-    ///     });
-    ///     it('returns that value', () => {
+    ///       });
+    ///       it('throws an error', () => {
     ///         // ...
-    ///     });
-    ///     describe('when the database has specific values', () => {
-    ///         const specificValue = '...';
-    ///         beforeEach(() => {
-    ///             seedMyDatabase(specificValue);
-    ///         });
-    ///         it('accepts that input', () => {
-    ///             // ...
-    ///         });
-    ///         it('throws an error', () => {
-    ///             // ...
-    ///         });
-    ///         beforeEach(() => {
-    ///             mockLogger();
-    ///         });
-    ///         afterEach(() => {
-    ///             clearLogger();
-    ///         });
-    ///         it('logs a message', () => {
-    ///             // ...
-    ///         });
-    ///     });
-    ///     afterAll(() => {
-    ///         removeMyDatabase();
-    ///     });
+    ///       });
+    ///       beforeEach(() => {
+    ///         mockLogger();
+    ///       });
+    ///       afterEach(() => {
+    ///         clearLogger();
+    ///       });
+    ///       it('logs a message', () => {
+    ///         // ...
+    ///       });
+    ///   });
+    ///   afterAll(() => {
+    ///     removeMyDatabase();
+    ///   });
     /// });
     /// ```
-    ///
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/prefer-hooks-in-order.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
@@ -137,6 +137,7 @@ declare_oxc_lint!(
     ///      "vitest/prefer-hooks-in-order": "error"
     ///   }
     /// }
+    /// ```
     PreferHooksInOrder,
     jest,
     style,
