@@ -8,7 +8,8 @@
     "build": "pnpm run build-dev --release",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir .",
-    "test": "vitest --typecheck run ./test/ && tsc",
+    "test": "pnpm run test-node && tsc",
+    "test-node": "vitest --dir test",
     "test-browser": "vitest -c vitest.config.browser.mts",
     "bench": "vitest bench --run ./bench.bench.mjs"
   },
@@ -52,7 +53,7 @@
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
     "@napi-rs/wasm-runtime": "^0.2.7",
-    "@vitest/browser": "3.0.7",
+    "@vitest/browser": "3.0.8",
     "playwright": "^1.51.0",
     "vitest": "catalog:"
   },
