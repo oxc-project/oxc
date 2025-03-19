@@ -3361,11 +3361,7 @@ function deserializeJSXElementName(pos) {
       return deserializeBoxJSXIdentifier(pos + 8);
     case 1:
       const ident = deserializeBoxIdentifierReference(pos + 8);
-      ident.type = 'JSXIdentifier';
-      delete ident.decorators;
-      delete ident.optional;
-      delete ident.typeAnnotation;
-      return ident;
+      return { type: 'JSXIdentifier', start: ident.start, end: ident.end, name: ident.name };
     case 2:
       return deserializeBoxJSXNamespacedName(pos + 8);
     case 3:
@@ -3382,11 +3378,7 @@ function deserializeJSXMemberExpressionObject(pos) {
   switch (uint8[pos]) {
     case 0:
       const ident = deserializeBoxIdentifierReference(pos + 8);
-      ident.type = 'JSXIdentifier';
-      delete ident.decorators;
-      delete ident.optional;
-      delete ident.typeAnnotation;
-      return ident;
+      return { type: 'JSXIdentifier', start: ident.start, end: ident.end, name: ident.name };
     case 1:
       return deserializeBoxJSXMemberExpression(pos + 8);
     case 2:
