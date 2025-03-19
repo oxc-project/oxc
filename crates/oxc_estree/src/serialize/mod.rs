@@ -8,6 +8,7 @@ mod config;
 mod formatter;
 mod primitives;
 mod sequences;
+mod special;
 mod strings;
 mod structs;
 use config::{Config, ConfigJS, ConfigTS};
@@ -16,6 +17,7 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use sequences::SequenceSerializer;
+pub use special::EmptyArray;
 pub use strings::JsonSafeString;
 pub use structs::{FlatStructSerializer, StructSerializer};
 

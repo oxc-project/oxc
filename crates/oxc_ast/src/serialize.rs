@@ -2,8 +2,8 @@ use cow_utils::CowUtils;
 
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactJSSerializer, CompactTSSerializer, ESTree, JsonSafeString, PrettyJSSerializer,
-    PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
+    CompactJSSerializer, CompactTSSerializer, ESTree, EmptyArray, JsonSafeString,
+    PrettyJSSerializer, PrettyTSSerializer, SequenceSerializer, Serializer, StructSerializer,
 };
 
 use crate::ast::*;
@@ -157,7 +157,7 @@ pub struct TsEmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for TsEmptyArray<'_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        EmptyArray.serialize(serializer);
     }
 }
 
@@ -378,7 +378,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
         if let Some(specifiers) = &self.0.specifiers {
             specifiers.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray.serialize(serializer);
         }
     }
 }
@@ -493,7 +493,7 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray.serialize(serializer);
         }
     }
 }
@@ -513,7 +513,7 @@ impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray.serialize(serializer);
         }
     }
 }
@@ -533,7 +533,7 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray.serialize(serializer);
         }
     }
 }
@@ -553,7 +553,7 @@ impl ESTree for ClassImplements<'_, '_> {
         if let Some(implements) = &self.0.implements {
             implements.serialize(serializer);
         } else {
-            [(); 0].serialize(serializer);
+            EmptyArray.serialize(serializer);
         }
     }
 }
@@ -606,7 +606,7 @@ pub struct JSXOpeningFragmentAttributes<'b>(#[expect(dead_code)] pub &'b JSXOpen
 
 impl ESTree for JSXOpeningFragmentAttributes<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        [(); 0].serialize(serializer);
+        EmptyArray.serialize(serializer);
     }
 }
 
