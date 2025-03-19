@@ -24,7 +24,7 @@ oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
-oxc_regular_expression = { workspace = true }
+oxc_regular_expression = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
@@ -43,5 +43,8 @@ oxc_ast_visit = { workspace = true, features = ["serialize"] }
 pico-args = { workspace = true }
 
 [features]
+default = ["regular_expression"]
+# Parse regex
+regular_expression = ["oxc_regular_expression"]
 # Expose Lexer for benchmarks
 benchmarking = []

@@ -118,7 +118,7 @@ oxc_isolated_declarations = { version = "0.60.0", path = "crates/oxc_isolated_de
 oxc_mangler = { version = "0.60.0", path = "crates/oxc_mangler" }
 oxc_minifier = { version = "0.60.0", path = "crates/oxc_minifier" }
 oxc_napi = { version = "0.60.0", path = "crates/oxc_napi" }
-oxc_parser = { version = "0.60.0", path = "crates/oxc_parser" }
+oxc_parser = { version = "0.60.0", path = "crates/oxc_parser", features = ["regular_expression"] }
 oxc_parser_napi = { version = "0.60.0", path = "napi/parser" }
 oxc_regular_expression = { version = "0.60.0", path = "crates/oxc_regular_expression" }
 oxc_semantic = { version = "0.60.0", path = "crates/oxc_semantic" }

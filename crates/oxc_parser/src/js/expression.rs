@@ -2,6 +2,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+#[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
@@ -342,18 +343,31 @@ impl<'a> ParserImpl<'a> {
         let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
         let raw = self.cur_src();
         self.bump_any();
+
         // Parse pattern if options is enabled and also flags are valid
-        let pattern = (self.options.parse_regular_expression && !flags_error)
-            .then_some(())
-            .map(|()| {
-                self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
-            })
-            .map_or_else(
-                || RegExpPattern::Raw(pattern_text),
-                |pat| {
-                    pat.map_or_else(|| RegExpPattern::Invalid(pattern_text), RegExpPattern::Pattern)
-                },
-            );
+        #[cfg(feature = "regular_expression")]
+        let pattern = {
+            (self.options.parse_regular_expression && !flags_error)
+                .then_some(())
+                .map(|()| {
+                    self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
+                })
+                .map_or_else(
+                    || RegExpPattern::Raw(pattern_text),
+                    |pat| {
+                        pat.map_or_else(
+                            || RegExpPattern::Invalid(pattern_text),
+                            RegExpPattern::Pattern,
+                        )
+                    },
+                )
+        };
+        #[cfg(not(feature = "regular_expression"))]
+        let pattern = {
+            let _ = (flags_start, flags_text, flags_error);
+            RegExpPattern::Raw(pattern_text)
+        };
+
         Ok(self.ast.reg_exp_literal(
             self.end_span(span),
             RegExp { pattern, flags },
@@ -361,6 +375,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
+    #[cfg(feature = "regular_expression")]
     fn parse_regex_pattern(
         &mut self,
         pattern_span_offset: u32,
