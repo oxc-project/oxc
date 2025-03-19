@@ -72,7 +72,7 @@ oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_linter = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
-oxc_parser = { workspace = true, features = ["benchmarking"], optional = true }
+oxc_parser = { workspace = true, features = ["benchmarking", "regex"], optional = true }
 oxc_prettier = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true, optional = true, features = ["schemars", "serialize"] }

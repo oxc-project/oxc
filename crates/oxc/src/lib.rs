@@ -39,6 +39,7 @@ pub mod parser {
     pub use oxc_parser::*;
 }
 
+#[cfg(feature = "regex")]
 pub mod regular_expression {
     #[doc(inline)]
     pub use oxc_regular_expression::*;
