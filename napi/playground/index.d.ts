@@ -60,6 +60,7 @@ export interface OxcError {
   message: string
   labels: Array<ErrorLabel>
   helpMessage?: string
+  codeframe?: string
 }
 
 export interface OxcLinterOptions {

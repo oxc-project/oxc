@@ -62,7 +62,7 @@ impl Oxc {
 
     #[napi]
     pub fn get_diagnostics(&self) -> Vec<OxcError> {
-        self.diagnostics.iter().cloned().map(OxcError::from).collect()
+        self.diagnostics.iter().map(OxcError::from).collect()
     }
 
     #[napi]

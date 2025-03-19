@@ -91,12 +91,14 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;
-    let mut errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
+    let mut diagnostics = ret.errors;
 
     if options.show_semantic_errors == Some(true) {
         let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
-        errors.extend(semantic_ret.errors.into_iter().map(OxcError::from));
+        diagnostics.extend(semantic_ret.errors);
     }
+
+    let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
 
     let comments =
         convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);

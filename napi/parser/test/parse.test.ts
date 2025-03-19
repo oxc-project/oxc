@@ -375,6 +375,15 @@ describe('UTF-16 span', () => {
     expect(ret.errors).toMatchInlineSnapshot(`
       [
         {
+          "codeframe": "
+        x Expected a semicolon or an implicit semicolon after a statement, but found
+        | none
+         ,-[test.js:1:12]
+       1 | "🤨";asdf asdf
+         :          ^
+         \`----
+        help: Try insert a semicolon here
+      ",
           "helpMessage": "Try insert a semicolon here",
           "labels": [
             {
@@ -396,6 +405,7 @@ describe('error', () => {
   it('returns structured error', () => {
     const ret = parseSync('test.js', code);
     expect(ret.errors.length).toBe(1);
+    delete ret.errors[0].codeframe;
     expect(ret.errors[0]).toStrictEqual({
       'helpMessage': 'Try insert a semicolon here',
       'labels': [

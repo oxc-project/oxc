@@ -701,7 +701,7 @@ pub fn transform(
         Ok(compiler) => compiler,
         Err(errors) => {
             return TransformResult {
-                errors: errors.into_iter().map(OxcError::from).collect(),
+                errors: OxcError::from_diagnostics(&filename, &source_text, errors),
                 ..Default::default()
             };
         }
@@ -715,7 +715,7 @@ pub fn transform(
         declaration: compiler.declaration,
         declaration_map: compiler.declaration_map,
         helpers_used: compiler.helpers_used,
-        errors: compiler.errors.into_iter().map(OxcError::from).collect(),
+        errors: OxcError::from_diagnostics(&filename, &source_text, compiler.errors),
     }
 }
 
@@ -818,6 +818,6 @@ pub fn module_runner_transform(
         map: map.map(Into::into),
         deps: deps.into_iter().collect::<Vec<String>>(),
         dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
-        errors: parser_ret.errors.into_iter().map(OxcError::from).collect(),
+        errors: OxcError::from_diagnostics(&filename, &source_text, parser_ret.errors),
     }
 }
