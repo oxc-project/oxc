@@ -14,7 +14,7 @@ use assert_unchecked::assert_unchecked;
 ///
 /// # Example
 /// ```
-/// # use oxc_data_structures::CodeBuffer;
+/// # use oxc_data_structures::code_buffer::CodeBuffer;
 /// let mut code = CodeBuffer::new();
 ///
 /// // mock settings
@@ -42,7 +42,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// // use `code` to build new source text
@@ -92,7 +92,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// assert!(code.is_empty());
     ///
@@ -115,7 +115,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::default();
     /// code.reserve(10);
     /// ```
@@ -131,7 +131,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     ///
@@ -160,7 +160,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     ///
@@ -194,7 +194,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_ascii_byte(b'f');
     /// code.print_ascii_byte(b'o');
@@ -234,7 +234,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// // Safe: 'a' is a valid ASCII character. Its UTF-8 representation only
     /// // requires a single byte.
@@ -295,7 +295,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// code.print_char('f');
@@ -317,7 +317,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("function main() { console.log('Hello, world!') }");
     /// ```
@@ -333,7 +333,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// code.print_ascii_bytes([b'f', b'o', b'o']);
@@ -366,7 +366,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// // SAFETY: All bytes in this slice are ASCII
@@ -396,7 +396,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     ///
     /// // SAFETY: All values yielded by this iterator are ASCII bytes
@@ -462,7 +462,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("foo");
     /// assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
@@ -476,7 +476,7 @@ impl CodeBuffer {
     ///
     /// # Example
     /// ```
-    /// # use oxc_data_structures::CodeBuffer;
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
     /// let mut code = CodeBuffer::new();
     /// code.print_str("console.log('foo');");
     ///

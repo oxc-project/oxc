@@ -18,7 +18,7 @@ workspace = true
 
 [lib]
 test = true
-doctest = false
+doctest = true
 
 [dependencies]
 assert-unchecked = { workspace = true, optional = true }
