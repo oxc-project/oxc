@@ -45,6 +45,7 @@ oxc_transformer = { workspace = true, optional = true }
 
 [features]
 default = ["regular_expression"]
+
 full = [
   "codegen",
   "mangler",
