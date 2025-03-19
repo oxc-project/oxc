@@ -56,8 +56,6 @@ full = [
   "regular_expression",
 ]
 
-regular_expression = ["oxc_regular_expression", "oxc_parser/regular_expression"]
-
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
 minifier = ["oxc_mangler", "oxc_minifier"]
@@ -66,6 +64,7 @@ mangler = ["oxc_mangler"]
 cfg = ["oxc_cfg"]
 isolated_declarations = ["oxc_isolated_declarations"]
 ast_visit = ["oxc_ast_visit"]
+regular_expression = ["oxc_regular_expression", "oxc_parser/regular_expression"]
 
 serialize = [
   "oxc_allocator/from_raw_parts",
