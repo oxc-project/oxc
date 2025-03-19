@@ -23,14 +23,13 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true }
-oxc_data_structures = { workspace = true, features = ["stack"] }
+oxc_data_structures = { workspace = true, features = ["assert_unchecked", "stack"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
-assert-unchecked = { workspace = true }
 itertools = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }

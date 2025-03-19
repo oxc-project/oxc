@@ -158,7 +158,6 @@ oxc_sourcemap = "3"
 
 #
 allocator-api2 = "0.2.21"
-assert-unchecked = "0.1.2"
 base64 = "0.22.1"
 bitflags = "2.8.0"
 bpaf = "0.9.16"

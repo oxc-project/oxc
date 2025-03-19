@@ -2,7 +2,7 @@
 
 use std::iter;
 
-use assert_unchecked::assert_unchecked;
+use crate::assert_unchecked;
 
 /// A string builder for constructing source code.
 ///

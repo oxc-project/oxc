@@ -63,12 +63,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
-name = "assert-unchecked"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7330592adf847ee2e3513587b4db2db410a0d751378654e7e993d9adcbe5c795"
-
-[[package]]
 name = "async-trait"
 version = "0.1.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1548,9 +1542,9 @@ name = "oxc_allocator"
 version = "0.60.0"
 dependencies = [
  "allocator-api2",
- "assert-unchecked",
  "bumpalo",
  "hashbrown 0.15.2",
+ "oxc_data_structures",
  "oxc_estree",
  "rustc-hash",
  "serde",
@@ -1718,7 +1712,6 @@ dependencies = [
 name = "oxc_data_structures"
 version = "0.60.0"
 dependencies = [
- "assert-unchecked",
  "ropey",
 ]
 
@@ -1953,7 +1946,6 @@ dependencies = [
 name = "oxc_parser"
 version = "0.60.0"
 dependencies = [
- "assert-unchecked",
  "bitflags 2.9.0",
  "cow-utils",
  "memchr",
@@ -1962,6 +1954,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
  "oxc_regular_expression",
@@ -2073,7 +2066,6 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.60.0"
 dependencies = [
- "assert-unchecked",
  "insta",
  "itertools",
  "oxc_allocator",
@@ -2128,12 +2120,12 @@ dependencies = [
 name = "oxc_syntax"
 version = "0.60.0"
 dependencies = [
- "assert-unchecked",
  "bitflags 2.9.0",
  "cow-utils",
  "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_data_structures",
  "oxc_estree",
  "oxc_index",
  "oxc_span",
