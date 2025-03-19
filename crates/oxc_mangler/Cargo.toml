@@ -31,3 +31,6 @@ oxc_span = { workspace = true }
 fixedbitset = { workspace = true }
 itertools = { workspace = true }
 rustc-hash = { workspace = true }
+
+[dev-dependencies]
+oxc_parser = { workspace = true }
