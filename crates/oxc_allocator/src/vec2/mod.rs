@@ -2271,11 +2271,41 @@ impl<'a, 'bump, T> IntoIterator for &'a mut Vec<'bump, T> {
 impl<'bump, T: 'bump> Extend<T> for Vec<'bump, T> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        let iter = iter.into_iter();
-        self.reserve(iter.size_hint().0);
+        // This implementation differs from the standard library's implementation, unlike
+        // `std` call `SpecExtend::spec_extend`, we call `extend_desugared` directly,
+        // because:
+        // 1. `std::iter::TrustedLen` is not stable yet, so we can't use it to optimize the
+        //   `extend` method.
+        // 2. `T` is always non-`Copy` and non-`Clone` in our use case, so we don't need a special
+        //   implementation for `T: Clone` or `T: Copy`.
+        self.extend_desugared(iter.into_iter())
+    }
+}
 
-        for t in iter {
-            self.push(t);
+impl<'bump, T: 'bump> Vec<'bump, T> {
+    // leaf method to which various SpecFrom/SpecExtend implementations delegate when
+    // they have no further optimizations to apply
+    fn extend_desugared<I: Iterator<Item = T>>(&mut self, mut iterator: I) {
+        // This is the case for a general iterator.
+        //
+        // This function should be the moral equivalent of:
+        //
+        //      for item in iterator {
+        //          self.push(item);
+        //      }
+        while let Some(element) = iterator.next() {
+            let len = self.len();
+            if len == self.capacity() {
+                let (lower, _) = iterator.size_hint();
+                self.reserve(lower.saturating_add(1));
+            }
+            unsafe {
+                ptr::write(self.as_mut_ptr().add(len), element);
+                // Since next() executes user code which can panic we have to bump the length
+                // after each step.
+                // NB can't overflow since we would have had to alloc the address space
+                self.set_len(len + 1);
+            }
         }
     }
 }
