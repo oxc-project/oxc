@@ -1322,7 +1322,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// let mut iter = keep.iter();
     /// vec.retain(|_| *iter.next().unwrap());
     /// assert_eq!(vec, [2, 3, 5]);
-    /// ```
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn retain<F>(&mut self, mut f: F)
     where
         F: FnMut(&T) -> bool,
@@ -2279,13 +2280,52 @@ impl<'a, 'bump, T> IntoIterator for &'a mut Vec<'bump, T> {
 }
 
 impl<'bump, T: 'bump> Extend<T> for Vec<'bump, T> {
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        let iter = iter.into_iter();
-        self.reserve(iter.size_hint().0);
+        // This is the case for a general iterator.
+        //
+        // This function should be the moral equivalent of:
+        //
+        //      for item in iterator {
+        //          self.push(item);
+        //      }
+        let iterator = iter.into_iter();
+        let (lower, _) = iterator.size_hint();
+        // Hot path.
+        if lower == 1 {
+            for item in iterator {
+                self.push(item);
+            }
+        } else {
+            self.extend_desugared(iterator);
+        }
+    }
+}
 
-        for t in iter {
-            self.push(t);
+impl<'bump, T: 'bump> Vec<'bump, T> {
+    // leaf method to which various SpecFrom/SpecExtend implementations delegate when
+    // they have no further optimizations to apply
+    fn extend_desugared<I: Iterator<Item = T>>(&mut self, mut iterator: I) {
+        while let Some(element) = iterator.next() {
+            #[cold]
+            fn reserve_slow<T>(vec: &mut Vec<T>, iterator: &impl Iterator<Item = T>) {
+                let (lower, _) = iterator.size_hint();
+                vec.reserve(lower.saturating_add(1));
+            }
+
+            let len = self.len();
+            if len == self.buf.cap() {
+                reserve_slow(self, iterator.by_ref());
+            }
+
+            unsafe {
+                ptr::write(self.as_mut_ptr().add(len), element);
+                // Since next() executes user code which can panic we have to bump the length
+                // after each step.
+                // NB can't overflow since we would have had to alloc the address space
+                self.set_len(len + 1);
+            }
         }
     }
 }

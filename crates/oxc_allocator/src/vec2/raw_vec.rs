@@ -625,14 +625,13 @@ impl<'a, T> RawVec<'a, T> {
     }
 
     // Given a new layout, completes the grow operation.
-    #[inline]
     fn finish_grow(&self, new_layout: Layout) -> Result<NonNull<[u8]>, CollectionAllocErr> {
         alloc_guard(new_layout.size())?;
 
         let res = match self.current_layout() {
             Some(layout) => unsafe {
                 debug_assert!(new_layout.align() == layout.align());
-                realloc(self.a, self.ptr.cast(), layout, new_layout.size())
+                self.a.grow(self.ptr.cast(), layout, new_layout)
             },
             None => self.a.allocate(new_layout),
         };
