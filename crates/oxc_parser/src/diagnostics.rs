@@ -504,10 +504,17 @@ pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
         .with_label(modifier.span)
 }
 
+/// TS(1028)
+#[cold]
+pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1028", "Accessibility modifier already seen.")
+        .with_label(modifier.span)
+        .with_help("Remove the duplicate modifier.")
+}
+
 /// TS(1030)
 #[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
-    // OxcDiagnostic::error(format!("TS1030: '{}' modifier already seen.", modifier.kind))
     ts_error("1030", format!("{}' modifier already seen.", modifier.kind))
         .with_label(modifier.span)
         .with_help("Remove the duplicate modifier.")

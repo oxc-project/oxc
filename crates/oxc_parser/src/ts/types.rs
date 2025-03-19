@@ -1328,8 +1328,13 @@ impl<'a> ParserImpl<'a> {
 
             if let Ok(kind) = ModifierKind::try_from(self.cur_kind()) {
                 let modifier = Modifier { kind, span: self.cur_token().span() };
-                flags.set(kind.into(), true);
-                modifiers.push(modifier);
+                let new_flag = ModifierFlags::from(kind);
+                if flags.contains(new_flag) {
+                    self.error(diagnostics::accessibility_modifier_already_seen(&modifier));
+                } else {
+                    flags.insert(new_flag);
+                    modifiers.push(modifier);
+                }
             } else {
                 break;
             }
