@@ -6,7 +6,7 @@
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform",
     "build": "pnpm run build-dev --release",
-    "test": "vitest --typecheck run ./test && tsc"
+    "test": "vitest run --dir ./test && tsc"
   },
   "engines": {
     "node": ">=14.0.0"
