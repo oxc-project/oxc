@@ -84,6 +84,17 @@ impl<T> ESTree for Null<'_, T> {
     }
 }
 
+#[ast_meta]
+#[estree(ts_type = "null", raw_deser = "null")]
+#[ts]
+pub struct TsNull<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for TsNull<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        ().serialize(serializer);
+    }
+}
+
 /// Serialized as `true`.
 #[ast_meta]
 #[estree(ts_type = "true", raw_deser = "true")]
@@ -101,6 +112,17 @@ impl<T> ESTree for True<'_, T> {
 pub struct False<'b, T>(#[expect(dead_code)] pub &'b T);
 
 impl<T> ESTree for False<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        false.serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(ts_type = "false", raw_deser = "false")]
+#[ts]
+pub struct TsFalse<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for TsFalse<'_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         false.serialize(serializer);
     }
@@ -125,6 +147,17 @@ pub struct Init<'b, T>(#[expect(dead_code)] pub &'b T);
 impl<T> ESTree for Init<'_, T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JsonSafeString("init").serialize(serializer);
+    }
+}
+
+#[ast_meta]
+#[estree(ts_type = "[]", raw_deser = "[]")]
+#[ts]
+pub struct TsEmptyArray<'b, T>(#[expect(dead_code)] pub &'b T);
+
+impl<T> ESTree for TsEmptyArray<'_, T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        [(); 0].serialize(serializer);
     }
 }
 
@@ -538,6 +571,9 @@ impl ESTree for ClassImplements<'_, '_> {
     raw_deser = "
         const ident = DESER[Box<IdentifierReference>](POS);
         ident.type = 'JSXIdentifier';
+        delete ident.decorators;
+        delete ident.optional;
+        delete ident.typeAnnotation;
         ident
     "
 )]

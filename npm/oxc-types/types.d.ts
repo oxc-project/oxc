@@ -54,11 +54,17 @@ export type Expression =
 export interface IdentifierName extends Span {
   type: 'Identifier';
   name: string;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface IdentifierReference extends Span {
   type: 'Identifier';
   name: string;
+  decorators?: [];
+  optional?: false;
+  typeAnnotation?: null;
 }
 
 export interface BindingIdentifier extends Span {

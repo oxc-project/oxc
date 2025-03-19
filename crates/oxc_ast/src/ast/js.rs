@@ -209,7 +209,10 @@ pub use match_expression;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier")]
+#[estree(
+    rename = "Identifier",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull)
+)]
 pub struct IdentifierName<'a> {
     pub span: Span,
     #[estree(json_safe)]
@@ -224,7 +227,10 @@ pub struct IdentifierName<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier")]
+#[estree(
+    rename = "Identifier",
+    add_fields(decorators = TsEmptyArray, optional = TsFalse, typeAnnotation = TsNull)
+)]
 pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.

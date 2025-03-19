@@ -53,6 +53,9 @@ function deserializeIdentifierName(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     name: deserializeStr(pos + 8),
+    decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 
@@ -62,6 +65,9 @@ function deserializeIdentifierReference(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     name: deserializeStr(pos + 8),
+    decorators: [],
+    optional: false,
+    typeAnnotation: null,
   };
 }
 
@@ -3417,6 +3423,9 @@ function deserializeJSXElementName(pos) {
     case 1:
       const ident = deserializeBoxIdentifierReference(pos + 8);
       ident.type = 'JSXIdentifier';
+      delete ident.decorators;
+      delete ident.optional;
+      delete ident.typeAnnotation;
       return ident;
     case 2:
       return deserializeBoxJSXNamespacedName(pos + 8);
@@ -3435,6 +3444,9 @@ function deserializeJSXMemberExpressionObject(pos) {
     case 0:
       const ident = deserializeBoxIdentifierReference(pos + 8);
       ident.type = 'JSXIdentifier';
+      delete ident.decorators;
+      delete ident.optional;
+      delete ident.typeAnnotation;
       return ident;
     case 1:
       return deserializeBoxJSXMemberExpression(pos + 8);
