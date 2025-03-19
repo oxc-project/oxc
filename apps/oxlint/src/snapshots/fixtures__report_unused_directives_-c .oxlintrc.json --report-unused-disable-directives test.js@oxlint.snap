@@ -1,0 +1,45 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json --report-unused-disable-directives test.js
+working directory: fixtures/report_unused_directives
+----------
+
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+   ,-[test.js:4:3]
+ 3 | 
+ 4 | // eslint-disable-next-line no-debugger
+   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 | console.log('This is a test');
+   `----
+
+  ! Unused eslint-disable directive (no problems were reported from no-console).
+    ,-[test.js:9:3]
+  8 | 
+  9 | // eslint-disable-next-line no-console
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | debugger;
+    `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+    ,-[test.js:10:1]
+  9 | // eslint-disable-next-line no-console
+ 10 | debugger;
+    : ^^^^^^^^^
+ 11 | 
+    `----
+  help: Delete this code.
+
+  ! Unused eslint-enable directive (no matching eslint-disable directives were found).
+    ,-[test.js:22:3]
+ 21 | 
+ 22 | // eslint-enable
+    :   ^^^^^^^^^^^^^^
+    `----
+
+Found 4 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 101 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
