@@ -37,6 +37,8 @@ mod options;
 #[derive(Default)]
 #[napi]
 pub struct Oxc {
+    #[napi(ts_type = "object")]
+    pub ast: (),
     pub ast_json: String,
     pub ir: String,
     pub control_flow_graph: String,
