@@ -188,7 +188,7 @@ pub struct ParseOptions {
     /// Whether to parse regular expressions or not.
     ///
     /// Default: `false`
-    #[cfg(feature = "regex")]
+    #[cfg(feature = "regular_expression")]
     pub parse_regular_expression: bool,
 
     /// Allow [`return`] statements outside of functions.
@@ -224,7 +224,7 @@ pub struct ParseOptions {
 impl Default for ParseOptions {
     fn default() -> Self {
         Self {
-            #[cfg(feature = "regex")]
+            #[cfg(feature = "regular_expression")]
             parse_regular_expression: false,
             allow_return_outside_function: false,
             preserve_parens: true,

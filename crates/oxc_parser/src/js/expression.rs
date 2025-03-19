@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-#[cfg(feature = "regex")]
+#[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
@@ -345,7 +345,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
 
         // Parse pattern if options is enabled and also flags are valid
-        #[cfg(feature = "regex")]
+        #[cfg(feature = "regular_expression")]
         let pattern = {
             (self.options.parse_regular_expression && !flags_error)
                 .then_some(())
@@ -362,7 +362,7 @@ impl<'a> ParserImpl<'a> {
                     },
                 )
         };
-        #[cfg(not(feature = "regex"))]
+        #[cfg(not(feature = "regular_expression"))]
         let pattern = {
             let _ = (flags_start, flags_text, flags_error);
             RegExpPattern::Raw(pattern_text)
@@ -375,7 +375,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    #[cfg(feature = "regex")]
+    #[cfg(feature = "regular_expression")]
     fn parse_regex_pattern(
         &mut self,
         pattern_span_offset: u32,

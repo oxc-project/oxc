@@ -43,7 +43,8 @@ oxc_ast_visit = { workspace = true, features = ["serialize"] }
 pico-args = { workspace = true }
 
 [features]
+default = ["regular_expression"]
+# Parse regex
+regular_expression = ["oxc_regular_expression"]
 # Expose Lexer for benchmarks
 benchmarking = []
-# Parse regex
-regex = ["oxc_regular_expression"]

@@ -29,7 +29,7 @@ oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true, features = ["serde"] }
 oxc_macros = { workspace = true }
-oxc_parser = { workspace = true, features = ["regex"] }
+oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }
 oxc_semantic = { workspace = true }

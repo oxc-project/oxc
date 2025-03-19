@@ -28,7 +28,7 @@ required-features = ["full"]
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
-oxc_parser = { workspace = true }
+oxc_parser = { workspace = true, features = [] }
 oxc_regular_expression = { workspace = true, optional = true }
 
 oxc_ast_visit = { workspace = true, optional = true }
@@ -53,10 +53,10 @@ full = [
   "isolated_declarations",
   "ast_visit",
   "cfg",
-  "regex",
+  "regular_expression",
 ]
 
-regex = ["oxc_regular_expression", "oxc_parser/regex"]
+regular_expression = ["oxc_regular_expression", "oxc_parser/regular_expression"]
 
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
