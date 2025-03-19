@@ -570,11 +570,7 @@ impl ESTree for ClassImplements<'_, '_> {
     ts_type = "JSXIdentifier",
     raw_deser = "
         const ident = DESER[Box<IdentifierReference>](POS);
-        ident.type = 'JSXIdentifier';
-        delete ident.decorators;
-        delete ident.optional;
-        delete ident.typeAnnotation;
-        ident
+        {type: 'JSXIdentifier', start: ident.start, end: ident.end, name: ident.name}
     "
 )]
 pub struct JSXElementIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>);
