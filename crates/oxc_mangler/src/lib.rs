@@ -1,4 +1,4 @@
-use std::iter;
+use std::iter::{self, repeat_with};
 
 use fixedbitset::FixedBitSet;
 use itertools::Itertools;
@@ -373,10 +373,10 @@ impl Mangler {
         allocator: &'a Allocator,
     ) -> Vec<'a, SlotFrequency<'a>> {
         let root_scope_id = scoping.root_scope_id();
-        let mut frequencies = Vec::with_capacity_in(total_number_of_slots, allocator);
-        for _ in 0..total_number_of_slots {
-            frequencies.push(SlotFrequency::new(allocator));
-        }
+        let mut frequencies = Vec::from_iter_in(
+            repeat_with(|| SlotFrequency::new(allocator)).take(total_number_of_slots),
+            allocator,
+        );
 
         for (symbol_id, slot) in slots.iter().copied().enumerate() {
             let symbol_id = SymbolId::from_usize(symbol_id);

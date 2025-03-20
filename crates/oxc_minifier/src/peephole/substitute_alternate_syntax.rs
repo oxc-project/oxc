@@ -1,3 +1,5 @@
+use std::iter::repeat_with;
+
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::constant_evaluation::DetermineValueType;
@@ -744,8 +746,8 @@ impl<'a> PeepholeOptimizations {
                         if n.value.fract() == 0.0 {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
-                                let elisions = std::iter::from_fn(|| {
-                                    Some(ArrayExpressionElement::Elision(ctx.ast.elision(n.span)))
+                                let elisions = repeat_with(|| {
+                                    ArrayExpressionElement::Elision(ctx.ast.elision(n.span))
                                 })
                                 .take(n_int);
                                 return Some(ctx.ast.expression_array(
