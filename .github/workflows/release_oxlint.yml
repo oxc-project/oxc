@@ -102,13 +102,9 @@ jobs:
 
       - name: Build
         shell: bash
+        env:
+          CC: clang # for mimalloc
         run: |
-          # Need to support 16kb-aligned pages for aarch64 systems,
-          # Asahi Linux & Raspberry Pi OS use a 16k page size.
-          # https://github.com/oxc-project/oxc/issues/3783
-          case ${{ matrix.target }} in
-            aarch64-*) export JEMALLOC_SYS_WITH_LG_PAGE=16 ;;
-          esac;
           cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
           cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
 
