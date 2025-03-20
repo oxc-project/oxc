@@ -284,7 +284,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn expression_string_literal_with_lossy<A>(
         self,
@@ -7849,7 +7849,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn import_attribute_key_string_literal_with_lossy<A>(
         self,
@@ -8448,7 +8448,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn module_export_name_string_literal_with_lossy<A>(
         self,
@@ -8630,7 +8630,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn string_literal_with_lossy<A>(
         self,
@@ -8653,7 +8653,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn alloc_string_literal_with_lossy<A>(
         self,
@@ -9452,7 +9452,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn jsx_attribute_value_string_literal_with_lossy<A>(
         self,
@@ -9957,7 +9957,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn ts_enum_member_name_string_with_lossy<A>(
         self,
@@ -10114,7 +10114,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn ts_literal_string_literal_with_lossy<A>(
         self,
@@ -13393,7 +13393,7 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`
+    /// * `lossy`: The string value contains replacement character (U+FFFD).
     #[inline]
     pub fn ts_module_declaration_name_string_literal_with_lossy<A>(
         self,
