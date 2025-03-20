@@ -124,6 +124,7 @@ jobs:
           pnpm run build-wasi
           pnpm run build-npm-dir
           pnpm run test-browser
+          pnpm build-browser-bundle --npmDir npm-dir
 
   test-napi:
     name: Test NAPI

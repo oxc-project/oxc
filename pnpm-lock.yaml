@@ -94,6 +94,9 @@ importers:
       '@vitest/browser':
         specifier: 3.0.8
         version: 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.13.10)(playwright@1.51.1)(typescript@5.8.2)(vite@6.2.2(@types/node@22.13.10)(terser@5.39.0))(vitest@3.0.8)
+      esbuild:
+        specifier: ^0.25.0
+        version: 0.25.1
       playwright:
         specifier: ^1.51.0
         version: 1.51.1

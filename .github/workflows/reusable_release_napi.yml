@@ -144,6 +144,9 @@ jobs:
 
       - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path} --npm-dir ${npm_dir}
 
+      - run: pnpm -C ${package_path} build-browser-bundle --npmDir ${npm_dir}
+        if: ${{ inputs.name == 'parser' }}
+
       - name: Check Publish
         run: |
           # Check subpackages
