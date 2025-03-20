@@ -13,14 +13,14 @@ let fixtureUrls = [
 ];
 
 // For sharding in CI - specify single fixture to run benchmarks on
-let skipStandard = false, skipRaw = false;
+let benchStandard = bench, benchRaw = bench;
 let shard = process.env.SHARD;
 if (shard) {
   shard *= 1;
   if (shard % 2 === 0) {
-    skipRaw = true;
+    benchRaw = bench.skip;
   } else {
-    skipStandard = true;
+    benchStandard = bench.skip;
     shard--;
   }
   fixtureUrls = [fixtureUrls[shard / 2]];
@@ -49,19 +49,15 @@ const fixtures = await Promise.all(fixtureUrls.map(async (url) => {
 
 // Run benchmarks
 for (const { filename, code } of fixtures) {
-  if (!skipStandard) {
-    bench(`parser_napi[${filename}]`, () => {
-      const ret = parseSync(filename, code);
-      // Read returned object's properties to execute getters which deserialize
-      const { program, comments, module, errors } = ret;
-    });
-  }
+  benchStandard(`parser_napi[${filename}]`, () => {
+    const ret = parseSync(filename, code);
+    // Read returned object's properties to execute getters which deserialize
+    const { program, comments, module, errors } = ret;
+  });
 
-  if (!skipRaw) {
-    bench(`parser_napi_raw[${filename}]`, () => {
-      const ret = parseSync(filename, code, { experimentalRawTransfer: true });
-      // Read returned object's properties to execute getters
-      const { program, comments, module, errors } = ret;
-    });
-  }
+  benchRaw(`parser_napi_raw[${filename}]`, () => {
+    const ret = parseSync(filename, code, { experimentalRawTransfer: true });
+    // Read returned object's properties to execute getters
+    const { program, comments, module, errors } = ret;
+  });
 }
