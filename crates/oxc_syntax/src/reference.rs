@@ -1,11 +1,12 @@
 #![expect(missing_docs)] // fixme
+
 use bitflags::bitflags;
-use nonmax::NonMaxU32;
-use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
 use oxc_allocator::CloneIn;
+use oxc_data_structures::nonmax::NonMaxU32;
+use oxc_index::Idx;
 
 use crate::{node::NodeId, symbol::SymbolId};
 

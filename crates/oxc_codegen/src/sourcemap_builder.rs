@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use nonmax::NonMaxU32;
+use oxc_data_structures::nonmax::NonMaxU32;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};

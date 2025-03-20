@@ -22,14 +22,13 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
-oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
+oxc_data_structures = { workspace = true, features = ["assert_unchecked", "nonmax"] }
 oxc_estree = { workspace = true }
 oxc_index = { workspace = true }
 oxc_span = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
-nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }

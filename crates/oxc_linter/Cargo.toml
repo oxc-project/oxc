@@ -25,6 +25,7 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["nonmax"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true, features = ["serde"] }
@@ -50,7 +51,6 @@ json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
 lazy_static = { workspace = true }
 memchr = { workspace = true }
-nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 regex = { workspace = true }

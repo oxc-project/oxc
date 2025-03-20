@@ -1,9 +1,11 @@
 //! AST Node ID and flags.
+
 use bitflags::bitflags;
-use nonmax::NonMaxU32;
-use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
+
+use oxc_data_structures::nonmax::NonMaxU32;
+use oxc_index::Idx;
 
 /// AST Node ID
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
