@@ -76,6 +76,8 @@ impl Oxc {
     #[allow(clippy::allow_attributes, clippy::needless_pass_by_value)]
     pub fn run(&mut self, source_text: String, options: OxcOptions) -> napi::Result<()> {
         self.diagnostics = vec![];
+        self.scope_text = String::new();
+        self.symbols_json = String::new();
 
         let OxcOptions {
             run: run_options,
