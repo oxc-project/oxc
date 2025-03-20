@@ -5,7 +5,7 @@
   "browser": "browser.js",
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform",
-    "build": "pnpm run build-dev --release",
+    "build": "pnpm run build-dev --features allocator --release",
     "test": "vitest run --dir ./test && tsc"
   },
   "engines": {

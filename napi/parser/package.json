@@ -5,7 +5,7 @@
   "browser": "wasm.mjs",
   "scripts": {
     "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
-    "build": "pnpm run build-dev --release",
+    "build": "pnpm run build-dev --features allocator --release",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir .",
     "test": "pnpm run test-node run && tsc",

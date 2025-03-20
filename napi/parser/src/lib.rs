@@ -1,7 +1,7 @@
 // Napi value need to be passed as value
 #![expect(clippy::needless_pass_by_value)]
 
-#[cfg(all(not(target_arch = "arm"), not(target_family = "wasm")))]
+#[cfg(all(feature = "allocator", not(target_arch = "arm"), not(target_family = "wasm")))]
 #[global_allocator]
 static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
