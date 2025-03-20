@@ -3111,39 +3111,6 @@ impl ESTree for TSImportType<'_> {
     }
 }
 
-impl ESTree for TSImportAttributes<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportAttributes"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("attributesKeyword", &self.attributes_keyword);
-        state.serialize_field("elements", &self.elements);
-        state.end();
-    }
-}
-
-impl ESTree for TSImportAttribute<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSImportAttribute"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &self.name);
-        state.serialize_field("value", &self.value);
-        state.end();
-    }
-}
-
-impl ESTree for TSImportAttributeName<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-        }
-    }
-}
-
 impl ESTree for TSFunctionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();

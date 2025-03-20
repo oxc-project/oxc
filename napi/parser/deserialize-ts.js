@@ -1836,30 +1836,10 @@ function deserializeTSImportType(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     argument: deserializeTSType(pos + 8),
-    options: deserializeOptionBoxTSImportAttributes(pos + 24),
+    options: deserializeOptionBoxObjectExpression(pos + 24),
     qualifier: deserializeOptionTSTypeName(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
     isTypeOf: deserializeBool(pos + 56),
-  };
-}
-
-function deserializeTSImportAttributes(pos) {
-  return {
-    type: 'TSImportAttributes',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    attributesKeyword: deserializeIdentifierName(pos + 8),
-    elements: deserializeVecTSImportAttribute(pos + 32),
-  };
-}
-
-function deserializeTSImportAttribute(pos) {
-  return {
-    type: 'TSImportAttribute',
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-    name: deserializeTSImportAttributeName(pos + 8),
-    value: deserializeExpression(pos + 56),
   };
 }
 
@@ -3921,17 +3901,6 @@ function deserializeTSTypeQueryExprName(pos) {
   }
 }
 
-function deserializeTSImportAttributeName(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return deserializeIdentifierName(pos + 8);
-    case 1:
-      return deserializeStringLiteral(pos + 8);
-    default:
-      throw new Error(`Unexpected discriminant ${uint8[pos]} for TSImportAttributeName`);
-  }
-}
-
 function deserializeTSMappedTypeModifierOperator(pos) {
   switch (uint8[pos]) {
     case 0:
@@ -5577,30 +5546,14 @@ function deserializeBoxTSTypeParameter(pos) {
   return deserializeTSTypeParameter(uint32[pos >> 2]);
 }
 
-function deserializeBoxTSImportAttributes(pos) {
-  return deserializeTSImportAttributes(uint32[pos >> 2]);
-}
-
-function deserializeOptionBoxTSImportAttributes(pos) {
+function deserializeOptionBoxObjectExpression(pos) {
   if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxTSImportAttributes(pos);
+  return deserializeBoxObjectExpression(pos);
 }
 
 function deserializeOptionTSTypeName(pos) {
   if (uint8[pos] === 2) return null;
   return deserializeTSTypeName(pos);
-}
-
-function deserializeVecTSImportAttribute(pos) {
-  const arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 6];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSImportAttribute(pos));
-    pos += 72;
-  }
-  return arr;
 }
 
 function deserializeBoxTSExternalModuleReference(pos) {

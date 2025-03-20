@@ -2205,51 +2205,6 @@ pub trait Traverse<'a> {
     fn exit_ts_import_type(&mut self, node: &mut TSImportType<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
-    fn enter_ts_import_attributes(
-        &mut self,
-        node: &mut TSImportAttributes<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-    #[inline]
-    fn exit_ts_import_attributes(
-        &mut self,
-        node: &mut TSImportAttributes<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-
-    #[inline]
-    fn enter_ts_import_attribute(
-        &mut self,
-        node: &mut TSImportAttribute<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-    #[inline]
-    fn exit_ts_import_attribute(
-        &mut self,
-        node: &mut TSImportAttribute<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-
-    #[inline]
-    fn enter_ts_import_attribute_name(
-        &mut self,
-        node: &mut TSImportAttributeName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-    #[inline]
-    fn exit_ts_import_attribute_name(
-        &mut self,
-        node: &mut TSImportAttributeName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-
-    #[inline]
     fn enter_ts_function_type(&mut self, node: &mut TSFunctionType<'a>, ctx: &mut TraverseCtx<'a>) {
     }
     #[inline]

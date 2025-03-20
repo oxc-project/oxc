@@ -285,39 +285,35 @@ pub(crate) enum AncestorType {
     TSImportTypeOptions = 262,
     TSImportTypeQualifier = 263,
     TSImportTypeTypeArguments = 264,
-    TSImportAttributesAttributesKeyword = 265,
-    TSImportAttributesElements = 266,
-    TSImportAttributeName = 267,
-    TSImportAttributeValue = 268,
-    TSFunctionTypeTypeParameters = 269,
-    TSFunctionTypeThisParam = 270,
-    TSFunctionTypeParams = 271,
-    TSFunctionTypeReturnType = 272,
-    TSConstructorTypeTypeParameters = 273,
-    TSConstructorTypeParams = 274,
-    TSConstructorTypeReturnType = 275,
-    TSMappedTypeTypeParameter = 276,
-    TSMappedTypeNameType = 277,
-    TSMappedTypeTypeAnnotation = 278,
-    TSTemplateLiteralTypeQuasis = 279,
-    TSTemplateLiteralTypeTypes = 280,
-    TSAsExpressionExpression = 281,
-    TSAsExpressionTypeAnnotation = 282,
-    TSSatisfiesExpressionExpression = 283,
-    TSSatisfiesExpressionTypeAnnotation = 284,
-    TSTypeAssertionExpression = 285,
-    TSTypeAssertionTypeAnnotation = 286,
-    TSImportEqualsDeclarationId = 287,
-    TSImportEqualsDeclarationModuleReference = 288,
-    TSExternalModuleReferenceExpression = 289,
-    TSNonNullExpressionExpression = 290,
-    DecoratorExpression = 291,
-    TSExportAssignmentExpression = 292,
-    TSNamespaceExportDeclarationId = 293,
-    TSInstantiationExpressionExpression = 294,
-    TSInstantiationExpressionTypeParameters = 295,
-    JSDocNullableTypeTypeAnnotation = 296,
-    JSDocNonNullableTypeTypeAnnotation = 297,
+    TSFunctionTypeTypeParameters = 265,
+    TSFunctionTypeThisParam = 266,
+    TSFunctionTypeParams = 267,
+    TSFunctionTypeReturnType = 268,
+    TSConstructorTypeTypeParameters = 269,
+    TSConstructorTypeParams = 270,
+    TSConstructorTypeReturnType = 271,
+    TSMappedTypeTypeParameter = 272,
+    TSMappedTypeNameType = 273,
+    TSMappedTypeTypeAnnotation = 274,
+    TSTemplateLiteralTypeQuasis = 275,
+    TSTemplateLiteralTypeTypes = 276,
+    TSAsExpressionExpression = 277,
+    TSAsExpressionTypeAnnotation = 278,
+    TSSatisfiesExpressionExpression = 279,
+    TSSatisfiesExpressionTypeAnnotation = 280,
+    TSTypeAssertionExpression = 281,
+    TSTypeAssertionTypeAnnotation = 282,
+    TSImportEqualsDeclarationId = 283,
+    TSImportEqualsDeclarationModuleReference = 284,
+    TSExternalModuleReferenceExpression = 285,
+    TSNonNullExpressionExpression = 286,
+    DecoratorExpression = 287,
+    TSExportAssignmentExpression = 288,
+    TSNamespaceExportDeclarationId = 289,
+    TSInstantiationExpressionExpression = 290,
+    TSInstantiationExpressionTypeParameters = 291,
+    JSDocNullableTypeTypeAnnotation = 292,
+    JSDocNonNullableTypeTypeAnnotation = 293,
 }
 
 /// Ancestor type used in AST traversal.
@@ -829,14 +825,6 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSImportTypeQualifier as u16,
     TSImportTypeTypeArguments(TSImportTypeWithoutTypeArguments<'a, 't>) =
         AncestorType::TSImportTypeTypeArguments as u16,
-    TSImportAttributesAttributesKeyword(TSImportAttributesWithoutAttributesKeyword<'a, 't>) =
-        AncestorType::TSImportAttributesAttributesKeyword as u16,
-    TSImportAttributesElements(TSImportAttributesWithoutElements<'a, 't>) =
-        AncestorType::TSImportAttributesElements as u16,
-    TSImportAttributeName(TSImportAttributeWithoutName<'a, 't>) =
-        AncestorType::TSImportAttributeName as u16,
-    TSImportAttributeValue(TSImportAttributeWithoutValue<'a, 't>) =
-        AncestorType::TSImportAttributeValue as u16,
     TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a, 't>) =
         AncestorType::TSFunctionTypeTypeParameters as u16,
     TSFunctionTypeThisParam(TSFunctionTypeWithoutThisParam<'a, 't>) =
@@ -1757,19 +1745,6 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_ts_import_attributes(self) -> bool {
-        matches!(
-            self,
-            Self::TSImportAttributesAttributesKeyword(_) | Self::TSImportAttributesElements(_)
-        )
-    }
-
-    #[inline]
-    pub fn is_ts_import_attribute(self) -> bool {
-        matches!(self, Self::TSImportAttributeName(_) | Self::TSImportAttributeValue(_))
-    }
-
-    #[inline]
     pub fn is_ts_function_type(self) -> bool {
         matches!(
             self,
@@ -1977,7 +1952,6 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::JSXSpreadChildExpression(_)
                 | Self::TSEnumMemberInitializer(_)
                 | Self::TSInterfaceHeritageExpression(_)
-                | Self::TSImportAttributeValue(_)
                 | Self::TSAsExpressionExpression(_)
                 | Self::TSSatisfiesExpressionExpression(_)
                 | Self::TSTypeAssertionExpression(_)
@@ -2202,11 +2176,6 @@ impl<'a, 't> Ancestor<'a, 't> {
     #[inline]
     pub fn is_parent_of_ts_type_query_expr_name(self) -> bool {
         matches!(self, Self::TSTypeQueryExprName(_))
-    }
-
-    #[inline]
-    pub fn is_parent_of_ts_import_attribute_name(self) -> bool {
-        matches!(self, Self::TSImportAttributeName(_))
     }
 
     #[inline]
@@ -2486,10 +2455,6 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSImportTypeOptions(a) => a.address(),
             Self::TSImportTypeQualifier(a) => a.address(),
             Self::TSImportTypeTypeArguments(a) => a.address(),
-            Self::TSImportAttributesAttributesKeyword(a) => a.address(),
-            Self::TSImportAttributesElements(a) => a.address(),
-            Self::TSImportAttributeName(a) => a.address(),
-            Self::TSImportAttributeValue(a) => a.address(),
             Self::TSFunctionTypeTypeParameters(a) => a.address(),
             Self::TSFunctionTypeThisParam(a) => a.address(),
             Self::TSFunctionTypeParams(a) => a.address(),
@@ -14266,10 +14231,10 @@ impl<'a, 't> TSImportTypeWithoutArgument<'a, 't> {
     }
 
     #[inline]
-    pub fn options(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
+    pub fn options(self) -> &'t Option<Box<'a, ObjectExpression<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
-                as *const Option<Box<'a, TSImportAttributes<'a>>>)
+                as *const Option<Box<'a, ObjectExpression<'a>>>)
         }
     }
 
@@ -14372,10 +14337,10 @@ impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
     }
 
     #[inline]
-    pub fn options(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
+    pub fn options(self) -> &'t Option<Box<'a, ObjectExpression<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
-                as *const Option<Box<'a, TSImportAttributes<'a>>>)
+                as *const Option<Box<'a, ObjectExpression<'a>>>)
         }
     }
 
@@ -14421,10 +14386,10 @@ impl<'a, 't> TSImportTypeWithoutTypeArguments<'a, 't> {
     }
 
     #[inline]
-    pub fn options(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
+    pub fn options(self) -> &'t Option<Box<'a, ObjectExpression<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_OPTIONS)
-                as *const Option<Box<'a, TSImportAttributes<'a>>>)
+                as *const Option<Box<'a, ObjectExpression<'a>>>)
         }
     }
 
@@ -14443,131 +14408,6 @@ impl<'a, 't> TSImportTypeWithoutTypeArguments<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for TSImportTypeWithoutTypeArguments<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTES_SPAN: usize = offset_of!(TSImportAttributes, span);
-pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD: usize =
-    offset_of!(TSImportAttributes, attributes_keyword);
-pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTES_ELEMENTS: usize =
-    offset_of!(TSImportAttributes, elements);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSImportAttributesWithoutAttributesKeyword<'a, 't>(
-    pub(crate) *const TSImportAttributes<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSImportAttributesWithoutAttributesKeyword<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTES_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn elements(self) -> &'t Vec<'a, TSImportAttribute<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTES_ELEMENTS)
-                as *const Vec<'a, TSImportAttribute<'a>>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TSImportAttributesWithoutAttributesKeyword<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSImportAttributesWithoutElements<'a, 't>(
-    pub(crate) *const TSImportAttributes<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSImportAttributesWithoutElements<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTES_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn attributes_keyword(self) -> &'t IdentifierName<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD)
-                as *const IdentifierName<'a>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TSImportAttributesWithoutElements<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTE_SPAN: usize = offset_of!(TSImportAttribute, span);
-pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTE_NAME: usize = offset_of!(TSImportAttribute, name);
-pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTE_VALUE: usize = offset_of!(TSImportAttribute, value);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSImportAttributeWithoutName<'a, 't>(
-    pub(crate) *const TSImportAttribute<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSImportAttributeWithoutName<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn value(self) -> &'t Expression<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTE_VALUE) as *const Expression<'a>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TSImportAttributeWithoutName<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self.0)
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSImportAttributeWithoutValue<'a, 't>(
-    pub(crate) *const TSImportAttribute<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSImportAttributeWithoutValue<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn name(self) -> &'t TSImportAttributeName<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTE_NAME)
-                as *const TSImportAttributeName<'a>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for TSImportAttributeWithoutValue<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         Address::from_ptr(self.0)

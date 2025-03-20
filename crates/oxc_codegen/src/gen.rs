@@ -3552,9 +3552,9 @@ impl Gen for TSImportType<'_> {
         }
         p.print_str("import(");
         self.argument.print(p, ctx);
-        if let Some(attributes) = &self.options {
+        if let Some(options) = &self.options {
             p.print_str(", ");
-            attributes.print(p, ctx);
+            options.print_expr(p, Precedence::Lowest, ctx);
         }
         p.print_str(")");
         if let Some(qualifier) = &self.qualifier {
@@ -3563,42 +3563,6 @@ impl Gen for TSImportType<'_> {
         }
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
-        }
-    }
-}
-
-impl Gen for TSImportAttributes<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_ascii_byte(b'{');
-        p.print_soft_space();
-        self.attributes_keyword.print(p, ctx);
-        p.print_str(":");
-        p.print_soft_space();
-        p.print_ascii_byte(b'{');
-        p.print_soft_space();
-        p.print_list(&self.elements, ctx);
-        p.print_soft_space();
-        p.print_ascii_byte(b'}');
-        p.print_soft_space();
-        p.print_ascii_byte(b'}');
-    }
-}
-
-impl Gen for TSImportAttribute<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.name.print(p, ctx);
-        p.print_str(": ");
-        self.value.print_expr(p, Precedence::Member, ctx);
-    }
-}
-
-impl Gen for TSImportAttributeName<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self {
-            TSImportAttributeName::Identifier(ident) => ident.print(p, ctx),
-            TSImportAttributeName::StringLiteral(literal) => {
-                p.print_string_literal(literal, false);
-            }
         }
     }
 }

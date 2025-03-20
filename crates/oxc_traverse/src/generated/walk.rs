@@ -5130,10 +5130,10 @@ unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_OPTIONS)
-        as *mut Option<Box<TSImportAttributes>>)
+        as *mut Option<Box<ObjectExpression>>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeOptions);
-        walk_ts_import_attributes(traverser, (&mut **field) as *mut _, ctx);
+        walk_object_expression(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
         as *mut Option<TSTypeName>)
@@ -5150,73 +5150,6 @@ unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack(pop_token);
     traverser.exit_ts_import_type(&mut *node, ctx);
-}
-
-unsafe fn walk_ts_import_attributes<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut TSImportAttributes<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_ts_import_attributes(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportAttributesAttributesKeyword(
-        ancestor::TSImportAttributesWithoutAttributesKeyword(node, PhantomData),
-    ));
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD)
-            as *mut IdentifierName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSImportAttributesElements);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTES_ELEMENTS)
-        as *mut Vec<TSImportAttribute>)
-    {
-        walk_ts_import_attribute(traverser, item as *mut _, ctx);
-    }
-    ctx.pop_stack(pop_token);
-    traverser.exit_ts_import_attributes(&mut *node, ctx);
-}
-
-unsafe fn walk_ts_import_attribute<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut TSImportAttribute<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_ts_import_attribute(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportAttributeName(
-        ancestor::TSImportAttributeWithoutName(node, PhantomData),
-    ));
-    walk_ts_import_attribute_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTE_NAME)
-            as *mut TSImportAttributeName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSImportAttributeValue);
-    walk_expression(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTE_VALUE) as *mut Expression,
-        ctx,
-    );
-    ctx.pop_stack(pop_token);
-    traverser.exit_ts_import_attribute(&mut *node, ctx);
-}
-
-unsafe fn walk_ts_import_attribute_name<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut TSImportAttributeName<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_ts_import_attribute_name(&mut *node, ctx);
-    match &mut *node {
-        TSImportAttributeName::Identifier(node) => {
-            walk_identifier_name(traverser, node as *mut _, ctx)
-        }
-        TSImportAttributeName::StringLiteral(node) => {
-            walk_string_literal(traverser, node as *mut _, ctx)
-        }
-    }
-    traverser.exit_ts_import_attribute_name(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(

@@ -172,7 +172,7 @@ impl<'a> ParserImpl<'a> {
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
-            Kind::LCurly => self.parse_object_expression(),
+            Kind::LCurly => self.parse_object_expression().map(Expression::ObjectExpression),
             // ClassExpression
             Kind::Class => self.parse_class_expression(),
             // This
