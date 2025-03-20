@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+- a9a47a6 parser: Add regex cargo feature to oxc_parser (#9879) (Toshit)
+- d4a83ba parser: Report duplicate modifier `Accessibility modifier already seen.` (#9890) (Boshen)
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
 ## [0.59.0] - 2025-03-18
 
 - 3d17860 ast: [**BREAKING**] Reorder fields of `TemplateElement` (#9821) (overlookmotel)

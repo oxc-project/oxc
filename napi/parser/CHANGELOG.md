@@ -4,6 +4,72 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 6565fc4 napi: Feature gate allocator (#9921) (Boshen)
+- 2cedfe4 napi: Add codeframe to napi error (#9893) (Boshen)
+- a9a47a6 parser: Add regex cargo feature to oxc_parser (#9879) (Toshit)
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
+### Bug Fixes
+
+- 28a2ed3 estree/ast: Fix `IdentifierName` and `IdentifierReference` (#9863) (hi-ogawa)
+
+### Performance
+
+- 5f97f28 ast/estree: Speed up raw deser for `JSXElement` (#9895) (overlookmotel)
+
+### Documentation
+
+- 590a258 napi/parser: Add stackblitz link for wasm build (Boshen)
+
+### Refactor
+
+- 961b95d napi: Move common code to `oxc_napi` (#9875) (Boshen)
+- 233c1fc napi/playground: Add JSON.parse wrapper (#9880) (Hiroshi Ogawa)
+
+### Testing
+
+- 040e993 napi: Refactor NAPI parser benchmarks (#9911) (overlookmotel)
+- e637e2e napi/parser: Tweak vitest config (#9878) (Hiroshi Ogawa)
+
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 6565fc4 napi: Feature gate allocator (#9921) (Boshen)
+- 2cedfe4 napi: Add codeframe to napi error (#9893) (Boshen)
+- a9a47a6 parser: Add regex cargo feature to oxc_parser (#9879) (Toshit)
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
+### Bug Fixes
+
+- 28a2ed3 estree/ast: Fix `IdentifierName` and `IdentifierReference` (#9863) (hi-ogawa)
+
+### Performance
+
+- 5f97f28 ast/estree: Speed up raw deser for `JSXElement` (#9895) (overlookmotel)
+
+### Documentation
+
+- 590a258 napi/parser: Add stackblitz link for wasm build (Boshen)
+
+### Refactor
+
+- 961b95d napi: Move common code to `oxc_napi` (#9875) (Boshen)
+- 233c1fc napi/playground: Add JSON.parse wrapper (#9880) (Hiroshi Ogawa)
+
+### Testing
+
+- 040e993 napi: Refactor NAPI parser benchmarks (#9911) (overlookmotel)
+- e637e2e napi/parser: Tweak vitest config (#9878) (Hiroshi Ogawa)
+
 ## [0.60.0] - 2025-03-18
 
 ### Features
