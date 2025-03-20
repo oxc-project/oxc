@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+### Features
+
+- 38ad787 data_structures: Add `assert_unchecked!` macro (#9885) (overlookmotel)
+
+### Bug Fixes
+
+- 3d4c5f3 semantic: Correctly visit `IfStmt` `test` when building cfg (#9864) (camc314)
+
+### Performance
+
+- f7d078c semantic: Use `reserve_exact` instead of `reserve` to save memory in pre-reserve (#9910) (Dunqing)
+
 ## [0.60.0] - 2025-03-18
 
 - b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)

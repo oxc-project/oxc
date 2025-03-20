@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+- eef7eb6 minifier: [**BREAKING**] Rename `CompressOptions::all_true`/`all_false` to `smallest`/`safest` (#9866) (sapphi-red)
+
+### Features
+
+- dcd356e minifier: Support `keep_names` option (#9867) (sapphi-red)
+
+### Performance
+
+- b272893 mangler, minifier: Initialize a Vec with a specific value using `Vec::from_iter_in` combined with `repeat_with` (#9908) (Dunqing)
+
+### Refactor
+
+
 ## [0.60.0] - 2025-03-18
 
 - b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)

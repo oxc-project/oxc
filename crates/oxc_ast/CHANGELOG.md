@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+- c631291 parser: [**BREAKING**] Parse `TSImportAttributes` as `ObjectExpression` (#9902) (Boshen)
+
+### Features
+
+- 59c8f71 parser,codegen: Handle lone surrogate in string literal (#9918) (Boshen)
+
+### Bug Fixes
+
+- 28a2ed3 estree/ast: Fix `IdentifierName` and `IdentifierReference` (#9863) (hi-ogawa)- 68018e1 Ast changes (Boshen)
+
+### Performance
+
+- 5f97f28 ast/estree: Speed up raw deser for `JSXElement` (#9895) (overlookmotel)
+
+### Refactor
+
+- 62e2859 ast/ast_builder: Use `self.vec_from_iter` instead of `Vec::from_iter_in` for consistency (#9909) (Dunqing)
+
 ## [0.60.0] - 2025-03-18
 
 - b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)

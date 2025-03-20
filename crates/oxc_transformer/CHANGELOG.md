@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.61.0] - 2025-03-20
+
+### Bug Fixes
+
+- 1774225 transformer/using: Incorrect scope ids for bindings (#9871) (camc314)
+
+### Refactor
+
+- dbe61c5 transformer/module-runner-transform: Remove redundant converison (#9912) (Dunqing)
+- ecdfe2e transformer/using: Move work to `exit_static_block` (#9713) (camc314)
+
 ## [0.60.0] - 2025-03-18
 
 - b3ce925 data_structures: [**BREAKING**] Put all parts behind features (#9849) (overlookmotel)
